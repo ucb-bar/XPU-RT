@@ -1,29 +1,137 @@
-# SpaceMiT K1: profile → schedule → execute → advise → recompile
+# SpaceMiT K1: profile → schedule → build → run → advise → rewrite
 
 A runbook you can follow from a fresh checkout to a measured result on the
 physical K1. Every number quoted here was measured on the board; where something
 did not work, that is recorded too, because the failures cost more time than the
 successes did.
 
+**Read this first.** The execution path changed. Measurements used to go through
+merlin's `merlin-dispatch-scheduler` running IREE VMFBs; they now go through
+**ModelBlaster's own generated C kernels**, executed by a Linux port of the
+schedule-driven multi-model harness (`ModelBlaster/harness_xpurt_linux`). The
+reason is not aesthetic: `apply_fusion_hint` / `apply_split_hint` rewrite
+ModelBlaster's IR, and a rewritten IR has no VMFB, so a runner that resolves
+each dispatch to a `.vmfb` on disk *cannot execute a granularity change*. With
+generated C, the thing the scheduler places is the thing that runs, and a hint
+is directly runnable.
+
+Everything the IREE path measured is still true of the IREE path, and the
+numbers are kept — in [§11](#11-the-retired-ireemerlin-path), clearly labelled,
+because several of them are the reason the current design looks the way it does.
+
+### Where this currently stands, measured
+
+Per-model service time on one core, ModelBlaster generated C, `rvv_x60`, int8,
+every model bit-exact against its golden (`max_abs_err=0`):
+
+| model | scalar | rvv_x60 | speedup |
+|---|---|---|---|
+| mlp_control | 0.37 | 0.083 | 4.5x |
+| lstm_tiny | 0.08 | 0.059 | 1.4x |
+| vitfly_frontend | 1.77 | 0.382 | 4.6x |
+| vitfly_lstm | 29.69 | 9.48 | 3.1x (7.2x warm — see below) |
+| dronet | 157.38 | 9.79 | 16.1x |
+| yolov8_nano | 4020.93 | 226.87 | 17.7x |
+
+Three models scheduled together on the board, measured, `max_abs_err=0`:
+
+| yolov8_nano | cores it needs | makespan | predicted | deadline misses |
+|---|---|---|---|---|
+| 3 Hz | 0.68 | 821.2 ms | 819.3 | 3/110 |
+| 4 Hz | 0.91 | 908.1 ms | 908.5 | **0/123** |
+| 5 Hz | 1.13 | 960.1 ms | 957.3 | **0/130** |
+| 6 Hz | 1.36 | 988.7 ms | 986.0 | **0/135** |
+
+alongside `mlp_control` at 100 Hz and `dronet` at 30 Hz throughout. Prediction is
+within 0.3% of measurement at every point.
+
+Two caveats that belong next to those tables, not in a footnote:
+
+* **`vitfly_lstm`'s 3.1x is dominated by a fixed cost, not by the kernel.**
+  `run_model_k1.sh` scp's the ELF and runs it once, so the profile includes
+  first-touch faulting of a 1.7 MB `const` weight array. Same binaries with
+  pages already resident: **3.26 ms vs 23.58 ms scalar, 7.2x**. Both the before
+  and after figures are cold, so the ratio is a fair comparison, but the
+  absolute numbers carry a constant that dominates whichever build is faster.
+* **3 Hz — the lightest load — is the only point that misses.** `mlp_control`
+  instances 13/14/15 start 11-14 ms late, then execute in 0.07-1.14 ms; their
+  harts were busy until 1-12 us before they started. They were ready and queued
+  behind non-preemptible in-flight YOLO/DroNet dispatches (~2.6 ms each, against
+  MLP's 10 ms period). The solver predicted no misses, so this is a real gap in
+  its model rather than the board being slow.
+
 ---
 
-## 0. The board
+## 0. Prerequisites
 
-| | |
-|---|---|
-| Console | `/dev/ttyUSB4` — CH340 (`1a86:7523`), 115200 8N1, group `dialout` |
-| Host | `ssh k1` → `10.44.98.236` (wlan0; both Ethernet ports are down) |
-| Key | `/scratch2/agustin/DIMA_SLICE`, already in the board's `authorized_keys` |
-| OS | Bianbu 3.0, Linux 6.6.63, glibc 2.41 |
-| SoC | Spacemit X60, 8 × riscv64 |
+Nothing below assumes a particular home directory. Set these once; every command
+in this document uses them.
+
+```bash
+export XPURT_ROOT="${XPURT_ROOT:-$(git rev-parse --show-toplevel)}"   # this checkout
+export MB_ROOT="$XPURT_ROOT/ModelBlaster"
+
+export MODELBLASTER_K1_HOST=k1          # ssh host alias for the board
+export REMOTE_ROOT=/root/mb_k1          # staging dir on the board
+export MODELBLASTER_K1_REMOTE_ROOT="$REMOTE_ROOT"   # name the MB runners read
+
+# riscv64 *Linux glibc* cross toolchain prefix. The board runs Bianbu/Linux, so
+# this is NOT the newlib/elf toolchain. Any of these works; pick what you have.
+export CROSS=riscv64-unknown-linux-gnu-
+
+# A Python with torch + numpy. Model extraction imports torch; the XPU-RT
+# scheduler side does not.
+export PY=python3
+```
+
+| you need | why | how to check |
+|---|---|---|
+| Python ≥3.11 with **torch**, **numpy** | `extract_graph` builds the model in PyTorch and does the int8 PTQ | `$PY -c 'import torch, numpy'` |
+| `matplotlib` | the scheduler writes a Gantt PNG on every run; `plot_xpurt_trace` needs it too | `$PY -c 'import matplotlib'` |
+| a riscv64-linux-gnu **gcc** | every board binary is cross-compiled and statically linked | `${CROSS}gcc --version` |
+| `cmake` ≥3.16, `ninja` or `make` | `harness_xpurt_linux` is a CMake project | `cmake --version` |
+| ssh access to the board | see the stanza below | `ssh $MODELBLASTER_K1_HOST true` |
+
+On the machine this was developed on, the torch environment is the conda env
+`merlin-dev` and the cross toolchain lives in a chipyard conda env — but neither
+is required, and neither path is baked into anything you have to edit:
+
+```bash
+# example only -- substitute your own
+source "$CONDA_ROOT/etc/profile.d/conda.sh" && conda activate merlin-dev
+export PY="$CONDA_PREFIX/bin/python"
+export CROSS="$CHIPYARD/.conda-env/riscv-tools/bin/riscv64-unknown-linux-gnu-"
+```
+
+`ModelBlaster/scripts/run_xpurt_k1.sh` still carries a developer default for
+`CROSS`. **Export `CROSS` yourself** rather than relying on it; it points at one
+person's chipyard checkout.
+
+`pydot` is *not* needed any more. It was a dependency of the IREE DOT-graph
+parser, which belongs to the retired path.
+
+### Which `modelblaster` are you importing?
+
+There is more than one checkout of ModelBlaster on a typical dev box, and pip
+editable installs make `import modelblaster` resolve to whichever one was
+installed — same module names, different behaviour, no warning.
+`run_xpurt_k1.sh` refuses to run when `modelblaster` does not resolve inside the
+checkout it lives in; if you see
+
+```
+refusing to run: 'modelblaster' resolves to /some/other/checkout/..., not this checkout
+```
+
+that guard is working. Fix `PYTHONPATH` (`$MB_ROOT/src:$MB_ROOT`) or the
+editable install, do not work around it.
 
 ### The SSH stanza matters
 
 ```
 Host k1 spacemit
-    HostName 10.44.98.236
+    HostName <board-ip>
     User root
-    IdentityFile /scratch2/agustin/DIMA_SLICE
+    IdentityFile ~/.ssh/<your-key>
     IdentitiesOnly yes
     IdentityAgent none          # <- this line
 ```
@@ -33,6 +141,20 @@ environment, `ssh` hangs at `Next authentication method: publickey` and the
 board's own log shows `Connection closed by authenticating user root [preauth]`
 — i.e. the *client* gave up. `ssh-add -l` hanging is the tell. The same fault
 breaks `git` over SSH; use `GIT_SSH_COMMAND` with the same option.
+
+No key material, IP or credential belongs in this repository. The board's
+address and key path live in your `~/.ssh/config` and nowhere else.
+
+---
+
+## 1. The board
+
+| | |
+|---|---|
+| Console | `/dev/ttyUSB4` — CH340 (`1a86:7523`), 115200 8N1, group `dialout` |
+| Host | `ssh $MODELBLASTER_K1_HOST` over wlan0; both Ethernet ports are down |
+| OS | Bianbu 3.0, Linux 6.6.63, glibc 2.41 |
+| SoC | Spacemit X60, 8 × riscv64, VLEN=256 (`zvl256b`) |
 
 ### Topology, measured not assumed
 
@@ -44,266 +166,210 @@ breaks `git` over SSH; use `GIT_SSH_COMMAND` with the same option.
 `/proc/cpuinfo` reports an identical ISA on all 8 harts and never mentions IME —
 it is a vendor extension the kernel does not enumerate. The table above comes
 from `artifacts/k1_bringup/*/ime_probe.c`, which pins each core and executes the
-raw encoding under a `SIGILL` handler. Re-run it with
-`ssh k1 /root/mb_k1/bin/ime_probe`.
+raw encoding under a `SIGILL` handler. `runtime/scripts/deploy_k1.sh` builds and
+installs it; re-run it with
+`ssh $MODELBLASTER_K1_HOST $REMOTE_ROOT/bin/ime_probe`.
 
-All 8 cores share **one** cpufreq policy, already `performance` at a fixed
-1.6 GHz. No governor change is needed, so none was made.
+The same facts are the machine-readable registry `ModelBlaster/cores/spacemit_k1.json`,
+which the schedule ingester reads. Cluster 0 cores carry `ime_*` capabilities and
+cluster 1 cores deliberately do not — an IME kernel on cluster 1 does not
+degrade, it dies, so that list is a correctness constraint and not a performance
+hint.
 
-### Two facts that will bite you
+All 8 cores share **one** cpufreq policy (`related_cpus 0-7`), already
+`performance` at a fixed 1.6 GHz. The clusters cannot be clocked independently.
+No governor change is needed, so none was made.
+
+### Five facts that will bite you
 
 **`rdcycle` raises SIGILL from userspace.** `rdtime` works, and is a fixed
-**24.000 MHz** (41.7 ns tick). Any generated code that times itself with
-`rdcycle` does not run slowly here — it dies. Convert tick counts with
-**24 MHz**, never the 1.6 GHz core clock.
+**24.000 MHz** (41.7 ns tick; `/proc/device-tree/cpus/timebase-frequency`
+agrees). Any generated code that times itself with `rdcycle` does not run slowly
+here — it dies. This is why every generation step below passes
+`--platform linux`, and why `ModelBlaster/runtime/mb_posix_compat.h` hard-codes
+`MB_POSIX_TICKS_PER_SEC = 24000000`. **Convert tick counts with 24 MHz, never
+the 1.6 GHz core clock**; getting it wrong scales every profile by 67×, silently.
 
 **Load average sits at 2.00 on an idle board.** Two vendor kernel threads
 (`vq0`, `vq1`) are wedged in uninterruptible sleep at 0% CPU. Benign. Do not
 chase it.
 
----
+**Co-running across clusters is worse than within one.** See [§10](#10-contention-measured-under-control-and-it-inverts-the-obvious-assumption).
+It contradicts the shared-L2 intuition, and it is measured.
 
-## 1. Build the compiler and the runtime
+**A vector build can execute scalar code and still report success.** Curated
+kernels are looked up by EXACT op name
+(`kernels/<backend>/<backend>_<op>_<algorithm>.c`), so a fused op --
+`conv2d_batchnorm2d_silu_s8` -- matches nothing even when `conv2d_s8`,
+`batchnorm2d_s8` and `silu_s8` all have kernels. Selection falls back to the
+scalar reference, writes `"source": "reference"` into `kernel_picks.json`, and
+the build succeeds. This cost this project its headline numbers: yolov8_nano
+measured **0.81x against the scalar build** -- slower -- because 99.8% of it was
+scalar code paying a vector build's overhead, and DroNet's "2.51x" was really
+86.7% scalar. `scripts/check_kernel_coverage.py` now fails the build on this and
+is wired into `run_xpurt_k1.sh`; override with `MB_KERNEL_COVERAGE=warn` only
+while iterating. Weight by measured time, not dispatch count -- DroNet's
+fallback was 13% by count and 86.7% by time.
 
-```bash
-cd /scratch2/agustin/XPU-RT
-git submodule update --init --recursive merlin/third_party/iree_bar   # ~5 GB
-bash merlin/build_tools/SpacemiT/setup_toolchain.sh                    # 800 MB
-source /scratch2/agustin/miniforge3/etc/profile.d/conda.sh && conda activate merlin-dev
-unset LDFLAGS CFLAGS CXXFLAGS CPPFLAGS      # <- see below
-bash setup.sh --skip-toolchain
-```
-
-**`unset LDFLAGS` is load-bearing.** Activating the conda env exports
-`LDFLAGS=-L$CONDA_PREFIX/lib …`; CMake captures it into
-`CMAKE_{EXE,MODULE,SHARED}_LINKER_FLAGS` at configure time, and every RISC-V link
-then resolves `-lstdc++` to the **x86** one:
-
-```
-ld.lld: error: .../libstdc++.so is incompatible with elf64-littleriscv
-```
-
-If a build directory already has the poisoned flags, strip them without
-rebuilding everything:
-
-```bash
-cmake . -DCMAKE_EXE_LINKER_FLAGS="-Wl,--gc-sections" \
-        -DCMAKE_MODULE_LINKER_FLAGS="-Wl,--gc-sections" \
-        -DCMAKE_SHARED_LINKER_FLAGS="-Wl,--gc-sections"
-```
-
-Also build with assertions off, or every measurement is ~26% high:
-
-```bash
-cmake . -DIREE_ENABLE_ASSERTIONS=OFF && ninja iree-benchmark-module \
-    merlin_dispatch_scheduler merlin_baseline_async
-```
-
-> The build type is already `Release`; IREE re-enables assertions on top, which
-> is what triggers google-benchmark's "Library was built as DEBUG" warning.
-> Same dispatch, same core: **80.0 µs with assertions, 63.2 µs without.**
+**`core_kind` is a placement pool, and the walker used to collapse it.**
+`generate_xpurt_main.py` spawns one scheduler worker per **(core_kind, hart)**
+pair the dispatch table uses. It previously spawned one per *kind* and claimed
+entries by `core_kind` alone, ignoring the `hart` each entry already carried --
+so a schedule using four `rvv` cores executed on one thread, and the number of
+dispatch pairs on different harts overlapping in time was exactly **zero**. A
+2-model workload still met every deadline that way (29% of one thread was
+enough); a 3-model one missed **119 of 123** while the solver predicted none.
+If you are reading an old trace, check `worker_hart` against `hart` before
+believing any statement about parallelism.
 
 ---
 
-## 2. Compile models
+## 2. Deploy the board-side binaries
+
+**This is step one on a fresh board, and it used to be missing.** Both runners
+scp *their own* harness as a side effect of running it, so nothing ever put the
+capability probe — or a previously built harness you want to re-run — on the
+board. That is the first hard stop for a new reader.
 
 ```bash
-export MERLIN_DIR=/scratch2/agustin/XPU-RT/merlin      # <- see below
-bash runtime/scripts/compile_all_models.sh
-for d in $(find gen/vmfb -path "*spacemit_x60*" -name "*_dispatch_graph.dot"); do
-    python3 runtime/scripts/dot_dispatch_parser.py "$d" --json-out "${d%.dot}.json"
-done
+runtime/scripts/deploy_k1.sh --list       # resolved manifest, no ssh
+runtime/scripts/deploy_k1.sh --dry-run    # + local validation, still no ssh
+runtime/scripts/deploy_k1.sh              # copy, verify, report
 ```
 
-**`MERLIN_DIR` must be set explicitly** if a sibling `../merlin` exists. The
-wrapper prefers the sibling over the submodule, and will silently compile with
-that checkout's pip-installed `iree-compile` — producing bytecode 16.0 modules
-that the runtime we just built (17.0) refuses to load.
+What it does:
 
-`pydot` is required by the DOT parser and is not in the env by default.
+* builds `ime_probe` from `artifacts/k1_bringup/*/ime_probe.c` (the only
+  board-side binary with no other producer) into `build/k1/bin/`;
+* copies an **explicit manifest** — `bin/ime_probe`, every locally built
+  single-model harness (`ModelBlaster/build/k1/*_harness` → `$REMOTE_ROOT/bin/`),
+  and every locally built schedule harness
+  (`ModelBlaster/build/k1_xpurt/_build/*/xpurt_harness` → `$REMOTE_ROOT/xpurt/<schedule>`);
+* **verifies each file landed** by comparing sha256 on both sides (falling back
+  to size, and saying so, if the board has no `sha256sum`);
+* is **idempotent** — a file whose remote hash already matches is skipped, so
+  re-running costs one ssh round trip and copies nothing.
+
+Extra files, and overrides:
+
+```bash
+runtime/scripts/deploy_k1.sh some/binary:bin/other_name    # explicit entry
+runtime/scripts/deploy_k1.sh --only 'bin/ime_probe'        # glob over remote paths
+runtime/scripts/deploy_k1.sh --host other-k1 --remote-root /srv/mb
+runtime/scripts/deploy_k1.sh --force                       # re-copy even if current
+```
+
+Two guards worth knowing about, because both correspond to real failures:
+
+* Every entry is checked to be a **riscv64 ELF** before it is copied
+  (`e_machine == EM_RISCV`). Conda environments export their own `CC`/`LDFLAGS`
+  and a cross build that quietly produced an x86 binary is a real failure mode
+  here; catching it locally is much cheaper than a "cannot execute binary file"
+  on the board.
+* `ime_probe` is compiled `-march=rv64gcv`. The probe *assembles* a `vsetvli` in
+  order to discover at **runtime** whether the core traps on it; the toolchain's
+  default `rv64gc` rejects the mnemonic at assembly time
+  (``unrecognized opcode ... extension `v' ... required``). The `-march` flag
+  decides what can be encoded, not what the hardware will accept — which is the
+  entire point of the probe.
+
+Nothing else needs deploying: every binary in this flow is linked `-static`
+(`-O2 -static` in both `ModelBlaster/harness_linux/Makefile` and the `run_xpurt_k1.sh` CMake
+invocation), so the board needs no libraries, no runtime and no `.vmfb` tree.
 
 ---
 
-## 3. Profile per dispatch, per core
+## 3. One model, one core: generate, build, run, verify, profile
 
 ```bash
-python3 runtime/scripts/profile_k1.py --cpu-ids 0 --reps 10 \
-        --models mlp,dronet --hw RVV,scalar                    # cluster 0
-python3 runtime/scripts/profile_k1.py --cpu-ids 4 --reps 10 \
-        --models mlp,dronet --hw RVV,scalar --hw-label-suffix _c1   # cluster 1
+cd "$MB_ROOT"
+PROFILE_OUT_ROOT="$XPURT_ROOT/gen_mb/profile" \
+  bash scripts/run_model_k1.sh mlp_control int8 rvv_x60 0
+#                              <model>      <quant> <target> <cpu>
 ```
 
-Writes two files per cell:
-- `results.csv` — the existing IREE-shaped schema, **median** in `mean_time`, so
-  `profile_loader.py` needs no change.
-- `profile.jsonl` — every sample, plus median/p90/p99/min/max/CV, cpu ids,
-  cluster, clock.
+extract → skeleton (`--platform linux`) → kernels → cross-build → deploy → run →
+verify → profile, in one command. Positional arguments only; everything else is
+environment (`MODELBLASTER_K1_HOST`, `MODELBLASTER_K1_REMOTE_ROOT`, `CROSS`,
+`OUT_ROOT`, `PROFILE_OUT_ROOT`, `BACKEND`).
 
-The cluster goes in the **hw label**, not the topo tag: XPU-RT keys profiles off
-combination *size* (`topo_0` for one core, whichever core), so encoding the
-cluster in the tag would make the profile unfindable.
+Artefacts land at, and these are the real paths — there is no `<gen>` placeholder:
 
-### What the profiles say
-
-| | |
-|---|---|
-| MLP, 5 dispatches | 335.7 µs — every dispatch 63-78 µs **regardless of work**; ~94% is launch overhead |
-| DroNet, 19 dispatches | **113.7 ms** on one core; top-5 dispatches are 75% of it |
-| cluster 1 vs cluster 0 | **0.996** median ratio on compute-bound dispatches — the clusters are equivalent for RVV |
-| IME vs RVV (DroNet) | **1.079** — IME is 7.9% *slower* overall. See `artifacts/k1_run/ime_gate/FINDINGS.md`: exactly **one** `smt.vmadot` exists in the whole model, in `matmul_1x1x2048`, and it is worth 0.027 ms of 122.7. The 7.9% is the `+xsmtvdot` data-tiling path, not the matrix engine — proved by `IME_ukernel`, which measures the same 122.73 ms with **zero** vmadot. No convolution can reach IME here: every xsmtvdot hook in this IREE is matmul-only. |
-
----
-
-## 4. Schedule
-
-```bash
-python3 scripts/run_xpurt_schedule.py \
-    --networks-json data/toplevel/networks_k1_mlp_dronet.json \
-    --solver greedy --profiled
+```
+ModelBlaster/build/k1/<model>/<quant>/graph.json      the IR (fusion/split hints edit THIS)
+ModelBlaster/build/k1/<model>/<quant>/{weights,io}.npz
+ModelBlaster/build/k1/<model>/<quant>/generated/      the generated C
+ModelBlaster/build/k1/<model>_<quant>_<target>_harness   the riscv64 static ELF
+ModelBlaster/build/k1/<model>/<quant>/profile_k1.csv  per-dispatch ticks
+$XPURT_ROOT/gen_mb/profile/<backend>/spacemit_x60/<model>/<model>.<quant>/<spec>/topo_<cpu>/results.csv
 ```
 
-Two settings in that config decide what the model means:
+`--platform linux` is what swaps `rdcycle` for `rdtime`; without it the binary
+SIGILLs on its first timed dispatch. The runner defaults
+`--profile-clock-mhz` to **24**, not 1600, for the same reason.
 
-- `"machine_combination_mode": "singletons"` — every core independently
-  schedulable, so 8 dispatches genuinely run at once. The alternative,
-  `"prefix"`, makes a *cluster* one resource that may be given up to 4 cores,
-  and then at most 2 dispatches run concurrently on the whole board.
-- `"topo_tag": "topo_0"` with `topo_tag_override` — singletons **must** be paired
-  with single-core profiles. A 4-hart timing here would credit each core with the
-  whole cluster's throughput.
+Valid `<target>` values are ModelBlaster backend tags:
+`scalar`, `rvv`, `rvv_x60`, `rvv_f16`, `rvv_hetero`, `rvv_opu`, `scalar_f16`,
+`gemmini`, `gemmini_q31`. On the K1 use `scalar` (reference, portable) or
+`rvv_x60` (`-march=rv64gcv_zvl256b -mabi=lp64d`, plus the RVV intrinsics compat
+header). `rvv_x60` is a K1-specific *build* of the `rvv` *kind* — see the
+core-kind trap in [§6](#6-build-and-run-the-schedule-on-the-board).
 
-IME is expressed as an implementation *on cluster-0 cores*, never as a separate
-machine — see `xpu-rt/capabilities.py`. Modelling it as `{"ime": 4}` extra
-machines produces schedules that cannot run: the IME machine is busy while the
-core it executes on is still marked idle.
+Reference results, all bit-exact (`max_abs_err=0`), core 0, scalar reference
+kernels:
 
----
-
-## 5. Execute on the board
-
-```bash
-tar czf - gen/vmfb/*/spacemit_x60 | ssh k1 'tar xzf - -C /root/mb_k1/'
-scp schedules/scheduled_networks_k1_mlp_dronet_greedy_profiled.json k1:/root/mb_k1/schedule.json
-ssh k1 'cd /root/mb_k1 && ./bin/merlin-dispatch-scheduler schedule.json local-task 1 1 0 \
-    --vmfb_dir=/root/mb_k1 --cpu_p_cpu_ids=0 --cpu_e_cpu_ids=4 --visible_cores=8 \
-    --variant_p=RVV --variant_e=RVV --trace_csv=/root/mb_k1/trace.csv'
-scp k1:/root/mb_k1/trace.csv artifacts/k1_run/
-```
-
-**Pin to as many cores as the profiles used.** With `--cpu_p_cpu_ids=0,1,2,3`
-against single-core profiles, dispatches run 3.75× faster than planned
-(18.29 ms planned, 4.88 ms actual) and every calibration number is meaningless.
-
-**Use `--pin_per_core=1` for any multi-core schedule.** Without it the runner
-creates one device per cluster and runs two worker threads total, so an 8-way
-schedule is serialised onto two threads and `CPU_P#2` is parsed and discarded.
-With it, one pinned device and one worker per physical core:
-
-| runner configuration | makespan | queueing | MLP deadline misses |
+| model | rdtime ticks | wall @24 MHz | verify |
 |---|---|---|---|
-| 1 worker/target, cluster device | 1017.2 ms | 87.6% | 32/32 |
-| 1 worker/target, per-core device | 1022.1 ms | 87.7% | 31/32 |
-| **8 workers, per-core device** | **448.5 ms** | **6.1%** | **2/32** |
+| mlp_control | 9 028 | 0.38 ms | PASS |
+| dronet | 3 777 286 | 157.4 ms | PASS |
+| yolov8_nano | 96 503 982 | 4 021 ms | PASS (75 600 outputs) |
 
-N-way is only offered together with per-core devices, deliberately: a module
-wraps an IREE session, and two threads in one session is a data race. Keying the
-module cache by core plus one worker per core means each session has exactly one
-thread.
+Read those as a correctness-and-plumbing result, not a performance one: the
+curated RVV kernels are a 4.2× improvement on `mlp_control` alone. Note also
+that the smallest dispatch costs **62 ticks ≈ 2.6 µs**, against the retired IREE
+path's ~63 µs floor — the per-dispatch overhead that dominated the IREE MLP was
+a property of that runtime, not of this hardware.
 
----
+### `PROFILE_OUT_ROOT` must end in `profile`
 
-## 6. Predicted vs actual
-
-```bash
-python3 scripts/join_k1_trace.py \
-    --schedule schedules/scheduled_networks_k1_mlp_dronet_greedy_profiled.json \
-    --trace artifacts/k1_run/trace.csv \
-    --out-json artifacts/k1_run/predicted_vs_actual.json
-```
-
-Joins on the stable dispatch key, never array position. Result on the reference
-run:
-
-| | |
-|---|---|
-| service-time error, all | +14.1% median |
-| service-time error, ≥1 ms | **+4.8%** median |
-| **queueing share of elapsed time** | **87.6%** |
-| periodic instances missing their window | 42 / 42, worst 685 ms late |
-
-The systematic **+17-25%** on the large convolutions is not profile error: solo
-profiles were taken one dispatch at a time, and the run has both clusters busy.
-That gap is contention, measured.
-
----
-
-## 7. Advice, and applying it
+XPU-RT's profile loader looks for
+`<gen_root>/profile/<hw>/<target>/<model>/<basename>/…/<topo_tag>/results.csv`.
+So a profile tree is only findable if its parent directory is literally named
+`profile`. The existing ModelBlaster profiles in this repo were written to
+`gen/profile_mb/…`, which **no `gen_root` can address** — verified. Either write
+new profiles to `$XPURT_ROOT/gen_mb/profile` as above, or expose the old tree
+under that name:
 
 ```bash
-python3 scripts/emit_compile_advice.py \
-    --schedule schedules/scheduled_networks_k1_mlp_dronet_greedy_profiled.json
-python3 scripts/apply_compile_advice.py \
-    --schedule schedules/scheduled_networks_k1_mlp_dronet_greedy_profiled.json \
-    --advice artifacts/k1_run/compile_advice.json \
-    --out schedules/scheduled_k1_advice_applied.json
+mkdir -p "$XPURT_ROOT/gen_mb" && ln -s ../gen/profile_mb "$XPURT_ROOT/gen_mb/profile"
 ```
 
-`compile_advice.json` is the contract; the `rationale` string is a courtesy
-field. Every item carries the evidence that produced it, and `unchanged` items
-record negative results so a later round does not re-propose them.
-
-Measured, baseline vs advice-applied, same board, same pinning:
-
-| | before | after | delta |
-|---|---|---|---|
-| retargeted dispatches (50) | 21 991 µs | 16 172 µs | **−26.5%** |
-| all dispatches | 1 229 482 µs | 1 231 831 µs | +0.2% |
-
-Predicted −21.2%, measured −26.5%. **And it does not matter at system level** —
-those dispatches are 1.8% of service time. Accepted per-dispatch, rejected as a
-system-level win. Executing the schedule is what tells you the difference; a
-kernel benchmark cannot.
-
----
-
-## 8. The ModelBlaster path
-
-```bash
-export MODELBLASTER_K1_HOST=k1
-export CROSS=/scratch2/agustin/XPU-RT/merlin/build_tools/riscv-tools-spacemit/\
-spacemit-toolchain-linux-glibc-x86_64-v1.1.2/bin/riscv64-unknown-linux-gnu-
-bash ModelBlaster/scripts/run_model_k1.sh mlp_control int8 scalar 0
-```
-
-extract → skeleton (`--platform linux`) → kernels → build → deploy → run →
-verify → profile, in one command. `--platform linux` is what swaps `rdcycle`
-for `rdtime`; without it the binary SIGILLs on its first timed dispatch.
-
-Reference result: `max_abs_err=0` (bit-exact), 7 dispatches, 9028 rdtime ticks
-(376 µs). Note the smallest dispatch costs **62 ticks ≈ 2.6 µs** against IREE's
-~63 µs floor — the per-dispatch overhead that dominates the IREE MLP is a
-property of that runtime, not of the hardware.
+`gen_mb` rather than `gen`: `gen/profile` is the retired IREE tree, and mixing
+timings from two different runtimes in one profile database is exactly the class
+of error [§11](#11-the-retired-ireemerlin-path) exists to prevent.
 
 ### Kernel generation is Codex-only
 
 ```bash
 export LLM_PROVIDER=codex
 export CODEX_CALLS_LOG=artifacts/k1_run/codex_calls.jsonl
-BACKEND=llm bash ModelBlaster/scripts/run_model_k1.sh ...
+BACKEND=llm bash scripts/run_model_k1.sh mlp_control int8 rvv_x60 0
 ```
 
-There is no fallback from Codex to Bedrock, by design and by test
+`BACKEND` selects `generate_kernels --backend {reference,llm}`; the default,
+`reference`, uses curated kernels and calls no model at all. There is no
+fallback from Codex to Bedrock, by design and by test
 (`ModelBlaster/tests/test_codex_provider.py`). If Codex is unavailable the
-kernel step fails loudly and the caller falls back to reference/curated
-kernels — deterministic artifacts already in the tree, not another model.
-The call log records `provider: codex`; note it deliberately does **not** reuse
+kernel step fails loudly and the caller falls back to reference/curated kernels —
+deterministic artifacts already in the tree, not another model. The call log
+records `provider: codex`; note it deliberately does **not** reuse
 `bedrock_client._append_call_log`, which hardcodes `"provider": "bedrock"`.
 
 #### Compare against the best kernel you already have, not the reference
 
 The first Codex kernel (`artifacts/k1_run/codex/`) was bit-exact on the board and
 **4.48× faster than the scalar reference** — a number it would be easy to report
-as a win. Against `kernels/rvv/rvv_linear_s8_direct.c`, which was already in the
+as a win. Against `ModelBlaster/kernels/rvv/rvv_linear_s8_direct.c`, which was already in the
 tree, it is **41% slower**:
 
 | `linear_s8` total, rdtime ticks | scalar ref | curated RVV | Codex RVV |
@@ -316,36 +382,540 @@ conditions before claiming a generated kernel is an improvement.
 
 ---
 
-## 9. Feeding advice back into ModelBlaster
+## 4. Make the models visible to the scheduler
+
+XPU-RT needs two things per network: a **dispatch dependency graph** and a
+**profile**. §3 produced the profile. The graph comes straight from the IR:
 
 ```bash
-python3 scripts/advice_to_fusion_hint.py \
-    --advice artifacts/k1_run/compile_advice_mlp_control.json \
-    --ir <gen>/graph.json --model mlp_control \
-    --out <gen>/fusion_hint.json --pair-only
-python3 -m modelblaster.pipeline.apply_fusion_hint \
-    --hint <gen>/fusion_hint.json --model mlp_control \
-    --ir <gen>/graph.json --out <gen>/graph.fused.json
+cd "$MB_ROOT"
+export PYTHONPATH="$MB_ROOT/src:$MB_ROOT"
+for m in mlp_control dronet; do
+  $PY -m modelblaster.pipeline.emit_dispatch_graph \
+      --ir "build/k1/$m/int8/graph.json" \
+      --out-root "$XPURT_ROOT/gen_mb/vmfb" \
+      --target spacemit_x60 --hw rvv_x60
+done
+# -> gen_mb/vmfb/<model>/spacemit_x60/rvv_x60/<model>.int8/<model>.int8_dispatch_graph.json
 ```
 
-The scheduler never edits C: it emits advice, the adapter translates the
-actionable subset into ModelBlaster's own `modelblaster.fusion_hints/v1`, and
-`apply_fusion_hint` does a pure JSON-in/JSON-out graph rewrite. mlp_control goes
-from 7 ops to 4 (three fused `linear_s8+elu_s8` pairs plus the tail linear).
+The `vmfb` directory name is a fossil of the IREE layout that XPU-RT's
+`dispatch_deps_path` reader expects; there are no VMFBs in it. Each entry's `id`
+is the same `dispatch_id` the profiler writes, so the graph joins to
+`results.csv` directly.
 
-Note the evidence only appeared **after** the previous round: once the curated
-RVV linear kernel landed, the elu ops went from noise to **39.7%** of runtime.
-Fusion advice that would have been wrong at round 0 is right at round 1, which
-is the argument for closing the loop rather than optimising once.
+Then a workload config. `data/toplevel/networks_k1_mb.json` is the worked
+example — 4 MLP-class + DroNet on 8 cores, single-core profiles:
+
+```jsonc
+"hardware": {
+  "machines":   { "cpu_p": 8 },                 // ONE pool -- see the trap below
+  "profile_hw": { "cpu_p": "rvv_x60" },
+  "profile": { "target": "spacemit_x60", "topo_tag": "topo_0",
+               "topo_tag_override": true, "gen_root": "gen_mb" }
+},
+"scheduler": { "machine_combination_mode": "singletons", "use_profiled": true, ... },
+"networks": {
+  "mlp_control": { "id": 0, "identifier": "mlp_control", "period": 10,
+                   "window_duration": 10,
+                   "dispatch_deps_path": "gen_mb/vmfb/mlp_control/spacemit_x60/rvv_x60/mlp_control.int8/mlp_control.int8_dispatch_graph.json" },
+  "dronet":      { "id": 1, "identifier": "dronet", "period": 33.3, ... }
+}
+```
+
+Three settings decide what the model means:
+
+* **`machine_combination_mode: "singletons"`** — every core independently
+  schedulable, so 8 dispatches genuinely run at once. The alternative,
+  `"prefix"`, makes a *cluster* one resource that may be given up to 4 cores,
+  and then at most 2 dispatches run concurrently on the whole board.
+  `"shard"` additionally offers aligned power-of-two core blocks, so the solver
+  can choose to spread one dispatch across several cores.
+* **`topo_tag: "topo_0"` with `topo_tag_override: true`** — singletons **must**
+  be paired with single-core profiles. A 4-hart timing here would credit each
+  core with the whole cluster's throughput. (With `machine_combination_mode:
+  "shard"` you must set `topo_tag_override: false` instead, so each block is
+  costed with its own N-hart profile; otherwise a 4-core shard is charged the
+  single-core time while blocking four cores, and the solver "correctly" never
+  picks one, for a purely clerical reason.)
+* **`"machines": {"cpu_p": 8}`, not `{"cpu_p": 4, "cpu_e": 4}`.** This is a
+  trap, verified: `ingest_xpurt_schedule` resolves `CPU_P#n` and `CPU_E#n` to
+  the *n*-th registry core **of the named kind**, and every core in
+  `cores/spacemit_k1.json` is kind `rvv`. With `--cpu-p-kind rvv --cpu-e-kind rvv`
+  (which is what the K1 wants — both clusters are RVV-capable and measured
+  equivalent at a 0.996 ratio), `CPU_P#0` and `CPU_E#0` both resolve to
+  `cluster0_core0`, hart 0. An 8-machine schedule then double-books harts 0-3
+  and never touches cluster 1. A single pool of 8 maps 1:1 onto harts 0-7.
+
+IME is expressed as an implementation *on cluster-0 cores*, never as a separate
+machine — see `xpu-rt/capabilities.py`. Modelling it as `{"ime": 4}` extra
+machines produces schedules that cannot run: the IME machine is busy while the
+core it executes on is still marked idle. (No ModelBlaster kernel targets IME
+today anyway; see [§9](#9-what-ime-actually-does).)
+
+---
+
+## 5. Schedule
+
+```bash
+cd "$XPURT_ROOT"
+python3 scripts/run_xpurt_schedule.py \
+    --networks-json data/toplevel/networks_k1_mb.json \
+    --solver greedy --profiled
+```
+
+This side needs no torch. Useful flags, all real:
+`--solver {milp,greedy,greedy_periodic,decomposed}`,
+`--scheduler {cpsat,heft,peft,edf,fifo,critical_path,…}`, `--time-limit`,
+`--max-periodic-iters`, `--no-profiled`, `--prune-periods` /
+`--no-prune-periods`, `--random-seed`.
+
+Outputs, all derived from the config's basename:
+
+```
+schedules/scheduled_networks_k1_mb_greedy_profiled.json          the schedule
+schedules/scheduled_networks_k1_mb_greedy_profiled_metrics.json  makespan, misses, …
+schedules/scheduled_networks_k1_mb_greedy_profiled_report.json   SchedulerReport v2
+plots/networks_k1_mb_greedy_profiled.png                         predicted Gantt
+```
+
+It also prints a `pdb_hash` over the profile CSVs it actually read — check it
+changes when you re-profile, and does not when you do not.
+
+> **Units.** `metrics.json` reports `makespan_us=727.97` for a schedule that is
+> 728 **milliseconds** long. Nine `*_us` fields carry millisecond values; `*_ms`
+> aliases were added and `units_note` states it, but the old keys were kept for
+> compatibility and are still wrong. Do not read a `_us` number from this file
+> without checking `units_note`.
+
+---
+
+## 6. Build and run the schedule on the board
+
+One command does generate → ingest → walker → cross-build → deploy → run:
+
+```bash
+cd "$MB_ROOT"
+CORE_KINDS=rvv bash scripts/run_xpurt_k1.sh \
+    --schedule "$XPURT_ROOT/schedules/scheduled_networks_k1_mb_greedy_profiled.json" \
+    --models mlp_control,dronet \
+    --backends rvv_x60
+```
+
+Flags: `--schedule` (required), `--registry`, `--models`, `--backends`,
+`--quant`, `--out-root`, `--cpu-ids`, `--no-trace`, `--jobs`.
+Environment: `MODELBLASTER_K1_HOST`, `MODELBLASTER_K1_REMOTE_ROOT`, `CROSS`,
+`PY`, `REGISTRY`, `CPU_P_KIND`, `CPU_E_KIND`, `CORE_KINDS`, `BACKEND`,
+`LLM_PROVIDER`.
+
+The five stages, and what each leaves behind:
+
+1. per `(model, backend)`: `extract_graph` → `generate_skeleton --platform linux`
+   → `generate_kernels`, staged as
+   `build/k1_xpurt/<model>/<quant>/<backend>/` (one weights/buffers TU per model,
+   shared across backends). Existing outputs are **reused**, so a second run is
+   fast — and stale, if you edited the IR without clearing them.
+2. `ingest_xpurt_schedule` → `<schedule>.{c,h}` dispatch table.
+3. `generate_xpurt_main --platform linux` → the walker.
+4. `cmake -S harness_xpurt_linux` cross-build → `xpurt_harness`
+   (`-O2 -static`, riscv64).
+5. `scp` to `$REMOTE_ROOT/xpurt/<schedule-name>`, run under
+   `ulimit -n 8192` (optionally `taskset -c $CPU_IDS`), pull back stdout and
+   split out the trace CSV.
+
+Everything through stage 4 runs without the board, which is the fastest way to
+check a config: point `MODELBLASTER_K1_HOST` at an unreachable name and the run
+completes stages 1-4 and stops at the `ssh`.
+
+### `core_kind` is not the backend tag
+
+`CORE_KINDS` describes what the **schedule** says (`rvv`, matching
+`cores/spacemit_k1.json`); `--backends` describes what the **binary** was built
+as (`rvv_x60`). They are parallel lists — kind *k* is executed by backend *k* —
+and they are not the same string. Conflating them makes every worker refuse
+every entry (`strcmp("rvv_x60","rvv") != 0`) and the run completes having
+executed nothing, with `entries_done=0` and an all-zero trace. That is why the
+command above sets `CORE_KINDS=rvv` explicitly while building `rvv_x60`.
+
+### Why the per-model / per-backend split is not simplified
+
+`model.c`'s `buf_*` intermediates must have exactly **one** definition per model,
+shared across backends. Giving each backend its own copy made a cross-backend
+dispatch within one network read zeroed scratch — that is what corrupted
+DroNet's output when `rvv` ran `maxpool1` and `scalar`'s `conv_modules.3` then
+read its own backend's `buf_maxpool1`. Weights are linked once for the same
+reason.
+
+### Output
+
+```
+build/k1_xpurt/_gen/<schedule>/<schedule>_stdout.txt   full board stdout
+build/k1_xpurt/_gen/<schedule>/<schedule>_trace.csv    the trace block, extracted
+build/k1_xpurt/_build/<schedule>/{cmake.log,build.log}
+```
+
+The trace columns are
+
+```
+entry_id, network, instance, dispatch_id, op, name, core_kind, hart,
+predicted_start_ms, predicted_duration_ms, worker_kind_idx,
+actual_start_cycles, actual_end_cycles
+```
+
+and `actual_*_cycles` are **rdtime ticks at 24 MHz**, not core cycles. The
+stdout also carries `MODELBLASTER_OUTPUT_*` (verify against golden),
+`MODELBLASTER_PROFILE_*` (per-op ticks per backend) and
+`MODELBLASTER_WALL_CYCLES[_INST]` blocks.
+
+**Verify before you report.** A run that produced timings but failed
+`max_abs_err` measured something, but not the function you meant. The runner
+greps the stdout for `MODELBLASTER_VERIFY|max_abs_err|FAIL|PASS`; read it.
+
+---
+
+## 7. Reading the result
+
+### The measured Gantt
+
+```bash
+$PY scripts/plot_xpurt_trace.py \
+    build/k1_xpurt/_gen/<schedule>/<schedule>_stdout.txt \
+    --clock-mhz 24 --source k1 \
+    --out plots/<schedule>_measured.png --csv artifacts/k1_run/<schedule>_trace.csv
+```
+
+Positional `input` is the **stdout capture** (or `-` for stdin), not the CSV.
+`--clock-mhz` defaults to 10 (Zephyr-on-spike); on this board it is **24**.
+
+Known break, hit on the one stdout capture currently in the tree: if the
+schedule's dispatches all carry `duration: 0` — as a fully fused FireSim
+schedule does — `_summary()` divides by a zero predicted makespan and raises
+`ZeroDivisionError` before writing the PNG. Schedules produced by §5 carry real
+durations and do not hit it.
+
+### Predicted vs actual
+
+`ModelBlaster/scripts/emit_measured_report.py` is meant to overlay the trace on
+the predicted `SchedulerReport` and hand the result back to the advisor:
+
+```bash
+$PY scripts/emit_measured_report.py \
+    --predicted-report "$XPURT_ROOT/schedules/<schedule>_report.json" \
+    --trace  build/k1_xpurt/_gen/<schedule>/<schedule>_trace.csv \
+    --out    artifacts/k1_run/<schedule>_measured.json \
+    --clock-mhz 24
+```
+
+(The flag is `--predicted-report`. It is **not** `--schedule`; a `--schedule`
+flag for this script appears in older notes and has never existed.)
+
+**It currently matches 0 rows, and you should not report numbers from it until
+that is fixed.** Verified against a real K1 trace and its own predicted report:
+`matched 0/7`. The join key is `(network, instance, dispatch_id)`; the trace has
+all three, but XPU-RT's report entries carry neither `network` nor `instance` —
+they encode both inside `name`, as `mlp_control0_dispatch_0`. So `_key_for()`
+falls back to `("", 0, id)` and never matches `("mlp_control", 0, 0)`. The fix is
+to parse `name` in `_key_for()`, the same `<network><instance>` split
+`ingest_xpurt_schedule` and `generate_xpurt_main` already implement.
+
+Two more traps in the same file, both real:
+
+* `--clock-mhz` defaults to **1000** (FireSim). On the K1 that under-reports
+  every measured time by 41.7×.
+* On FireSim traces the `actual_*_cycles` columns are *mtime ticks of 1000 CPU
+  cycles*, so the column name is wrong there too and the old default compounded
+  the error. On the K1 the columns really are the harness's own timer ticks, and
+  24 MHz is the right conversion.
+
+Until the join is fixed, the honest comparison is per-network: sum
+`predicted_duration_ms` from the trace's own columns against
+`(actual_end - actual_start) / 24e3` ms from the same rows. Both come from the
+one file the binary emitted, which sidesteps the labelling hazard described in
+`artifacts/agentic_branch_salvage.md`: *the trace's labels must be provably
+generated from the same artifact the binary executed.*
+
+---
+
+## 8. Advice, and feeding it back
+
+The advisor reads a `SchedulerReport` and says what to change:
+
+```bash
+python3 xpu-rt/advisor.py \
+    --report schedules/scheduled_networks_k1_mb_greedy_profiled_report.json \
+    --top-k 5 --json --emit artifacts/k1_run/advice.json
+```
+
+On the worked example it reports the bottleneck resource, `granularity:
+too_fine`, and recommends coarsening — `749/749 dispatches below 1000 cycles`.
+That recommendation is actionable, because ModelBlaster can execute a
+granularity change:
+
+```bash
+cd "$MB_ROOT"
+$PY -m modelblaster.pipeline.apply_fusion_hint \
+    --hint  <hint.json> --model mlp_control \
+    --ir    build/k1_xpurt/mlp_control/int8/graph.json \
+    --out   build/k1_xpurt/mlp_control/int8/graph.fused.json
+# the dual, for splitting one op across cores:
+$PY -m modelblaster.pipeline.apply_split_hint \
+    --hint <hint.json> --model dronet \
+    --ir   build/k1_xpurt/dronet/int8/graph.json \
+    --out  build/k1_xpurt/dronet/int8/graph.split.json
+```
+
+`apply_fusion_hint` also takes `--pairwise`. Both are pure JSON-in/JSON-out
+rewrites: the scheduler never edits C. Rebuild by pointing the flow at the
+rewritten IR — **never edit `graph.json` in place**; a crash then leaves the
+source corrupted.
+
+`mlp_control` goes from 7 ops to 4 (three fused `linear_s8+elu_s8` pairs plus the
+tail linear). Note the evidence only appeared **after** the previous round: once
+the curated RVV linear kernel landed, the `elu` ops went from noise to **39.7%**
+of runtime. Fusion advice that would have been wrong at round 0 is right at
+round 1, which is the argument for closing the loop rather than optimising once.
+
+### The invariant that governs every rewrite
+
+From `ModelBlaster/artifacts/agentic_fuse_split/WARNING.md` and the salvage audit, in the
+order they cost time:
+
+1. A rewrite may not reduce modelled work unless a kernel exists that performs
+   the merged work. Otherwise the schedule counts the work as gone and the
+   hardware still does it.
+2. Costs must reach the scheduler through the live ingest path, never a
+   side-file. A corrective patch that edits a `results.csv` the scheduler does
+   not read produces an "honest" number within 0.05 ms of the fiction it was
+   correcting.
+3. A corrective patch must be independently checked to have taken effect. An
+   implausibly small delta after a large intended change is evidence of a no-op.
+4. The trace's labels must be provably generated from the same artifact the
+   binary executed.
+
+### What does not work on this path yet
+
+* **`scripts/emit_compile_advice.py` cannot read ModelBlaster profiles.** It
+  loads `<gen_root>/profile/<impl>/<target>/<model>/<basename>/<topo>/profile.jsonl`
+  — a file only the retired IREE profiler writes, at a directory depth
+  ModelBlaster's writer does not use (it inserts a `<spec>` level and emits
+  `results.csv`). Verified. `--impls RVV,scalar,IME` are IREE labels too. Until
+  a ModelBlaster-side profile ingester exists, use `xpu-rt/advisor.py` above.
+* **`scripts/apply_compile_advice.py`** rewrites `.vmfb` module paths inside a
+  schedule. There are no VMFBs on this path; it is retired with the runtime it
+  served.
+* **`scripts/join_k1_trace.py`** joins a *merlin* trace CSV. The ModelBlaster
+  trace has a different schema; see §7.
+* **`scripts/advice_to_fusion_hint.py`** (`--advice --ir --model --out
+  [--pair-only]`) is the adapter from `compile_advice.json` to
+  `modelblaster.fusion_hints/v1`. Its input comes from `emit_compile_advice`, so
+  it is blocked behind the first item.
+* **`runtime/scripts/verify_ime_build.sh`** needs merlin's `llvm-objdump` (or
+  `OBJDUMP=`). It gates an IREE artifact; nothing on the current path emits IME
+  instructions at all.
+
+---
+
+## 9. What IME actually does
+
+Full record, with disassembly, in `artifacts/k1_run/ime_gate/FINDINGS.md`. The
+short version, because three earlier claims in this document were wrong:
+
+* **The micro-tile is 4×4×8 and hardware-forced.** The spec's MAC-unit table is
+  indexed by `vl*SEW`, not VLEN: at VLEN=256, SEW=8, `vl=32` → `M×N×K = 4×4×8`.
+  K is pinned at 8; deep reductions are a loop of accumulating `vmadot`s.
+  `vsetvli` must set `vl=32, e8, m1` immediately before the instruction or it
+  SIGILLs.
+* **The discriminator is M, not K.** Every `xsmtvdot` lowering path in the
+  vendored IREE requires `M0=4 && N0=4`. MLP gets no `vmadot` because **M=1**
+  (GEMV), not because its K is small.
+* **The one `vmadot` is real, executed, and 15/16 wasted.** In
+  `dronet$…_matmul_1x1x2048`, inside a loop with a live back edge — and four
+  instructions later a *masked* `vse32.v` stores **one** of the sixteen int32
+  results. It is 23% faster than the RVV form while discarding 15/16 lanes, and
+  it is 0.075% of DroNet's runtime: worth 0.027 ms of 122.7.
+* **The "IME wins" in `compile_advice.json` are not IME wins.** Dispatches 14
+  and 7 contain no `vmadot` at all; the speedups are incidental codegen variation
+  from the `+xsmtvdot` data-tiling path.
+* **No convolution can reach IME here.** Every `xsmtvdot` hook in that IREE is
+  matmul-only; no conv→img2col/mmt4d path is wired to it. DroNet is 111 of its
+  122.7 ms in convolutions.
+* **The ukernel route was tried and refuted.** `IME_ukernel` measures 122.73 ms
+   — identical to `IME` — while containing **zero** `vmadot`. So the entire
+  +7.9% "IME penalty" is the data-tiling path acting on code that is pure RVV
+  either way. Kept in the yaml as a recorded negative result so nobody re-runs
+  it.
+
+The honest statement is that **IME is untested on this workload, because the
+workload never reaches it.** Two routes would change that: pad narrow-M matmuls
+to `M0=4` instead of shrinking the tile to `{1,4,8}`; or wire conv through
+img2col/mmt4d so it can hit the matmul hooks — the only route with access to the
+111 ms where DroNet's time actually is.
+
+For a ModelBlaster kernel, note there are **no clang builtins and no intrinsics
+header** for this extension: you need `.insn r 0x2b, 3, 0x71, …` or the LLVM IR
+intrinsic. LLVM has no scheduling model for `smt.vmadot`, so latency and
+throughput must be measured, not looked up. One `vmadot` = 128 int8 MACs against
+32 for an RVV `vwmul`+`vwadd` pair, so the instruction-count ceiling is 8:1.
+
+---
+
+## 10. Contention, measured under control — and it inverts the obvious assumption
+
+`runtime/scripts/k1_contention.py` pins the dispatch under test to core 0 and
+runs a co-runner on a chosen other core, comparing against the same dispatch
+with nothing else running. The co-runner must be a **different** benchmark: an
+identical one shares its weights, and a same-L2 co-placement then looks
+*helpful* rather than contended (1.034× with the same module vs 1.088× with a
+different one, same dispatch). The script's own docstring still says "the same
+benchmark binary" and is wrong; the measurements below used a different one.
+
+| dispatch | solo | co-runner same cluster | co-runner other cluster |
+|---|---|---|---|
+| dronet.0 | 0.581 ms | 1.088× | **1.298×** |
+| dronet.10 | 0.416 ms | 1.103× | **1.312×** |
+| dronet.11 | 0.222 ms | 0.995× | 0.937× |
+| dronet.12 | 9.581 ms | 1.053× | **1.233×** |
+| dronet.13 | 18.321 ms | 1.034× | **1.137×** |
+| dronet.14 | 1.317 ms | 1.014× | 1.031× |
+| **median** | | **1.043×** | **1.185×** |
+
+**Co-running on the *other* cluster costs ~18%; on the *same* cluster ~4%.** That
+is the opposite of what the resource model suggests — cores 0-3 and 4-7 have
+separate 512K L2s, so spreading across clusters looks like the way to avoid
+interference, and on this SoC it is roughly four times worse.
+
+The magnitude also matches the otherwise unexplained gap in the first
+predicted-vs-actual join: solo profiles ran 17-25% optimistic on the large
+convolutions during a run with both clusters busy, and cross-cluster co-running
+measures 13-31% here. So that gap was contention, and specifically
+*cross-cluster* contention.
+
+**Confidence: moderate, mechanism unexplained.** Six dispatches, four
+repetitions, one co-runner kind; two of the six show no effect. A plausible story
+is shared memory-controller or interconnect pressure dominating L2 isolation, but
+this experiment does not establish it. Before it changes placement policy it
+wants more co-runner kinds, more repetitions, and a memory-bandwidth control to
+separate interconnect pressure from cache effects.
+
+If it holds, the scheduling consequence is concrete and contrarian: **prefer
+packing concurrent work onto one cluster** rather than spreading it.
+
+The measurements were taken through the IREE path, on IREE dispatches. Nothing
+about the mechanism is IREE-specific, but they have **not** been reproduced
+against the generated-C kernels, and doing so is the cheapest way to raise the
+confidence level.
+
+---
+
+## 11. The retired IREE/merlin path
+
+Kept because the numbers explain the current design, not because you should run
+it. Nothing below is a step.
+
+* **Assertions cost 26%.** IREE re-enables assertions on top of `Release`;
+  same dispatch, same core, **80.0 µs with, 63.2 µs without**. The
+  google-benchmark "Library was built as DEBUG" warning was the tell.
+* **`unset LDFLAGS` was load-bearing.** Activating a conda env exports
+  `LDFLAGS=-L$CONDA_PREFIX/lib`; CMake captured it and every RISC-V link then
+  resolved `-lstdc++` to the x86 one
+  (`ld.lld: … is incompatible with elf64-littleriscv`). The same class of bug is
+  why `deploy_k1.sh` checks `e_machine` before copying.
+* **Per-dispatch overhead dominated.** MLP: 5 dispatches, 335.7 µs total, every
+  dispatch 63-78 µs *regardless of work* — ~94% launch overhead. DroNet:
+  19 dispatches, 113.7 ms, top-5 dispatches 75% of it. The generated-C path's
+  smallest dispatch is 2.6 µs, which is the whole argument for the move.
+* **Cluster symmetry.** cluster-1/cluster-0 median ratio **0.996** on
+  compute-bound dispatches: the clusters are equivalent for RVV, so placement
+  across them is a scheduling choice, not a performance one.
+* **Worker count, not device pinning, was the concurrency limit.** The runner
+  created one device per cluster and ran two worker threads total, so an 8-way
+  schedule was serialised onto two threads. `--pin_per_core=1` is what created
+  one pinned device and one worker per physical core — **and it is not
+  optional**, which is why the historical command is written here with it:
+
+  ```bash
+  # RETIRED -- for the record only
+  ssh k1 'cd /root/mb_k1 && ./bin/merlin-dispatch-scheduler schedule.json local-task 1 1 0 \
+      --vmfb_dir=/root/mb_k1 --cpu_p_cpu_ids=0,1,2,3 --cpu_e_cpu_ids=4,5,6,7 \
+      --visible_cores=8 --variant_p=RVV --variant_e=RVV --pin_per_core=1 \
+      --trace_csv=/root/mb_k1/trace.csv'
+  ```
+
+  | runner configuration | makespan | queueing | MLP deadline misses |
+  |---|---|---|---|
+  | 1 worker/target, cluster device | 1017.2 ms | 87.6% | 32/32 |
+  | 1 worker/target, per-core device | 1022.1 ms | 87.7% | 31/32 |
+  | **8 workers, per-core device** | **448.5 ms** | **6.1%** | **2/32** |
+
+* **Pin to as many cores as the profiles used.** `--cpu_p_cpu_ids=0,1,2,3`
+  against single-core profiles ran dispatches 3.75× faster than planned
+  (18.29 ms planned, 4.88 ms actual) and made every calibration number
+  meaningless.
+* **Prediction error decomposes.** Aggregate median +19.5%, but **+1.7%**
+  restricted to dispatches ≥1 ms: the cost model is accurate on the work that
+  matters and wrong on small dispatches, where an unmodelled fixed per-dispatch
+  overhead dominates. By op type: matmul +32.5% (n=138), reduction +23.5%,
+  elementwise +20.4%, conv **+2.3%**.
+* **Sharding is real on this hardware.** DroNet's per-instance service time
+  falls **113.7 → 62.0 → 32.4 ms** on 1/2/4 cores, and a 4-core shard cuts
+  worst-case lateness from 108.8 ms to 27.2 ms (22.6 → 29.0 Hz against 30 Hz
+  required). Note the sibling branch's headline "-48.6% from sharding" does
+  **not** survive its own artifacts — its "unsharded baseline" binary contains
+  only the two sharded tiles; see `artifacts/agentic_branch_salvage.md`. Cite
+  the K1 numbers, not that one.
+
+  **Superseded, and by how much:** those are IREE-era, single-model,
+  pinned-core measurements. Through ModelBlaster's generated C with the fused
+  conv kernels present, DroNet is **9.79 ms on ONE core** — the 113.7 ms
+  starting point was 86.7% scalar reference code. The scaling conclusion
+  (sharding helps DroNet's convolutions, and does not help the MLP) still
+  stands; the absolute numbers do not. Re-derive before citing.
+* **A retraction.** "B4 has 1 MLP deadline miss" was n=1 and is not
+  reproducible: seven runs of the identical schedule give 7-9 misses of 38.
+  MLP completes at ~7 ms against a 10 ms deadline, so its miss count is a
+  knife-edge and not a discriminator between configurations. Makespan is stable
+  to 1.0% across runs; achieved frequency is the honest framing.
+* **A closed loop, measured, and rejected at system level.** Retargeting 50
+  dispatches on compile advice took them from 21 991 µs to 16 172 µs
+  (**−26.5%** measured against −21.2% predicted) while total service time moved
+  **+0.2%** — those dispatches are 1.8% of the workload. Accepted per-dispatch,
+  rejected as a system-level win. Executing the schedule is what tells you the
+  difference; a kernel benchmark cannot.
+
+---
+
+## 12. Failure modes, in one place
+
+| symptom | cause | fix |
+|---|---|---|
+| `ssh` hangs at `Next authentication method: publickey` | stale `ssh-agent` | `IdentityAgent none` in the ssh stanza |
+| binary SIGILLs on its first timed dispatch | `rdcycle` from userspace | `--platform linux` (already passed by both runners) |
+| every timing 67× off | converted with 1.6 GHz instead of 24 MHz rdtime | `--profile-clock-mhz 24`, `--clock-mhz 24` |
+| `entries_done=0`, all-zero trace | `core_kind` ≠ backend tag (`rvv` vs `rvv_x60`) | set `CORE_KINDS` to the schedule's kind |
+| schedule uses only harts 0-3; cluster 1 idle | `CPU_P#n` and `CPU_E#n` alias to the same registry core | one pool: `"machines": {"cpu_p": 8}` |
+| solver reports "no profile found" | profile tree not under a directory named `profile` | `PROFILE_OUT_ROOT=$XPURT_ROOT/gen_mb/profile`, `gen_root: "gen_mb"` |
+| a 4-core shard is never selected | `topo_tag_override: true` charges it the single-core cost | `topo_tag_override: false` with `machine_combination_mode: "shard"` |
+| `No module named 'modelblaster'` from CMake | `backend_rename` was invoked with `PYTHONPATH=<repo>/..`, which only works if the checkout dir is *named* `modelblaster` | fixed in `harness_xpurt_linux/CMakeLists.txt` (now `<repo>/src:<repo>`) |
+| `refusing to run: 'modelblaster' resolves to …` | an editable install points at a different checkout | fix `PYTHONPATH`/the install; do not bypass |
+| `emit_measured_report` matches 0 rows | report entries have no `network`/`instance`; they are inside `name` | unfixed — see §7 |
+| `plot_xpurt_trace` raises `ZeroDivisionError` | schedule has all-zero predicted durations | use a schedule from §5 |
+| `makespan_us` looks 1000× too small | nine `*_us` fields carry ms | read `*_ms` / `units_note` |
+| load average 2.00 on an idle board | wedged vendor kernel threads `vq0`/`vq1` | ignore |
 
 ---
 
 ## Artifacts
 
 ```
-artifacts/k1_bringup/<ts>/     board inventory, topology, IME probe + source
-artifacts/repo_reconciliation.md
-artifacts/k1_progress.md       running log: what was tried, what failed, why
-artifacts/k1_run/              traces, predicted-vs-actual, compile_advice.json
-gen/profile/<hw>/spacemit_x60/<model>/<basename>/topo_0/{results.csv,profile.jsonl}
+artifacts/k1_bringup/<ts>/        board inventory, topology, IME probe + source
+artifacts/k1_progress.md          running log: what was tried, what failed, why
+artifacts/k1_run/ime_gate/FINDINGS.md   what IME really does, with disassembly
+artifacts/agentic_branch_salvage.md     audit of the sibling branch; the label-provenance rule
+ModelBlaster/artifacts/agentic_fuse_split/WARNING.md   the bookkeeping-fiction speedup, kept verbatim
+ModelBlaster/cores/spacemit_k1.json     the measured board topology, machine-readable
+gen_mb/profile/<backend>/spacemit_x60/<model>/<model>.<quant>/<spec>/topo_<cpu>/results.csv
+gen_mb/vmfb/<model>/spacemit_x60/<backend>/<basename>/<basename>_dispatch_graph.json
+schedules/scheduled_<config>_<solver>_profiled{,_metrics,_report}.json
+ModelBlaster/build/k1/<model>/<quant>/          single-model IR, weights, generated C
+ModelBlaster/build/k1_xpurt/{<model>,_gen,_build}/   schedule-driven build tree
 ```
