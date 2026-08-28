@@ -54,6 +54,47 @@ PERIODS = {"mlp": 10.0, "dronet": 33.3}
 CORES = [f"CPU_P#{i}" for i in range(4)] + [f"CPU_E#{i}" for i in range(4)]
 
 
+#: Which toolchain produced a trace. This matters because the two are not
+#: comparable and the figures do not say which they are showing.
+#:
+#: Every trace under artifacts/k1_run/baselines/ is IREE-era: module names read
+#: `mlp$async_dispatch_0_embedded_elf_riscv_64_...` and each row carries a
+#: `vmfb_path`. The project has since dropped the IREE path entirely and moved
+#: to ModelBlaster, whose module names read
+#: `mlp_control$dispatch_0_rvv_x60_linear_s8_M1xK16xN256` and whose traces
+#: carry `worker_hart` / `actual_start_cycles` instead.
+#:
+#: The figure this file produced was captioned "B4 + sharding, after the
+#: scheduler fed evidence back" and drawn from IREE measurements. On the
+#: ModelBlaster path sharding has never run at all -- `parallel_conv2d_s8`
+#: sliced IHWOC-packed weights with an OIHW offset formula until it was
+#: disabled. So the figure and the code told different stories, and the figure
+#: was the one that looked authoritative.
+#:
+#: Detecting provenance and stamping it on the output is the cheap half of the
+#: fix. The other half -- a ModelBlaster rung ladder -- needs a schema adapter,
+#: because these two traces share no column names; `plot_k1_trace_gantt.py`
+#: already has `_normalise_modelblaster` for that.
+IREE_ERA = "iree"
+MODELBLASTER = "modelblaster"
+
+#: Set by main() before any figure is built; read by the save sites so every
+#: figure carries its own provenance rather than relying on the caller.
+_PROVENANCE = "unknown"
+
+
+def trace_provenance(rows) -> str:
+    """`iree` or `modelblaster`, from the row schema itself."""
+    if not rows:
+        return "empty"
+    r = rows[0]
+    if "vmfb_path" in r or "$async_dispatch" in (r.get("module_name") or ""):
+        return IREE_ERA
+    if "worker_hart" in r or "actual_start_cycles" in r:
+        return MODELBLASTER
+    return "unknown"
+
+
 def load_trace(path):
     with open(path) as f:
         return list(csv.DictReader(f))
@@ -248,6 +289,7 @@ def render_gantt_panels(panels, out, *, periods, cores=None, window_ms=140.0,
         axes[0].legend(handles=handles, ncol=max(1, len(handles)), frameon=False,
                        loc="lower left", bbox_to_anchor=(0, 1.18))
     fig.tight_layout(rect=(0.01, 0, 1, 0.97))
+    _stamp(fig, _PROVENANCE)
     fig.savefig(out + ".pdf", bbox_inches="tight", pad_inches=0.03)
     fig.savefig(out + ".png", dpi=300, bbox_inches="tight", pad_inches=0.03)
     plt.close(fig)
@@ -334,6 +376,7 @@ def figure2(rungs, out):
         ax.text(-0.22, 1.06, lab, transform=ax.transAxes, fontsize=8,
                 fontweight="bold", va="bottom")
     fig.tight_layout()
+    _stamp(fig, _PROVENANCE)
     fig.savefig(out + ".pdf", bbox_inches="tight", pad_inches=0.03)
     fig.savefig(out + ".png", dpi=300, bbox_inches="tight", pad_inches=0.03)
     plt.close(fig)
@@ -422,10 +465,27 @@ def figure3(out):
         ax.text(-0.16, 1.06, lab, transform=ax.transAxes, fontsize=8,
                 fontweight="bold", va="bottom")
     fig.tight_layout()
+    _stamp(fig, _PROVENANCE)
     fig.savefig(out + ".pdf", bbox_inches="tight", pad_inches=0.03)
     fig.savefig(out + ".png", dpi=300, bbox_inches="tight", pad_inches=0.03)
     plt.close(fig)
     print("wrote", out + ".pdf/.png")
+
+
+def _stamp(fig, provenance):
+    """Say on the figure which toolchain produced the numbers.
+
+    A figure that does not name its own provenance is how an IREE-era result
+    ends up being read as a current one.
+    """
+    if provenance == IREE_ERA:
+        fig.text(0.005, 0.002,
+                 "Measured on the IREE path, which this project has since "
+                 "dropped. NOT the current ModelBlaster toolchain; the two are "
+                 "not comparable.", fontsize=4.5, color="#D55E00", va="bottom")
+    elif provenance == MODELBLASTER:
+        fig.text(0.005, 0.002, "Measured on the ModelBlaster path.",
+                 fontsize=4.5, color="#666666", va="bottom")
 
 
 def main():
@@ -446,9 +506,44 @@ def main():
     # LaTeX sources live outside this checkout.
     out = os.environ.get("XPURT_FIGURE_DIR") or os.path.join(REPO, "out", "figures")
     os.makedirs(out, exist_ok=True)
-    figure1(rungs, os.path.join(out, "k1_schedule_evolution"))
-    figure2(rungs, os.path.join(out, "k1_feedback_ladder"))
-    figure3(os.path.join(out, "k1_shard_evidence"))
+
+    # Establish provenance BEFORE plotting, and refuse to draw a figure that
+    # mixes toolchains -- a mixed ladder would be meaningless and would look
+    # exactly like a meaningful one.
+    provs = {}
+    for tag, _title, trace_p, _sched_p in rungs:
+        if not os.path.exists(trace_p):
+            print(f"missing trace for {tag}: {trace_p}", file=sys.stderr)
+            return 2
+        provs[tag] = trace_provenance(load_trace(trace_p))
+    distinct = set(provs.values())
+    if len(distinct) > 1:
+        print(f"refusing to plot a ladder that mixes toolchains: {provs}",
+              file=sys.stderr)
+        return 3
+    provenance = distinct.pop()
+    print(f"trace provenance: {provenance}")
+
+    # The prefix is part of the fix. A file called
+    # `k1_schedule_evolution.png` says nothing about which toolchain it came
+    # from; `iree_era_k1_schedule_evolution.png` cannot be mistaken.
+    prefix = "iree_era_" if provenance == IREE_ERA else ""
+    if provenance == IREE_ERA:
+        print("NOTE: these rungs are IREE-era. The project has moved to "
+              "ModelBlaster and the two are not comparable. In particular the "
+              "B4 sharding rung has NO ModelBlaster equivalent -- sharding has "
+              "never run on that path. Figures are stamped and prefixed "
+              "accordingly.", file=sys.stderr)
+
+    global _PROVENANCE
+    _PROVENANCE = provenance
+    figure1(rungs, os.path.join(out, prefix + "k1_schedule_evolution"))
+    figure2(rungs, os.path.join(out, prefix + "k1_feedback_ladder"))
+
+    # figure3 reads gen/profile -- the retired IREE tree -- and its whole
+    # premise is that IREE distributes these convolutions. It is an IREE
+    # figure by construction, so it is always prefixed.
+    figure3(os.path.join(out, "iree_era_k1_shard_evidence"))
     return 0
 
 
