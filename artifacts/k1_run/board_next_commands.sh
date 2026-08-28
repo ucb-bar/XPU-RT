@@ -113,6 +113,9 @@ PYTHONPATH="$MB_ROOT" "$PY" -m pipeline.apply_fusion_hint \
 
 # 2c. THE GATE. Exits 3 if the graph did not change; stop there and report the
 #     negative result rather than profiling a rewrite that is not one.
+#     Exits 4 if the rewriter's own `id_remap` disagrees with the op
+#     signatures -- that is a broken rewriter, not a negative result, and
+#     every downstream join that trusts the remap would carry the error.
 cd "$XPURT_ROOT"
 "$PY" scripts/diff_dispatch_graph.py \
   --before "$MB_ROOT/build/k1/$MODEL/int8/graph.json" \

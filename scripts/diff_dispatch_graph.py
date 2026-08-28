@@ -73,17 +73,9 @@ def signatures_from_ir(path: str) -> list[str]:
     (M1xK16xN256, n256) cannot collide with the unfused pair it replaced.
     """
     g = json.load(open(path))
-    out = []
-    for op in g.get("ops", []):
-        if op.get("dispatch_id") is None:
-            continue          # view op: no dispatch, no cost, no signature
-        sig = f"{op['op']}_{_shape_tag(op.get('shape'))}"
-        subs = op.get("sub_ops") or []
-        if subs:
-            sig += "[" + "+".join(
-                f"{s['op']}_{_shape_tag(s.get('shape'))}" for s in subs) + "]"
-        out.append(sig)
-    return out
+    return [_ir_signature(op) for op in g.get("ops", [])
+            # view op: no dispatch, no cost, no signature
+            if op.get("dispatch_id") is not None]
 
 
 def signatures_from_profile(path: str) -> list[str]:
@@ -103,7 +95,16 @@ def _load(path: str) -> list[str]:
 
 
 def _ir_signature(op) -> str:
-    """One op's signature, the same string `signatures_from_ir` builds."""
+    """One IR op's signature. The single definition for this file.
+
+    A fused op's signature includes its members, so `linear_s8_elu_s8` over
+    (M1xK16xN256, n256) cannot collide with the unfused pair it replaced.
+
+    Both callers go through here -- `signatures_from_ir` for the multiset
+    diff, and `audit_id_remap` for the per-op remap check. This module's own
+    header says a second parser would be a second answer to the same question;
+    that applies inside the file too.
+    """
     sig = f"{op['op']}_{_shape_tag(op.get('shape'))}"
     subs = op.get("sub_ops") or []
     if subs:
