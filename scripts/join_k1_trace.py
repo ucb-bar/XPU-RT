@@ -22,17 +22,70 @@ import argparse
 import csv
 import json
 import re
+import os
 import statistics
 import sys
 from collections import defaultdict
 
+sys.path.insert(0, os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "xpu-rt"))
 
-def load_trace(path):
+import k1_trace  # noqa: E402
+
+
+def load_trace(path, slot_maps=None):
+    """`{dispatch_key: [row, ...]}` from either producer's trace.
+
+    `k1_trace.normalise` is what makes the ModelBlaster schema readable here at
+    all: it has no `dispatch_key` column, no `run_us`, and stamps rdtime ticks
+    rather than microseconds. Without it this tool could not read a single
+    trace the project has taken since the IREE path was dropped -- and it is
+    the tool that separates "slow kernel" from "long queue", which is the
+    distinction a deadline miss turns on.
+    """
     rows = defaultdict(list)
-    with open(path) as f:
-        for r in csv.DictReader(f):
-            rows[r["dispatch_key"]].append(r)
+    for r in k1_trace.read(path, slot_maps):
+        rows[r["dispatch_key"]].append(r)
     return rows
+
+
+def _op_kind_agrees(module_name: str, trace_op: str) -> bool:
+    """Does the schedule's dispatch name the same op kind the trace ran?"""
+    if not module_name or not trace_op:
+        return True                       # nothing to check against
+    return f"_{trace_op}_" in module_name
+
+
+def audit_alignment(disp, trace):
+    """`(checked, mismatched, per_job)` for schedule-id vs trace-id agreement.
+
+    ALWAYS RUN, because the failure is silent and reads as a prediction error.
+    The trace's `dispatch_id` is a record SLOT and drifts from the IR's id by
+    the number of zero-cost ops before it (`k1_trace.ir_slot_map`), so a join
+    on the id alone compares different ops. Both numbers are real, which is
+    what makes it convincing: yolov8_nano dispatch 81 reported "predicted
+    17.465 ms, measured 0.577 ms" -- a 96.8% error that was entirely a
+    mislabel.
+
+    The op KIND settles it without needing the IR: the schedule carries it in
+    `module_name`, the trace in its own `op` column.
+    """
+    checked = mismatched = 0
+    per_job = defaultdict(lambda: [0, 0])
+    for key, v in disp.items():
+        rs = trace.get(key)
+        if not rs:
+            continue
+        trace_op = rs[0].get("op", "")
+        if not trace_op:
+            continue
+        checked += 1
+        job = v.get("job_name", "")
+        per_job[job][0] += 1
+        if not _op_kind_agrees(v.get("module_name", ""), trace_op):
+            mismatched += 1
+            per_job[job][1] += 1
+    return checked, mismatched, per_job
 
 
 def base_and_instance(job: str):
@@ -92,12 +145,43 @@ def main() -> int:
     ap.add_argument("--trace", required=True)
     ap.add_argument("--out-json")
     ap.add_argument("--top", type=int, default=12)
+    ap.add_argument("--ir", action="append", default=[],
+                    help="a model's graph.json; repeatable. Translates the "
+                         "trace's record-slot ids to the IR dispatch_ids the "
+                         "schedule uses. Required for any model containing a "
+                         "zero-cost op (view / chunk2_c1), where the two "
+                         "numberings diverge -- see k1_trace.ir_slot_map.")
+    ap.add_argument("--allow-misaligned", action="store_true",
+                    help="report per-dispatch errors even when the schedule "
+                         "and the trace disagree about what each id names")
     a = ap.parse_args()
 
     sched = json.load(open(a.schedule))
     disp = sched["dispatches"]
     periods = (sched.get("metadata") or {}).get("periodic_networks") or {}
-    trace = load_trace(a.trace)
+    slot_maps = k1_trace.slot_maps_from_irs(a.ir) if a.ir else None
+    trace = load_trace(a.trace, slot_maps)
+
+    n_checked, n_bad, per_job = audit_alignment(disp, trace)
+    if n_bad:
+        print(f"ID ALIGNMENT: {n_bad} of {n_checked} joined dispatches name a "
+              f"different op in the schedule than the trace ran.",
+              file=sys.stderr)
+        for job, (tot, bad) in sorted(per_job.items()):
+            if bad:
+                print(f"  {job}: {bad}/{tot}", file=sys.stderr)
+        print("  The trace's `dispatch_id` is a record SLOT, which drifts from "
+              "the IR id by the number of zero-cost ops before it. Pass --ir "
+              "<graph.json> for the affected model(s) to translate it.",
+              file=sys.stderr)
+        if not a.allow_misaligned:
+            print("  Refusing: every per-dispatch number below would compare "
+                  "two different ops. Pass --allow-misaligned to see them "
+                  "anyway.", file=sys.stderr)
+            return 2
+    elif n_checked:
+        print(f"id alignment: {n_checked} joined dispatches agree on op kind",
+              file=sys.stderr)
 
     joined, missing, multi_iter_keys = [], [], []
     for key, v in disp.items():

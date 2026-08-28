@@ -36,6 +36,11 @@ import os
 import sys
 from typing import Dict, List, Optional, Sequence, Tuple
 
+sys.path.insert(0, os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "xpu-rt"))
+
+import k1_trace  # noqa: E402
+
 import matplotlib as mpl
 mpl.use("Agg")
 import matplotlib.pyplot as plt
@@ -62,41 +67,17 @@ def model_of(job_name: str) -> str:
     return job_name.rstrip("0123456789") or job_name
 
 
-#: rdtime on this board. NOT the 1.6 GHz core clock and not 1 MHz -- the
-#: device-tree timebase-frequency is 24000000, and every cycles->time
-#: conversion in this project uses it.
-K1_RDTIME_HZ = 24_000_000.0
-
-
-def _normalise_modelblaster(rows: List[dict]) -> List[dict]:
-    """Map ModelBlaster's harness_xpurt trace onto the canonical column names.
-
-    Two producers emit measured K1 traces and they disagree on spelling, not on
-    meaning: merlin's runner writes `start_us`/`run_us`/`job_name`/`cores`,
-    ModelBlaster's writes `actual_start_cycles`/`actual_end_cycles`/
-    `network`+`instance`/`core_kind`+`hart`. Normalising once here is what keeps
-    this from becoming the fourth renderer that reads exactly one producer.
-
-    Cycles are rdtime ticks at 24 MHz, and the run is stamped from the first
-    tick observed rather than from 0, so the axis starts at the run's own t0.
-    """
-    if not rows or "actual_start_cycles" not in rows[0]:
-        return rows
-    t0 = min(int(r["actual_start_cycles"]) for r in rows)
-    out = []
-    for r in rows:
-        s, e = int(r["actual_start_cycles"]), int(r["actual_end_cycles"])
-        d = dict(r)
-        d["start_us"] = (s - t0) / K1_RDTIME_HZ * 1e6
-        d["run_us"] = max(e - s, 0) / K1_RDTIME_HZ * 1e6
-        d["job_name"] = f'{r.get("network", "")}{r.get("instance", "")}'
-        out.append(d)
-    return out
+#: Re-exported so this renderer keeps one name for the board's clock.
+K1_RDTIME_HZ = k1_trace.K1_RDTIME_HZ
 
 
 def read_trace(path: str) -> List[dict]:
-    with open(path, newline="") as f:
-        return _normalise_modelblaster(list(csv.DictReader(f)))
+    """Both producers' schemas, normalised in `xpu-rt/k1_trace.py`.
+
+    It used to live here, which made this the only tool that could read a
+    ModelBlaster trace -- `join_k1_trace.py` sat next to it unable to read one.
+    """
+    return k1_trace.read(path)
 
 
 def read_schedule(path: Optional[str]) -> Dict[str, dict]:
