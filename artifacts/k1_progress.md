@@ -1182,3 +1182,91 @@ board, and re-score under the lexicographic objective.
 ### Repo SHAs
 
 XPU-RT `feat/k1-modelblaster-closed-loop`, ModelBlaster `dd66497`.
+
+---
+
+## Fused RVV kernels: measured, and a label that would have hidden them
+
+### Attempted
+
+Write curated RVV kernels for the two fused ops, verify bit-exact, and re-profile
+all six models on the board.
+
+### Commands
+
+    scripts/run_model_k1.sh <model> int8 rvv_x60 0     # PROFILE_OUT_ROOT set
+    scripts/k1_verify_fused_conv_rvv.py                # kernel vs reference_impl
+    scripts/check_rvv_vtype.py <objects and harness ELFs>
+
+### Measurements
+
+Two kernels added (ModelBlaster `2fb09f6`): `rvv_conv2d_batchnorm2d_s8_
+rvv_oc_blocked_bn_epilogue.c` and `rvv_conv2d_batchnorm2d_silu_s8_
+rvv_oc_blocked_bn_silu_epilogue.c`. Each is `rvv_oc_blocked`'s convolution with
+the extra stages applied on the store path, so no intermediate is materialized.
+The fused specs previously carried only gemmini-affined algorithm candidates, so
+the curated probe had no (op, algorithm) pair to look for on ANY RVV target --
+the missing kernel was upstream of the missing file.
+
+Re-profiled independently of the agent that wrote them (rvv_x60, cpu 0, rdtime
+24 MHz):
+
+| model | scalar | rvv BEFORE | rvv AFTER | after vs scalar | gain |
+|---|---|---|---|---|---|
+| mlp_control | 0.37 | 0.09 | 0.09 | 4.17x | 1.0x |
+| lstm_tiny | 0.08 | 0.08 | 0.08 | 0.97x | 1.0x |
+| vitfly_frontend | 1.77 | 0.42 | 0.42 | 4.18x | 1.0x |
+| vitfly_lstm | 29.69 | 28.28 | 28.41 | 1.04x | 1.0x |
+| dronet | 157.38 | 62.59 | **10.26** | **15.34x** | 6.1x |
+| yolov8_nano | 4020.93 | 4974.78 | **233.20** | **17.24x** | 21.3x |
+
+yolov8_nano's rvv_x60 build goes from SLOWER than scalar to 17.2x faster. The
+0.81x was never a property of RVV or of YOLO's op mix.
+
+Bit-exactness: max_abs_err=0 on all 3 DroNet and 57 yolov8_nano (shape, quant)
+tuples in two data regimes, plus end-to-end golden compare max_abs_err=0 on both
+models. check_rvv_vtype.py OK on both objects and both deployed ELFs.
+
+### Failed, then fixed
+
+The coverage gate committed in `dd66497` would have FAILED this correct build.
+Its ground-truth signal was module_name's trailing segment -- but that segment is
+the SHAPE tag, and `_shape_concise()` returned the literal string `"scalar"` for
+an op with no recorded shape. The fused convs had no shape AND ran the
+reference, so the two coincided and the label looked like a working signal. With
+real kernels in place (22.9x measured) the name still read `_scalar`.
+
+The gate was right for the wrong reason, which is worse than being wrong: it
+would have kept reporting a fallback that no longer existed, and the natural
+response would have been to stop trusting the gate.
+
+Fixed at both layers. The sentinel is now `noshape`, and profile_writer emits an
+`implementation` column filled from the build's kernel_picks.json AT PROFILE
+TIME, so it describes the build that was measured rather than whatever that file
+says when read later (mlp_control's had already drifted). Verified on the board:
+
+    dronet$dispatch_3_rvv_x60_conv2d_batchnorm2d_s8_noshape,
+        curated[rvv]/rvv_oc_blocked_bn_epilogue
+
+That a profile could not previously answer "was this dispatch actually
+vectorised?" is the root cause of the whole episode, not an incidental gap.
+
+### Blocker
+
+None.
+
+### Next
+
+Re-solve B0-B4 against the corrected costs and rerun on the board. DroNet at
+10.26 ms against a 33.3 ms period is now ~31% of one core rather than 97% of
+four, so the feasibility frontier moves substantially and the earlier
+schedulability conclusions do not carry over.
+
+Two ops still have no curated RVV kernel at all -- `add_s8` and `sigmoid_s8`, a
+pre-existing gap rather than a name mismatch. Small by measured time (0.62 of
+DroNet's 10.26 ms, 3.59 of yolov8_nano's 233.2 ms) but they are now a visible
+share and worth writing.
+
+### Repo SHAs
+
+XPU-RT `feat/k1-modelblaster-closed-loop`, ModelBlaster `fdc1c94`.
