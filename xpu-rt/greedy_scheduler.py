@@ -42,6 +42,85 @@ import numpy as np
 
 from workload import Workload
 
+# --- co-runner contention (additive, OFF by default) ---------------------
+#
+# `_CONTENTION` is None unless someone explicitly installs a measured model via
+# `configure_contention()` or passes `contention=` to a scheduler entry point.
+# While it is None, `_duration()` is exactly `op.get_duration_for_combination`,
+# so a repo with no contention.json behaves bit-identically to before.
+#
+# The multiplier is applied at lookup time and never written back into the
+# profile: a solo service time stays a solo service time on disk.
+_CONTENTION = None
+_CONTENTION_PLACEMENT = None
+
+
+def configure_contention(model=None, placement=None) -> None:
+    """Install (or clear) the contention model used by the duration lookup.
+
+    `model=None` disables contention entirely — the default state.
+    `placement` forces every lookup to use one placement; when left None the
+    placement is derived per-combination by the model
+    (`placement_for_combination`), which returns None for combinations it has
+    no measurement for, leaving those durations untouched.
+    """
+    global _CONTENTION, _CONTENTION_PLACEMENT
+    _CONTENTION = model
+    _CONTENTION_PLACEMENT = placement
+
+
+def get_contention():
+    """Return (model, forced_placement). Mostly for tests and reporting."""
+    return _CONTENTION, _CONTENTION_PLACEMENT
+
+
+class _contention_scope:
+    """Context manager so a per-call `contention=` argument cannot leak into
+    the next caller's schedule."""
+
+    def __init__(self, model, placement=None):
+        self._model = model
+        self._placement = placement
+
+    def __enter__(self):
+        self._prev = get_contention()
+        if self._model is not None:
+            configure_contention(self._model, self._placement)
+        return self
+
+    def __exit__(self, *exc):
+        configure_contention(*self._prev)
+        return False
+
+
+def _duration(op, combo_idx, machine_combinations, machines) -> float:
+    """Solo duration for (op, combination), scaled by the measured co-runner
+    contention factor when a contention model is installed.
+
+    Off by default: with `_CONTENTION is None` this is a straight passthrough.
+    """
+    base = op.get_duration_for_combination(combo_idx, machine_combinations, machines)
+    model = _CONTENTION
+    if model is None:
+        return base
+    placement = _CONTENTION_PLACEMENT
+    if placement is None:
+        try:
+            placement = model.placement_for_combination(
+                machine_combinations[combo_idx]
+            )
+        except Exception:
+            placement = None
+    if placement is None:
+        return base
+    try:
+        factor = float(model.contention_factor(op, placement))
+    except Exception:
+        return base
+    if factor <= 0:
+        return base
+    return base * factor
+
 
 def _is_periodic_op(op) -> bool:
     """A periodic op is one whose `max_end_t` window-bound was set by
@@ -86,7 +165,7 @@ def _compute_alap_deadlines(workload, machine_combinations) -> dict:
         durs = []
         for c in range(len(machine_combinations)):
             try:
-                d = op.get_duration_for_combination(c, machine_combinations, machines)
+                d = _duration(op, c, machine_combinations, machines)
                 if d > 0:
                     durs.append(float(d))
             except Exception:
@@ -155,8 +234,9 @@ def _earliest_start_for(
             continue
         other_combo_idx = int(np.argmax(alpha[j, :]))
         if workload.combinations_overlap(combo_idx, other_combo_idx):
-            other_dur = workload.operations[j].get_duration_for_combination(
-                other_combo_idx, machine_combinations, machines
+            other_dur = _duration(
+                workload.operations[j], other_combo_idx,
+                machine_combinations, machines,
             )
             other_end = t[j] + other_dur
             earliest_start = max(earliest_start, other_end)
@@ -166,7 +246,7 @@ def _earliest_start_for(
     for pred in op.predecessors:
         pred_idx = workload.operations.index(pred)
         pred_combo_idx = int(np.argmax(alpha[pred_idx, :]))
-        pred_dur = workload.operations[pred_idx].get_duration_for_combination(
+        pred_dur = _duration(workload.operations[pred_idx],
             pred_combo_idx, machine_combinations, machines
         )
         pred_end = t[pred_idx] + pred_dur
@@ -182,7 +262,7 @@ def _earliest_start_for(
     if op.min_start_t is not None:
         earliest_start = max(earliest_start, float(op.min_start_t))
 
-    duration = op.get_duration_for_combination(
+    duration = _duration(op,
         combo_idx, machine_combinations, machines
     )
     return earliest_start, duration
@@ -333,7 +413,7 @@ def _schedule_loop(workload, mode: str) -> tuple[np.ndarray, np.ndarray]:
         alpha[chosen_op, chosen_combo] = 1.0
         scheduled[chosen_op] = True
 
-        duration = workload.operations[chosen_op].get_duration_for_combination(
+        duration = _duration(workload.operations[chosen_op],
             chosen_combo, machine_combinations, machines
         )
         op_end = chosen_start + duration
@@ -350,14 +430,21 @@ def _schedule_loop(workload, mode: str) -> tuple[np.ndarray, np.ndarray]:
     return t, alpha
 
 
-def greedy_schedule(workload: Workload) -> tuple[np.ndarray, np.ndarray]:
+def greedy_schedule(workload: Workload, contention=None, contention_placement=None
+                    ) -> tuple[np.ndarray, np.ndarray]:
     """List-scheduling greedy. Each iteration picks the (op, combo) with
     the lowest completion time among ready ops. Ties broken by the
-    order operations appear in ``workload.operations``."""
-    return _schedule_loop(workload, mode="greedy")
+    order operations appear in ``workload.operations``.
+
+    `contention` optionally takes a `contention_model.ContentionModel`; with
+    the default None the durations are the plain solo profile."""
+    with _contention_scope(contention, contention_placement):
+        return _schedule_loop(workload, mode="greedy")
 
 
-def greedy_periodic_schedule(workload: Workload) -> tuple[np.ndarray, np.ndarray]:
+def greedy_periodic_schedule(workload: Workload, contention=None,
+                             contention_placement=None
+                             ) -> tuple[np.ndarray, np.ndarray]:
     """Non-periodic-priority list-scheduling greedy. Among ready ops,
     schedules the lowest-completion non-periodic op first; periodic
     ops only get scheduled when no non-periodic is ready, with one
@@ -370,8 +457,12 @@ def greedy_periodic_schedule(workload: Workload) -> tuple[np.ndarray, np.ndarray
     greedy interleaves dronet dispatches between yolov8 dispatches,
     growing yolov8's makespan. This variant pins dronet to "fill the
     gaps" left by yolov8, shrinking yolov8's makespan at the cost of
-    slightly higher dronet jitter (still within the periodic window)."""
-    return _schedule_loop(workload, mode="greedy_periodic")
+    slightly higher dronet jitter (still within the periodic window).
+
+    `contention` optionally takes a `contention_model.ContentionModel`; with
+    the default None the durations are the plain solo profile."""
+    with _contention_scope(contention, contention_placement):
+        return _schedule_loop(workload, mode="greedy_periodic")
 
 
 def _per_instance_independent_makespan(
@@ -430,7 +521,7 @@ def _per_instance_independent_makespan(
                         continue
                     if pred_idx not in op_set:
                         continue
-                    pred_dur = workload.operations[pred_idx].get_duration_for_combination(
+                    pred_dur = _duration(workload.operations[pred_idx],
                         local_combo[pred_idx], machine_combinations, machines)
                     pred_end = local_t[pred_idx] + pred_dur
                     pc = machine_combinations[local_combo[pred_idx]]
@@ -441,7 +532,7 @@ def _per_instance_independent_makespan(
                 if op.min_start_t is not None:
                     start = max(start, float(op.min_start_t))
                 try:
-                    dur = op.get_duration_for_combination(c, machine_combinations, machines)
+                    dur = _duration(op, c, machine_combinations, machines)
                 except Exception:
                     continue
                 completion = start + dur
@@ -463,7 +554,7 @@ def _per_instance_independent_makespan(
     if not local_t:
         return 0.0
     return max(
-        local_t[i] + workload.operations[i].get_duration_for_combination(
+        local_t[i] + _duration(workload.operations[i],
             local_combo[i], machine_combinations, machines)
         for i in local_t
     )
@@ -517,7 +608,7 @@ def _compute_alap_deadlines_with_np(
         durs = []
         for c in range(len(machine_combinations)):
             try:
-                d = op.get_duration_for_combination(c, machine_combinations, machines)
+                d = _duration(op, c, machine_combinations, machines)
                 if d > 0:
                     durs.append(float(d))
             except Exception:
@@ -575,7 +666,17 @@ def _compute_alap_deadlines_with_np(
     return alap
 
 
-def decomposed_schedule(workload: Workload) -> tuple[np.ndarray, np.ndarray]:
+def decomposed_schedule(workload: Workload, contention=None,
+                        contention_placement=None
+                        ) -> tuple[np.ndarray, np.ndarray]:
+    """Two-phase decomposed scheduling, optionally with measured co-runner
+    contention applied to the duration lookup (`contention=` a
+    `contention_model.ContentionModel`; None = plain solo profile)."""
+    with _contention_scope(contention, contention_placement):
+        return _decomposed_schedule(workload)
+
+
+def _decomposed_schedule(workload: Workload) -> tuple[np.ndarray, np.ndarray]:
     """Two-phase decomposed scheduling: periodic first, non-periodic backfills.
 
     Phase 1 — periodic placement (EDF over chain-aware deadlines):
@@ -651,7 +752,7 @@ def decomposed_schedule(workload: Workload) -> tuple[np.ndarray, np.ndarray]:
         t[op_idx] = start
         alpha[op_idx, combo_idx] = 1.0
         scheduled[op_idx] = True
-        duration = workload.operations[op_idx].get_duration_for_combination(
+        duration = _duration(workload.operations[op_idx],
             combo_idx, machine_combinations, machines)
         end = start + duration
         combination_available_time[combo_idx] = end
@@ -697,7 +798,7 @@ def decomposed_schedule(workload: Workload) -> tuple[np.ndarray, np.ndarray]:
         if not scheduled[i]:
             continue
         c = int(np.argmax(alpha[i]))
-        dur = workload.operations[i].get_duration_for_combination(
+        dur = _duration(workload.operations[i],
             c, machine_combinations, machines)
         busy[c].append((float(t[i]), float(t[i]) + float(dur)))
         # Reflect onto overlapping combos so they see the same busy windows.
@@ -735,7 +836,7 @@ def decomposed_schedule(workload: Workload) -> tuple[np.ndarray, np.ndarray]:
             if not scheduled[pred_idx]:
                 return float("inf"), 0.0
             pc = int(np.argmax(alpha[pred_idx]))
-            pred_dur = workload.operations[pred_idx].get_duration_for_combination(
+            pred_dur = _duration(workload.operations[pred_idx],
                 pc, machine_combinations, machines)
             pred_end = float(t[pred_idx]) + float(pred_dur)
             transfer = transfer_times[
@@ -743,7 +844,7 @@ def decomposed_schedule(workload: Workload) -> tuple[np.ndarray, np.ndarray]:
                 machines.index(machine_combinations[combo_idx][0])]
             pred_floor = max(pred_floor, pred_end + float(transfer))
         try:
-            duration = float(op.get_duration_for_combination(
+            duration = float(_duration(op,
                 combo_idx, machine_combinations, machines))
         except Exception:
             return float("inf"), 0.0

@@ -838,7 +838,40 @@ if __name__ == "__main__":
         choices=available_schedulers(),
         help="Scheduler to use. Default 'mosek' preserves the existing CVXPY/MOSEK pipeline; additional baselines are added in later milestones.",
     )
+    parser.add_argument(
+        "--contention",
+        nargs="?",
+        const=True,
+        default=None,
+        metavar="PATH",
+        help=(
+            "Apply measured co-runner contention multipliers to the greedy "
+            "duration lookup. OFF by default. Bare flag uses "
+            "artifacts/k1_run/contention.json; pass a path to override. A "
+            "missing artifact is a no-op."
+        ),
+    )
     args = parser.parse_args()
+
+    # Contention is additive and off unless asked for: installing None here
+    # leaves the schedulers on the plain solo profile.
+    if args.contention is not None:
+        import contention_model
+        import greedy_scheduler
+
+        _path = None if args.contention is True else args.contention
+        _model = contention_model.load(_path)
+        if _model is None:
+            print(
+                f"--contention: no artifact at "
+                f"{_path or contention_model.DEFAULT_PATH}; running without it"
+            )
+        else:
+            print(
+                f"--contention: loaded {_model.path} "
+                f"(placements: {', '.join(_model.placements())})"
+            )
+        greedy_scheduler.configure_contention(_model)
 
     seed = None if args.random_seed is not None and args.random_seed < 0 else args.random_seed
 
