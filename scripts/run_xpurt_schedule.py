@@ -700,8 +700,19 @@ def schedule_iree_networks(
         with open(metrics_path, "w") as f:
             _json.dump(metrics_dict, f, indent=2)
         print(f"Metrics written to: {metrics_path}")
+        # `op_deadline_miss`, spelled out. `metrics.py` counts misses PER
+        # DISPATCH and says so at length, but it also keeps a
+        # `deadline_miss_count` alias for compatibility -- and this line used
+        # to print that alias as a bare "deadline_miss". A reader takes that
+        # for the number of late INSTANCES, which is the quantity a frequency
+        # claim rests on, and the two differ by more than an order of
+        # magnitude: one B4 cell reports 229 late dispatches and 13 late
+        # instances out of 47. The alias is fine in the JSON, where the
+        # op_-prefixed name sits beside it; on a summary line with no context
+        # it is a trap, and it caught me.
         print(f"  makespan_us={metrics_dict['makespan_us']:.2f}  "
-              f"deadline_miss={metrics_dict['deadline_miss_count']}  "
+              f"op_deadline_miss={metrics_dict['op_deadline_miss_count']}"
+              f" (dispatches, NOT instances)  "
               f"cross_dev={metrics_dict['cross_device_transitions']}  "
               f"solver_s={solver_wall_time_s:.3f}")
     except Exception as exc:
