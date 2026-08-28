@@ -823,17 +823,33 @@ narrow adapter turns it into one of ModelBlaster's hint contracts, and a
 JSON-in/JSON-out rewriter applies it. Every stage is a file, so any stage can be
 debugged alone.
 
-| verb | producer | advice → hint | consumer | reached |
-|---|---|---|---|---|
-| `fuse_with_successor` | `overhead_advice` | `advice_to_fusion_hint.py` | `apply_fusion_hint.py` | board: **rejected**, 36% slower |
-| `split` | `blocking_advice` | `advice_to_split_hint.py` | `apply_split_hint.py` | board: **rejected**, +13.7% |
-| `unfuse` | `unfuse_advice` | `advice_to_unfuse_hint.py` | `apply_unfuse_hint.py` | host-verified; no board rung yet |
-| `choose_implementation` | `implementation_advice` | `advice_to_kernel_choice.py` | `generate_kernels --keep-reference-ops` | host-verified; no board rung yet |
-| `shard` | `shard_advice` | — | `MB_SHARD_FACTOR` (build-level) | **cannot fire**: see below |
+| verb | producer | advice → hint | consumer | the VERB on hardware | the BRIDGE end to end |
+|---|---|---|---|---|---|
+| `fuse_with_successor` | `overhead_advice` | `advice_to_fusion_hint.py` | `apply_fusion_hint.py` | **rejected**, 36% slower | ✅ drove that rung |
+| `split` | `blocking_advice` | `advice_to_split_hint.py` | `apply_split_hint.py` | **rejected**, +13.7% | ⚠️ that rung used a hand-written hint |
+| `unfuse` | `unfuse_advice` | `advice_to_unfuse_hint.py` | `apply_unfuse_hint.py` | never | host only |
+| `choose_implementation` | `implementation_advice` | `advice_to_kernel_choice.py` | `generate_kernels --keep-reference-ops` | never | host only |
+| `shard` | `shard_advice` | — | `MB_SHARD_FACTOR` (build-level) | never | **cannot fire**: see below |
 
-Two of these have reached a board verdict and **both were rejected on
+**Read the last two columns separately.** "The verb reached a board verdict" and
+"this chain produced that verdict" are different claims, and only
+`fuse_with_successor` satisfies both. The DroNet split that measured +13.7% was
+driven by a hint written by hand — `advice_to_split_hint.py` did not exist
+then — so the split bridge is verified against the rewriter and against real
+advice, but has not yet been the thing that produced a board number. Collapsing
+the two columns is how a chain gets credited with a measurement it did not make.
+
+Two verbs have reached a board verdict and **both were rejected on
 measurement**. That is the loop working, not failing, and it is the reason the
 rejections are on the record rather than the successes.
+
+A third measured result is a refusal rather than a rung: on the `dense2`
+workload `advice_to_split_hint` emits **0 splits**, because yolov8_nano's
+largest dispatch is 2.238 ms against a 16.527 ms periodic slot (13.5%) and
+`blocking_advice` fires only above 100%. Nothing blocks, so nothing needs
+splitting, and B4 put 4-way OC sharding at +76% total work. The 64×96 graph is
+already fine enough for that workload — which is what dropping from 160×160
+bought.
 
 Every bridge takes `--advice --ir --model --out`. Each derives what it can from
 the measurement rather than taking it as a parameter — `advice_to_split_hint`
@@ -896,6 +912,62 @@ that compare different ops.
 
 The upstream fix is for the harness to stamp the IR `dispatch_id`; that needs a
 board rebuild and re-run, and this makes every trace already taken readable.
+
+### Running a REWRITTEN IR on the board
+
+The loop's output is a graph.json that no `--model` can regenerate, so the
+runner has to be handed it:
+
+```bash
+bash ModelBlaster/scripts/run_xpurt_k1.sh \
+    --schedule <scheduled_*.json> \
+    --staged-ir <network>:<dir containing graph.json, weights.npz, io.npz> \
+    --models <network>,<...> --backends rvv_x60,rvv_x60
+```
+
+`--staged-ir` copies the graph, records its source path and sha256 in
+`.staged_from` (deliberately *not* `.extract_config`, so a staged graph can
+never satisfy the extraction reuse check), and **renames the IR's `name` field
+to the network name** — every generated C symbol mangles from it
+(`model_<name>_op_record_t`, `MODEL_<NAME>_OUTPUT_SIZE`), while `xpurt_main.c`
+mangles from the schedule's network name. Leave them different and the harness
+fails to compile against a type it just generated.
+
+The same flag covers a network whose name is not a `models/` module —
+`networks_dense2` calls its detector `yolov8_nano_64x96`, which is
+`yolov8_nano` built at another input size.
+
+### Two toolchain traps that cost a board slot each
+
+**Use GCC 14.3, not 13.2.** `run_xpurt_k1.sh` defaults `CROSS` to chipyard's
+`riscv64-unknown-linux-gnu-` 13.2, while the single-model profiling path builds
+with the spacemit 14.3 one. GCC 13.2 **reorders the `__riscv_vsetvl_*`
+intrinsics**, so a widening instruction executes under the narrow vtype:
+
+```
+vsetvli e32,m4     <- sets SEW=32
+vsetvli e8,m1      <- clobbers it to SEW=8
+vle8.v / vle8.v
+vsext.vf4          <- ILLEGAL: widening 8->32 needs SEW=32
+```
+
+Measured in `kernel_add_s8`: SIGILL with no stdout, `epc 0x17020`, `badaddr`
+equal to that instruction's own encoding. Same source and flags, GCC 14.3
+emits `vsetvli e32,m4 / vle8 / vsext.vf4` and it runs. Set:
+
+```bash
+export CROSS=<...>/spacemit-toolchain-linux-glibc-x86_64-v1.1.2/bin/riscv64-unknown-linux-gnu-
+```
+
+This does not invalidate earlier scheduled runs: a wrong vtype is an *illegal
+instruction*, so it crashes rather than quietly computing a wrong answer.
+
+**A network name may end in a digit.** `<network><instance>` has no separator,
+so `yolov8_nano_64x96` reads as `yolov8_nano_64x` + instance 96 under a
+trailing-digit split. That emitted `#include "yolov8_nano_64x_model.h"` and
+failed the build; it also greyed the model out of every figure. Pass
+`--networks` to `generate_xpurt_main` (the runner does), and prefer the trace's
+own `network` column in any renderer.
 
 ### `shard`: documented, deliberately not wired
 
