@@ -62,6 +62,8 @@ from __future__ import annotations
 from dataclasses import dataclass, asdict, field
 import statistics
 
+import job_names
+
 
 # A non-periodic job is only flagged "coarser" when its max dispatch
 # duration is under this fraction of the tightest periodic job's free slot
@@ -106,10 +108,19 @@ class GranularityAdvice:
 
 
 def _strip_trailing_digits(s: str) -> str:
-    i = len(s)
-    while i > 0 and s[i - 1].isdigit():
-        i -= 1
-    return s[:i]
+    """Kept as the name-free fallback; `job_names` owns the real split."""
+    return job_names.strip_trailing_digits(s)
+
+
+def _base_id(instance_id: str, known=None) -> str:
+    """`<network><instance>` -> network, given the real network names.
+
+    Without `known` this is the old trailing-digit strip, which reads
+    `yolov8_nano_64x960` as `yolov8_nano_64x` + 960. That name reaches
+    `metadata.periodic_networks` and from there every consumer, including the
+    scorer that decides deadline misses -- see `job_names`.
+    """
+    return job_names.model_of(instance_id, known)
 
 
 def _instance_id_from_dispatch_key(dispatch_key: str) -> str:
@@ -117,7 +128,7 @@ def _instance_id_from_dispatch_key(dispatch_key: str) -> str:
     return dispatch_key.split("_dispatch_", 1)[0]
 
 
-def from_workload(combined_workload, t, alpha) -> list[DispatchRecord]:
+def from_workload(combined_workload, t, alpha, known=None) -> list[DispatchRecord]:
     """Build DispatchRecords from a live post-schedule() workload.
 
     Uses the same `min_start_t`/`max_end_t is not None` periodicity signal
@@ -131,7 +142,7 @@ def from_workload(combined_workload, t, alpha) -> list[DispatchRecord]:
             op.operation_name if getattr(op, "operation_name", None) else f"op_{op_idx}"
         )
         instance_id = _instance_id_from_dispatch_key(operation_name)
-        base_id = _strip_trailing_digits(instance_id)
+        base_id = _base_id(instance_id, known)
         is_periodic = (
             getattr(op, "min_start_t", None) is not None
             or getattr(op, "max_end_t", None) is not None
@@ -160,7 +171,7 @@ def from_workload(combined_workload, t, alpha) -> list[DispatchRecord]:
     return records
 
 
-def from_schedule_json(schedule_dict: dict) -> list[DispatchRecord]:
+def from_schedule_json(schedule_dict: dict, known=None) -> list[DispatchRecord]:
     """Build DispatchRecords from a saved schedule JSON's `dispatches` dict.
 
     Periodicity is not in this schema (older files never wrote it), so it's
@@ -171,9 +182,13 @@ def from_schedule_json(schedule_dict: dict) -> list[DispatchRecord]:
     limitation, not a bug, when no periodicity metadata was persisted.
     """
     records = []
+    # A schedule records its own network names; prefer them over a guess.
+    if known is None:
+        md = schedule_dict.get("metadata") or {}
+        known = set(md.get("periodic_networks") or ()) or None
     for dispatch_key, entry in schedule_dict.get("dispatches", {}).items():
         instance_id = _instance_id_from_dispatch_key(dispatch_key)
-        base_id = _strip_trailing_digits(instance_id)
+        base_id = _base_id(instance_id, known)
         records.append(DispatchRecord(
             instance_id=instance_id,
             base_id=base_id,

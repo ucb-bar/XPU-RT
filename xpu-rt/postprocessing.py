@@ -286,7 +286,12 @@ def output_scheduled_json(
     periodic_networks = {}
     granularity_advice = []
     try:
-        records = from_workload(combined_workload, t, alpha)
+        # The real network names, so `periodic_networks` is keyed by what the
+        # networks are actually called. Written stripped, this metadata makes
+        # every downstream consumer -- including the deadline scorer -- split
+        # job names in the wrong place for any network ending in a digit.
+        known = set(profiled_times_by_network or ()) or None
+        records = from_workload(combined_workload, t, alpha, known)
         periodic_periods, _ = group_by_periodicity(records)
         periodic_networks = {base: round(period, 3) for base, period in periodic_periods.items()}
         granularity_advice = [advice.as_dict() for advice in analyze_granularity(records)]

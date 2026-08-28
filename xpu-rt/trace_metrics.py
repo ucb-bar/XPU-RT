@@ -43,19 +43,23 @@ from __future__ import annotations
 
 import csv
 from collections import defaultdict
+
+import job_names
 from typing import Dict, Iterable, List, Optional, Sequence
 
 
-def model_of(job_name: str) -> str:
-    """'dronet3' -> 'dronet'. The instance index is the numeric suffix."""
-    base = job_name.rstrip("0123456789")
-    return base or job_name
+def model_of(job_name: str, known=None) -> str:
+    """'dronet3' -> 'dronet'. The instance index is the numeric suffix.
+
+    `known` is the set of real network names. Pass it whenever it is available:
+    without it a network whose own name ends in a digit is split in the wrong
+    place, and the consequence here is not cosmetic -- see `job_names`.
+    """
+    return job_names.model_of(job_name, known)
 
 
-def instance_index(job_name: str) -> int:
-    base = model_of(job_name)
-    suffix = job_name[len(base):]
-    return int(suffix) if suffix else 0
+def instance_index(job_name: str, known=None) -> int:
+    return job_names.instance_index(job_name, known)
 
 
 def pct(xs: Sequence[float], p: float) -> float:
@@ -156,6 +160,13 @@ def summarise_trace(rows: Sequence[dict],
     if not rows:
         return {}
     windows_ms = windows_ms or {}
+    # The period map's keys ARE the network names, so the split below needs no
+    # extra argument -- provided the schedule that produced them was itself
+    # written with un-stripped names (see `postprocessing.output_scheduled_json`).
+    # For a schedule written before that fix the keys are already stripped, and
+    # `job_names.split_job_name` then falls through to the same stripping, so
+    # old artifacts keep scoring exactly as they did.
+    known = set(periods_ms) | set(windows_ms)
 
     service_us = sum(float(r["run_us"]) for r in rows)
     # Not every producer measures queueing separately (ModelBlaster's harness
@@ -177,12 +188,12 @@ def summarise_trace(rows: Sequence[dict],
 
     per_model: Dict[str, dict] = {}
     for job, (st, en) in spans.items():
-        m = model_of(job)
+        m = model_of(job, known)
         T = periods_ms.get(m)
         if T is None:
             continue
         D = windows_ms.get(m, T)
-        k = instance_index(job)
+        k = instance_index(job, known)
         d = per_model.setdefault(m, {
             "period_ms": T, "deadline_ms": D, "instances": 0,
             "misses": 0, "lateness_ms": [], "response_ms": [],
