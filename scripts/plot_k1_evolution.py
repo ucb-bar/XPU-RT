@@ -106,70 +106,166 @@ def pct(xs, p):
     return s[k]
 
 
-# ---------------------------------------------------------------- figure 1
-def figure1(rungs, out):
-    """Measured Gantt, one panel per rung, lanes = physical cores.
+# ------------------------------------------------------- reusable Gantt render
+# One renderer, parameterised. This block used to be the body of figure1() with
+# the rungs, the two model colours, the eight K1 cores and the 140 ms window all
+# hardcoded, so anything else that needed a core-lane Gantt wrote its own -- and
+# by now `xpu-rt/plot_gantt.py` (terminal) and merlin's
+# `analysis/plot_dispatch_trace.py` already disagree with it about the schema.
+# The policy sweep needs exactly this picture per solver, so the picture became
+# a function and figure1 became its first caller. Nothing about the published
+# figure changed: same lanes, same window, same styling.
+
+#: Okabe-Ito, minus the two already spoken for below.
+PALETTE = ["#009E73", "#CC79A7", "#56B4E9", "#F0E442", "#D55E00", "#000000"]
+
+
+def model_colours(models):
+    """Stable model -> colour map. DroNet and MLP keep the published colours."""
+    fixed = {"dronet": C_DRONET, "mlp": C_MLP}
+    out, spare = {}, list(PALETTE)
+    for m in sorted(models):
+        base = m
+        if base in fixed:
+            out[m] = fixed[base]
+        else:
+            out[m] = spare[len(out) % len(spare)]
+    return out
+
+
+def cores_from_schedule(sched):
+    """Lane order from a schedule's own hardware targets, cluster-major.
+
+    Sorting is (cluster, numeric core) rather than lexicographic so CPU_P#10
+    lands after CPU_P#9 instead of after CPU_P#1.
+    """
+    seen = set()
+    for ent in sched.values():
+        for c in str(ent.get("hardware_target", "")).split("+"):
+            if c:
+                seen.add(c)
+
+    def key(c):
+        cluster, _, idx = c.partition("#")
+        return (cluster, int(idx) if idx.isdigit() else 0)
+
+    return sorted(seen, key=key)
+
+
+def render_gantt_panels(panels, out, *, periods, cores=None, window_ms=140.0,
+                        deadline_model=None, colours=None,
+                        xlabel="Time on the K1 (ms)", width=DOUBLE_COL,
+                        model_labels=None,
+                        panel_height_mm=26.0, panel_labels=True,
+                        cluster_boundary=True, legend=True):
+    """Gantt with physical cores as lanes, one panel per entry in `panels`.
+
+    `panels` is a sequence of dicts with keys ``title``, ``rows`` (trace rows,
+    measured or rendered from a schedule by `xpu-rt/schedule_trace.py`) and
+    ``sched`` (that run's ``dispatches`` map, for the core assignment).
 
     A sharded dispatch is drawn as ONE bar spanning every core it holds, which
     is what the runtime actually does -- the core lock in scheduler_runner.cc
-    keeps the other three cores idle for its duration. Drawing it as four
-    independent bars would show a machine that does not exist.
+    keeps the other cores idle for its duration. Drawing it as four independent
+    bars would show a machine that does not exist.
+
+    Writes ``out + '.png'`` and ``out + '.pdf'`` and returns both paths.
     """
-    window_ms = 140.0
-    fig, axes = plt.subplots(len(rungs), 1, figsize=(DOUBLE_COL, 78 * MM),
-                             sharex=True)
-    for lab, ax, (tag, title, trace_p, sched_p) in zip("abc", axes, rungs):
-        rows = load_trace(trace_p)
-        sched = load_schedule(sched_p)
-        for r in rows:
-            key = r["dispatch_key"]
-            ent = sched.get(key)
+    panels = list(panels)
+    if not panels:
+        raise ValueError("render_gantt_panels: no panels")
+    if cores is None:
+        cores = cores_from_schedule(panels[0]["sched"])
+    if not cores:
+        raise ValueError("render_gantt_panels: no core lanes could be resolved")
+    if colours is None:
+        colours = model_colours({model_of(r["job_name"])
+                                 for p in panels for r in p["rows"]})
+
+    height = max(panel_height_mm * len(panels), 28.0) * MM
+    fig, axes = plt.subplots(len(panels), 1, figsize=(width, height),
+                             sharex=True, squeeze=False)
+    axes = list(axes[:, 0])
+    seen_models = set()
+    for idx, (ax, panel) in enumerate(zip(axes, panels)):
+        sched = panel["sched"]
+        for r in panel["rows"]:
+            ent = sched.get(r["dispatch_key"])
             if ent is None:
                 continue
             start = float(r["start_us"]) / 1000.0
             dur = float(r["run_us"]) / 1000.0
             if start > window_ms:
                 continue
-            lanes = [CORES.index(c) for c in ent["hardware_target"].split("+")
-                     if c in CORES]
+            lanes = [cores.index(c) for c in str(ent["hardware_target"]).split("+")
+                     if c in cores]
             if not lanes:
                 continue
             m = model_of(r["job_name"])
-            colour = C_DRONET if m == "dronet" else C_MLP
+            seen_models.add(m)
             lo, hi = min(lanes), max(lanes)
             ax.broken_barh([(start, max(dur, 0.15))],
                            (lo - 0.42, (hi - lo) + 0.84),
-                           facecolors=colour, edgecolors="white",
-                           linewidth=0.15)
-        # DroNet's release boundaries: the deadlines the whole exercise is about
-        k = 0
-        while k * PERIODS["dronet"] <= window_ms:
-            ax.axvline(k * PERIODS["dronet"], color=C_DEADLINE, lw=0.4,
-                       ls=(0, (2, 2)), zorder=0)
-            k += 1
-        ax.set_yticks(range(len(CORES)))
-        ax.set_yticklabels(CORES, fontsize=4.2)
-        ax.set_ylim(-0.7, len(CORES) - 0.3)
+                           facecolors=colours.get(m, C_MUTED),
+                           edgecolors="white", linewidth=0.15)
+        if deadline_model and periods.get(deadline_model):
+            T = periods[deadline_model]
+            k = 0
+            while k * T <= window_ms:
+                ax.axvline(k * T, color=C_DEADLINE, lw=0.4, ls=(0, (2, 2)),
+                           zorder=0)
+                k += 1
+        ax.set_yticks(range(len(cores)))
+        ax.set_yticklabels(cores, fontsize=4.2)
+        ax.set_ylim(-0.7, len(cores) - 0.3)
         ax.invert_yaxis()
         ax.set_xlim(0, window_ms)
-        ax.set_title(title, loc="left", pad=2)
+        ax.set_title(panel["title"], loc="left", pad=2)
         ax.spines[["top", "right"]].set_visible(False)
-        # Cluster boundary: cores 0-3 carry IME, cores 4-7 do not.
-        ax.axhline(3.5, color="0.75", lw=0.4)
-        ax.text(-0.062, 1.16, lab, transform=ax.transAxes, fontsize=8,
-                fontweight="bold", va="top", ha="right")
-    axes[-1].set_xlabel("Time on the K1 (ms)")
-    handles = [Patch(facecolor=C_DRONET, label="DroNet (33.3 ms period)"),
-               Patch(facecolor=C_MLP, label="MLP (10 ms period)"),
-               plt.Line2D([], [], color=C_DEADLINE, lw=0.6, ls=(0, (2, 2)),
-                          label="DroNet deadlines")]
-    axes[0].legend(handles=handles, ncol=3, frameon=False,
-                   loc="lower left", bbox_to_anchor=(0, 1.18))
+        if cluster_boundary:
+            # Where the cluster label changes: on the K1 that is cores 0-3
+            # carrying IME and 4-7 not, which is a hardware fact worth a line.
+            for i in range(1, len(cores)):
+                if cores[i].split("#")[0] != cores[i - 1].split("#")[0]:
+                    ax.axhline(i - 0.5, color="0.75", lw=0.4)
+        if panel_labels:
+            lab = chr(ord("a") + idx) if isinstance(panel_labels, bool) \
+                else panel_labels[idx]
+            ax.text(-0.062, 1.16, lab, transform=ax.transAxes, fontsize=8,
+                    fontweight="bold", va="top", ha="right")
+    axes[-1].set_xlabel(xlabel)
+    if legend:
+        names = model_labels or {}
+        handles = [Patch(facecolor=colours.get(m, C_MUTED),
+                         label=(f"{names.get(m, m)} ({periods[m]:g} ms period)"
+                                if periods.get(m) else names.get(m, m)))
+                   for m in sorted(seen_models)]
+        if deadline_model and periods.get(deadline_model):
+            handles.append(plt.Line2D([], [], color=C_DEADLINE, lw=0.6,
+                                      ls=(0, (2, 2)),
+                                      label=f"{names.get(deadline_model, deadline_model)}"
+                                            f" deadlines"))
+        axes[0].legend(handles=handles, ncol=max(1, len(handles)), frameon=False,
+                       loc="lower left", bbox_to_anchor=(0, 1.18))
     fig.tight_layout(rect=(0.01, 0, 1, 0.97))
     fig.savefig(out + ".pdf", bbox_inches="tight", pad_inches=0.03)
     fig.savefig(out + ".png", dpi=300, bbox_inches="tight", pad_inches=0.03)
     plt.close(fig)
     print("wrote", out + ".pdf/.png")
+    return out + ".png", out + ".pdf"
+
+
+# ---------------------------------------------------------------- figure 1
+def figure1(rungs, out):
+    """Measured Gantt, one panel per rung, lanes = physical cores."""
+    panels = [{"title": title,
+               "rows": load_trace(trace_p),
+               "sched": load_schedule(sched_p)}
+              for _tag, title, trace_p, sched_p in rungs]
+    return render_gantt_panels(panels, out, periods=PERIODS, cores=CORES,
+                               window_ms=140.0, deadline_model="dronet",
+                               colours={"dronet": C_DRONET, "mlp": C_MLP},
+                               model_labels={"dronet": "DroNet", "mlp": "MLP"})
 
 
 # ---------------------------------------------------------------- figure 2

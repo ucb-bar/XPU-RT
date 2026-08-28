@@ -1,0 +1,123 @@
+============================================================
+Loading network hierarchy from JSON...
+============================================================
+
+Loading networks from: /scratch2/agustin/XPU-RT/results/policy_sweep_k1/config/networks_k1_mb_B1_k1_mb_B1.json
+
+Found 2 networks:
+  - mlp_control (id: 0, identifier: mlp_control)
+  - dronet (id: 1, identifier: dronet)
+
+Found 0 network-level dependencies:
+
+Resolved runtime configuration:
+  Machine core counts: {'CPU_P': 4, 'CPU_E': 4}
+  Profile HW mapping: CPU_P->rvv_x60, CPU_E->rvv_x60
+  Profile target/topology: target=spacemit_x60, topo_tag=topo_0
+  p_core_speedup: 1.0
+  random_seed: 42
+  solver_verbosity: 0
+  time_limit: 20
+  use_profiled: True
+  prune_periodic: True
+  restrict_makespan_to_nonperiodic: False
+  machine_combination_mode: singletons
+  enforce_same_processor_combinations: True
+
+Using profiled runtimes where available...
+
+Creating workload from network hierarchy...
+
+Workload created successfully!
+  Total operations: 434
+  Scheduler machines (8 cores): ['CPU_P#0', 'CPU_P#1', 'CPU_P#2', 'CPU_P#3', 'CPU_E#0', 'CPU_E#1', 'CPU_E#2', 'CPU_E#3']
+  Machine combination options: 8 (mode=singletons)
+  Job names: ['mlp_control0', 'dronet0', 'mlp_control1', 'mlp_control2', 'mlp_control3', 'mlp_control4', 'mlp_control5', 'mlp_control6', 'mlp_control7', 'mlp_control8', 'mlp_control9', 'mlp_control10', 'mlp_control11', 'mlp_control12', 'mlp_control13', 'mlp_control14', 'mlp_control15', 'mlp_control16', 'mlp_control17', 'mlp_control18', 'mlp_control19', 'mlp_control20', 'mlp_control21', 'mlp_control22', 'mlp_control23', 'mlp_control24', 'mlp_control25', 'mlp_control26', 'mlp_control27', 'mlp_control28', 'mlp_control29', 'mlp_control30', 'mlp_control31', 'dronet1', 'dronet2', 'dronet3', 'dronet4', 'dronet5', 'dronet6', 'dronet7', 'dronet8', 'dronet9']
+  Operations with multiple predecessors: 30
+  Independent jobs (can run in parallel): 42
+
+============================================================
+Scheduling combined workload (scheduler=cpsat)...
+============================================================
+
+Scheduling completed!
+Makespan (non-periodic): 0.00 ms
+
+Combination assignments:
+  1xCPU_P: 95 operations
+  1xCPU_P: 95 operations
+  1xCPU_P: 95 operations
+  1xCPU_P: 95 operations
+  1xCPU_E: 339 operations
+  1xCPU_E: 339 operations
+  1xCPU_E: 339 operations
+  1xCPU_E: 339 operations
+
+Per-network combination assignments:
+  Mlp_control0: 1xCPU_E=7, 1xCPU_E=7, 1xCPU_E=7, 1xCPU_E=7
+  Dronet0: 1xCPU_P=4, 1xCPU_P=4, 1xCPU_P=4, 1xCPU_P=4, 1xCPU_E=17, 1xCPU_E=17, 1xCPU_E=17, 1xCPU_E=17
+  Mlp_control1: 1xCPU_E=7, 1xCPU_E=7, 1xCPU_E=7, 1xCPU_E=7
+  Mlp_control2: 1xCPU_E=7, 1xCPU_E=7, 1xCPU_E=7, 1xCPU_E=7
+  Mlp_control3: 1xCPU_E=7, 1xCPU_E=7, 1xCPU_E=7, 1xCPU_E=7
+  Mlp_control4: 1xCPU_E=7, 1xCPU_E=7, 1xCPU_E=7, 1xCPU_E=7
+  Mlp_control5: 1xCPU_E=7, 1xCPU_E=7, 1xCPU_E=7, 1xCPU_E=7
+  Mlp_control6: 1xCPU_E=7, 1xCPU_E=7, 1xCPU_E=7, 1xCPU_E=7
+  Mlp_control7: 1xCPU_E=7, 1xCPU_E=7, 1xCPU_E=7, 1xCPU_E=7
+  Mlp_control8: 1xCPU_E=7, 1xCPU_E=7, 1xCPU_E=7, 1xCPU_E=7
+  Mlp_control9: 1xCPU_E=7, 1xCPU_E=7, 1xCPU_E=7, 1xCPU_E=7
+  Mlp_control10: 1xCPU_E=7, 1xCPU_E=7, 1xCPU_E=7, 1xCPU_E=7
+  Mlp_control11: 1xCPU_E=7, 1xCPU_E=7, 1xCPU_E=7, 1xCPU_E=7
+  Mlp_control12: 1xCPU_E=7, 1xCPU_E=7, 1xCPU_E=7, 1xCPU_E=7
+  Mlp_control13: 1xCPU_E=7, 1xCPU_E=7, 1xCPU_E=7, 1xCPU_E=7
+  Mlp_control14: 1xCPU_E=7, 1xCPU_E=7, 1xCPU_E=7, 1xCPU_E=7
+  Mlp_control15: 1xCPU_E=7, 1xCPU_E=7, 1xCPU_E=7, 1xCPU_E=7
+  Mlp_control16: 1xCPU_E=7, 1xCPU_E=7, 1xCPU_E=7, 1xCPU_E=7
+  Mlp_control17: 1xCPU_E=7, 1xCPU_E=7, 1xCPU_E=7, 1xCPU_E=7
+  Mlp_control18: 1xCPU_E=7, 1xCPU_E=7, 1xCPU_E=7, 1xCPU_E=7
+  Mlp_control19: 1xCPU_E=7, 1xCPU_E=7, 1xCPU_E=7, 1xCPU_E=7
+  Mlp_control20: 1xCPU_E=7, 1xCPU_E=7, 1xCPU_E=7, 1xCPU_E=7
+  Mlp_control21: 1xCPU_E=7, 1xCPU_E=7, 1xCPU_E=7, 1xCPU_E=7
+  Mlp_control22: 1xCPU_E=7, 1xCPU_E=7, 1xCPU_E=7, 1xCPU_E=7
+  Mlp_control23: 1xCPU_E=7, 1xCPU_E=7, 1xCPU_E=7, 1xCPU_E=7
+  Mlp_control24: 1xCPU_E=7, 1xCPU_E=7, 1xCPU_E=7, 1xCPU_E=7
+  Mlp_control25: 1xCPU_E=7, 1xCPU_E=7, 1xCPU_E=7, 1xCPU_E=7
+  Mlp_control26: 1xCPU_E=7, 1xCPU_E=7, 1xCPU_E=7, 1xCPU_E=7
+  Mlp_control27: 1xCPU_E=7, 1xCPU_E=7, 1xCPU_E=7, 1xCPU_E=7
+  Mlp_control28: 1xCPU_P=2, 1xCPU_P=2, 1xCPU_P=2, 1xCPU_P=2, 1xCPU_E=5, 1xCPU_E=5, 1xCPU_E=5, 1xCPU_E=5
+  Mlp_control29: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control30: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control31: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Dronet1: 1xCPU_P=4, 1xCPU_P=4, 1xCPU_P=4, 1xCPU_P=4, 1xCPU_E=17, 1xCPU_E=17, 1xCPU_E=17, 1xCPU_E=17
+  Dronet2: 1xCPU_P=4, 1xCPU_P=4, 1xCPU_P=4, 1xCPU_P=4, 1xCPU_E=17, 1xCPU_E=17, 1xCPU_E=17, 1xCPU_E=17
+  Dronet3: 1xCPU_P=4, 1xCPU_P=4, 1xCPU_P=4, 1xCPU_P=4, 1xCPU_E=17, 1xCPU_E=17, 1xCPU_E=17, 1xCPU_E=17
+  Dronet4: 1xCPU_P=4, 1xCPU_P=4, 1xCPU_P=4, 1xCPU_P=4, 1xCPU_E=17, 1xCPU_E=17, 1xCPU_E=17, 1xCPU_E=17
+  Dronet5: 1xCPU_P=4, 1xCPU_P=4, 1xCPU_P=4, 1xCPU_P=4, 1xCPU_E=17, 1xCPU_E=17, 1xCPU_E=17, 1xCPU_E=17
+  Dronet6: 1xCPU_P=5, 1xCPU_P=5, 1xCPU_P=5, 1xCPU_P=5, 1xCPU_E=16, 1xCPU_E=16, 1xCPU_E=16, 1xCPU_E=16
+  Dronet7: 1xCPU_P=10, 1xCPU_P=10, 1xCPU_P=10, 1xCPU_P=10, 1xCPU_E=11, 1xCPU_E=11, 1xCPU_E=11, 1xCPU_E=11
+  Dronet8: 1xCPU_P=17, 1xCPU_P=17, 1xCPU_P=17, 1xCPU_P=17, 1xCPU_E=4, 1xCPU_E=4, 1xCPU_E=4, 1xCPU_E=4
+  Dronet9: 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 1xCPU_E=5, 1xCPU_E=5, 1xCPU_E=5, 1xCPU_E=5
+Job 'mlp_control0' (job_id=0, color_index=0) -> color RGB=[0.59607843 0.8345098  0.57882353]
+DEBUG TRANSFER: alpha_shape=(434, 8), num_actual_machines=8, len(machines)=8, alpha_cols=8, is_using_combos=False, prev_machine=7, machine=7, transfer_times_shape=(8, 8), machine_combinations=True
+DEBUG IMMEDIATE: op=62, job_id=9, lookup=9, op_color_index=9, base_colors[9]=(np.float64(0.38901960784313727), np.float64(0.7363321799307958), np.float64(0.43044982698961937))
+DEBUG AFTER MODULO: op=62, original=9, after_modulo=9, len(base_colors)=42
+DEBUG BEFORE LEGEND: op=62, op_color_index=9, original=9, job_index=8, legend_key=kind_mlp_control, in_legend=True
+DEBUG IMMEDIATE: op=63, job_id=10, lookup=10, op_color_index=10, base_colors[10]=(np.float64(0.35764705882352943), np.float64(0.7209534794309881), np.float64(0.4150711264898116))
+DEBUG AFTER MODULO: op=63, original=10, after_modulo=10, len(base_colors)=42
+DEBUG BEFORE LEGEND: op=63, op_color_index=10, original=10, job_index=9, legend_key=kind_mlp_control, in_legend=True
+DEBUG IMMEDIATE: op=64, job_id=10, lookup=10, op_color_index=10, base_colors[10]=(np.float64(0.35764705882352943), np.float64(0.7209534794309881), np.float64(0.4150711264898116))
+DEBUG AFTER MODULO: op=64, original=10, after_modulo=10, len(base_colors)=42
+DEBUG BEFORE LEGEND: op=64, op_color_index=10, original=10, job_index=9, legend_key=kind_mlp_control, in_legend=True
+Job 'dronet0' (job_id=1, color_index=1) -> color RGB=[0.57960784 0.77019608 0.87372549]
+Saving plot to plots/networks_k1_mb_B1_k1_mb_B1_cpsat_profiled.png...
+
+Plot saved to plots/networks_k1_mb_B1_k1_mb_B1_cpsat_profiled.png
+
+Outputting scheduled JSON...
+  pdb_hash = sha256:7894dcef5b1e735b... over 2 CSV(s)
+
+Scheduled JSON saved to: schedules/scheduled_networks_k1_mb_B1_k1_mb_B1_cpsat_profiled.json
+Metrics written to: schedules/scheduled_networks_k1_mb_B1_k1_mb_B1_cpsat_profiled_metrics.json
+  makespan_us=318.00  deadline_miss=121  cross_dev=109  solver_s=20.651
+Scheduler report written to: schedules/scheduled_networks_k1_mb_B1_k1_mb_B1_cpsat_profiled_report.json
+
+--- stderr ---
