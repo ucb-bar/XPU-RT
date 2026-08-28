@@ -10,3 +10,6 @@ runtime/dispatch_from_schedule_async/
 
 # Session/audit notes for docs -- process commentary, not user-facing docs
 docs/*_status.md
+
+# large render artifacts — keep out of git (GitHub rejects >100MB)
+sims/out/*.mp4
