@@ -89,12 +89,35 @@ export PY=python3
 | Python ≥3.11 with **torch**, **numpy** | `extract_graph` builds the model in PyTorch and does the int8 PTQ | `$PY -c 'import torch, numpy'` |
 | `matplotlib` | the scheduler writes a Gantt PNG on every run; `plot_xpurt_trace` needs it too | `$PY -c 'import matplotlib'` |
 | a riscv64-linux-gnu **gcc** | every board binary is cross-compiled and statically linked | `${CROSS}gcc --version` |
+| **ultralytics**, only for yolov8 | `get_model` streams pretrained weights out of a `.pt` through the ultralytics loader | `$PY -c 'import ultralytics'` |
 | `cmake` ≥3.16, `ninja` or `make` | `harness_xpurt_linux` is a CMake project | `cmake --version` |
 | ssh access to the board | see the stanza below | `ssh $MODELBLASTER_K1_HOST true` |
 
-On the machine this was developed on, the torch environment is the conda env
-`merlin-dev` and the cross toolchain lives in a chipyard conda env — but neither
-is required, and neither path is baked into anything you have to edit:
+On the machine this was developed on the environments are split, and the split
+is worth knowing because no single one of them can run the whole yolov8 path:
+
+| env | has | lacks |
+|---|---|---|
+| `merlin-dev` | torch 2.9.1 | **ultralytics** |
+| `xpurt` | torch, **ultralytics 8.4.39** | — use this one for yolov8 |
+| XPU-RT's own `.venv` | the scheduler side, matplotlib, mosek | torch |
+
+An earlier version of this document claimed `merlin-dev` carried ultralytics
+8.4. It does not, and the failure is a `ModuleNotFoundError` several minutes
+into an extraction rather than at the start.
+
+The cross toolchain is GCC 14.3.0 at
+
+    merlin/build_tools/riscv-tools-spacemit/spacemit-toolchain-linux-glibc-x86_64-v1.1.2/bin
+
+Export it on `PATH` explicitly, and if you launch a build with `nohup` or in the
+background, export it INSIDE that script. A background run here once failed
+every single build because the PATH was set in the interactive shell and not in
+the `nohup`ed one; the fix is a `command -v ${CROSS}gcc || exit 1` guard at the
+top of the script, which turns twenty minutes of confusing failures into one
+line.
+
+None of these paths is baked into anything you have to edit:
 
 ```bash
 # example only -- substitute your own
@@ -379,6 +402,87 @@ tree, it is **41% slower**:
 Accept requires correctness **and** an improvement in the selected metric. It is
 archived, not promoted. Always run the incumbent on the same board in the same
 conditions before claiming a generated kernel is an improvement.
+
+---
+
+## 3b. Bringing a RETRAINED detector on board
+
+A model retrained elsewhere — new classes, new input geometry — needs three
+things to agree, and nothing checks two of them for you.
+
+```bash
+export MODELBLASTER_YOLOV8N_WEIGHTS=/path/to/best.pt   # the fine-tune
+export MODELBLASTER_YOLOV8N_NC=2                       # its class count
+export MODELBLASTER_YOLOV8N_INPUT=64x96                # H x W; `96` = square
+export MODELBLASTER_YOLOV8N_CALIB_DIR=/path/to/dataset/images/val
+export MODELBLASTER_YOLOV8N_CALIB_IMAGE=/path/to/dataset/images/val/one.png
+bash scripts/run_model_k1.sh yolov8_nano int8 rvv_x60 0
+```
+
+### The three that must agree
+
+1. the geometry the model was TRAINED at,
+2. `MODELBLASTER_YOLOV8N_INPUT` here,
+3. the board's preprocess.
+
+Only the third is yours to get right at deploy time; the first two are a
+config you can silently mismatch. Note what does NOT need to agree: the
+ultralytics EXPORT geometry. Conv and BN weight shapes depend on channel
+counts, not on input resolution, so a checkpoint trained at 64x96 loads into a
+model configured at any size — this path reads the `state_dict`, not an
+exported graph.
+
+### Rectangular input, and why it is not a micro-optimisation
+
+`MODELBLASTER_YOLOV8N_INPUT` takes `64x96` (H x W) as well as a bare square
+size. Every dimension must be a multiple of 32 — YOLOv8's deepest level
+downsamples by 32, so `96x48` is refused even though half of it looks legal.
+
+A square input forces a non-square camera frame to be letterboxed, and the
+padding is then convolved at full cost through the whole backbone. For the
+90x60 FPV frame here, a 96x96 letterbox is a predicted 88.5 ms of which ~26 ms
+convolves grey bars; the matching 64x96 is 62.6 ms with zero padding. That is
+not a speed/accuracy trade — the content box inside the letterbox IS 64x96, so
+the rect keeps every real pixel.
+
+Exact-aspect sizes are scarcer than they look. For 3:2 the ladder is 64x96,
+then 128x192 — a 3.5x cost jump, because 96x144 would be the natural half-step
+and 144 is not a multiple of 32.
+
+### PTQ calibration is not optional here, and its default is absent
+
+`models/yolov8_nano.py` defaults `MODELBLASTER_YOLOV8N_CALIB_DIR` to
+`datasets/idsia/samples/sc`, which **does not exist in this checkout**. The
+documented fallback is `torch.randn`, and for this model that is not a mild
+degradation:
+
+> With `torch.randn` activation scales saturated the cls-head logits and
+> produced 50 false-positive detections at confidence=1.0 ... the int8 ceiling
+> tracks fp32 within 1-2 ulp instead of L-inf ~ 59.
+
+So the default path quantises a detector against noise. It builds, verifies,
+and profiles perfectly cleanly, and hands you a latency number for a model that
+detects nonsense. Point `CALIB_DIR` at the deployment distribution — the actual
+validation set of the actual dataset — and confirm from the log that it says
+`calibrated across N samples`.
+
+`CALIB_IMAGE` is a SEPARATE knob for the single io-pinned golden used by the
+host-vs-board bit-exactness check. Setting only `CALIB_DIR` leaves the golden
+as noise. `max_abs_err` is still a valid test of "the generated C matches
+PyTorch" — any fixed input tests that — but it exercises no real-data
+behaviour. Set both.
+
+### A custom `nc` needs a custom checkpoint
+
+`MODELBLASTER_YOLOV8N_NC != 80` against the STOCK `yolov8n.pt` is refused: its
+cv3 head is COCO-80 and loading it into a 2-class model is a real shape error.
+With `MODELBLASTER_YOLOV8N_WEIGHTS` pointing at a fine-tune, any `nc` is
+allowed — permitted, not trusted, since the loader still raises per tensor on
+any shape mismatch and names it.
+
+The trap to know: `MODELBLASTER_YOLOV8N_PRETRAINED=0` is the obvious way past
+a refusal and it silently discards the training, shipping random weights that
+build, run, profile and detect nothing.
 
 ---
 
