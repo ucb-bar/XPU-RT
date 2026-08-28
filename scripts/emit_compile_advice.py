@@ -36,15 +36,23 @@ def main() -> int:
                     help="measured trace CSV. Without it, "
                          "deadline_misses_attributed is 0 -- an unmeasured "
                          "miss count is not evidence.")
-    ap.add_argument("--gen-root", default="gen")
+    # Defaults describe the LIVE path (ModelBlaster/rvv_x60), not the retired
+    # IREE one. They used to be `gen` / `RVV,scalar,IME` / `RVV` / `jsonl`,
+    # which resolve nothing here: ModelBlaster writes `rvv_x60` and `scalar`
+    # under `gen_mb`. The old defaults did not error -- `scalar` alone
+    # resolved, so the "no profiles" warning never fired, `profs.get("RVV")`
+    # returned {}, and the run wrote an EMPTY advice file and exited 0.
+    # Measured: 118 advice items with the explicit flags, 0 with the defaults,
+    # and nothing said why. The retired tree stays reachable by passing them.
+    ap.add_argument("--gen-root", default="gen_mb")
     ap.add_argument("--target", default="spacemit_x60")
     ap.add_argument("--schedule", required=True)
     ap.add_argument("--out", default="artifacts/k1_run/compile_advice.json")
     ap.add_argument("--models", default="mlp:mlp.q.int8,dronet:dronet.q.int8")
-    ap.add_argument("--impls", default="RVV,scalar,IME")
-    ap.add_argument("--baseline-impl", default="RVV")
+    ap.add_argument("--impls", default="rvv_x60,scalar")
+    ap.add_argument("--baseline-impl", default="rvv_x60")
     ap.add_argument("--profile-format", choices=("jsonl", "csv"),
-                    default="jsonl",
+                    default="csv",
                     help="which producer wrote the profiles. `jsonl` is "
                          "runtime/scripts/profile_k1.py (samples, "
                          "percentiles, cv). `csv` is ModelBlaster's "
@@ -174,6 +182,17 @@ def main() -> int:
         if not profs:
             print(f"WARN no profiles for {model}", file=sys.stderr)
             continue
+        # An absent BASELINE is not "no advice", it is "I could not read the
+        # thing every comparison is made against". Silently yielding an empty
+        # advice document for this is how the old defaults hid themselves.
+        if a.baseline_impl not in profs:
+            raise SystemExit(
+                f"--baseline-impl {a.baseline_impl!r} has no profile for "
+                f"{model}. Resolved: {sorted(profs)}. Requested: {impls}. "
+                f"Looked under --gen-root {a.gen_root!r} with "
+                f"--profile-format {a.profile_format}. Every comparison is "
+                f"against the baseline, so continuing would write an empty "
+                f"advice document and exit 0.")
         base = profs.get(a.baseline_impl, {})
         # From the schedule's own records rather than a separate dispatch-graph
         # file, so the chain test and the cost data cannot disagree about which

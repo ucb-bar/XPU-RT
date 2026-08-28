@@ -138,7 +138,20 @@ def render_gantt(trace_csv: str, out_path: str,
     # is 30× the predicted, the chart should show it. That's the whole point.
     raw_max_pred = max(r["predicted_start"] + r["predicted_duration"] for r in rows)
     PRED_PER_MS = 1_000_000.0 if raw_max_pred > 10_000 else 1.0
-    ACTUAL_PER_MS = 1_000.0  # mtime @ 1 MHz on this bitstream
+    # Ticks per millisecond in the ACTUAL column. Overridable because this
+    # renderer is used on more than one target.
+    #
+    # It was hardcoded to 1_000.0 ("mtime @ 1 MHz on this bitstream"), which is
+    # the FireSim bitstream's clock. On the SpaceMiT K1 `rdtime` runs at a
+    # fixed 24 MHz (ModelBlaster/cores/spacemit_k1.json, notes.clock; rdcycle
+    # SIGILLs from userspace there, so rdtime is the only counter available).
+    # Every "actual" bar drawn from a K1 trace was therefore 24x too long,
+    # against a "predicted" panel that was correct -- which reads as a
+    # catastrophic misprediction and is a unit bug.
+    #
+    # scripts/plot_k1_trace_gantt.py:68 has the same constant spelled
+    # K1_RDTIME_HZ and got it right; this is the copy that did not.
+    ACTUAL_PER_MS = float(os.environ.get("XPURT_TICKS_PER_MS", 24_000.0))
     # Keep `scale` as the dispatch-shape ratio for the printed summary.
     scale = (max(r["actual_end"] for r in rows) / raw_max_pred) if raw_max_pred > 0 else 1.0
 
