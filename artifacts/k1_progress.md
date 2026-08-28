@@ -1270,3 +1270,89 @@ share and worth writing.
 ### Repo SHAs
 
 XPU-RT `feat/k1-modelblaster-closed-loop`, ModelBlaster `fdc1c94`.
+
+---
+
+## Every op now has a vector kernel; the two "RVV doesn't help" models did too
+
+### Attempted
+
+Close the remaining curated-kernel gaps the `implementation` column exposed, and
+find out whether the models that measured ~1.0x on RVV were really unsuited to
+it.
+
+### Measurements
+
+They were not. With real provenance in the profile, the gate showed `lstm_s8`
+was 97.9% of vitfly_lstm and 91.8% of lstm_tiny -- the same missing-kernel bug,
+not a property of LSTMs. Six ops had no curated RVV kernel; five carried no
+`AlgorithmCandidate` at all and `add_s8` carried only a gemmini-affined one, so
+the curated probe had nothing to look for on any RVV target.
+
+Final state, all six models, cold (the stated protocol -- see the caveat below):
+
+| model | scalar | rvv at session start | rvv now | vs scalar |
+|---|---|---|---|---|
+| mlp_control | 0.37 | 0.09 | 0.083 | 4.5x |
+| lstm_tiny | 0.08 | 0.08 | 0.059 | 1.4x |
+| vitfly_frontend | 1.77 | 0.42 | 0.382 | 4.6x |
+| vitfly_lstm | 29.69 | 28.28 | **9.48** | 3.1x |
+| dronet | 157.38 | 62.59 | **9.79** | 16.1x |
+| yolov8_nano | 4020.93 | 4974.78 | **226.87** | 17.7x |
+
+Reference-implementation time is now **0.000 ms in all six profiles**, verified
+independently from the `implementation` column rather than from the agent's
+report.
+
+### Two things that are NOT as good as the table suggests
+
+**vitfly_lstm's 3.1x is dominated by a fixed page-fault cost.** `run_model_k1.sh`
+scp's the ELF and runs it once, so the profile includes first-touch of a 1.7 MB
+const weight array. Measured directly on the board, same binaries, pages already
+resident:
+
+    rvv_x60   ~78,163 ticks =  3.26 ms
+    scalar   ~565,812 ticks = 23.58 ms      -> 7.24x warm
+
+Both the before and after numbers are cold, so the ratio is a fair comparison,
+but the absolute figures carry a constant that dominates whichever build is
+faster. The kernel's actual work is ~7.2x, not 3.1x.
+
+**`lstm_s8` is the one kernel that is not bit-exact by construction.** The
+reference accumulates 1.67 M products in double; the kernel does an exact int32
+dot product and rounds once. It is more accurate, and it agrees at the int8
+output on every case measured -- but that agreement is measured, not proven, with
+a ~1e-11 margin against a .5 tie. Recorded in the kernel header, the
+AlgorithmCandidate and the commit message rather than left implicit.
+
+Also honest: `sigmoid_s8` on dronet got 0.4 us SLOWER (n=1, 10 rdtime ticks,
+identical scalar expression below the memoization guard) and `elu_s8`'s memoized
+table LOSES 10-14% when every input byte is distinct. Real quantized activations
+repeat and mlp_control measured 1.24x, but the downside is real.
+
+### Passed
+
+Coverage gate with no override: `OK ... every weighted op has a rvv_x60 kernel`
+on all six models. check_rvv_vtype OK on all objects and deployed ELFs.
+max_abs_err=0 on all 21 (shape, quant) cases plus end-to-end golden compare.
+
+One correction to an earlier note in this log: `add_s8` CAN be vectorised
+bit-exactly. `roundf` is ties-away-from-zero and `vfcvt.x.f` rounds by `frm`,
+where RMM (encoding 4, "ties to Max Magnitude") is exactly that. The earlier
+entry said this was not reachable; it is, and it was verified in isolation on the
+board before being relied on. 7.5-7.6x on the two models that use it.
+
+### Blocker
+
+None.
+
+### Next
+
+Re-solve the ladder against these costs and run it on the board. The predicted
+policy sweep already shows the feasibility picture has moved: DroNet achieves
+32.3 Hz against a 30.0 Hz requirement with zero misses, where before the kernel
+fixes it needed 97% of four cores.
+
+### Repo SHAs
+
+XPU-RT `feat/k1-modelblaster-closed-loop` `e03fcf2`, ModelBlaster `f083877`.
