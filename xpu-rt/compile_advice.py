@@ -38,9 +38,47 @@ from typing import Any, Dict, List, Optional, Sequence
 
 SCHEMA_VERSION = 1
 
+#: The compiler-facing vocabulary. Every verb here is a directive ModelBlaster
+#: can act on: it names a change to the IR or to kernel selection.
+#:
+#: NOT in this vocabulary, deliberately: `rebalance`. `xpu-rt/advisor.py` emits
+#: it and it is a real recommendation, but it asks the SCHEDULER to re-place
+#: work ("rerun with heft/peft"), not the compiler to change anything. Putting
+#: it here would put a directive in a compiler contract that ModelBlaster can
+#: never execute. The two advisors answer different questions and the split is
+#: the point, not an accident: `advisor.py` diagnoses a schedule for a human,
+#: this file emits directives for a compiler.
+#:
+#: Each entry records its producer. A verb with no producer is a word the
+#: system cannot say, and `test_compile_advice_schema.py` enforces that the
+#: annotation stays true -- an unproduced verb is either wired or removed, not
+#: left advertising a capability that does not exist.
 RECOMMENDATIONS = (
-    "split", "fuse_with_predecessor", "fuse_with_successor",
-    "choose_implementation", "pin_core_class", "shard", "coarsen", "unchanged",
+    "split",                  # blocking_advice
+    "fuse_with_successor",    # overhead_advice
+    "choose_implementation",  # implementation_advice
+    "shard",                  # shard_advice (needs multi-core profiles)
+    "unfuse",                 # unfuse_advice
+    "unchanged",              # every advisor's refusal branch
+)
+
+#: Verbs the contract once advertised and nothing ever emitted. Kept as an
+#: explicit record rather than silently deleted, because "we removed a verb"
+#: and "a consumer is reading a verb that vanished" are different events and
+#: the second should be greppable.
+#:
+#: `fuse_with_predecessor` -- the mirror of fuse_with_successor. No producer
+#:     ever emitted it; `advice_to_fusion_hint.py` would accept it (it filters
+#:     on the `fuse_` prefix), so wiring it is a small change if a producer
+#:     ever wants the other direction.
+#: `pin_core_class`        -- placement. This is the natural home for
+#:     advisor.py's `rebalance`, and wiring that is the one merge worth doing.
+#: `coarsen`               -- a granularity VERDICT, not a directive. It says
+#:     "this graph is too fine", which is what `fuse_with_successor` then does
+#:     something about. A verdict and a directive are different kinds and it
+#:     should not have been in this tuple.
+RETIRED_RECOMMENDATIONS = (
+    "fuse_with_predecessor", "pin_core_class", "coarsen",
 )
 
 
@@ -278,6 +316,118 @@ def blocking_advice(model: str, profile: Dict[int, dict],
                            f"periodic releases, so it blocks non-preemptively "
                            f"for {svc/free_slot_ms:.1f}x the slot."),
             ))
+    return out
+
+
+def unfuse_advice(model: str, profile: Dict[int, dict],
+                  ops_by_id: Dict[int, dict],
+                  kernels_dir: Optional[str] = None,
+                  backend: str = "rvv") -> List[Advice]:
+    """Recommend undoing a fusion -- but only for the one case that is a win.
+
+    THE CASE THIS EXISTS FOR, and it is a failure this project actually hit.
+    Curated kernels are looked up by EXACT op name, so a fused op like
+    `conv2d_batchnorm2d_silu_s8` matches no per-constituent kernel and silently
+    falls back to the scalar reference INSIDE a build labelled `rvv_x60`.
+    Measured, before the curated fused kernel existed:
+
+        yolov8_nano  rvv_x60   57 of 90 dispatches on reference, 99.8% of the
+                               4974.8 ms total -- 0.81x against pure scalar
+
+    When the constituents each DO have a vector kernel, unfusing turns one
+    scalar dispatch into three vector ones. That is a large win, and it is
+    detectable from artifacts: the profile's `implementation` column says what
+    ran, and the kernels directory says what exists.
+
+    WHAT MUST NOT TRIGGER IT. Not a granularity verdict, not dispatch count,
+    not op-kind. A curated fused kernel is usually the RIGHT answer -- the
+    conv+BN+SiLU kernel is 97% of yolov8n's runtime and applies BN and SiLU as
+    a table lookup inside the conv's register tile, so unfusing it loses the
+    epilogue fusion, doubles the dispatch count and adds two full passes over
+    the output tensor. `advisor.py` reading this workload says
+    `granularity: too_fine`, i.e. the loop's own measurement wants FEWER
+    dispatches. Emitting unfuse from that verdict is how you get the 0.81x
+    result back.
+
+    So the gate is narrow and measured: the fused op ran `reference`, and every
+    constituent has a curated kernel. Anything else returns `unchanged` with
+    the reason, so a later round does not re-propose it.
+    """
+    out: List[Advice] = []
+    for did, rec in sorted(profile.items()):
+        op = ops_by_id.get(did) or {}
+        subs = op.get("sub_ops") or []
+        if len(subs) < 2:
+            continue                      # not a fused op; nothing to undo
+        impl = (rec.get("implementation") or "").strip()
+        fused_kind = op.get("op", "")
+        svc = float(rec.get("median_ms") or 0.0)
+
+        if impl.split("/")[0] != "reference":
+            # The fused kernel is doing its job. This is the common and
+            # correct case; record the refusal so it is not revisited.
+            out.append(Advice(
+                model=model, dispatch_id=did, recommendation="unchanged",
+                priority=5, confidence="high",
+                evidence=Evidence(
+                    service_time_us=round(svc * 1000, 2),
+                    extra={"reason": "fused kernel is not a reference fallback",
+                           "fused_impl": impl or "unknown",
+                           "op": fused_kind}),
+                rationale=(f"{fused_kind} runs {impl or 'an unrecorded kernel'}; "
+                           f"unfusing a working fused kernel loses the epilogue "
+                           f"fusion and doubles the dispatch count.")))
+            continue
+
+        # It fell back. Do the constituents have kernels to fall forward to?
+        constituent_impls: Dict[str, Optional[str]] = {}
+        for sub in subs:
+            kind = sub.get("op", "")
+            found = None
+            if kernels_dir:
+                hits = sorted(glob.glob(os.path.join(
+                    kernels_dir, f"{backend}_{kind}_*.c")))
+                found = os.path.basename(hits[0]) if hits else None
+            constituent_impls[kind] = found
+        all_covered = kernels_dir is not None and all(
+            v is not None for v in constituent_impls.values())
+
+        if not all_covered:
+            missing = [k for k, v in constituent_impls.items() if v is None]
+            out.append(Advice(
+                model=model, dispatch_id=did, recommendation="unchanged",
+                priority=3, confidence="high",
+                evidence=Evidence(
+                    service_time_us=round(svc * 1000, 2),
+                    extra={"reason": ("constituents have no curated kernel"
+                                      if kernels_dir else
+                                      "no kernels_dir given; cannot verify"),
+                           "fused_impl": impl,
+                           "constituent_impls": constituent_impls,
+                           "op": fused_kind}),
+                rationale=(f"{fused_kind} fell back to {impl}, but unfusing "
+                           f"would land on the reference for {missing or 'an '
+                           'unverified set'} -- the same problem, more "
+                           f"dispatches.")))
+            continue
+
+        out.append(Advice(
+            model=model, dispatch_id=did, recommendation="unfuse",
+            priority=1, confidence="high",
+            evidence=Evidence(
+                service_time_us=round(svc * 1000, 2),
+                on_critical_path=True,
+                extra={"fused_impl": impl,
+                       "constituent_impls": constituent_impls,
+                       "n_constituents": len(subs),
+                       "op": fused_kind}),
+            constraints={"requires_constituent_kernels": True,
+                         "legal_resources": ["k1_cluster0", "k1_cluster1"]},
+            rationale=(f"{fused_kind} matched no curated kernel and ran "
+                       f"{impl}, while every constituent has one "
+                       f"({', '.join(sorted(constituent_impls))}). Unfusing "
+                       f"turns one scalar dispatch into {len(subs)} vector "
+                       f"ones.")))
     return out
 
 
