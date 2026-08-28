@@ -1,0 +1,9 @@
+{
+ "backend": "rvv_x60",
+ "layout": "ihwoc",
+ "op": "dronet dispatch 0 conv2d_s8 OC32 -> 2x16",
+ "tile_weight_arrays_match_pack_of_oihw_slice": true,
+ "parent_array_dropped": true,
+ "old_pointer_offset_would_have_been_correct": false,
+ "note": "pack(w[t*16:(t+1)*16]) vs the previous (weight + t*16*IC*KH*KW) view of pack(w): the two are different element sets under IHWOC, so the pre-fix rvv_x60 split was numerically wrong while the scalar split was bit-exact. Verified by reconstructing both from weights.npz and the emitted weights.c text."
+}

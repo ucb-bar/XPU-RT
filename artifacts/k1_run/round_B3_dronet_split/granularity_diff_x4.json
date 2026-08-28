@@ -1,0 +1,18 @@
+{
+ "before": "/scratch2/agustin/XPU-RT/artifacts/k1_run/round_B3_dronet_split/graph.baseline.json",
+ "after": "/scratch2/agustin/XPU-RT/artifacts/k1_run/round_B3_dronet_split/graph.split_x4.json",
+ "n_before": 21,
+ "n_after": 24,
+ "op_count_delta": 3,
+ "signatures_removed": [
+  "conv2d_s8_N1xIC3xIH112xIW112xOC32xOH56xOW56xKH3xKW3xSH2xSW2xPH1xPW1"
+ ],
+ "signatures_added": [
+  "conv2d_s8_N1xIC3xIH112xIW112xOC8xOH56xOW56xKH3xKW3xSH2xSW2xPH1xPW1",
+  "conv2d_s8_N1xIC3xIH112xIW112xOC8xOH56xOW56xKH3xKW3xSH2xSW2xPH1xPW1",
+  "conv2d_s8_N1xIC3xIH112xIW112xOC8xOH56xOW56xKH3xKW3xSH2xSW2xPH1xPW1",
+  "conv2d_s8_N1xIC3xIH112xIW112xOC8xOH56xOW56xKH3xKW3xSH2xSW2xPH1xPW1"
+ ],
+ "granularity_changed": true,
+ "verdict": "GRANULARITY CHANGED"
+}

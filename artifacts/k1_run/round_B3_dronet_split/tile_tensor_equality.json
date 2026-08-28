@@ -1,0 +1,29 @@
+{
+ "x2": {
+  "backend": "scalar",
+  "n_elems": 100352,
+  "max_abs_diff": 0,
+  "n_differing": 0,
+  "tiles_all_identical": false,
+  "golden_verify_max_abs_err": 0
+ },
+ "x4": {
+  "backend": "scalar",
+  "n_elems": 100352,
+  "max_abs_diff": 0,
+  "n_differing": 0,
+  "tiles_all_identical": false,
+  "golden_verify_max_abs_err": 0
+ },
+ "mutant_x2_negative_control": {
+  "what": "tile 1's weight/bias pointer offsets stripped from the emitted C -- the exact historical apply_split_hint defect (tile_offset_N), reintroduced by hand",
+  "n_elems": 100352,
+  "max_abs_diff": 180,
+  "n_differing": 49631,
+  "tiles_all_identical": true,
+  "golden_verify_max_abs_err": 16,
+  "conclusion": "the check has teeth: both the tensor-level comparison AND the 2-element in-binary golden verify fail on the broken variant"
+ },
+ "_what": "Tensor-level equality of dronet's conv_modules_0 (1x32x56x56 = 100352 int8 elements) before and after apply_split_hint, measured by running the generated C on the BUILD HOST (--platform host, scalar backend, harness_linux native x86) with ir['inspect_tensors'] dumping the tile outputs. The 2-element golden verify alone is a weak witness for a rewrite at dispatch 0; this compares the split op's own output.",
+ "_reproduce": "ModelBlaster/scripts/verify_ir_rewrite_host.py reproduces the x2/x4 rows (see host_verify_x*.json in this directory). The negative control is recorded only here: it required hand-editing the emitted model.c to strip tile 1's weight/bias offsets, which is not something a script should be able to do."
+}
