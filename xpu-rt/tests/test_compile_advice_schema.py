@@ -451,38 +451,70 @@ class AgainstTheRealK1Fixture(unittest.TestCase):
         if set(self.profs) != {"rvv_x60", "scalar"}:
             self.skipTest(f"fixture profiles not resolvable: {sorted(self.profs)}")
 
-    def test_the_only_dispatch_that_prefers_scalar_is_the_1_element_sigmoid(self):
-        """The measurement, and what it says about a purely RELATIVE gain gate.
+    def test_the_sub_microsecond_sigmoid_switch_is_refused(self):
+        """A large percentage of a negligible cost is not an opportunity.
 
         20 of DroNet's 21 dispatches are faster in the rvv_x60 build (9.79 ms
         total against 157.38 ms scalar, 16x). The single exception is dispatch
         20, `sigmoid_s8_n1`: 1.42 us vs 1.21 us, because the LUT-gather kernel's
         setup costs more than a one-element sigmoid.
 
-        `min_gain=0.05` is relative only, so a 0.21 US difference clears it and
-        the advisor recommends recompiling a kernel to save a fifth of a
-        microsecond -- from a `single_sample_mean` profile that cannot resolve
-        that difference. This test pins that as the current behaviour rather
-        than asserting it is right; an absolute floor alongside the relative one
-        is the obvious fix, and would change this assertion.
+        A purely RELATIVE gate passed that: 14.7% clears any percentage floor
+        you would set for a real win, and the advisor emitted "scalar is 14.7%
+        faster (1us vs 1us)" -- two identical numbers, because the difference
+        does not survive rounding to the unit it is reported in. Acting on it
+        costs a Codex call, a rebuild, a board run and a re-solve to save
+        0.21 us.
+
+        It is not merely wasteful. The acceptance objective is lexicographic
+        with standalone kernel cycles LAST, so a 0.21 us change cannot move any
+        term above it: the best case is a no-op and the realistic case is that
+        it perturbs a schedule currently missing zero deadlines.
+
+        `min_gain_ms` is the floor that catches it, and it has to coexist with
+        the relative one -- a 5% gain on a 200 ms dispatch is still worth
+        having, so neither floor alone is sufficient.
         """
         adv = implementation_advice("dronet", self.profs, "rvv_x60")
         self.assertEqual(len(adv), 21)
         switches = [a for a in adv if a.recommendation == "choose_implementation"]
-        self.assertEqual([a.dispatch_id for a in switches], [20],
+        self.assertEqual([a.dispatch_id for a in switches], [],
                          [a.rationale for a in switches])
-        ev = switches[0].evidence.extra
-        self.assertEqual(ev["proposed_impl"], "scalar")
-        self.assertLess(ev["baseline_median_us"] - ev["proposed_median_us"], 1.0,
-                        "the whole recommendation is worth under a microsecond")
+
+    def test_a_large_relative_gain_alone_is_not_enough(self):
+        """Directly: the relative floor passes and the absolute one refuses."""
+        profs = {
+            "rvv_x60": {0: {"median_ms": 0.00142, "module_name": "m$d0_x_sigmoid_s8_n1"}},
+            "scalar":  {0: {"median_ms": 0.00121, "module_name": "m$d0_x_sigmoid_s8_n1"}},
+        }
+        gain = (0.00142 - 0.00121) / 0.00142
+        self.assertGreater(gain, 0.05, "the relative floor really does pass")
+        self.assertEqual(
+            [a for a in implementation_advice("dronet", profs, "rvv_x60")
+             if a.recommendation == "choose_implementation"], [])
+        # ... and a gain of the same PROPORTION on real work is still taken.
+        big = {
+            "rvv_x60": {0: {"median_ms": 14.2, "module_name": "m$d0_x_conv2d_s8_N1"}},
+            "scalar":  {0: {"median_ms": 12.1, "module_name": "m$d0_x_conv2d_s8_N1"}},
+        }
+        self.assertEqual(
+            len([a for a in implementation_advice("dronet", big, "rvv_x60")
+                 if a.recommendation == "choose_implementation"]), 1)
 
     def test_switching_the_baseline_recommends_the_vector_build_everywhere(self):
-        """The mirror case, which is what makes the previous test meaningful."""
+        """The mirror case, which is what makes the previous test meaningful.
+
+        17, not 20: three of DroNet's dispatches are faster under rvv_x60 by
+        less than `min_gain_ms`, so the absolute floor refuses them in this
+        direction too. A floor that only applied to the answer we disliked
+        would be a thumb on the scale.
+        """
         adv = implementation_advice("dronet", self.profs, "scalar")
         switches = [a for a in adv if a.recommendation == "choose_implementation"]
-        self.assertEqual(len(switches), 20)
+        self.assertEqual(len(switches), 17)
         for a in switches:
             self.assertEqual(a.evidence.extra["proposed_impl"], "rvv_x60")
+            self.assertGreaterEqual(a.evidence.extra["gain_ms"], 0.05)
 
     def test_confidence_is_not_high_when_the_profile_has_no_dispersion(self):
         """This run took one sample per dispatch, so `cv_pct` is absent.

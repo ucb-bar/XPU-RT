@@ -92,12 +92,41 @@ def implementation_advice(
     profiles_by_impl: Dict[str, Dict[int, dict]],
     baseline_impl: str,
     min_gain: float = 0.05,
+    min_gain_ms: float = 0.05,
 ) -> List[Advice]:
     """Per dispatch, is some other measured implementation actually faster?
 
-    `min_gain` exists so a recommendation has to clear measurement noise before
-    it is made. The CV on these profiles is 0.2-1.4%, so 5% is a comfortable
-    margin; without it the advisor would churn kernels for nothing.
+    Two floors, and the second one exists because the first is not enough.
+
+    `min_gain` (relative) keeps a recommendation from chasing measurement noise.
+    It was set at 5% against profiles whose CV was 0.2-1.4%.
+
+    `min_gain_ms` (absolute) is what stops a large PERCENTAGE of a negligible
+    cost from reading as an opportunity. Without it this advisor emitted, from a
+    real profile:
+
+        dronet.20  choose_implementation  scalar is 14.7% faster than rvv_x60
+                   for this dispatch (1us vs 1us)
+
+    -- a recommendation to regenerate a kernel to save a fraction of a
+    microsecond on a 1.4 us op, printed with two identical numbers because the
+    difference does not survive rounding to the unit it is reported in. Acting on
+    it costs a Codex call, a rebuild, a board run and a re-solve.
+
+    It matters more than tidiness because the acceptance objective is
+    lexicographic with standalone kernel cycles LAST: a change worth 0.2 us
+    cannot move any term above it, so the best case is a no-op and the realistic
+    case is that it perturbs a schedule that currently misses zero deadlines.
+
+    The relative floor cannot cover this on its own -- 14.7% clears any
+    percentage threshold you would set for a real win -- and the absolute floor
+    cannot cover it either, since a 5% gain on a 200 ms dispatch is worth having.
+    Both, or neither works.
+
+    Note both floors are still weaker than they look while profiles are n=1:
+    with no `cycles_cv_pct` there is no measured noise floor to compare against,
+    and a 10-12% gain on one sample is not distinguishable from run-to-run
+    variation. That is why every such item comes out `medium` confidence.
     """
     out: List[Advice] = []
     base = profiles_by_impl.get(baseline_impl, {})
@@ -112,7 +141,9 @@ def implementation_advice(
                 best_impl, best = impl, r["median_ms"]
         gain = (b - best) / b
         op = brec.get("module_name", "")
-        if best_impl != baseline_impl and gain >= min_gain:
+        gain_ms = b - best
+        if best_impl != baseline_impl and gain >= min_gain \
+                and gain_ms >= min_gain_ms:
             out.append(Advice(
                 model=model, dispatch_id=did,
                 recommendation="choose_implementation",
@@ -126,6 +157,12 @@ def implementation_advice(
                         "proposed_impl": best_impl,
                         "proposed_median_us": round(best * 1000, 2),
                         "gain_fraction": round(gain, 4),
+                        # Absolute, not just relative: a large percentage of a
+                        # negligible cost is what min_gain_ms exists to refuse,
+                        # and a consumer weighing this against the cost of a
+                        # rebuild needs the milliseconds.
+                        "gain_ms": round(gain_ms, 4),
+                        "min_gain_ms_required": min_gain_ms,
                         "baseline_cv_pct": brec.get("cv_pct"),
                         "op": op,
                         # Which kernel the baseline number was actually timed
@@ -159,6 +196,8 @@ def implementation_advice(
                            "best_alternative": best_impl,
                            "gain_fraction": round(gain, 4),
                            "min_gain_required": min_gain,
+                           "min_gain_ms_required": min_gain_ms,
+                           "gain_ms": round(gain_ms, 4),
                            "op": op,
                            "baseline_kernel": brec.get("implementation") or None,
                            "stat_basis": (brec.get("stat_basis")
