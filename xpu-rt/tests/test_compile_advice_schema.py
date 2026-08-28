@@ -2,8 +2,9 @@
 
 WHAT THIS FILE GUARDS. The advice document is the only channel from "the
 scheduler noticed something" to "the compiler does something about it". Nothing
-on the consuming side validates it: `scripts/apply_compile_advice.py` reaches
-straight into `item["evidence"]["proposed_impl"]`, and
+on the consuming side validates it: `scripts/advice_to_kernel_choice.py` reaches
+straight into `item["evidence"]["proposed_impl"]`,
+`scripts/advice_to_split_hint.py` into `constraints["max_target_piece_us"]`, and
 `scripts/advice_to_fusion_hint.py` into `x["recommendation"]` and
 `x["evidence"]`. A producer that renames a field, nests it one level deeper,
 emits a recommendation word the consumer has never heard of, or drops the
@@ -91,7 +92,7 @@ CONFIDENCE_VALUES = {"high", "medium", "low"}
 #: opposed to merely parse it. Each entry is the set of keys the code that
 #: applies that recommendation dereferences.
 ACTIONABLE_EVIDENCE = {
-    # scripts/apply_compile_advice.py: ev["proposed_impl"]
+    # scripts/advice_to_kernel_choice.py: ev["proposed_impl"]
     "choose_implementation": {"proposed_impl", "baseline_impl", "gain_fraction"},
     # a split needs a target piece size; without the slot it is unmotivated
     "split": {"overrun_factor"},
@@ -249,7 +250,8 @@ class ExtraMustBeFlattened(unittest.TestCase):
         self.assertNotIn("extra", d["evidence"])
 
     def test_the_consumers_own_access_pattern_works(self):
-        """Exactly what `apply_compile_advice.py` does, on real producer output.
+        """Exactly what `advice_to_kernel_choice.py` does, on real producer
+        output.
 
         It builds `{(model, int(dispatch_id)): ev["proposed_impl"]}`. That line
         is the whole reason `extra` has to be flattened AND the reason
@@ -268,8 +270,8 @@ class ExtraMustBeFlattened(unittest.TestCase):
     def test_a_wildcard_dispatch_id_never_reaches_that_int_coercion(self):
         """`overhead_advice` addresses a model with `"*"`, not a dispatch.
 
-        `apply_compile_advice.py` calls `int(item["dispatch_id"])`, guarded only
-        by a `recommendation != "choose_implementation"` filter. So the moment
+        `advice_to_kernel_choice.py` keys its grouping on `dispatch_id` under
+        exactly a `recommendation == "choose_implementation"` filter. So the moment
         any producer emits `"*"` with a `choose_implementation` (or any other
         recommendation that consumer handles), it raises `ValueError` on a
         document that is otherwise perfectly valid. Pin the invariant that keeps
@@ -281,7 +283,7 @@ class ExtraMustBeFlattened(unittest.TestCase):
             if a.dispatch_id == "*":
                 self.assertTrue(a.recommendation.startswith("fuse_"),
                                 f"{a.recommendation} with dispatch_id='*' "
-                                f"would crash apply_compile_advice.py")
+                                f"would crash advice_to_kernel_choice.py")
             else:
                 int(a.dispatch_id)
 
