@@ -188,23 +188,50 @@ def join(before: Mapping[Any, Mapping[str, Any]],
     return out
 
 
+def _unwrap_singleton(dst: Any) -> Any:
+    """`[2]` is a one-to-one remap written as a list; `[0, 1]` is a split.
+
+    `apply_split_hint` writes EVERY entry as a list, so a check that skipped
+    all list values checked nothing at all on the only remap format that
+    exists on disk -- the B3 split graphs are `{"0": [0, 1], "1": [2], ...}`,
+    twenty of whose twenty-one entries are one-to-one. Vacuously passing is
+    the worst outcome for a check whose whole job is to catch a wrong claim.
+    """
+    if isinstance(dst, (list, tuple)) and len(dst) == 1:
+        return dst[0]
+    return dst
+
+
 def check_id_remap(before: Mapping[Any, Mapping[str, Any]],
                    after: Mapping[Any, Mapping[str, Any]],
-                   id_remap: Mapping[Any, Any]) -> List[str]:
+                   id_remap: Mapping[Any, Any],
+                   signature_of=None) -> List[str]:
     """Disagreements between a rewriter's `id_remap` and the signatures.
 
     Returns one human-readable line per pre-rewrite dispatch whose remapped
     target carries a different op signature. Empty means the remap and the
-    module names tell the same story.
+    signatures tell the same story.
 
     This is the reason to keep both mechanisms: `id_remap` is a claim made by
     the tool that did the rewrite, and a claim about which op became which is
-    exactly the kind that is worth checking against the artifact rather than
-    believing. Many-to-one entries (a fuse group) are skipped -- the fused op's
-    signature is by construction not any member's.
+    exactly the kind worth checking against the artifact rather than believing.
+    Many-to-one entries (a fuse group) and genuine one-to-many entries (a
+    split) are skipped -- the rewritten op's signature is by construction not
+    any member's. A SINGLETON list is not one of those; see
+    `_unwrap_singleton`.
+
+    `signature_of` extracts a signature from one record, defaulting to the
+    module-name parse. An IR `graph.json` has no `module_name` yet -- it is
+    assigned later by `profile_writer._module_name` -- so a caller holding IR
+    passes a function reading the op's own `op`/`shape` fields instead.
     """
+    if signature_of is None:
+        def signature_of(rec):
+            return op_signature(rec.get("module_name", ""))
+
     targets: Dict[Any, List[Any]] = {}
     for src, dst in id_remap.items():
+        dst = _unwrap_singleton(dst)
         for d in (dst if isinstance(dst, (list, tuple)) else [dst]):
             targets.setdefault(d, []).append(src)
 
@@ -212,7 +239,8 @@ def check_id_remap(before: Mapping[Any, Mapping[str, Any]],
     # string keys, and sorting those lexically would report the same findings in
     # a different order than the int-keyed remap it came from -- enough to make
     # two runs of the same check look like they disagreed.
-    entries = [(_coerce_id(src, before), dst) for src, dst in id_remap.items()]
+    entries = [(_coerce_id(src, before), _unwrap_singleton(dst))
+               for src, dst in id_remap.items()]
 
     problems: List[str] = []
     for src, dst in sorted(entries, key=lambda kv: _id_order(kv[0])):
@@ -222,8 +250,8 @@ def check_id_remap(before: Mapping[Any, Mapping[str, Any]],
             continue                      # many-to-one: a fuse, new op
         if src not in before or dst not in after:
             continue
-        sb = op_signature(before[src].get("module_name", ""))
-        sa = op_signature(after[dst].get("module_name", ""))
+        sb = signature_of(before[src])
+        sa = signature_of(after[dst])
         if sb and sa and sb != sa:
             problems.append(
                 f"id_remap says {src} -> {dst}, but the signatures differ: "

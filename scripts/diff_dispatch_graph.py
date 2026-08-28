@@ -11,6 +11,7 @@ profiling and refuses to pass a rewrite that did not change anything:
 
     exit 0  the graph changed -- go and profile it
     exit 3  the graph is identical -- a negative result, report it as one
+    exit 4  the rewriter's `id_remap` disagrees with the signatures
 
 Joins on the OP SIGNATURE, never on `dispatch_id`
 -------------------------------------------------
@@ -49,7 +50,9 @@ import sys
 sys.path.insert(0, os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "xpu-rt"))
 
-from dispatch_lineage import op_signature  # noqa: E402
+from dispatch_lineage import (  # noqa: E402
+    _unwrap_singleton, check_id_remap, op_signature,
+)
 
 
 def _shape_tag(shape) -> str:
@@ -99,6 +102,53 @@ def _load(path: str) -> list[str]:
             else signatures_from_ir(path))
 
 
+def _ir_signature(op) -> str:
+    """One op's signature, the same string `signatures_from_ir` builds."""
+    sig = f"{op['op']}_{_shape_tag(op.get('shape'))}"
+    subs = op.get("sub_ops") or []
+    if subs:
+        sig += "[" + "+".join(
+            f"{s['op']}_{_shape_tag(s.get('shape'))}" for s in subs) + "]"
+    return sig
+
+
+def _by_dispatch_id(path: str) -> dict:
+    """{dispatch_id: op} for an IR graph.json. Empty for a results.csv."""
+    if path.endswith(".csv"):
+        return {}
+    g = json.load(open(path))
+    return {op["dispatch_id"]: op for op in g.get("ops", [])
+            if op.get("dispatch_id") is not None}
+
+
+def audit_id_remap(before_path: str, after_path: str) -> list[str]:
+    """Check the rewriter's `id_remap` against the signatures, if it made one.
+
+    `id_remap` is the rewriter saying which op became which. The signatures are
+    what the artifact says. Checking one against the other is the point of
+    keeping both -- and until now nothing did: `check_id_remap` had no caller
+    outside its own tests, while this script already holds exactly the two
+    graphs it needs.
+
+    Returns `(problems, n_checked)`. `n_checked` is what separates "the remap
+    agrees" from "there was nothing to check" -- and the second was the silent
+    reality on every split graph before `_unwrap_singleton`.
+    """
+    if after_path.endswith(".csv"):
+        return [], 0
+    after_doc = json.load(open(after_path))
+    remap = after_doc.get("id_remap")
+    if not remap:
+        return [], 0
+    before, after = _by_dispatch_id(before_path), _by_dispatch_id(after_path)
+    if not before or not after:
+        return [], 0
+    n = sum(1 for v in remap.values()
+            if not isinstance(_unwrap_singleton(v), (list, tuple)))
+    return check_id_remap(before, after, remap,
+                          signature_of=_ir_signature), n
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--before", required=True,
@@ -129,6 +179,28 @@ def main() -> int:
                "as a rewrite")
     print(verdict)
 
+    # The rewriter's own claim about which op became which, checked against
+    # the signatures. A remap that disagrees means the rewrite moved an op
+    # somewhere its module name says it did not go, and every downstream join
+    # that trusts the remap -- advice, lineage, the schedule ingest -- would
+    # carry that error silently.
+    remap_problems, remap_checked = audit_id_remap(a.before, a.after)
+    if remap_checked:
+        # Say how many were checked. A silent pass is indistinguishable from a
+        # check that ran on nothing, which is exactly what this check used to
+        # do on a split graph.
+        print(f"id_remap: {remap_checked} one-to-one entr"
+              f"{'y' if remap_checked == 1 else 'ies'} checked against the "
+              f"signatures, {len(remap_problems)} disagreement(s)")
+    if remap_problems:
+        print(f"id_remap DISAGREES with the signatures "
+              f"({len(remap_problems)} entr{'y' if len(remap_problems) == 1 else 'ies'}):")
+        for line in remap_problems:
+            print(f"  {line}")
+        print("Refusing: the rewrite's own bookkeeping does not match its "
+              "output. Fix the rewriter before profiling this graph.")
+        return 4
+
     if a.json:
         json.dump({
             "before": a.before, "after": a.after,
@@ -138,6 +210,7 @@ def main() -> int:
             "signatures_added": added,
             "granularity_changed": changed,
             "verdict": verdict,
+            "id_remap_problems": remap_problems,
         }, open(a.json, "w"), indent=1)
         print(f"wrote {a.json}")
     return 0 if changed else 3

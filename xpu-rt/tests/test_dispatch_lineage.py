@@ -459,3 +459,58 @@ class AgainstTheRealRewriter(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
+
+
+class SingletonListRemapEntries(unittest.TestCase):
+    """`apply_split_hint` writes EVERY entry as a list, singletons included.
+
+    The B3 split graphs on disk are `{"0": [0, 1], "1": [2], "2": [3], ...}` --
+    twenty-one entries of which twenty are plain one-to-one mappings that
+    happen to be wrapped in a list. `check_id_remap` skipped every list value,
+    so on the only remap format that exists in this tree it checked ZERO
+    entries and returned no problems.
+
+    Passing vacuously is the worst outcome for a check whose entire job is to
+    catch a wrong claim, so these pin both halves: singletons are checked, and
+    genuine one-to-many entries are still skipped.
+    """
+
+    def _pair(self):
+        before = {0: {"module_name": "m$dispatch_0_rvv_conv2d_s8_A"},
+                  1: {"module_name": "m$dispatch_1_rvv_linear_s8_B"}}
+        after = {0: {"module_name": "m$dispatch_0_rvv_conv2d_s8_A"},
+                 1: {"module_name": "m$dispatch_1_rvv_linear_s8_B"}}
+        return before, after
+
+    def test_a_singleton_list_is_checked_not_skipped(self):
+        before, after = self._pair()
+        # 0 -> [1] is a lie: a conv did not become a linear.
+        problems = dispatch_lineage.check_id_remap(before, after, {0: [1]})
+        self.assertTrue(problems, "a singleton list must be checked")
+        self.assertIn("0 -> 1", problems[0])
+
+    def test_a_correct_singleton_list_passes(self):
+        before, after = self._pair()
+        self.assertEqual(
+            dispatch_lineage.check_id_remap(before, after, {0: [0], 1: [1]}),
+            [])
+
+    def test_a_real_one_to_many_split_is_still_skipped(self):
+        """A split's pieces do not carry the parent's signature by
+        construction, so checking them would report every split as broken."""
+        before, after = self._pair()
+        self.assertEqual(
+            dispatch_lineage.check_id_remap(before, after, {0: [0, 1]}), [])
+
+    def test_a_custom_signature_extractor_is_used(self):
+        """An IR graph.json has no `module_name` -- it is assigned later by
+        `profile_writer._module_name` -- so a caller holding IR supplies its
+        own reader over the op's `op`/`shape` fields."""
+        before = {0: {"op": "conv2d_s8", "shape": "A"}}
+        after = {1: {"op": "linear_s8", "shape": "B"}}
+        problems = dispatch_lineage.check_id_remap(
+            before, after, {0: [1]},
+            signature_of=lambda r: f"{r['op']}_{r['shape']}")
+        self.assertTrue(problems)
+        self.assertIn("conv2d_s8_A", problems[0])
+        self.assertIn("linear_s8_B", problems[0])
