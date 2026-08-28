@@ -91,6 +91,11 @@ schedules/*_report.json
 # Only the one subtree with no tracked content at all:
 /gen/profile_hybrid/
 
+# Ad-hoc feasibility probes: derived specs written to answer one question,
+# alongside the _fx_ sweep configs.
+data/toplevel/_probe_*.json
+/schedules/scheduled__probe_*
+
 # Freshness-sweep per-cell solver output, matching the existing
 # data/toplevel/_fx_*.json rule for the configs that produced it. Scoped to
 # `.json` on purpose: the `.json.cfgsha256` siblings ARE tracked (they are the
