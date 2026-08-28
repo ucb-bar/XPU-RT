@@ -43,10 +43,34 @@ LOOKUP = dict(model="mlp_control", target="firesim_gemmini_opu", hw="gemmini",
               basename="mlp_control.int8", topo_tag="topo_0")
 
 
-@unittest.skipUnless(os.path.exists(os.path.join(_REPO, "gen", "profile")),
-                     "profile tree absent; run "
-                     "scripts/export_profile_db_to_results_csv.py")
 class GenRootSelectsTheTree(unittest.TestCase):
+    """No `skipUnless`: both trees this class resolves against are COMMITTED.
+
+    It used to skip on `gen/profile` being absent, dating from when the profile
+    tree was generated locally. `gen/profile/gemmini/firesim_gemmini_opu/
+    mlp_control/...` and its `gen25/` counterpart are both tracked now (six
+    files each, a few kB), so the skip could only ever fire on a broken
+    checkout -- and a regression test that skips itself when its data is missing
+    is a regression test that reports success for the one situation it cannot
+    check. `setUpClass` asserts the data is there instead, so a missing fixture
+    is an error rather than a silence.
+
+    The K1/`spacemit_x60` side of this loader -- a different directory depth and
+    a `results.csv` with an extra column -- is covered by
+    `test_k1_profile_fixture.py`, against a committed fixture added for the same
+    reason.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        for tree in ("gen", "gen25"):
+            path = os.path.join(_REPO, tree, "profile", "gemmini",
+                                "firesim_gemmini_opu", "mlp_control",
+                                "mlp_control.int8", "topo_0", "results.csv")
+            assert os.path.exists(path), (
+                f"committed profile fixture missing: {path}. It is tracked; "
+                f"restore it rather than skipping these tests.")
+
     def test_default_resolves_under_gen(self):
         p = find_profile_csv(_REPO, **LOOKUP)
         self.assertIsNotNone(p)
@@ -55,9 +79,6 @@ class GenRootSelectsTheTree(unittest.TestCase):
     def test_explicit_gen_root_is_honoured_not_ignored(self):
         """The regression itself: passing an alternate tree must change the
         resolved path. Before the fix this returned the gen/ path."""
-        alt = os.path.join(_REPO, "gen25", "profile")
-        if not os.path.exists(alt):
-            self.skipTest("gen25 tree absent")
         p = find_profile_csv(_REPO, gen_root="gen25", **LOOKUP)
         self.assertIsNotNone(p)
         self.assertIn(os.path.join("gen25", "profile"), p)

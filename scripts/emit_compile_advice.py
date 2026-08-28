@@ -127,14 +127,31 @@ def main() -> int:
         work has x% of the window to do it in. For DroNet's heaviest
         convolution that is 33.3 * 22.87/113.7 = 6.7 ms -- which it exceeds on
         one core and meets on four, which is exactly the finding.
-        """
-        period = periods_by_base.get(model, 0.0)
-        total = sum(float(r.get("median_ms") or 0.0) for r in profile.values())
-        if period <= 0 or total <= period:
-            return budget_for(model)
-        return period / total  # scale factor; caller multiplies by cost
 
-    free_slot_ms = min((v for v in slots.values() if v > 0), default=0.0)
+        Returns the share of the LARGEST dispatch, as a single ms budget.
+        `blocking_advice` and `shard_advice` both compare every dispatch against
+        one scalar, so the threshold has to be the heaviest dispatch's share --
+        the one that must shrink first for the instance to fit at all. A literal
+        per-dispatch share would be `cost * period/total` for every dispatch,
+        which every dispatch exceeds whenever the model is saturated, so it
+        would flag the entire model and say nothing.
+
+        This used to return `period / total` -- a dimensionless scale factor,
+        annotated "caller multiplies by cost" -- and no caller ever did, because
+        no caller was ever written: the function was dead, `blocking_advice` got
+        `budget_for` (the whole period for a saturated model), and the shard
+        path recomputed the largest dispatch's share inline. So the case
+        described above went exactly as described: a model needing 113.7 ms
+        against a 33.3 ms period produced ten `unchanged` items and nothing
+        actionable, because no single dispatch exceeded the full period.
+        """
+        period = periods_by_base.get(model, 0.0) or periods.get(model, 0.0)
+        costs = [float(r.get("median_ms") or 0.0) for r in profile.values()]
+        total = sum(costs)
+        if period <= 0 or total <= period or not costs:
+            return budget_for(model)
+        return period * (max(costs) / total)
+
     if slots:
         print("  free slots (ms): " + ", ".join(
             f"{b}={v:.3f}" + (" [saturated -> budget=period]" if v <= 0 else "")
@@ -200,25 +217,20 @@ def main() -> int:
             # The real figure comes from a measured trace, so when none is
             # supplied the honest value is 0 rather than a number that happens
             # to be available.
-            advice += blocking_advice(model, base, budget_for(model),
+            advice += blocking_advice(model, base, dispatch_budget(model, base),
                                       misses=measured_misses.get(model, 0))
         # Sharding is judged on measured scaling with core count, which no
         # single-topo profile can show.
         by_cores = get_profiles_by_cores(a.gen_root, a.target, model,
                                          basename, a.baseline_impl)
         if len(by_cores) > 1:
-            period = periods.get(model, 0.0)
-            if period and total > period:
-                # Saturated: each dispatch gets its proportional share of the
-                # window. shard_advice compares cost to a single budget, so
-                # pass the share of the LARGEST dispatch -- the one that has to
-                # shrink first for the instance to fit at all.
-                biggest = max((float(r.get("median_ms") or 0.0)
-                               for r in base.values()), default=0.0)
-                target = period * (biggest / total) if total else 0.0
-            else:
-                target = budget_for(model)
-            advice += shard_advice(model, by_cores, target)
+            # The same budget `blocking_advice` was given, from the same
+            # function. These two used to compute it separately -- the shard
+            # path inline and correctly, the blocking path via `budget_for` and
+            # wrongly -- so the two recommendations were made against different
+            # thresholds for the same dispatch, and only one of them could be
+            # right.
+            advice += shard_advice(model, by_cores, dispatch_budget(model, base))
 
     # Highest-priority first; the consumer is expected to apply a bounded number.
     advice.sort(key=lambda x: (x.priority, -x.evidence.service_time_us))
