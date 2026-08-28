@@ -1511,3 +1511,90 @@ implement.
 ### Repo SHAs
 
 XPU-RT `feat/k1-modelblaster-closed-loop`, ModelBlaster `f083877`.
+
+---
+
+## Three models, every deadline met, and the frontier is not where the plan expected
+
+### Attempted
+
+Fix the walker so the schedule's core assignment is executed, then re-measure the
+three-model workload and sweep YOLOv8n's frequency to locate the real boundary.
+
+### Measurements
+
+The walker now spawns one worker per `(core_kind, hart)` present in the dispatch
+table and claims entries on both fields (ModelBlaster `7ca80f0`). A second defect
+turned up in the same code: the affinity call sat under
+`#ifdef CONFIG_POSIX_THREADS_AFFINITY`, a Zephyr Kconfig symbol the Linux harness
+never defines, so **every K1 worker had been floating across all eight harts**
+while printing `pinned_hart=N` at exit. Each worker now records
+`sched_getcpu()` and every run shows `observed_cpu == pinned_hart`.
+
+Re-measured (independently of the agent that made the change):
+
+|  | before | after |
+|---|---|---|
+| 3-model 4 Hz misses | 119/123 | **0/123** |
+| 3-model makespan | 1017.78 ms | **908.10 ms** (predicted 908.49) |
+| cross-hart overlapping pairs | 0 | **1256** |
+| B1 regression | 0/42 | 0/42 |
+
+Frequency sweep, all measured on the board, golden verify `max_abs_err=0`:
+
+| yolo Hz | cores needed | makespan | predicted | misses |
+|---|---|---|---|---|
+| 3 | 0.68 | 821.2 ms | 819.3 | 3/110 |
+| 4 | 0.91 | 908.1 ms | 908.5 | **0/123** |
+| 5 | 1.13 | 960.1 ms | 957.3 | **0/130** |
+| 6 | 1.36 | 988.7 ms | 986.0 | **0/135** |
+
+Prediction is within 0.3% of measurement at every point.
+
+### The plan's expectation does not hold, and it is worth being precise about why
+
+The plan predicted the three-model workload "will not meet the plan's nominal
+frequencies on this board" and asked for a feasibility frontier showing what
+cannot be met. Measured: mlp_control at 100 Hz, dronet at 30 Hz and yolov8_nano
+at up to 6 Hz all hold simultaneously, with YOLO needing 1.36 cores by service
+time. The plan's 5-10 Hz target for YOLO is met at its lower half.
+
+That expectation was formed when yolov8_nano measured 4974.8 ms and DroNet
+62.6 ms. Both numbers were a missing kernel. The frontier the plan anticipated
+was a property of the software, not the board.
+
+### The one anomaly, not glossed
+
+3 Hz -- the LIGHTEST load -- is the only point with misses: mlp_control 3 of 82,
+instances 13/14/15. They start 11.4/12.7/14.1 ms late and then execute in
+0.07-1.14 ms, and their harts were busy until 1-12 us before they started. So
+MLP was ready and queued behind non-preemptible YOLO and DroNet dispatches;
+YOLO's dispatches run ~2.6 ms against MLP's 10 ms period, so a short burst is
+enough to push three consecutive instances past their deadline.
+
+The solver predicted 0 misses here, so this is a real modelling gap: it does not
+account for a released instance waiting on a dispatch already in flight. It is
+small (3.7% of instances, 1.5-4.2 ms of overshoot) and it is a transient the run
+recovers from, but it is the solver being wrong rather than the board being slow,
+and the higher-load points passing does not excuse it.
+
+### Passed
+
+485 passed / 1 skipped across xpu-rt/tests. Gantts plus composite for every rung.
+The renderer now plots `worker_hart` (where a dispatch ran) rather than `hart`
+(where it was asked to run) -- they disagreed before this fix, so keying on the
+schedule drew four busy lanes that were one thread time-slicing.
+
+### Blocker
+
+None.
+
+### Next
+
+8/10/12 Hz solves are running to find where the boundary actually is. Then B3
+(granularity) and B4 (sharding), which only became meaningful now that the
+runtime executes dispatches concurrently.
+
+### Repo SHAs
+
+XPU-RT `feat/k1-modelblaster-closed-loop` `fcd3553`, ModelBlaster `7ca80f0`.
