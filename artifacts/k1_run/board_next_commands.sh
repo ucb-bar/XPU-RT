@@ -189,8 +189,9 @@ PYEOF
 # THE EVIDENCE IS WEAKER THAN THE THRESHOLD. Those three maxpools are the same
 # op at the same shape, so they are three replicates of one measurement: the
 # within-shape spread is 12.1% (rvv) and 11.6% (scalar) on a single sample each,
-# against a claimed 21.8% gap at the mean and a `min_gain` gate of 5%. The 10.4%
-# item (dispatch 42) is not distinguishable from that spread at all.
+# against a 17.9% gap at the mean (per dispatch: 21.5%, 21.2%, 10.4%) and a
+# `min_gain` gate of 5%. The 10.4% item (dispatch 42) is not
+# distinguishable from that spread at all.
 #
 # So the honest prerequisite is repetition, not application: add MB_REPS to
 # ModelBlaster/harness_linux/src/main.c and take the median (plan Phase 5). Until
