@@ -97,3 +97,24 @@ schedules/*_report.json
 # config fingerprint that says which sweep cell a result belongs to), and a
 # rule that shadowed them would be worse than no rule.
 /schedules/scheduled__fx_*.json
+
+# Generated figures, same category as /plots/.
+/figures/
+
+# Board and profiler output trees that contain NO tracked file. Listed
+# individually rather than as `gen/*`, because gen/ also holds the tracked
+# qrb5165/spacemit profiles and the dispatch graphs every network spec points
+# at -- see the note above. Each path below was checked with `git ls-files`.
+/gen/profile/IME/
+/gen/profile/RVV/spacemit_x60/
+/gen/profile/RVV_c1/
+/gen/profile/RVV_fused/
+/gen/profile/scalar/spacemit_x60/
+/gen/profile/scalar_c1/
+/gen/profile_mb/rvv_x60/
+/gen/profile_mb/scalar/spacemit_x60/lstm_tiny/
+/gen/profile_mb/scalar/spacemit_x60/vitfly_frontend/
+/gen/profile_mb/scalar/spacemit_x60/vitfly_lstm/
+/gen/vmfb/dronet/spacemit_x60/
+/gen/vmfb/mlp/
+/gen/vmfb/yolov8_nano/
