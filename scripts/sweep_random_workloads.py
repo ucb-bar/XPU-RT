@@ -1,7 +1,13 @@
 #!/usr/bin/env python3
 """
-Sweep gen_random_workload.py over its parameter space and schedule every
-config that comes out of it.
+Sweep gen_random_workload.py across the core-count hardware configs
+(single_core, dual_core, quad_core) and schedule every config that comes
+out of it.
+
+Hardware is the only axis that varies by default: every other generator
+knob sits at gen_random_workload.py's own default, so the out-of-the-box
+sweep is exactly three configs.  The other knobs are still exposed as
+flags (each takes a comma-separated list) if you want to widen the grid.
 
 Two phases:
 
@@ -15,6 +21,16 @@ Two phases:
      scripts/run_xpurt_schedule.py once per --solver.  The plot and
      scheduled JSON the runner drops in plots/ and schedules/ are moved
      into the sweep directory, and the makespans are collected.
+
+While phase 2 runs, every scheduler run is tracked (queued / running / its
+final status): each finished run prints as soon as it lands, a status block
+listing what is still in flight is printed every --status-interval seconds,
+and the summary ends with a table of all runs.
+
+Scheduler runs are bounded by --max-time (per run, wall clock).  Shortening
+it also shortens the MILP solve (--time-limit is capped to fit) but not the
+greedy loop, which is bounded by --max-periodic-iters instead -- lower that
+too if greedy runs are being killed at the deadline rather than finishing.
 
 Everything lands in runs/sweeps/<sweep>/:
     results.csv     one row per (config x solver) run
@@ -32,17 +48,23 @@ Usage:
     # what would run, without running it
     python scripts/sweep_random_workloads.py --dry-run
 
-    # the default grid (all available hardware x 3 seeds x 3 scale bands
-    # x 2 headrooms x 2 gaps, greedy solvers), 4 runs at a time
+    # the default grid (single_core, dual_core, quad_core x greedy solvers)
     python scripts/sweep_random_workloads.py --name nightly --jobs 4
 
-    # one axis at a time
+    # just one of them
+    python scripts/sweep_random_workloads.py --hardware dual_core
+
+    # widen an axis back out on top of the core-count sweep
     python scripts/sweep_random_workloads.py --seeds 0,1,2,3,4,5,6,7 \\
         --scale 1.2:5.0 --period-headroom 1.25 --max-gap 1.0 \\
         --solver greedy,greedy_periodic
 
     # re-run only what's missing (existing rows are kept)
     python scripts/sweep_random_workloads.py --name nightly --resume
+
+    # keep it short: 2 min per run, lighter greedy refinement, status every 15s
+    python scripts/sweep_random_workloads.py --max-time 120 \\
+        --max-periodic-iters 2 --status-interval 15
 """
 
 from __future__ import annotations
@@ -59,7 +81,7 @@ import subprocess
 import sys
 import threading
 import time
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, asdict
 from datetime import datetime
 from typing import Dict, List, Optional, Tuple
@@ -70,6 +92,12 @@ RUN_SCRIPT = os.path.join("scripts", "run_xpurt_schedule.py")
 HARDWARE_BANK = os.path.join("data", "banks", "hardware_bank.json")
 CONFIG_ROOT = os.path.join("data", "toplevel", "generated-data")
 SWEEP_ROOT = os.path.join("runs", "sweeps")
+
+# The swept hardware axis: the three core-count configs from the hardware
+# bank, smallest first.  The bank holds other entries (qrb5165_hetero, the
+# firesim/spike boards); they are reachable with --hardware but are not part
+# of the default sweep.
+CORE_HARDWARE = ["single_core", "dual_core", "quad_core"]
 
 # run_xpurt_schedule.py's output naming (see its "Output naming" comment):
 # plots/<stem><solver_tag><_profiled>.png and
@@ -179,6 +207,111 @@ def resolve_scheduler_python(explicit: Optional[str]) -> str:
 
 
 # --------------------------------------------------------------------------
+# Live status of the scheduler runs
+# --------------------------------------------------------------------------
+
+def hms(seconds: float) -> str:
+    """0:07, 3:21, 1:04:09."""
+    seconds = int(seconds)
+    if seconds >= 3600:
+        return f"{seconds // 3600}:{seconds // 60 % 60:02d}:{seconds % 60:02d}"
+    return f"{seconds // 60}:{seconds % 60:02d}"
+
+
+class Tracker:
+    """State of every phase-2 run, so the sweep can say what it is doing.
+
+    Each run is queued -> running -> done; the pool worker calls start()/
+    finish() around the subprocess, the monitor thread reads snapshot()
+    every --status-interval seconds, and the summary prints the final table.
+    """
+
+    def __init__(self, jobs: List[Tuple["Point", str, str]], max_time: Optional[float]):
+        self.max_time = max_time
+        self.started_at = time.time()
+        self._lock = threading.Lock()
+        self._runs: Dict[Tuple[str, str], Dict[str, object]] = {}
+        for point, config, solver in jobs:
+            self._runs[(point.stem, solver)] = {
+                "stem": point.stem, "config": config, "solver": solver,
+                "state": "queued", "status": "", "started": None,
+                "seconds": None, "makespan": "", "detail": "",
+            }
+
+    def start(self, point: "Point", solver: str) -> None:
+        with self._lock:
+            run = self._runs[(point.stem, solver)]
+            run["state"] = "running"
+            run["started"] = time.time()
+
+    def finish(self, point: "Point", solver: str, row: Dict[str, object]) -> None:
+        with self._lock:
+            run = self._runs[(point.stem, solver)]
+            run["state"] = "done"
+            run["status"] = str(row.get("status", "?"))
+            run["makespan"] = row.get("makespan_ms", "")
+            run["detail"] = str(row.get("detail", ""))
+            run["seconds"] = row.get(
+                "sched_seconds",
+                round(time.time() - run["started"], 2) if run["started"] else None)
+
+    def snapshot(self) -> List[Dict[str, object]]:
+        with self._lock:
+            return [dict(run) for run in self._runs.values()]
+
+    def counts(self) -> Tuple[int, int, List[Dict[str, object]], Dict[str, int]]:
+        """(queued, running, finished runs, finished status -> count)."""
+        queued = running = 0
+        done: List[Dict[str, object]] = []
+        by_status: Dict[str, int] = {}
+        for run in self.snapshot():
+            if run["state"] == "queued":
+                queued += 1
+            elif run["state"] == "running":
+                running += 1
+            else:
+                done.append(run)
+                key = str(run["status"])
+                by_status[key] = by_status.get(key, 0) + 1
+        return queued, running, done, by_status
+
+    def print_status(self) -> None:
+        """The periodic in-flight block."""
+        queued, running, done, by_status = self.counts()
+        breakdown = ", ".join(f"{k} {v}" for k, v in sorted(by_status.items()))
+        print(f"  .. {hms(time.time() - self.started_at)} in: {running} running, "
+              f"{queued} queued, {len(done)} done"
+              + (f" ({breakdown})" if breakdown else ""))
+        now = time.time()
+        live = sorted((r for r in self.snapshot() if r["state"] == "running"),
+                      key=lambda r: r["started"] or now)
+        budget = f"/{hms(self.max_time)}" if self.max_time else ""
+        for run in live:
+            elapsed = hms(now - float(run["started"] or now))
+            print(f"       running {elapsed}{budget}  {str(run['solver']):<16} "
+                  f"{run['stem']}")
+
+    def print_table(self) -> None:
+        """The end-of-sweep per-run table."""
+        runs = sorted(self.snapshot(), key=lambda r: (r["stem"], r["solver"]))
+        if not runs:
+            return
+        print("\n  scheduler runs")
+        print(f"    {'status':<12} {'solver':<16} {'elapsed':>8} "
+              f"{'makespan(ms)':>13}  config")
+        for run in runs:
+            status = str(run["status"] or run["state"])
+            secs = run["seconds"]
+            elapsed = hms(float(secs)) if isinstance(secs, (int, float)) else "-"
+            mk = run["makespan"]
+            makespan = f"{float(mk):.2f}" if isinstance(mk, (int, float)) else "-"
+            print(f"    {status:<12} {str(run['solver']):<16} {elapsed:>8} "
+                  f"{makespan:>13}  {run['stem']}")
+            if run["detail"]:
+                print(f"      -- {str(run['detail'])[:150]}")
+
+
+# --------------------------------------------------------------------------
 # Phases
 # --------------------------------------------------------------------------
 
@@ -260,10 +393,11 @@ def schedule(point: Point, config: str, solver: str, args,
            "--time-limit", str(args.time_limit),
            "--max-periodic-iters", str(args.max_periodic_iters)]
 
+    deadline = args.max_time if args.max_time and args.max_time > 0 else None
     started = time.time()
     try:
         proc = subprocess.run(cmd, cwd=REPO_ROOT, capture_output=True,
-                              text=True, timeout=args.timeout)
+                              text=True, timeout=deadline)
         out, err, rc = proc.stdout, proc.stderr, proc.returncode
         timed_out = False
     except subprocess.TimeoutExpired as e:
@@ -276,7 +410,13 @@ def schedule(point: Point, config: str, solver: str, args,
         f.write(" ".join(cmd) + "\n\n" + out + err)
 
     if timed_out:
-        row.update(status="timeout", detail=f"exceeded --timeout {args.timeout}s")
+        # The partial stdout is in the log; its last line says how far the
+        # run got, which is what you need to decide whether to raise
+        # --max-time or shrink the workload.
+        where = last_progress(out)
+        row.update(status="timeout",
+                   detail=f"killed at --max-time {deadline}s"
+                          + (f"; last output: {where}" if where else ""))
         return row
     if rc != 0:
         tail = [l.strip() for l in (err or out).splitlines() if l.strip()]
@@ -308,6 +448,16 @@ def schedule(point: Point, config: str, solver: str, args,
             os.path.join(REPO_ROOT, str(row["schedule_json"]))))
     row["status"] = "ok"
     return row
+
+
+def last_progress(text: str, limit: int = 120) -> str:
+    """Last short, non-blank stdout line -- the runner also prints huge
+    single-line dumps (the full job-name list), which say nothing useful."""
+    for line in reversed(text.splitlines()):
+        line = line.strip()
+        if line and len(line) <= limit:
+            return line
+    return ""
 
 
 def find_artifact(directory: str, prefix: str, stem: str, solver: str,
@@ -376,10 +526,18 @@ def csv_list(cast):
     return parse
 
 
-def available_hardware() -> List[str]:
+def check_hardware(names: List[str], ap: argparse.ArgumentParser) -> None:
+    """Reject bank entries that don't exist or are marked unavailable."""
     with open(os.path.join(REPO_ROOT, HARDWARE_BANK)) as f:
-        bank = json.load(f)
-    return sorted(k for k, v in bank["configs"].items() if v.get("available", True))
+        configs = json.load(f)["configs"]
+    for name in names:
+        entry = configs.get(name)
+        if entry is None:
+            ap.error(f"unknown hardware {name!r}; the bank has "
+                     f"{sorted(configs)}")
+        if not entry.get("available", True):
+            reason = entry.get("unavailable_reason", "marked unavailable")
+            ap.error(f"hardware {name!r} is not usable: {reason}")
 
 
 def main(argv: Optional[List[str]] = None) -> int:
@@ -392,19 +550,21 @@ def main(argv: Optional[List[str]] = None) -> int:
                          "(default: sweep_<timestamp>)")
 
     # Generator axes.
-    ap.add_argument("--hardware", type=csv_list(str), default=None,
+    ap.add_argument("--hardware", type=csv_list(str), default=CORE_HARDWARE,
                     help="comma-separated hardware bank entries "
-                         "(default: every entry marked available)")
-    ap.add_argument("--seeds", type=csv_list(int), default=[0, 1, 2],
-                    help="comma-separated RNG seeds (default: 0,1,2)")
+                         f"(default: {','.join(CORE_HARDWARE)})")
+    # The remaining generator axes are pinned to gen_random_workload.py's own
+    # defaults so that hardware is the only thing the default sweep varies.
+    ap.add_argument("--seeds", type=csv_list(int), default=[0],
+                    help="comma-separated RNG seeds (default: 0)")
     ap.add_argument("--scale", type=csv_list(parse_scale),
-                    default=[(1.05, 1.5), (1.2, 5.0), (2.0, 10.0)],
+                    default=[(1.2, 5.0)],
                     help="comma-separated MIN:MAX window/period scale bands "
-                         "(default: 1.05:1.5,1.2:5.0,2.0:10.0)")
-    ap.add_argument("--period-headroom", type=csv_list(float), default=[1.0, 1.25],
-                    help="comma-separated --period-headroom values (default: 1.0,1.25)")
-    ap.add_argument("--max-gap", type=csv_list(float), default=[0.25, 1.0],
-                    help="comma-separated --max-gap values (default: 0.25,1.0)")
+                         "(default: 1.2:5.0)")
+    ap.add_argument("--period-headroom", type=csv_list(float), default=[1.25],
+                    help="comma-separated --period-headroom values (default: 1.25)")
+    ap.add_argument("--max-gap", type=csv_list(float), default=[1.0],
+                    help="comma-separated --max-gap values (default: 1.0)")
     ap.add_argument("--num-instances", type=csv_list(str), default=["auto"],
                     help="comma-separated --num-instances values (default: auto)")
     ap.add_argument("--cap-instances", type=int, default=None,
@@ -415,16 +575,26 @@ def main(argv: Optional[List[str]] = None) -> int:
                     default=["greedy", "greedy_periodic", "decomposed"],
                     help="comma-separated solvers (default: the three greedy "
                          "variants; 'milp' needs cvxpy+mosek)")
-    ap.add_argument("--time-limit", type=float, default=20,
-                    help="(milp) solver time limit in seconds (default: 20)")
+    ap.add_argument("--time-limit", type=float, default=None,
+                    help="(milp) solver time limit in seconds (default: 20, "
+                         "or 80%% of --max-time when that is the smaller)")
     ap.add_argument("--max-periodic-iters", type=int, default=4,
                     help="(greedy) periodic refinement iterations (default: 4)")
 
     # Execution.
     ap.add_argument("--jobs", type=int, default=4,
                     help="scheduler runs in parallel (default: 4)")
-    ap.add_argument("--timeout", type=float, default=900,
-                    help="per scheduler run, in seconds (default: 900)")
+    ap.add_argument("--max-time", "--timeout", dest="max_time", type=float,
+                    default=900,
+                    help="wall-clock budget for one scheduler run, in seconds "
+                         "(default: 900; 0 = no deadline).  A run still going "
+                         "at the deadline is killed and recorded as 'timeout', "
+                         "so to shorten runs that actually finish, lower "
+                         "--max-periodic-iters (greedy) as well")
+    ap.add_argument("--status-interval", type=float, default=30,
+                    help="seconds between in-flight status blocks during "
+                         "scheduling (default: 30; 0 = only print runs as "
+                         "they finish)")
     ap.add_argument("--limit", type=int, default=None,
                     help="only take the first N grid points")
     ap.add_argument("--resume", action="store_true",
@@ -444,9 +614,14 @@ def main(argv: Optional[List[str]] = None) -> int:
             ap.error(f"unknown solver {solver!r}; pick from {sorted(SOLVER_TAG)}")
     if args.jobs < 1:
         ap.error("--jobs must be >= 1")
+    if args.time_limit is None:
+        # A MILP solve that runs past the deadline is killed with nothing to
+        # show for it, so keep the solver's own limit inside the budget.
+        args.time_limit = 20.0
+        if args.max_time and args.max_time > 0:
+            args.time_limit = min(args.time_limit, 0.8 * args.max_time)
 
-    if args.hardware is None:
-        args.hardware = available_hardware()
+    check_hardware(args.hardware, ap)
     if not args.name:
         args.name = "sweep_" + datetime.now().strftime("%Y%m%d_%H%M%S")
 
@@ -461,6 +636,11 @@ def main(argv: Optional[List[str]] = None) -> int:
     print(f"  max-gap         : {', '.join(str(v) for v in args.max_gap)}")
     print(f"  num-instances   : {', '.join(args.num_instances)}")
     print(f"  solvers         : {', '.join(args.solver)}")
+    print(f"  max-time        : "
+          + (f"{args.max_time:g}s per scheduler run" if args.max_time > 0
+             else "no deadline")
+          + f" (milp --time-limit {args.time_limit:g}s, "
+            f"greedy --max-periodic-iters {args.max_periodic_iters})")
     print(f"  {len(points)} configs x {len(args.solver)} solvers = {n_runs} scheduler runs")
 
     if args.dry_run:
@@ -523,37 +703,63 @@ def main(argv: Optional[List[str]] = None) -> int:
     # ---- phase 2: schedule -------------------------------------------------
     jobs = [(p, cfg, solver) for p, cfg in runnable for solver in args.solver]
     print(f"\n[2/2] scheduling {len(jobs)} runs ({args.jobs} at a time)")
+    tracker = Tracker(jobs, args.max_time)
     done = 0
 
     def work(job):
         point, config, solver = job
+        tracker.start(point, solver)
         try:
             row = schedule(point, config, solver, args, sweep_dir, sched_python)
         except Exception as e:  # keep one bad run from killing the sweep
             row = {"config": config, "solver": solver, "status": "sweep-error",
                    "detail": f"{type(e).__name__}: {e}"}
+        tracker.finish(point, solver, row)
         return point, row
 
-    with ThreadPoolExecutor(max_workers=args.jobs) as pool:
-        for point, row in pool.map(work, jobs):
-            done += 1
-            merged = dict(point_base[point])
-            merged.update(row)
-            record(merged)
-            mk = merged.get("makespan_ms", "")
-            print(f"  [{done}/{len(jobs)}] {str(merged['status']):<12} "
-                  f"{merged['solver']:<16} {point.stem}"
-                  + (f"  makespan={mk} ms" if mk != "" else "")
-                  + (f"  -- {str(merged.get('detail', ''))[:120]}"
-                     if merged.get("detail") else ""))
+    # Periodic "what is still running" block, so a long sweep is never silent.
+    stop_monitor = threading.Event()
+
+    def monitor():
+        while not stop_monitor.wait(args.status_interval):
+            tracker.print_status()
+
+    monitor_thread = None
+    if args.status_interval > 0 and jobs:
+        monitor_thread = threading.Thread(target=monitor, daemon=True)
+        monitor_thread.start()
+
+    try:
+        with ThreadPoolExecutor(max_workers=args.jobs) as pool:
+            # as_completed, not map: a finished run should print when it
+            # finishes, not when every run submitted before it has too.
+            futures = [pool.submit(work, job) for job in jobs]
+            for future in as_completed(futures):
+                point, row = future.result()
+                done += 1
+                merged = dict(point_base[point])
+                merged.update(row)
+                record(merged)
+                mk = merged.get("makespan_ms", "")
+                secs = merged.get("sched_seconds", "")
+                print(f"  [{done}/{len(jobs)}] {str(merged['status']):<12} "
+                      f"{merged['solver']:<16} {point.stem}"
+                      + (f"  {hms(float(secs))}" if secs != "" else "")
+                      + (f"  makespan={mk} ms" if mk != "" else "")
+                      + (f"  -- {str(merged.get('detail', ''))[:120]}"
+                         if merged.get("detail") else ""))
+    finally:
+        stop_monitor.set()
+        if monitor_thread:
+            monitor_thread.join(timeout=1)
 
     csv_file.close()
-    finish(rows, args, sweep_dir, results_csv)
+    finish(rows, args, sweep_dir, results_csv, tracker)
     return 0
 
 
 def finish(rows: List[Dict[str, object]], args, sweep_dir: str,
-           results_csv: str) -> None:
+           results_csv: str, tracker: Optional[Tracker] = None) -> None:
     results_json = os.path.join(sweep_dir, "results.json")
     with open(results_json, "w") as f:
         json.dump({
@@ -580,6 +786,9 @@ def finish(rows: List[Dict[str, object]], args, sweep_dir: str,
     print("\nsummary")
     for status in sorted(counts):
         print(f"  {status:<12} {counts[status]}")
+
+    if tracker is not None:
+        tracker.print_table()
 
     scheduled = [r for r in rows
                  if r.get("status") in ("ok", "reused")

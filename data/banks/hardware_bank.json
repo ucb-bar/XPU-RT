@@ -14,7 +14,16 @@
     "",
     "`available: false` marks configs whose profile CSVs the generator cannot",
     "reach: find_profile_csv() hardcodes <repo>/gen/profile and ignores the",
-    "`profile.gen_root` key that profile_metrics.py honours."
+    "`profile.gen_root` key that profile_metrics.py honours.",
+    "",
+    "`single_core`/`dual_core`/`quad_core` scale both machine kinds together",
+    "(1, 2 and 4 cores of each).  build_machine_combinations() turns a kind with",
+    "N cores into groups of 1..N cores whose topo tag is derived from the group",
+    "size, but qrb5165_v66 only has topo_0 profiles on disk -- so these entries",
+    "pin `topo_tag_override: true`, and every group reads the single-core",
+    "measurement.  Extra cores therefore buy dispatch-level parallelism, not an",
+    "intra-dispatch speedup.  Re-profile at topo_0_1 / topo_0_1_2_3 and drop the",
+    "override to model multi-hart groups."
   ],
 
   "default": "qrb5165_hetero",
@@ -38,6 +47,45 @@
       "available": true,
       "machines":   { "cpu_e": 1, "cpu_p": 1, "cpu_x": 1 },
       "profile_hw": { "cpu_e": "DSP", "cpu_p": "HTA", "cpu_x": "CPU" },
+      "profile": {
+        "gen_root": "gen",
+        "target": "qrb5165_v66",
+        "topo_tag": "topo_0",
+        "topo_tag_override": true
+      }
+    },
+
+    "single_core": {
+      "description": "QRB5165 v66: 1 p-core (HTA) + 1 e-core (DSP)",
+      "available": true,
+      "machines":   { "cpu_p": 1, "cpu_e": 1 },
+      "profile_hw": { "cpu_p": "HTA", "cpu_e": "DSP" },
+      "profile": {
+        "gen_root": "gen",
+        "target": "qrb5165_v66",
+        "topo_tag": "topo_0",
+        "topo_tag_override": true
+      }
+    },
+
+    "dual_core": {
+      "description": "QRB5165 v66: 2 p-cores (HTA) + 2 e-cores (DSP)",
+      "available": true,
+      "machines":   { "cpu_p": 2, "cpu_e": 2 },
+      "profile_hw": { "cpu_p": "HTA", "cpu_e": "DSP" },
+      "profile": {
+        "gen_root": "gen",
+        "target": "qrb5165_v66",
+        "topo_tag": "topo_0",
+        "topo_tag_override": true
+      }
+    },
+
+    "quad_core": {
+      "description": "QRB5165 v66: 4 p-cores (HTA) + 4 e-cores (DSP)",
+      "available": true,
+      "machines":   { "cpu_p": 4, "cpu_e": 4 },
+      "profile_hw": { "cpu_p": "HTA", "cpu_e": "DSP" },
       "profile": {
         "gen_root": "gen",
         "target": "qrb5165_v66",
