@@ -1,0 +1,101 @@
+{
+  "_comment": [
+    "Model bank for scripts/gen_random_workload.py, keyed by the hardware",
+    "config's `profile.target`.  The generator draws networks from the platform",
+    "matching the chosen hardware, measures each against its profile CSVs, and",
+    "drops any it cannot resolve.",
+    "",
+    "Per-model keys:",
+    "  dispatch_deps_path -- repo-relative *_dispatch_graph.json; supplies the",
+    "                        dispatch ids and is copied into the workload.",
+    "  profile_model      -- the <model> level of",
+    "                        gen/profile/<hw>/<target>/<model>/<basename>/...",
+    "  profile_basename   -- the <basename> level; MUST equal the dispatch",
+    "                        path's parent directory name, because",
+    "                        profile_loader derives the basename from the path.",
+    "  role               -- 'periodic' (joins the shared-period chain) or",
+    "                        'sporadic' (laid into the gaps, no edges).",
+    "                        At least one usable periodic model is required.",
+    "  count              -- {min,max} draws per generation; min 0 makes it",
+    "                        optional.  Multiple draws get _a/_b suffixes.",
+    "  variant_note       -- free text appended to the workload's _comment."
+  ],
+
+  "platforms": {
+
+    "qrb5165_v66": {
+      "models": {
+        "smolvlm_vision_v3": {
+          "dispatch_deps_path": "gen/qnn_vmfb/smolvlm_vision_v3/qrb5165_v66/CPU/smolvlm_vision_v3.int8/smolvlm_vision_v3.int8_dispatch_graph.json",
+          "profile_model": "smolvlm_vision_v3",
+          "profile_basename": "smolvlm_vision_v3.int8",
+          "role": "periodic",
+          "count": { "min": 1, "max": 3 },
+          "variant_note": "49 dispatches; profiled clean on CPU/DSP/HTA (no unsupported rows), HTA is the fastest whole-network backend."
+        },
+        "smolvlm_vision_v3_bundles": {
+          "dispatch_deps_path": "gen/qnn_vmfb/smolvlm_vision_v3_bundles/qrb5165_v66/CPU/smolvlm_vision_v3_bundles.int8/smolvlm_vision_v3_bundles.int8_dispatch_graph.json",
+          "profile_model": "smolvlm_vision_v3_bundles",
+          "profile_basename": "smolvlm_vision_v3_bundles.int8",
+          "role": "sporadic",
+          "count": { "min": 0, "max": 1 },
+          "variant_note": "Alternative bundling of smolvlm_vision_v3 (97 dispatches). Every backend has unsupported dispatches, so no single backend runs it whole and its reference duration falls back to best-per-dispatch across CPU/DSP/HTA."
+        }
+      }
+    },
+
+    "spike": {
+      "models": {
+        "mlp_control": {
+          "dispatch_deps_path": "zephyr-chipyard-sw/gen/vmfb/mlp_control/generic_riscv64/RVV/mlp_control.fp32/mlp_control.fp32_dispatch_graph.json",
+          "profile_model": "mlp_control",
+          "profile_basename": "mlp_control.fp32",
+          "role": "periodic",
+          "count": { "min": 1, "max": 2 }
+        },
+        "dronet": {
+          "dispatch_deps_path": "zephyr-chipyard-sw/gen/vmfb/dronet/generic_riscv64/RVV/dronet.fp32/dronet.fp32_dispatch_graph.json",
+          "profile_model": "dronet",
+          "profile_basename": "dronet.fp32",
+          "role": "periodic",
+          "count": { "min": 1, "max": 2 }
+        },
+        "yolov8_nano": {
+          "dispatch_deps_path": "zephyr-chipyard-sw/gen/vmfb/yolov8_nano/generic_riscv64/RVV/yolov8_nano.fp32/yolov8_nano.fp32_dispatch_graph.json",
+          "profile_model": "yolov8_nano",
+          "profile_basename": "yolov8_nano.fp32",
+          "role": "sporadic",
+          "count": { "min": 0, "max": 2 }
+        }
+      }
+    },
+
+    "firesim_rocket_saturn": {
+      "models": {
+        "mlp_control": {
+          "dispatch_deps_path": "zephyr-chipyard-sw/gen/vmfb/mlp_control/generic_riscv64/RVV/mlp_control.fp32/mlp_control.fp32_dispatch_graph.json",
+          "profile_model": "mlp_control",
+          "profile_basename": "mlp_control.fp32",
+          "role": "periodic",
+          "count": { "min": 1, "max": 2 },
+          "variant_note": "fp32 build: the gemmini_q31 sweep profiles mlp_control.fp32, there is no int8 variant on disk."
+        },
+        "dronet": {
+          "dispatch_deps_path": "zephyr-chipyard-sw/gen/vmfb/dronet/firesim_rocket_saturn/gemmini/dronet.int8/dronet.int8_dispatch_graph.json",
+          "profile_model": "dronet",
+          "profile_basename": "dronet.int8",
+          "role": "periodic",
+          "count": { "min": 1, "max": 2 },
+          "variant_note": "int8/gemmini build, matching the sweep_v8 profile data. The fp32 build at generic_riscv64/RVV/dronet.fp32 is the one the RVV-only FireSim configs use."
+        },
+        "yolov8_nano": {
+          "dispatch_deps_path": "zephyr-chipyard-sw/gen/vmfb/yolov8_nano/firesim_rocket_saturn/gemmini/yolov8_nano.int8/yolov8_nano.int8_dispatch_graph.json",
+          "profile_model": "yolov8_nano",
+          "profile_basename": "yolov8_nano.int8",
+          "role": "sporadic",
+          "count": { "min": 0, "max": 2 }
+        }
+      }
+    }
+  }
+}
