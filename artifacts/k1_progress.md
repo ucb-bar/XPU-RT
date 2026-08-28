@@ -1598,3 +1598,105 @@ runtime executes dispatches concurrently.
 ### Repo SHAs
 
 XPU-RT `feat/k1-modelblaster-closed-loop` `fcd3553`, ModelBlaster `7ca80f0`.
+
+---
+
+## fused_full: the sensor-fusion model that cannot see its sensors
+
+### Attempted
+
+Port Dima's `fused_full` (multi-input vision + ToF + low-dimensional state, int8
+encoders with an fp16 tail, LSTM) onto this branch, profile it on the K1, and
+schedule it in a multi-model periodic workload. Chosen over VitFly/SmolVLA
+because it is the deployable configuration.
+
+### Measurements
+
+Ported by hand rather than cherry-picked: `feat/harness-shared-input`'s
+`extract_graph.py` has diverged ~3k lines and its multi-input work replaces
+`run_model` with an N-typed-buffer ABI this branch does not speak. Calibration
+uses 32 real gate-course frames from `calib_real.pkl` (not synthetic --
+`run_model_k1.sh` never passed `--num-calibration`, so the first runs silently
+calibrated on one synthetic tensor and `lowdim` scale came out 0.0083 instead of
+1.7231).
+
+**Pure int8 does not degrade gracefully. It goes blind.** The fuse layer takes
+its output scale from the same max-abs as `lowdim`, whose `optical_flow`
+component reaches 218.8. Requantizing the other branches into that scale --
+verified directly from the graph's own quant parameters:
+
+| input into the fuse | scale_in | ratio to scale_out | max int8 -> levels |
+|---|---|---|---|
+| vision_fc (camera, 512ch) | 0.001922 | 0.001116 | **0.142 -> 0** |
+| depth_fc (ToF, 64ch) | 0.004530 | 0.002629 | **0.334 -> 0** |
+| lowdim (state, 21ch) | 1.723068 | 1.000000 | 127.000 |
+
+The camera's and the ToF array's strongest possible activations both round to
+integer zero. Only the 21-element state vector survives, because its scale IS
+the output scale. Measured on the board: feeding zeros for both sensors gives
+**bit-identical commands** over six consecutive real frames.
+
+So `max_abs_err=0` on this model is a correct kernel faithfully executing a
+network that has lost 95% of its input. That is the same failure shape as
+yolov8_nano's 0.81x and the walker's one-worker-per-kind serialization: nothing
+errors, every check passes, and the number is meaningless. Against fp32 over 12
+real frames with LSTM state carried on both sides: pure int8 rel L2 **0.2385**,
+hybrid **0.0768**. Cosine similarity says 0.9711 for the blind model, which is
+why cosine is not the metric to report here.
+
+Warm service time, median of 6 (the n=1 cold profile was **2.0x too slow** --
+first-touch faulting of 2.6 MB of weights, charged to whichever op hits a page
+first): pure int8 **3.851 ms**, hybrid **3.611 ms**. The model that works is not
+measurably slower, and `lstm_f16` beats `lstm_s8` at all three layers. Not
+claimed as *faster*: identical `conv2d_s8` dispatches vary up to 26% between the
+two builds, wider than the 0.24 ms gap.
+
+### Four models on the board, every deadline met
+
+`fused_full` at 10 ms period (from the COLD 7.664 ms, since a periodic task must
+admit its worst case), `stateful: true` (measured, not assumed --
+`MODELBLASTER_ITERS=3` gives `[12,108] [9,127] [2,127]`), 25 instances, 24
+chained edges. Solved with edf in 0.70 s; greedy cross-checked on the same
+config gave 0 misses and a makespan within 0.65% but took **1982.8 s**.
+
+| network | period | n | span med | max lateness | misses |
+|---|---|---|---|---|---|
+| fused_full | 10.0 ms | 25 | 9.932 ms | -1.343 ms | **0/25** |
+| mlp_control | 10.0 ms | 32 | 0.094 ms | -8.941 ms | **0/32** |
+| dronet | 33.3 ms | 10 | 8.617 ms | -22.237 ms | **0/10** |
+| yolov8_nano | 250.0 ms | 4 | 526.8 ms | -78.461 ms | **0/4** |
+
+Achieved rates over each model's own scheduled span: fused_full 102.7 Hz,
+mlp_control 103.5, dronet 32.5, yolov8_nano 4.5. Measured wall 900.22 ms against
+902.65 predicted (0.3%). Of fused_full's 9.932 ms span only 4.051 ms is busy
+(against 3.851 standalone -- a 5% contention penalty); the rest is dependency
+wait, so the chain and release times pace it rather than compute.
+
+### The gap that decided which model got scheduled, now closed
+
+The scheduled model above is the BLIND one. `harness_xpurt_linux/CMakeLists.txt`
+had no per-TU compiler override, and the fp16 kernels need GCC >= 14 (the Zvfh
+intrinsics do not exist in 13.2, the only riscv64-unknown-linux-gnu compiler
+here). So the hybrid could run standalone but never inside a schedule.
+
+Fixed with an explicit `add_custom_command`, deliberately NOT
+`C_COMPILER_LAUNCHER` -- a launcher prefixes the compiler rather than replacing
+it, so it would have quietly kept using 13.2. Verified both ways on the board
+with the B1 schedule: default compiler exit=0 (no regression), and with
+`MODELBLASTER_KERNEL_CC=<gcc 14.2>` the build log shows
+`riscv64-unknown-elf-gcc` compiling `kernels.c`, exit=0.
+
+### Blocker
+
+None.
+
+### Next
+
+Schedule the HYBRID fused_full now that the override exists, and re-measure.
+That is the deployable configuration and the one whose numbers should be
+reported; everything above about the int8 variant stands as a measurement of a
+model that should not be deployed.
+
+### Repo SHAs
+
+XPU-RT `feat/k1-modelblaster-closed-loop`, ModelBlaster `76f2263`.
