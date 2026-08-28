@@ -80,6 +80,11 @@ class DispatchRecord:
     duration: float
     dispatch_key: str = ""             # e.g. "dronet0_dispatch_5"; defaults to instance_id
     dependencies: list[str] = field(default_factory=list)   # dispatch_keys this depends on
+    #: The DECLARED release k*T for this instance, in ms, when one exists.
+    #: `start_time` is when the solver actually placed the dispatch, which is
+    #: the same thing only while the job is meeting its period. See
+    #: `_period_from_instances`.
+    nominal_release: float | None = None
 
     def __post_init__(self):
         if not self.dispatch_key:
@@ -147,6 +152,10 @@ def from_workload(combined_workload, t, alpha) -> list[DispatchRecord]:
             duration=float(duration),
             dispatch_key=operation_name,
             dependencies=dependencies,
+            # The periodic release k*T workload_factory computed for this
+            # instance. Present only on periodic instances, which is exactly
+            # where a period means anything.
+            nominal_release=getattr(op, "min_start_t", None),
         ))
     return records
 
@@ -173,6 +182,12 @@ def from_schedule_json(schedule_dict: dict) -> list[DispatchRecord]:
             duration=float(entry["duration"]),
             dispatch_key=dispatch_key,
             dependencies=list(entry.get("dependencies", [])),
+            # `release_us` is MICROseconds while `start_time` is
+            # milliseconds -- the writer is `min_start_t * 1000.0`
+            # (postprocessing.py). Mixing them would infer a period 1000x
+            # too large and look merely "saturated" rather than wrong.
+            nominal_release=(float(entry["release_us"]) / 1000.0
+                             if entry.get("release_us") is not None else None),
         ))
     return records
 
@@ -226,19 +241,60 @@ def _is_linear_chain(records: list[DispatchRecord]) -> bool:
     return all(d <= 1 for d in out_degree.values())
 
 
-def _period_from_instances(instance_start_times: dict[str, float]) -> float | None:
-    """Median of consecutive deltas between instances' earliest start times.
+def _median_delta(values) -> float | None:
+    """Median of consecutive deltas over a sorted sequence.
 
-    Median (not mean) so a solver's occasional early/late jitter on one
-    instance doesn't skew the inferred period -- workload_factory.py spaces
-    periodic instances uniformly by construction, so deltas should cluster
-    tightly around the true period.
+    Median (not mean) so one instance's jitter does not skew the result --
+    workload_factory.py spaces periodic instances uniformly by construction,
+    so deltas should cluster tightly.
     """
-    if len(instance_start_times) < 2:
+    ordered = sorted(values)
+    if len(ordered) < 2:
         return None
-    ordered = sorted(instance_start_times.values())
-    deltas = [b - a for a, b in zip(ordered, ordered[1:])]
-    return statistics.median(deltas)
+    return statistics.median(b - a for a, b in zip(ordered, ordered[1:]))
+
+
+def _period_from_instances(instance_start_times: dict[str, float],
+                           instance_releases: dict[str, float] | None = None,
+                           ) -> tuple[float | None, float | None]:
+    """The instance period: declared where known, inferred otherwise.
+
+    Returns `(period, inferred)`. `period` is what callers should use;
+    `inferred` is the start-time estimate, kept so a caller can see the two
+    disagree.
+
+    WHY THE DECLARED VALUE WINS. This used to return the median delta between
+    instances' actual START times, which equals the period only while the job
+    is meeting it. Under saturation the starts are whatever the solver could
+    manage, so the "period" becomes a report of the symptom:
+
+        yolov8_nano, declared 250.0 ms, both measured against real profiles
+          B4 S1 (1 P core):  inferred 154.526 ms
+          B4 S2 (1P + 1E):   inferred 177.921 ms   (and dronet 33.3 -> 30.000)
+
+    The error runs in both directions -- compressed instances infer a period
+    that is too SHORT, a backlog infers one that is too LONG -- and
+    `_free_slot_ms` divides the job's critical path by whichever it gets. So a
+    wrong period both invents free slot that does not exist and hides free slot
+    that does, and the advisor then recommends fitting work accordingly.
+
+    The declared release is exact and immune to this: `workload_factory` sets
+    each instance's `min_start_t` to `start_time + i*period`, so the delta
+    between consecutive releases IS the period, whatever the solver then did.
+
+    A job with fewer than two declared releases falls back to inference. That
+    is not a rare corner: a stateful network chains instance i-1 -> i, so only
+    its first instance is a root dispatch and only that one carries a release
+    (postprocessing.py writes `release_us` for root dispatches only). Such a
+    job genuinely has no independent periodic release, and inference is the
+    honest answer for it rather than a workaround.
+    """
+    inferred = _median_delta(instance_start_times.values())
+    if instance_releases:
+        declared = _median_delta(instance_releases.values())
+        if declared is not None:
+            return declared, inferred
+    return inferred, inferred
 
 
 def group_by_periodicity(
@@ -274,12 +330,27 @@ def group_by_periodicity(
         is_periodic = explicit_periodic or (inferred_periodic and not explicit_non_periodic)
         if is_periodic:
             earliest_by_instance: dict[str, float] = {}
+            releases_by_instance: dict[str, float] = {}
             for r in group:
                 if r.instance_id not in earliest_by_instance or r.start_time < earliest_by_instance[r.instance_id]:
                     earliest_by_instance[r.instance_id] = r.start_time
-            period = _period_from_instances(earliest_by_instance)
+                if r.nominal_release is not None:
+                    releases_by_instance.setdefault(r.instance_id, r.nominal_release)
+                    releases_by_instance[r.instance_id] = min(
+                        releases_by_instance[r.instance_id], r.nominal_release)
+            period, inferred = _period_from_instances(
+                earliest_by_instance, releases_by_instance)
             if period is not None:
                 periodic_periods[base_id] = period
+                # A job whose instances do not start one period apart is a job
+                # that is not keeping up. Say so here rather than silently
+                # adopting the achieved spacing as the requirement -- this is
+                # the case the advisor most needs to know about.
+                if inferred is not None and period > 0 and abs(inferred - period) / period > 0.05:
+                    print(f"  granularity: {base_id} declares a {period:.3f} ms "
+                          f"period but its instances start {inferred:.3f} ms "
+                          f"apart -- it is not meeting its period; advice uses "
+                          f"the declared value")
         else:
             non_periodic[base_id] = group
 

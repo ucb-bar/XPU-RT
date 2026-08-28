@@ -227,6 +227,99 @@ def test_from_schedule_json_recovers_instance_ids_from_dispatch_keys():
     assert advice[0].recommended == "finer"
 
 
+def _saturated_records(base, declared_period, achieved_spacing, n_instances,
+                       dispatch_duration=2.0):
+    """A periodic job whose instances start CLOSER together than declared.
+
+    That is the real B4 S1 shape: yolov8_nano declares a 250 ms period and its
+    instances start 154.526 ms apart because the solver compressed them onto
+    one core.
+    """
+    records = []
+    for i in range(n_instances):
+        inst = f"{base}{i}"
+        records.append(DispatchRecord(
+            instance_id=inst, base_id=base, is_periodic=True,
+            start_time=float(i * achieved_spacing),
+            duration=dispatch_duration,
+            dispatch_key=f"{inst}_dispatch_0",
+            nominal_release=float(i * declared_period),
+        ))
+    return records
+
+
+def test_declared_period_beats_achieved_spacing():
+    """The defect: a job that is not keeping up reported its symptom.
+
+    `_period_from_instances` used the median delta between instances' actual
+    START times, which equals the period only while the job is meeting it.
+    Measured on the real B4 S1 schedule, solved against real profiles:
+    yolov8_nano declares 250.0 ms and its starts are 154.526 ms apart.
+    """
+    records = _saturated_records("yolov8_nano", declared_period=250.0,
+                                 achieved_spacing=154.526, n_instances=4)
+    periods, _ = group_by_periodicity(records)
+    assert abs(periods["yolov8_nano"] - 250.0) < 1e-6, periods
+
+
+def test_a_backlog_infers_a_period_that_is_too_long():
+    """The error runs both ways, so both directions are pinned.
+
+    Compressed instances infer a period that is too short; a job accumulating
+    a backlog infers one that is too long. `_free_slot_ms` divides by whichever
+    it gets, so one direction invents free slot and the other hides it.
+    """
+    records = _saturated_records("dronet", declared_period=33.3,
+                                 achieved_spacing=58.085, n_instances=6)
+    periods, _ = group_by_periodicity(records)
+    assert abs(periods["dronet"] - 33.3) < 1e-6, periods
+
+
+def test_free_slot_uses_the_declared_period():
+    """The consequence, not just the intermediate value.
+
+    A 58.085 ms inferred period against a 20 ms critical path reports ~65% of
+    a period free; the declared 33.3 ms says ~40%. The advisor sizes work to
+    fit that number.
+    """
+    from granularity_advisor import _free_slot_ms
+    records = _saturated_records("dronet", declared_period=33.3,
+                                 achieved_spacing=58.085, n_instances=6,
+                                 dispatch_duration=20.0)
+    periods, _ = group_by_periodicity(records)
+    slot = _free_slot_ms("dronet", records, periods["dronet"])
+    assert abs(slot - (33.3 - 20.0)) < 1e-6, slot
+
+
+def test_a_stateful_job_falls_back_to_inference():
+    """Only the first instance of a chained job is a root dispatch, so only it
+    carries a release. Inference is the honest answer there, not a workaround --
+    such a job has no independent periodic release at all."""
+    records = _saturated_records("fused_full", declared_period=10.0,
+                                 achieved_spacing=10.0, n_instances=5)
+    for r in records[1:]:
+        r.nominal_release = None
+    periods, _ = group_by_periodicity(records)
+    assert abs(periods["fused_full"] - 10.0) < 1e-6, periods
+
+
+def test_release_and_start_units_are_not_mixed():
+    """`release_us` is microseconds; `start_time` is milliseconds.
+
+    from_schedule_json divides by 1000. Reading the field raw would infer a
+    period 1000x too large, which looks like a badly saturated job rather than
+    a units bug.
+    """
+    sched = {"dispatches": {
+        f"m{i}_dispatch_0": {"start_time": float(i * 7.0), "duration": 1.0,
+                             "dependencies": [], "release_us": float(i * 10000.0)}
+        for i in range(4)}}
+    records = from_schedule_json(sched)
+    assert all(r.nominal_release == i * 10.0
+               for i, r in enumerate(sorted(records, key=lambda r: r.start_time))), \
+        [r.nominal_release for r in records]
+
+
 def _run_all():
     tests = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
     failures = []
