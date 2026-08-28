@@ -65,7 +65,8 @@ def pairs(schedule, trace_rows):
         meas = float(r["run_us"]) / 1000.0
         if pred <= 0 or meas <= 0:
             continue
-        agrees = f'_{r.get("op", "")}_' in v.get("module_name", "")
+        agrees = k1_trace.op_kind_matches(v.get("module_name", ""),
+                                          r.get("op", ""))
         model = r.get("network") or figstyle.model_of(
             v.get("job_name") or "", known)
         out[model].append((pred, meas, agrees))

@@ -73,6 +73,30 @@ def ir_slot_map(ir: Dict[str, Any]) -> Dict[int, int]:
     return out
 
 
+def op_kind_matches(module_name: str, op: str) -> bool:
+    """Does a schedule entry's `module_name` name the op kind the trace ran?
+
+    `module_name` is `<model>$dispatch_<id>_<impl>_<op>[_<shape signature>]`,
+    and the shape suffix is OPTIONAL: `profile_writer` appends `noshape` when
+    it cannot read a shape, but a profile written before that behaviour existed
+    ends at the op kind. Both forms are on disk right now --
+
+        mlp_control$dispatch_0_rvv_x60_linear_s8_M1xK16xN256
+        yolov8_nano$dispatch_0_rvv_x60_conv2d_batchnorm2d_silu_s8
+
+    -- so testing only for `_<op>_` reports every dispatch of the second form
+    as a mismatch. That is a false alarm in a check whose whole job is to
+    refuse a bad join, which makes it worse than no check: it would train a
+    reader to pass the override flag.
+
+    Matching on a trailing field as well as an embedded one keeps it exact:
+    `_conv2d_s8` does not match `..._conv2d_batchnorm2d_silu_s8`.
+    """
+    if not module_name or not op:
+        return True                      # nothing to check against
+    return f"_{op}_" in module_name or module_name.endswith(f"_{op}")
+
+
 def is_modelblaster(rows: List[Dict[str, Any]]) -> bool:
     return bool(rows) and "actual_start_cycles" in rows[0]
 

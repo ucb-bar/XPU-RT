@@ -49,11 +49,9 @@ def load_trace(path, slot_maps=None):
     return rows
 
 
-def _op_kind_agrees(module_name: str, trace_op: str) -> bool:
-    """Does the schedule's dispatch name the same op kind the trace ran?"""
-    if not module_name or not trace_op:
-        return True                       # nothing to check against
-    return f"_{trace_op}_" in module_name
+#: Shared with `plot_predicted_vs_measured.py`, so the audit and the figure
+#: cannot disagree about whether a join is sound.
+_op_kind_agrees = k1_trace.op_kind_matches
 
 
 def audit_alignment(disp, trace):

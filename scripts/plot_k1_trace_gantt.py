@@ -66,8 +66,18 @@ _PALETTE = [figstyle.BLUE, figstyle.ORANGE, figstyle.GREEN,
 C_DEADLINE = figstyle.C_DEADLINE
 
 
-def model_of(job_name: str) -> str:
-    return job_name.rstrip("0123456789") or job_name
+def model_of(job_name: str, row: dict | None = None) -> str:
+    """The model a trace row belongs to.
+
+    Prefers the trace's own `network` column. Stripping trailing digits off
+    `<network><instance>` is ambiguous the moment a network name ends in a
+    digit -- `yolov8_nano_64x96` is a real one -- and it silently produced a
+    `yolov8_nano_64x` series, in the fallback grey, for the model carrying the
+    workload in the featured figure.
+    """
+    if row and row.get("network"):
+        return row["network"]
+    return figstyle.model_of(job_name)
 
 
 #: Re-exported so this renderer keeps one name for the board's clock.
@@ -153,7 +163,7 @@ def draw(ax, rows: Sequence[dict], sched: Dict[str, dict],
         lanes = [lane_idx[l] for l in lanes_for(r, sched) if l in lane_idx]
         if not lanes:
             continue
-        m = model_of(r.get("job_name", ""))
+        m = model_of(r.get("job_name", ""), r)
         lo, hi = min(lanes), max(lanes)
         # One bar spanning the whole held set: that is what the core lock did.
         ax.broken_barh([(start, max(dur, 0.12))], (lo - 0.42, (hi - lo) + 0.84),
@@ -198,7 +208,7 @@ def render(panels: List[Tuple[str, str, Optional[str]]], out: str,
         loaded.append((title, rows, sched, periods_from_schedule(sp)))
         for r in rows:
             all_lanes.extend(lanes_for(r, sched))
-            m = model_of(r.get("job_name", ""))
+            m = model_of(r.get("job_name", ""), r)
             if m not in models:
                 models.append(m)
     lane_order = collect_lane_order(all_lanes)
