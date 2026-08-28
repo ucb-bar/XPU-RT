@@ -1,0 +1,14 @@
+dispatch_id,module_name,vmfb_path,mlir_path,mean_time,mean_unit,mean_time_ns,returncode,log_path,source,op,shape,cycles,cycles_n,cycles_cv_pct,implementation
+0,fused_full$dispatch_0_rvv_x60_conv2d_s8_N1xIC1xIH60xIW90xOC16xOH30xOW45xKH5xKW5xSH2xSW2xPH2xPW2,,,0.641500,ms,641500.000000,0,,k1,conv2d_s8,N=1;IC=1;IH=60;IW=90;OC=16;OH=30;OW=45;KH=5;KW=5;SH=2;SW=2;PH=2;PW=2,15396,6,1.68,curated[rvv]/rvv_vsmul_vnclip
+1,fused_full$dispatch_1_rvv_x60_conv2d_s8_N1xIC16xIH30xIW45xOC32xOH15xOW23xKH3xKW3xSH2xSW2xPH1xPW1,,,0.719500,ms,719500.000000,0,,k1,conv2d_s8,N=1;IC=16;IH=30;IW=45;OC=32;OH=15;OW=23;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,17268,6,2.98,curated[rvv]/rvv_vsmul_vnclip
+2,fused_full$dispatch_2_rvv_x60_conv2d_s8_N1xIC32xIH15xIW23xOC64xOH8xOW12xKH3xKW3xSH2xSW2xPH1xPW1,,,0.745583,ms,745583.333333,0,,k1,conv2d_s8,N=1;IC=32;IH=15;IW=23;OC=64;OH=8;OW=12;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,17894,6,0.38,curated[rvv]/rvv_vsmul_vnclip
+3,fused_full$dispatch_3_rvv_x60_conv2d_s8_N1xIC64xIH8xIW12xOC64xOH4xOW6xKH3xKW3xSH2xSW2xPH1xPW1,,,0.439917,ms,439916.666667,0,,k1,conv2d_s8,N=1;IC=64;IH=8;IW=12;OC=64;OH=4;OW=6;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,10558,6,0.32,curated[rvv]/rvv_vsmul_vnclip
+4,fused_full$dispatch_4_rvv_x60_linear_s8_M1xK1536xN512,,,0.260708,ms,260708.333333,0,,k1,linear_s8,M=1;K=1536;N=512,6257,6,0.54,curated[rvv]/direct
+5,fused_full$dispatch_5_rvv_x60_conv2d_s8_N1xIC4xIH8xIW8xOC16xOH8xOW8xKH3xKW3xSH1xSW1xPH1xPW1,,,0.038875,ms,38875.000000,0,,k1,conv2d_s8,N=1;IC=4;IH=8;IW=8;OC=16;OH=8;OW=8;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,933,6,0.93,curated[rvv]/rvv_vsmul_vnclip
+6,fused_full$dispatch_6_rvv_x60_conv2d_s8_N1xIC16xIH8xIW8xOC16xOH8xOW8xKH3xKW3xSH1xSW1xPH1xPW1,,,0.122833,ms,122833.333333,0,,k1,conv2d_s8,N=1;IC=16;IH=8;IW=8;OC=16;OH=8;OW=8;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,2948,6,18.42,curated[rvv]/rvv_vsmul_vnclip
+7,fused_full$dispatch_7_rvv_x60_linear_s8_M1xK1024xN64,,,0.021875,ms,21875.000000,0,,k1,linear_s8,M=1;K=1024;N=64,525,6,1.56,curated[rvv]/direct
+8,fused_full$dispatch_8_rvv_x60_cat3_c1_s8_N1xH1xW1xC_inputs512|64|21xC_total597,,,0.040083,ms,40083.333333,0,,k1,cat3_c1_s8,N=1;H=1;W=1;C_inputs=512|64|21;C_total=597,962,6,14.0,curated[rvv]/direct
+9,fused_full$dispatch_9_rvv_x60_lstm_s8_input_size597xhidden_size128,,,0.330208,ms,330208.333333,0,,k1,lstm_s8,input_size=597;hidden_size=128,7925,6,0.89,curated[rvv]/rvv_gate_int_dot
+10,fused_full$dispatch_10_rvv_x60_lstm_s8_input_size128xhidden_size128,,,0.244958,ms,244958.333333,0,,k1,lstm_s8,input_size=128;hidden_size=128,5879,6,0.76,curated[rvv]/rvv_gate_int_dot
+11,fused_full$dispatch_11_rvv_x60_lstm_s8_input_size128xhidden_size128,,,0.243875,ms,243875.000000,0,,k1,lstm_s8,input_size=128;hidden_size=128,5853,6,0.5,curated[rvv]/rvv_gate_int_dot
+12,fused_full$dispatch_12_rvv_x60_linear_s8_M1xK128xN2,,,0.000750,ms,750.000000,0,,k1,linear_s8,M=1;K=128;N=2,18,6,21.66,curated[rvv]/direct

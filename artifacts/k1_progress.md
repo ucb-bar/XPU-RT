@@ -1700,3 +1700,100 @@ model that should not be deployed.
 ### Repo SHAs
 
 XPU-RT `feat/k1-modelblaster-closed-loop`, ModelBlaster `76f2263`.
+
+---
+
+## The deployable configuration, scheduled and measured
+
+### Attempted
+
+Schedule the HYBRID fused_full -- the variant that can see its sensors -- rather
+than the pure-int8 one, and close out B3 prep.
+
+### Measurements
+
+`MB_FUSED_LOWDIM_FLOAT=1` turned out to be required, not optional. Without it the
+hybrid still routes `lowdim` through int8 and back (an extra `cast_i8_to_f16`
+before the fuse, 18 ops instead of 17), which clips the same 218.8 optical_flow
+outlier: golden `max_abs_err=5`. With it, 17 ops and **PASS** (max_abs_err=1,
+max_rel_err 0.0094 against rtol 0.01).
+
+Warm service time, median of 6 with iteration 0 dropped:
+
+| variant | dispatches | total | sees its sensors? |
+|---|---|---|---|
+| pure int8 | 13 | 3.851 ms | **no** |
+| hybrid | 15 | **3.622 ms** | yes |
+
+The model that works is *faster* than the one that does not. Every dispatch is
+`curated[rvv]/...`; nothing on the reference.
+
+Four models on the board, `exit=0`, edf, 1201 entries:
+
+| network | period | n | span med | Hz (own span) | need | misses |
+|---|---|---|---|---|---|---|
+| yolov8_nano | 250.0 ms | 4 | 152.044 ms | 4.4 | 4.0 | 0/4 |
+| dronet | 33.3 ms | 10 | 8.472 ms | 32.5 | 30.0 | 0/10 |
+| fused_full | 10.0 ms | 25 | 9.916 ms | 102.9 | 100.0 | **1/25** |
+| mlp_control | 10.0 ms | 32 | 0.079 ms | 103.6 | 100.0 | 0/32 |
+
+**1 of 71**, makespan 900.33 ms against 902.65 predicted (0.26%). The blind int8
+variant scored 0/71 on the equivalent rung, so the hybrid costs one fused_full
+deadline out of 25 -- small, real, and worth stating rather than rounding away.
+It is the correct trade: the alternative is a model that ignores both sensors.
+
+### A bug I introduced and then found
+
+The `MODELBLASTER_KERNEL_CC` override I added applied to EVERY model's
+kernels.c. `harness_linux` builds one model per binary so it never hit this;
+this harness links many, so yolov8_nano's int8 kernels were also recompiled with
+the bare-metal toolchain.
+
+The symptom was almost perfectly disguised: the binary executed all 767
+dispatches correctly -- worker `entries_done` summed to exactly 767 -- and then
+died in the trace `printf`. SIGSEGV in `__strlen` from `__printf_buffer`,
+`badaddr 0xffffffffc8ffc9f8`.
+
+That address is what identified it. Identical across two different binaries, and
+`0xc8ffc9f8` sign-extended is a 32-bit float bit pattern sitting where a `char*`
+belonged -- a computed value, not stray memory. The bisect: hybrid alone exit=0;
+yolov8_nano + hybrid SIGSEGV; yolov8_nano + three int8 models exit=0. So the
+trigger was another model being miscompiled, not fp16.
+
+Ruled out along the way, each cheaply: buffer sizing (correctly `_Float16`),
+newlib/glibc symbol clash (no newlib symbols, single `printf`), `frm` leakage
+(`add_s8` does save and restore it), table corruption (`.rodata` is read-only and
+entry 735 is valid), and format/argument count (14 and 14).
+
+The override is now applied only where the default compiler *cannot* build the
+file, and the file says which: the Zvfh kernels declare `_Float16`. Detecting
+that beats a per-model flag, which would be one more thing to keep in sync.
+
+### Also fixed
+
+The IR cache reused `graph.json` on existence alone, so a schedule solved against
+the fp16 hybrid was ingested against a cached pure-int8 graph and died on
+`dispatch_id=13 not in network 'fused_full'`. Dying was the lucky outcome: the
+graphs differ in PRECISION, so a dispatch-count coincidence would have run the
+blind model under the hybrid's name. Reuse is now keyed on the extraction config,
+which is recorded beside the graph.
+
+And the profile summary no longer quotes a CV that is timer quantisation.
+`rdtime` ticks at 24 MHz, so a 1.5 us dispatch is ~36 ticks; the run reported
+"worst CV 244.8%" on one of those. It now takes its worst from dispatches over
+240 ticks and says how many it excluded.
+
+### Blocker
+
+None.
+
+### Next
+
+B3 is prepped and gated host-side (a separate agent produced
+`artifacts/k1_run/round_B3_dronet_split/`, including a real IHWOC weight-packing
+bug that would have silently corrupted OC-split convolutions on rvv_x60). Its
+board step is one command and has not been run.
+
+### Repo SHAs
+
+XPU-RT `feat/k1-modelblaster-closed-loop`, ModelBlaster `03f15da`.
