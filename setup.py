@@ -25,4 +25,15 @@ setup(
         "matplotlib",
         "pandas",
     ],
+    # Optional solver backends. Neither is a hard dependency: the registry
+    # imports them lazily and `scripts/profile_schedulers.py` probes for them
+    # and reports "unavailable" rather than failing. They are named here so
+    # that "the sweep only ran four of six policies" has a one-line fix
+    # (`pip install -e '.[solvers]'`) instead of a guess.
+    #
+    # MOSEK additionally needs a licence file (~/mosek/mosek.lic or
+    # $MOSEKLM_LICENSE_FILE); installing the wheel alone is not enough.
+    extras_require={
+        "solvers": ["ortools", "mosek"],
+    },
 )
