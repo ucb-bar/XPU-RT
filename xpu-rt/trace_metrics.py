@@ -67,9 +67,48 @@ def pct(xs: Sequence[float], p: float) -> float:
     return s[k]
 
 
+#: `rdtime` on the K1. NOT the 1.6 GHz core clock and not 1 MHz -- the device
+#: tree's `timebase-frequency` is 24000000, and every cycles->time conversion in
+#: this project uses it.
+K1_RDTIME_HZ = 24_000_000.0
+
+
+def normalise_modelblaster(rows: List[dict]) -> List[dict]:
+    """Map ModelBlaster's `harness_xpurt` trace onto this module's columns.
+
+    Two producers emit measured K1 traces and they disagree on spelling, not on
+    meaning: merlin's runner writes `start_us`/`end_us`/`run_us`/
+    `queue_delay_us`/`job_name`/`cores`; ModelBlaster's writes
+    `actual_start_cycles`/`actual_end_cycles` plus `network`+`instance`. Doing
+    the mapping here rather than in each caller is the whole reason this module
+    exists -- `metrics.py` and `k1_baselines.py` disagreeing about what a miss
+    is, in different files, is what it was written to end.
+
+    Cycles are rdtime ticks, and the run is stamped from the first tick observed
+    rather than from 0, so t=0 is the run's own start.
+
+    `queue_delay_us` has no counterpart in this producer, so it is left ABSENT
+    rather than filled with 0 -- `summarise_trace` then reports `queue_us: None`
+    instead of a zero that would read as "no queueing was measured".
+    """
+    if not rows or "actual_start_cycles" not in rows[0]:
+        return rows
+    t0 = min(int(r["actual_start_cycles"]) for r in rows)
+    out = []
+    for r in rows:
+        s, e = int(r["actual_start_cycles"]), int(r["actual_end_cycles"])
+        d = dict(r)
+        d["start_us"] = (s - t0) / K1_RDTIME_HZ * 1e6
+        d["end_us"] = (e - t0) / K1_RDTIME_HZ * 1e6
+        d["run_us"] = max(e - s, 0) / K1_RDTIME_HZ * 1e6
+        d["job_name"] = f'{r.get("network", "")}{r.get("instance", "")}'
+        out.append(d)
+    return out
+
+
 def read_trace(path: str) -> List[dict]:
     with open(path, newline="") as f:
-        return list(csv.DictReader(f))
+        return normalise_modelblaster(list(csv.DictReader(f)))
 
 
 def _held_cores(row: dict) -> List[str]:
@@ -119,7 +158,14 @@ def summarise_trace(rows: Sequence[dict],
     windows_ms = windows_ms or {}
 
     service_us = sum(float(r["run_us"]) for r in rows)
-    queue_us = sum(float(r["queue_delay_us"]) for r in rows)
+    # Not every producer measures queueing separately (ModelBlaster's harness
+    # records only start/end cycles). Absent is reported as absent: a 0 here
+    # would be indistinguishable from a run that genuinely never queued, and
+    # the queue/service split is the field that decides whether a miss calls
+    # for a faster kernel or an earlier start.
+    have_queue = all((r.get("queue_delay_us") or "") != "" for r in rows)
+    queue_us = (sum(float(r["queue_delay_us"]) for r in rows)
+                if have_queue else None)
     makespan_us = max(float(r["end_us"]) for r in rows)
 
     # Per instance: span, and the cores it touched.
@@ -174,9 +220,10 @@ def summarise_trace(rows: Sequence[dict],
     out = {
         "n_dispatches": len(rows),
         "service_us": round(service_us, 1),
-        "queue_us": round(queue_us, 1),
-        "queue_share_pct": round(100 * queue_us / (service_us + queue_us), 1)
-                           if service_us + queue_us else 0.0,
+        "queue_us": round(queue_us, 1) if have_queue else None,
+        "queue_share_pct": (round(100 * queue_us / (service_us + queue_us), 1)
+                            if have_queue and service_us + queue_us else
+                            (0.0 if have_queue else None)),
         "makespan_us": round(makespan_us, 1),
         "periodic_instances": len(spans),
         # Kept for continuity with the earlier per-instance count, but named so

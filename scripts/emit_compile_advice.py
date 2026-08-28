@@ -18,7 +18,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(_HERE), "xpu-rt"))
 
 from compile_advice import (  # noqa: E402
     blocking_advice, implementation_advice, load_profiles,
-    load_profiles_by_cores, overhead_advice, shard_advice, write_advice,
+    load_profiles_by_cores, load_profiles_by_cores_csv, load_profiles_csv,
+    overhead_advice, shard_advice, write_advice,
 )
 # The canonical granularity analysis. This file used to carry its own
 # `is_linear_chain` over a dispatch-graph FILE and its own notion of a free
@@ -42,7 +43,22 @@ def main() -> int:
     ap.add_argument("--models", default="mlp:mlp.q.int8,dronet:dronet.q.int8")
     ap.add_argument("--impls", default="RVV,scalar,IME")
     ap.add_argument("--baseline-impl", default="RVV")
+    ap.add_argument("--profile-format", choices=("jsonl", "csv"),
+                    default="jsonl",
+                    help="which producer wrote the profiles. `jsonl` is "
+                         "runtime/scripts/profile_k1.py (samples, "
+                         "percentiles, cv). `csv` is ModelBlaster's "
+                         "pipeline/profile_writer.py (IREE-shape results.csv, "
+                         "one mean per dispatch, plus the `implementation` "
+                         "column recording which kernel actually ran) -- the "
+                         "only format the corrected rvv_x60 builds exist in.")
     a = ap.parse_args()
+    if a.profile_format == "csv":
+        get_profiles, get_profiles_by_cores = (load_profiles_csv,
+                                               load_profiles_by_cores_csv)
+    else:
+        get_profiles, get_profiles_by_cores = (load_profiles,
+                                              load_profiles_by_cores)
 
     sched = json.load(open(a.schedule))
     periods = (sched.get("metadata") or {}).get("periodic_networks") or {}
@@ -137,7 +153,7 @@ def main() -> int:
     advice, notes = [], {}
     for spec in a.models.split(","):
         model, basename = spec.split(":")
-        profs = load_profiles(a.gen_root, a.target, model, basename, impls)
+        profs = get_profiles(a.gen_root, a.target, model, basename, impls)
         if not profs:
             print(f"WARN no profiles for {model}", file=sys.stderr)
             continue
@@ -151,6 +167,23 @@ def main() -> int:
             "n_dispatches": len(base),
             "total_median_ms": round(sum(r["median_ms"] for r in base.values()), 3),
             "linear_chain": chain,
+            # What statistic the numbers above ARE. `results.csv` carries one
+            # mean per dispatch and the harness that writes it takes a single
+            # sample, so an advice document derived from it must not be read as
+            # if it rested on a median over warm repetitions.
+            "stat_basis": sorted({r.get("stat_basis", "median_of_reps")
+                                  for r in base.values()}),
+            # Which kernel actually ran. Curated kernels are looked up by exact
+            # op name, so fused ops used to fall back to the scalar reference
+            # inside builds labelled `rvv_x60`; a profile that cannot say which
+            # kernel it timed cannot support advice about that kernel.
+            "baseline_implementations": sorted(
+                {r.get("implementation", "") for r in base.values()}) or None,
+            "profile_csv": sorted({r["source_csv"] for r in base.values()
+                                   if r.get("source_csv")}) or None,
+            "core_counts_profiled": sorted(
+                get_profiles_by_cores(a.gen_root, a.target, model, basename,
+                                      a.baseline_impl)),
         }
         advice += implementation_advice(model, profs, a.baseline_impl)
         advice += overhead_advice(model, base, chain)
@@ -171,8 +204,8 @@ def main() -> int:
                                       misses=measured_misses.get(model, 0))
         # Sharding is judged on measured scaling with core count, which no
         # single-topo profile can show.
-        by_cores = load_profiles_by_cores(a.gen_root, a.target, model,
-                                          basename, a.baseline_impl)
+        by_cores = get_profiles_by_cores(a.gen_root, a.target, model,
+                                         basename, a.baseline_impl)
         if len(by_cores) > 1:
             period = periods.get(model, 0.0)
             if period and total > period:

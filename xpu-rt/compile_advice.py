@@ -29,6 +29,8 @@ Design rules that fall out of what the measurements actually showed:
 
 from __future__ import annotations
 
+import csv
+import glob
 import json
 import os
 from dataclasses import asdict, dataclass, field
@@ -126,6 +128,10 @@ def implementation_advice(
                         "gain_fraction": round(gain, 4),
                         "baseline_cv_pct": brec.get("cv_pct"),
                         "op": op,
+                        # Which kernel the baseline number was actually timed
+                        # on. Blank for producers that do not record it.
+                        "baseline_kernel": brec.get("implementation") or None,
+                        "stat_basis": brec.get("stat_basis") or "median_of_reps",
                     }),
                 constraints={
                     # IME executes only on cluster 0; measured by SIGILL probe.
@@ -141,14 +147,22 @@ def implementation_advice(
             # round from re-proposing a change already measured as not worth it.
             out.append(Advice(
                 model=model, dispatch_id=did, recommendation="unchanged",
-                priority=5, confidence="high",
+                priority=5,
+                # Same gate as the positive branch. A "no alternative wins"
+                # verdict drawn from a single sample is not high confidence
+                # either, and hardcoding "high" here made the two branches
+                # disagree about what the same measurement supports.
+                confidence="high" if brec.get("cv_pct", 100) < 5 else "medium",
                 evidence=Evidence(
                     service_time_us=round(b * 1000, 2),
                     extra={"baseline_impl": baseline_impl,
                            "best_alternative": best_impl,
                            "gain_fraction": round(gain, 4),
                            "min_gain_required": min_gain,
-                           "op": op}),
+                           "op": op,
+                           "baseline_kernel": brec.get("implementation") or None,
+                           "stat_basis": (brec.get("stat_basis")
+                                          or "median_of_reps")}),
                 rationale=(f"no measured alternative beats {baseline_impl} by "
                            f"{min_gain*100:.0f}% (best was {best_impl} at "
                            f"{gain*100:+.1f}%)."),
@@ -240,6 +254,140 @@ def write_advice(path: str, advice: List[Advice], *,
     os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
     with open(path, "w") as f:
         json.dump(doc, f, indent=1)
+
+
+def _load_results_csv(path: str, n_cores: Optional[int] = None) -> Dict[int, dict]:
+    """{dispatch_id: rec} from an IREE-shape `results.csv`.
+
+    The second profile producer on this board. `runtime/scripts/profile_k1.py`
+    writes `profile.jsonl` (all samples, percentiles, cv); ModelBlaster's
+    `pipeline/profile_writer.py` writes IREE's `results.csv`, and that is the
+    only format the corrected `rvv_x60` builds exist in. Without this the
+    advisor could only ever be regenerated against the older IREE-path
+    profiles -- which is exactly the stale-input failure this exists to fix.
+
+    Two honesty markers travel with every record, because they change what the
+    advice may claim:
+
+    * `stat_basis`. `results.csv` carries a single `mean_time` per dispatch, not
+      a distribution. The harness that produced these takes ONE sample, so
+      `median_ms` here is that one sample, not a median over warm repetitions.
+      `cv_pct` is therefore deliberately ABSENT rather than invented -- callers
+      default it to 100, which downgrades confidence to "medium", which is the
+      correct answer for n=1.
+    * `implementation`. The column that records which kernel actually ran
+      (`curated[rvv]/rvv_oc_blocked_bn_epilogue`, and so on). It exists because
+      curated kernels were looked up by exact op name, so fused ops silently
+      fell back to the scalar reference inside builds labelled `rvv_x60`. Any
+      advice derived from a profile whose rows say `scalar` while the build says
+      `rvv` is advice about a binary nobody shipped, so the string is carried
+      into the evidence rather than left on disk.
+    """
+    out: Dict[int, dict] = {}
+    if not os.path.exists(path):
+        return out
+    with open(path, newline="") as f:
+        for row in csv.DictReader(f):
+            raw = (row.get("dispatch_id") or "").strip()
+            if not raw:
+                continue
+            try:
+                did = int(raw)
+            except ValueError:
+                continue
+            try:
+                t = float(row.get("mean_time") or 0.0)
+            except ValueError:
+                continue
+            unit = (row.get("mean_unit") or "ms").strip()
+            ms = t / 1000.0 if unit == "us" else (t * 1000.0 if unit == "s" else t)
+            rec = {
+                "dispatch_id": did,
+                "module_name": row.get("module_name", ""),
+                # One sample; see `stat_basis`. Named `median_ms` because that
+                # is the key every advisor here reads -- renaming it would fork
+                # the two producers apart again.
+                "median_ms": ms,
+                "mean_ms": ms,
+                "stat_basis": "single_sample_mean",
+                "op": row.get("op", ""),
+                "shape": row.get("shape", ""),
+                "implementation": row.get("implementation", ""),
+                "source": row.get("source", ""),
+                "source_csv": path,
+            }
+            if row.get("cycles"):
+                try:
+                    rec["cycles"] = int(float(row["cycles"]))
+                except ValueError:
+                    pass
+            if n_cores is not None:
+                rec["n_cores"] = n_cores
+            out[did] = rec
+    return out
+
+
+def _n_cores_from_topo_tag(tag: str) -> int:
+    """`topo_0_1_2_3` -> 4. The tag lists the harts the run actually held."""
+    return max(1, len(tag.split("_")) - 1)
+
+
+def _find_results_csv(gen_root: str, impl: str, target: str, model: str,
+                      basename: str, topo_tag: str) -> Optional[str]:
+    """Most recently modified `results.csv` for this (impl, model, topo).
+
+    Handles both layouts, same as `profile_loader.find_profile_csv`: the
+    ModelBlaster/IREE one interposes a spec directory
+    (`<model>_<target>_<impl>_<basename>`) between the basename and the topo
+    tag, and the older one does not.
+    """
+    root = os.path.join(gen_root, "profile", impl, target, model, basename)
+    for pat in (os.path.join(root, "*", topo_tag, "results.csv"),
+                os.path.join(root, topo_tag, "results.csv")):
+        hits = glob.glob(pat)
+        if hits:
+            return max(hits, key=os.path.getmtime)
+    return None
+
+
+def load_profiles_csv(gen_root: str, target: str, model: str, basename: str,
+                      impls: List[str], topo_tag: str = "topo_0"
+                      ) -> Dict[str, Dict[int, dict]]:
+    """`load_profiles`, for the `results.csv` producer. Same return shape."""
+    out: Dict[str, Dict[int, dict]] = {}
+    n = _n_cores_from_topo_tag(topo_tag)
+    for impl in impls:
+        p = _find_results_csv(gen_root, impl, target, model, basename, topo_tag)
+        if not p:
+            continue
+        rec = _load_results_csv(p, n_cores=n)
+        if rec:
+            out[impl] = rec
+    return out
+
+
+def load_profiles_by_cores_csv(gen_root: str, target: str, model: str,
+                               basename: str, impl: str,
+                               topo_tags: Sequence[str] = (
+                                   "topo_0", "topo_0_1", "topo_0_1_2_3",
+                                   "topo_0_1_2_3_4_5_6_7")
+                               ) -> Dict[int, Dict[int, dict]]:
+    """`load_profiles_by_cores`, for the `results.csv` producer.
+
+    Returns `{n_cores: {did: rec}}`. A tree that only ever profiled one core
+    count comes back with a single entry, and `shard_advice` then has nothing
+    to measure -- which is the honest outcome, not a bug to route around.
+    """
+    out: Dict[int, Dict[int, dict]] = {}
+    for tag in topo_tags:
+        p = _find_results_csv(gen_root, impl, target, model, basename, tag)
+        if not p:
+            continue
+        n = _n_cores_from_topo_tag(tag)
+        rec = _load_results_csv(p, n_cores=n)
+        if rec:
+            out[n] = rec
+    return out
 
 
 def load_profiles(gen_root: str, target: str, model: str, basename: str,
