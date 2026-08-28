@@ -60,3 +60,40 @@ schedules/*_report.json
 
 # LaTeX sources and build products do not belong in the runtime repo.
 /paper/
+
+# Editor, agent and tooling local state.
+/.claude/
+/.vscode/
+/.mcp.json
+/uv.lock
+
+# Build trees and scratch. No tracked content in any of them.
+/build/
+/compgen_output/
+/sessions/
+/tmp/
+
+# Model weights are inputs, not source: yolov8n.pt is 6.5 MB of downloadable
+# checkpoint and data/models/ is where the rest land.
+/yolov8n.pt
+/data/models/
+/data/training/
+# LLM response cache for kernel synthesis: regenerable, and can carry prompt
+# text that has no reason to be in a public repo.
+/data/llm_cache/
+
+# gen/ is deliberately NOT blanket-ignored. It holds 44 TRACKED files -- the
+# qrb5165 and spacemit profiles that the benchmarks are anchored on, and the
+# ModelBlaster dispatch graphs that every network spec's `dispatch_deps_path`
+# points at. Ignoring the tree wholesale made a gitignore rule shadow tracked
+# data, which is confusing rather than clean.
+#
+# Only the one subtree with no tracked content at all:
+/gen/profile_hybrid/
+
+# Freshness-sweep per-cell solver output, matching the existing
+# data/toplevel/_fx_*.json rule for the configs that produced it. Scoped to
+# `.json` on purpose: the `.json.cfgsha256` siblings ARE tracked (they are the
+# config fingerprint that says which sweep cell a result belongs to), and a
+# rule that shadowed them would be worse than no rule.
+/schedules/scheduled__fx_*.json
