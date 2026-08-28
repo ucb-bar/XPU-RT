@@ -43,10 +43,19 @@ figstyle.use()
 
 
 def pairs(schedule, trace_rows):
-    """`{model: [(predicted_ms, measured_ms, agrees), ...]}`."""
+    """`{model: [(predicted_ms, measured_ms, agrees), ...]}`.
+
+    The model name comes from the trace's own `network` column where there is
+    one. Deriving it by stripping trailing digits off `job_name` is ambiguous
+    the moment a network name ends in a digit -- `yolov8_nano_64x96` is a real
+    one -- and it silently produced a `yolov8_nano_64x` series in the fallback
+    grey for the model carrying the workload.
+    """
     by_key = {}
     for r in trace_rows:
         by_key.setdefault(r["dispatch_key"], r)
+    known = set((schedule.get("metadata") or {}).get("periodic_networks") or {})
+    known |= {r["network"] for r in trace_rows if r.get("network")}
     out = defaultdict(list)
     for key, v in schedule["dispatches"].items():
         r = by_key.get(key)
@@ -57,7 +66,8 @@ def pairs(schedule, trace_rows):
         if pred <= 0 or meas <= 0:
             continue
         agrees = f'_{r.get("op", "")}_' in v.get("module_name", "")
-        model = (v.get("job_name") or "").rstrip("0123456789")
+        model = r.get("network") or figstyle.model_of(
+            v.get("job_name") or "", known)
         out[model].append((pred, meas, agrees))
     return out
 

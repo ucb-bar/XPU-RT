@@ -45,10 +45,18 @@ MODEL_COLOR = {
     "yolov8_nano": BLUE,
     "dronet": ORANGE,
     "mlp_control": GREEN,
-    "lstm_tiny": PURPLE,
-    "vitfly_frontend": SKY,
-    "vitfly_lstm": YELLOW,
+    "fused_full": PURPLE,
+    "lstm_tiny": SKY,
+    "vitfly_frontend": YELLOW,
+    "vitfly_lstm": VERMILLION,
 }
+
+#: Input-size variants of one detector. They are the same model at different
+#: resolutions and must read as the same series across figures, so they share
+#: its colour rather than each drawing a new one from the palette.
+MODEL_ALIASES = ("yolov8_nano_64x96", "yolov8_nano_128x192",
+                 "yolov8_nano_320", "yolov8_nano_64")
+MODEL_COLOR.update({a: BLUE for a in MODEL_ALIASES})
 
 #: Roles, not models. A deadline is always vermillion, whatever it belongs to.
 C_DEADLINE = VERMILLION
@@ -65,9 +73,38 @@ FIGURE_DIR = os.path.join(
 
 
 def model_color(name: str, fallback: str = C_MUTED) -> str:
-    """The canonical colour for a model, tolerant of instance suffixes."""
+    """The canonical colour for a model, tolerant of instance suffixes.
+
+    THE EXACT NAME IS TRIED FIRST, and that ordering is the whole point. A
+    network name can END IN DIGITS -- `yolov8_nano_64x96` is a real one in
+    `networks_dense2` -- so stripping trailing digits to remove an instance
+    suffix turns it into `yolov8_nano_64x`, which matches nothing. The model
+    that carries the workload then renders in the fallback grey and the legend
+    names a model that does not exist. Instance suffixes are only stripped
+    when the full name is not itself a known model.
+    """
+    if name in MODEL_COLOR:
+        return MODEL_COLOR[name]
     base = (name or "").rstrip("0123456789") or name
-    return MODEL_COLOR.get(base, MODEL_COLOR.get(name, fallback))
+    return MODEL_COLOR.get(base, fallback)
+
+
+def model_of(job_name: str, known: "set[str] | None" = None) -> str:
+    """`'yolov8_nano_64x960'` -> `'yolov8_nano_64x96'`, given the known set.
+
+    A job name is `<network><instance>` with no separator, and a network name
+    may itself end in digits, so the split is genuinely ambiguous without the
+    set of real network names. Prefer the trace's own `network` column where
+    there is one; use this where there is not.
+    """
+    if known:
+        # Longest match wins: `yolov8_nano_64x96` before `yolov8_nano_64x9`.
+        for cand in sorted(known, key=len, reverse=True):
+            if job_name.startswith(cand) and job_name[len(cand):].isdigit():
+                return cand
+        if job_name in known:
+            return job_name
+    return (job_name or "").rstrip("0123456789") or job_name
 
 
 def use() -> None:
