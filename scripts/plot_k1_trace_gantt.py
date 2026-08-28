@@ -132,8 +132,16 @@ def lanes_for(row: dict, sched: Dict[str, dict]) -> List[str]:
     # measured K1 traces unrenderable, which is how this repo ended up with
     # three Gantt renderers that each read one producer.
     kind = (row.get("core_kind") or "").strip()
-    hart = (row.get("hart") or "").strip()
-    if kind and hart != "":
+    # `worker_hart` is where the dispatch RAN; `hart` is where the schedule
+    # asked for it. They agree when the runtime honours the assignment and
+    # they did not before the walker spawned one worker per (kind, hart) --
+    # a single worker per kind executed every hart's entries on one thread,
+    # so drawing the scheduled hart depicted four busy lanes that were really
+    # one thread time-slicing. A MEASURED Gantt has to plot what happened.
+    hart = (row.get("worker_hart") or "").strip()
+    if hart in ("", "-1"):
+        hart = (row.get("hart") or "").strip()
+    if kind and hart not in ("", "-1"):
         return [f"{kind}#{hart}"]
 
     ent = sched.get(row.get("dispatch_key", ""))
@@ -225,7 +233,13 @@ def render(panels: List[Tuple[str, str, Optional[str]]], out: str,
     colours = {m: _PALETTE[i % len(_PALETTE)] for i, m in enumerate(ordered)}
     models = ordered
 
-    h = max(len(panels) * height_per_panel_mm, 30.0) * MM
+    # Height has to follow the LANE COUNT, not just the panel count. A fixed
+    # 26 mm panel was sized when a trace showed 2-5 lanes; once the walker ran
+    # one worker per hart an 8-hart panel packed 8 rows into the same space and
+    # the tick labels overlapped into each other ("rvv#3" on top of
+    # "rvv_c1#4"), which is unreadable at print size and worse than no label.
+    per_panel = max(height_per_panel_mm, 8.0 + 3.6 * len(lane_idx))
+    h = max(len(panels) * per_panel, 30.0) * MM
     fig, axes = plt.subplots(len(panels), 1, figsize=(DOUBLE_COL, h),
                              sharex=True, squeeze=False)
     axes = axes[:, 0]
