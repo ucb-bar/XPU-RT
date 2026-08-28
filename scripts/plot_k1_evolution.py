@@ -441,7 +441,10 @@ def main():
          f"{b}/trace_B4.csv",
          f"{s}/scheduled_networks_k1_B4_shard_greedy_profiled.json"),
     ]
-    out = os.path.join(REPO, "paper", "figures")
+    # Generated output, so it lands in the gitignored /out/ tree rather than
+    # in the repo proper. There is no paper/ directory here any more; the
+    # LaTeX sources live outside this checkout.
+    out = os.environ.get("XPURT_FIGURE_DIR") or os.path.join(REPO, "out", "figures")
     os.makedirs(out, exist_ok=True)
     figure1(rungs, os.path.join(out, "k1_schedule_evolution"))
     figure2(rungs, os.path.join(out, "k1_feedback_ladder"))
