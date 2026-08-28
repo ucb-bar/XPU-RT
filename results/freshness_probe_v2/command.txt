@@ -1,0 +1,1 @@
+/scratch2/agustin/miniforge3/envs/merlin-dev/bin/python -m benchmarks.freshness_eval.run --config data/toplevel/freshness_canon_300ms.json --output-dir results/freshness_probe_v2 --policies PROBES --bursts 0,1,2,3,4 --seeds 0 --reuse-fixtures --cell-timeout 2400

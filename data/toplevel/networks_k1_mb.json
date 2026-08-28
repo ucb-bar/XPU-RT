@@ -1,0 +1,47 @@
+{
+  "_comment": "SpaceMiT K1 (X60), 8 cores, measured through ModelBlaster's own generated-C kernels (the IREE/merlin execution path is retired). Profiles come from ModelBlaster's profile_writer via PROFILE_OUT_ROOT=<repo>/gen_mb/profile, which is why gen_root is gen_mb and not gen -- gen/profile is the retired IREE tree and mixing the two would compare timings from two different runtimes.",
+  "_machines_comment": "ONE pool of 8, not cpu_p:4 + cpu_e:4. ingest_xpurt_schedule maps CPU_P#n and CPU_E#n to the n-th registry core OF THE NAMED KIND, and every core in cores/spacemit_k1.json is kind 'rvv' -- so with cpu_p_kind = cpu_e_kind = rvv, CPU_P#0 and CPU_E#0 both resolve to cluster0_core0 (hart 0) and cluster 1 is never used. A single CPU_P pool of 8 maps 1:1 onto harts 0-7.",
+  "_capabilities_comment": "IME is measured, not assumed: smt.vmadot executes on cores 0-3 and SIGILLs on 4-7 (artifacts/k1_bringup/*/ime_capability_probe.txt). It is a property of cluster-0 cores, never a separate machine -- see xpu-rt/capabilities.py. No ModelBlaster kernel targets it today; see artifacts/k1_run/ime_gate/FINDINGS.md.",
+  "hardware": {
+    "machines": {
+      "cpu_p": 8
+    },
+    "profile_hw": {
+      "cpu_p": "rvv_x60"
+    },
+    "profile": {
+      "target": "spacemit_x60",
+      "topo_tag": "topo_0",
+      "topo_tag_override": true,
+      "gen_root": "gen_mb"
+    },
+    "p_core_speedup": 1.0
+  },
+  "scheduler": {
+    "random_seed": 42,
+    "solver_verbosity": 1,
+    "time_limit": 120,
+    "use_profiled": true,
+    "prune_periodic": true,
+    "restrict_makespan_to_nonperiodic": false,
+    "machine_combination_mode": "singletons"
+  },
+  "networks": {
+    "mlp_control": {
+      "id": 0,
+      "identifier": "mlp_control",
+      "dispatch_deps_path": "gen_mb/vmfb/mlp_control/spacemit_x60/rvv_x60/mlp_control.int8/mlp_control.int8_dispatch_graph.json",
+      "period": 10,
+      "window_duration": 10
+    },
+    "dronet": {
+      "id": 1,
+      "identifier": "dronet",
+      "dispatch_deps_path": "gen_mb/vmfb/dronet/spacemit_x60/rvv_x60/dronet.int8/dronet.int8_dispatch_graph.json",
+      "period": 33.3,
+      "window_duration": 33.3
+    }
+  },
+  "edges": [],
+  "_topo_comment": "topo_tag_override=true pins every machine combination to the single-core profile. singletons + topo_0 must go together: a multi-hart timing here would credit each core with the whole cluster's throughput. ModelBlaster's K1 runner only ever produces topo_<cpu> profiles for the one core it pinned, so topo_0 is what exists."
+}

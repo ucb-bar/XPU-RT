@@ -1,0 +1,17 @@
+workload,solver,n_ops,feasible,valid,makespan_us,deadline_miss_count,solver_wall_time_s,error
+montage_25,MOSEK,20,True,False,990.0,0,0.32785685593262315,
+montage_25,HIGHS,20,True,False,990.0,0,0.2990046119084582,
+cybershake_30,MOSEK,27,True,False,550.0,0,2.132524473941885,
+cybershake_30,HIGHS,27,True,True,1270.0,0,2.1351040430599824,
+epigenomics_46,MOSEK,30,True,False,940.0,0,2.409722775919363,
+epigenomics_46,HIGHS,30,True,False,940.0,0,2.2954018550226465,
+dronet_chipyard,MOSEK,15,True,True,1502288.401,0,0.031681725988164544,
+dronet_chipyard,HIGHS,15,True,True,1502288.401,0,0.028592971968464553,
+mlp_wide_chipyard,MOSEK,3,True,True,7210.135999999999,0,0.010542099946178496,
+mlp_wide_chipyard,HIGHS,3,True,True,7210.136,0,0.006190633052028716,
+vision_pipeline,MOSEK,14,False,,,,0.09608969802502543,no_schedule
+vision_pipeline,HIGHS,14,False,,,,0.09285484801512212,no_schedule
+sensor_fusion_diamond,MOSEK,16,True,True,745.0000000000001,0,0.148216433939524,
+sensor_fusion_diamond,HIGHS,16,True,True,745.0,0,0.18927029299084097,
+tiny_op_quantized_chain,MOSEK,25,True,True,810.0,0,0.045841392944566905,
+tiny_op_quantized_chain,HIGHS,25,True,True,810.0,0,0.04252434603404254,

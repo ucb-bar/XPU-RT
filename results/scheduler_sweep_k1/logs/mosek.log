@@ -1,0 +1,65 @@
+============================================================
+Loading network hierarchy from JSON...
+============================================================
+
+Loading networks from: /scratch2/agustin/XPU-RT/results/scheduler_sweep_k1/config/networks_k1_mlp_dronet.json
+
+Found 2 networks:
+  - mlp (id: 0, identifier: mlp)
+  - dronet (id: 1, identifier: dronet)
+
+Found 0 network-level dependencies:
+
+Resolved runtime configuration:
+  Machine core counts: {'CPU_P': 4, 'CPU_E': 4}
+  Profile HW mapping: CPU_P->RVV, CPU_E->RVV_c1
+  Profile target/topology: target=spacemit_x60, topo_tag=topo_0
+  p_core_speedup: 1.0
+  random_seed: 42
+  solver_verbosity: 0
+  time_limit: 120.0
+  use_profiled: True
+  prune_periodic: True
+  restrict_makespan_to_nonperiodic: False
+  machine_combination_mode: singletons
+  enforce_same_processor_combinations: True
+
+Using profiled runtimes where available...
+
+Creating workload from network hierarchy...
+
+Workload created successfully!
+  Total operations: 370
+  Scheduler machines (8 cores): ['CPU_P#0', 'CPU_P#1', 'CPU_P#2', 'CPU_P#3', 'CPU_E#0', 'CPU_E#1', 'CPU_E#2', 'CPU_E#3']
+  Machine combination options: 8 (mode=singletons)
+  Job names: ['mlp0', 'dronet0', 'mlp1', 'mlp2', 'mlp3', 'mlp4', 'mlp5', 'mlp6', 'mlp7', 'mlp8', 'mlp9', 'mlp10', 'mlp11', 'mlp12', 'mlp13', 'mlp14', 'mlp15', 'mlp16', 'mlp17', 'mlp18', 'mlp19', 'mlp20', 'mlp21', 'mlp22', 'mlp23', 'mlp24', 'mlp25', 'mlp26', 'mlp27', 'mlp28', 'mlp29', 'mlp30', 'mlp31', 'mlp32', 'mlp33', 'dronet1', 'dronet2', 'dronet3', 'dronet4', 'dronet5', 'dronet6', 'dronet7', 'dronet8', 'dronet9']
+  Operations with multiple predecessors: 30
+  Independent jobs (can run in parallel): 44
+
+============================================================
+Scheduling combined workload (scheduler=mosek)...
+============================================================
+Status:  infeasible
+Optimal value:  inf
+Warning: Optimization failed (infeasible or error). Cannot expand schedule.
+
+--- stderr ---
+/scratch2/agustin/XPU-RT/.venv/lib/python3.13/site-packages/mosek/__init__.py:11539: UserWarning: Argument subi in putaijlist64: Incorrect array format causing data to be copied
+  warnings.warn("Argument subi in putaijlist64: Incorrect array format causing data to be copied");
+/scratch2/agustin/XPU-RT/.venv/lib/python3.13/site-packages/mosek/__init__.py:11568: UserWarning: Argument subj in putaijlist64: Incorrect array format causing data to be copied
+  warnings.warn("Argument subj in putaijlist64: Incorrect array format causing data to be copied");
+Traceback (most recent call last):
+  File [35m"/scratch2/agustin/XPU-RT/scripts/run_xpurt_schedule.py"[0m, line [35m878[0m, in [35m<module>[0m
+    [31mschedule_iree_networks[0m[1;31m([0m
+    [31m~~~~~~~~~~~~~~~~~~~~~~[0m[1;31m^[0m
+        [1;31mnetworks_json_path=args.networks_json,[0m
+        [1;31m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+    ...<9 lines>...
+        [1;31mmax_periodic_iters=args.max_periodic_iters,[0m
+        [1;31m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+    [1;31m)[0m
+    [1;31m^[0m
+  File [35m"/scratch2/agustin/XPU-RT/scripts/run_xpurt_schedule.py"[0m, line [35m511[0m, in [35mschedule_iree_networks[0m
+    combo_idx = int(np.argmax([31malpha[0m[1;31m[i][0m))
+                              [31m~~~~~[0m[1;31m^^^[0m
+[1;35mTypeError[0m: [35m'NoneType' object is not subscriptable[0m

@@ -1,0 +1,1 @@
+/home/agustin/.local/bin/python -m benchmarks.freshness_eval.run --config data/toplevel/freshness_canon_300ms.json --output-dir results/freshness_probe/shard_0 --policies static_nominal,probe_prodwin40 --bursts 0,1,2,3,4 --seeds 0 --cell-timeout 1200

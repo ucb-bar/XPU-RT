@@ -1,0 +1,125 @@
+============================================================
+Loading network hierarchy from JSON...
+============================================================
+
+Loading networks from: /scratch2/agustin/XPU-RT/results/scheduler_sweep_k1/config/networks_k1_mlp_dronet.json
+
+Found 2 networks:
+  - mlp (id: 0, identifier: mlp)
+  - dronet (id: 1, identifier: dronet)
+
+Found 0 network-level dependencies:
+
+Resolved runtime configuration:
+  Machine core counts: {'CPU_P': 4, 'CPU_E': 4}
+  Profile HW mapping: CPU_P->RVV, CPU_E->RVV_c1
+  Profile target/topology: target=spacemit_x60, topo_tag=topo_0
+  p_core_speedup: 1.0
+  random_seed: 42
+  solver_verbosity: 0
+  time_limit: 120.0
+  use_profiled: True
+  prune_periodic: True
+  restrict_makespan_to_nonperiodic: False
+  machine_combination_mode: singletons
+  enforce_same_processor_combinations: True
+
+Using profiled runtimes where available...
+
+Creating workload from network hierarchy...
+
+Workload created successfully!
+  Total operations: 370
+  Scheduler machines (8 cores): ['CPU_P#0', 'CPU_P#1', 'CPU_P#2', 'CPU_P#3', 'CPU_E#0', 'CPU_E#1', 'CPU_E#2', 'CPU_E#3']
+  Machine combination options: 8 (mode=singletons)
+  Job names: ['mlp0', 'dronet0', 'mlp1', 'mlp2', 'mlp3', 'mlp4', 'mlp5', 'mlp6', 'mlp7', 'mlp8', 'mlp9', 'mlp10', 'mlp11', 'mlp12', 'mlp13', 'mlp14', 'mlp15', 'mlp16', 'mlp17', 'mlp18', 'mlp19', 'mlp20', 'mlp21', 'mlp22', 'mlp23', 'mlp24', 'mlp25', 'mlp26', 'mlp27', 'mlp28', 'mlp29', 'mlp30', 'mlp31', 'mlp32', 'mlp33', 'dronet1', 'dronet2', 'dronet3', 'dronet4', 'dronet5', 'dronet6', 'dronet7', 'dronet8', 'dronet9']
+  Operations with multiple predecessors: 30
+  Independent jobs (can run in parallel): 44
+
+============================================================
+Scheduling combined workload (scheduler=cpsat)...
+============================================================
+
+Scheduling completed!
+Makespan (non-periodic): 0.00 ms
+
+Combination assignments:
+  1xCPU_P: 203 operations
+  1xCPU_P: 203 operations
+  1xCPU_P: 203 operations
+  1xCPU_P: 203 operations
+  1xCPU_E: 167 operations
+  1xCPU_E: 167 operations
+  1xCPU_E: 167 operations
+  1xCPU_E: 167 operations
+
+Per-network combination assignments:
+  Mlp0: 1xCPU_P=1, 1xCPU_P=1, 1xCPU_P=1, 1xCPU_P=1, 1xCPU_E=4, 1xCPU_E=4, 1xCPU_E=4, 1xCPU_E=4
+  Dronet0: 1xCPU_P=8, 1xCPU_P=8, 1xCPU_P=8, 1xCPU_P=8, 1xCPU_E=12, 1xCPU_E=12, 1xCPU_E=12, 1xCPU_E=12
+  Mlp1: 1xCPU_P=1, 1xCPU_P=1, 1xCPU_P=1, 1xCPU_P=1, 1xCPU_E=4, 1xCPU_E=4, 1xCPU_E=4, 1xCPU_E=4
+  Mlp2: 1xCPU_P=3, 1xCPU_P=3, 1xCPU_P=3, 1xCPU_P=3, 1xCPU_E=2, 1xCPU_E=2, 1xCPU_E=2, 1xCPU_E=2
+  Mlp3: 1xCPU_P=2, 1xCPU_P=2, 1xCPU_P=2, 1xCPU_P=2, 1xCPU_E=3, 1xCPU_E=3, 1xCPU_E=3, 1xCPU_E=3
+  Mlp4: 1xCPU_P=4, 1xCPU_P=4, 1xCPU_P=4, 1xCPU_P=4, 1xCPU_E=1, 1xCPU_E=1, 1xCPU_E=1, 1xCPU_E=1
+  Mlp5: 1xCPU_P=2, 1xCPU_P=2, 1xCPU_P=2, 1xCPU_P=2, 1xCPU_E=3, 1xCPU_E=3, 1xCPU_E=3, 1xCPU_E=3
+  Mlp6: 1xCPU_P=1, 1xCPU_P=1, 1xCPU_P=1, 1xCPU_P=1, 1xCPU_E=4, 1xCPU_E=4, 1xCPU_E=4, 1xCPU_E=4
+  Mlp7: 1xCPU_P=3, 1xCPU_P=3, 1xCPU_P=3, 1xCPU_P=3, 1xCPU_E=2, 1xCPU_E=2, 1xCPU_E=2, 1xCPU_E=2
+  Mlp8: 1xCPU_P=2, 1xCPU_P=2, 1xCPU_P=2, 1xCPU_P=2, 1xCPU_E=3, 1xCPU_E=3, 1xCPU_E=3, 1xCPU_E=3
+  Mlp9: 1xCPU_P=4, 1xCPU_P=4, 1xCPU_P=4, 1xCPU_P=4, 1xCPU_E=1, 1xCPU_E=1, 1xCPU_E=1, 1xCPU_E=1
+  Mlp10: 1xCPU_P=1, 1xCPU_P=1, 1xCPU_P=1, 1xCPU_P=1, 1xCPU_E=4, 1xCPU_E=4, 1xCPU_E=4, 1xCPU_E=4
+  Mlp11: 1xCPU_P=3, 1xCPU_P=3, 1xCPU_P=3, 1xCPU_P=3, 1xCPU_E=2, 1xCPU_E=2, 1xCPU_E=2, 1xCPU_E=2
+  Mlp12: 1xCPU_P=4, 1xCPU_P=4, 1xCPU_P=4, 1xCPU_P=4, 1xCPU_E=1, 1xCPU_E=1, 1xCPU_E=1, 1xCPU_E=1
+  Mlp13: 1xCPU_P=4, 1xCPU_P=4, 1xCPU_P=4, 1xCPU_P=4, 1xCPU_E=1, 1xCPU_E=1, 1xCPU_E=1, 1xCPU_E=1
+  Mlp14: 1xCPU_P=2, 1xCPU_P=2, 1xCPU_P=2, 1xCPU_P=2, 1xCPU_E=3, 1xCPU_E=3, 1xCPU_E=3, 1xCPU_E=3
+  Mlp15: 1xCPU_P=2, 1xCPU_P=2, 1xCPU_P=2, 1xCPU_P=2, 1xCPU_E=3, 1xCPU_E=3, 1xCPU_E=3, 1xCPU_E=3
+  Mlp16: 1xCPU_P=3, 1xCPU_P=3, 1xCPU_P=3, 1xCPU_P=3, 1xCPU_E=2, 1xCPU_E=2, 1xCPU_E=2, 1xCPU_E=2
+  Mlp17: 1xCPU_P=5, 1xCPU_P=5, 1xCPU_P=5, 1xCPU_P=5
+  Mlp18: 1xCPU_P=3, 1xCPU_P=3, 1xCPU_P=3, 1xCPU_P=3, 1xCPU_E=2, 1xCPU_E=2, 1xCPU_E=2, 1xCPU_E=2
+  Mlp19: 1xCPU_P=2, 1xCPU_P=2, 1xCPU_P=2, 1xCPU_P=2, 1xCPU_E=3, 1xCPU_E=3, 1xCPU_E=3, 1xCPU_E=3
+  Mlp20: 1xCPU_P=5, 1xCPU_P=5, 1xCPU_P=5, 1xCPU_P=5
+  Mlp21: 1xCPU_P=3, 1xCPU_P=3, 1xCPU_P=3, 1xCPU_P=3, 1xCPU_E=2, 1xCPU_E=2, 1xCPU_E=2, 1xCPU_E=2
+  Mlp22: 1xCPU_P=4, 1xCPU_P=4, 1xCPU_P=4, 1xCPU_P=4, 1xCPU_E=1, 1xCPU_E=1, 1xCPU_E=1, 1xCPU_E=1
+  Mlp23: 1xCPU_P=2, 1xCPU_P=2, 1xCPU_P=2, 1xCPU_P=2, 1xCPU_E=3, 1xCPU_E=3, 1xCPU_E=3, 1xCPU_E=3
+  Mlp24: 1xCPU_E=5, 1xCPU_E=5, 1xCPU_E=5, 1xCPU_E=5
+  Mlp25: 1xCPU_P=5, 1xCPU_P=5, 1xCPU_P=5, 1xCPU_P=5
+  Mlp26: 1xCPU_P=3, 1xCPU_P=3, 1xCPU_P=3, 1xCPU_P=3, 1xCPU_E=2, 1xCPU_E=2, 1xCPU_E=2, 1xCPU_E=2
+  Mlp27: 1xCPU_P=2, 1xCPU_P=2, 1xCPU_P=2, 1xCPU_P=2, 1xCPU_E=3, 1xCPU_E=3, 1xCPU_E=3, 1xCPU_E=3
+  Mlp28: 1xCPU_P=2, 1xCPU_P=2, 1xCPU_P=2, 1xCPU_P=2, 1xCPU_E=3, 1xCPU_E=3, 1xCPU_E=3, 1xCPU_E=3
+  Mlp29: 1xCPU_P=3, 1xCPU_P=3, 1xCPU_P=3, 1xCPU_P=3, 1xCPU_E=2, 1xCPU_E=2, 1xCPU_E=2, 1xCPU_E=2
+  Mlp30: 1xCPU_P=3, 1xCPU_P=3, 1xCPU_P=3, 1xCPU_P=3, 1xCPU_E=2, 1xCPU_E=2, 1xCPU_E=2, 1xCPU_E=2
+  Mlp31: 1xCPU_P=1, 1xCPU_P=1, 1xCPU_P=1, 1xCPU_P=1, 1xCPU_E=4, 1xCPU_E=4, 1xCPU_E=4, 1xCPU_E=4
+  Mlp32: 1xCPU_P=3, 1xCPU_P=3, 1xCPU_P=3, 1xCPU_P=3, 1xCPU_E=2, 1xCPU_E=2, 1xCPU_E=2, 1xCPU_E=2
+  Mlp33: 1xCPU_P=2, 1xCPU_P=2, 1xCPU_P=2, 1xCPU_P=2, 1xCPU_E=3, 1xCPU_E=3, 1xCPU_E=3, 1xCPU_E=3
+  Dronet1: 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 1xCPU_E=4, 1xCPU_E=4, 1xCPU_E=4, 1xCPU_E=4
+  Dronet2: 1xCPU_P=14, 1xCPU_P=14, 1xCPU_P=14, 1xCPU_P=14, 1xCPU_E=6, 1xCPU_E=6, 1xCPU_E=6, 1xCPU_E=6
+  Dronet3: 1xCPU_P=14, 1xCPU_P=14, 1xCPU_P=14, 1xCPU_P=14, 1xCPU_E=6, 1xCPU_E=6, 1xCPU_E=6, 1xCPU_E=6
+  Dronet4: 1xCPU_P=14, 1xCPU_P=14, 1xCPU_P=14, 1xCPU_P=14, 1xCPU_E=6, 1xCPU_E=6, 1xCPU_E=6, 1xCPU_E=6
+  Dronet5: 1xCPU_P=12, 1xCPU_P=12, 1xCPU_P=12, 1xCPU_P=12, 1xCPU_E=8, 1xCPU_E=8, 1xCPU_E=8, 1xCPU_E=8
+  Dronet6: 1xCPU_P=6, 1xCPU_P=6, 1xCPU_P=6, 1xCPU_P=6, 1xCPU_E=14, 1xCPU_E=14, 1xCPU_E=14, 1xCPU_E=14
+  Dronet7: 1xCPU_P=11, 1xCPU_P=11, 1xCPU_P=11, 1xCPU_P=11, 1xCPU_E=9, 1xCPU_E=9, 1xCPU_E=9, 1xCPU_E=9
+  Dronet8: 1xCPU_P=8, 1xCPU_P=8, 1xCPU_P=8, 1xCPU_P=8, 1xCPU_E=12, 1xCPU_E=12, 1xCPU_E=12, 1xCPU_E=12
+  Dronet9: 1xCPU_P=10, 1xCPU_P=10, 1xCPU_P=10, 1xCPU_P=10, 1xCPU_E=10, 1xCPU_E=10, 1xCPU_E=10, 1xCPU_E=10
+Job 'mlp0' (job_id=0, color_index=0) -> color RGB=[0.59607843 0.8345098  0.57882353]
+DEBUG TRANSFER: alpha_shape=(370, 8), num_actual_machines=8, len(machines)=8, alpha_cols=8, is_using_combos=False, prev_machine=7, machine=7, transfer_times_shape=(8, 8), machine_combinations=True
+DEBUG IMMEDIATE: op=62, job_id=13, lookup=13, op_color_index=13, base_colors[13]=(np.float64(0.2949019607843137), np.float64(0.6901960784313725), np.float64(0.38431372549019605))
+DEBUG AFTER MODULO: op=62, original=13, after_modulo=13, len(base_colors)=44
+DEBUG BEFORE LEGEND: op=62, op_color_index=13, original=13, job_index=12, legend_key=kind_mlp, in_legend=True
+DEBUG IMMEDIATE: op=63, job_id=13, lookup=13, op_color_index=13, base_colors[13]=(np.float64(0.2949019607843137), np.float64(0.6901960784313725), np.float64(0.38431372549019605))
+DEBUG AFTER MODULO: op=63, original=13, after_modulo=13, len(base_colors)=44
+DEBUG BEFORE LEGEND: op=63, op_color_index=13, original=13, job_index=12, legend_key=kind_mlp, in_legend=True
+DEBUG IMMEDIATE: op=64, job_id=13, lookup=13, op_color_index=13, base_colors[13]=(np.float64(0.2949019607843137), np.float64(0.6901960784313725), np.float64(0.38431372549019605))
+DEBUG AFTER MODULO: op=64, original=13, after_modulo=13, len(base_colors)=44
+DEBUG BEFORE LEGEND: op=64, op_color_index=13, original=13, job_index=12, legend_key=kind_mlp, in_legend=True
+Job 'dronet0' (job_id=1, color_index=1) -> color RGB=[0.57960784 0.77019608 0.87372549]
+Saving plot to plots/networks_k1_mlp_dronet_cpsat_profiled.png...
+
+Plot saved to plots/networks_k1_mlp_dronet_cpsat_profiled.png
+
+Outputting scheduled JSON...
+  pdb_hash = sha256:55e86b60f6b39030... over 4 CSV(s)
+
+Scheduled JSON saved to: schedules/scheduled_networks_k1_mlp_dronet_cpsat_profiled.json
+Metrics written to: schedules/scheduled_networks_k1_mlp_dronet_cpsat_profiled_metrics.json
+  makespan_us=471.08  deadline_miss=297  cross_dev=286  solver_s=120.831
+Scheduler report written to: schedules/scheduled_networks_k1_mlp_dronet_cpsat_profiled_report.json
+
+--- stderr ---

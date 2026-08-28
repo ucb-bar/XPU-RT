@@ -1,0 +1,196 @@
+$ /home/agustin/.local/bin/python /scratch2/agustin/XPU-RT/scripts/run_xpurt_schedule.py --networks-json data/toplevel/_fx_probe_prodwin25_B3_s0.json --solver greedy --use-profiled --no-prune-periods --include-periodic-in-makespan --time-limit 60.0
+
+--- stdout ---
+============================================================
+Loading network hierarchy from JSON...
+============================================================
+
+Loading networks from: /scratch2/agustin/XPU-RT/data/toplevel/_fx_probe_prodwin25_B3_s0.json
+
+Found 3 networks:
+  - mlp_control (id: 0, identifier: mlp_control)
+  - dronet (id: 1, identifier: dronet)
+  - yolov8_nano_64 (id: 2, identifier: yolov8_nano_64)
+
+Found 0 network-level dependencies:
+
+Resolved runtime configuration:
+  Machine core counts: {'CPU_P': 1, 'CPU_E': 1}
+  Profile HW mapping: CPU_P->gemmini, CPU_E->rvv_opu
+  Profile target/topology: target=firesim_gemmini_opu, topo_tag=topo_0
+  p_core_speedup: 1.0
+  random_seed: 0
+  solver_verbosity: 0
+  time_limit: 60.0
+  use_profiled: True
+  prune_periodic: False
+  restrict_makespan_to_nonperiodic: False
+  machine_combination_mode: singletons
+  enforce_same_processor_combinations: True
+
+Using profiled runtimes where available...
+
+--- greedy iteration 1 ---
+  Total operations: 972
+  Job names: ['mlp_control0', 'dronet0', 'yolov8_nano_640', 'mlp_control1', 'mlp_control2', 'mlp_control3', 'mlp_control4', 'mlp_control5', 'mlp_control6', 'mlp_control7', 'mlp_control8', 'mlp_control9', 'mlp_control10', 'mlp_control11', 'mlp_control12', 'mlp_control13', 'mlp_control14', 'mlp_control15', 'mlp_control16', 'mlp_control17', 'mlp_control18', 'mlp_control19', 'mlp_control20', 'mlp_control21', 'mlp_control22', 'mlp_control23', 'mlp_control24', 'mlp_control25', 'mlp_control26', 'mlp_control27', 'mlp_control28', 'mlp_control29', 'dronet1', 'dronet2', 'dronet3', 'dronet4', 'dronet5', 'yolov8_nano_641', 'yolov8_nano_642']
+  Makespan: 307.17 ms
+  Periodic 'mlp_control': period=10ms current=30 needed=31
+  Periodic 'dronet': period=50ms current=6 needed=7
+  Periodic 'yolov8_nano_64': period=100ms current=3 needed=4
+  Bumping num_instances: mlp_control: 30->31, dronet: 6->7, yolov8_nano_64: 3->4
+
+--- greedy iteration 2 ---
+  Total operations: 1212
+  Job names: ['mlp_control0', 'dronet0', 'yolov8_nano_640', 'mlp_control1', 'mlp_control2', 'mlp_control3', 'mlp_control4', 'mlp_control5', 'mlp_control6', 'mlp_control7', 'mlp_control8', 'mlp_control9', 'mlp_control10', 'mlp_control11', 'mlp_control12', 'mlp_control13', 'mlp_control14', 'mlp_control15', 'mlp_control16', 'mlp_control17', 'mlp_control18', 'mlp_control19', 'mlp_control20', 'mlp_control21', 'mlp_control22', 'mlp_control23', 'mlp_control24', 'mlp_control25', 'mlp_control26', 'mlp_control27', 'mlp_control28', 'mlp_control29', 'mlp_control30', 'dronet1', 'dronet2', 'dronet3', 'dronet4', 'dronet5', 'dronet6', 'yolov8_nano_641', 'yolov8_nano_642', 'yolov8_nano_643']
+  Makespan: 383.21 ms
+  Periodic 'mlp_control': period=10ms current=31 needed=39
+  Periodic 'dronet': period=50ms current=7 needed=8
+  Periodic 'yolov8_nano_64': period=100ms current=4 needed=4
+  Bumping num_instances: mlp_control: 31->39, dronet: 7->8
+
+--- greedy iteration 3 ---
+  Total operations: 1289
+  Job names: ['mlp_control0', 'dronet0', 'yolov8_nano_640', 'mlp_control1', 'mlp_control2', 'mlp_control3', 'mlp_control4', 'mlp_control5', 'mlp_control6', 'mlp_control7', 'mlp_control8', 'mlp_control9', 'mlp_control10', 'mlp_control11', 'mlp_control12', 'mlp_control13', 'mlp_control14', 'mlp_control15', 'mlp_control16', 'mlp_control17', 'mlp_control18', 'mlp_control19', 'mlp_control20', 'mlp_control21', 'mlp_control22', 'mlp_control23', 'mlp_control24', 'mlp_control25', 'mlp_control26', 'mlp_control27', 'mlp_control28', 'mlp_control29', 'mlp_control30', 'mlp_control31', 'mlp_control32', 'mlp_control33', 'mlp_control34', 'mlp_control35', 'mlp_control36', 'mlp_control37', 'mlp_control38', 'dronet1', 'dronet2', 'dronet3', 'dronet4', 'dronet5', 'dronet6', 'dronet7', 'yolov8_nano_641', 'yolov8_nano_642', 'yolov8_nano_643']
+  Makespan: 403.66 ms
+  Periodic 'mlp_control': period=10ms current=39 needed=41
+  Periodic 'dronet': period=50ms current=8 needed=9
+  Periodic 'yolov8_nano_64': period=100ms current=4 needed=5
+  Bumping num_instances: mlp_control: 39->41, dronet: 8->9, yolov8_nano_64: 4->5
+
+--- greedy iteration 4 ---
+  Total operations: 1536
+  Job names: ['mlp_control0', 'dronet0', 'yolov8_nano_640', 'mlp_control1', 'mlp_control2', 'mlp_control3', 'mlp_control4', 'mlp_control5', 'mlp_control6', 'mlp_control7', 'mlp_control8', 'mlp_control9', 'mlp_control10', 'mlp_control11', 'mlp_control12', 'mlp_control13', 'mlp_control14', 'mlp_control15', 'mlp_control16', 'mlp_control17', 'mlp_control18', 'mlp_control19', 'mlp_control20', 'mlp_control21', 'mlp_control22', 'mlp_control23', 'mlp_control24', 'mlp_control25', 'mlp_control26', 'mlp_control27', 'mlp_control28', 'mlp_control29', 'mlp_control30', 'mlp_control31', 'mlp_control32', 'mlp_control33', 'mlp_control34', 'mlp_control35', 'mlp_control36', 'mlp_control37', 'mlp_control38', 'mlp_control39', 'mlp_control40', 'dronet1', 'dronet2', 'dronet3', 'dronet4', 'dronet5', 'dronet6', 'dronet7', 'dronet8', 'yolov8_nano_641', 'yolov8_nano_642', 'yolov8_nano_643', 'yolov8_nano_644']
+  Makespan: 483.21 ms
+  Periodic 'mlp_control': period=10ms current=41 needed=49
+  Periodic 'dronet': period=50ms current=9 needed=10
+  Periodic 'yolov8_nano_64': period=100ms current=5 needed=5
+  Bumping num_instances: mlp_control: 41->49, dronet: 9->10
+
+Final greedy makespan: 483.21 ms (after 4 iterations)
+
+Scheduling completed!
+Makespan (non-periodic): 0.00 ms
+
+Combination assignments:
+  1xCPU_P: 1095 operations
+  1xCPU_E: 441 operations
+
+Per-network combination assignments:
+  Mlp_control0: 1xCPU_P=7
+  Dronet0: 1xCPU_P=10, 1xCPU_E=11
+  Yolov8_nano_640: 1xCPU_P=147, 1xCPU_E=65
+  Mlp_control1: 1xCPU_P=7
+  Mlp_control2: 1xCPU_P=7
+  Mlp_control3: 1xCPU_P=6, 1xCPU_E=1
+  Mlp_control4: 1xCPU_P=7
+  Mlp_control5: 1xCPU_P=7
+  Mlp_control6: 1xCPU_P=7
+  Mlp_control7: 1xCPU_P=7
+  Mlp_control8: 1xCPU_P=7
+  Mlp_control9: 1xCPU_P=7
+  Mlp_control10: 1xCPU_P=7
+  Mlp_control11: 1xCPU_P=7
+  Mlp_control12: 1xCPU_P=7
+  Mlp_control13: 1xCPU_P=7
+  Mlp_control14: 1xCPU_P=6, 1xCPU_E=1
+  Mlp_control15: 1xCPU_P=7
+  Mlp_control16: 1xCPU_P=6, 1xCPU_E=1
+  Mlp_control17: 1xCPU_P=7
+  Mlp_control18: 1xCPU_P=7
+  Mlp_control19: 1xCPU_P=7
+  Mlp_control20: 1xCPU_P=7
+  Mlp_control21: 1xCPU_P=7
+  Mlp_control22: 1xCPU_P=7
+  Mlp_control23: 1xCPU_P=7
+  Mlp_control24: 1xCPU_P=6, 1xCPU_E=1
+  Mlp_control25: 1xCPU_P=7
+  Mlp_control26: 1xCPU_P=6, 1xCPU_E=1
+  Mlp_control27: 1xCPU_P=7
+  Mlp_control28: 1xCPU_P=7
+  Mlp_control29: 1xCPU_P=7
+  Mlp_control30: 1xCPU_P=7
+  Mlp_control31: 1xCPU_P=7
+  Mlp_control32: 1xCPU_P=7
+  Mlp_control33: 1xCPU_P=7
+  Mlp_control34: 1xCPU_P=6, 1xCPU_E=1
+  Mlp_control35: 1xCPU_P=7
+  Mlp_control36: 1xCPU_P=6, 1xCPU_E=1
+  Mlp_control37: 1xCPU_P=7
+  Mlp_control38: 1xCPU_P=7
+  Mlp_control39: 1xCPU_P=7
+  Mlp_control40: 1xCPU_P=7
+  Dronet1: 1xCPU_P=9, 1xCPU_E=12
+  Dronet2: 1xCPU_P=10, 1xCPU_E=11
+  Dronet3: 1xCPU_P=9, 1xCPU_E=12
+  Dronet4: 1xCPU_P=10, 1xCPU_E=11
+  Dronet5: 1xCPU_P=9, 1xCPU_E=12
+  Dronet6: 1xCPU_P=10, 1xCPU_E=11
+  Dronet7: 1xCPU_P=9, 1xCPU_E=12
+  Dronet8: 1xCPU_P=10, 1xCPU_E=11
+  Yolov8_nano_641: 1xCPU_P=144, 1xCPU_E=68
+  Yolov8_nano_642: 1xCPU_P=144, 1xCPU_E=68
+  Yolov8_nano_643: 1xCPU_P=144, 1xCPU_E=68
+  Yolov8_nano_644: 1xCPU_P=150, 1xCPU_E=62
+Job 'mlp_control0' (job_id=0, color_index=0) -> color RGB=[0.59607843 0.8345098  0.57882353]
+DEBUG TRANSFER: alpha_shape=(1536, 2), num_actual_machines=2, len(machines)=2, alpha_cols=2, is_using_combos=False, prev_machine=0, machine=0, transfer_times_shape=(2, 2), machine_combinations=True
+Job 'mlp_control1' (job_id=3, color_index=3) -> color RGB=[0.57946943 0.82675894 0.56516724]
+Job 'mlp_control2' (job_id=4, color_index=4) -> color RGB=[0.55732411 0.81642445 0.54695886]
+Job 'mlp_control3' (job_id=5, color_index=5) -> color RGB=[0.54071511 0.80867359 0.53330258]
+Job 'mlp_control4' (job_id=6, color_index=6) -> color RGB=[0.51856978 0.7983391  0.51509419]
+Saving plot to plots/_fx_probe_prodwin25_B3_s0_greedy_profiled.png...
+
+--- stderr ---
+/scratch2/agustin/XPU-RT/xpu-rt/plot.py:550: UserWarning: Tight layout not applied. The bottom and top margins cannot be made large enough to accommodate all axes decorations.
+  plt.tight_layout()
+Traceback (most recent call last):
+  File "/scratch2/agustin/XPU-RT/scripts/run_xpurt_schedule.py", line 790, in <module>
+    schedule_iree_networks(
+  File "/scratch2/agustin/XPU-RT/scripts/run_xpurt_schedule.py", line 581, in schedule_iree_networks
+    plot.plot_optimization_schedule(
+  File "/scratch2/agustin/XPU-RT/xpu-rt/plot.py", line 554, in plot_optimization_schedule
+    plt.savefig(save_path, dpi=500, bbox_inches='tight')
+  File "/usr/lib/python3/dist-packages/matplotlib/pyplot.py", line 959, in savefig
+    res = fig.savefig(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3/dist-packages/matplotlib/figure.py", line 3285, in savefig
+    self.canvas.print_figure(fname, **kwargs)
+  File "/usr/lib/python3/dist-packages/matplotlib/backend_bases.py", line 2338, in print_figure
+    result = print_method(
+             ^^^^^^^^^^^^^
+  File "/usr/lib/python3/dist-packages/matplotlib/backend_bases.py", line 2204, in <lambda>
+    print_method = functools.wraps(meth)(lambda *args, **kwargs: meth(
+                                                                 ^^^^^
+  File "/usr/lib/python3/dist-packages/matplotlib/_api/deprecation.py", line 410, in wrapper
+    return func(*inner_args, **inner_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3/dist-packages/matplotlib/backends/backend_agg.py", line 517, in print_png
+    self._print_pil(filename_or_obj, "png", pil_kwargs, metadata)
+  File "/usr/lib/python3/dist-packages/matplotlib/backends/backend_agg.py", line 463, in _print_pil
+    FigureCanvasAgg.draw(self)
+  File "/usr/lib/python3/dist-packages/matplotlib/backends/backend_agg.py", line 405, in draw
+    self.figure.draw(self.renderer)
+  File "/usr/lib/python3/dist-packages/matplotlib/artist.py", line 74, in draw_wrapper
+    result = draw(artist, renderer, *args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3/dist-packages/matplotlib/artist.py", line 51, in draw_wrapper
+    return draw(artist, renderer)
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3/dist-packages/matplotlib/figure.py", line 3082, in draw
+    mimage._draw_list_compositing_images(
+  File "/usr/lib/python3/dist-packages/matplotlib/image.py", line 131, in _draw_list_compositing_images
+    a.draw(renderer)
+  File "/usr/lib/python3/dist-packages/matplotlib/artist.py", line 51, in draw_wrapper
+    return draw(artist, renderer)
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3/dist-packages/matplotlib/axes/_base.py", line 3100, in draw
+    mimage._draw_list_compositing_images(
+  File "/usr/lib/python3/dist-packages/matplotlib/image.py", line 131, in _draw_list_compositing_images
+    a.draw(renderer)
+  File "/usr/lib/python3/dist-packages/matplotlib/artist.py", line 51, in draw_wrapper
+    return draw(artist, renderer)
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3/dist-packages/matplotlib/text.py", line 735, in draw
+    textrenderer.draw_text(gc, x, y, clean_line,
+  File "/usr/lib/python3/dist-packages/matplotlib/backends/backend_agg.py", line 208, in draw_text
+    font.draw_glyphs_to_bitmap(
+RuntimeError: In draw_glyphs_to_bitmap: Could not convert glyph to bitmap (raster overflow; error code 0x62)

@@ -1,0 +1,116 @@
+config          data/toplevel/freshness_canon_300ms.json
+epoch           300.0 ms
+A0 (uncontended input-age ceiling)  60.546 ms
+  closed-form supremum              68.519 ms
+  distinct uncontended ages         [20.55, 30.55, 40.55, 50.55, 60.55]
+  producer dronet T=50.0 L=17.973 ms on gemmini
+  consumer mlp_control T=10.0 L=0.546 ms
+phi             ['A0+5=65.5', 'A0+10=70.5', 'A0+20=80.5', 'A0+30=90.5', 'A0+50=110.5']
+bursts          [0, 1, 2, 3]
+policies        ['probe_defer15', 'probe_defer20']
+seeds           [0]
+
+  probe_defer15        B=0 seed=0 makespan=  290.5ms  deadline=1.000 soft=0/0 (7.2s)
+  probe_defer15        B=1 seed=0 makespan=  290.5ms  deadline=1.000 soft=1/1 (13.6s)
+  probe_defer15        B=2 seed=0 makespan=  290.5ms  deadline=1.000 soft=2/2 (20.1s)
+  probe_defer15        B=3 seed=0 makespan=  297.2ms  deadline=1.000 soft=3/3 (24.8s)
+  probe_defer20        B=0 seed=0 makespan=  290.5ms  deadline=1.000 soft=0/0 (6.0s)
+  probe_defer20        B=1 seed=0 makespan=  290.5ms  deadline=1.000 soft=1/1 (13.1s)
+  probe_defer20        B=2 seed=0 makespan=  290.5ms  deadline=1.000 soft=2/2 (19.6s)
+  probe_defer20        B=3 seed=0 makespan=  485.4ms  deadline=1.000 soft=3/3 (162.3s)
+
+================================================================================================
+A0 = 60.546 ms   (uncontended input-age ceiling)
+
+policy                 B     phi   mkspn   dl_ok  fresh_ok  out_ok  diverg  maxage  prod_dl  soft
+                                        (consumer)                                  (producer)      
+oracle                 0    65.5   290.5   1.000     0.933   0.933   0.067    60.5    1.000     0
+oracle                 0    70.5   290.5   1.000     0.933   0.933   0.067    60.5    1.000     0
+oracle                 0    80.5   290.5   1.000     0.933   0.933   0.067    60.5    1.000     0
+oracle                 0    90.5   290.5   1.000     0.933   0.933   0.067    60.5    1.000     0
+oracle                 0   110.5   290.5   1.000     0.933   0.933   0.067    60.5    1.000     0
+oracle                 1    65.5   290.5   1.000     0.833   0.833   0.167    90.5    1.000     1
+oracle                 1    70.5   290.5   1.000     0.867   0.867   0.133    90.5    1.000     1
+oracle                 1    80.5   290.5   1.000     0.900   0.900   0.100    90.5    1.000     1
+oracle                 1    90.5   290.5   1.000     0.933   0.933   0.067    90.5    1.000     1
+oracle                 1   110.5   290.5   1.000     0.933   0.933   0.067    90.5    1.000     1
+oracle                 2    65.5   290.5   1.000     0.733   0.733   0.267    90.5    1.000     2
+oracle                 2    70.5   290.5   1.000     0.800   0.800   0.200    90.5    1.000     2
+oracle                 2    80.5   290.5   1.000     0.867   0.867   0.133    90.5    1.000     2
+oracle                 2    90.5   290.5   1.000     0.933   0.933   0.067    90.5    1.000     2
+oracle                 2   110.5   290.5   1.000     0.933   0.933   0.067    90.5    1.000     2
+oracle                 3    65.5   297.2   1.000     0.633   0.633   0.367    90.5    1.000     3
+oracle                 3    70.5   297.2   1.000     0.733   0.733   0.267    90.5    1.000     3
+oracle                 3    80.5   297.2   1.000     0.833   0.833   0.167    90.5    1.000     3
+oracle                 3    90.5   297.2   1.000     0.933   0.933   0.067    90.5    1.000     3
+oracle                 3   110.5   485.4   1.000     0.951   0.951   0.049   100.5    0.556     3
+probe_defer15          0    65.5   290.5   1.000     0.933   0.933   0.067    60.5    1.000     0
+probe_defer15          0    70.5   290.5   1.000     0.933   0.933   0.067    60.5    1.000     0
+probe_defer15          0    80.5   290.5   1.000     0.933   0.933   0.067    60.5    1.000     0
+probe_defer15          0    90.5   290.5   1.000     0.933   0.933   0.067    60.5    1.000     0
+probe_defer15          0   110.5   290.5   1.000     0.933   0.933   0.067    60.5    1.000     0
+probe_defer15          1    65.5   290.5   1.000     0.833   0.833   0.167    90.5    1.000     1
+probe_defer15          1    70.5   290.5   1.000     0.867   0.867   0.133    90.5    1.000     1
+probe_defer15          1    80.5   290.5   1.000     0.900   0.900   0.100    90.5    1.000     1
+probe_defer15          1    90.5   290.5   1.000     0.933   0.933   0.067    90.5    1.000     1
+probe_defer15          1   110.5   290.5   1.000     0.933   0.933   0.067    90.5    1.000     1
+probe_defer15          2    65.5   290.5   1.000     0.733   0.733   0.267    90.5    1.000     2
+probe_defer15          2    70.5   290.5   1.000     0.800   0.800   0.200    90.5    1.000     2
+probe_defer15          2    80.5   290.5   1.000     0.867   0.867   0.133    90.5    1.000     2
+probe_defer15          2    90.5   290.5   1.000     0.933   0.933   0.067    90.5    1.000     2
+probe_defer15          2   110.5   290.5   1.000     0.933   0.933   0.067    90.5    1.000     2
+probe_defer15          3    65.5   297.2   1.000     0.633   0.633   0.367    90.5    1.000     3
+probe_defer15          3    70.5   297.2   1.000     0.733   0.733   0.267    90.5    1.000     3
+probe_defer15          3    80.5   297.2   1.000     0.833   0.833   0.167    90.5    1.000     3
+probe_defer15          3    90.5   297.2   1.000     0.933   0.933   0.067    90.5    1.000     3
+probe_defer15          3   110.5   297.2   1.000     0.933   0.933   0.067    90.5    1.000     3
+probe_defer20          0    65.5   290.5   1.000     0.933   0.933   0.067    60.5    1.000     0
+probe_defer20          0    70.5   290.5   1.000     0.933   0.933   0.067    60.5    1.000     0
+probe_defer20          0    80.5   290.5   1.000     0.933   0.933   0.067    60.5    1.000     0
+probe_defer20          0    90.5   290.5   1.000     0.933   0.933   0.067    60.5    1.000     0
+probe_defer20          0   110.5   290.5   1.000     0.933   0.933   0.067    60.5    1.000     0
+probe_defer20          1    65.5   290.5   1.000     0.767   0.767   0.233   100.5    0.833     1
+probe_defer20          1    70.5   290.5   1.000     0.833   0.833   0.167   100.5    0.833     1
+probe_defer20          1    80.5   290.5   1.000     0.867   0.867   0.133   100.5    0.833     1
+probe_defer20          1    90.5   290.5   1.000     0.900   0.900   0.100   100.5    0.833     1
+probe_defer20          1   110.5   290.5   1.000     0.933   0.933   0.067   100.5    0.833     1
+probe_defer20          2    65.5   290.5   1.000     0.600   0.600   0.400   100.5    0.667     2
+probe_defer20          2    70.5   290.5   1.000     0.733   0.733   0.267   100.5    0.667     2
+probe_defer20          2    80.5   290.5   1.000     0.800   0.800   0.200   100.5    0.667     2
+probe_defer20          2    90.5   290.5   1.000     0.867   0.867   0.133   100.5    0.667     2
+probe_defer20          2   110.5   290.5   1.000     0.933   0.933   0.067   100.5    0.667     2
+probe_defer20          3    65.5   485.4   1.000     0.488   0.488   0.512   100.5    0.556     3
+probe_defer20          3    70.5   485.4   1.000     0.659   0.659   0.341   100.5    0.556     3
+probe_defer20          3    80.5   485.4   1.000     0.683   0.683   0.317   100.5    0.556     3
+probe_defer20          3    90.5   485.4   1.000     0.854   0.854   0.146   100.5    0.556     3
+probe_defer20          3   110.5   485.4   1.000     0.951   0.951   0.049   100.5    0.556     3
+
+Epoch comparability (makespan <= epoch): cross-policy ranking is only well-posed where EVERY policy fits.
+  comparable contention levels: [0, 1, 2]
+  B=3: NOT comparable -- 1 policy/policies overrun the epoch: probe_defer20
+
+Operating points with deadline_success >= 0.95 and output_valid < deadline_success - 0.10:  19
+  probe_defer20         B=3 phi=65.5  deadline=1.000 output_valid=0.488 divergence=0.512
+  probe_defer20         B=2 phi=65.5  deadline=1.000 output_valid=0.600 divergence=0.400
+  probe_defer15         B=3 phi=65.5  deadline=1.000 output_valid=0.633 divergence=0.367
+  probe_defer20         B=3 phi=70.5  deadline=1.000 output_valid=0.659 divergence=0.341
+  probe_defer20         B=3 phi=80.5  deadline=1.000 output_valid=0.683 divergence=0.317
+  probe_defer15         B=2 phi=65.5  deadline=1.000 output_valid=0.733 divergence=0.267
+  probe_defer15         B=3 phi=70.5  deadline=1.000 output_valid=0.733 divergence=0.267
+  probe_defer20         B=2 phi=70.5  deadline=1.000 output_valid=0.733 divergence=0.267
+  probe_defer20         B=1 phi=65.5  deadline=1.000 output_valid=0.767 divergence=0.233
+  probe_defer15         B=2 phi=70.5  deadline=1.000 output_valid=0.800 divergence=0.200
+  probe_defer20         B=2 phi=80.5  deadline=1.000 output_valid=0.800 divergence=0.200
+  probe_defer15         B=1 phi=65.5  deadline=1.000 output_valid=0.833 divergence=0.167
+
+Largest divergence (schedule fits the epoch): 0.400 at probe_defer20 B=2 phi=65.5 (deadline 1.000, output_valid 0.600)
+Largest divergence overall (epoch OVERRUN, rate is over a 485 ms trace, not the 300 ms epoch -- do not quote): 0.512 at probe_defer20 B=3
+
+All 8 (policy, B) cells were identical across 1 seeds.
+
+wrote /scratch2/agustin/XPU-RT/results/freshness_probe/curve_1/
+  manifest.json
+  aggregate.csv
+  per_invocation.csv
+  command.txt
+  git_commits.json

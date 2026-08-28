@@ -1,0 +1,165 @@
+{
+  "schema": "xpurt.freshness_eval/1",
+  "config": "data/toplevel/freshness_canon_300ms.json",
+  "epoch_ms": 300.0,
+  "bursts": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "deltas": [
+    5.0,
+    10.0,
+    20.0,
+    30.0,
+    50.0
+  ],
+  "phis": [
+    {
+      "delta": 5.0,
+      "phi_ms": 65.546074
+    },
+    {
+      "delta": 10.0,
+      "phi_ms": 70.546074
+    },
+    {
+      "delta": 20.0,
+      "phi_ms": 80.546074
+    },
+    {
+      "delta": 30.0,
+      "phi_ms": 90.546074
+    },
+    {
+      "delta": 50.0,
+      "phi_ms": 110.546074
+    }
+  ],
+  "A0": {
+    "A0_realized": 60.546074,
+    "A0_supremum": 68.519152,
+    "distinct_ages": [
+      20.546074,
+      30.546074,
+      40.546074,
+      50.546074,
+      60.546074
+    ],
+    "no_producer_count": 2,
+    "total_consumer_invocations": 31,
+    "producer_task": "dronet",
+    "consumer_task": "mlp_control",
+    "producer_period_ms": 50.0,
+    "producer_latency_ms": 17.973077999999997,
+    "consumer_period_ms": 10.0,
+    "consumer_latency_ms": 0.546074,
+    "fast_cluster_hw": "gemmini",
+    "pipeline_fill_ms": 17.973077999999997
+  },
+  "policies": {
+    "probe_defer7": {
+      "solver": "greedy",
+      "scheduler": "mosek",
+      "mutations": {
+        "soft_phase_ms": 7.0
+      },
+      "intent": "Defer the first soft release by 7 ms."
+    },
+    "probe_defer8": {
+      "solver": "greedy",
+      "scheduler": "mosek",
+      "mutations": {
+        "soft_phase_ms": 8.0
+      },
+      "intent": "Defer the first soft release by 8 ms."
+    }
+  },
+  "mutation_vocabulary": {
+    "preferred_hw": "{net: profile_hw} SOFT pin. profile_loader multiplies non-preferred combinations by PIN_PENALTY_MULT; it does not hard-exclude them. A preference, never a reservation.",
+    "window_duration": "{net: ms} tightens a network's own window, i.e. max_end_t = release + ms. MEASURED INERT ON GREEDY: five probes (prodwin40/30/25/20 on the producer, soft_first on the consumer) all produce schedules that are bit-identical to the baseline at every contention level. The mutation does reach the workload -- test_freshness_mutations asserts max_end_t moves -- so greedy simply does not reprioritise on it; the constraint is already satisfied and there is no gradient. The MILP enforces it outright, so this key is only useful under solver=milp. Retained as a documented negative result, not as a working mechanism.",
+    "phase_ms": "{net: ms} start_time offset on ANY network. Distinct from soft_phase_ms, which is kept because it is baked into 60 already-solved fixture hashes and folding the two would force a full re-solve. Use this for the producer: greedy honours release times (min_start_t) even though it ignores window_duration, so a producer offset is the one directional control this workload has that greedy actually responds to.",
+    "admit_cap": "int cap on admitted soft instances: admitted = min(B, cap). Trades soft utility for headroom directly. `contention_level` still records the OFFERED B, so admission control is never free in the reporting.",
+    "soft_phase_ms": "float start_time offset on the soft network, deferring its first release. Rate-limiting in time rather than in count."
+  },
+  "producer_reference_window_ms": 50.0,
+  "reuse_fixtures": true,
+  "oracle_note": "The oracle row is a post-hoc upper bound: the best output_valid_rate available at each (B, phi) among the deployable policies. It is not a deployable policy.",
+  "seeds": [
+    0
+  ],
+  "post_passes": {
+    "compaction_enabled": false,
+    "automerge_enabled": false,
+    "note": "Both rewrite the emitted fixture and are forced off, so this is a comparison of policies rather than of policy+post-pass."
+  },
+  "timing_provenance": {
+    "timing_source": "firesim_measured",
+    "target": "firesim_gemmini_opu",
+    "backends": {
+      "cpu_p": "gemmini",
+      "cpu_e": "rvv_opu"
+    },
+    "measured_or_derived": "measured_cycles_derived_ms",
+    "clock_mhz_assumed": 1000.0,
+    "scaling_factor": "mean_time_ms = cycles / 1e6",
+    "clock_caveat": "The assumed 1 GHz is NOT the Alveo U250 bitstream frequency (25-30 MHz). Raw cycles are preserved in the exported results.csv `cycles` column. Absolute millisecond claims must restate this assumption.",
+    "source": "ModelBlaster/benchmarks/profile_db (see gen/profile/**/_provenance.json)"
+  },
+  "producer_instance_provenance": "inferred_from_schedule_timestamps -- no dataflow exists between the producer and consumer networks in either XPU-RT or ModelBlaster, so the consumed instance is inferred, never recorded",
+  "time_unit": "ms",
+  "schedule_digests_by_policy_burst": {
+    "probe_defer7|B0": {
+      "0": "-5202665678305638986"
+    },
+    "probe_defer7|B1": {
+      "0": "5905795465049628073"
+    },
+    "probe_defer7|B2": {
+      "0": "2323220316976264186"
+    },
+    "probe_defer7|B3": {
+      "0": "9072393424266487132"
+    },
+    "probe_defer8|B0": {
+      "0": "-5202665678305638986"
+    },
+    "probe_defer8|B1": {
+      "0": "-7276597637246251484"
+    },
+    "probe_defer8|B2": {
+      "0": "-1462384026164388942"
+    },
+    "probe_defer8|B3": {
+      "0": "3345536104680714995"
+    }
+  },
+  "determinism": {
+    "probe_defer7|B0": "identical across seeds",
+    "probe_defer7|B1": "identical across seeds",
+    "probe_defer7|B2": "identical across seeds",
+    "probe_defer7|B3": "identical across seeds",
+    "probe_defer8|B0": "identical across seeds",
+    "probe_defer8|B1": "identical across seeds",
+    "probe_defer8|B2": "identical across seeds",
+    "probe_defer8|B3": "identical across seeds"
+  },
+  "failures": [],
+  "n_per_invocation_rows": 1200,
+  "n_aggregate_rows": 60,
+  "git": {
+    "xpu-rt": {
+      "sha": "9edaeb97360e4e10aafc96514ae159104e8574e1",
+      "dirty": true
+    },
+    "ModelBlaster": {
+      "sha": "16b7b52d25cd139f4af726dacb5b4139545388b1",
+      "dirty": true
+    },
+    "zephyr-chipyard-sw": {
+      "sha": "03ee2e2604d81f14efaa0e499a32c17dcf92a26e",
+      "dirty": true
+    }
+  }
+}

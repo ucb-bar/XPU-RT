@@ -1,0 +1,28 @@
+{
+  "top_candidate": {
+    "candidate_id": "fuse_tiny_0__tiny_1",
+    "type": "fuse_producer_consumer",
+    "affected_ops": [
+      "tiny_0",
+      "tiny_1"
+    ],
+    "expected_benefit": {
+      "saved_transfer_us": 21.666666666666668,
+      "predicted_makespan_delta": -21.666666666666668
+    },
+    "expected_risk": {
+      "lost_device_flexibility": true,
+      "scratchpad_pressure_increase": 0
+    }
+  },
+  "before": {
+    "makespan_us": 45.0,
+    "dispatch_count": 6
+  },
+  "after": {
+    "makespan_us": 42.0,
+    "dispatch_count": 5
+  },
+  "improved_makespan": true,
+  "reduced_dispatches": true
+}

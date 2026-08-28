@@ -1,0 +1,50 @@
+{
+  "_comment": "SpaceMiT K1 (X60), 8 cores. Cluster 0 = cores 0-3 (scalar+RVV+IME), cluster 1 = cores 4-7 (scalar+RVV). Both clusters share ONE cpufreq policy pinned to performance at 1.6 GHz, so there is no per-cluster DVFS skew to model. Profiles are single-core (topo_0) because the K1 uses per-core scheduler combinations: each core is independently schedulable, so a 4-hart timing would credit one core with the whole cluster's throughput.",
+  "_capabilities_comment": "IME is measured, not assumed: smt.vmadot executes on cores 0-3 and SIGILLs on 4-7 (artifacts/k1_bringup/*/ime_capability_probe.txt). It is therefore a property of cluster-0 cores, never a separate machine -- see xpu-rt/capabilities.py.",
+  "hardware": {
+    "machines": {
+      "cpu_p": 4,
+      "cpu_e": 4
+    },
+    "profile_hw": {
+      "cpu_p": "RVV",
+      "cpu_e": "RVV_c1"
+    },
+    "profile": {
+      "target": "spacemit_x60",
+      "topo_tag": "topo_0",
+      "topo_tag_override": true,
+      "gen_root": "gen"
+    },
+    "p_core_speedup": 1.0
+  },
+  "scheduler": {
+    "random_seed": 42,
+    "solver_verbosity": 1,
+    "time_limit": 120,
+    "use_profiled": true,
+    "prune_periodic": true,
+    "restrict_makespan_to_nonperiodic": false,
+    "machine_combination_mode": "singletons"
+  },
+  "networks": {
+    "mlp": {
+      "id": 0,
+      "identifier": "mlp",
+      "dispatch_deps_path": "gen/vmfb/mlp/spacemit_x60/RVV/mlp.q.int8/mlp.q.int8_dispatch_graph.json",
+      "period": 10,
+      "window_duration": 10,
+      "num_instances": 7
+    },
+    "dronet": {
+      "id": 1,
+      "identifier": "dronet",
+      "dispatch_deps_path": "gen/vmfb/dronet/spacemit_x60/RVV/dronet.q.int8/dronet.q.int8_dispatch_graph.json",
+      "period": 33.3,
+      "window_duration": 33.3,
+      "num_instances": 2
+    }
+  },
+  "edges": [],
+  "_concurrency_comment": "machine_combination_mode=singletons: each of the 8 cores is independently schedulable, so 8 dispatches can genuinely run at once. This is why the profiles above are single-core (topo_0)."
+}

@@ -1,0 +1,77 @@
+config          data/toplevel/freshness_canon_300ms.json
+epoch           300.0 ms
+A0 (uncontended input-age ceiling)  60.546 ms
+  closed-form supremum              68.519 ms
+  distinct uncontended ages         [20.55, 30.55, 40.55, 50.55, 60.55]
+  producer dronet T=50.0 L=17.973 ms on gemmini
+  consumer mlp_control T=10.0 L=0.546 ms
+phi             ['A0+5=65.5', 'A0+10=70.5', 'A0+20=80.5', 'A0+30=90.5', 'A0+50=110.5']
+bursts          [3, 4]
+policies        ['probe_prodwin30', 'probe_prodwin25']
+seeds           [0]
+
+  probe_prodwin30      B=3 seed=0 makespan=  483.2ms  deadline=1.000 soft=3/3 (220.8s)
+  probe_prodwin30      B=4 seed=0 makespan=  815.2ms  deadline=1.000 soft=4/4 (813.3s)
+  probe_prodwin25      B=3 seed=0 makespan=  483.2ms  deadline=1.000 soft=3/3 (241.2s)
+  probe_prodwin25      B=4 seed=0 makespan=  815.2ms  deadline=1.000 soft=4/4 (746.9s)
+
+================================================================================================
+A0 = 60.546 ms   (uncontended input-age ceiling)
+
+policy                 B     phi   mkspn   dl_ok  fresh_ok  out_ok  diverg  maxage  prod_dl  soft
+                                        (consumer)                                  (producer)      
+oracle                 3    65.5   483.2   1.000     0.073   0.073   0.927   130.5    0.000     3
+oracle                 3    70.5   483.2   1.000     0.122   0.122   0.878   130.5    0.000     3
+oracle                 3    80.5   483.2   1.000     0.220   0.220   0.780   130.5    0.000     3
+oracle                 3    90.5   483.2   1.000     0.293   0.293   0.707   130.5    0.000     3
+oracle                 3   110.5   483.2   1.000     0.561   0.561   0.439   130.5    0.000     3
+oracle                 4    65.5   815.2   1.000     0.000   0.000   1.000   500.5    0.000     4
+oracle                 4    70.5   815.2   1.000     0.000   0.000   1.000   500.5    0.000     4
+oracle                 4    80.5   815.2   1.000     0.000   0.000   1.000   500.5    0.000     4
+oracle                 4    90.5   815.2   1.000     0.000   0.000   1.000   500.5    0.000     4
+oracle                 4   110.5   815.2   1.000     0.000   0.000   1.000   500.5    0.000     4
+probe_prodwin25        3    65.5   483.2   1.000     0.073   0.073   0.927   130.5    0.000     3
+probe_prodwin25        3    70.5   483.2   1.000     0.122   0.122   0.878   130.5    0.000     3
+probe_prodwin25        3    80.5   483.2   1.000     0.220   0.220   0.780   130.5    0.000     3
+probe_prodwin25        3    90.5   483.2   1.000     0.293   0.293   0.707   130.5    0.000     3
+probe_prodwin25        3   110.5   483.2   1.000     0.561   0.561   0.439   130.5    0.000     3
+probe_prodwin25        4    65.5   815.2   1.000     0.000   0.000   1.000   500.5    0.000     4
+probe_prodwin25        4    70.5   815.2   1.000     0.000   0.000   1.000   500.5    0.000     4
+probe_prodwin25        4    80.5   815.2   1.000     0.000   0.000   1.000   500.5    0.000     4
+probe_prodwin25        4    90.5   815.2   1.000     0.000   0.000   1.000   500.5    0.000     4
+probe_prodwin25        4   110.5   815.2   1.000     0.000   0.000   1.000   500.5    0.000     4
+probe_prodwin30        3    65.5   483.2   1.000     0.073   0.073   0.927   130.5    0.000     3
+probe_prodwin30        3    70.5   483.2   1.000     0.122   0.122   0.878   130.5    0.000     3
+probe_prodwin30        3    80.5   483.2   1.000     0.220   0.220   0.780   130.5    0.000     3
+probe_prodwin30        3    90.5   483.2   1.000     0.293   0.293   0.707   130.5    0.000     3
+probe_prodwin30        3   110.5   483.2   1.000     0.561   0.561   0.439   130.5    0.000     3
+probe_prodwin30        4    65.5   815.2   1.000     0.000   0.000   1.000   500.5    0.000     4
+probe_prodwin30        4    70.5   815.2   1.000     0.000   0.000   1.000   500.5    0.000     4
+probe_prodwin30        4    80.5   815.2   1.000     0.000   0.000   1.000   500.5    0.000     4
+probe_prodwin30        4    90.5   815.2   1.000     0.000   0.000   1.000   500.5    0.000     4
+probe_prodwin30        4   110.5   815.2   1.000     0.000   0.000   1.000   500.5    0.000     4
+
+Operating points with deadline_success >= 0.95 and output_valid < deadline_success - 0.10:  20
+  probe_prodwin30       B=4 phi=65.5  deadline=1.000 output_valid=0.000 divergence=1.000
+  probe_prodwin30       B=4 phi=70.5  deadline=1.000 output_valid=0.000 divergence=1.000
+  probe_prodwin30       B=4 phi=80.5  deadline=1.000 output_valid=0.000 divergence=1.000
+  probe_prodwin30       B=4 phi=90.5  deadline=1.000 output_valid=0.000 divergence=1.000
+  probe_prodwin30       B=4 phi=110.5  deadline=1.000 output_valid=0.000 divergence=1.000
+  probe_prodwin25       B=4 phi=65.5  deadline=1.000 output_valid=0.000 divergence=1.000
+  probe_prodwin25       B=4 phi=70.5  deadline=1.000 output_valid=0.000 divergence=1.000
+  probe_prodwin25       B=4 phi=80.5  deadline=1.000 output_valid=0.000 divergence=1.000
+  probe_prodwin25       B=4 phi=90.5  deadline=1.000 output_valid=0.000 divergence=1.000
+  probe_prodwin25       B=4 phi=110.5  deadline=1.000 output_valid=0.000 divergence=1.000
+  probe_prodwin30       B=3 phi=65.5  deadline=1.000 output_valid=0.073 divergence=0.927
+  probe_prodwin25       B=3 phi=65.5  deadline=1.000 output_valid=0.073 divergence=0.927
+
+Largest divergence: 1.000 at probe_prodwin30 B=4 phi=65.5 (deadline 1.000, output_valid 0.000)
+
+All 4 (policy, B) cells were identical across 1 seeds.
+
+wrote /scratch2/agustin/XPU-RT/results/freshness_probe/redo_1/
+  manifest.json
+  aggregate.csv
+  per_invocation.csv
+  command.txt
+  git_commits.json

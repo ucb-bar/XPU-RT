@@ -1,0 +1,48 @@
+{
+  "networks_json": "data/toplevel/networks_k1_mlp_dronet.json",
+  "effective_config": "results/scheduler_sweep_k1_h67/config/networks_k1_mlp_dronet_sweep_h67.json",
+  "overrides": {
+    "horizon_ms": 66.6,
+    "pinned_num_instances": {
+      "mlp": 7,
+      "dronet": 2
+    }
+  },
+  "solvers_requested": [
+    "greedy",
+    "greedy_periodic",
+    "heft",
+    "edf",
+    "cpsat",
+    "mosek"
+  ],
+  "availability": {
+    "greedy": "available",
+    "greedy_periodic": "available",
+    "heft": "available",
+    "edf": "available",
+    "cpsat": "available",
+    "mosek": "available"
+  },
+  "critical_models": [
+    "dronet",
+    "mlp"
+  ],
+  "heavy_model": "dronet",
+  "comparability": "ok",
+  "compaction_enabled": false,
+  "automerge_enabled": false,
+  "objective": "xpu-rt/candidate_objective.py lexicographic order",
+  "metrics": "xpu-rt/trace_metrics.py summarise_trace",
+  "numbers_are": "PREDICTED from the solver's own per-op profile, not measured on the board",
+  "ranking": [
+    "greedy",
+    "greedy_periodic",
+    "edf",
+    "cpsat",
+    "heft"
+  ],
+  "csv": "results/scheduler_sweep_k1_h67/scheduler_sweep.csv",
+  "composite_gantt": "results/scheduler_sweep_k1_h67/gantt/gantt_composite.png",
+  "objective_terms_png": "results/scheduler_sweep_k1_h67/objective_terms.png"
+}

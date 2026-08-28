@@ -1,0 +1,1049 @@
+{
+  "schema": "xpurt.freshness_eval.merged/1",
+  "merged_from": [
+    "results/freshness_probe/shard_0",
+    "results/freshness_probe/shard_1",
+    "results/freshness_probe/shard_2",
+    "results/freshness_probe/shard_3",
+    "results/freshness_probe/shard_4"
+  ],
+  "incomplete_shards": [],
+  "policies_merged": [
+    "probe_admit1",
+    "probe_admit2",
+    "probe_defer25",
+    "probe_nonperiodic_priority",
+    "probe_prodwin20",
+    "probe_prodwin25",
+    "probe_prodwin30",
+    "probe_prodwin40",
+    "static_nominal"
+  ],
+  "n_policies": 9,
+  "n_aggregate_rows": 180,
+  "n_per_invocation_rows": 4650,
+  "failures": [
+    {
+      "policy": "static_nominal",
+      "burst": 3,
+      "seed": 0,
+      "status": "solver exit 1 (see /scratch2/agustin/XPU-RT/results/freshness_probe/shard_0/work/_fx_static_nominal_B3_s0_greedy.log)"
+    },
+    {
+      "policy": "static_nominal",
+      "burst": 4,
+      "seed": 0,
+      "status": "solver exit 1 (see /scratch2/agustin/XPU-RT/results/freshness_probe/shard_0/work/_fx_static_nominal_B4_s0_greedy.log)"
+    },
+    {
+      "policy": "probe_prodwin40",
+      "burst": 3,
+      "seed": 0,
+      "status": "solver exit 1 (see /scratch2/agustin/XPU-RT/results/freshness_probe/shard_0/work/_fx_probe_prodwin40_B3_s0_greedy.log)"
+    },
+    {
+      "policy": "probe_prodwin40",
+      "burst": 4,
+      "seed": 0,
+      "status": "solver exit 1 (see /scratch2/agustin/XPU-RT/results/freshness_probe/shard_0/work/_fx_probe_prodwin40_B4_s0_greedy.log)"
+    },
+    {
+      "policy": "probe_prodwin30",
+      "burst": 3,
+      "seed": 0,
+      "status": "solver exit 1 (see /scratch2/agustin/XPU-RT/results/freshness_probe/shard_1/work/_fx_probe_prodwin30_B3_s0_greedy.log)"
+    },
+    {
+      "policy": "probe_prodwin30",
+      "burst": 4,
+      "seed": 0,
+      "status": "solver exit 1 (see /scratch2/agustin/XPU-RT/results/freshness_probe/shard_1/work/_fx_probe_prodwin30_B4_s0_greedy.log)"
+    },
+    {
+      "policy": "probe_prodwin25",
+      "burst": 3,
+      "seed": 0,
+      "status": "solver exit 1 (see /scratch2/agustin/XPU-RT/results/freshness_probe/shard_1/work/_fx_probe_prodwin25_B3_s0_greedy.log)"
+    },
+    {
+      "policy": "probe_prodwin25",
+      "burst": 4,
+      "seed": 0,
+      "status": "solver exit 1 (see /scratch2/agustin/XPU-RT/results/freshness_probe/shard_1/work/_fx_probe_prodwin25_B4_s0_greedy.log)"
+    },
+    {
+      "policy": "probe_prodwin20",
+      "burst": 3,
+      "seed": 0,
+      "status": "solver exit 1 (see /scratch2/agustin/XPU-RT/results/freshness_probe/shard_2/work/_fx_probe_prodwin20_B3_s0_greedy.log)"
+    },
+    {
+      "policy": "probe_prodwin20",
+      "burst": 4,
+      "seed": 0,
+      "status": "solver exit 1 (see /scratch2/agustin/XPU-RT/results/freshness_probe/shard_2/work/_fx_probe_prodwin20_B4_s0_greedy.log)"
+    },
+    {
+      "policy": "probe_defer25",
+      "burst": 3,
+      "seed": 0,
+      "status": "solver exit 1 (see /scratch2/agustin/XPU-RT/results/freshness_probe/shard_3/work/_fx_probe_defer25_B3_s0_greedy.log)"
+    },
+    {
+      "policy": "probe_defer25",
+      "burst": 4,
+      "seed": 0,
+      "status": "solver exit 1 (see /scratch2/agustin/XPU-RT/results/freshness_probe/shard_3/work/_fx_probe_defer25_B4_s0_greedy.log)"
+    },
+    {
+      "policy": "probe_nonperiodic_priority",
+      "burst": 3,
+      "seed": 0,
+      "status": "solver exit 1 (see /scratch2/agustin/XPU-RT/results/freshness_probe/shard_4/work/_fx_probe_nonperiodic_priority_B3_s0_greedy_periodic.log)"
+    },
+    {
+      "policy": "probe_nonperiodic_priority",
+      "burst": 4,
+      "seed": 0,
+      "status": "solver exit 1 (see /scratch2/agustin/XPU-RT/results/freshness_probe/shard_4/work/_fx_probe_nonperiodic_priority_B4_s0_greedy_periodic.log)"
+    }
+  ],
+  "oracle_note": "Recomputed over the full merged policy set. Shard-local oracle rows were dropped on read because each was an upper bound over only that shard's policies.",
+  "config": "data/toplevel/freshness_canon_300ms.json",
+  "epoch_ms": 300.0,
+  "A0": {
+    "A0_realized": 60.546074,
+    "A0_supremum": 68.519152,
+    "distinct_ages": [
+      20.546074,
+      30.546074,
+      40.546074,
+      50.546074,
+      60.546074
+    ],
+    "no_producer_count": 2,
+    "total_consumer_invocations": 31,
+    "producer_task": "dronet",
+    "consumer_task": "mlp_control",
+    "producer_period_ms": 50.0,
+    "producer_latency_ms": 17.973078,
+    "consumer_period_ms": 10.0,
+    "consumer_latency_ms": 0.5460740000000001,
+    "fast_cluster_hw": "gemmini"
+  },
+  "phis": [
+    {
+      "delta": 5.0,
+      "phi_ms": 65.546074
+    },
+    {
+      "delta": 10.0,
+      "phi_ms": 70.546074
+    },
+    {
+      "delta": 20.0,
+      "phi_ms": 80.546074
+    },
+    {
+      "delta": 30.0,
+      "phi_ms": 90.546074
+    },
+    {
+      "delta": 50.0,
+      "phi_ms": 110.546074
+    }
+  ],
+  "post_passes": {
+    "compaction_enabled": false,
+    "automerge_enabled": false,
+    "note": "Both rewrite the emitted fixture and are forced off, so this is a comparison of policies rather than of policy+post-pass."
+  },
+  "timing_provenance": {
+    "timing_source": "firesim_measured",
+    "target": "firesim_gemmini_opu",
+    "backends": {
+      "cpu_p": "gemmini",
+      "cpu_e": "rvv_opu"
+    },
+    "measured_or_derived": "measured_cycles_derived_ms",
+    "clock_mhz_assumed": 1000.0,
+    "scaling_factor": "mean_time_ms = cycles / 1e6",
+    "clock_caveat": "The assumed 1 GHz is NOT the Alveo U250 bitstream frequency (25-30 MHz). Raw cycles are preserved in the exported results.csv `cycles` column. Absolute millisecond claims must restate this assumption.",
+    "source": "ModelBlaster/benchmarks/profile_db (see gen/profile/**/_provenance.json)"
+  },
+  "producer_instance_provenance": "inferred_from_schedule_timestamps -- no dataflow exists between the producer and consumer networks in either XPU-RT or ModelBlaster, so the consumed instance is inferred, never recorded",
+  "producer_reference_window_ms": 50.0,
+  "mutation_vocabulary": {
+    "preferred_hw": "{net: profile_hw} SOFT pin. profile_loader multiplies non-preferred combinations by PIN_PENALTY_MULT; it does not hard-exclude them. A preference, never a reservation.",
+    "window_duration": "{net: ms} tightens a network's own window, i.e. max_end_t = release + ms. greedy honours this via ALAP back-propagation and emergency promotion; the MILP enforces it outright. Applied to the PRODUCER this converts the consumer's freshness requirement into a producer deadline, which is the only mechanism here that acts on the quantity freshness actually depends on.",
+    "admit_cap": "int cap on admitted soft instances: admitted = min(B, cap). Trades soft utility for headroom directly. `contention_level` still records the OFFERED B, so admission control is never free in the reporting.",
+    "soft_phase_ms": "float start_time offset on the soft network, deferring its first release. Rate-limiting in time rather than in count."
+  },
+  "time_unit": "ms",
+  "shards": {
+    "shard_0": {
+      "schema": "xpurt.freshness_eval/1",
+      "config": "data/toplevel/freshness_canon_300ms.json",
+      "epoch_ms": 300.0,
+      "bursts": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "deltas": [
+        5.0,
+        10.0,
+        20.0,
+        30.0,
+        50.0
+      ],
+      "phis": [
+        {
+          "delta": 5.0,
+          "phi_ms": 65.546074
+        },
+        {
+          "delta": 10.0,
+          "phi_ms": 70.546074
+        },
+        {
+          "delta": 20.0,
+          "phi_ms": 80.546074
+        },
+        {
+          "delta": 30.0,
+          "phi_ms": 90.546074
+        },
+        {
+          "delta": 50.0,
+          "phi_ms": 110.546074
+        }
+      ],
+      "A0": {
+        "A0_realized": 60.546074,
+        "A0_supremum": 68.519152,
+        "distinct_ages": [
+          20.546074,
+          30.546074,
+          40.546074,
+          50.546074,
+          60.546074
+        ],
+        "no_producer_count": 2,
+        "total_consumer_invocations": 31,
+        "producer_task": "dronet",
+        "consumer_task": "mlp_control",
+        "producer_period_ms": 50.0,
+        "producer_latency_ms": 17.973078,
+        "consumer_period_ms": 10.0,
+        "consumer_latency_ms": 0.5460740000000001,
+        "fast_cluster_hw": "gemmini"
+      },
+      "policies": {
+        "static_nominal": {
+          "solver": "greedy",
+          "scheduler": "mosek",
+          "mutations": {},
+          "intent": "Contention-blind earliest-completion list schedule. Maximises soft throughput under low load; no protection for the perception chain."
+        },
+        "probe_prodwin40": {
+          "solver": "greedy",
+          "scheduler": "mosek",
+          "mutations": {
+            "window_duration": {
+              "dronet": 40.0
+            }
+          },
+          "intent": "Producer window tightened 50 -> 40 ms."
+        }
+      },
+      "mutation_vocabulary": {
+        "preferred_hw": "{net: profile_hw} SOFT pin. profile_loader multiplies non-preferred combinations by PIN_PENALTY_MULT; it does not hard-exclude them. A preference, never a reservation.",
+        "window_duration": "{net: ms} tightens a network's own window, i.e. max_end_t = release + ms. greedy honours this via ALAP back-propagation and emergency promotion; the MILP enforces it outright. Applied to the PRODUCER this converts the consumer's freshness requirement into a producer deadline, which is the only mechanism here that acts on the quantity freshness actually depends on.",
+        "admit_cap": "int cap on admitted soft instances: admitted = min(B, cap). Trades soft utility for headroom directly. `contention_level` still records the OFFERED B, so admission control is never free in the reporting.",
+        "soft_phase_ms": "float start_time offset on the soft network, deferring its first release. Rate-limiting in time rather than in count."
+      },
+      "producer_reference_window_ms": 50.0,
+      "oracle_note": "The oracle row is a post-hoc upper bound: the best output_valid_rate available at each (B, phi) among the deployable policies. It is not a deployable policy.",
+      "seeds": [
+        0
+      ],
+      "post_passes": {
+        "compaction_enabled": false,
+        "automerge_enabled": false,
+        "note": "Both rewrite the emitted fixture and are forced off, so this is a comparison of policies rather than of policy+post-pass."
+      },
+      "timing_provenance": {
+        "timing_source": "firesim_measured",
+        "target": "firesim_gemmini_opu",
+        "backends": {
+          "cpu_p": "gemmini",
+          "cpu_e": "rvv_opu"
+        },
+        "measured_or_derived": "measured_cycles_derived_ms",
+        "clock_mhz_assumed": 1000.0,
+        "scaling_factor": "mean_time_ms = cycles / 1e6",
+        "clock_caveat": "The assumed 1 GHz is NOT the Alveo U250 bitstream frequency (25-30 MHz). Raw cycles are preserved in the exported results.csv `cycles` column. Absolute millisecond claims must restate this assumption.",
+        "source": "ModelBlaster/benchmarks/profile_db (see gen/profile/**/_provenance.json)"
+      },
+      "producer_instance_provenance": "inferred_from_schedule_timestamps -- no dataflow exists between the producer and consumer networks in either XPU-RT or ModelBlaster, so the consumed instance is inferred, never recorded",
+      "time_unit": "ms",
+      "schedule_digests_by_policy_burst": {
+        "static_nominal|B0": {
+          "0": "1868134194855250709"
+        },
+        "static_nominal|B1": {
+          "0": "4973057758140371754"
+        },
+        "static_nominal|B2": {
+          "0": "-8173958749601121102"
+        },
+        "probe_prodwin40|B0": {
+          "0": "1868134194855250709"
+        },
+        "probe_prodwin40|B1": {
+          "0": "4973057758140371754"
+        },
+        "probe_prodwin40|B2": {
+          "0": "-8173958749601121102"
+        }
+      },
+      "determinism": {
+        "static_nominal|B0": "identical across seeds",
+        "static_nominal|B1": "identical across seeds",
+        "static_nominal|B2": "identical across seeds",
+        "probe_prodwin40|B0": "identical across seeds",
+        "probe_prodwin40|B1": "identical across seeds",
+        "probe_prodwin40|B2": "identical across seeds"
+      },
+      "failures": [
+        {
+          "policy": "static_nominal",
+          "burst": 3,
+          "seed": 0,
+          "status": "solver exit 1 (see /scratch2/agustin/XPU-RT/results/freshness_probe/shard_0/work/_fx_static_nominal_B3_s0_greedy.log)"
+        },
+        {
+          "policy": "static_nominal",
+          "burst": 4,
+          "seed": 0,
+          "status": "solver exit 1 (see /scratch2/agustin/XPU-RT/results/freshness_probe/shard_0/work/_fx_static_nominal_B4_s0_greedy.log)"
+        },
+        {
+          "policy": "probe_prodwin40",
+          "burst": 3,
+          "seed": 0,
+          "status": "solver exit 1 (see /scratch2/agustin/XPU-RT/results/freshness_probe/shard_0/work/_fx_probe_prodwin40_B3_s0_greedy.log)"
+        },
+        {
+          "policy": "probe_prodwin40",
+          "burst": 4,
+          "seed": 0,
+          "status": "solver exit 1 (see /scratch2/agustin/XPU-RT/results/freshness_probe/shard_0/work/_fx_probe_prodwin40_B4_s0_greedy.log)"
+        }
+      ],
+      "n_per_invocation_rows": 900,
+      "n_aggregate_rows": 45,
+      "git": {
+        "xpu-rt": {
+          "sha": "de2c4fe69922bad497017f96e9faa092ef7ee37a",
+          "dirty": true
+        },
+        "ModelBlaster": {
+          "sha": "16b7b52d25cd139f4af726dacb5b4139545388b1",
+          "dirty": true
+        },
+        "zephyr-chipyard-sw": {
+          "sha": "03ee2e2604d81f14efaa0e499a32c17dcf92a26e",
+          "dirty": true
+        }
+      }
+    },
+    "shard_1": {
+      "schema": "xpurt.freshness_eval/1",
+      "config": "data/toplevel/freshness_canon_300ms.json",
+      "epoch_ms": 300.0,
+      "bursts": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "deltas": [
+        5.0,
+        10.0,
+        20.0,
+        30.0,
+        50.0
+      ],
+      "phis": [
+        {
+          "delta": 5.0,
+          "phi_ms": 65.546074
+        },
+        {
+          "delta": 10.0,
+          "phi_ms": 70.546074
+        },
+        {
+          "delta": 20.0,
+          "phi_ms": 80.546074
+        },
+        {
+          "delta": 30.0,
+          "phi_ms": 90.546074
+        },
+        {
+          "delta": 50.0,
+          "phi_ms": 110.546074
+        }
+      ],
+      "A0": {
+        "A0_realized": 60.546074,
+        "A0_supremum": 68.519152,
+        "distinct_ages": [
+          20.546074,
+          30.546074,
+          40.546074,
+          50.546074,
+          60.546074
+        ],
+        "no_producer_count": 2,
+        "total_consumer_invocations": 31,
+        "producer_task": "dronet",
+        "consumer_task": "mlp_control",
+        "producer_period_ms": 50.0,
+        "producer_latency_ms": 17.973078,
+        "consumer_period_ms": 10.0,
+        "consumer_latency_ms": 0.5460740000000001,
+        "fast_cluster_hw": "gemmini"
+      },
+      "policies": {
+        "probe_prodwin30": {
+          "solver": "greedy",
+          "scheduler": "mosek",
+          "mutations": {
+            "window_duration": {
+              "dronet": 30.0
+            }
+          },
+          "intent": "Producer window tightened 50 -> 30 ms."
+        },
+        "probe_prodwin25": {
+          "solver": "greedy",
+          "scheduler": "mosek",
+          "mutations": {
+            "window_duration": {
+              "dronet": 25.0
+            }
+          },
+          "intent": "Producer window tightened 50 -> 25 ms."
+        }
+      },
+      "mutation_vocabulary": {
+        "preferred_hw": "{net: profile_hw} SOFT pin. profile_loader multiplies non-preferred combinations by PIN_PENALTY_MULT; it does not hard-exclude them. A preference, never a reservation.",
+        "window_duration": "{net: ms} tightens a network's own window, i.e. max_end_t = release + ms. greedy honours this via ALAP back-propagation and emergency promotion; the MILP enforces it outright. Applied to the PRODUCER this converts the consumer's freshness requirement into a producer deadline, which is the only mechanism here that acts on the quantity freshness actually depends on.",
+        "admit_cap": "int cap on admitted soft instances: admitted = min(B, cap). Trades soft utility for headroom directly. `contention_level` still records the OFFERED B, so admission control is never free in the reporting.",
+        "soft_phase_ms": "float start_time offset on the soft network, deferring its first release. Rate-limiting in time rather than in count."
+      },
+      "producer_reference_window_ms": 50.0,
+      "oracle_note": "The oracle row is a post-hoc upper bound: the best output_valid_rate available at each (B, phi) among the deployable policies. It is not a deployable policy.",
+      "seeds": [
+        0
+      ],
+      "post_passes": {
+        "compaction_enabled": false,
+        "automerge_enabled": false,
+        "note": "Both rewrite the emitted fixture and are forced off, so this is a comparison of policies rather than of policy+post-pass."
+      },
+      "timing_provenance": {
+        "timing_source": "firesim_measured",
+        "target": "firesim_gemmini_opu",
+        "backends": {
+          "cpu_p": "gemmini",
+          "cpu_e": "rvv_opu"
+        },
+        "measured_or_derived": "measured_cycles_derived_ms",
+        "clock_mhz_assumed": 1000.0,
+        "scaling_factor": "mean_time_ms = cycles / 1e6",
+        "clock_caveat": "The assumed 1 GHz is NOT the Alveo U250 bitstream frequency (25-30 MHz). Raw cycles are preserved in the exported results.csv `cycles` column. Absolute millisecond claims must restate this assumption.",
+        "source": "ModelBlaster/benchmarks/profile_db (see gen/profile/**/_provenance.json)"
+      },
+      "producer_instance_provenance": "inferred_from_schedule_timestamps -- no dataflow exists between the producer and consumer networks in either XPU-RT or ModelBlaster, so the consumed instance is inferred, never recorded",
+      "time_unit": "ms",
+      "schedule_digests_by_policy_burst": {
+        "probe_prodwin30|B0": {
+          "0": "-7177643670340959492"
+        },
+        "probe_prodwin30|B1": {
+          "0": "-5395736900698912591"
+        },
+        "probe_prodwin30|B2": {
+          "0": "8551948187738826279"
+        },
+        "probe_prodwin25|B0": {
+          "0": "-7177643670340959492"
+        },
+        "probe_prodwin25|B1": {
+          "0": "-5395736900698912591"
+        },
+        "probe_prodwin25|B2": {
+          "0": "8551948187738826279"
+        }
+      },
+      "determinism": {
+        "probe_prodwin30|B0": "identical across seeds",
+        "probe_prodwin30|B1": "identical across seeds",
+        "probe_prodwin30|B2": "identical across seeds",
+        "probe_prodwin25|B0": "identical across seeds",
+        "probe_prodwin25|B1": "identical across seeds",
+        "probe_prodwin25|B2": "identical across seeds"
+      },
+      "failures": [
+        {
+          "policy": "probe_prodwin30",
+          "burst": 3,
+          "seed": 0,
+          "status": "solver exit 1 (see /scratch2/agustin/XPU-RT/results/freshness_probe/shard_1/work/_fx_probe_prodwin30_B3_s0_greedy.log)"
+        },
+        {
+          "policy": "probe_prodwin30",
+          "burst": 4,
+          "seed": 0,
+          "status": "solver exit 1 (see /scratch2/agustin/XPU-RT/results/freshness_probe/shard_1/work/_fx_probe_prodwin30_B4_s0_greedy.log)"
+        },
+        {
+          "policy": "probe_prodwin25",
+          "burst": 3,
+          "seed": 0,
+          "status": "solver exit 1 (see /scratch2/agustin/XPU-RT/results/freshness_probe/shard_1/work/_fx_probe_prodwin25_B3_s0_greedy.log)"
+        },
+        {
+          "policy": "probe_prodwin25",
+          "burst": 4,
+          "seed": 0,
+          "status": "solver exit 1 (see /scratch2/agustin/XPU-RT/results/freshness_probe/shard_1/work/_fx_probe_prodwin25_B4_s0_greedy.log)"
+        }
+      ],
+      "n_per_invocation_rows": 900,
+      "n_aggregate_rows": 45,
+      "git": {
+        "xpu-rt": {
+          "sha": "de2c4fe69922bad497017f96e9faa092ef7ee37a",
+          "dirty": true
+        },
+        "ModelBlaster": {
+          "sha": "16b7b52d25cd139f4af726dacb5b4139545388b1",
+          "dirty": true
+        },
+        "zephyr-chipyard-sw": {
+          "sha": "03ee2e2604d81f14efaa0e499a32c17dcf92a26e",
+          "dirty": true
+        }
+      }
+    },
+    "shard_2": {
+      "schema": "xpurt.freshness_eval/1",
+      "config": "data/toplevel/freshness_canon_300ms.json",
+      "epoch_ms": 300.0,
+      "bursts": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "deltas": [
+        5.0,
+        10.0,
+        20.0,
+        30.0,
+        50.0
+      ],
+      "phis": [
+        {
+          "delta": 5.0,
+          "phi_ms": 65.546074
+        },
+        {
+          "delta": 10.0,
+          "phi_ms": 70.546074
+        },
+        {
+          "delta": 20.0,
+          "phi_ms": 80.546074
+        },
+        {
+          "delta": 30.0,
+          "phi_ms": 90.546074
+        },
+        {
+          "delta": 50.0,
+          "phi_ms": 110.546074
+        }
+      ],
+      "A0": {
+        "A0_realized": 60.546074,
+        "A0_supremum": 68.519152,
+        "distinct_ages": [
+          20.546074,
+          30.546074,
+          40.546074,
+          50.546074,
+          60.546074
+        ],
+        "no_producer_count": 2,
+        "total_consumer_invocations": 31,
+        "producer_task": "dronet",
+        "consumer_task": "mlp_control",
+        "producer_period_ms": 50.0,
+        "producer_latency_ms": 17.973078,
+        "consumer_period_ms": 10.0,
+        "consumer_latency_ms": 0.5460740000000001,
+        "fast_cluster_hw": "gemmini"
+      },
+      "policies": {
+        "probe_prodwin20": {
+          "solver": "greedy",
+          "scheduler": "mosek",
+          "mutations": {
+            "window_duration": {
+              "dronet": 20.0
+            }
+          },
+          "intent": "Producer window tightened 50 -> 20 ms."
+        },
+        "probe_admit1": {
+          "solver": "greedy",
+          "scheduler": "mosek",
+          "mutations": {
+            "admit_cap": 1
+          },
+          "intent": "Admit at most 1 soft instance regardless of offered B."
+        }
+      },
+      "mutation_vocabulary": {
+        "preferred_hw": "{net: profile_hw} SOFT pin. profile_loader multiplies non-preferred combinations by PIN_PENALTY_MULT; it does not hard-exclude them. A preference, never a reservation.",
+        "window_duration": "{net: ms} tightens a network's own window, i.e. max_end_t = release + ms. greedy honours this via ALAP back-propagation and emergency promotion; the MILP enforces it outright. Applied to the PRODUCER this converts the consumer's freshness requirement into a producer deadline, which is the only mechanism here that acts on the quantity freshness actually depends on.",
+        "admit_cap": "int cap on admitted soft instances: admitted = min(B, cap). Trades soft utility for headroom directly. `contention_level` still records the OFFERED B, so admission control is never free in the reporting.",
+        "soft_phase_ms": "float start_time offset on the soft network, deferring its first release. Rate-limiting in time rather than in count."
+      },
+      "producer_reference_window_ms": 50.0,
+      "oracle_note": "The oracle row is a post-hoc upper bound: the best output_valid_rate available at each (B, phi) among the deployable policies. It is not a deployable policy.",
+      "seeds": [
+        0
+      ],
+      "post_passes": {
+        "compaction_enabled": false,
+        "automerge_enabled": false,
+        "note": "Both rewrite the emitted fixture and are forced off, so this is a comparison of policies rather than of policy+post-pass."
+      },
+      "timing_provenance": {
+        "timing_source": "firesim_measured",
+        "target": "firesim_gemmini_opu",
+        "backends": {
+          "cpu_p": "gemmini",
+          "cpu_e": "rvv_opu"
+        },
+        "measured_or_derived": "measured_cycles_derived_ms",
+        "clock_mhz_assumed": 1000.0,
+        "scaling_factor": "mean_time_ms = cycles / 1e6",
+        "clock_caveat": "The assumed 1 GHz is NOT the Alveo U250 bitstream frequency (25-30 MHz). Raw cycles are preserved in the exported results.csv `cycles` column. Absolute millisecond claims must restate this assumption.",
+        "source": "ModelBlaster/benchmarks/profile_db (see gen/profile/**/_provenance.json)"
+      },
+      "producer_instance_provenance": "inferred_from_schedule_timestamps -- no dataflow exists between the producer and consumer networks in either XPU-RT or ModelBlaster, so the consumed instance is inferred, never recorded",
+      "time_unit": "ms",
+      "schedule_digests_by_policy_burst": {
+        "probe_prodwin20|B0": {
+          "0": "-4752785243573661390"
+        },
+        "probe_prodwin20|B1": {
+          "0": "7201485843641677377"
+        },
+        "probe_prodwin20|B2": {
+          "0": "4910776672308525248"
+        },
+        "probe_admit1|B0": {
+          "0": "-4752785243573661390"
+        },
+        "probe_admit1|B1": {
+          "0": "7201485843641677377"
+        },
+        "probe_admit1|B2": {
+          "0": "7201485843641677377"
+        },
+        "probe_admit1|B3": {
+          "0": "7201485843641677377"
+        },
+        "probe_admit1|B4": {
+          "0": "7201485843641677377"
+        }
+      },
+      "determinism": {
+        "probe_prodwin20|B0": "identical across seeds",
+        "probe_prodwin20|B1": "identical across seeds",
+        "probe_prodwin20|B2": "identical across seeds",
+        "probe_admit1|B0": "identical across seeds",
+        "probe_admit1|B1": "identical across seeds",
+        "probe_admit1|B2": "identical across seeds",
+        "probe_admit1|B3": "identical across seeds",
+        "probe_admit1|B4": "identical across seeds"
+      },
+      "failures": [
+        {
+          "policy": "probe_prodwin20",
+          "burst": 3,
+          "seed": 0,
+          "status": "solver exit 1 (see /scratch2/agustin/XPU-RT/results/freshness_probe/shard_2/work/_fx_probe_prodwin20_B3_s0_greedy.log)"
+        },
+        {
+          "policy": "probe_prodwin20",
+          "burst": 4,
+          "seed": 0,
+          "status": "solver exit 1 (see /scratch2/agustin/XPU-RT/results/freshness_probe/shard_2/work/_fx_probe_prodwin20_B4_s0_greedy.log)"
+        }
+      ],
+      "n_per_invocation_rows": 1200,
+      "n_aggregate_rows": 65,
+      "git": {
+        "xpu-rt": {
+          "sha": "927edbc6920dc6b4d756380ff156cce8cf2d6615",
+          "dirty": true
+        },
+        "ModelBlaster": {
+          "sha": "16b7b52d25cd139f4af726dacb5b4139545388b1",
+          "dirty": true
+        },
+        "zephyr-chipyard-sw": {
+          "sha": "03ee2e2604d81f14efaa0e499a32c17dcf92a26e",
+          "dirty": true
+        }
+      }
+    },
+    "shard_3": {
+      "schema": "xpurt.freshness_eval/1",
+      "config": "data/toplevel/freshness_canon_300ms.json",
+      "epoch_ms": 300.0,
+      "bursts": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "deltas": [
+        5.0,
+        10.0,
+        20.0,
+        30.0,
+        50.0
+      ],
+      "phis": [
+        {
+          "delta": 5.0,
+          "phi_ms": 65.546074
+        },
+        {
+          "delta": 10.0,
+          "phi_ms": 70.546074
+        },
+        {
+          "delta": 20.0,
+          "phi_ms": 80.546074
+        },
+        {
+          "delta": 30.0,
+          "phi_ms": 90.546074
+        },
+        {
+          "delta": 50.0,
+          "phi_ms": 110.546074
+        }
+      ],
+      "A0": {
+        "A0_realized": 60.546074,
+        "A0_supremum": 68.519152,
+        "distinct_ages": [
+          20.546074,
+          30.546074,
+          40.546074,
+          50.546074,
+          60.546074
+        ],
+        "no_producer_count": 2,
+        "total_consumer_invocations": 31,
+        "producer_task": "dronet",
+        "consumer_task": "mlp_control",
+        "producer_period_ms": 50.0,
+        "producer_latency_ms": 17.973078,
+        "consumer_period_ms": 10.0,
+        "consumer_latency_ms": 0.5460740000000001,
+        "fast_cluster_hw": "gemmini"
+      },
+      "policies": {
+        "probe_admit2": {
+          "solver": "greedy",
+          "scheduler": "mosek",
+          "mutations": {
+            "admit_cap": 2
+          },
+          "intent": "Admit at most 2 soft instances regardless of offered B."
+        },
+        "probe_defer25": {
+          "solver": "greedy",
+          "scheduler": "mosek",
+          "mutations": {
+            "soft_phase_ms": 25.0
+          },
+          "intent": "Defer the first soft release by 25 ms (half a DroNet period)."
+        }
+      },
+      "mutation_vocabulary": {
+        "preferred_hw": "{net: profile_hw} SOFT pin. profile_loader multiplies non-preferred combinations by PIN_PENALTY_MULT; it does not hard-exclude them. A preference, never a reservation.",
+        "window_duration": "{net: ms} tightens a network's own window, i.e. max_end_t = release + ms. greedy honours this via ALAP back-propagation and emergency promotion; the MILP enforces it outright. Applied to the PRODUCER this converts the consumer's freshness requirement into a producer deadline, which is the only mechanism here that acts on the quantity freshness actually depends on.",
+        "admit_cap": "int cap on admitted soft instances: admitted = min(B, cap). Trades soft utility for headroom directly. `contention_level` still records the OFFERED B, so admission control is never free in the reporting.",
+        "soft_phase_ms": "float start_time offset on the soft network, deferring its first release. Rate-limiting in time rather than in count."
+      },
+      "producer_reference_window_ms": 50.0,
+      "oracle_note": "The oracle row is a post-hoc upper bound: the best output_valid_rate available at each (B, phi) among the deployable policies. It is not a deployable policy.",
+      "seeds": [
+        0
+      ],
+      "post_passes": {
+        "compaction_enabled": false,
+        "automerge_enabled": false,
+        "note": "Both rewrite the emitted fixture and are forced off, so this is a comparison of policies rather than of policy+post-pass."
+      },
+      "timing_provenance": {
+        "timing_source": "firesim_measured",
+        "target": "firesim_gemmini_opu",
+        "backends": {
+          "cpu_p": "gemmini",
+          "cpu_e": "rvv_opu"
+        },
+        "measured_or_derived": "measured_cycles_derived_ms",
+        "clock_mhz_assumed": 1000.0,
+        "scaling_factor": "mean_time_ms = cycles / 1e6",
+        "clock_caveat": "The assumed 1 GHz is NOT the Alveo U250 bitstream frequency (25-30 MHz). Raw cycles are preserved in the exported results.csv `cycles` column. Absolute millisecond claims must restate this assumption.",
+        "source": "ModelBlaster/benchmarks/profile_db (see gen/profile/**/_provenance.json)"
+      },
+      "producer_instance_provenance": "inferred_from_schedule_timestamps -- no dataflow exists between the producer and consumer networks in either XPU-RT or ModelBlaster, so the consumed instance is inferred, never recorded",
+      "time_unit": "ms",
+      "schedule_digests_by_policy_burst": {
+        "probe_admit2|B0": {
+          "0": "8937352284551001505"
+        },
+        "probe_admit2|B1": {
+          "0": "7393082540909757273"
+        },
+        "probe_admit2|B2": {
+          "0": "1932659658944924570"
+        },
+        "probe_admit2|B3": {
+          "0": "1932659658944924570"
+        },
+        "probe_admit2|B4": {
+          "0": "1932659658944924570"
+        },
+        "probe_defer25|B0": {
+          "0": "8937352284551001505"
+        },
+        "probe_defer25|B1": {
+          "0": "5346891581714572840"
+        },
+        "probe_defer25|B2": {
+          "0": "-9114973917088957276"
+        }
+      },
+      "determinism": {
+        "probe_admit2|B0": "identical across seeds",
+        "probe_admit2|B1": "identical across seeds",
+        "probe_admit2|B2": "identical across seeds",
+        "probe_admit2|B3": "identical across seeds",
+        "probe_admit2|B4": "identical across seeds",
+        "probe_defer25|B0": "identical across seeds",
+        "probe_defer25|B1": "identical across seeds",
+        "probe_defer25|B2": "identical across seeds"
+      },
+      "failures": [
+        {
+          "policy": "probe_defer25",
+          "burst": 3,
+          "seed": 0,
+          "status": "solver exit 1 (see /scratch2/agustin/XPU-RT/results/freshness_probe/shard_3/work/_fx_probe_defer25_B3_s0_greedy.log)"
+        },
+        {
+          "policy": "probe_defer25",
+          "burst": 4,
+          "seed": 0,
+          "status": "solver exit 1 (see /scratch2/agustin/XPU-RT/results/freshness_probe/shard_3/work/_fx_probe_defer25_B4_s0_greedy.log)"
+        }
+      ],
+      "n_per_invocation_rows": 1200,
+      "n_aggregate_rows": 65,
+      "git": {
+        "xpu-rt": {
+          "sha": "927edbc6920dc6b4d756380ff156cce8cf2d6615",
+          "dirty": true
+        },
+        "ModelBlaster": {
+          "sha": "16b7b52d25cd139f4af726dacb5b4139545388b1",
+          "dirty": true
+        },
+        "zephyr-chipyard-sw": {
+          "sha": "03ee2e2604d81f14efaa0e499a32c17dcf92a26e",
+          "dirty": true
+        }
+      }
+    },
+    "shard_4": {
+      "schema": "xpurt.freshness_eval/1",
+      "config": "data/toplevel/freshness_canon_300ms.json",
+      "epoch_ms": 300.0,
+      "bursts": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "deltas": [
+        5.0,
+        10.0,
+        20.0,
+        30.0,
+        50.0
+      ],
+      "phis": [
+        {
+          "delta": 5.0,
+          "phi_ms": 65.546074
+        },
+        {
+          "delta": 10.0,
+          "phi_ms": 70.546074
+        },
+        {
+          "delta": 20.0,
+          "phi_ms": 80.546074
+        },
+        {
+          "delta": 30.0,
+          "phi_ms": 90.546074
+        },
+        {
+          "delta": 50.0,
+          "phi_ms": 110.546074
+        }
+      ],
+      "A0": {
+        "A0_realized": 60.546074,
+        "A0_supremum": 68.519152,
+        "distinct_ages": [
+          20.546074,
+          30.546074,
+          40.546074,
+          50.546074,
+          60.546074
+        ],
+        "no_producer_count": 2,
+        "total_consumer_invocations": 31,
+        "producer_task": "dronet",
+        "consumer_task": "mlp_control",
+        "producer_period_ms": 50.0,
+        "producer_latency_ms": 17.973078,
+        "consumer_period_ms": 10.0,
+        "consumer_latency_ms": 0.5460740000000001,
+        "fast_cluster_hw": "gemmini"
+      },
+      "policies": {
+        "probe_nonperiodic_priority": {
+          "solver": "greedy_periodic",
+          "scheduler": "mosek",
+          "mutations": {},
+          "intent": "FALSIFICATION CONTROL, expected to be WORSE: non-periodic priority deprioritises the periodic producer."
+        }
+      },
+      "mutation_vocabulary": {
+        "preferred_hw": "{net: profile_hw} SOFT pin. profile_loader multiplies non-preferred combinations by PIN_PENALTY_MULT; it does not hard-exclude them. A preference, never a reservation.",
+        "window_duration": "{net: ms} tightens a network's own window, i.e. max_end_t = release + ms. greedy honours this via ALAP back-propagation and emergency promotion; the MILP enforces it outright. Applied to the PRODUCER this converts the consumer's freshness requirement into a producer deadline, which is the only mechanism here that acts on the quantity freshness actually depends on.",
+        "admit_cap": "int cap on admitted soft instances: admitted = min(B, cap). Trades soft utility for headroom directly. `contention_level` still records the OFFERED B, so admission control is never free in the reporting.",
+        "soft_phase_ms": "float start_time offset on the soft network, deferring its first release. Rate-limiting in time rather than in count."
+      },
+      "producer_reference_window_ms": 50.0,
+      "oracle_note": "The oracle row is a post-hoc upper bound: the best output_valid_rate available at each (B, phi) among the deployable policies. It is not a deployable policy.",
+      "seeds": [
+        0
+      ],
+      "post_passes": {
+        "compaction_enabled": false,
+        "automerge_enabled": false,
+        "note": "Both rewrite the emitted fixture and are forced off, so this is a comparison of policies rather than of policy+post-pass."
+      },
+      "timing_provenance": {
+        "timing_source": "firesim_measured",
+        "target": "firesim_gemmini_opu",
+        "backends": {
+          "cpu_p": "gemmini",
+          "cpu_e": "rvv_opu"
+        },
+        "measured_or_derived": "measured_cycles_derived_ms",
+        "clock_mhz_assumed": 1000.0,
+        "scaling_factor": "mean_time_ms = cycles / 1e6",
+        "clock_caveat": "The assumed 1 GHz is NOT the Alveo U250 bitstream frequency (25-30 MHz). Raw cycles are preserved in the exported results.csv `cycles` column. Absolute millisecond claims must restate this assumption.",
+        "source": "ModelBlaster/benchmarks/profile_db (see gen/profile/**/_provenance.json)"
+      },
+      "producer_instance_provenance": "inferred_from_schedule_timestamps -- no dataflow exists between the producer and consumer networks in either XPU-RT or ModelBlaster, so the consumed instance is inferred, never recorded",
+      "time_unit": "ms",
+      "schedule_digests_by_policy_burst": {
+        "probe_nonperiodic_priority|B0": {
+          "0": "-3168109005717918429"
+        },
+        "probe_nonperiodic_priority|B1": {
+          "0": "-96434926828120685"
+        },
+        "probe_nonperiodic_priority|B2": {
+          "0": "-7414310714952082273"
+        }
+      },
+      "determinism": {
+        "probe_nonperiodic_priority|B0": "identical across seeds",
+        "probe_nonperiodic_priority|B1": "identical across seeds",
+        "probe_nonperiodic_priority|B2": "identical across seeds"
+      },
+      "failures": [
+        {
+          "policy": "probe_nonperiodic_priority",
+          "burst": 3,
+          "seed": 0,
+          "status": "solver exit 1 (see /scratch2/agustin/XPU-RT/results/freshness_probe/shard_4/work/_fx_probe_nonperiodic_priority_B3_s0_greedy_periodic.log)"
+        },
+        {
+          "policy": "probe_nonperiodic_priority",
+          "burst": 4,
+          "seed": 0,
+          "status": "solver exit 1 (see /scratch2/agustin/XPU-RT/results/freshness_probe/shard_4/work/_fx_probe_nonperiodic_priority_B4_s0_greedy_periodic.log)"
+        }
+      ],
+      "n_per_invocation_rows": 450,
+      "n_aggregate_rows": 30,
+      "git": {
+        "xpu-rt": {
+          "sha": "927edbc6920dc6b4d756380ff156cce8cf2d6615",
+          "dirty": true
+        },
+        "ModelBlaster": {
+          "sha": "16b7b52d25cd139f4af726dacb5b4139545388b1",
+          "dirty": true
+        },
+        "zephyr-chipyard-sw": {
+          "sha": "03ee2e2604d81f14efaa0e499a32c17dcf92a26e",
+          "dirty": true
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,120 @@
+config          data/toplevel/freshness_canon_300ms.json
+epoch           300.0 ms
+A0 (uncontended input-age ceiling)  60.546 ms
+  closed-form supremum              68.519 ms
+  distinct uncontended ages         [20.55, 30.55, 40.55, 50.55, 60.55]
+  producer dronet T=50.0 L=17.973 ms on gemmini
+  consumer mlp_control T=10.0 L=0.546 ms
+phi             ['A0+5=65.5', 'A0+10=70.5', 'A0+20=80.5', 'A0+30=90.5', 'A0+50=110.5']
+bursts          [0, 1, 2, 3, 4]
+policies        ['probe_admit2', 'probe_defer25']
+seeds           [0]
+
+  probe_admit2         B=0 seed=0 makespan=  290.5ms  deadline=1.000 soft=0/0 (7.1s)
+  probe_admit2         B=1 seed=0 makespan=  290.5ms  deadline=1.000 soft=1/1 (15.0s)
+  probe_admit2         B=2 seed=0 makespan=  290.5ms  deadline=1.000 soft=2/2 (22.7s)
+  probe_admit2         B=3 seed=0 makespan=  290.5ms  deadline=1.000 soft=2/3 (23.0s)
+  probe_admit2         B=4 seed=0 makespan=  290.5ms  deadline=1.000 soft=2/4 (23.0s)
+  probe_defer25        B=0 seed=0 makespan=  290.5ms  deadline=1.000 soft=0/0 (7.3s)
+  probe_defer25        B=1 seed=0 makespan=  290.5ms  deadline=1.000 soft=1/1 (14.8s)
+  probe_defer25        B=2 seed=0 makespan=  290.5ms  deadline=1.000 soft=2/2 (21.6s)
+  [FAIL] probe_defer25        B=3 seed=0: solver exit 1 (see /scratch2/agustin/XPU-RT/results/freshness_probe/shard_3/work/_fx_probe_defer25_B3_s0_greedy.log)
+  [FAIL] probe_defer25        B=4 seed=0: solver exit 1 (see /scratch2/agustin/XPU-RT/results/freshness_probe/shard_3/work/_fx_probe_defer25_B4_s0_greedy.log)
+
+================================================================================================
+A0 = 60.546 ms   (uncontended input-age ceiling)
+
+policy                 B     phi   mkspn   dl_ok  fresh_ok  out_ok  diverg  maxage  prod_dl  soft
+                                        (consumer)                                  (producer)      
+oracle                 0    65.5   290.5   1.000     0.933   0.933   0.067    60.5    1.000     0
+oracle                 0    70.5   290.5   1.000     0.933   0.933   0.067    60.5    1.000     0
+oracle                 0    80.5   290.5   1.000     0.933   0.933   0.067    60.5    1.000     0
+oracle                 0    90.5   290.5   1.000     0.933   0.933   0.067    60.5    1.000     0
+oracle                 0   110.5   290.5   1.000     0.933   0.933   0.067    60.5    1.000     0
+oracle                 1    65.5   290.5   1.000     0.767   0.767   0.233   100.5    0.833     1
+oracle                 1    70.5   290.5   1.000     0.767   0.767   0.233   100.5    0.833     1
+oracle                 1    80.5   290.5   1.000     0.833   0.833   0.167   100.5    0.833     1
+oracle                 1    90.5   290.5   1.000     0.867   0.867   0.133   100.5    0.833     1
+oracle                 1   110.5   290.5   1.000     0.933   0.933   0.067   100.5    0.833     1
+oracle                 2    65.5   290.5   1.000     0.600   0.600   0.400   100.5    0.667     2
+oracle                 2    70.5   290.5   1.000     0.667   0.667   0.333   100.5    0.667     2
+oracle                 2    80.5   290.5   1.000     0.733   0.733   0.267   100.5    0.667     2
+oracle                 2    90.5   290.5   1.000     0.833   0.833   0.167   100.5    0.667     2
+oracle                 2   110.5   290.5   1.000     0.933   0.933   0.067   100.5    0.667     2
+oracle                 3    65.5   290.5   1.000     0.267   0.267   0.733   130.5    0.333     2
+oracle                 3    70.5   290.5   1.000     0.333   0.333   0.667   130.5    0.333     2
+oracle                 3    80.5   290.5   1.000     0.400   0.400   0.600   130.5    0.333     2
+oracle                 3    90.5   290.5   1.000     0.433   0.433   0.567   130.5    0.333     2
+oracle                 3   110.5   290.5   1.000     0.633   0.633   0.367   130.5    0.333     2
+oracle                 4    65.5   290.5   1.000     0.267   0.267   0.733   130.5    0.333     2
+oracle                 4    70.5   290.5   1.000     0.333   0.333   0.667   130.5    0.333     2
+oracle                 4    80.5   290.5   1.000     0.400   0.400   0.600   130.5    0.333     2
+oracle                 4    90.5   290.5   1.000     0.433   0.433   0.567   130.5    0.333     2
+oracle                 4   110.5   290.5   1.000     0.633   0.633   0.367   130.5    0.333     2
+probe_admit2           0    65.5   290.5   1.000     0.933   0.933   0.067    60.5    1.000     0
+probe_admit2           0    70.5   290.5   1.000     0.933   0.933   0.067    60.5    1.000     0
+probe_admit2           0    80.5   290.5   1.000     0.933   0.933   0.067    60.5    1.000     0
+probe_admit2           0    90.5   290.5   1.000     0.933   0.933   0.067    60.5    1.000     0
+probe_admit2           0   110.5   290.5   1.000     0.933   0.933   0.067    60.5    1.000     0
+probe_admit2           1    65.5   290.5   1.000     0.600   0.600   0.400   100.5    0.667     1
+probe_admit2           1    70.5   290.5   1.000     0.600   0.600   0.400   100.5    0.667     1
+probe_admit2           1    80.5   290.5   1.000     0.633   0.633   0.367   100.5    0.667     1
+probe_admit2           1    90.5   290.5   1.000     0.633   0.633   0.367   100.5    0.667     1
+probe_admit2           1   110.5   290.5   1.000     0.700   0.700   0.300   100.5    0.667     1
+probe_admit2           2    65.5   290.5   1.000     0.267   0.267   0.733   130.5    0.333     2
+probe_admit2           2    70.5   290.5   1.000     0.333   0.333   0.667   130.5    0.333     2
+probe_admit2           2    80.5   290.5   1.000     0.400   0.400   0.600   130.5    0.333     2
+probe_admit2           2    90.5   290.5   1.000     0.433   0.433   0.567   130.5    0.333     2
+probe_admit2           2   110.5   290.5   1.000     0.633   0.633   0.367   130.5    0.333     2
+probe_admit2           3    65.5   290.5   1.000     0.267   0.267   0.733   130.5    0.333     2
+probe_admit2           3    70.5   290.5   1.000     0.333   0.333   0.667   130.5    0.333     2
+probe_admit2           3    80.5   290.5   1.000     0.400   0.400   0.600   130.5    0.333     2
+probe_admit2           3    90.5   290.5   1.000     0.433   0.433   0.567   130.5    0.333     2
+probe_admit2           3   110.5   290.5   1.000     0.633   0.633   0.367   130.5    0.333     2
+probe_admit2           4    65.5   290.5   1.000     0.267   0.267   0.733   130.5    0.333     2
+probe_admit2           4    70.5   290.5   1.000     0.333   0.333   0.667   130.5    0.333     2
+probe_admit2           4    80.5   290.5   1.000     0.400   0.400   0.600   130.5    0.333     2
+probe_admit2           4    90.5   290.5   1.000     0.433   0.433   0.567   130.5    0.333     2
+probe_admit2           4   110.5   290.5   1.000     0.633   0.633   0.367   130.5    0.333     2
+probe_defer25          0    65.5   290.5   1.000     0.933   0.933   0.067    60.5    1.000     0
+probe_defer25          0    70.5   290.5   1.000     0.933   0.933   0.067    60.5    1.000     0
+probe_defer25          0    80.5   290.5   1.000     0.933   0.933   0.067    60.5    1.000     0
+probe_defer25          0    90.5   290.5   1.000     0.933   0.933   0.067    60.5    1.000     0
+probe_defer25          0   110.5   290.5   1.000     0.933   0.933   0.067    60.5    1.000     0
+probe_defer25          1    65.5   290.5   1.000     0.767   0.767   0.233   100.5    0.833     1
+probe_defer25          1    70.5   290.5   1.000     0.767   0.767   0.233   100.5    0.833     1
+probe_defer25          1    80.5   290.5   1.000     0.833   0.833   0.167   100.5    0.833     1
+probe_defer25          1    90.5   290.5   1.000     0.867   0.867   0.133   100.5    0.833     1
+probe_defer25          1   110.5   290.5   1.000     0.933   0.933   0.067   100.5    0.833     1
+probe_defer25          2    65.5   290.5   1.000     0.600   0.600   0.400   100.5    0.667     2
+probe_defer25          2    70.5   290.5   1.000     0.667   0.667   0.333   100.5    0.667     2
+probe_defer25          2    80.5   290.5   1.000     0.733   0.733   0.267   100.5    0.667     2
+probe_defer25          2    90.5   290.5   1.000     0.833   0.833   0.167   100.5    0.667     2
+probe_defer25          2   110.5   290.5   1.000     0.933   0.933   0.067   100.5    0.667     2
+
+Operating points with deadline_success >= 0.95 and output_valid < deadline_success - 0.10:  28
+  probe_admit2          B=2 phi=65.5  deadline=1.000 output_valid=0.267 divergence=0.733
+  probe_admit2          B=3 phi=65.5  deadline=1.000 output_valid=0.267 divergence=0.733
+  probe_admit2          B=4 phi=65.5  deadline=1.000 output_valid=0.267 divergence=0.733
+  probe_admit2          B=2 phi=70.5  deadline=1.000 output_valid=0.333 divergence=0.667
+  probe_admit2          B=3 phi=70.5  deadline=1.000 output_valid=0.333 divergence=0.667
+  probe_admit2          B=4 phi=70.5  deadline=1.000 output_valid=0.333 divergence=0.667
+  probe_admit2          B=2 phi=80.5  deadline=1.000 output_valid=0.400 divergence=0.600
+  probe_admit2          B=3 phi=80.5  deadline=1.000 output_valid=0.400 divergence=0.600
+  probe_admit2          B=4 phi=80.5  deadline=1.000 output_valid=0.400 divergence=0.600
+  probe_admit2          B=2 phi=90.5  deadline=1.000 output_valid=0.433 divergence=0.567
+  probe_admit2          B=3 phi=90.5  deadline=1.000 output_valid=0.433 divergence=0.567
+  probe_admit2          B=4 phi=90.5  deadline=1.000 output_valid=0.433 divergence=0.567
+
+Largest divergence: 0.733 at probe_admit2 B=2 phi=65.5 (deadline 1.000, output_valid 0.267)
+
+All 8 (policy, B) cells were identical across 1 seeds.
+
+2 cell(s) FAILED; see manifest.failures
+
+wrote /scratch2/agustin/XPU-RT/results/freshness_probe/shard_3/
+  manifest.json
+  aggregate.csv
+  per_invocation.csv
+  command.txt
+  git_commits.json

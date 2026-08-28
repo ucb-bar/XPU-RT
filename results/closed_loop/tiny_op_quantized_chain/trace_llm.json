@@ -1,0 +1,69 @@
+{
+  "workload": "scenario:tiny_op_quantized_chain",
+  "scheduler": "fastest_device",
+  "ranker": "llm",
+  "max_candidates": 10,
+  "baseline_makespan_us": 390.0,
+  "final_makespan_us": 220.0,
+  "improvement_us": 170.0,
+  "improvement_pct": 43.58974358974359,
+  "baseline_dispatches": 25,
+  "final_dispatches": 1,
+  "trace": [
+    {
+      "iter": 0,
+      "candidate_id": "fuse_chain_L3_relu_L4_relu",
+      "candidate_type": "fuse_linear_chain",
+      "predicted_delta": -108.33333333333334,
+      "measured_objective_before": 390.0,
+      "measured_objective_after": 367.0,
+      "delta": -23.0,
+      "accepted": true,
+      "reason": "improved"
+    },
+    {
+      "iter": 1,
+      "candidate_id": "fuse_chain_L2_bias_L3_bias",
+      "candidate_type": "fuse_linear_chain",
+      "predicted_delta": -108.33333333333334,
+      "measured_objective_before": 367.0,
+      "measured_objective_after": 329.0,
+      "delta": -38.0,
+      "accepted": true,
+      "reason": "improved"
+    },
+    {
+      "iter": 2,
+      "candidate_id": "fuse_chain_L1_conv_L2_conv",
+      "candidate_type": "fuse_linear_chain",
+      "predicted_delta": -108.33333333333334,
+      "measured_objective_before": 329.0,
+      "measured_objective_after": 295.0,
+      "delta": -34.0,
+      "accepted": true,
+      "reason": "improved"
+    },
+    {
+      "iter": 3,
+      "candidate_id": "fuse_chain_L0_quant_L1_quant",
+      "candidate_type": "fuse_linear_chain",
+      "predicted_delta": -108.33333333333334,
+      "measured_objective_before": 295.0,
+      "measured_objective_after": 262.0,
+      "delta": -33.0,
+      "accepted": true,
+      "reason": "improved"
+    },
+    {
+      "iter": 4,
+      "candidate_id": "fuse_chain_L0_quant+L0_conv+L0_bias+L0_relu+L0_dequant+L1_quant_L4_dequant",
+      "candidate_type": "fuse_linear_chain",
+      "predicted_delta": -86.66666666666667,
+      "measured_objective_before": 262.0,
+      "measured_objective_after": 220.0,
+      "delta": -42.0,
+      "accepted": true,
+      "reason": "improved"
+    }
+  ]
+}

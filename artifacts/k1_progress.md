@@ -1797,3 +1797,66 @@ board step is one command and has not been run.
 ### Repo SHAs
 
 XPU-RT `feat/k1-modelblaster-closed-loop`, ModelBlaster `03f15da`.
+
+---
+
+## B3, the granularity rung: measured on the board, and rejected on the measurement
+
+### Attempted
+
+Execute the granularity rung. dronet dispatch 0 (`conv2d_s8`, OC 32) split into
+two OC-16 tiles, chosen because it is the largest splittable dispatch as a
+fraction of its own free slot and is the graph root, so its tiles have no
+serialising predecessor.
+
+### Measurements
+
+Bit-exact on hardware: `max_abs_err=0`, 22 dispatches, 2 split tiles. This was
+the FIRST execution of the rvv_x60 tiles -- the host verification could only
+prove the rewrite, since only scalar assembles on x86 -- so it also confirms the
+IHWOC weight-packing fix. Without it an OC slice is strided (weights are permuted
+to `(IC,KH,KW,OC)`, OC innermost) while the codegen used an OIHW offset formula,
+which was bit-exact on scalar and silently wrong on rvv_x60 for every tile.
+
+Like-for-like, identical build, median of 6 with iteration 0 dropped:
+
+| | dispatches | total |
+|---|---|---|
+| baseline | 21 | 8.590 ms |
+| split x2 | 22 | **9.769 ms (+13.7%)** |
+
+And on the split dispatch itself:
+
+    unsplit conv (OC=32)                              1.9450 ms
+    tiles (OC=16 each)               1.5583 + 1.5210 = 3.0793 ms   (+58%)
+    critical path IF the tiles land on separate harts  1.5583 ms   (-20%)
+
+**Verdict: rejected.** Splitting costs 58% extra total work on that dispatch and
+buys at most a 20% latency reduction, conditional on the two tiles being placed
+on different harts. dronet already meets its 30 Hz requirement with ~23 ms of
+slack against a 33.3 ms period, so under the lexicographic objective -- where
+standalone kernel cycles rank LAST -- nothing above that term can improve, and
+the change is pure cost. This is the loop working, not the loop failing.
+
+The interesting part is WHY the tiles are not half the cost. An OC-16 tile costs
+80% of the OC-32 dispatch, not 50%: each tile re-reads the whole input while
+producing half the output channels, so the input traffic is duplicated and this
+convolution is not OC-bound. That is a compiler-relevant finding and it argues
+for splitting along a different axis if this rung is ever revisited.
+
+### A method note that mattered
+
+My first comparison read -0.2% and was wrong. The baseline I had backed up
+predated the `_zfh_zvfh` addition to rvv_x60's `-march`, and the giveaway was
+that `batchnorm2d` HALVED and an unrelated convolution dropped 20% -- deltas no
+OC split can explain. Re-profiling the baseline under the identical build turned
+a spurious -0.2% into a real +13.7%. Two profiles from different builds are not
+a comparison, however tempting the arithmetic looks.
+
+### Blocker
+
+None.
+
+### Repo SHAs
+
+XPU-RT `feat/k1-modelblaster-closed-loop`, ModelBlaster `1d978a2`.

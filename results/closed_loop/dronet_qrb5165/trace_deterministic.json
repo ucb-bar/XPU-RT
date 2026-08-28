@@ -1,0 +1,13 @@
+{
+  "workload": "model:dronet@qrb5165",
+  "scheduler": "fifo",
+  "ranker": "deterministic",
+  "max_candidates": 10,
+  "baseline_makespan_us": 70787.4,
+  "final_makespan_us": 70787.4,
+  "improvement_us": 0.0,
+  "improvement_pct": 0.0,
+  "baseline_dispatches": 15,
+  "final_dispatches": 15,
+  "trace": []
+}

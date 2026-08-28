@@ -1,0 +1,144 @@
+{
+  "schema": "xpurt.freshness_eval/1",
+  "config": "data/toplevel/freshness_canon_300ms.json",
+  "epoch_ms": 300.0,
+  "bursts": [
+    3,
+    4
+  ],
+  "deltas": [
+    5.0,
+    10.0,
+    20.0,
+    30.0,
+    50.0
+  ],
+  "phis": [
+    {
+      "delta": 5.0,
+      "phi_ms": 65.546074
+    },
+    {
+      "delta": 10.0,
+      "phi_ms": 70.546074
+    },
+    {
+      "delta": 20.0,
+      "phi_ms": 80.546074
+    },
+    {
+      "delta": 30.0,
+      "phi_ms": 90.546074
+    },
+    {
+      "delta": 50.0,
+      "phi_ms": 110.546074
+    }
+  ],
+  "A0": {
+    "A0_realized": 60.546074,
+    "A0_supremum": 68.519152,
+    "distinct_ages": [
+      20.546074,
+      30.546074,
+      40.546074,
+      50.546074,
+      60.546074
+    ],
+    "no_producer_count": 2,
+    "total_consumer_invocations": 31,
+    "producer_task": "dronet",
+    "consumer_task": "mlp_control",
+    "producer_period_ms": 50.0,
+    "producer_latency_ms": 17.973078,
+    "consumer_period_ms": 10.0,
+    "consumer_latency_ms": 0.5460740000000001,
+    "fast_cluster_hw": "gemmini"
+  },
+  "policies": {
+    "static_nominal": {
+      "solver": "greedy",
+      "scheduler": "mosek",
+      "mutations": {},
+      "intent": "Contention-blind earliest-completion list schedule. Maximises soft throughput under low load; no protection for the perception chain."
+    },
+    "probe_prodwin40": {
+      "solver": "greedy",
+      "scheduler": "mosek",
+      "mutations": {
+        "window_duration": {
+          "dronet": 40.0
+        }
+      },
+      "intent": "Producer window tightened 50 -> 40 ms."
+    }
+  },
+  "mutation_vocabulary": {
+    "preferred_hw": "{net: profile_hw} SOFT pin. profile_loader multiplies non-preferred combinations by PIN_PENALTY_MULT; it does not hard-exclude them. A preference, never a reservation.",
+    "window_duration": "{net: ms} tightens a network's own window, i.e. max_end_t = release + ms. greedy honours this via ALAP back-propagation and emergency promotion; the MILP enforces it outright. Applied to the PRODUCER this converts the consumer's freshness requirement into a producer deadline, which is the only mechanism here that acts on the quantity freshness actually depends on.",
+    "admit_cap": "int cap on admitted soft instances: admitted = min(B, cap). Trades soft utility for headroom directly. `contention_level` still records the OFFERED B, so admission control is never free in the reporting.",
+    "soft_phase_ms": "float start_time offset on the soft network, deferring its first release. Rate-limiting in time rather than in count."
+  },
+  "producer_reference_window_ms": 50.0,
+  "oracle_note": "The oracle row is a post-hoc upper bound: the best output_valid_rate available at each (B, phi) among the deployable policies. It is not a deployable policy.",
+  "seeds": [
+    0
+  ],
+  "post_passes": {
+    "compaction_enabled": false,
+    "automerge_enabled": false,
+    "note": "Both rewrite the emitted fixture and are forced off, so this is a comparison of policies rather than of policy+post-pass."
+  },
+  "timing_provenance": {
+    "timing_source": "firesim_measured",
+    "target": "firesim_gemmini_opu",
+    "backends": {
+      "cpu_p": "gemmini",
+      "cpu_e": "rvv_opu"
+    },
+    "measured_or_derived": "measured_cycles_derived_ms",
+    "clock_mhz_assumed": 1000.0,
+    "scaling_factor": "mean_time_ms = cycles / 1e6",
+    "clock_caveat": "The assumed 1 GHz is NOT the Alveo U250 bitstream frequency (25-30 MHz). Raw cycles are preserved in the exported results.csv `cycles` column. Absolute millisecond claims must restate this assumption.",
+    "source": "ModelBlaster/benchmarks/profile_db (see gen/profile/**/_provenance.json)"
+  },
+  "producer_instance_provenance": "inferred_from_schedule_timestamps -- no dataflow exists between the producer and consumer networks in either XPU-RT or ModelBlaster, so the consumed instance is inferred, never recorded",
+  "time_unit": "ms",
+  "schedule_digests_by_policy_burst": {
+    "static_nominal|B3": {
+      "0": "-1242307496944558844"
+    },
+    "static_nominal|B4": {
+      "0": "-6883673267946873007"
+    },
+    "probe_prodwin40|B3": {
+      "0": "-1242307496944558844"
+    },
+    "probe_prodwin40|B4": {
+      "0": "-6883673267946873007"
+    }
+  },
+  "determinism": {
+    "static_nominal|B3": "identical across seeds",
+    "static_nominal|B4": "identical across seeds",
+    "probe_prodwin40|B3": "identical across seeds",
+    "probe_prodwin40|B4": "identical across seeds"
+  },
+  "failures": [],
+  "n_per_invocation_rows": 1050,
+  "n_aggregate_rows": 30,
+  "git": {
+    "xpu-rt": {
+      "sha": "a1620f0b2efa5b5b36b35a863af4039df677f78d",
+      "dirty": true
+    },
+    "ModelBlaster": {
+      "sha": "16b7b52d25cd139f4af726dacb5b4139545388b1",
+      "dirty": true
+    },
+    "zephyr-chipyard-sw": {
+      "sha": "03ee2e2604d81f14efaa0e499a32c17dcf92a26e",
+      "dirty": true
+    }
+  }
+}

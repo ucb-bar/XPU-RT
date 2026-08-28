@@ -1,0 +1,86 @@
+============================================================
+Loading network hierarchy from JSON...
+============================================================
+
+Loading networks from: /scratch2/agustin/XPU-RT/results/scheduler_sweep_k1_h67/config/networks_k1_mlp_dronet_sweep_h67.json
+
+Found 2 networks:
+  - mlp (id: 0, identifier: mlp)
+  - dronet (id: 1, identifier: dronet)
+
+Found 0 network-level dependencies:
+
+Resolved runtime configuration:
+  Machine core counts: {'CPU_P': 4, 'CPU_E': 4}
+  Profile HW mapping: CPU_P->RVV, CPU_E->RVV_c1
+  Profile target/topology: target=spacemit_x60, topo_tag=topo_0
+  p_core_speedup: 1.0
+  random_seed: 42
+  solver_verbosity: 0
+  time_limit: 120.0
+  use_profiled: True
+  prune_periodic: True
+  restrict_makespan_to_nonperiodic: False
+  machine_combination_mode: singletons
+  enforce_same_processor_combinations: True
+
+Using profiled runtimes where available...
+
+--- greedy_periodic iteration 1 ---
+  Total operations: 75
+  Job names: ['mlp0', 'dronet0', 'mlp1', 'mlp2', 'mlp3', 'mlp4', 'mlp5', 'mlp6', 'dronet1']
+  Makespan: 146.33 ms
+  Periodic 'mlp': period=10ms current=7 needed=15
+  Periodic 'dronet': period=33ms current=2 needed=5
+  Bumping num_instances: mlp: 7->15, dronet: 2->5
+
+Final greedy makespan: 146.33 ms (after 1 iteration)
+
+Scheduling completed!
+Makespan (non-periodic): 0.00 ms
+
+Combination assignments:
+  1xCPU_P: 44 operations
+  1xCPU_P: 44 operations
+  1xCPU_P: 44 operations
+  1xCPU_P: 44 operations
+  1xCPU_E: 31 operations
+  1xCPU_E: 31 operations
+  1xCPU_E: 31 operations
+  1xCPU_E: 31 operations
+
+Per-network combination assignments:
+  Mlp0: 1xCPU_P=4, 1xCPU_P=4, 1xCPU_P=4, 1xCPU_P=4, 1xCPU_E=1, 1xCPU_E=1, 1xCPU_E=1, 1xCPU_E=1
+  Dronet0: 1xCPU_P=8, 1xCPU_P=8, 1xCPU_P=8, 1xCPU_P=8, 1xCPU_E=12, 1xCPU_E=12, 1xCPU_E=12, 1xCPU_E=12
+  Mlp1: 1xCPU_P=4, 1xCPU_P=4, 1xCPU_P=4, 1xCPU_P=4, 1xCPU_E=1, 1xCPU_E=1, 1xCPU_E=1, 1xCPU_E=1
+  Mlp2: 1xCPU_P=4, 1xCPU_P=4, 1xCPU_P=4, 1xCPU_P=4, 1xCPU_E=1, 1xCPU_E=1, 1xCPU_E=1, 1xCPU_E=1
+  Mlp3: 1xCPU_P=4, 1xCPU_P=4, 1xCPU_P=4, 1xCPU_P=4, 1xCPU_E=1, 1xCPU_E=1, 1xCPU_E=1, 1xCPU_E=1
+  Mlp4: 1xCPU_P=4, 1xCPU_P=4, 1xCPU_P=4, 1xCPU_P=4, 1xCPU_E=1, 1xCPU_E=1, 1xCPU_E=1, 1xCPU_E=1
+  Mlp5: 1xCPU_P=4, 1xCPU_P=4, 1xCPU_P=4, 1xCPU_P=4, 1xCPU_E=1, 1xCPU_E=1, 1xCPU_E=1, 1xCPU_E=1
+  Mlp6: 1xCPU_P=4, 1xCPU_P=4, 1xCPU_P=4, 1xCPU_P=4, 1xCPU_E=1, 1xCPU_E=1, 1xCPU_E=1, 1xCPU_E=1
+  Dronet1: 1xCPU_P=8, 1xCPU_P=8, 1xCPU_P=8, 1xCPU_P=8, 1xCPU_E=12, 1xCPU_E=12, 1xCPU_E=12, 1xCPU_E=12
+Job 'mlp0' (job_id=0, color_index=0) -> color RGB=[0.59607843 0.8345098  0.57882353]
+DEBUG TRANSFER: alpha_shape=(75, 8), num_actual_machines=8, len(machines)=8, alpha_cols=8, is_using_combos=False, prev_machine=0, machine=0, transfer_times_shape=(8, 8), machine_combinations=True
+Job 'dronet0' (job_id=1, color_index=1) -> color RGB=[0.57960784 0.77019608 0.87372549]
+DEBUG IMMEDIATE: op=62, job_id=8, lookup=8, op_color_index=8, base_colors[8]=(np.float64(0.03137254901960784), np.float64(0.23695501730103807), np.float64(0.4919492502883507))
+DEBUG AFTER MODULO: op=62, original=8, after_modulo=8, len(base_colors)=9
+DEBUG BEFORE LEGEND: op=62, op_color_index=8, original=8, job_index=8, legend_key=kind_dronet, in_legend=True
+DEBUG IMMEDIATE: op=63, job_id=8, lookup=8, op_color_index=8, base_colors[8]=(np.float64(0.03137254901960784), np.float64(0.23695501730103807), np.float64(0.4919492502883507))
+DEBUG AFTER MODULO: op=63, original=8, after_modulo=8, len(base_colors)=9
+DEBUG BEFORE LEGEND: op=63, op_color_index=8, original=8, job_index=8, legend_key=kind_dronet, in_legend=True
+DEBUG IMMEDIATE: op=64, job_id=8, lookup=8, op_color_index=8, base_colors[8]=(np.float64(0.03137254901960784), np.float64(0.23695501730103807), np.float64(0.4919492502883507))
+DEBUG AFTER MODULO: op=64, original=8, after_modulo=8, len(base_colors)=9
+DEBUG BEFORE LEGEND: op=64, op_color_index=8, original=8, job_index=8, legend_key=kind_dronet, in_legend=True
+Saving plot to plots/networks_k1_mlp_dronet_sweep_h67_greedy_periodic_profiled.png...
+
+Plot saved to plots/networks_k1_mlp_dronet_sweep_h67_greedy_periodic_profiled.png
+
+Outputting scheduled JSON...
+  pdb_hash = sha256:55e86b60f6b39030... over 4 CSV(s)
+
+Scheduled JSON saved to: schedules/scheduled_networks_k1_mlp_dronet_sweep_h67_greedy_periodic_profiled.json
+Metrics written to: schedules/scheduled_networks_k1_mlp_dronet_sweep_h67_greedy_periodic_profiled_metrics.json
+  makespan_us=146.33  deadline_miss=32  cross_dev=50  solver_s=0.201
+Scheduler report written to: schedules/scheduled_networks_k1_mlp_dronet_sweep_h67_greedy_periodic_profiled_report.json
+
+--- stderr ---
