@@ -13,11 +13,33 @@
     "  profile_basename   -- the <basename> level; MUST equal the dispatch",
     "                        path's parent directory name, because",
     "                        profile_loader derives the basename from the path.",
-    "  role               -- 'periodic' (joins the shared-period chain) or",
-    "                        'sporadic' (laid into the gaps, no edges).",
+    "  role               -- 'periodic' (runs at its own rate, see period_ms)",
+    "                        or 'sporadic' (laid into the gaps, no edges).",
     "                        At least one usable periodic model is required.",
+    "  period_ms          -- {min,max} for the model's PERIOD in ms: the rate",
+    "                        the task actually runs at, drawn once per",
+    "                        generation and then snapped to a multiple of the",
+    "                        fastest task's period.  It is DECLARED, not",
+    "                        derived from the network's runtime, because a",
+    "                        task's rate is a property of the loop it sits in",
+    "                        -- a 0.4 ms control MLP runs at 100+ Hz whatever",
+    "                        it costs, and sizing its period from its own",
+    "                        window is what produced a 283 ms control loop.",
+    "                        Copies of one model share its period and are",
+    "                        chained; models at different rates get no edges",
+    "                        between them, because an instance-i ->",
+    "                        instance-i edge only means anything at equal",
+    "                        rates.  Omitted, the period falls back to 2x-8x",
+    "                        the model's measured runtime.  Sporadic models",
+    "                        ignore it.",
     "  count              -- {min,max} draws per generation; min 0 makes it",
     "                        optional.  Multiple draws get _a/_b suffixes.",
+    "  probability        -- optional chance in [0,1] that the model is drawn",
+    "                        at all; below it the count draw is skipped and",
+    "                        the model sits out this generation entirely.",
+    "                        Use it for a model that should show up now and",
+    "                        then rather than in most workloads -- `count.min:",
+    "                        0` only thins it to 1-in-(max+1).",
     "  variant_note       -- free text appended to the workload's _comment."
   ],
 
@@ -30,6 +52,7 @@
           "profile_model": "smolvlm_vision_v3",
           "profile_basename": "smolvlm_vision_v3.int8",
           "role": "periodic",
+          "period_ms": { "min": 2000, "max": 6000 },
           "count": { "min": 1, "max": 3 },
           "variant_note": "49 dispatches; profiled clean on CPU/DSP/HTA (no unsupported rows), HTA is the fastest whole-network backend."
         },
@@ -51,6 +74,7 @@
           "profile_model": "mlp_control",
           "profile_basename": "mlp_control.fp32",
           "role": "periodic",
+          "period_ms": { "min": 4, "max": 20 },
           "count": { "min": 1, "max": 2 }
         },
         "dronet": {
@@ -58,6 +82,7 @@
           "profile_model": "dronet",
           "profile_basename": "dronet.fp32",
           "role": "periodic",
+          "period_ms": { "min": 50, "max": 200 },
           "count": { "min": 1, "max": 2 }
         },
         "yolov8_nano": {
@@ -65,7 +90,9 @@
           "profile_model": "yolov8_nano",
           "profile_basename": "yolov8_nano.fp32",
           "role": "sporadic",
-          "count": { "min": 0, "max": 2 }
+          "probability": 0.25,
+          "count": { "min": 1, "max": 1 },
+          "variant_note": "Occasional detector: without gemmini it costs 629 ms serial on RVV (10.4 s on scalar) against dronet's 28 ms and mlp_control's 0.4 ms, so one instance dominates the horizon and the periodic instance count with it. Drawn in a quarter of generations, one at a time -- the workloads that get it are the loaded ones, the rest stay a fast mlp+dronet control loop."
         }
       }
     },
@@ -77,6 +104,7 @@
           "profile_model": "mlp_control",
           "profile_basename": "mlp_control.fp32",
           "role": "periodic",
+          "period_ms": { "min": 4, "max": 20 },
           "count": { "min": 1, "max": 2 },
           "variant_note": "fp32 build: the gemmini_q31 sweep profiles mlp_control.fp32, there is no int8 variant on disk."
         },
@@ -85,6 +113,7 @@
           "profile_model": "dronet",
           "profile_basename": "dronet.int8",
           "role": "periodic",
+          "period_ms": { "min": 50, "max": 200 },
           "count": { "min": 1, "max": 2 },
           "variant_note": "int8/gemmini build, matching the sweep_v8 profile data. The fp32 build at generic_riscv64/RVV/dronet.fp32 is the one the RVV-only FireSim configs use."
         },
@@ -93,7 +122,9 @@
           "profile_model": "yolov8_nano",
           "profile_basename": "yolov8_nano.int8",
           "role": "sporadic",
-          "count": { "min": 0, "max": 2 }
+          "probability": 0.25,
+          "count": { "min": 1, "max": 1 },
+          "variant_note": "Occasional detector, same draw rate as the spike platform's so the two RISC-V mixes stay comparable; gemmini brings its cost down but it is still the heaviest network here."
         }
       }
     }

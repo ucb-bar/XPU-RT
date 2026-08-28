@@ -14,9 +14,18 @@
     "",
     "`available: false` marks configs whose profile CSVs the generator cannot",
     "reach: find_profile_csv() hardcodes <repo>/gen/profile and ignores the",
-    "`profile.gen_root` key that profile_metrics.py honours.",
+    "`profile.gen_root` key that profile_metrics.py honours.  That is",
+    "deliberate -- the generator mirrors profile_loader's search exactly, so a",
+    "config it accepts is one the scheduler can also load.  A tree that lives",
+    "elsewhere becomes reachable by symlinking it under <repo>/gen/profile",
+    "(gen/profile/{RVV,scalar}/spike/* are tracked symlinks into",
+    "zephyr-chipyard-sw/modelblaster/gen/profile, which is what makes the",
+    "spike_* entries below available); `gen_root` still records where the",
+    "profiling run actually writes, for repro_workload.sh and",
+    "worst_case_nonperiodic_duration.py.",
     "",
-    "`single_core`/`dual_core`/`quad_core` scale both machine kinds together",
+    "`single_core`/`dual_core`/`quad_core` (qrb5165) and their `spike_*`",
+    "counterparts scale both machine kinds together",
     "(1, 2 and 4 cores of each).  build_machine_combinations() turns a kind with",
     "N cores into groups of 1..N cores whose topo tag is derived from the group",
     "size, but qrb5165_v66 only has topo_0 profiles on disk -- so these entries",
@@ -96,14 +105,48 @@
 
     "spike_het": {
       "description": "Spike ISA sim: RVV p-core + scalar e-core",
-      "available": false,
-      "unavailable_reason": [
-        "profile CSVs live under zephyr-chipyard-sw/modelblaster/gen/profile,",
-        "but find_profile_csv() only looks under <repo>/gen/profile.",
-        "gen/profile/{RVV,scalar}/spike/ exist but hold no results.csv."
-      ],
+      "available": true,
       "machines":   { "cpu_e": 1, "cpu_p": 1 },
       "profile_hw": { "cpu_e": "scalar", "cpu_p": "RVV" },
+      "profile": {
+        "gen_root": "zephyr-chipyard-sw/modelblaster/gen",
+        "target": "spike",
+        "topo_tag": "topo_0",
+        "topo_tag_override": true
+      }
+    },
+
+    "spike_single_core": {
+      "description": "Spike ISA sim: 1 p-core (RVV) + 1 e-core (scalar)",
+      "available": true,
+      "machines":   { "cpu_p": 1, "cpu_e": 1 },
+      "profile_hw": { "cpu_p": "RVV", "cpu_e": "scalar" },
+      "profile": {
+        "gen_root": "zephyr-chipyard-sw/modelblaster/gen",
+        "target": "spike",
+        "topo_tag": "topo_0",
+        "topo_tag_override": true
+      }
+    },
+
+    "spike_dual_core": {
+      "description": "Spike ISA sim: 2 p-cores (RVV) + 2 e-cores (scalar)",
+      "available": true,
+      "machines":   { "cpu_p": 2, "cpu_e": 2 },
+      "profile_hw": { "cpu_p": "RVV", "cpu_e": "scalar" },
+      "profile": {
+        "gen_root": "zephyr-chipyard-sw/modelblaster/gen",
+        "target": "spike",
+        "topo_tag": "topo_0",
+        "topo_tag_override": true
+      }
+    },
+
+    "spike_quad_core": {
+      "description": "Spike ISA sim: 4 p-cores (RVV) + 4 e-cores (scalar)",
+      "available": true,
+      "machines":   { "cpu_p": 4, "cpu_e": 4 },
+      "profile_hw": { "cpu_p": "RVV", "cpu_e": "scalar" },
       "profile": {
         "gen_root": "zephyr-chipyard-sw/modelblaster/gen",
         "target": "spike",

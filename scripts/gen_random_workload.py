@@ -11,29 +11,53 @@ Everything the generator emits is backed by data that exists on disk:
   * Before a model is used, the generator resolves its profile results.csv on
     *every* backend in the hardware config -- mirroring profile_loader's search
     -- so `use_profiled: true` never hits the strict-mode FileNotFoundError.
-  * Periods and windows are sized from the model's *measured* runtime on that
-    hardware (see `reference_duration_ms`), scaled by a random factor in
-    [--min-scale, --max-scale] (default 1.2x - 5x).
+  * Periods come from the bank's declared `period_ms` per model -- the rate
+    the task runs at -- and windows from the model's *measured* runtime on
+    that hardware scaled by a random factor in [--min-scale, --max-scale]
+    (default 1.2x - 5x), squeezed to fit inside the period.
   * No `p_core_speedup` is emitted: it only scales the synthetic-timing
     fallback, so applying it on top of profiled CSVs would fabricate timings.
 
 Workload shape:
 
-  * Periodic models form ONE dependency chain sharing a single period T, with
-    staggered `start_time` offsets so their windows run back-to-back inside each
-    frame.  A shared period is required for correctness: workload_factory
-    expands an edge between two periodic networks into instance-i -> instance-i
-    edges, so a downstream task with a shorter period would be asked to finish
-    before its producer starts.
+  * Each periodic model runs at its OWN period, drawn from the model bank's
+    `period_ms` -- the rate the task actually runs at (a control MLP at
+    100+ Hz, a perception net at 5-20 Hz), not something derived from how
+    long the network happens to take.  Periods are then snapped to integer
+    multiples of the fastest one, so the hyperperiod is the slowest period
+    rather than an lcm of unrelated numbers.
+  * `window_duration` is the instance's DEADLINE inside its period, sized as
+    the measured runtime times a random factor in [--min-scale, --max-scale]
+    and squeezed if need be so a model's copies fit one frame with
+    --period-headroom to spare.  A window that does not fit means
+    consecutive instances of the same network overlap.
+  * The taskset is then checked against the hardware: each periodic task is
+    packed onto the backend that stays least loaded, and any config asking
+    for more than --max-utilization of a core has the worst offender's
+    period doubled until it fits.  Heterogeneity is the point -- dronet is
+    28 ms on RVV and 454 ms on scalar, so two cores is not two dronets.
+  * How many copies of each model are drawn comes from the bank's `count`
+    range, gated by an optional `probability` -- so a model can be common in
+    the mix or occasional in it without changing what it looks like when it
+    does show up.  Copies of one model share its period, run back-to-back
+    inside the frame, and are chained by edges.  Models at *different* rates
+    get no edges between them: workload_factory pairs periodic instances by
+    index, which only says something when both sides tick together.
   * Sporadic models (the yolos) get non-overlapping [min_start_t, max_end_t]
     windows laid into the gaps along the timeline, with no edges touching the
-    periodic chain.  An edge from a periodic network to a non-periodic one fans
-    out to *every* instance, which would serialise the whole workload.
+    periodic taskset.  An edge from a periodic network to a non-periodic one
+    fans out to *every* instance, which would serialise the whole workload.
+  * The document carries an explicit `horizon_ms` and a `num_instances` per
+    periodic network (ceil(horizon / period), inside --max-ops).  Left to
+    itself the toolchain sizes periodic instances from the *non-periodic*
+    makespan, which is zero for a workload of nothing but periodic tasks --
+    that is what collapsed every all-periodic schedule to a single instance
+    of each network.
 
 Usage:
     python scripts/gen_random_workload.py 1234
-    python scripts/gen_random_workload.py 1234 --hardware quad_core
-    python scripts/gen_random_workload.py 1234 --hardware qnn --stdout
+    python scripts/gen_random_workload.py 1234 --hardware spike_quad_core
+    python scripts/gen_random_workload.py 1234 --horizon-periods 6 --stdout
     python scripts/gen_random_workload.py --list
 
 Run with --list to see the banks the current checkout can generate from.
@@ -223,11 +247,36 @@ def measure(repo_root: str, name: str, spec: dict, hw_pool: List[str],
 
     best = 0.0
     worst = 0.0
+    unrunnable: List[int] = []
     for i in ids:
         vals = [times[hw][i] for hw in hw_pool
                 if i in times[hw] and times[hw][i] < SENTINEL_MS]
-        best += min(vals) if vals else 0.0
-        worst += max(vals) if vals else 0.0
+        if not vals:
+            # Empty for two very different reasons:
+            #   - no backend has a row for this dispatch at all -- it is one
+            #     of the zero-cost IR ops the codegen drops (view, chunk2_c1),
+            #     which profile_loader's strict mode also costs at 0; or
+            #   - every backend that does have a row marks it unsupported --
+            #     nothing in this hardware config can run the dispatch.
+            # Both used to cost 0, which sized windows against work no
+            # backend can do: smolvlm_vision_v3_bundles measured 417 ms here
+            # while the scheduler, charging profile_loader's unsupported
+            # penalty for the same 46 dispatches, put it at 46,000,417 ms.
+            if any(i in times[hw] for hw in hw_pool):
+                unrunnable.append(i)
+            continue
+        best += min(vals)
+        worst += max(vals)
+
+    if unrunnable:
+        shown = ", ".join(str(i) for i in unrunnable[:8])
+        more = f" (+{len(unrunnable) - 8} more)" if len(unrunnable) > 8 else ""
+        return None, [
+            f"{name}: {len(unrunnable)} of {len(ids)} dispatches are "
+            f"unsupported on every backend in this hardware config "
+            f"({'/'.join(hw_pool)}) -- dispatch_ids {shown}{more}. "
+            f"No schedule can run this network here."
+        ]
 
     return ModelTiming(
         name=name, spec=spec, n_dispatches=len(ids),
@@ -238,14 +287,28 @@ def measure(repo_root: str, name: str, spec: dict, hw_pool: List[str],
 
 
 # --------------------------------------------------------------------------
-# Generation
+# Draws
 # --------------------------------------------------------------------------
 
 def draw_count(rng: random.Random, spec: dict) -> int:
+    """
+    How many copies of one model this generation gets.
+
+    An optional `probability` gates the model first: below it the count draw
+    is skipped and the model sits this one out.  That is a different shape
+    from `count.min: 0`, which can only thin a model to 1-in-(max+1) and
+    still gives it a draw every time -- the gate is how a model that should
+    appear now and then (yolov8_nano) stays occasional without touching the
+    count range it uses when it *is* drawn.  The probability draw is taken
+    unconditionally so the RNG stream stays aligned across models.
+    """
+    p = spec.get("probability")
+    drawn = rng.random() < float(p) if p is not None else True
     bounds = spec.get("count") or {}
     lo = int(bounds.get("min", 1))
     hi = int(bounds.get("max", lo))
-    return rng.randint(min(lo, hi), max(lo, hi))
+    count = rng.randint(min(lo, hi), max(lo, hi))
+    return count if drawn else 0
 
 
 def task_keys(name: str, count: int) -> List[str]:
@@ -265,6 +328,197 @@ def task_keys(name: str, count: int) -> List[str]:
         return [name]
     return [f"{name}_{chr(ord('a') + i)}" for i in range(count)]
 
+
+# --------------------------------------------------------------------------
+# Rates
+# --------------------------------------------------------------------------
+
+# Fallback period band for a periodic model the bank gives no `period_ms`:
+# a multiple of the model's own measured runtime.  Feasible, but arbitrary
+# -- declare `period_ms` instead, it is the number that carries meaning.
+DEFAULT_PERIOD_SPAN = (2.0, 8.0)
+
+
+def draw_period_ms(rng: random.Random, spec: dict, reference_ms: float) -> float:
+    """The model's period in ms, before harmonic snapping."""
+    bounds = spec.get("period_ms") or {}
+    lo, hi = bounds.get("min"), bounds.get("max")
+    if lo is None or hi is None:
+        lo = reference_ms * DEFAULT_PERIOD_SPAN[0]
+        hi = reference_ms * DEFAULT_PERIOD_SPAN[1]
+    lo, hi = float(lo), float(hi)
+    return rng.uniform(min(lo, hi), max(lo, hi))
+
+
+@dataclass
+class RateGroup:
+    """One periodic model's copies, all running at that model's own period.
+
+    A group is the unit that shares a period, so it is also the unit that
+    can carry dependency edges: workload_factory expands an edge between two
+    periodic networks into instance-i -> instance-i edges, which only says
+    something when both sides tick at the same rate.  Copies within a group
+    are chained; nothing crosses between groups.
+    """
+    model: str
+    period: int
+    drawn: List[float]        # deadline slack as drawn, before any fitting
+    factors: List[float]      # ...and after fitting it into `period`
+    keys: List[str] = field(default_factory=list)
+    windows: List[int] = field(default_factory=list)
+    starts: List[int] = field(default_factory=list)
+    stretched: bool = False
+
+    def refit(self, ref_ms: float, period: int, headroom: float) -> None:
+        """Re-derive the windows for a new period, from the drawn slack.
+
+        Refitting the already-squeezed factors would keep a deadline that
+        was tightened to fit a period the task no longer has -- a task
+        whose period doubled for utilization would carry the tight
+        deadline of the rate it was moved off.
+        """
+        self.period, self.factors, dropped = fit_windows(
+            ref_ms, self.drawn[:len(self.keys)], period, headroom)
+        if dropped:
+            self.keys = self.keys[:len(self.factors)]
+            self.drawn = self.drawn[:len(self.factors)]
+
+
+def fit_windows(ref_ms: float, factors: List[float], period: int,
+                headroom: float) -> Tuple[int, List[float], int]:
+    """
+    Size one model's windows so all its copies fit inside one period.
+
+    Returns (period, factors, dropped) -- `dropped` copies were cut from the
+    end of `factors`, and the period only moves as a last resort.
+
+    `window_duration` is a deadline, not a duration: the instance has to
+    finish inside [start_time + i*T, start_time + i*T + window].  Consecutive
+    instances therefore overlap unless a model's copies fit in one frame,
+    which is what the old generator had backwards -- it summed the windows
+    and called the sum a period, so the period grew with the deadline slack
+    instead of the slack being bounded by the rate.
+
+    Three moves, in the order that costs the least meaning:
+      1. squeeze the deadlines toward the measured runtime (a tight deadline
+         is still a real workload, and never goes below 1.0x);
+      2. drop a copy (two of a model at this rate is more than the frame
+         holds, but the rate itself is the declared, meaningful number);
+      3. only for a single copy that still does not fit, double the period,
+         which is the honest statement that the model cannot run this often.
+    """
+    factors = list(factors)
+    dropped = 0
+
+    def windows(fs: List[float]) -> int:
+        return sum(max(1, int(math.ceil(ref_ms * f))) for f in fs)
+
+    for _ in range(32):
+        budget = period / max(1.0, headroom)
+        if windows(factors) <= budget:
+            return period, factors, dropped
+        wanted = sum(ref_ms * f for f in factors)
+        # Aim below the budget by one ms per window: each one is rounded up
+        # to whole ms, and without that slack the squeeze lands just over
+        # the line and the period gets stretched for a rounding error.
+        target = budget - len(factors)
+        if wanted > 0 and target > 0:
+            squeezed = [max(1.0, f * target / wanted) for f in factors]
+            if windows(squeezed) <= budget:
+                return period, squeezed, dropped
+        floored = [max(1.0, f) for f in factors]
+        if windows(floored) <= budget:
+            return period, floored, dropped
+        if len(factors) > 1:
+            factors = floored[:-1]
+            dropped += 1
+            continue
+        factors = floored
+        period *= 2
+    return period, factors, dropped
+
+
+def harmonize(groups: List["RateGroup"], timings: Dict[str, ModelTiming],
+              headroom: float) -> None:
+    """
+    Snap the periods back into a divisibility ladder, in place.
+
+    Walking fastest-first, each period is raised to the next multiple of
+    the one below it.  Periods only ever grow, so windows that fitted
+    still fit; they are refit anyway, from the drawn slack, so a task
+    whose period grew gets the deadline its new rate allows.
+    """
+    prev = 0
+    for g in sorted(groups, key=lambda g: g.period):
+        if prev and g.period % prev:
+            g.refit(timings[g.model].reference_ms,
+                    prev * int(math.ceil(g.period / prev)), headroom)
+        prev = g.period
+
+
+def backend_capacity(hardware: dict) -> Dict[str, int]:
+    """{backend: how many machine slots map to it}, e.g. {RVV: 2, scalar: 2}."""
+    capacity: Dict[str, int] = {}
+    for kind, hw in hardware["profile_hw"].items():
+        capacity[hw] = capacity.get(hw, 0) + int(hardware["machines"].get(kind, 0))
+    return {hw: n for hw, n in capacity.items() if n > 0}
+
+
+def periodic_utilization(groups: List["RateGroup"], timings: Dict[str, ModelTiming],
+                         capacity: Dict[str, int]) -> Tuple[float, Dict[str, float]]:
+    """
+    Peak backend utilization of the periodic set alone.
+
+    Each periodic task is placed on the backend that ends up least loaded
+    relative to that backend's core count (longest-first, which is the usual
+    partitioned-EDF heuristic), charged at *that backend's* measured runtime
+    over its period.  The peak is max over backends of load / cores.
+
+    Above 1.0 the periodic set asks for more of some backend than the
+    hardware has, so instances miss their windows in every schedule no
+    matter which solver runs -- which is what a period drawn without regard
+    to the hardware produces (two dronet copies at 50 ms is 1.14 RVV cores,
+    and spike_single_core has one).  Heterogeneity matters here: dronet is
+    28 ms on RVV and 454 ms on scalar, so "there are two cores" is not the
+    same as "there is capacity for two dronets".
+    """
+    load = {hw: 0.0 for hw in capacity}
+    if not capacity:
+        return 0.0, load
+
+    items: List[Tuple[float, ModelTiming, int]] = []
+    for g in groups:
+        t = timings[g.model]
+        for _ in g.keys:
+            items.append((t.reference_ms / g.period, t, g.period))
+    items.sort(key=lambda it: -it[0])
+
+    for _, t, period in items:
+        best_hw: Optional[str] = None
+        best_after = math.inf
+        for hw, cores in capacity.items():
+            ms = t.per_backend_serial_ms.get(hw, math.inf)
+            if not math.isfinite(ms):
+                continue
+            after = (load[hw] + ms / period) / cores
+            if after < best_after:
+                best_hw, best_after = hw, after
+        if best_hw is None:
+            # No backend runs this network whole; it has to be split across
+            # them, and reference_ms is already the best-per-dispatch bound.
+            # Charge it to the least loaded backend so it still counts.
+            best_hw = min(capacity, key=lambda hw: load[hw] / capacity[hw])
+            load[best_hw] += t.reference_ms / period
+        else:
+            load[best_hw] += t.per_backend_serial_ms[best_hw] / period
+
+    peak = max(load[hw] / capacity[hw] for hw in capacity)
+    return peak, load
+
+
+# --------------------------------------------------------------------------
+# Generation
+# --------------------------------------------------------------------------
 
 def generate(args, hw_bank: dict, model_bank: dict) -> dict:
     rng = random.Random(args.seed)
@@ -336,38 +590,111 @@ def generate(args, hw_bank: dict, model_bank: dict) -> dict:
     if not periodic:
         raise SystemExit(
             f"no usable periodic models for {target!r} -- nothing to build a "
-            "periodic chain from"
+            "periodic taskset from"
         )
 
     scale = lambda: rng.uniform(args.min_scale, args.max_scale)
+    notes_rate: List[str] = []
 
-    # --- periodic chain ---------------------------------------------------
-    # One shared period T with staggered start_time offsets.  See the module
-    # docstring for why the period has to be shared.
-    chain: List[dict] = []
-    offset = 0
+    # --- periodic taskset: one period per model ---------------------------
+    # Every draw is taken before anything is sized, so the RNG stream does
+    # not depend on how the fitting below turns out.
+    draws: List[Tuple[str, int, float, List[float]]] = []
     for name in periodic:
         spec = models[name]
-        t = timings[name]
-        for key in task_keys(name, draw_count(rng, spec)):
-            factor = scale()
-            window = max(1, int(math.ceil(t.reference_ms * factor)))
-            chain.append({
-                "key": key,
-                "model": name,
-                "window": window,
-                "start_time": offset,
-                "factor": round(factor, 3),
-                "duration_ms": round(t.reference_ms, 3),
-            })
-            offset += window
+        count = draw_count(rng, spec)
+        raw_period = draw_period_ms(rng, spec, timings[name].reference_ms)
+        factors = [scale() for _ in range(count)]
+        if count:
+            draws.append((name, count, raw_period, factors))
 
-    frame = offset  # total occupied time inside one period
-    period = max(1, int(math.ceil(frame * rng.uniform(1.0, args.period_headroom))))
+    if not draws:
+        raise SystemExit(
+            "every periodic model was drawn zero times -- nothing to build a "
+            "periodic taskset from.  Raise count.min or probability for at "
+            f"least one of: {', '.join(periodic)}"
+        )
+
+    # Harmonic snap.  Sorted fastest-first, every period becomes an integer
+    # multiple of the one below it -- so each divides the next, and the
+    # hyperperiod is the slowest period rather than an lcm of unrelated
+    # numbers.  (Multiples of a shared base is not enough: 15 ms and 20 ms
+    # are both multiples of 5 and still only repeat together every 60 ms.)
+    # The hyperperiod is what the horizon and every instance count are
+    # measured in, so letting it run to an lcm is letting the workload size
+    # itself by accident.
+    draws.sort(key=lambda d: d[2])
+    base = max(1, int(round(draws[0][2])))
+    groups: List[RateGroup] = []
+    prev = base
+    for name, count, raw_period, factors in draws:
+        period = prev * max(1, int(round(raw_period / prev)))
+        prev = period
+        ref = timings[name].reference_ms
+        fitted, fitted_factors, dropped = fit_windows(
+            ref, factors, period, args.period_headroom)
+        g = RateGroup(model=name, period=fitted, drawn=factors,
+                      factors=fitted_factors,
+                      keys=task_keys(name, count - dropped),
+                      stretched=fitted != period)
+        if dropped:
+            notes_rate.append(
+                f"  {name}: {count} copies -> {count - dropped} -- "
+                f"{ref:.3f} ms each does not fit {count} times into a "
+                f"{period} ms frame with {args.period_headroom}x headroom")
+        if g.stretched:
+            notes_rate.append(
+                f"  {name}: period stretched {period} -> {fitted} ms -- one "
+                f"copy at {ref:.3f} ms does not fit a {period} ms frame with "
+                f"{args.period_headroom}x headroom")
+        prev = g.period          # a stretch inside fit_windows counts too
+        groups.append(g)
+
+    # Utilization relief.  A period drawn from the bank knows the task's
+    # rate but not the hardware it landed on, so the taskset can come out
+    # over capacity (dronet twice at 50 ms is 1.14 RVV cores; spike's
+    # single-core config has one).  Halve the worst offender's rate until
+    # it fits -- doubling a period keeps the harmonic structure, so the
+    # hyperperiod does not blow up on the way.
+    capacity = backend_capacity(hardware)
+    for _ in range(12):
+        peak, load = periodic_utilization(groups, timings, capacity)
+        if peak <= args.max_utilization:
+            break
+        victim = max(groups, key=lambda g: len(g.keys) * timings[g.model].reference_ms / g.period)
+        was = victim.period
+        victim.refit(timings[victim.model].reference_ms, victim.period * 2,
+                     args.period_headroom)
+        notes_rate.append(
+            f"  {victim.model}: period {was} -> {victim.period} ms -- the "
+            f"taskset needed {peak:.2f} of a core against a "
+            f"{args.max_utilization} budget")
+    # Doubling a period keeps it a multiple of everything below it but can
+    # push it past something above it (10 and 30 ms -> 20 and 30), so
+    # re-snap the ladder before anything is measured against it.
+    harmonize(groups, timings, args.period_headroom)
+    peak, load = periodic_utilization(groups, timings, capacity)
+
+    # Windows and phases.  Copies of a model run back-to-back inside the
+    # frame, so a chain edge between them is satisfiable instance by
+    # instance; fit_windows already guaranteed the group fits.
+    for g in groups:
+        ref = timings[g.model].reference_ms
+        g.windows = [max(1, int(math.ceil(ref * f))) for f in g.factors]
+        offset = 0
+        g.starts = []
+        for w in g.windows:
+            g.starts.append(offset)
+            offset += w
+
+    # Harmonized, so this is the lcm; computed as one anyway, because a
+    # hyperperiod that is quietly wrong silently mis-sizes every count.
+    hyperperiod = math.lcm(*(g.period for g in groups))
+    horizon = float(hyperperiod * args.horizon_periods)
 
     # --- sporadic tasks in the gaps --------------------------------------
     sporadic_tasks: List[dict] = []
-    cursor = rng.uniform(0.0, float(period))
+    cursor = rng.uniform(0.0, float(hyperperiod))
     for name in sporadic:
         spec = models[name]
         t = timings[name]
@@ -386,29 +713,80 @@ def generate(args, hw_bank: dict, model_bank: dict) -> dict:
             })
             cursor = end + rng.uniform(0.0, args.max_gap * window)
 
-    horizon = max([s["max_end_t"] for s in sporadic_tasks] or [float(period)])
+    # The periodic tasks have to keep ticking for as long as there is any
+    # work on the machine, so the horizon covers the sporadic span too.
+    span = max([s["max_end_t"] for s in sporadic_tasks] or [0.0])
+    horizon = max(horizon, span)
+
+    # ...but bounded by an operation budget, because horizon/period is an
+    # operation count and the schedulers are superlinear in it.  yolov8_nano
+    # alone stretches the span past 3 s, which at an 8 ms control period is
+    # 375 mlp_control instances and ~2600 operations.
+    sporadic_ops = sum(timings[s["model"]].n_dispatches for s in sporadic_tasks)
+
+    # --- instance counts --------------------------------------------------
+    # Emitted explicitly rather than left to workload_factory's heuristic,
+    # which sizes periodic instances from the *non-periodic* makespan and so
+    # returns exactly one instance for a workload that has no sporadic task
+    # in it at all.
+    def instances_at(span_ms: float, period: int) -> int:
+        if args.num_instances != "auto":
+            return int(args.num_instances)
+        n = max(1, int(math.ceil(span_ms / period)))
+        if args.cap_instances:
+            n = min(n, args.cap_instances)
+        return n
+
+    def ops_at(span_ms: float) -> int:
+        return sporadic_ops + sum(
+            timings[g.model].n_dispatches * len(g.keys) * instances_at(span_ms, g.period)
+            for g in groups)
+
+    # Shrink against the count the workload actually ends up with, not
+    # against horizon/period: every network rounds its own count up, so the
+    # closed-form bound lands over budget by up to one instance each.
+    wanted_horizon = horizon
+    while horizon > hyperperiod and ops_at(horizon) > args.max_ops:
+        over = ops_at(horizon) / float(args.max_ops)
+        horizon = max(float(hyperperiod), horizon / max(over, 1.02))
+    capped = horizon < wanted_horizon
+
+    instances_for = lambda period: instances_at(horizon, period)
+
+    # An explicit --num-instances ignores the horizon, so there the horizon
+    # has to catch up to it: `horizon_ms` is what the periodic trim cuts
+    # against downstream, and a workload asking for 100 instances of a
+    # 16 ms task inside a 336 ms horizon would have three quarters of them
+    # thrown away after they were scheduled.
+    #
+    # Only for an explicit count.  Doing it in the `auto` case would be
+    # circular -- the count is ceil(horizon/period), so count*period is
+    # always >= horizon, and raising the horizon to it raises the count
+    # again, which is how a workload capped at --max-ops 1200 came back
+    # out at 1280 operations.  The `auto` count already covers the horizon
+    # by construction: the last instance opens at (n-1)*period < horizon.
+    if args.num_instances != "auto":
+        horizon = max(horizon, max(instances_for(g.period) * g.period
+                                   for g in groups))
 
     # --- assemble ---------------------------------------------------------
     networks: Dict[str, dict] = {}
     next_id = 0
-    for item in chain:
-        spec = models[item["model"]]
-        entry = {
-            "id": next_id,
-            "identifier": item["key"],
-            "dispatch_deps_path": spec["dispatch_deps_path"],
-            "period": period,
-            "window_duration": item["window"],
-        }
-        if item["start_time"]:
-            entry["start_time"] = item["start_time"]
-        if args.num_instances != "auto":
-            entry["num_instances"] = int(args.num_instances)
-        elif args.cap_instances:
-            entry["num_instances"] = max(1, min(
-                args.cap_instances, int(math.ceil(horizon / period))))
-        networks[item["key"]] = entry
-        next_id += 1
+    for g in groups:
+        spec = models[g.model]
+        for key, window, start in zip(g.keys, g.windows, g.starts):
+            entry = {
+                "id": next_id,
+                "identifier": key,
+                "dispatch_deps_path": spec["dispatch_deps_path"],
+                "period": g.period,
+                "window_duration": window,
+                "num_instances": instances_for(g.period),
+            }
+            if start:
+                entry["start_time"] = start
+            networks[key] = entry
+            next_id += 1
 
     for item in sporadic_tasks:
         spec = models[item["model"]]
@@ -421,32 +799,67 @@ def generate(args, hw_bank: dict, model_bank: dict) -> dict:
         }
         next_id += 1
 
-    edges = [{"from": chain[i]["key"], "to": chain[i + 1]["key"]}
-             for i in range(len(chain) - 1)]
+    # Chains run inside a rate group only.  Across groups the periods
+    # differ, and workload_factory pairs periodic instances by index, so a
+    # cross-rate edge would tie the 8 ms task's instance i to the 96 ms
+    # task's instance i -- a dependency between events 88 ms apart that
+    # claims to be the same tick.
+    edges = [{"from": g.keys[i], "to": g.keys[i + 1]}
+             for g in groups for i in range(len(g.keys) - 1)]
+
+    total_ops = ops_at(horizon)
 
     notes = [
         f"Randomly generated by scripts/gen_random_workload.py (seed={args.seed}).",
         f"Hardware: {hw_name} -- {hw_cfg.get('description', '')}",
-        f"Periodic chain (shared period {period} ms, sequential edges, "
-        f"staggered start_time so windows run back-to-back inside each frame): "
-        + " -> ".join(c["key"] for c in chain) + ".",
-        f"Sporadic tasks placed in the gaps with non-overlapping windows, no "
-        f"edges to the periodic chain: "
-        + (", ".join(s["key"] for s in sporadic_tasks) or "(none)") + ".",
-        "Windows are the model's measured runtime on this hardware scaled by a "
-        f"random factor in [{args.min_scale}, {args.max_scale}]:",
+        "Periodic taskset -- each model runs at its OWN period, drawn from the "
+        "model bank's period_ms and snapped to a multiple of the fastest "
+        f"task's ({base} ms) so the hyperperiod is just the slowest period "
+        f"({hyperperiod} ms):",
     ]
-    for item in chain + sporadic_tasks:
-        t = timings[item["model"]]
+    for g in groups:
+        t = timings[g.model]
+        util = len(g.keys) * t.reference_ms / g.period
         notes.append(
-            f"  {item['key']}: {item['duration_ms']} ms ({t.reference_basis}, "
-            f"{t.n_dispatches} dispatches) x {item['factor']}"
-        )
+            f"  {g.model}: period {g.period} ms ({1000.0 / g.period:.1f} Hz), "
+            f"{len(g.keys)} copy(ies), {t.reference_ms:.3f} ms each "
+            f"({t.reference_basis}, {t.n_dispatches} dispatches), "
+            f"{util * 100:.1f}% of a core, "
+            f"{instances_for(g.period)} instances over the horizon")
+        for key, window, start, factor in zip(g.keys, g.windows, g.starts, g.factors):
+            notes.append(
+                f"    {key}: window {window} ms (deadline = "
+                f"{factor:.2f}x measured runtime), start_time {start} ms")
+    notes.append(
+        f"Peak backend utilization of the periodic set: {peak:.2f} "
+        f"(budget {args.max_utilization}) -- "
+        + ", ".join(f"{hw} {load[hw]:.2f}/{capacity[hw]}" for hw in sorted(load))
+        + ".")
+    if notes_rate:
+        notes.append("Rates adjusted to fit this hardware:")
+        notes.extend(notes_rate)
+    horizon_note = f"Horizon {horizon:.0f} ms = {args.horizon_periods} x hyperperiod"
+    if span > hyperperiod * args.horizon_periods:
+        horizon_note += f", widened to cover the sporadic span ({span:.0f} ms)"
+    if capped:
+        horizon_note += (f", then shortened from {wanted_horizon:.0f} ms to stay "
+                         f"inside --max-ops {args.max_ops}")
+    notes.append(horizon_note + "; num_instances is ceil(horizon / period) per "
+                 f"network, {total_ops} operations in total.")
+    notes.append(
+        "Sporadic tasks placed in the gaps with non-overlapping windows, no "
+        "edges to the periodic taskset (an edge across the boundary fans out "
+        "to every periodic instance): "
+        + (", ".join(f"{s['key']} [{s['min_start_t']:.0f}, {s['max_end_t']:.0f}] ms"
+                     for s in sporadic_tasks) or "(none)") + ".")
+    notes.append(
+        "Edges chain the copies of one model, which share its period; models "
+        "at different rates get none, because workload_factory pairs periodic "
+        "instances by index and that only means something at equal periods.")
     notes.append(
         "No p_core_speedup: it scales only the synthetic-timing fallback, so "
-        "applying it on top of profiled CSVs would fabricate timings."
-    )
-    for name in sorted({i["model"] for i in chain + sporadic_tasks}):
+        "applying it on top of profiled CSVs would fabricate timings.")
+    for name in sorted({g.model for g in groups} | {s["model"] for s in sporadic_tasks}):
         note = models[name].get("variant_note")
         if note:
             notes.append(f"  {name}: {note}")
@@ -457,6 +870,13 @@ def generate(args, hw_bank: dict, model_bank: dict) -> dict:
     return {
         "_comment": notes,
         "hardware": hardware,
+        # How long the workload is meant to run.  run_xpurt_schedule and
+        # workload_factory both read it: it is the floor on how far periodic
+        # instances are grown and on where the periodic trim cuts, so a
+        # taskset with no sporadic work in it still ticks for the full span
+        # instead of collapsing to one instance of each network.
+        "horizon_ms": round(horizon, 3),
+        "hyperperiod_ms": hyperperiod,
         "scheduler": {
             "random_seed": args.seed,
             "solver_verbosity": args.solver_verbosity,
@@ -531,19 +951,27 @@ def validate(config: dict, repo_root: str) -> List[str]:
                     "workload_factory fans it out to every instance"
                 )
 
-    # Periodic chain: one shared period, and each instance-i -> instance-i edge
-    # must be satisfiable by the start_time offsets.
-    periods = {i["period"] for n, i in networks.items() if is_periodic[n]}
-    if len(periods) > 1:
-        problems.append(
-            f"periodic networks have differing periods {sorted(periods)}; edges "
-            "between them expand instance-i -> instance-i, which is infeasible "
-            "unless the periods match"
-        )
+    # Edges between periodic networks expand instance-i -> instance-i, so
+    # the two sides have to tick together: same period, same instance
+    # count, and the consumer's window must open after the producer's
+    # closes within the frame.
     for e in edges:
         a, b = networks.get(e["from"], {}), networks.get(e["to"], {})
         if "period" not in a or "period" not in b:
             continue
+        if a["period"] != b["period"]:
+            problems.append(
+                f"edge {e['from']} -> {e['to']} joins periods "
+                f"{a['period']} and {b['period']}; instance-i -> instance-i "
+                "only means something at equal periods"
+            )
+            continue
+        if a.get("num_instances") != b.get("num_instances"):
+            problems.append(
+                f"edge {e['from']} -> {e['to']} joins {a.get('num_instances')} "
+                f"and {b.get('num_instances')} instances; the pairing would "
+                "drop the tail"
+            )
         a_end = a.get("start_time", 0) + a["window_duration"]
         b_start = b.get("start_time", 0)
         if b_start < a_end:
@@ -551,6 +979,9 @@ def validate(config: dict, repo_root: str) -> List[str]:
                 f"{e['to']} starts at {b_start} inside {e['from']}'s window "
                 f"(ends {a_end}) -- instance-i edge is infeasible"
             )
+
+    # Each periodic network's window has to close before its next instance
+    # opens, and every network has to say how many instances it runs.
     for n, i in networks.items():
         if not is_periodic[n]:
             continue
@@ -560,6 +991,9 @@ def validate(config: dict, repo_root: str) -> List[str]:
                 f"{n}: start_time+window_duration ({span}) exceeds period "
                 f"({i['period']}) -- consecutive instances overlap"
             )
+        count = i.get("num_instances")
+        if not isinstance(count, int) or count < 1:
+            problems.append(f"{n}: num_instances must be a positive int, got {count!r}")
 
     # Sporadic windows must not overlap each other.
     windows = sorted(
@@ -640,16 +1074,27 @@ def main(argv: Optional[List[str]] = None) -> int:
     ap.add_argument("--max-scale", type=float, default=5.0,
                     help="upper bound on window/period as a multiple of measured runtime")
     ap.add_argument("--period-headroom", type=float, default=1.25,
-                    help="period is the chain's occupied time times U(1.0, this)")
+                    help="a model's copies must fit in period/this, leaving the "
+                         "rest of the frame idle (default: 1.25)")
     ap.add_argument("--max-gap", type=float, default=1.0,
                     help="idle gap after a sporadic task, as a fraction of its window")
+    ap.add_argument("--max-utilization", type=float, default=0.75,
+                    help="periodic load budget per backend core; a taskset over "
+                         "it has the offending model's period doubled until it "
+                         "fits (default: 0.75)")
 
+    ap.add_argument("--horizon-periods", type=float, default=3.0,
+                    help="how many hyperperiods the workload runs for; sets "
+                         "num_instances = ceil(horizon/period) (default: 3)")
+    ap.add_argument("--max-ops", type=int, default=1200,
+                    help="operation budget for the whole workload; the horizon "
+                         "is shortened to stay inside it (default: 1200)")
     ap.add_argument("--num-instances", default="auto",
                     help="explicit num_instances for every periodic network, or "
-                         "'auto' to let workload_factory's horizon heuristic decide")
+                         "'auto' to derive it from the horizon")
     ap.add_argument("--cap-instances", type=int, default=None,
-                    help="with --num-instances auto, emit an explicit cap computed "
-                         "from the laid-out horizon, at most this many")
+                    help="with --num-instances auto, cap the derived count at "
+                         "this many instances per network")
 
     ap.add_argument("--solver-verbosity", type=int, default=2)
     ap.add_argument("--time-limit", type=int, default=20)
@@ -664,6 +1109,14 @@ def main(argv: Optional[List[str]] = None) -> int:
         ap.error("seed is required (or pass --list)")
     if not 0 < args.min_scale <= args.max_scale:
         ap.error("--min-scale must be > 0 and <= --max-scale")
+    if args.period_headroom < 1.0:
+        ap.error("--period-headroom must be >= 1.0")
+    if not 0 < args.max_utilization <= 1.0:
+        ap.error("--max-utilization must be in (0, 1]")
+    if args.horizon_periods <= 0:
+        ap.error("--horizon-periods must be > 0")
+    if args.max_ops < 1:
+        ap.error("--max-ops must be >= 1")
     if args.num_instances != "auto":
         try:
             if int(args.num_instances) <= 0:
@@ -685,11 +1138,11 @@ def main(argv: Optional[List[str]] = None) -> int:
         sys.stdout.write(text)
         return 0
 
-    hw_name = config["hardware"]["profile"]["target"]
-    for key, cfg in hw_bank["configs"].items():
-        if cfg["profile"]["target"] == hw_name and cfg["machines"] == config["hardware"]["machines"]:
-            hw_name = key
-            break
+    # The bank entry we generated from, taken from the notes rather than
+    # matched back by (target, machines): spike_het and spike_single_core
+    # are the same target with the same machine counts, so the reverse
+    # lookup named every spike_single_core workload "spike_het".
+    hw_name = config["_comment"][1].split("Hardware: ", 1)[1].split(" --", 1)[0]
     out = args.out or os.path.join(
         args.repo_root, "data", "toplevel", "generated-data",
         f"networks_random_{hw_name}_seed{args.seed}.json")
@@ -697,14 +1150,22 @@ def main(argv: Optional[List[str]] = None) -> int:
     with open(out, "w") as f:
         f.write(text)
 
-    n_periodic = sum(1 for v in config["networks"].values() if "period" in v)
-    period = next((v["period"] for v in config["networks"].values() if "period" in v), 0)
+    nets = config["networks"]
+    per = {n: v for n, v in nets.items() if "period" in v}
     print(f"wrote {out}")
     print(f"  hardware : {hw_name}  {config['hardware']['profile_hw']}")
-    print(f"  networks : {len(config['networks'])} "
-          f"({n_periodic} periodic @ period={period} ms, "
-          f"{len(config['networks']) - n_periodic} sporadic)")
-    print(f"  edges    : {len(config['edges'])} (acyclic, chain over the periodic set)")
+    print(f"  horizon  : {config['horizon_ms']:.0f} ms "
+          f"(hyperperiod {config['hyperperiod_ms']} ms)")
+    print(f"  networks : {len(nets)} ({len(per)} periodic, "
+          f"{len(nets) - len(per)} sporadic)")
+    for n, v in per.items():
+        print(f"    {n:<22} period {v['period']:>6} ms  window "
+              f"{v['window_duration']:>6} ms  x{v['num_instances']} instances")
+    for n, v in nets.items():
+        if n not in per:
+            print(f"    {n:<22} sporadic  [{v['min_start_t']:.0f}, "
+                  f"{v['max_end_t']:.0f}] ms")
+    print(f"  edges    : {len(config['edges'])} (acyclic, chains within a rate group)")
     return 0
 
 
