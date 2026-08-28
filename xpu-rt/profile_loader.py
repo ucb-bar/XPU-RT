@@ -15,6 +15,7 @@ import os
 
 import numpy as np
 
+from compile_advice import n_cores_from_topo_tag
 from workload_factory import (
     resolve_dispatch_deps_path,
     topo_tag_for_combination,
@@ -67,7 +68,7 @@ def hash_for_paths(csv_paths: list[str]) -> str:
     return digest
 
 
-def load_profiled_times(csv_path: str) -> dict[int, dict]:
+def load_profiled_times(csv_path: str, n_cores: int | None = None) -> dict[int, dict]:
     """
     Load profiled runtimes from a CSV file.
 
@@ -76,9 +77,26 @@ def load_profiled_times(csv_path: str) -> dict[int, dict]:
       - module_name (optional)
       - mean_time
       - mean_unit (assumed 'ms' if missing)
+      - implementation (optional; newer ModelBlaster profiles only)
+      - cycles (optional)
+
+    `n_cores`: how many harts the measurement held, which the CSV itself does
+    not record -- it is encoded in the topo tag of the path the CSV was found
+    at. Callers that resolved that path pass it in so the record can say what
+    it is a measurement *of*; `_load_all_topo_profiles` does.
 
     Returns:
       dict mapping dispatch_id (int) -> {"time_ms": float, "module_name": str}
+      plus "implementation", "cycles" and "n_cores" where known.
+
+    WHY THE EXTRA FIELDS. The cost was the only thing carried forward, so a
+    schedule could not say which kernel produced it. `implementation` is the
+    column that distinguishes a curated vector kernel from the scalar
+    reference that a missing curated entry silently falls back to -- inside a
+    build still labelled `rvv_x60`. Dropping it here is what made that
+    fallback invisible to everything downstream of the solver (the trace
+    joiner already looks for `implementation` on the schedule's dispatch
+    entries and has never found one).
     """
     profiled: dict[int, dict] = {}
     if not os.path.exists(csv_path):
@@ -106,10 +124,25 @@ def load_profiled_times(csv_path: str) -> dict[int, dict]:
                 mean_time_ms = mean_time * 1000.0
             else:
                 mean_time_ms = mean_time
-            profiled[dispatch_id] = {
+            rec: dict = {
                 "time_ms": mean_time_ms,
                 "module_name": module_name,
             }
+            # Absent rather than empty when the column is missing: a consumer
+            # must be able to tell "this profile generation did not record the
+            # kernel" from "the kernel is named ''".
+            implementation = (row.get("implementation") or "").strip()
+            if implementation:
+                rec["implementation"] = implementation
+            cycles = (row.get("cycles") or "").strip()
+            if cycles:
+                try:
+                    rec["cycles"] = int(float(cycles))
+                except ValueError:
+                    pass
+            if n_cores is not None:
+                rec["n_cores"] = n_cores
+            profiled[dispatch_id] = rec
     return profiled
 
 
@@ -210,7 +243,10 @@ def _load_all_topo_profiles(
     """
     Load profiles for all (hw, topo) combinations for a network.
 
-    Returns {(hw, topo): {dispatch_id: {"time_ms", "module_name"}}}.
+    Returns {(hw, topo): {dispatch_id: {"time_ms", "module_name",
+    "implementation"?, "cycles"?, "n_cores"}}}. `n_cores` is derived from
+    `topo`, which is the only place the core count of a measurement is
+    recorded -- the CSV does not carry it.
 
     `topo_tag_override`: see _resolve_topo_for. None = derive from
     combo size; str = single override applied to every (hw, combo);
@@ -243,7 +279,8 @@ def _load_all_topo_profiles(
                 gen_root=gen_root,
             )
             if csv_path:
-                prof = load_profiled_times(csv_path)
+                prof = load_profiled_times(
+                    csv_path, n_cores=n_cores_from_topo_tag(topo))
                 if prof:
                     profiles[(hw, topo)] = prof
                     _LAST_LOAD_CSV_PATHS.append(csv_path)

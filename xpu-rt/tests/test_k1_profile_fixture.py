@@ -1,13 +1,16 @@
 """The K1 (`spacemit_x60`) profile parsers, against a committed real profile.
 
 WHY THIS FILE EXISTS. Every K1 measurement in this tree lives under
-`gen/profile_mb/`, which is untracked *and* unreachable: the loaders glob
-`<gen_root>/profile/...`, so a directory named `profile_mb` cannot be addressed
-by any `gen_root` (documented in `docs/k1_modelblaster_xpurt_closed_loop.md`,
-§"`PROFILE_OUT_ROOT` must end in `profile`"). The consequence was that the
-ModelBlaster/K1 side of the profile parsers -- a different directory depth, a
-different module-name convention, and a 14th column that the older schema does
-not have -- had no test data at all, so nothing exercised it.
+`gen/profile_mb/`, which is UNTRACKED -- so a fresh checkout has none of it and
+a test cannot read it. (It is reachable at runtime: `profile_loader` hardcodes
+the directory name `profile`, so a tracked symlink `gen_mb/profile ->
+../gen/profile_mb` plus `"gen_root": "gen_mb"` addresses it, documented in
+`docs/k1_modelblaster_xpurt_closed_loop.md` §"`PROFILE_OUT_ROOT` must end in
+`profile`". Reachability was never the problem; committed test data was.) The
+consequence was that the ModelBlaster/K1 side of the profile parsers -- a
+different directory depth, a different module-name convention, and a 14th
+column that the older schema does not have -- had no test data at all, so
+nothing exercised it.
 
 `fixtures/k1_profile/` is that data: a verbatim copy of two real 21-dispatch
 DroNet profiles (rvv_x60 and scalar), placed at a `gen_root`-addressable path.
@@ -168,6 +171,55 @@ class TheSchedulerSideParser(unittest.TestCase):
                 w.writerows(rows)
             prof = load_profiled_times(p)
         self.assertAlmostEqual(prof[1]["time_ms"], RVV_DISPATCH_1_MS, places=6)
+
+    def test_the_implementation_column_reaches_the_solver_side_record(self):
+        """The advisor side kept it; the solver side threw it away.
+
+        `load_profiles_csv` has carried `implementation` since the column was
+        added, but `load_profiled_times` -- the function the SCHEDULE's costs
+        actually come from -- built its record from `time_ms` and
+        `module_name` only. So the one field that distinguishes a curated
+        vector kernel from the scalar reference it silently falls back to was
+        readable by the advisor and invisible to everything downstream of the
+        solver.
+
+        That asymmetry is the whole defect: a build labelled `rvv_x60` that
+        executed reference code produced a schedule that could not say so.
+        """
+        prof = self._load("rvv_x60")
+        impls = {r.get("implementation") for r in prof.values()}
+        self.assertNotIn(None, impls,
+                         "every rvv_x60 row has an implementation; none may "
+                         "be dropped on the way into the record")
+        self.assertTrue(any(i.startswith("curated[rvv]/") for i in impls),
+                        f"expected curated rvv kernels, got {sorted(impls)}")
+
+    def test_a_profile_without_the_column_omits_it_rather_than_faking_it(self):
+        """Absent, not empty-string.
+
+        A consumer has to be able to tell "this profile generation did not
+        record which kernel ran" from "the kernel is named ''". The scalar
+        fixture predates the column, so it is the case that proves it.
+        """
+        prof = self._load("scalar")
+        self.assertTrue(all("implementation" not in r for r in prof.values()),
+                        "the 13-column schema must not invent the field")
+
+    def test_the_core_count_of_a_measurement_is_recorded(self):
+        """`n_cores` lives in the topo tag of the PATH, never in the CSV.
+
+        Shard advice is a claim about how a cost changes with core count, so a
+        record that cannot say how many harts it was measured on cannot
+        support it. `test_shard_advice.py` documents this as the reason the
+        measurements sat on disk with no reader.
+        """
+        path = find_profile_csv(FIXTURE, hw="rvv_x60", **LOOKUP)
+        self.assertEqual(
+            {r.get("n_cores") for r in load_profiled_times(path, n_cores=1).values()},
+            {1})
+        self.assertTrue(
+            all("n_cores" not in r for r in load_profiled_times(path).values()),
+            "an unknown core count must stay absent rather than default to 1")
 
     def test_a_missing_file_is_an_empty_profile_not_an_exception(self):
         """`_load_all_topo_profiles` relies on this to aggregate every gap

@@ -366,7 +366,7 @@ def _load_results_csv(path: str, n_cores: Optional[int] = None) -> Dict[int, dic
     return out
 
 
-def _n_cores_from_topo_tag(tag: str) -> int:
+def n_cores_from_topo_tag(tag: str) -> int:
     """`topo_0_1_2_3` -> 4. The tag lists the harts the run actually held."""
     return max(1, len(tag.split("_")) - 1)
 
@@ -394,7 +394,7 @@ def load_profiles_csv(gen_root: str, target: str, model: str, basename: str,
                       ) -> Dict[str, Dict[int, dict]]:
     """`load_profiles`, for the `results.csv` producer. Same return shape."""
     out: Dict[str, Dict[int, dict]] = {}
-    n = _n_cores_from_topo_tag(topo_tag)
+    n = n_cores_from_topo_tag(topo_tag)
     for impl in impls:
         p = _find_results_csv(gen_root, impl, target, model, basename, topo_tag)
         if not p:
@@ -422,7 +422,7 @@ def load_profiles_by_cores_csv(gen_root: str, target: str, model: str,
         p = _find_results_csv(gen_root, impl, target, model, basename, tag)
         if not p:
             continue
-        n = _n_cores_from_topo_tag(tag)
+        n = n_cores_from_topo_tag(tag)
         rec = _load_results_csv(p, n_cores=n)
         if rec:
             out[n] = rec
