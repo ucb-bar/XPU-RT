@@ -394,6 +394,12 @@ def unfuse_advice(model: str, profile: Dict[int, dict],
 
         if not all_covered:
             missing = [k for k, v in constituent_impls.items() if v is None]
+            # Built outside the f-string on purpose. Nesting a quoted literal
+            # inside an f-string's braces is legal only from 3.12 (PEP 701),
+            # and this module is imported by `profile_loader`, so on an older
+            # interpreter the SyntaxError takes down every scheduler run --
+            # not just the advice path.
+            uncovered = missing or "an unverified set"
             out.append(Advice(
                 model=model, dispatch_id=did, recommendation="unchanged",
                 priority=3, confidence="high",
@@ -406,9 +412,8 @@ def unfuse_advice(model: str, profile: Dict[int, dict],
                            "constituent_impls": constituent_impls,
                            "op": fused_kind}),
                 rationale=(f"{fused_kind} fell back to {impl}, but unfusing "
-                           f"would land on the reference for {missing or 'an '
-                           'unverified set'} -- the same problem, more "
-                           f"dispatches.")))
+                           f"would land on the reference for {uncovered} -- "
+                           f"the same problem, more dispatches.")))
             continue
 
         out.append(Advice(
