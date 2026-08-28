@@ -26,6 +26,7 @@
     "dronet": {
       "id": 0,
       "identifier": "dronet",
+      "quant": "int8",
       "dispatch_deps_path": "zephyr-chipyard-sw/gen/vmfb/dronet/generic_riscv64/RVV/dronet.fp32/dronet.fp32_dispatch_graph.json"
     }
   },

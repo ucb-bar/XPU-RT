@@ -26,6 +26,7 @@
     "mlp_control": {
       "id": 0,
       "identifier": "mlp_control",
+      "quant": "fp32",
       "dispatch_deps_path": "zephyr-chipyard-sw/gen/vmfb/mlp_control/generic_riscv64/RVV/mlp_control.fp32/mlp_control.fp32_dispatch_graph.json",
       "period": 10,
       "window_duration": 10
@@ -33,6 +34,7 @@
     "dronet": {
       "id": 1,
       "identifier": "dronet",
+      "quant": "int8",
       "dispatch_deps_path": "zephyr-chipyard-sw/gen/vmfb/dronet/generic_riscv64/RVV/dronet.fp32/dronet.fp32_dispatch_graph.json",
       "period": 1000,
       "window_duration": 1000
@@ -40,6 +42,7 @@
     "yolov8_nano": {
       "id": 2,
       "identifier": "yolov8_nano",
+      "quant": "int8",
       "dispatch_deps_path": "zephyr-chipyard-sw/gen/vmfb/yolov8_nano/generic_riscv64/RVV/yolov8_nano.fp32/yolov8_nano.fp32_dispatch_graph.json"
     }
   },

@@ -631,7 +631,8 @@ def main(argv: Optional[List[str]] = None) -> int:
     ap.add_argument("--hardware", help="hardware bank entry, or 'random' "
                                        "(default: the bank's `default`)")
     ap.add_argument("-o", "--out",
-                    help="output path (default: data/toplevel/networks_random_<hw>_seed<SEED>.json)")
+                    help="output path (default: data/toplevel/generated-data/"
+                         "networks_random_<hw>_seed<SEED>.json)")
     ap.add_argument("--stdout", action="store_true", help="write to stdout instead")
 
     ap.add_argument("--min-scale", type=float, default=1.2,
@@ -690,7 +691,7 @@ def main(argv: Optional[List[str]] = None) -> int:
             hw_name = key
             break
     out = args.out or os.path.join(
-        args.repo_root, "data", "toplevel",
+        args.repo_root, "data", "toplevel", "generated-data",
         f"networks_random_{hw_name}_seed{args.seed}.json")
     os.makedirs(os.path.dirname(os.path.abspath(out)), exist_ok=True)
     with open(out, "w") as f:

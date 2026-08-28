@@ -48,6 +48,27 @@ done for this env. Flags to skip already-fresh stages (`--skip-deps`,
 `--skip-profile`, `--skip-dispatch`, `--skip-schedule`, `--skip-build`) are
 documented in the script's `--help`.
 
+The script is **driven by the workload spec**, not by a hardcoded model
+list: `--networks-json PATH` (default
+`data/toplevel/networks_mlp_dronet_yolo_spike.json`) supplies which models
+get profiled and built (each `networks` entry's `identifier`, deduped, in
+spec order), each model's quant tree (the entry's `quant` field, §4 — default
+`fp32`), the HW backends to emit dispatch graphs for and link into the binary
+(`hardware.profile_hw`, lowercased for `TARGET=`/`BACKENDS=`), the IREE
+target triple (parsed out of `dispatch_deps_path`), and the profile target
+(`hardware.profile.target`, which must be `spike` here — a FireSim spec is
+rejected rather than silently profiled the wrong way). So the single-network
+repros of §9 are just:
+
+```bash
+bash scripts/repro_mlp_dronet_yolo_spike.sh \
+  --networks-json data/toplevel/networks_dronet_only_spike.json
+```
+
+`--quants` overrides the spec's per-model quants (one comma-separated entry
+per model, in spec order) when you want the same topology at a different
+precision without editing the spec.
+
 The sections below (including the from-scratch environment setup in
 "Prerequisites") are the manual, step-by-step walkthrough the script
 automates — read them for the "why" behind each stage and the bugs each
@@ -417,22 +438,33 @@ this session). Current content:
   "networks": {
     "mlp_control": {
       "id": 0, "identifier": "mlp_control",
+      "quant": "fp32",
       "dispatch_deps_path": "zephyr-chipyard-sw/gen/vmfb/mlp_control/generic_riscv64/RVV/mlp_control.fp32/mlp_control.fp32_dispatch_graph.json",
       "period": 1000, "window_duration": 1000
     },
     "dronet": {
       "id": 1, "identifier": "dronet",
+      "quant": "int8",
       "dispatch_deps_path": "zephyr-chipyard-sw/gen/vmfb/dronet/generic_riscv64/RVV/dronet.fp32/dronet.fp32_dispatch_graph.json",
       "period": 1000, "window_duration": 1000
     },
     "yolov8_nano": {
       "id": 2, "identifier": "yolov8_nano",
+      "quant": "int8",
       "dispatch_deps_path": "zephyr-chipyard-sw/gen/vmfb/yolov8_nano/generic_riscv64/RVV/yolov8_nano.fp32/yolov8_nano.fp32_dispatch_graph.json"
     }
   },
   "edges": []
 }
 ```
+
+`quant` is read by `scripts/repro_mlp_dronet_yolo_spike.sh` (not by the
+scheduler, which ignores unknown keys) to pick each model's
+`modelblaster/examples/<model>/<quant>/` tree for profiling, dispatch-graph
+emission, and the combined build. It has to be declared explicitly because
+the dispatch graphs are renamed to `.fp32` in §2 for the profile-CSV
+basename match, so `dispatch_deps_path` no longer records the real
+precision. Omitting it means `fp32`.
 
 Notes on settings that changed during debugging (see Bugs 5/6/7 below):
 - `period`/`window_duration` for mlp_control/dronet: 10ms/20ms (original,
