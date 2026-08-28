@@ -1095,3 +1095,90 @@ exists.
 
 XPU-RT `feat/k1-modelblaster-closed-loop`, merlin (pending commit), ModelBlaster
 `34dc890`.
+
+---
+
+## Fused ops had no RVV kernel, so the vector builds ran scalar
+
+### Attempted
+
+Execute the B0/B1 ladder on the ModelBlaster runner, and explain why yolov8_nano
+profiled at 0.81x on RVV -- slower than the pure-scalar build -- when DroNet's
+convolutions measured 2.51x on the same backend.
+
+### Commands
+
+    .venv/bin/python scripts/run_xpurt_schedule.py \
+        --networks-json data/toplevel/networks_k1_mb_B{0,1}.json \
+        --solver greedy --use-profiled
+    ModelBlaster/scripts/run_xpurt_k1.sh --schedule schedules/..._B1_...json \
+        --models mlp_control,dronet --backends rvv_x60,rvv_x60
+    ModelBlaster/scripts/check_kernel_coverage.py <gen_dir> --profile <results.csv>
+    ModelBlaster/scripts/check_rvv_vtype.py <harness elf>
+
+### Measurements
+
+Curated kernels are looked up by EXACT op name
+(`kernels/<backend>/<backend>_<op>_<algo>.c`). The graph fuses conv+BN(+SiLU)
+into a single op, and the fused name matches no file, so selection falls back to
+the scalar reference and records `"source": "reference"` in kernel_picks.json.
+Nothing read that field.
+
+Share of each rvv_x60 build actually executing scalar code:
+
+| model | dispatches on reference | share of measured runtime |
+|---|---|---|
+| yolov8_nano | 57 of 90 (`conv2d_batchnorm2d_silu_s8`) | 4962.6 of 4974.8 ms = **99.8%** |
+| dronet | 3 of 21 (`conv2d_batchnorm2d_s8`) | 54.2 of 62.6 ms = **86.7%** |
+| mlp_control | 0 | 0% |
+
+Every constituent op had a working RVV kernel -- `conv2d_s8`, `batchnorm2d_s8`,
+`silu_s8` are all in the curated library. Fusion produced a name none of them
+answered to, and having a kernel per constituent does not compose.
+
+### Passed
+
+`check_kernel_coverage.py` reproduces the finding from artifacts already on disk
+and fails the build. Nine regression tests in
+`ModelBlaster/tests/test_kernel_coverage.py`.
+
+### Failed
+
+The B1 harness SIGILLed on the board (`cause 2`, `badaddr 0x5e075c57` =
+`vfmv.v.f v24, fa4`, a float op illegal at SEW=8). `check_rvv_vtype.py` located
+it in `kernel_batchnorm2d_s8_dronet_rvv_x60`. The curated source was already
+fixed at 19:01; the harness was built at 17:44 from a cached generated
+`kernels.c`. `run_xpurt_k1.sh` reused generated sources whenever they merely
+EXISTED, and `generate_kernels.py` inlines curated bodies into that file -- so
+the fix could not reach the hardware while the source tree looked correct.
+
+### What this invalidates
+
+Every rvv_x60 service time measured so far understates the hardware, DroNet's
+2.51x and yolov8_nano's 0.81x included. The 0.81x is not a property of RVV or of
+YOLO's op mix; it is the cost of a vector build's overhead paid on top of scalar
+execution. All B0-B4 schedules were solved against these costs and must be
+re-derived once the fused kernels land -- the scheduler consumed a profile that
+did not describe the achievable machine.
+
+Two guard rails were the corrective, not a one-off patch: the coverage gate
+weights fallbacks by measured time (DroNet's is 13% by dispatch count and 86.7%
+by time, so counting dispatches would have rated it below threshold), and it
+prefers the profiled run's own algorithm tag over kernel_picks.json, because a
+stale picks file claimed mlp_control's `linear_s8` was on the reference when the
+run showed a curated kernel. A gate that manufactures regressions gets ignored.
+
+### Blocker
+
+None. Fused RVV kernels for `conv2d_batchnorm2d_silu_s8` and
+`conv2d_batchnorm2d_s8` are being written; the ladder reruns after they verify
+bit-exact and pass the vtype checker.
+
+### Next
+
+Re-profile all six models, re-solve B0-B4 from the corrected costs, rerun on the
+board, and re-score under the lexicographic objective.
+
+### Repo SHAs
+
+XPU-RT `feat/k1-modelblaster-closed-loop`, ModelBlaster `dd66497`.
