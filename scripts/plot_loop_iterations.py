@@ -49,7 +49,9 @@ def load(spec):
     """`LABEL=path.json` -> `(label, schedule_dict, path)`."""
     if "=" not in spec:
         raise SystemExit(f"--iteration needs LABEL=path.json, got {spec!r}")
-    label, path = spec.split("=", 1)
+    # rsplit, not split: a label naturally contains '=' ("dronet OC=32"), and
+    # a path does not, so the LAST field is the file.
+    label, path = spec.rsplit("=", 1)
     with open(path) as f:
         return label, json.load(f), path
 
