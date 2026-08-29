@@ -1,0 +1,369 @@
+{
+  "dot_file": "combined_schedule_periodic.json",
+  "dispatches": {
+    "dronet0_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_P#0",
+      "start_time": 2.437,
+      "duration": 2.563,
+      "job_name": "dronet0",
+      "module_name": "dronet$dispatch_0_HTA_qnn_graph_ir_ops24"
+    },
+    "dronet1_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_P#0",
+      "start_time": 7.436999999999999,
+      "duration": 2.563,
+      "job_name": "dronet1",
+      "module_name": "dronet$dispatch_0_HTA_qnn_graph_ir_ops24",
+      "time_dependency": "dronet0_dispatch_0"
+    },
+    "dronet2_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_P#0",
+      "start_time": 10.0,
+      "duration": 2.563,
+      "job_name": "dronet2",
+      "module_name": "dronet$dispatch_0_HTA_qnn_graph_ir_ops24",
+      "time_dependency": "dronet0_dispatch_0"
+    },
+    "dronet3_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_P#0",
+      "start_time": 15.0,
+      "duration": 2.563,
+      "job_name": "dronet3",
+      "module_name": "dronet$dispatch_0_HTA_qnn_graph_ir_ops24",
+      "time_dependency": "dronet2_dispatch_0"
+    },
+    "dronet4_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_P#0",
+      "start_time": 20.0,
+      "duration": 2.563,
+      "job_name": "dronet4",
+      "module_name": "dronet$dispatch_0_HTA_qnn_graph_ir_ops24",
+      "time_dependency": "dronet3_dispatch_0"
+    },
+    "dronet5_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_P#0",
+      "start_time": 25.0,
+      "duration": 2.563,
+      "job_name": "dronet5",
+      "module_name": "dronet$dispatch_0_HTA_qnn_graph_ir_ops24",
+      "time_dependency": "dronet4_dispatch_0"
+    },
+    "dronet6_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_P#0",
+      "start_time": 30.0,
+      "duration": 2.563,
+      "job_name": "dronet6",
+      "module_name": "dronet$dispatch_0_HTA_qnn_graph_ir_ops24",
+      "time_dependency": "dronet5_dispatch_0"
+    },
+    "mlp_control0_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_X#0",
+      "start_time": -0.0,
+      "duration": 0.028,
+      "job_name": "mlp_control0",
+      "module_name": "mlp_control$dispatch_0_HTA_qnn_graph_ir_ops7"
+    },
+    "mlp_control1_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_X#0",
+      "start_time": 2.0,
+      "duration": 0.028,
+      "job_name": "mlp_control1",
+      "module_name": "mlp_control$dispatch_0_HTA_qnn_graph_ir_ops7",
+      "time_dependency": "mlp_control0_dispatch_0"
+    },
+    "mlp_control2_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_X#0",
+      "start_time": 4.0,
+      "duration": 0.028,
+      "job_name": "mlp_control2",
+      "module_name": "mlp_control$dispatch_0_HTA_qnn_graph_ir_ops7",
+      "time_dependency": "fused_full0_dispatch_0"
+    },
+    "mlp_control3_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_X#0",
+      "start_time": 6.0,
+      "duration": 0.028,
+      "job_name": "mlp_control3",
+      "module_name": "mlp_control$dispatch_0_HTA_qnn_graph_ir_ops7",
+      "time_dependency": "mlp_control2_dispatch_0"
+    },
+    "mlp_control4_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_X#0",
+      "start_time": 8.0,
+      "duration": 0.028,
+      "job_name": "mlp_control4",
+      "module_name": "mlp_control$dispatch_0_HTA_qnn_graph_ir_ops7",
+      "time_dependency": "mlp_control3_dispatch_0"
+    },
+    "mlp_control5_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_X#0",
+      "start_time": 10.0,
+      "duration": 0.028,
+      "job_name": "mlp_control5",
+      "module_name": "mlp_control$dispatch_0_HTA_qnn_graph_ir_ops7",
+      "time_dependency": "mlp_control4_dispatch_0"
+    },
+    "mlp_control6_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_X#0",
+      "start_time": 12.0,
+      "duration": 0.028,
+      "job_name": "mlp_control6",
+      "module_name": "mlp_control$dispatch_0_HTA_qnn_graph_ir_ops7",
+      "time_dependency": "mlp_control5_dispatch_0"
+    },
+    "mlp_control7_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_X#0",
+      "start_time": 14.0,
+      "duration": 0.028,
+      "job_name": "mlp_control7",
+      "module_name": "mlp_control$dispatch_0_HTA_qnn_graph_ir_ops7",
+      "time_dependency": "mlp_control6_dispatch_0"
+    },
+    "mlp_control8_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_X#0",
+      "start_time": 16.0,
+      "duration": 0.028,
+      "job_name": "mlp_control8",
+      "module_name": "mlp_control$dispatch_0_HTA_qnn_graph_ir_ops7",
+      "time_dependency": "mlp_control7_dispatch_0"
+    },
+    "mlp_control9_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_X#0",
+      "start_time": 18.0,
+      "duration": 0.028,
+      "job_name": "mlp_control9",
+      "module_name": "mlp_control$dispatch_0_HTA_qnn_graph_ir_ops7",
+      "time_dependency": "mlp_control8_dispatch_0"
+    },
+    "mlp_control10_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_X#0",
+      "start_time": 20.0,
+      "duration": 0.028,
+      "job_name": "mlp_control10",
+      "module_name": "mlp_control$dispatch_0_HTA_qnn_graph_ir_ops7",
+      "time_dependency": "mlp_control9_dispatch_0"
+    },
+    "mlp_control11_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_X#0",
+      "start_time": 22.0,
+      "duration": 0.028,
+      "job_name": "mlp_control11",
+      "module_name": "mlp_control$dispatch_0_HTA_qnn_graph_ir_ops7",
+      "time_dependency": "mlp_control10_dispatch_0"
+    },
+    "mlp_control12_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_X#0",
+      "start_time": 24.0,
+      "duration": 0.028,
+      "job_name": "mlp_control12",
+      "module_name": "mlp_control$dispatch_0_HTA_qnn_graph_ir_ops7",
+      "time_dependency": "fused_full1_dispatch_0"
+    },
+    "mlp_control13_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_X#0",
+      "start_time": 26.0,
+      "duration": 0.028,
+      "job_name": "mlp_control13",
+      "module_name": "mlp_control$dispatch_0_HTA_qnn_graph_ir_ops7",
+      "time_dependency": "mlp_control12_dispatch_0"
+    },
+    "mlp_control14_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_X#0",
+      "start_time": 28.0,
+      "duration": 0.028,
+      "job_name": "mlp_control14",
+      "module_name": "mlp_control$dispatch_0_HTA_qnn_graph_ir_ops7",
+      "time_dependency": "mlp_control13_dispatch_0"
+    },
+    "mlp_control15_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_X#0",
+      "start_time": 30.0,
+      "duration": 0.028,
+      "job_name": "mlp_control15",
+      "module_name": "mlp_control$dispatch_0_HTA_qnn_graph_ir_ops7",
+      "time_dependency": "mlp_control14_dispatch_0"
+    },
+    "yolov8n_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_E#0",
+      "start_time": -0.0,
+      "duration": 14.764,
+      "job_name": "yolov8n",
+      "module_name": "yolov8n$dispatch_0_HTA_qnn_graph_ir_ops103"
+    },
+    "yolov8n_dispatch_1": {
+      "id": 1,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "yolov8n_dispatch_0"
+      ],
+      "hardware_target": "CPU_E#0",
+      "start_time": 14.764000000011292,
+      "duration": 16.686,
+      "job_name": "yolov8n",
+      "module_name": "yolov8n$dispatch_1_HTA_qnn_graph_ir_ops146",
+      "time_dependency": "yolov8n_dispatch_0"
+    },
+    "fused_full0_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_X#0",
+      "start_time": 2.8529999999941564,
+      "duration": 1.147,
+      "job_name": "fused_full0",
+      "module_name": "fused_full$dispatch_0_HTA_qnn_graph_ir_ops16",
+      "time_dependency": "mlp_control1_dispatch_0"
+    },
+    "fused_full1_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_X#0",
+      "start_time": 22.85299999999559,
+      "duration": 1.147,
+      "job_name": "fused_full1",
+      "module_name": "fused_full$dispatch_0_HTA_qnn_graph_ir_ops16",
+      "time_dependency": "mlp_control11_dispatch_0"
+    }
+  },
+  "metadata": {
+    "makespan": 32.563,
+    "num_operations": 27,
+    "machines": [
+      "CPU_P#0",
+      "CPU_E#0",
+      "CPU_X#0"
+    ],
+    "machine_combinations": [
+      [
+        "CPU_P#0"
+      ],
+      [
+        "CPU_E#0"
+      ],
+      [
+        "CPU_X#0"
+      ]
+    ],
+    "profile_hw": {
+      "CPU_P": "HTA",
+      "CPU_E": "DSP",
+      "CPU_X": "CPU"
+    },
+    "periodic_networks": {
+      "dronet": 5.0,
+      "mlp_control": 2.0,
+      "fused_full": 20.0
+    },
+    "granularity_advice": [
+      {
+        "subject": "yolov8n",
+        "recommended": "finer",
+        "reason": "the desired granularity for yolov8n's dispatches should be finer: its largest dispatch (16.69 ms) exceeds mlp_control's available free slot (1.97 ms) (period 2.00 ms, free slot 1.97 ms after mlp_control's own utilization) -- it would overrun mlp_control's cadence if they shared a core",
+        "conflicting_periodic_job": "mlp_control",
+        "period_ms": 2.0,
+        "free_slot_ms": 1.972,
+        "max_dispatch_duration_ms": 16.686
+      }
+    ]
+  }
+}

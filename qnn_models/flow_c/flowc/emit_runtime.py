@@ -61,10 +61,23 @@ def emit_table(entries: list[FlowCEntry], lane_mode: str, out_path: str) -> dict
         key = _lane_key(e, lane_mode)
         if key not in lanes:
             lanes[key] = {"kind": e.kind, "label": e.backend_label,
-                          "hart": e.hart, "network": e.network,
+                          "hart": e.hart, "harts": e.harts, "network": e.network,
                           "serialized": e.exec_serialized,
                           "spin_us": e.gate_spin_us,
-                          "fifo": e.sched_fifo_prio}
+                          "fifo": e.sched_fifo_prio,
+                          "exec_cores": e.exec_cores}
+    # Several lanes of one kind (kind-network mode) must not share a gate core:
+    # two spinning waiters on one core serialise each other. Spread them over
+    # the kind's harts, cycling if there are more lanes than cores.
+    from collections import defaultdict
+    per_kind = defaultdict(list)
+    for key, v in lanes.items():
+        per_kind[v["kind"]].append(key)
+    for kind, keys in per_kind.items():
+        harts = [lanes[k]["harts"] for k in keys][0] or []
+        for i, key in enumerate(keys):
+            if harts:
+                lanes[key]["hart"] = harts[i % len(harts)]
     lane_index = {k: i for i, k in enumerate(lanes)}
 
     lines = [HEADER, "#pragma once", "#include <stddef.h>", "",
@@ -127,14 +140,38 @@ def emit_table(entries: list[FlowCEntry], lane_mode: str, out_path: str) -> dict
     lines.append("};")
     lines.append("static const int FLOWC_LANE_HART[FLOWC_N_LANES] = { "
                  + ", ".join(str(v["hart"]) for v in lanes.values()) + " };")
-    lines.append("/* Spin-before-deadline budget per lane, from the registry's "
-                 "qnn.gate_spin_us. */")
+    lines.append("/* Spin-before-deadline budget per lane. The registry's")
+    lines.append(" * qnn.gate_spin_us, capped at a quarter of the lane's own minimum")
+    lines.append(" * inter-entry gap: a lane whose period equals its spin window spins")
+    lines.append(" * essentially continuously, which is fine while it owns its core and")
+    lines.append(" * ruinous once another lane's compute shares the cluster. */")
+    starts = {}
+    for e in entries:
+        starts.setdefault(lane_index[_lane_key(e, lane_mode)], []).append(e.start_time_ms)
+    capped = []
+    for key, v in lanes.items():
+        ss = sorted(starts.get(lane_index[key], []))
+        gaps = [b - a for a, b in zip(ss, ss[1:]) if b - a > 1e-6]
+        spin = v["spin_us"]
+        if gaps:
+            cap = int(0.25 * min(gaps) * 1000.0)
+            if cap < spin:
+                v["spin_capped_from"] = spin
+                spin = max(cap, 0)
+        v["spin_effective"] = spin
+        capped.append(spin)
     lines.append("static const long FLOWC_LANE_SPIN_US[FLOWC_N_LANES] = { "
-                 + ", ".join(str(v["spin_us"]) for v in lanes.values()) + " };")
+                 + ", ".join(str(x) for x in capped) + " };")
     lines.append("/* SCHED_FIFO priority per lane (0 = leave the lane on SCHED_OTHER), "
                  "from the registry's qnn.sched_fifo_prio. */")
     lines.append("static const int FLOWC_LANE_FIFO[FLOWC_N_LANES] = { "
                  + ", ".join(str(v["fifo"]) for v in lanes.values()) + " };")
+    lines.append("/* Cores the backend's own threads may use during execute, from")
+    lines.append(" * the registry's qnn.exec_cores. Empty string = the whole machine. */")
+    lines.append("static const char *const FLOWC_LANE_EXEC_CORES[FLOWC_N_LANES] = {")
+    for v in lanes.values():
+        lines.append("    " + _c_str(",".join(str(c) for c in v["exec_cores"])) + ",")
+    lines.append("};")
     lines.append("")
     lines += ["#ifdef __cplusplus", "}  /* extern \"C\" */", "#endif", ""]
 
@@ -485,17 +522,47 @@ static void pin_to(int core) {
 // on a phone SoC can starve the very kernel threads (FastRPC callbacks,
 // DVFS governor) the accelerator lanes depend on. Worth turning on for a
 // lane that carries a hard-deadline network and whose dispatches are short.
-static void set_fifo(int prio) {
-    if (prio <= 0) return;
-    struct sched_param sp{}; sp.sched_priority = prio;
-    int rc = pthread_setschedparam(pthread_self(), SCHED_FIFO, &sp);
-    if (rc != 0)
-        std::fprintf(stderr, "[lane] SCHED_FIFO prio %d failed (%d) — need root?\n", prio, rc);
+// Raise for the wait, drop for the work.
+//
+// SCHED_FIFO exists here to make a lane's *wake-up* punctual. Holding it
+// across QnnGraph_execute is actively harmful: the backend op packages
+// spawn their own worker threads, and a pthread inherits both scheduling
+// policy and affinity from its creator — so a real-time, core-pinned lane
+// hands the QNN CPU backend a pool of real-time threads all pinned to one
+// core. Two such lanes on one core wedged the board hard enough to need a
+// power cycle. The policy is therefore scoped to the gate.
+static void set_sched(int prio) {
+    struct sched_param sp{};
+    if (prio > 0) {
+        sp.sched_priority = prio;
+        if (pthread_setschedparam(pthread_self(), SCHED_FIFO, &sp) != 0)
+            std::fprintf(stderr, "[lane] SCHED_FIFO %d failed — need root?\n", prio);
+    } else {
+        sp.sched_priority = 0;
+        pthread_setschedparam(pthread_self(), SCHED_OTHER, &sp);
+    }
+}
+
+// Affinity is likewise gate-scoped: pinned while waiting so the wake lands
+// on a known core, unpinned for execute so the backend's own threads can
+// use the machine.
+static cpu_set_t g_all_cores;
+static cpu_set_t g_exec_mask[FLOWC_N_LANES];   // per-lane execute affinity
+
+static void pin_to_core(int core) {
+    if (core < 0) return;
+    cpu_set_t set; CPU_ZERO(&set); CPU_SET(core, &set);
+    pthread_setaffinity_np(pthread_self(), sizeof(set), &set);
+}
+// Restore the lane's *execute* affinity — not "everything". The backend's
+// worker threads inherit this mask, so it decides which cores the compute
+// lands on; leaving it wide lets a CPU-heavy network stomp the cores the
+// accelerator lanes wake up on.
+static void unpin_to_exec(int lane) {
+    pthread_setaffinity_np(pthread_self(), sizeof(g_exec_mask[lane]), &g_exec_mask[lane]);
 }
 
 static void worker(int lane, int core, int fifo_prio) {
-    pin_to(core);
-    set_fifo(fifo_prio);
     // Park at the barrier *after* pinning and first-touching this thread's
     // stack, so t0 measures the schedule and not thread startup.
     g_ready.fetch_add(1, std::memory_order_release);
@@ -513,8 +580,14 @@ static void worker(int lane, int core, int fifo_prio) {
         tr.lane = lane;
         tr.dep_done_ms = now_ms() - g_t0;
 
+        // --- gate: pinned and (optionally) real-time ---
+        pin_to_core(core);
+        set_sched(fifo_prio);
         gate_until(e.start_time_ms, lane);
         tr.gate_done_ms = now_ms() - g_t0;
+        // --- work: ordinary policy, full machine ---
+        set_sched(0);
+        unpin_to_exec(lane);
 
         auto cit = g_ctx.find(ctx_key(e));
         if (cit == g_ctx.end()) {
@@ -617,6 +690,47 @@ int main() {
             pos = comma + 1;
         }
         for (; l < FLOWC_N_LANES; ++l) lane_fifo[l] = last;
+    }
+
+    // kind-network mode can put several lanes on one kind, and they all
+    // inherit that kind's core and priority from the registry. Two spinning
+    // real-time lanes on one core is a livelock, so only the first lane on a
+    // core keeps a real-time priority and a spin window.
+    {
+        std::unordered_map<int, int> first_on_core;
+        for (int l = 0; l < FLOWC_N_LANES; ++l) {
+            int core = lane_core[l];
+            if (core < 0) continue;
+            auto it = first_on_core.find(core);
+            if (it == first_on_core.end()) { first_on_core[core] = l; continue; }
+            if (lane_fifo[l] > 0 || g_spin_us[l] > 0) {
+                std::fprintf(stderr,
+                    "[main] lane %d (%s) shares core %d with lane %d (%s): "
+                    "dropping its SCHED_FIFO %d and %ld us spin to avoid two "
+                    "real-time spinners on one core\n",
+                    l, FLOWC_LANE_NAME[l], core, it->second,
+                    FLOWC_LANE_NAME[it->second], lane_fifo[l], g_spin_us[l]);
+                lane_fifo[l] = 0;
+                g_spin_us[l] = 0;
+            }
+        }
+    }
+
+    CPU_ZERO(&g_all_cores);
+    for (int c = 0; c < CPU_SETSIZE && c < 64; ++c) CPU_SET(c, &g_all_cores);
+    for (int l = 0; l < FLOWC_N_LANES; ++l) {
+        const char* spec = FLOWC_LANE_EXEC_CORES[l];
+        if (const char* env = std::getenv("FLOWC_EXEC_CORES")) spec = env;
+        if (!spec || !*spec) { g_exec_mask[l] = g_all_cores; continue; }
+        CPU_ZERO(&g_exec_mask[l]);
+        std::string sp(spec); size_t pos = 0;
+        while (pos <= sp.size()) {
+            size_t comma = sp.find(',', pos);
+            int c = std::atoi(sp.substr(pos, comma - pos).c_str());
+            if (c >= 0 && c < CPU_SETSIZE) CPU_SET(c, &g_exec_mask[l]);
+            if (comma == std::string::npos) break;
+            pos = comma + 1;
+        }
     }
 
     SysFns sys = load_system();

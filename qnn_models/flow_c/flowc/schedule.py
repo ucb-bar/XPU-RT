@@ -31,6 +31,7 @@ class QnnCore:
     exec_serialized: bool
     gate_spin_us: int
     sched_fifo_prio: int
+    exec_cores: tuple[int, ...]
 
 
 def load_qnn_cores(registry_path: str) -> dict[str, QnnCore]:
@@ -46,7 +47,8 @@ def load_qnn_cores(registry_path: str) -> dict[str, QnnCore]:
             lib=q["lib"], label=q["label"], ctx_suffix=q.get("ctx_suffix", ""),
             exec_serialized=bool(q.get("exec_serialized", False)),
             gate_spin_us=int(q.get("gate_spin_us", 200)),
-            sched_fifo_prio=int(q.get("sched_fifo_prio", 0)))
+            sched_fifo_prio=int(q.get("sched_fifo_prio", 0)),
+            exec_cores=tuple(q.get("exec_cores", [])))
     return out
 
 
@@ -60,6 +62,7 @@ class FlowCEntry:
     kind: str
     core_name: str
     hart: int
+    harts: tuple[int, ...]
     backend_label: str
     backend_lib: str
     ctx: str
@@ -67,6 +70,7 @@ class FlowCEntry:
     exec_serialized: bool
     gate_spin_us: int
     sched_fifo_prio: int
+    exec_cores: tuple[int, ...]
     n_ir_ops: int
     ir_first: int
     ir_last: int
@@ -112,9 +116,11 @@ def ingest(schedule_path: str, bsets: dict[str, BindingSet], irs: dict[str, dict
             entry_id=e.entry_id, network=e.network, instance=e.instance,
             binding_id=binding.id, binding_name=binding.name,
             kind=e.core_kind, core_name=e.core_name, hart=e.hart,
+            harts=qc.harts,
             backend_label=qc.label, backend_lib=qc.lib,
             ctx=bb.ctx, graph=bb.graph, exec_serialized=qc.exec_serialized,
             gate_spin_us=qc.gate_spin_us, sched_fifo_prio=qc.sched_fifo_prio,
+            exec_cores=qc.exec_cores,
             n_ir_ops=binding.last - binding.first + 1,
             ir_first=binding.first, ir_last=binding.last,
             start_time_ms=e.start_time_ms, duration_ms=e.duration_ms,

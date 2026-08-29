@@ -92,19 +92,31 @@ def from_pytorch(model_id: str, out_dir: str, quant: str = "int8",
 
 
 _ONNX_EXPORT = textwrap.dedent('''
-    import importlib, sys, torch
+    import importlib, inspect, sys, torch
     model_id, out_path, input_name, opset = sys.argv[1:5]
     mod = importlib.import_module(f"modelblaster.models.{model_id}")
     model = mod.get_model()
     model.eval()
     sample = mod.get_sample_input()
+    # Multi-input models (fused_full: front_grey + tof_cross + lowdim) hand
+    # back a tuple. Name the inputs after forward()'s parameters so the ONNX
+    # graph, the IR's input list and the converter flags all agree.
+    if isinstance(sample, (tuple, list)):
+        names = [p for p in inspect.signature(model.forward).parameters
+                 if p not in ("self",)][:len(sample)]
+        args = tuple(sample)
+        shapes = [tuple(t.shape) for t in sample]
+    else:
+        names = [input_name]
+        args = (sample,)
+        shapes = [tuple(sample.shape)]
     torch.onnx.export(
-        model, sample, out_path,
-        input_names=[input_name], output_names=["output"],
+        model, args, out_path,
+        input_names=names, output_names=["output"],
         opset_version=int(opset), do_constant_folding=True,
         dynamo=False)
     print(f"wrote {out_path} from modelblaster.models.{model_id} "
-          f"(input {tuple(sample.shape)})")
+          f"(inputs {dict(zip(names, shapes))})")
 ''')
 
 

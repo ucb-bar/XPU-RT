@@ -263,6 +263,84 @@ mark entries that ran past their predicted finish — expect all
 `mlp_control` bars to carry one: predicted 0.028 ms, actual ~0.06 ms, still
 comfortably inside its 2 ms period.
 
+## Worked example: adding a network (FusedSensorNet)
+
+`fused_full` — modelblaster's FusedSensorNet (vision CNN + ToF depth conv +
+3-layer LSTM + head, three inputs) — went through this flow end to end,
+including the conversion stages the three original networks skipped because
+their DLCs already existed. The sequence, all from `qnn_models/flow_c`:
+
+```bash
+# 1. ONNX from the same module modelblaster's codegen consumes
+python3 flow_c.py ir --export-onnx        # gen/onnx/fused_full.onnx (3 inputs, opset 17)
+
+# 2. ONNX -> DLC (multi-input: rank-4 inputs NCHW, the 1x21 state NONTRIVIAL)
+sudo docker run --rm -v $QNN_SDK:/qnn:ro -v $PWD/gen/convert:/workspace qnn-convert \
+  python3.10 /qnn/bin/x86_64-linux-clang/snpe-onnx-to-dlc \
+    --input_network /workspace/fused_full.onnx \
+    -d front_grey 1,1,60,90 --input_layout front_grey NCHW \
+    -d tof_cross  1,4,8,8   --input_layout tof_cross  NCHW \
+    -d lowdim     1,21      --input_layout lowdim     NONTRIVIAL \
+    --output_path /workspace/fused_full.dlc
+
+# 3. int8, calibrated from the model's own get_calibration_samples()
+#    (10 samples x 3 inputs -> cal/*.raw + calibration_list.txt)
+sudo docker run --rm ... qairt-quantizer --input_dlc /workspace/fused_full.dlc \
+    --output_dlc /workspace/fused_full_quantized.dlc \
+    --input_list /workspace/cal/calibration_list.txt \
+    --act_bitwidth 8 --weights_bitwidth 8 --bias_bitwidth 8
+
+# 4. context binaries on the board, one per backend that composes
+# 5. measure with profile_segments.cpp, write measurements/ + bindings/
+# 6. add to a workload and run the flow as usual
+```
+
+What the board said, which is the interesting part:
+
+| Backend | Compose | Note |
+|---|---|---|
+| DSP (int8) | ✅ 2.58 MB ctx | 4.74 ms — the LSTMs run on HVX |
+| HTA (int8) | ❌ | `QnnHta: unsupported op Transpose` |
+| CPU (int8) | ❌ | CPU op package rejects the quantized `Reshape` op config |
+| CPU (fp32) | ✅ 6.24 MB ctx | 1.15 ms under the lane's exec mask |
+
+So precision became a per-(tile, backend) property in the manifest: the DSP
+entry names the int8 context, the CPU entry names the fp32 one. It is also
+the case that broke the assumption that capability is a property of an op
+*kind* — the same int8 `Reshape` composes fine inside the yolov8n head on
+CPU. The registry check stays useful as a first filter; the measurements
+file is what records what actually composed.
+
+With `fused_full` at a 20 ms period added to the 3-way workload, MOSEK
+solves the 58-op model to optimal and puts it on the CPU lane beside
+mlp_control. Measured over 3 reps: makespan 0.99-1.11x predicted, no
+deadline misses, `dronet` 2.50 ms vs a 2.563 ms cell and `yolov8n` 15.55 vs
+14.76 — but `fused_full` itself runs ~5.6x its isolated cell (6.39 ms p50
+against 1.147 ms). See "Known limitations".
+
+### The threading lesson this produced
+
+Two networks sharing the CPU lane is what forced `--lane-mode kind-network`
+into use, and running it exposed two real bugs:
+
+1. **A real-time lane must not hold its priority across `graphExecute`.**
+   A pthread inherits scheduling policy *and* affinity from its creator, so
+   a `SCHED_FIFO`, core-pinned lane hands the QNN CPU backend a pool of
+   real-time threads pinned to one core. With two such lanes on the same
+   core the board stopped scheduling anything else and needed a power cycle.
+   The runtime now raises priority and pins **for the gate only**, then
+   drops to `SCHED_OTHER` and restores the lane's execute mask before
+   dispatching.
+2. **Spin windows must be bounded by the lane's own cadence.** A 2000 µs
+   spin on a 2 ms period is a lane that spins continuously. The emitter now
+   caps each lane's spin at a quarter of its minimum inter-entry gap
+   (mlp_control: 2000 → 274 µs), and a shared-core guard demotes any second
+   real-time lane that lands on an already-claimed core.
+
+`deploy_and_run.sh` also gained `RUN_TIMEOUT` (default 120 s, `timeout -s
+KILL` on the board side) so a wedged runtime can no longer take the board
+out of ssh reach.
+
 ## How this differs from the standard modelblaster flow
 
 Flow A (spike/FireSim) and this flow share the front end and the scheduling
@@ -413,6 +491,14 @@ a reader of one table can read the other.
   yolov8n tiles sit on DSP) and silently does not when they were not
   (0 under greedy, tiles on different backends). `FLOWC_DUMP_TENSORS=1`
   prints the names. Explicit mapping in the manifest is the fix.
+- **A CPU-heavy network's real cost is not its isolated cell.** `fused_full`
+  measures 1.147 ms alone under its lane's exec mask and ~6.4 ms (p90 10.2 ms)
+  inside the 4-way schedule. The per-lane execute mask binds the lane thread,
+  but the QNN CPU op package builds its thread pool at bringup on the main
+  thread with full-machine affinity, so it contends with every other lane —
+  including the real-time-gated one. Same class as the per-op MILP gap in
+  `runtime/HETEROGENEOUS_SCHEDULING_QRB5165.md`: CPU contention is not in the
+  cost model. Networks on their own silicon match their cells to within 5%.
 - **`--solver milp` needs cvxpy + a MOSEK license**; `greedy_periodic` is
   the default and needs neither.
 - **The exclusion cost is still a cost.** xpu-rt's `Operation` carries a

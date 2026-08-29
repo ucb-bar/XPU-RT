@@ -5,15 +5,55 @@
   "harness": "qnn_models/runtime/profile_segments.cpp",
   "iters": 50,
   "cells": {
-    "dronet/dronet_full":         {"hta": 2563.27, "dsp": 891.62,   "cpu": 6998.22},
-    "mlp_control/mlp_control_full": {"dsp": 542.27, "cpu": 28.85},
-    "yolov8n/yolov8n_backbone":   {"hta": 21578.56, "dsp": 14764.54, "cpu": 34343.16},
-    "yolov8n/yolov8n_head":       {"dsp": 16686.31, "cpu": 39464.62}
+    "dronet/dronet_full": {
+      "hta": 2563.27,
+      "dsp": 891.62,
+      "cpu": 6998.22
+    },
+    "mlp_control/mlp_control_full": {
+      "dsp": 542.27,
+      "cpu": 28.85
+    },
+    "yolov8n/yolov8n_backbone": {
+      "hta": 21578.56,
+      "dsp": 14764.54,
+      "cpu": 34343.16
+    },
+    "yolov8n/yolov8n_head": {
+      "dsp": 16686.31,
+      "cpu": 39464.62
+    },
+    "fused_full/fused_full_net": {
+      "dsp": 4737.0,
+      "cpu": 1147.0
+    }
   },
   "unit": "us",
   "statistic": "mean",
   "compose_failures": [
-    {"cell": "mlp_control/mlp_control_full", "backend": "hta", "reason": "elu_s8 not in HTA op set"},
-    {"cell": "yolov8n/yolov8n_head", "backend": "hta", "reason": "Resize/Slice/Softmax not in HTA op set"}
-  ]
+    {
+      "cell": "mlp_control/mlp_control_full",
+      "backend": "hta",
+      "reason": "elu_s8 not in HTA op set"
+    },
+    {
+      "cell": "yolov8n/yolov8n_head",
+      "backend": "hta",
+      "reason": "Resize/Slice/Softmax not in HTA op set"
+    },
+    {
+      "cell": "fused_full/fused_full_net",
+      "backend": "hta",
+      "reason": "Transpose not in HTA op set (QnnHta: unsupported op Transpose)"
+    },
+    {
+      "cell": "fused_full/fused_full_net",
+      "backend": "cpu@int8",
+      "reason": "CPU op package rejects the quantized Reshape op config; the fp32 build composes, so the cpu cell is measured at fp32"
+    }
+  ],
+  "_notes": {
+    "fused_full/fused_full_net@cpu": "1147 us is the fp32 graph measured under the cpu lane's own execute mask (taskset -c 4-5, 30 iters) \u2014 the mask the runtime actually gives the QNN CPU op package. Unmasked on all 8 cores it measures 1460 us, and on the A55 little cluster 3948 us, so the cell is only meaningful alongside the mask. The earlier 2875 us cell was taken before the exec-mask mechanism existed.",
+    "fused_full/fused_full_net@cpu#contention": "In-situ it costs ~5.6x the isolated cell: pooled over 3 reps of the 4-way schedule its exec p50 is 6.39 ms against a 1.147 ms cell (p90 10.2 ms). The per-lane exec mask constrains the lane thread, but the QNN CPU op package's own thread pool is created during bringup on the main thread and keeps full-machine affinity, so it contends with every other lane \u2014 including the real-time-gated mlp_control lane. This is the same class as the per-op MILP gap documented in runtime/HETEROGENEOUS_SCHEDULING_QRB5165.md: CPU contention is not in the cost model. dronet (2.50 vs 2.563) and yolov8n (15.55 vs 14.76) sit on their own silicon and match their cells."
+  }
 }
