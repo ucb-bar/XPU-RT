@@ -1,0 +1,110 @@
+{
+  "machines": [
+    "HTA",
+    "GPU",
+    "CPU"
+  ],
+  "transfer_us": [
+    [
+      0.0,
+      75.0,
+      52.0
+    ],
+    [
+      92.0,
+      0.0,
+      101.0
+    ],
+    [
+      17.0,
+      23.0,
+      0.0
+    ]
+  ],
+  "islands": [
+    {
+      "name": "input_split",
+      "machine": "CPU",
+      "start_us": 0.0,
+      "finish_us": 30.0,
+      "deps": []
+    },
+    {
+      "name": "gpu_stem_branch_b",
+      "machine": "GPU",
+      "start_us": 53.0,
+      "finish_us": 12553.0,
+      "deps": [
+        "input_split"
+      ]
+    },
+    {
+      "name": "hta_stem_branch_a",
+      "machine": "HTA",
+      "start_us": 47.0,
+      "finish_us": 5957.0,
+      "deps": [
+        "input_split"
+      ]
+    },
+    {
+      "name": "cpu_bridge_concat_requant",
+      "machine": "CPU",
+      "start_us": 12654.0,
+      "finish_us": 12854.0,
+      "deps": [
+        "hta_stem_branch_a",
+        "gpu_stem_branch_b"
+      ]
+    },
+    {
+      "name": "hta_trunk_conv",
+      "machine": "HTA",
+      "start_us": 12871.0,
+      "finish_us": 17071.0,
+      "deps": [
+        "cpu_bridge_concat_requant"
+      ]
+    },
+    {
+      "name": "head1_hta",
+      "machine": "HTA",
+      "start_us": 17071.0,
+      "finish_us": 18871.0,
+      "deps": [
+        "hta_trunk_conv"
+      ]
+    },
+    {
+      "name": "head2_gpu",
+      "machine": "GPU",
+      "start_us": 17146.0,
+      "finish_us": 18546.0,
+      "deps": [
+        "hta_trunk_conv"
+      ]
+    },
+    {
+      "name": "head3_cpu",
+      "machine": "CPU",
+      "start_us": 17123.0,
+      "finish_us": 17723.0,
+      "deps": [
+        "hta_trunk_conv"
+      ]
+    },
+    {
+      "name": "cpu_decode",
+      "machine": "CPU",
+      "start_us": 18923.0,
+      "finish_us": 20423.0,
+      "deps": [
+        "head1_hta",
+        "head2_gpu",
+        "head3_cpu"
+      ]
+    }
+  ],
+  "makespan_us": 20423.0,
+  "cpu_baseline_us": 105130.0
+}

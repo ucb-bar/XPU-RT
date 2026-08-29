@@ -140,3 +140,4 @@ out/figures/
 # by scripts/setup_spacemit_toolchain.sh. A local checkout may still be present
 # for the retired IREE/runtime flow; it is not tracked.
 /merlin/
+
