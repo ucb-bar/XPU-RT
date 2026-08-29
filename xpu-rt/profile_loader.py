@@ -358,6 +358,14 @@ def load_profiled_processing_times(
                 requested_pairs.add((hw, _resolve_topo_for(hw, combo, topo_tag_override)))
         for (hw, topo) in requested_pairs:
             if (hw, topo) not in all_profiles:
+                # IME is an OPTIONAL per-network capability: a network with no
+                # ime kernel (e.g. a conv/GEMV model, or a transformer op like
+                # gelu that has no ime kernel) legitimately has no ime_x60 CSV.
+                # That is not a data gap to fatal on — its ime cells are simply
+                # excluded (cost 1e8) per-dispatch below, so the solver never
+                # places it on the NPU. Only rvv/scalar misses are fatal.
+                if hw.lower().startswith("ime"):
+                    continue
                 if strict:
                     missing.append(
                         f"  - {net_id} @ {hw}/{topo}: no profile CSV under "
@@ -469,6 +477,13 @@ def load_profiled_processing_times(
 
                 if t_ms is not None:
                     base_t = float(t_ms)
+                elif hw.lower().startswith("ime"):
+                    # An ime combination with no measured cost for this dispatch
+                    # means the op has no ime kernel (only matmul_s8 does today).
+                    # Exclude the cell with the scheduler's INFEASIBLE_COST
+                    # sentinel (1e8) so the op is NEVER placed on the NPU — a
+                    # 0.0 here would make a non-ime op look free on cluster 0.
+                    base_t = 1e8
                 else:
                     if strict:
                         # Per-dispatch misses are typically zero-cost
