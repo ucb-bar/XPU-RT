@@ -1,0 +1,28 @@
+{
+  "network": "yolov8n",
+  "ir": {"source": "onnx:yolov8n", "quant": "int8",
+         "graph_json": "boards/qrb5165_v66/graphs/yolov8n_HTA_split.json"},
+  "_comment": "Two tiles, cut at the backbone/head boundary the partitioner found (IR ops 0..102 vs 103..248). The cut is load-bearing: the head's Resize/Slice/Softmax reject on HTA, so a single whole-network tile would pin the entire detector to one backend. Sub-DLCs come from slice_to_subonnx.py + build_subdlcs.sh.",
+  "bindings": [
+    {
+      "id": 0,
+      "name": "yolov8n_backbone",
+      "ops": {"first": 0, "last": 102},
+      "backends": {
+        "hta": {"ctx": "ctx_yolov8n_backbone__Hta.bin", "graph": "yolov8n_HTA_split_seg100"},
+        "dsp": {"ctx": "ctx_yolov8n_backbone__Dsp.bin", "graph": "yolov8n_HTA_split_seg100"},
+        "cpu": {"ctx": "ctx_yolov8n_backbone__Cpu.bin", "graph": "yolov8n_HTA_split_seg100"}
+      }
+    },
+    {
+      "id": 1,
+      "name": "yolov8n_head",
+      "ops": {"first": 103, "last": 248},
+      "depends_on": [0],
+      "backends": {
+        "dsp": {"ctx": "ctx_yolov8n_head__Dsp.bin", "graph": "yolov8n_HTA_split_seg101"},
+        "cpu": {"ctx": "ctx_yolov8n_head__Cpu.bin", "graph": "yolov8n_HTA_split_seg101"}
+      }
+    }
+  ]
+}

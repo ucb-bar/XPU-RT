@@ -1,0 +1,19 @@
+{
+  "_comment": "Per-(binding, backend) whole-graph wallclock around QnnGraph_execute, captured by qnn_models/runtime/profile_segments.cpp on the physical QRB5165 at 10.44.120.201. Every number here is measured; capability-excluded cells are absent by construction (the registry decides those) rather than carrying a sentinel cost.",
+  "target": "qrb5165_v66",
+  "captured_at": "2026-08-28",
+  "harness": "qnn_models/runtime/profile_segments.cpp",
+  "iters": 50,
+  "cells": {
+    "dronet/dronet_full":         {"hta": 2563.27, "dsp": 891.62,   "cpu": 6998.22},
+    "mlp_control/mlp_control_full": {"dsp": 542.27, "cpu": 28.85},
+    "yolov8n/yolov8n_backbone":   {"hta": 21578.56, "dsp": 14764.54, "cpu": 34343.16},
+    "yolov8n/yolov8n_head":       {"dsp": 16686.31, "cpu": 39464.62}
+  },
+  "unit": "us",
+  "statistic": "mean",
+  "compose_failures": [
+    {"cell": "mlp_control/mlp_control_full", "backend": "hta", "reason": "elu_s8 not in HTA op set"},
+    {"cell": "yolov8n/yolov8n_head", "backend": "hta", "reason": "Resize/Slice/Softmax not in HTA op set"}
+  ]
+}
