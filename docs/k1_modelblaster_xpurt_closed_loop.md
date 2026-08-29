@@ -1134,6 +1134,16 @@ short version, because three earlier claims in this document were wrong:
   instructions later a *masked* `vse32.v` stores **one** of the sixteen int32
   results. It is 23% faster than the RVV form while discarding 15/16 lanes, and
   it is 0.075% of DroNet's runtime: worth 0.027 ms of 122.7.
+* **The 4×4 int32 accumulator is plain ROW-MAJOR across the `(vd, vd+1)`
+  pair.** Measured, not assumed — `ModelBlaster/scripts/k1_ime_accumulator_probe.c`
+  makes all 16 results distinct (`C[i][j] = 16(i+1) + (j+1)`) and prints the
+  pair in memory order: `17 18 19 20 33 34 35 36 49 50 51 52 65 66 67 68`.
+  Element *e* is `C[e/4][e%4]`; `vd` holds rows 0–1 and `vd+1` rows 2–3. No
+  swizzle. This was the single unknown blocking a real IME matmul, because a
+  wrong guess produces a permuted result that the golden compare rejects
+  without naming the permutation. The control is that the same binary exits
+  132 (SIGILL) on hart 5: had the instruction been elided or ignored, cluster 1
+  would have printed the same numbers instead of dying.
 * **The "IME wins" in `compile_advice.json` are not IME wins.** Dispatches 14
   and 7 contain no `vmadot` at all; the speedups are incidental codegen variation
   from the `+xsmtvdot` data-tiling path.
