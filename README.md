@@ -231,27 +231,46 @@ QUANT=int8 TARGET=gemmini_q31 RUNNER=firesim bash examples/dronet/run.sh
 ModelBlaster ships two scheduler bridge scripts that import `xpu-rt/scheduler.py`
 straight off this checkout (via `XPURT_ROOT`) and solve with MOSEK through cvxpy
 — the same MILP as Flow B's `scripts/run_xpurt_schedule.py`, just invoked from
-the ModelBlaster side:
+the ModelBlaster side.
+
+**Deps:** install the `milp` extra into the same `zephyr` conda env used for
+everything else in this repo, from the top-level XPU-RT checkout:
+
+```bash
+pip install -e ".[milp]"   # adds cvxpy (the modeling layer) to the zephyr env
+```
+
+This is enough to exercise the scheduler bridge end to end against cvxpy's
+free solvers (`--solver CLARABEL`, `SCS`, `HIGHS`, `OSQP`, `SCIPY`). **MOSEK
+itself** — the solver these scripts default to (`--solver MOSEK`) — is a
+separate, license-gated product: `pip install mosek` adds the Python
+package (no license needed just to install it), but actually solving
+requires a license file (`MOSEKLM_LICENSE_FILE`) from mosek.com.
+
+(modelblaster's own `pyproject.toml` also declares a `scheduler` extra meant
+for `uv sync --extra scheduler` + `uv run` — currently broken for this
+nested-submodule layout: `uv.lock` resolution pulls in every
+`[tool.uv.sources]` entry regardless of which extra you sync, including an
+unrelated `smolvla`-extra path (`merlin/third_party/lerobot`) that isn't
+checked out by default. Plain `python3` in the `zephyr` env, as below, is
+the reliable path today.)
 
 ```bash
 cd zephyr-chipyard-sw/modelblaster
 export XPURT_ROOT="$(cd ../.. && pwd)"
 
 # single hetero workload
-PYTHONPATH=. uv run python -m scripts.run_xpurt_scheduler \
+PYTHONPATH=. python3 -m scripts.run_xpurt_scheduler \
     --workload dronet_hetero_int8 \
     --target-backends gemmini,rvv_opu \
     --runner firesim \
     --output schedule_fixtures/dronet_xpurt_mosek.json
 
 # multi-network workload (YAML spec of networks + instance counts)
-PYTHONPATH=. uv run python -m scripts.run_xpurt_scheduler_multi \
+PYTHONPATH=. python3 -m scripts.run_xpurt_scheduler_multi \
     --config configs/multi_3way_qrb.yaml \
     --output schedule_fixtures/3way_mosek_qrb.json
 ```
-
-Both require a MOSEK license + cvxpy in the interpreter that runs them — see
-`XPURT_PYTHON` below.
 
 ### 3) Build and run the scheduled binary
 
