@@ -70,9 +70,7 @@
     "                        0` only thins it to 1-in-(max+1).",
     "  variant_note       -- free text appended to the workload's _comment."
   ],
-
   "platforms": {
-
     "qrb5165_v66": {
       "models": {
         "smolvlm_vision_v3": {
@@ -80,8 +78,14 @@
           "profile_model": "smolvlm_vision_v3",
           "profile_basename": "smolvlm_vision_v3.int8",
           "role": "periodic",
-          "period_ms": { "min": 2000, "max": 6000 },
-          "count": { "min": 1, "max": 3 },
+          "period_ms": {
+            "min": 2000,
+            "max": 6000
+          },
+          "count": {
+            "min": 1,
+            "max": 3
+          },
           "variant_note": "49 dispatches; profiled clean on CPU/DSP/HTA (no unsupported rows), HTA is the fastest whole-network backend."
         },
         "smolvlm_vision_v3_bundles": {
@@ -89,12 +93,14 @@
           "profile_model": "smolvlm_vision_v3_bundles",
           "profile_basename": "smolvlm_vision_v3_bundles.int8",
           "role": "sporadic",
-          "count": { "min": 0, "max": 1 },
+          "count": {
+            "min": 0,
+            "max": 1
+          },
           "variant_note": "Alternative bundling of smolvlm_vision_v3 (97 dispatches). Every backend has unsupported dispatches, so no single backend runs it whole and its reference duration falls back to best-per-dispatch across CPU/DSP/HTA."
         }
       }
     },
-
     "spike": {
       "models": {
         "mlp_control": {
@@ -102,9 +108,18 @@
           "profile_model": "mlp_control",
           "profile_basename": "mlp_control.fp32",
           "role": "periodic",
-          "period_ms": { "min": 5, "max": 20 },
-          "window_ms": { "min": 5, "max": 20 },
-          "count": { "min": 1, "max": 2 },
+          "period_ms": {
+            "min": 5,
+            "max": 20
+          },
+          "window_ms": {
+            "min": 5,
+            "max": 20
+          },
+          "count": {
+            "min": 1,
+            "max": 2
+          },
           "max_copies": 1
         },
         "dronet": {
@@ -112,21 +127,32 @@
           "profile_model": "dronet",
           "profile_basename": "dronet.fp32",
           "role": "periodic",
-          "period_ms": { "min": 20, "max": 100 },
-          "window_ms": { "min": 20, "max": 100 },
-          "count": { "min": 1, "max": 2 }
+          "period_ms": {
+            "min": 20,
+            "max": 100
+          },
+          "window_ms": {
+            "min": 20,
+            "max": 100
+          },
+          "count": {
+            "min": 1,
+            "max": 2
+          }
         },
         "yolov8_nano": {
           "dispatch_deps_path": "zephyr-chipyard-sw/gen/vmfb/yolov8_nano/generic_riscv64/RVV/yolov8_nano.fp32/yolov8_nano.fp32_dispatch_graph.json",
           "profile_model": "yolov8_nano",
           "profile_basename": "yolov8_nano.fp32",
           "role": "sporadic",
-          "count": { "min": 0, "max": 5 },
+          "count": {
+            "min": 0,
+            "max": 5
+          },
           "variant_note": "Detection load, 0-5 instances per generation: without gemmini it costs 629 ms serial on RVV (10.4 s on scalar) against dronet's 28 ms and mlp_control's 0.4 ms, so each instance stretches the sporadic span and the horizon with it. The count draw alone decides how loaded a workload is -- a sixth of seeds get none and stay a fast mlp+dronet control loop, the rest carry one to five detections. Five of them is ~1060 operations before a single periodic instance, so --max-ops will bind: the horizon shrinks toward one hyperperiod and the periodic tasks cover less of the sporadic span."
         }
       }
     },
-
     "firesim_rocket_saturn": {
       "models": {
         "mlp_control": {
@@ -134,9 +160,18 @@
           "profile_model": "mlp_control",
           "profile_basename": "mlp_control.fp32",
           "role": "periodic",
-          "period_ms": { "min": 5, "max": 20 },
-          "window_ms": { "min": 5, "max": 20 },
-          "count": { "min": 1, "max": 2 },
+          "period_ms": {
+            "min": 5,
+            "max": 20
+          },
+          "window_ms": {
+            "min": 5,
+            "max": 20
+          },
+          "count": {
+            "min": 1,
+            "max": 2
+          },
           "max_copies": 1,
           "variant_note": "fp32 build: the gemmini_q31 sweep profiles mlp_control.fp32, there is no int8 variant on disk."
         },
@@ -145,9 +180,18 @@
           "profile_model": "dronet",
           "profile_basename": "dronet.int8",
           "role": "periodic",
-          "period_ms": { "min": 20, "max": 100 },
-          "window_ms": { "min": 20, "max": 100 },
-          "count": { "min": 1, "max": 2 },
+          "period_ms": {
+            "min": 20,
+            "max": 100
+          },
+          "window_ms": {
+            "min": 20,
+            "max": 100
+          },
+          "count": {
+            "min": 1,
+            "max": 2
+          },
           "variant_note": "int8/gemmini build, matching the sweep_v8 profile data. The fp32 build at generic_riscv64/RVV/dronet.fp32 is the one the RVV-only FireSim configs use."
         },
         "yolov8_nano": {
@@ -155,8 +199,65 @@
           "profile_model": "yolov8_nano",
           "profile_basename": "yolov8_nano.int8",
           "role": "sporadic",
-          "count": { "min": 0, "max": 5 },
+          "count": {
+            "min": 0,
+            "max": 5
+          },
           "variant_note": "Detection load, 0-5 instances per generation -- same count band as the spike platform's so the two RISC-V mixes stay comparable; gemmini brings its cost down but it is still the heaviest network here."
+        }
+      }
+    },
+    "firesim_f2_armB": {
+      "models": {
+        "mlp_control": {
+          "dispatch_deps_path": "zephyr-chipyard-sw/gen/vmfb/mlp_control/firesim_f2_armB/V256D128_rvv/mlp_control.fp32/mlp_control.fp32_dispatch_graph.json",
+          "profile_model": "mlp_control",
+          "profile_basename": "mlp_control.fp32",
+          "role": "periodic",
+          "period_ms": {
+            "min": 5,
+            "max": 20
+          },
+          "window_ms": {
+            "min": 5,
+            "max": 20
+          },
+          "count": {
+            "min": 1,
+            "max": 2
+          },
+          "max_copies": 1,
+          "variant_note": "armB optimized-kernel build: conv2d_s8 = gemmini_tiled_conv (int8 mvout drain) on gemmini_q31, curated RVV on V256D128_rvv."
+        },
+        "dronet": {
+          "dispatch_deps_path": "zephyr-chipyard-sw/gen/vmfb/dronet/firesim_f2_armB/gemmini_q31/dronet.int8/dronet.int8_dispatch_graph.json",
+          "profile_model": "dronet",
+          "profile_basename": "dronet.int8",
+          "role": "periodic",
+          "period_ms": {
+            "min": 20,
+            "max": 100
+          },
+          "window_ms": {
+            "min": 20,
+            "max": 100
+          },
+          "count": {
+            "min": 1,
+            "max": 2
+          },
+          "variant_note": "armB optimized-kernel build: conv2d_s8 = gemmini_tiled_conv (int8 mvout drain) on gemmini_q31, curated RVV on V256D128_rvv."
+        },
+        "yolov8_nano": {
+          "dispatch_deps_path": "zephyr-chipyard-sw/gen/vmfb/yolov8_nano/firesim_f2_armB/gemmini_q31/yolov8_nano.int8/yolov8_nano.int8_dispatch_graph.json",
+          "profile_model": "yolov8_nano",
+          "profile_basename": "yolov8_nano.int8",
+          "role": "sporadic",
+          "count": {
+            "min": 0,
+            "max": 5
+          },
+          "variant_note": "armB optimized-kernel build: conv2d_s8 = gemmini_tiled_conv (int8 mvout drain) on gemmini_q31, curated RVV on V256D128_rvv."
         }
       }
     }

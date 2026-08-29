@@ -21,6 +21,24 @@ from workload_factory import (
 )
 
 
+# The profile sweeps write 1e9 us (= 1e6 ms) for a dispatch that cannot run on
+# that backend at all.  Those rows mark "unsupported", they are not timings,
+# and a sentinel that reaches the solver as a duration becomes fiction: one
+# unsupported dispatch adds 1e6 ms to the makespan, and run_xpurt_schedule.py
+# then sizes every periodic net against that (ceil(makespan / period)), which
+# is how a 3-network workload turned into 450k operations.  Sentinels never
+# become durations here -- see _penalise_unsupported below.
+SENTINEL_MS = 1e6
+
+# The "never pick this combination" idiom: 1000x the dispatch's own best real
+# cost, capped at 100 ms.  Big enough to dominate the optimizer (no solver
+# picks a penalised combo when a valid one exists), small enough not to blow
+# up the LP's numeric range or the horizon-estimate sums.  Used both for
+# unsupported-backend combos and for preferred_hw pinning.
+COMBO_PENALTY_MULT = 1000.0
+COMBO_PENALTY_CAP_MS = 100.0
+
+
 def load_profiled_times(csv_path: str) -> dict[int, dict]:
     """
     Load profiled runtimes from a CSV file.
@@ -195,6 +213,39 @@ def _load_all_topo_profiles(
     return profiles
 
 
+def _synthetic_time(rng: np.random.Generator, combo: list[str],
+                    p_core_speedup: float) -> float:
+    """A made-up per-dispatch cost, for `strict=False` callers only."""
+    p_ms_synth = float(rng.uniform(2.0, 10.0))
+    if machine_type_prefix(combo[0]) == "CPU_P":
+        return p_ms_synth
+    return p_ms_synth * p_core_speedup
+
+
+def _penalise_unsupported(combo_times: list) -> None:
+    """
+    Replace the `None` slots (unsupported sentinels) in `combo_times` with a
+    cost the solver will never choose, in place.
+
+    An operation has to be assigned *somewhere*, so an unsupported
+    combination needs a number. It must be clearly worse than every real
+    option and still bounded: the raw 1e6 ms sentinel is bounded too, but it
+    is large enough to dominate any real makespan, which is what produced
+    12-hour schedules out of sub-second networks. Scaling off the dispatch's
+    own best real cost keeps the penalty in the same numeric range as the
+    rest of the model.
+    """
+    real = [v for v in combo_times if v is not None]
+    if not real:
+        return
+    best_real = min(real)
+    penalty = best_real + min(COMBO_PENALTY_CAP_MS,
+                              COMBO_PENALTY_MULT * (best_real or 1.0))
+    for ci, v in enumerate(combo_times):
+        if v is None:
+            combo_times[ci] = penalty
+
+
 def load_profiled_processing_times(
     networks: dict,
     repo_base_path: str,
@@ -246,6 +297,8 @@ def load_profiled_processing_times(
     # Aggregate missing-data findings before raising so the user sees
     # *every* gap at once, not just the first one — saves an iter cycle.
     missing: list[str] = []
+    # Dispatches no backend in this hardware config can run at all.
+    unrunnable: list[str] = []
 
     for net_id, net_info in networks.items():
         dispatch_deps_path = net_info.get("dispatch_deps_path", "")
@@ -299,16 +352,12 @@ def load_profiled_processing_times(
             # avoids that by penalising non-preferred-hw combos so the
             # solver never picks them.
             preferred_hw = net_info.get("preferred_hw")
-            # Scaled penalty: 1000x the dispatch's own preferred-hw cost,
-            # capped at 100 ms. Big enough to dominate the optimizer (no
-            # solver picks a wrong-kind combo when a valid one exists),
-            # small enough not to blow up the LP's numeric range or the
-            # horizon-estimate sums.
-            PIN_PENALTY_MULT = 1000.0
-            PIN_PENALTY_CAP_MS = 100.0
 
-            combo_times = []
-            preferred_t = None  # cache the preferred-hw time to scale the penalty
+            # `None` marks a combination whose profile row is an unsupported
+            # sentinel. Those slots are filled in below, once the dispatch's
+            # best *real* cost is known — a sentinel is not a timing, so it
+            # must never be summed into a duration.
+            combo_times: list[float | None] = []
             for ci, combo in enumerate(machine_combinations):
                 hw = combo_hw[ci]
                 topo = _resolve_topo_for(hw, combo, topo_tag_override)
@@ -317,6 +366,10 @@ def load_profiled_processing_times(
                 t_ms = None
                 if prof and isinstance(dispatch_id, int) and dispatch_id in prof:
                     t_ms = prof[dispatch_id]["time_ms"]
+
+                if t_ms is not None and float(t_ms) >= SENTINEL_MS:
+                    combo_times.append(None)
+                    continue
 
                 if t_ms is not None:
                     base_t = float(t_ms)
@@ -335,19 +388,36 @@ def load_profiled_processing_times(
                         # catch.
                         base_t = 0.0
                     else:
-                        p_ms_synth = float(rng.uniform(2.0, 10.0))
-                        core_type = machine_type_prefix(combo[0])
-                        if core_type == "CPU_P":
-                            base_t = p_ms_synth
-                        else:
-                            base_t = p_ms_synth * p_core_speedup
-                if preferred_hw is not None and hw == preferred_hw and preferred_t is None:
-                    preferred_t = base_t
+                        base_t = _synthetic_time(rng, combo, p_core_speedup)
                 combo_times.append(base_t)
 
+            if all(v is None for v in combo_times):
+                # No combination in this hardware config can run this
+                # dispatch. Any number we invent is fiction — the old code
+                # passed the 1e6 ms sentinel straight through and the
+                # schedule inherited it — so record it and fail below.
+                unrunnable.append(
+                    f"  - {net_id}/{dispatch_name} (dispatch_id={dispatch_id}): "
+                    f"unsupported on every profiled backend "
+                    f"({', '.join(sorted(set(combo_hw)))})"
+                )
+                if strict:
+                    continue
+                combo_times = [
+                    _synthetic_time(rng, combo, p_core_speedup)
+                    for combo in machine_combinations
+                ]
+            else:
+                _penalise_unsupported(combo_times)
+
             if preferred_hw is not None:
-                penalty = min(PIN_PENALTY_CAP_MS,
-                              PIN_PENALTY_MULT * (preferred_t or 1.0))
+                preferred_t = next(
+                    (combo_times[ci] for ci in range(len(machine_combinations))
+                     if combo_hw[ci] == preferred_hw),
+                    None,
+                )
+                penalty = min(COMBO_PENALTY_CAP_MS,
+                              COMBO_PENALTY_MULT * (preferred_t or 1.0))
                 for ci, combo in enumerate(machine_combinations):
                     if combo_hw[ci] != preferred_hw:
                         combo_times[ci] += penalty
@@ -377,5 +447,25 @@ def load_profiled_processing_times(
             "     into the synthetic fallback explicitly.\n"
             f"Missing entries ({len(missing)}):\n" + "\n".join(missing)
         )
+
+    if strict and unrunnable:
+        raise ValueError(
+            "profile_loader: some dispatches are unsupported on every backend "
+            "in this hardware config, so no schedule can run them. The profile "
+            "CSVs mark them with the 1e9 us sentinel; costing them as if they "
+            "were timings puts ~1e6 ms per dispatch into the makespan and "
+            "produces a fictional schedule. Either:\n"
+            "  1. Add a backend that supports them to the workload's\n"
+            "     hardware.profile_hw (e.g. CPU alongside HTA/DSP), OR\n"
+            "  2. Re-bundle or re-compile the network so every dispatch has a\n"
+            "     backend that can run it, OR\n"
+            "  3. Drop the network from this hardware config.\n"
+            f"Unrunnable dispatches ({len(unrunnable)}):\n" + "\n".join(unrunnable)
+        )
+    if unrunnable and not strict:
+        # Non-strict callers opted into synthetic timings, but say so —
+        # these dispatches have no measured cost on any backend here.
+        print(f"  (warning) {len(unrunnable)} dispatch(es) unsupported on every "
+              f"profiled backend; costed with synthetic times (strict=False)")
 
     return processing_times, combined_profiled_p, combined_profiled_e, profiled_by_network

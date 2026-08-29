@@ -285,6 +285,25 @@ def schedule_iree_networks(
             topo_tag_override=tt_override,
         )
 
+    # "Periodic" means the op belongs to a network the workload declared
+    # with a `period`.  Not "the op has a time window": a sporadic network
+    # carries min_start_t/max_end_t too, so the window test folds yolov8
+    # into the periodic set and reports a workload built around it as
+    # having no non-periodic work at all.
+    periodic_net_ids = {nid for nid, info in networks.items()
+                        if info.get("period") is not None}
+
+    def _is_periodic_op(workload, op) -> bool:
+        # job_names is indexed by JOB id, not by operation index.
+        job_id = getattr(op, "job_id", None)
+        if job_id is None or job_id >= len(workload.job_names):
+            return False
+        jn = workload.job_names[job_id]
+        if not isinstance(jn, str):
+            return False
+        return any(jn.startswith(nid) and jn[len(nid):].isdigit() and jn != nid
+                   for nid in periodic_net_ids)
+
     def _build_workload():
         return create_workload_from_network_hierarchy(
             networks_data=networks_data,
@@ -334,14 +353,17 @@ def schedule_iree_networks(
 
         if effective_prune_periodic:
             combined_workload, t, alpha = trim_periodic_after_nonperiodic_makespan(
-                combined_workload, t, alpha
+                combined_workload, t, alpha,
+                horizon_ms=networks_data.get("horizon_ms"),
             )
     else:
         # solver == "greedy" or "greedy_periodic": iterative periodic-
         # instance refinement. See greedy_scheduler for the per-pass
         # algorithm; only the picker discipline differs between the two.
         # Loop strategy:
-        #   - low-seed: force num_instances=1 per periodic network when
+        #   - low-seed: force num_instances=1 per periodic network that
+        #     does not ask for a count itself (one that does is pinned to
+        #     what it asked for and skips the loop), when
         #     restrict_makespan_to_nonperiodic is set (otherwise the
         #     workload_factory horizon S_np/(1-F_p) inflates the seed
         #     and the joint schedule converges to a bad equilibrium —
@@ -349,13 +371,49 @@ def schedule_iree_networks(
         #     periodic, justifying the over-allocation).
         #   - per pass: build workload, run greedy, measure makespan
         #     over non-periodic ops only (when the flag is set), grow
-        #     periodic counts to ceil(makespan/period) for any short
-        #     network; iterate until counts are stable or
-        #     `max_periodic_iters` is hit.
-        if effective_restrict_makespan_to_nonperiodic:
-            for net_id, net_info in networks.items():
-                if net_info.get("period") is not None:
-                    networks_data["networks"][net_id]["num_instances"] = 1
+        #     periodic counts to ceil(max(makespan, horizon)/period) for
+        #     any short network; iterate until counts are stable or
+        #     `max_periodic_iters` is hit.  "Non-periodic" here means a
+        #     network the workload did not declare with a `period` -- a
+        #     sporadic one with a window still counts -- see
+        #     `_is_periodic_op`.
+        #
+        # A workload that declares `num_instances` (gen_random_workload
+        # emits one per periodic network, sized from the horizon it laid
+        # the sporadic tasks into) gets exactly that count: the refinement
+        # loop below sizes counts for workloads that DON'T say, and a
+        # document that does say has already decided.  Two things went
+        # wrong when it did not:
+        #   - overwriting the count with 1 and then growing from the
+        #     *non-periodic* makespan meant a workload of nothing but
+        #     periodic tasks measured a makespan of 0 and converged at one
+        #     instance of each network — mlp_control ran once, at t=0, and
+        #     never again;
+        #   - growing past a declared count undoes the generator's
+        #     --cap-instances and --max-ops budgets at schedule time, which
+        #     is where the operation count actually costs something.
+        declared_instances: dict[str, int] = {}
+        for net_id, net_info in networks.items():
+            if net_info.get("period") is None:
+                continue
+            declared = net_info.get("num_instances")
+            if isinstance(declared, int) and not isinstance(declared, bool) and declared > 0:
+                declared_instances[net_id] = declared
+            elif effective_restrict_makespan_to_nonperiodic:
+                networks_data["networks"][net_id]["num_instances"] = 1
+
+        # The workload's own span, when it states one: periodic instances
+        # cover at least this much even if the non-periodic work finishes
+        # earlier (or there is none at all).
+        try:
+            declared_horizon = max(0.0, float(networks_data.get("horizon_ms") or 0.0))
+        except (TypeError, ValueError):
+            declared_horizon = 0.0
+        if declared_instances or declared_horizon:
+            print(f"  Workload declares horizon {declared_horizon:.0f} ms and "
+                  f"{len(declared_instances)} explicit periodic instance "
+                  f"counts; those counts are used as given. Networks without "
+                  f"one are still sized by the refinement loop below.")
 
         # Pick the per-pass picker function.
         if solver == "greedy_periodic":
@@ -381,19 +439,6 @@ def schedule_iree_networks(
             # (matches the MILP solver's objective when
             # restrict_makespan_to_nonperiodic is on).
             machine_combinations_iter = combined_workload.get_machine_combinations()
-            periodic_net_ids = {
-                nid for nid, info in networks.items()
-                if info.get("period") is not None
-            }
-            def _is_periodic_op(op_idx: int) -> bool:
-                jn = (combined_workload.job_names[op_idx]
-                      if op_idx < len(combined_workload.job_names) else "")
-                if not isinstance(jn, str):
-                    return False
-                for nid in periodic_net_ids:
-                    if jn.startswith(nid) and jn[len(nid):].isdigit() and jn != nid:
-                        return True
-                return False
             iter_makespan = 0.0
             iter_makespan_all = 0.0
             for i, op in enumerate(combined_workload.operations):
@@ -404,7 +449,8 @@ def schedule_iree_networks(
                 finish = float(t[i]) + float(dur)
                 if finish > iter_makespan_all:
                     iter_makespan_all = finish
-                if effective_restrict_makespan_to_nonperiodic and _is_periodic_op(i):
+                if effective_restrict_makespan_to_nonperiodic and \
+                        _is_periodic_op(combined_workload, op):
                     continue
                 if finish > iter_makespan:
                     iter_makespan = finish
@@ -416,7 +462,8 @@ def schedule_iree_networks(
 
             # Refine periodic counts: each periodic net needs
             # ceil(makespan/period) instances. Don't shrink — periodic
-            # workloads only need to grow to cover larger makespans.
+            # workloads only need to grow to cover larger makespans.  A net
+            # that declared its own count is pinned to it instead.
             needed_counts: dict[str, int] = {}
             for net_id, net_info in networks.items():
                 period = net_info.get("period")
@@ -429,7 +476,15 @@ def schedule_iree_networks(
                     continue
                 if T <= 0:
                     continue
-                needed = max(1, int(np.ceil(iter_makespan / T)))
+                needed = max(1, int(np.ceil(max(iter_makespan, declared_horizon) / T)))
+                if net_id in declared_instances:
+                    asked = declared_instances[net_id]
+                    if needed > asked:
+                        print(f"  Periodic '{net_id}': the schedule runs to "
+                              f"{max(iter_makespan, declared_horizon):.0f} ms, which would "
+                              f"take {needed} instances, but the workload asks "
+                              f"for {asked} — keeping {asked}")
+                    needed = asked
                 current = int(net_info.get("num_instances") or prev_counts.get(net_id, 0))
                 if current == 0:
                     current = sum(
@@ -452,11 +507,21 @@ def schedule_iree_networks(
             if not bumped:
                 break
             print("  Bumping num_instances:", ", ".join(f"{n}: {a}->{b}" for n, a, b in bumped))
-        print(f"\nFinal greedy makespan: {iter_makespan:.2f} ms (after {it + 1} iteration{'s' if it else ''})")
+        # A workload of nothing but periodic tasks has a non-periodic
+        # makespan of 0 by construction; report the span that means
+        # something for it instead of a bare zero.
+        # Keep the "<N> ms (after <k> iteration" shape: the sweep parses it.
+        if effective_restrict_makespan_to_nonperiodic and iter_makespan <= 0.0:
+            print(f"\nFinal greedy makespan: {iter_makespan_all:.2f} ms "
+                  f"(after {it + 1} iteration{'s' if it else ''}; over all "
+                  f"operations, this workload has no non-periodic work)")
+        else:
+            print(f"\nFinal greedy makespan: {iter_makespan:.2f} ms (after {it + 1} iteration{'s' if it else ''})")
 
         if effective_prune_periodic:
             combined_workload, t, alpha = trim_periodic_after_nonperiodic_makespan(
-                combined_workload, t, alpha
+                combined_workload, t, alpha,
+                horizon_ms=networks_data.get("horizon_ms"),
             )
 
     # Calculate makespan (non-periodic operations only, matching the solver objective)
@@ -466,13 +531,24 @@ def schedule_iree_networks(
         op = combined_workload.operations[i]
         combo_idx = int(np.argmax(alpha[i]))
         dur = op.get_duration_for_combination(combo_idx, machine_combinations, combined_workload.machines)
-        is_periodic = (op.min_start_t is not None) or (op.max_end_t is not None)
-        if not is_periodic:
+        if not _is_periodic_op(combined_workload, op):
             completion_times.append(float(t[i]) + float(dur))
     makespan = max(completion_times) if completion_times else 0.0
 
+    all_ops_makespan = 0.0
+    for i in range(len(combined_workload.operations)):
+        op = combined_workload.operations[i]
+        combo_idx = int(np.argmax(alpha[i]))
+        dur = op.get_duration_for_combination(combo_idx, machine_combinations, combined_workload.machines)
+        all_ops_makespan = max(all_ops_makespan, float(t[i]) + float(dur))
+
     print(f"\nScheduling completed!")
-    print(f"Makespan (non-periodic): {makespan:.2f} ms")
+    if completion_times:
+        print(f"Makespan (non-periodic): {makespan:.2f} ms "
+              f"(all operations: {all_ops_makespan:.2f} ms)")
+    else:
+        print(f"Makespan (all operations): {all_ops_makespan:.2f} ms "
+              f"(no non-periodic work in this workload)")
 
     # Build combination labels for display
     def _combo_label(combo: list[str]) -> str:
