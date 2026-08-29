@@ -118,10 +118,15 @@ data/toplevel/_probe_*.json
 /gen/profile/RVV_fused/
 /gen/profile/scalar/spacemit_x60/
 /gen/profile/scalar_c1/
-/gen/profile_mb/rvv_x60/
-/gen/profile_mb/scalar/spacemit_x60/lstm_tiny/
-/gen/profile_mb/scalar/spacemit_x60/vitfly_frontend/
-/gen/profile_mb/scalar/spacemit_x60/vitfly_lstm/
+# NOT /gen/profile_mb/. That tree is what `gen_mb/profile` symlinks to, and
+# it is the MEASURED COST DATABASE THE SCHEDULER INGESTS -- every solve in this
+# repo reads it, and each schedule records the exact files it read in
+# `metadata.pdb_files`. It was ignored under the rule above, on the reasoning
+# that it contained no tracked file; that reasoning is circular, and the effect
+# was that 18 of 21 measured profiles were absent from a clean clone while
+# every recorded verdict had been computed from them. `pdb_hash` proves WHICH
+# costs a solve read; it cannot reconstruct them. 256 KB of CSV is a small
+# price for the numbers the whole project rests on being reproducible.
 /gen/vmfb/dronet/spacemit_x60/
 /gen/vmfb/mlp/
 /gen/vmfb/yolov8_nano/
