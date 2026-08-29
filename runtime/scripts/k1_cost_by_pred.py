@@ -117,11 +117,11 @@ def serialise(schedule: dict, lanes: List[str]) -> dict:
 
 
 def run_board(schedule_path: str, models: str, backends: str,
-              timeout: float) -> str:
+              timeout: float, extra: List[str] = ()) -> str:
     cmd = ["bash", os.path.join(REPO, "ModelBlaster", "scripts",
                                 "run_xpurt_k1.sh"),
            "--schedule", schedule_path, "--models", models,
-           "--backends", backends]
+           "--backends", backends, *extra]
     p = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout,
                        cwd=os.path.join(REPO, "ModelBlaster"))
     if p.returncode != 0:
@@ -168,6 +168,13 @@ def main() -> int:
                     help="a solved schedule to use as the template; only "
                          "hardware_target and start_time are rewritten")
     ap.add_argument("--models", default="dronet")
+    ap.add_argument("--staged-ir", action="append", default=[],
+                    metavar="NET:DIR",
+                    help="forwarded to run_xpurt_k1.sh. Needed for a network "
+                         "whose name is not a models/ module -- the deployed "
+                         "detector is `yolov8_nano` built at 64x96 and "
+                         "registered under its own name, so extract_graph has "
+                         "nothing to extract for it. Repeatable.")
     ap.add_argument("--backends", default="rvv_x60,rvv_x60",
                     help="one backend per CORE KIND, in order. The K1 solve "
                          "declares two kinds (rvv, rvv_c1) because the two "
@@ -200,7 +207,9 @@ def main() -> int:
     samples: Dict[str, List[Dict[str, float]]] = {k: [] for k in PLACEMENTS}
     for r in range(a.repeats):
         for name in PLACEMENTS:                    # INTERLEAVED, not blocked
-            run_board(paths[name], a.models, a.backends, a.timeout)
+            run_board(paths[name], a.models, a.backends, a.timeout,
+                      extra=[x for s_ in a.staged_ir
+                             for x in ("--staged-ir", s_)])
             # run_xpurt_k1.sh files the trace under the schedule's own stem,
             # so the three variants cannot overwrite each other's results --
             # which is why they are given distinct filenames above.
