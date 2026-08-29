@@ -23,6 +23,9 @@ import json
 import os
 import subprocess
 import sys
+sys.path.insert(0, os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "xpu-rt"))
+import job_names as _job_names  # noqa: E402
 from collections import defaultdict
 
 sys.path.insert(0, os.path.join(
@@ -97,7 +100,7 @@ def predicted(schedule_path, periods):
         inst[j] = max(inst[j], float(v["start_time"]) + float(v["duration"]))
     misses = 0
     for job, en in inst.items():
-        b = job.rstrip("0123456789") or job
+        b = _job_names.model_of(job)
         i = int(job[len(b):] or 0)
         T = periods.get(b)
         if T is not None and en > i * T + T:

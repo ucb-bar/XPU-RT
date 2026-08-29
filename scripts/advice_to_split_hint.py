@@ -59,7 +59,9 @@ from advice_join import (  # noqa: E402
     verify_graph_identity,
 )
 
-CONTRACT = "modelblaster.split_hints/v1"
+import bundle  # noqa: E402
+
+CONTRACT = bundle.SPLIT_CONTRACT
 
 #: Op kinds `ModelBlaster/pipeline/apply_split_hint.py::_SPLITTABLE` accepts,
 #: and the axis each one tiles. Mirrored rather than imported so this script
@@ -219,21 +221,19 @@ def main() -> int:
               f"({refused} refused, {len(wants)} advised)", file=sys.stderr)
         return 1
 
-    hint = {
-        "contract": CONTRACT,
-        "reason": "; ".join(
+    hint = bundle.split_hint(
+        {a.model: split_ops},
+        reason="; ".join(
             f"dispatch {n['dispatch_id']} ({n['op']}) {n['service_time_us']:.0f}us "
             f"vs {n['max_target_piece_us']:.0f}us slot -> {n['axis']} "
             f"{n[n['axis']]} in {n['n_splits']}" for n in notes),
-        "networks": [{"network": a.model, "split_ops": split_ops}],
-        "_provenance": {
+        provenance={
             "from_advice": advice.get("schedule_id"),
             "max_splits": a.max_splits,
             "refused": refused,
             "derivation": notes,
             "evidence": [x.get("evidence") for x in wants],
-        },
-    }
+        })
     with open(a.out, "w") as f:
         json.dump(hint, f, indent=1)
     print(f"wrote {a.out}")

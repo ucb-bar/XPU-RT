@@ -16,9 +16,14 @@ AT final size rather than made large and shrunk, which is what keeps 6 pt type
 from __future__ import annotations
 
 import os
+import sys
 from typing import Optional
 
 import matplotlib as mpl
+
+sys.path.insert(0, os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "xpu-rt"))
+import job_names as _job_names  # noqa: E402
 
 MM = 1 / 25.4
 SINGLE_COL = 89 * MM
@@ -85,26 +90,19 @@ def model_color(name: str, fallback: str = C_MUTED) -> str:
     """
     if name in MODEL_COLOR:
         return MODEL_COLOR[name]
-    base = (name or "").rstrip("0123456789") or name
-    return MODEL_COLOR.get(base, fallback)
+    # The palette's own keys are the known network names, so the split needs
+    # no extra argument here.
+    return MODEL_COLOR.get(_job_names.model_of(name, MODEL_COLOR), fallback)
 
 
 def model_of(job_name: str, known: "set[str] | None" = None) -> str:
     """`'yolov8_nano_64x960'` -> `'yolov8_nano_64x96'`, given the known set.
 
-    A job name is `<network><instance>` with no separator, and a network name
-    may itself end in digits, so the split is genuinely ambiguous without the
-    set of real network names. Prefer the trace's own `network` column where
-    there is one; use this where there is not.
+    Delegates to `xpu-rt/job_names.py`, which owns this split for the whole
+    repo. It had been written independently seven times before that module
+    existed, and the copies disagreed.
     """
-    if known:
-        # Longest match wins: `yolov8_nano_64x96` before `yolov8_nano_64x9`.
-        for cand in sorted(known, key=len, reverse=True):
-            if job_name.startswith(cand) and job_name[len(cand):].isdigit():
-                return cand
-        if job_name in known:
-            return job_name
-    return (job_name or "").rstrip("0123456789") or job_name
+    return _job_names.model_of(job_name, known)
 
 
 def use() -> None:

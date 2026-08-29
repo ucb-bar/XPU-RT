@@ -100,8 +100,10 @@ def load_schedule(path):
         return json.load(f)["dispatches"]
 
 
-def model_of(job_name):
-    return job_name.rstrip("0123456789") or job_name
+def model_of(job_name, known=None):
+    """`job_names` owns this split; see that module for why it is not a
+    trailing-digit strip."""
+    return figstyle.model_of(job_name, known)
 
 
 def instance_stats(rows):

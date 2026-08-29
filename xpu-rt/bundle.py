@@ -80,6 +80,47 @@ def backend_assignments(available: List[str], machines=("cpu_p", "cpu_e")) -> Li
     return out
 
 
+#: The two Contract-2 schemas ModelBlaster's rewriters accept. Three call sites
+#: build these -- `fusion_hints_from_diagnosis` below (from a SchedulerReport),
+#: `scripts/granularity_loop.py` (from scored candidates) and
+#: `scripts/advice_to_fusion_hint.py` (from compile_advice) -- because they
+#: analyse different things. What they must NOT differ on is the wire format,
+#: so the schema is written once, here.
+FUSION_CONTRACT = "modelblaster.fusion_hints/v1"
+SPLIT_CONTRACT = "modelblaster.split_hints/v1"
+
+
+def fusion_hint(groups_by_network: Dict[str, List[List[int]]], reason: str,
+                provenance: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    """`{network: [[op_id, ...], ...]}` -> `modelblaster.fusion_hints/v1`."""
+    doc: Dict[str, Any] = {
+        "contract": FUSION_CONTRACT,
+        "reason": reason,
+        "networks": [{"network": net,
+                      "fuse_groups": [sorted(set(g)) for g in groups if len(g) > 1],
+                      "n_tiny": sum(len(g) for g in groups if len(g) > 1)}
+                     for net, groups in sorted(groups_by_network.items())
+                     if any(len(g) > 1 for g in groups)],
+    }
+    if provenance:
+        doc["_provenance"] = provenance
+    return doc
+
+
+def split_hint(splits_by_network: Dict[str, List[Dict[str, int]]], reason: str,
+               provenance: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    """`{network: [{"op": id, "n_splits": n}, ...]}` -> split_hints/v1."""
+    doc: Dict[str, Any] = {
+        "contract": SPLIT_CONTRACT,
+        "reason": reason,
+        "networks": [{"network": net, "split_ops": ops}
+                     for net, ops in sorted(splits_by_network.items()) if ops],
+    }
+    if provenance:
+        doc["_provenance"] = provenance
+    return doc
+
+
 def fusion_hints_from_diagnosis(report: Dict[str, Any], diag: Any) -> Dict[str, Any]:
     """Derive the fusion-hint contract from the report's tiny-dispatch chains.
 
