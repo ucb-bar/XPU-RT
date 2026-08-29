@@ -26,11 +26,19 @@ HERE, where the reason can still be printed against the advice that caused it.
 
 WHY THERE IS A CAP
 ------------------
-Splitting is not free. B4 measured 4-way OC sharding of yolov8n costing **+76%
+Splitting is not free. B4 measured 4-way OC splitting of yolov8n costing **+76%
 total work** before it buys any parallelism, so its ceiling is 2.27x rather
 than 4x. Past that the extra pieces mostly add work. `--max-splits` defaults
 to 4 for that reason; a run that wants more must say so, and the hint records
 what was asked for alongside what was emitted.
+
+THAT NUMBER IS ABOUT SPLIT, NOT SHARD, and it has been borrowed for the wrong
+one. Splitting turns one op into SEPARATE DISPATCHES, each with its own setup
+and its own slice of the weights -- which is where the +76% comes from.
+Sharding leaves the dispatch alone and spreads it across harts with per-shard
+re-packed weights; measured, that is 3.87x and 3.93x on four harts for
+ffn_block's two linears, and 1.59x-2.92x on whole models. Two different
+mechanisms, two different ceilings. See docs/the_loop.md section 4c.
 
 WHAT IT REFUSES, LOUDLY
 -----------------------

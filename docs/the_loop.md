@@ -50,9 +50,19 @@ alone, which is the reason for the file boundaries.
 | `choose_implementation` | `implementation_advice` | `advice_to_kernel_choice.py` | `generate_kernels --keep-reference-ops` |
 | `shard` | `shard_advice` | — | `MB_SHARD_FACTOR` (build-level) |
 
-`shard` is deliberately unwired: it needs multi-core profiles that do not
-exist, and B4 measured 4-way OC sharding at **+76% total work**, a 2.27×
-ceiling. Documented, not built.
+`shard` has no bridge because it is not a graph rewrite: the width is chosen by
+the SCHEDULER, per dispatch, out of multi-core profiles, rather than by a hint
+that changes the IR. See section 4c.
+
+This entry used to read "deliberately unwired: it needs multi-core profiles
+that do not exist, and B4 measured a 2.27x ceiling." Both halves are now
+obsolete and are recorded here rather than deleted, because the second one was
+quoted for a while as if it bounded sharding in general. The profiles exist for
+three models at four widths each; the 2.27x came from a different mechanism;
+and OC sharding measures **3.87x and 3.93x on four harts** for ffn_block's two
+linears. What was actually missing was not profiles but a board harness -- the
+Linux harness compiled no pool at all, so every `parallel_<op>` wrapper in
+every K1 binary had taken its serial arm.
 
 ## 3. Search and decide are different
 
@@ -286,10 +296,114 @@ kernel; only `linear_s8` and `matmul_s8` there are genuine accelerator work.
 The figure distinguishes them, and conflating them would overstate how much of
 the schedule the NPU carries.
 
+## 4c. The third axis: how many HARTS run a dispatch
+
+Section 4 changes the graph, 4b changes which unit runs a dispatch. The third
+lever leaves both alone and changes how WIDE a dispatch runs -- one hart, or a
+block of them sharing the work.
+
+It is a scheduling decision for the same reason as 4b: **the extra harts do
+not always pay**, and where they stop paying is measured, not derived. On
+`rvv_x60`, medians of 6 warm reps:
+
+| | 1 hart | 2 | 4 | 8 | 4-hart |
+|---|---|---|---|---|---|
+| ffn_block fc1 (M=128) | 338091 | 168644 | 87456 | 53162 | 3.87x |
+| ffn_block fc2 (M=128) | 266293 | 128800 | 67815 | 54261 | 3.93x |
+| ffn_block total | 681737 | 375542 | 233113 | 185161 | 2.92x |
+| `layernorm_s8` | 61818 | 62125 | 61902 | 62007 | **1.01x** |
+
+The last row is the control and it is why the others can be believed:
+`layernorm_s8` has no pool path, so it must not move, and it does not -- within
+0.5% across every width. A speedup that came from a quieter board would have
+moved it too.
+
+Whole models, four harts: **ffn_block 2.92x, yolov8_nano_64x96 1.96x, dronet
+1.59x**. The headline number is the least useful thing in the data, because
+within ONE model the per-dispatch gain runs from 4.02x (a wide-OC conv) down to
+0.83x (a 1x1). Sharding pays in proportion to OC and against spatial extent, so
+a model's total is set by whichever its largest dispatches happen to be -- not
+by its size or its maximum OC. That spread, not a count of regressions, is the
+argument for choosing a width per dispatch.
+
+```bash
+# profile one model at four widths. MB_CORES derives the pool size, the
+# affinity mask and the topo tag from one place -- a run tagged topo_0_1_2_3
+# whose pool was actually 1 thread is a serial measurement filed as a parallel
+# one, and nothing downstream could tell.
+for spec in "0:1" "0,1:2" "0,1,2,3:4" "0,1,2,3,4,5,6,7:8"; do
+  MB_CORES="${spec%:*}" MB_SHARD_FACTOR="${spec#*:}" ITERS=7 \
+    scripts/run_model_k1.sh dronet int8 rvv_x60 0
+done
+
+python scripts/plot_multicore_scaling.py --model dronet --model yolov8_nano_64x96
+python scripts/plot_loop_iterations.py --color-by width \
+  --iteration "the solver picks a width per dispatch=schedules/scheduled_networks_k1_multicore_shard_greedy_profiled.json" \
+  --windows-from data/toplevel/networks_k1_multicore_shard.json \
+  --critical-models dronet --heavy-model yolov8_nano_64x96 --window-ms 24
+```
+
+**`topo_tag_override: false` is load-bearing**, and its failure is silent. With
+it true every combination is costed from `topo_0`, so a 4-hart block is charged
+the SINGLE-hart time while occupying four harts. The solver then correctly
+never picks one, and the run reports "sharding does not help" for a purely
+clerical reason.
+
+Conv sharding needs the weights RE-PACKED per shard, not a pointer offset: the
+rvv backends pack conv weights IHWOC, so an OC slice is strided and no offset
+expresses it. `shard_conv_weights` gives each shard its own array. Bit-exactness
+is not a separate step -- `run_model_k1.sh` golden-compares in-binary every run,
+so a shard reading the wrong weights fails the run that would have timed it.
+
+## 4d. What the cost model knows beyond a solo profile
+
+Two questions, same shape, opposite answers. Both were measured on the
+ModelBlaster path because the earlier numbers for both came from
+`iree-benchmark-module` over `.vmfb` files, and that path is retired.
+
+**Co-runner contention: a NULL.** Does a dispatch slow down because something
+else runs at the same time on another hart? Not measurably, up to four
+co-runners -- the same-cluster and cross-cluster distributions straddle 1.0 and
+overlap completely, and the arms are not monotonic in co-runner count. The
+IREE-path figures (1.043x same-cluster, 1.185x cross-cluster) do not reproduce.
+Install no contention model. `docs/k1_contention.md`.
+
+**Producer-consumer edge cost: REAL, and network-dependent.** What does it cost
+a dispatch to read what the previous one wrote, from another hart? All arms
+disjoint, twice, on two networks:
+
+| | same hart | same cluster | other cluster |
+|---|---|---|---|
+| dronet | 1.000 | 1.068 | 1.111 |
+| yolov8_nano_64x96 | 1.000 | 1.033 | 1.070 |
+
+Roughly 6% to leave the hart that produced your input, 10% to leave the
+cluster -- and yolo pays ~4pp less than dronet in both classes, so the map is
+keyed per network rather than being a global constant. `docs/k1_cost_by_pred.md`.
+
+**The two are different mechanisms and only one is visible here.** On this
+board the cross-cluster cost appears when a dispatch is placed away from its
+PRODUCER, not when two dispatches sit on opposite sides at once. Three
+independent measurements agree on the explanation: dronet is slower on 8 harts
+than on 4 (5.32 vs 5.25 ms) and yolo is not; dronet pays more to cross the
+edge; dronet's working set fits one L2 and so has more to lose. Looking for
+this effect with a co-runner sweep finds nothing, and is right to.
+
 ## 5. Guard rails, and what each one caught
 
 Every one of these exists because it failed silently at least once.
 
+* **`check_rvv_avl.py` refuses a `vsetvl` whose AVL is another `vsetvl`'s
+  result.** Every instruction is legal and the binary runs to completion; only
+  `vl` is wrong, so `check_rvv_vtype.py` -- which reads the disassembly for
+  instructions the hardware refuses -- structurally cannot see it. Two
+  committed kernels declaring `accuracy_class: bit_exact` were not
+  (`max_abs_err` 20 and 68); see section 6.
+* **`check_schedule_feasibility` refuses an implementation the core cannot
+  execute.** Every other finding it reports is a slowdown -- a double-booked
+  core serialises, an overrun still produces numbers. This one does not: an
+  `ime` dispatch on CPU_E takes SIGILL and writes nothing, so it surfaces as a
+  missing results file rather than a wrong measurement.
 * **`compare_candidates` refuses two schedules with the same `pdb_hash`.** They
   were solved against the same measured costs, so whatever the verdict is, it
   is not about the rewrite.
@@ -347,7 +461,7 @@ Every one of these exists because it failed silently at least once.
   `--windows-from` and you score against the period, a more forgiving test than
   the workload declared.
 
-## 6. Two traps that cost a board slot each
+## 6. Three traps that cost a board slot each
 
 **Use GCC 14.3, not 13.2.** Get it with
 `eval "$(scripts/setup_spacemit_toolchain.sh)"`, which finds an existing
@@ -368,6 +482,25 @@ vsext.vf4         ← ILLEGAL: widening 8→32 needs SEW=32
 SIGILL with no stdout, `epc 0x17020`, `badaddr` equal to that instruction's own
 encoding. It crashes rather than computing a wrong answer, so no past result is
 invalidated.
+
+**GCC 14.3 has its own bug, in the opposite direction, and it is worse.**
+Given a `vsetvl` whose AVL is another `vsetvl`'s return value -- which reads as
+correct RVV, since e8m1 and e32m4 hold the same number of elements -- it
+substitutes an unrelated register. Measured in the avgpool kernel: the second
+`vsetvl` was issued with the enclosing loop's BOUND as its AVL, `vl` came out 5
+where the output row is 11 wide, and six of every eleven outputs were never
+written. No crash, no warning, `max_abs_err=68`.
+
+So the two compilers are wrong in opposite ways, and the mandate that fixed the
+loud failure installed a quiet one:
+
+```
+GCC 13.2   reorders a vsetvl across a widening op   -> SIGILL, loud
+GCC 14.3   wrong AVL on a chained vsetvl            -> wrong answer, silent
+```
+
+The only form correct under both is to pass the ELEMENT COUNT to every width,
+every time. `scripts/check_rvv_avl.py` refuses the other one.
 
 **`--staged-ir` for anything the loop produced.** A rewritten IR has no
 `--model` that can regenerate it, which is the entire point of the loop. The
@@ -392,6 +525,12 @@ The modules are not all named after the concepts.
 | job-name splitting | `xpu-rt/job_names.py` |
 | trace reading, both producers | `xpu-rt/k1_trace.py` |
 | board measurement of a candidate | `ModelBlaster/scripts/measure_candidate.sh --runner k1` |
+| multi-core board runs (pool + topo tag) | `ModelBlaster/scripts/run_model_k1.sh` via `MB_CORES` |
+| per-shard conv weight re-packing | `ModelBlaster/pipeline/generate_skeleton.py::shard_conv_weights` |
+| co-runner contention (a null result) | `runtime/scripts/k1_contention_mb.py`, `docs/k1_contention.md` |
+| producer-consumer edge cost | `runtime/scripts/k1_cost_by_pred.py`, `docs/k1_cost_by_pred.md` |
+| which implementations a core can run | `xpu-rt/capabilities.py` |
+| the chained-AVL kernel lint | `ModelBlaster/scripts/check_rvv_avl.py` |
 
 `rewrite.py`, `bundle.py` and `granularity_loop.py` were absent from this branch
 for a while — added on `origin/xpurt-scheduler-advisor` and never merged

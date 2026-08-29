@@ -1013,12 +1013,20 @@ own `network` column in any renderer.
 per-shard re-packed weights) is **build-level and whole-model**. Before building
 a bridge across that gap, two things had to be true, and neither is:
 
-* **The advice cannot fire at all.** It needs `profiles_by_cores` with a 1-core
-  baseline *and* multi-core measurements. Only `topo_0` exists — all 16 profile
-  directories on disk. This is a data-collection gap, not a code gap.
-* **The measured ceiling is low.** B4 measured 4-way OC sharding costing
-  **+76% total work** before it buys any parallelism, so its ceiling is 2.27×,
-  not 4×.
+* ~~**The advice cannot fire at all.** It needs `profiles_by_cores` with a
+  1-core baseline *and* multi-core measurements. Only `topo_0` exists — all 16
+  profile directories on disk.~~ **NO LONGER TRUE.** ffn_block, dronet and
+  yolov8_nano_64x96 are each profiled at `topo_0`, `topo_0_1`, `topo_0_1_2_3`
+  and `topo_0_1_2_3_4_5_6_7`. The data-collection gap is closed; what was
+  actually missing was a board harness, since the Linux harness compiled no
+  thread pool at all.
+* ~~**The measured ceiling is low.** B4 measured 4-way OC sharding costing
+  **+76% total work**, so its ceiling is 2.27×.~~ **THAT NUMBER IS ABOUT A
+  DIFFERENT MECHANISM.** It measured SPLITTING an op into separate dispatches,
+  each redoing its own setup. Intra-op sharding — one dispatch, several harts,
+  per-shard re-packed weights — measures **3.87× and 3.93× on four harts** for
+  ffn_block's two linears. Do not transfer the split cap to sharding; see
+  `docs/the_loop.md` §4c.
 
 So the verb stays documented and unwired, which is an outcome rather than an
 omission. The mechanism is real and tested (`_OC_SLICEABLE_CONV_OPS`, per-shard
