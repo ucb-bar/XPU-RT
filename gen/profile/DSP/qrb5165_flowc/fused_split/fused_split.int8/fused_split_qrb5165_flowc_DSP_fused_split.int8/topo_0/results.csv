@@ -1,0 +1,4 @@
+dispatch_id,module_name,vmfb_path,mlir_path,mean_time,mean_unit,mean_time_ns,returncode,log_path,source,op,shape,cycles
+0,fused_split$dispatch_0_DSP_qnn_graph_ir_ops4,,,0.578000,ms,578000.000000,0,,qnn-mean@2026-08-28,qnn_graph,ir_ops=4,578
+1,fused_split$dispatch_1_DSP_qnn_graph_ir_ops2,,,0.383000,ms,383000.000000,0,,qnn-mean@2026-08-28,qnn_graph,ir_ops=2,383
+2,fused_split$dispatch_2_DSP_qnn_graph_ir_ops10,,,3.064000,ms,3064000.000000,0,,qnn-mean@2026-08-28,qnn_graph,ir_ops=10,3064

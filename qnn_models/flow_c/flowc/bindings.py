@@ -40,12 +40,28 @@ class Binding:
     source_onnx: str = ""            # the ONNX this tile was compiled from
     depends_on: tuple[int, ...] = ()
     backends: dict[str, BackendBinding] = field(default_factory=dict)
+    ranges: tuple[tuple[int, int], ...] = ()   # when the tile is not one span
     lowering: tuple[str, ...] = ()   # transforms the compiled graph carries
     lowering_note: str = ""
     derived_from: str = ""           # provenance when the range was not hand-written
 
-    def op_ids(self) -> range:
-        return range(self.first, self.last + 1)
+    def op_ids(self):
+        """The IR ops this tile executes.
+
+        Usually one span, but a network with parallel branches has tiles that
+        interleave in dispatch-id order — fused_full's LSTM tail is ops 4-5
+        plus 8-15, with the depth branch's 6-7 in between — so a tile is a
+        set of ranges and `first`/`last` are just its extent.
+        """
+        if self.ranges:
+            out = []
+            for a, b in self.ranges:
+                out.extend(range(a, b + 1))
+            return sorted(set(out))
+        return list(range(self.first, self.last + 1))
+
+    def n_ops(self) -> int:
+        return len(self.op_ids())
 
 
 @dataclass
@@ -110,6 +126,11 @@ def load(path: str, ir: dict | None = None, repo_qnn_root: str = "") -> BindingS
                 raise ValueError(f"{path}: ops='all' needs the IR to resolve")
             first, last = ir["ops"][0]["dispatch_id"], ir["ops"][-1]["dispatch_id"]
             derived = "whole network (ops='all')"
+        elif isinstance(spec, dict) and "ranges" in spec:
+            rngs = tuple((int(a), int(b)) for a, b in spec["ranges"])
+            first, last = min(a for a, _ in rngs), max(b for _, b in rngs)
+            derived = ("hand-written ranges " +
+                       ", ".join(f"{a}..{b}" for a, b in rngs))
         elif isinstance(spec, dict) and "from_partition" in spec:
             if not groups:
                 raise ValueError(f"{path}: ops.from_partition needs a `partition` path")
@@ -127,6 +148,8 @@ def load(path: str, ir: dict | None = None, repo_qnn_root: str = "") -> BindingS
         bindings.append(Binding(
             id=int(entry["id"]), name=entry["name"], first=first, last=last,
             source_onnx=entry.get("source_onnx", ""), derived_from=derived,
+            ranges=(tuple((int(a), int(b)) for a, b in spec["ranges"])
+                    if isinstance(spec, dict) and "ranges" in spec else ()),
             depends_on=tuple(entry.get("depends_on", [])),
             backends={k: BackendBinding(k, v["ctx"], v["graph"])
                       for k, v in entry["backends"].items()},
@@ -260,7 +283,7 @@ def verify_against_artifacts(bset: BindingSet, qnn_root: str,
         return n.replace("/", "_").replace(".", "_").strip("_")
     for b, path in todo:
         got = info[path]
-        declared = b.last - b.first + 1
+        declared = b.n_ops()
         if got["nodes"] != declared:
             findings.append(
                 f"{b.name}: declares {declared} IR ops ({b.derived_from}) but "

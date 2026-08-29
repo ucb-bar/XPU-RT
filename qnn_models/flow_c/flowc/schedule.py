@@ -121,7 +121,7 @@ def ingest(schedule_path: str, bsets: dict[str, BindingSet], irs: dict[str, dict
             ctx=bb.ctx, graph=bb.graph, exec_serialized=qc.exec_serialized,
             gate_spin_us=qc.gate_spin_us, sched_fifo_prio=qc.sched_fifo_prio,
             exec_cores=qc.exec_cores,
-            n_ir_ops=binding.last - binding.first + 1,
+            n_ir_ops=binding.n_ops(),
             ir_first=binding.first, ir_last=binding.last,
             start_time_ms=e.start_time_ms, duration_ms=e.duration_ms,
             deps=tuple(e.deps_entry_ids), time_dep=e.time_dep_entry_id))
