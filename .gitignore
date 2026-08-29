@@ -141,3 +141,6 @@ out/figures/
 # for the retired IREE/runtime flow; it is not tracked.
 /merlin/
 
+# Downloaded cross toolchain (6 GB). scripts/setup_spacemit_toolchain.sh
+# fetches it here on demand; it is an artifact, never a commit.
+/tools/riscv-tools-spacemit/

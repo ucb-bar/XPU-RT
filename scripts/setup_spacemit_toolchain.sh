@@ -40,12 +40,13 @@ PATH_ONLY=0
 
 say() { echo "$@" >&2; }
 
-# Search order: an explicit install, ours, then merlin's -- which is still on
-# disk for anyone who had the submodule checked out, and there is no reason to
-# download a second copy of a 300 MB toolchain to prove a point.
+# Search order: an explicit install (SPACEMIT_TOOLCHAIN_ROOT), then ours.
+# There used to be a third candidate under merlin/build_tools/, from when
+# merlin was a submodule here; the 6 GB tree it pointed at now lives at
+# DEST_ROOT and merlin is gone, so the fallback would only ever have found
+# a stale copy on a machine that predates the move.
 CANDIDATES=(
     "${DEST_ROOT}/${DIRNAME}"
-    "${REPO_ROOT}/merlin/build_tools/riscv-tools-spacemit/${DIRNAME}"
 )
 FOUND=""
 for c in "${CANDIDATES[@]}"; do
