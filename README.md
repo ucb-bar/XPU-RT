@@ -29,6 +29,17 @@ build from ModelBlaster — so the two entries above differ in where the code
 runs, not in what generates it. The `results.csv` schema is IREE-shaped for the
 same reason a road can keep a Roman route: every reader already speaks it.
 
+### Start here
+
+* **[`docs/CHANGES.md`](docs/CHANGES.md)** — what recently landed across both
+  repos, and the order to read it in. If you have been away, read this one.
+* **[`docs/the_loop.md`](docs/the_loop.md)** — the index: every arrow of the
+  compiler↔scheduler cycle and which script owns it.
+* **[`docs/environment.md`](docs/environment.md)** — recreating the
+  environment. Two flows, two environments, and neither is merlin's `.venv`.
+* **[`examples/`](examples/)** — runnable, one per topic:
+  `.venv/bin/python examples/run_all.py`
+
 ### Documentation
 
 * [`docs/end_to_end_xpurt_firesim.md`](docs/end_to_end_xpurt_firesim.md)
