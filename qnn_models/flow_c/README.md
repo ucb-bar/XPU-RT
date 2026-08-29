@@ -26,6 +26,9 @@ models/<id>.py ──► extract_graph ──► graph.json IR ──┐   (mode
                          deploy_and_run.sh ──► board ──► trace
 ```
 
+Step-by-step reproduction, the diff against the standard modelblaster flow,
+and a file map: [`docs/mlp_dronet_yolo_qnn_reproduction.md`](../../docs/mlp_dronet_yolo_qnn_reproduction.md).
+
 ## Run it
 
 ```bash
