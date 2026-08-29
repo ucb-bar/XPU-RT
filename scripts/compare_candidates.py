@@ -25,6 +25,22 @@ graphs. `--windows-from` reads the spec so the deadline is the declared
 so the network names are known, which is what stops a name ending in a digit
 from being split in the wrong place (see `job_names`).
 
+TWO THINGS ARE CHECKED BEFORE ANY TERM IS COMPARED, because each of them
+produces a verdict that looks perfectly well-formed and means nothing.
+
+`pdb_hash` proves the two solves read DIFFERENT measured costs -- without it
+the verdict is about scheduler noise, not about the rewrite.
+
+Per-model INSTANCE COUNTS prove they scheduled the SAME AMOUNT OF WORK. This
+one is not hypothetical: the 4 Hz baseline was re-solved without
+`--max-periodic-iters 1`, the refinement loop grew mlp_control from 32
+instances to 91, and the resulting file sat on disk under the same name as the
+baseline three recorded verdicts had used. Nothing complained -- `pdb_hash`
+still differed, every term still computed, and a figure rendered from it
+reported the opposite verdict for the DroNet x2 rung. A split changes how many
+dispatches an instance is made of; it must not change how many instances there
+are, so unequal instance counts mean the flags differed, not the graph.
+
 A tie is a REJECTION: `accept()` requires the candidate to be strictly better
 on some term before any term it is worse on.
 """
@@ -42,7 +58,7 @@ sys.path.insert(0, os.path.join(_REPO, "xpu-rt"))
 sys.path.insert(0, _HERE)
 
 import candidate_objective as objective  # noqa: E402
-from schedule_scoring import score  # noqa: E402
+from schedule_scoring import instances_per_model, score  # noqa: E402
 import schedule_trace  # noqa: E402
 import trace_metrics  # noqa: E402
 import workload_spec  # noqa: E402
@@ -68,6 +84,10 @@ def main() -> int:
     ap.add_argument("--heavy-model", default=None)
     ap.add_argument("--baseline-label", default="baseline")
     ap.add_argument("--candidate-label", default="candidate")
+    ap.add_argument("--allow-instance-mismatch", action="store_true",
+                    help="compare anyway when the two sides scheduled "
+                         "different instance counts; the verdict is then "
+                         "about the flags as much as the graph")
     ap.add_argument("--json", default=None)
     a = ap.parse_args()
 
@@ -88,6 +108,21 @@ def main() -> int:
               "solved against the SAME measured costs. Whatever the verdict "
               "would be, it is not about the rewrite.", file=sys.stderr)
         return 2
+
+    # The check that they scheduled the same amount of work.
+    bi = instances_per_model(base_s, known)
+    ci = instances_per_model(cand_s, known)
+    if bi != ci:
+        msg = ("the two schedules hold different instance counts, so they are "
+               "not two graphs -- they are two amounts of work:\n"
+               f"    {a.baseline_label:>12}: {bi}\n"
+               f"    {a.candidate_label:>12}: {ci}\n"
+               "  solve BOTH sides with --max-periodic-iters 1; the refinement "
+               "loop grows num_instances and the growth is not equal.")
+        if not a.allow_instance_mismatch:
+            print(f"REFUSING: {msg}", file=sys.stderr)
+            return 2
+        print(f"WARNING: {msg}", file=sys.stderr)
 
     _, base, _ = score(a.baseline_label, base_s, windows, critical,
                        a.heavy_model, known)
@@ -110,6 +145,7 @@ def main() -> int:
                    "candidate": a.candidate_schedule,
                    "accepted": bool(ok), "why": why,
                    "baseline_pdb_hash": bh, "candidate_pdb_hash": ch,
+                   "baseline_instances": bi, "candidate_instances": ci,
                    "baseline_terms": base.as_dict() if hasattr(base, "as_dict")
                    else str(base),
                    "candidate_terms": cand.as_dict() if hasattr(cand, "as_dict")

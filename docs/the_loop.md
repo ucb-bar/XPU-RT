@@ -162,16 +162,65 @@ gives back x2's p99 gain entirely, so granularity has an interior optimum below
 x4 — and it is still not better than not splitting. Consistent with B4's +76%:
 slicing OC adds work, and where nothing blocks, nothing buys it.
 
+### The rung that was accepted
+
+Three rejections do not demonstrate a loop; they demonstrate a filter. The
+`unfuse` rung is the one where the loop changed the schedule for the better and
+the objective said so.
+
+`unfuse_advice` fires on a fused op whose implementation fell back to the
+scalar reference — the historical 0.81× condition. That condition no longer
+occurs on any profile in the tree, because the curated fused kernel now exists,
+so the rung was **reconstructed**: `--keep-reference-ops
+conv2d_batchnorm2d_silu_s8` forces the fallback, and the loop responds to it.
+State that plainly — the loop's response is hardware-proven; the loop did not
+spontaneously find the condition.
+
+It then found a second thing, which was not reconstructed. Against the *curated
+fused* control (`ctrl`, same toolchain, same graph shape), the unfused graph is
+still faster:
+
+```
+              misses  worst_late    p99     makespan   standalone   heavy max
+  ctrl          0       0.000      8.230    898.097     961067       148.10
+  unfused       0       0.000      8.230    866.421     794037       116.42
+
+  ACCEPT — heavy-model max latency: 116.42 beats 148.10
+```
+
+218.128 → 176.370 ms on the detector, **−19.1%**, and better on makespan and on
+standalone cycles as well. Accepted at term 5.
+
+**This is a kernel bug, not a fact about fusion.** Splitting conv+BN+SiLU into
+three dispatches cannot be intrinsically cheaper than doing it in one pass. The
+reason it wins is that `rvv_conv2d_batchnorm2d_silu_s8_rvv_oc_blocked_bn_silu_epilogue.c`
+carries a slower conv inner loop than the standalone
+`rvv_conv2d_s8_rvv_vsmul_vnclip.c`, so the fused kernel gives back more than the
+fusion saves. The right response is to rebuild the fused kernel on the faster
+inner loop, which should beat both. Recorded as the loop working — it found a
+real 19% and named the term — not as a recommendation to stop fusing.
+
 ### The figure
 
 ```bash
+S=schedules/scheduled_networks_k1_mb_3model_4hz
 python scripts/plot_loop_iterations.py \
-  --iteration "baseline · dronet conv0 OC=32=<baseline schedule>" \
-  --iteration "split x2 · dronet conv0 OC=2x16=<x2 schedule>" \
-  --iteration "split x4 · dronet conv0 OC=4x8=<x4 schedule>" \
-  --windows-from <spec> --critical-models mlp_control,dronet \
-  --heavy-model yolov8_nano --out-dir out/figures
+  --iteration "1 · baseline: dronet conv0 OC=32=${S}_greedy_profiled.json" \
+  --iteration "2 · split dronet conv0 x2=${S}_split_x2_greedy_profiled.json" \
+  --iteration "3 · split dronet conv0 x4=${S}_split_x4_greedy_profiled.json" \
+  --iteration "4 · yolo control rebuild, same toolchain=${S}_yolo_ctrl_greedy_profiled.json" \
+  --iteration "5 · pin maxpool2d to the scalar kernel=${S}_yolo_pinmaxpool_greedy_profiled.json" \
+  --iteration "6 · unfuse yolo conv+BN+SiLU=${S}_yolo_unfused_greedy_profiled.json" \
+  --control 4 --judge-against 5=4 --judge-against 6=4 \
+  --windows-from data/toplevel/networks_k1_mb_3model_4hz.json \
+  --critical-models mlp_control,dronet --heavy-model yolov8_nano \
+  --window-ms 250 --out-dir out/figures --stem k1_loop_story \
+  --title "Four rewrites adjudicated on the K1 by the nine-term objective"
 ```
+
+→ `out/figures/k1_loop_story.png`, all four adjudicated rewrites in one
+figure, plus the per-rung PNGs. Panel d is the control; panels e and f are
+judged against it rather than against the shipping baseline.
 
 → `out/figures/k1_loop_evolution.png`, one panel per rung on the real machine
 lanes, each labelled with its dispatch count, miss count, p99, makespan and the
@@ -186,6 +235,25 @@ Every one of these exists because it failed silently at least once.
 * **`compare_candidates` refuses two schedules with the same `pdb_hash`.** They
   were solved against the same measured costs, so whatever the verdict is, it
   is not about the rewrite.
+* **`compare_candidates` refuses two schedules with different INSTANCE
+  COUNTS.** `pdb_hash` proves the two solves read different costs; nothing
+  proved they scheduled the same amount of *work*, and a schedule does not
+  record how many refinement iterations produced it. The 4 Hz baseline was
+  re-solved without `--max-periodic-iters 1`, the loop grew `mlp_control` from
+  32 instances to 91 and `dronet` from 10 to 28, and it was written under the
+  baseline's own filename — after three verdicts had been recorded against the
+  826-dispatch version. Every term still computed, `pdb_hash` still differed,
+  and the figure rendered from it reported **ACCEPT** for a DroNet rung that
+  had been adjudicated REJECT. A rewrite changes how many dispatches an
+  instance is made of; it must not change how many instances there are.
+  `plot_loop_iterations` makes the same check, from the same implementation
+  (`schedule_scoring.instances_per_model`), and refuses to draw the panel.
+* **A control build is not a rewrite.** The yolo `ctrl` rebuild is 4.5 ms
+  faster than the shipping baseline on the same graph, because they came off
+  different toolchains. Fed to the objective as a rung it "accepts", crediting
+  a compiler to a rewrite that did not happen. Mark it `--control` in the
+  figure and judge the real rung against it, not against the shipping build —
+  `--judge-against 6=4`.
 * **A per-dispatch profile miss costs ZERO, silently.** Check the row count
   against the dispatch count; `profile_loader`'s strict mode only catches a
   wholly absent CSV.

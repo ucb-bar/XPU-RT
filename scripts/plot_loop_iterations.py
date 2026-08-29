@@ -8,6 +8,14 @@ schedule the solver actually emitted. Underneath each panel is the verdict
 decided on -- because "rejected" without the term is the thing this project
 kept doing by eye, on a service-time percentage that ranks ninth of nine.
 
+EACH RUNG NAMES THE BASELINE IT WAS JUDGED AGAINST, and it is not always the
+first panel. The yolo unfuse rung was measured against a REBUILD of the
+detector (`ctrl`) rather than against the shipping baseline, because those two
+came off different toolchains -- judging it against panel a would credit the
+rewrite with a compiler difference. `--judge-against` says so on the panel
+instead of leaving it to a caption nobody reads. Panels whose instance counts
+disagree are refused outright: that is two amounts of work, not two graphs.
+
 Read the panels as a sequence: a rung that adds dispatches should visibly
 change the weave, and if it does not, the rewrite did not do what the hint
 asked for. `diff_dispatch_graph` proves the graph changed; this shows whether
@@ -37,6 +45,7 @@ sys.path.insert(0, os.path.join(_REPO, "xpu-rt"))
 sys.path.insert(0, _HERE)
 
 import candidate_objective as objective  # noqa: E402
+import schedule_scoring as scoring  # noqa: E402
 from schedule_scoring import score  # noqa: E402
 import figstyle  # noqa: E402
 import job_names  # noqa: E402
@@ -90,8 +99,19 @@ def panel(ax, schedule, known, window_ms, title, subtitle):
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--iteration", action="append", required=True,
-                    help="LABEL=scheduled_*.json, repeatable; the FIRST is the "
-                         "baseline every later one is judged against")
+                    help="LABEL=scheduled_*.json, repeatable; panel 1 is the "
+                         "default baseline for every later one")
+    ap.add_argument("--control", action="append", default=[], metavar="PANEL",
+                    help="1-based panel index that is a CONTROL BUILD, not a "
+                         "rewrite -- a rebuild of the same graph. It gets no "
+                         "verdict: the objective would happily 'accept' it and "
+                         "credit a toolchain difference to a rewrite that did "
+                         "not happen. Later rungs may still be judged against it.")
+    ap.add_argument("--judge-against", action="append", default=[],
+                    metavar="PANEL=BASELINE",
+                    help="1-based panel indices: '5=4' judges the fifth rung "
+                         "against the fourth rather than against panel 1. Use "
+                         "it whenever a rung has its own control build.")
     ap.add_argument("--windows-from", default=None)
     ap.add_argument("--critical-models", default="")
     ap.add_argument("--heavy-model", default=None)
@@ -111,17 +131,59 @@ def main() -> int:
     outcomes = [score(lbl, sch, windows, critical, a.heavy_model, known)[1]
                 for lbl, sch, _ in iters]
 
+    # Which panel each rung is judged against; panel 1 unless told otherwise.
+    against = {i: 0 for i in range(len(iters))}
+    for spec in a.judge_against:
+        try:
+            k, b = (int(x) - 1 for x in spec.split("=", 1))
+        except ValueError:
+            raise SystemExit(f"--judge-against needs PANEL=BASELINE, got {spec!r}")
+        if not (0 <= b < k < len(iters)):
+            raise SystemExit(
+                f"--judge-against {spec}: a rung is judged against an EARLIER "
+                f"panel, and both must be in 1..{len(iters)}")
+        against[k] = b
+
+    letters = [chr(ord("a") + i) for i in range(len(iters))]
+    controls = set()
+    for spec in a.control:
+        k = int(spec) - 1
+        if not (0 <= k < len(iters)):
+            raise SystemExit(f"--control {spec}: no such panel")
+        controls.add(k)
+
     verdicts = ["baseline"]
-    for o in outcomes[1:]:
-        ok, why = objective.accept(o, outcomes[0])
+    for k in range(1, len(iters)):
+        b = against[k]
+        if k in controls:
+            verdicts.append("control build of the same graph — no verdict")
+            continue
+        # Two amounts of work are not two graphs. Same check the verdict CLI
+        # makes, from the same implementation.
+        bi = scoring.instances_per_model(iters[b][1], known)
+        ci = scoring.instances_per_model(iters[k][1], known)
+        if bi != ci:
+            raise SystemExit(
+                f"panel {letters[k]} holds {ci} instances and its baseline "
+                f"{letters[b]} holds {bi}: they were solved over different "
+                f"amounts of work and no verdict between them is meaningful. "
+                f"Re-solve both with --max-periodic-iters 1.")
+        ok, why = objective.accept(outcomes[k], outcomes[b])
         # `why` names the deciding term and both values; the term alone is
         # what the panel needs -- the numbers are already in the stats line.
         tail = why.split("--", 1)[-1].strip()
-        term = tail.split(":", 1)[0].strip() if ":" in tail else tail
-        verdicts.append(("ACCEPT on " if ok else "REJECT on ") + term)
+        head = f"{'ACCEPT' if ok else 'REJECT'} vs {letters[b]}"
+        # A tie names no term -- it is a rejection precisely BECAUSE no term
+        # separated them -- so it reads as a clause, not as "on <term>".
+        verdicts.append(f"{head} on {tail.split(':', 1)[0].strip()}"
+                        if ":" in tail else f"{head} \u2014 {tail}")
 
     n = len(iters)
-    fig, axes = plt.subplots(n, 1, figsize=(figstyle.DOUBLE_COL, 34 * n * figstyle.MM),
+    # Built at final size: panels shrink to stay inside the page rather than
+    # the figure growing past it and being scaled down later, which is what
+    # turns 6 pt type into 4 pt type.
+    per = min(34.0, (170.0 - 6.0) / n) * figstyle.MM
+    fig, axes = plt.subplots(n, 1, figsize=(figstyle.DOUBLE_COL, per * n + 6 * figstyle.MM),
                              squeeze=False)
     seen = {}
     for i, ((lbl, sch, path), o, v) in enumerate(zip(iters, outcomes, verdicts)):

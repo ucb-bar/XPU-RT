@@ -24,8 +24,33 @@ from collections import defaultdict
 from typing import Dict, List, Optional, Sequence, Tuple
 
 import candidate_objective as objective
+import job_names
 import schedule_trace
 import trace_metrics
+
+
+def instances_per_model(schedule: dict, known=None) -> Dict[str, int]:
+    """`{model: number of distinct instances}` for a solved schedule.
+
+    WHY ANY CONSUMER OF `score` NEEDS THIS. Two outcomes are only comparable
+    if they were solved over the same amount of work, and nothing in a
+    schedule says how many refinement iterations produced it. The 4 Hz
+    baseline was re-solved without `--max-periodic-iters 1`; the loop grew
+    mlp_control from 32 instances to 91 and wrote the result under the
+    baseline's own name. Every term still computed, `pdb_hash` still differed
+    from the candidate's, and the figure rendered from it reported the
+    opposite verdict for a rung that had already been adjudicated.
+
+    Counts INSTANCES, not dispatches: a rewrite is expected to change how many
+    dispatches an instance is made of, and must not change how many instances
+    there are. So unequal counts mean the solver flags differed, not the graph.
+    """
+    seen: Dict[str, set] = {}
+    for d in (schedule.get("dispatches") or {}).values():
+        j = d.get("job_name") or ""
+        if j:
+            seen.setdefault(job_names.model_of(j, known), set()).add(j)
+    return {m: len(v) for m, v in sorted(seen.items())}
 
 
 def heavy_stats(rows: Sequence[dict], model: str) -> Tuple[float, float]:
