@@ -21,16 +21,39 @@ Two invariants this module exists to protect:
    file is absent, and the scheduler wiring is off unless a model is explicitly
    installed. Nothing changes for anyone who has not run the measurement.
 
-What the measurement actually said (K1 / SpaceMiT X60, 8 harts, 2 clusters of 4
-sharing a 512K L2 each):
+What the measurement said, ON THE IREE PATH, and why that qualifier now
+matters (K1 / SpaceMiT X60, 8 harts, 2 clusters of 4 sharing a 512K L2 each):
 
     median slowdown, co-runner on the SAME cluster  : 1.043x
     median slowdown, co-runner on the OTHER cluster : 1.185x
 
-That is the *opposite* of the shared-L2 intuition. Cross-cluster co-running is
-worse than sharing an L2, so "spread the work across clusters" is the wrong
-default on this part. See :func:`ContentionModel.median_factor` and the
-regression test in ``xpu-rt/tests/test_contention_model.py``.
+That is the *opposite* of the shared-L2 intuition -- cross-cluster co-running
+worse than sharing an L2, so "spread the work across clusters" would be the
+wrong default on this part.
+
+**IT DOES NOT REPRODUCE ON THE PATH WE SHIP.** Those numbers come from
+`iree-benchmark-module` running `.vmfb` files, and the IREE path is retired;
+every kernel on this board today comes out of ModelBlaster's curated tree.
+Re-measured with `runtime/scripts/k1_contention_mb.py` under a paired design
+(solo re-taken immediately before each arm), one co-runner gives:
+
+    same cluster,  4 samples : 0.999  1.012  1.010  1.051
+    other cluster, 4 samples : 1.061  0.995  1.002  1.004
+
+Two distributions that straddle 1.0 and overlap completely. Arms with three
+and four co-runners land inside the same band and are not monotonic in
+co-runner count, which cannot be physical. So contention is BELOW THIS
+MEASUREMENT'S RESOLUTION at these co-runner counts, and neither artifact
+should be installed as a model today.
+
+`artifacts/k1_run/CONTENTION_FINDINGS.md` has the full account, including the
+three ways the re-measurement was wrong before it was right -- a co-runner
+that was not pinned where it claimed, a survivor check that counted itself,
+and an unpaired design whose drift was the size of its effect.
+
+Nothing here changes by default: :func:`load` returns ``None`` when the
+artifact is absent and the scheduler wiring is off unless a model is
+explicitly installed.
 """
 
 from __future__ import annotations
