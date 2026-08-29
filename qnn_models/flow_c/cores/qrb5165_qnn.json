@@ -40,7 +40,10 @@
         "ctx_suffix": "Hta",
         "exec_serialized": true,
         "gate_spin_us": 200,
-        "sched_fifo_prio": 0
+        "sched_fifo_prio": 0,
+        "exec_cores": [
+          7
+        ]
       }
     },
     {
@@ -55,13 +58,20 @@
         "avgpool2d",
         "avgpool2d_s8",
         "batchnorm2d_s8",
+        "cast_i8_to_f16",
+        "cat3_c1_f16",
         "concat",
         "concat_s8",
         "conv2d_s8",
         "elu_s8",
+        "flatten",
+        "gemm_f16",
         "hardswish",
         "hardswish_s8",
+        "linear_f16",
         "linear_s8",
+        "lstm_f16",
+        "lstm_s8",
         "maxpool2d",
         "maxpool2d_s8",
         "mul_s8",
@@ -95,14 +105,18 @@
         "ctx_suffix": "Dsp",
         "exec_serialized": true,
         "gate_spin_us": 200,
-        "sched_fifo_prio": 0
+        "sched_fifo_prio": 0,
+        "exec_cores": [
+          6
+        ]
       }
     },
     {
       "name": "cpu0",
       "kind": "cpu",
       "harts": [
-        5
+        5,
+        4
       ],
       "description": "Kryo 585 through libQnnCpu. Runs everything; the op package threads internally, so the host runtime gives it one lane thread and does not tile inside a dispatch.",
       "capabilities": [
@@ -112,16 +126,23 @@
         "avgpool2d_s8",
         "batchnorm2d",
         "batchnorm2d_s8",
+        "cast_i8_to_f16",
+        "cat3_c1_f16",
         "concat",
         "concat_s8",
         "conv2d",
         "conv2d_s8",
         "elu",
         "elu_s8",
+        "flatten",
+        "gemm_f16",
         "hardswish",
         "hardswish_s8",
         "linear",
+        "linear_f16",
         "linear_s8",
+        "lstm_f16",
+        "lstm_s8",
         "maxpool2d",
         "maxpool2d_s8",
         "mul",
@@ -159,7 +180,12 @@
         "gate_spin_us": 2000,
         "gate_spin_note": "2 ms of spin before the deadline: this lane carries the 500 Hz control policy, and a timer wakeup on an idle-clocked A78 costs ~1.4 ms \u2014 measured, see flow_c/README.md.",
         "sched_fifo_prio": 40,
-        "sched_fifo_note": "Applied to this lane only. Measured over 4 reps x 32 mlp_control instances: SCHED_OTHER gave exec max 2.22 ms and 3 deadline misses; SCHED_FIFO 40 on this lane alone gave max 0.106 ms and zero misses, with no makespan change. Do NOT raise it on the dsp/hta lanes \u2014 they block in FastRPC and would starve the very callbacks they wait on, which is what made a process-wide SCHED_FIFO regress in the earlier hand-written runtime."
+        "sched_fifo_note": "Applied to this lane only. Measured over 4 reps x 32 mlp_control instances: SCHED_OTHER gave exec max 2.22 ms and 3 deadline misses; SCHED_FIFO 40 on this lane alone gave max 0.106 ms and zero misses, with no makespan change. Do NOT raise it on the dsp/hta lanes \u2014 they block in FastRPC and would starve the very callbacks they wait on, which is what made a process-wide SCHED_FIFO regress in the earlier hand-written runtime.",
+        "exec_cores": [
+          4,
+          5
+        ],
+        "exec_cores_note": "Where the QNN CPU op package's own threads may run. Measured on fused_full fp32 (30 iters): all cores 1.46 ms, A78 pair (4,5) 1.15 ms, A78+X1 (4-7) 1.05 ms, A55 little cluster (0-3) 3.95 ms. Two big cores buy everything the whole machine does, so the lane takes 4,5 and leaves 6 and 7 to the dsp and hta lanes' wake-ups."
       }
     },
     {
@@ -191,8 +217,10 @@
         "ctx_suffix": "Gpu",
         "exec_serialized": false,
         "gate_spin_us": 200,
-        "sched_fifo_prio": 0
+        "sched_fifo_prio": 0,
+        "exec_cores": []
       }
     }
-  ]
+  ],
+  "_capability_note": "Capability lists are per op *kind*, which is an approximation: some rejections are config-specific rather than kind-specific. fused_full is the case in point \u2014 its int8 graph fails CPU compose on a Reshape op config even though the yolov8n head's int8 reshapes compose on CPU fine. What actually composed is recorded per (tile, backend) in measurements/, and the binding manifest names one context per backend, so a kind-level 'yes' that the board contradicts shows up as a missing context rather than a wrong schedule."
 }

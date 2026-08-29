@@ -209,6 +209,14 @@ flow_c/
 
 ## Known gaps
 
+* **A CPU-heavy network's real cost is not its isolated cell.** FusedSensorNet
+  measures 1.147 ms alone under its lane's exec mask and ~6.4 ms (p90 10.2 ms)
+  inside the 4-way schedule. The lane's execute mask only binds the lane
+  thread; the QNN CPU op package builds its thread pool at bringup, on the
+  main thread, with full-machine affinity — so it contends with every other
+  lane, the real-time-gated one included. Networks on their own silicon
+  (dronet on HTA, yolov8n on DSP) match their cells to within 5%.
+
 * **Tensor handoff is name-matched and currently finds nothing.** The
   runtime caches each graph's outputs by tensor name and feeds a later
   graph's identically-named input; the yolov8n backbone→head pair does not

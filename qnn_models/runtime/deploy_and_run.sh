@@ -30,6 +30,10 @@
 #   XPURT_DSP_CTX_BUDGET    lazy DSP context budget (multi-graph runtimes)
 #   XPURT_HTA_CTX_BUDGET    lazy HTA context budget
 #   LOG_DIR            where to save the captured trace (default runs/<gen_dir basename>)
+#   RUN_TIMEOUT        board-side SIGKILL deadline in seconds (default 120). A
+#                      runtime that wedges its cores — e.g. two real-time lanes
+#                      spinning on one — can take the whole board out of reach
+#                      of ssh, so the run is never left unbounded.
 
 set -uo pipefail
 
@@ -122,7 +126,7 @@ cd "$BOARD_DIR_ARG"
 LD_LIBRARY_PATH=$QNN_SDK_ROOT/lib/target \\
 ADSP_LIBRARY_PATH="$ADSP_FULL" \\
 $env_lines \\
-./qnn_runtime
+timeout -s KILL ${RUN_TIMEOUT:-120} ./qnn_runtime
 EOF
 RC=$?
 
