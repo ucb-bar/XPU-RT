@@ -59,7 +59,8 @@ def resolve(wl: dict) -> tuple[dict, dict, dict]:
         ir = irmod.load(spec, work_dir=_p("gen", "ir"), quant=doc["ir"].get("quant", "int8"))
         ir["name"] = net["name"]
         irs[net["name"]] = ir
-        bsets[net["name"]] = bmod.load(doc_path, ir)
+        bsets[net["name"]] = bmod.load(doc_path, ir,
+                                       repo_qnn_root=os.path.join(REPO, "qnn_models"))
     return irs, bsets, reg
 
 
@@ -75,10 +76,18 @@ def stage_ir(wl: dict, args) -> None:
             blocked = {k: v for k, v in f.allowed.items() if v}
             print(f"  {f.binding.name:22} ir ops {f.binding.first:>3}..{f.binding.last:<3} "
                   f"({f.binding.last - f.binding.first + 1:>3})  runs on: {ok}")
+            print(f"      range from: {f.binding.derived_from}")
             for k, v in blocked.items():
                 print(f"      {k:4} blocked by {', '.join(v)}")
         for note in bmod.reconcile(feas):
             print(f"  note: {note}")
+        try:
+            checks = bmod.verify_against_artifacts(
+                bset, os.path.join(REPO, "qnn_models"), mb.onnx_python())
+        except Exception as exc:
+            checks = [f"artifact check unavailable: {exc}"]
+        for c in checks:
+            print(f"  artifact check: {c}")
     # ONNX export from the same module, for the QNN converter side.
     if args.export_onnx:
         for net in wl["networks"]:
