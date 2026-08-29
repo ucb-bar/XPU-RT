@@ -88,6 +88,7 @@ def backend_assignments(available: List[str], machines=("cpu_p", "cpu_e")) -> Li
 #: so the schema is written once, here.
 FUSION_CONTRACT = "modelblaster.fusion_hints/v1"
 SPLIT_CONTRACT = "modelblaster.split_hints/v1"
+SHARD_CONTRACT = "modelblaster.shard_hints/v1"
 
 
 def fusion_hint(groups_by_network: Dict[str, List[List[int]]], reason: str,
@@ -115,6 +116,34 @@ def split_hint(splits_by_network: Dict[str, List[Dict[str, int]]], reason: str,
         "reason": reason,
         "networks": [{"network": net, "split_ops": ops}
                      for net, ops in sorted(splits_by_network.items()) if ops],
+    }
+    if provenance:
+        doc["_provenance"] = provenance
+    return doc
+
+
+def shard_hint(shards_by_network: Dict[str, List[Dict[str, int]]], reason: str,
+               provenance: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    """`{network: [{"op": id, "n_shards": n}, ...]}` -> shard_hints/v1.
+
+    SHARD IS NOT SPLIT, and the two contracts are separate because the graphs
+    they produce are different. A split CUTS one dispatch into n dispatches:
+    the graph grows, the scheduler sees n independent pieces it may place
+    anywhere, and the cost model gets n new rows. A shard leaves the dispatch
+    count alone and says this ONE dispatch is compiled to run its output
+    channels across n cores at once -- same node, same edges, one cost that
+    depends on the width it was given.
+
+    So `n_shards` is a property of a dispatch, not a rewrite of the graph, and
+    the field is spelled differently from `n_splits` on purpose: a hint file
+    that confuses them would be accepted by the wrong applier and silently do
+    the other thing.
+    """
+    doc: Dict[str, Any] = {
+        "contract": SHARD_CONTRACT,
+        "reason": reason,
+        "networks": [{"network": net, "shard_ops": ops}
+                     for net, ops in sorted(shards_by_network.items()) if ops],
     }
     if provenance:
         doc["_provenance"] = provenance

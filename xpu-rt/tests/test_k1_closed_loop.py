@@ -65,6 +65,7 @@ for _p in (_REPO, _XPURT, os.path.join(_REPO, "scripts")):
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
+import bundle  # noqa: E402
 import candidate_objective  # noqa: E402
 import compile_advice  # noqa: E402
 import dispatch_lineage  # noqa: E402
@@ -1108,3 +1109,137 @@ class UnfuseReachesTheRewriter(unittest.TestCase):
                            "--out", os.path.join(d, "hint.json")])
         self.assertEqual(rc, 1, "the bridge emitted an unfuse for a working "
                                 "curated fused kernel")
+
+
+class ShardReachesTheRewriter(unittest.TestCase):
+    """`shard_advice` -> `advice_to_shard_hint` -> `apply_shard_hint`.
+
+    The fifth verb, and the last to get a chain. `shard_advice` has existed
+    since `compile_advice.py` was written but could never fire: it is gated on
+    the same model being profiled at more than one core width, and for most of
+    this project's life only `topo_0` existed.
+
+    What this pins is the property that distinguishes shard from split, and it
+    is the one a reader is most likely to get wrong: **the dispatch count does
+    not change.** A split cuts one dispatch into n and renumbers everything
+    after it (hence `id_remap`). A shard annotates ONE op with a width and
+    leaves the graph alone -- same ids, same edges, same count. A shard
+    applier that quietly behaved like a split would still produce a graph that
+    builds and runs.
+    """
+
+    #: N=1024 and N=256 both divide 8. The third, N=100, does not divide any
+    #: width above 4 -- it is here so the walk-down is exercised rather than
+    #: assumed.
+    def _ir(self):
+        def lin(did, n, k):
+            return {"name": f"l{did}", "op": "linear_s8",
+                    "inputs": [f"t{did}"], "outputs": [f"t{did + 1}"],
+                    "weight": f"l{did}.w", "bias": f"l{did}.b",
+                    "shape": {"M": 8, "K": k, "N": n},
+                    "dispatch_id": did, "hardware_target": "any",
+                    "depends_on": [] if did == 0 else [did - 1],
+                    "quant": {"scale_a": 0.1, "scale_b": 0.1,
+                              "scale_out": 0.1, "activation_min": -128,
+                              "activation_max": 127}}
+        return {"name": "m", "version": 1, "quant": "int8", "tensors": {},
+                "ops": [lin(0, 1024, 256), lin(1, 256, 1024), lin(2, 100, 256)]}
+
+    def _advice(self, dispatch_id, n_cores=8, efficiency=0.61):
+        """One `shard` item, in the shape `shard_advice` really emits."""
+        return compile_advice.Advice(
+            model="m", dispatch_id=dispatch_id, recommendation="shard",
+            priority=1, confidence="medium",
+            constraints={"n_cores": n_cores,
+                         "legal_resources": ["k1_cluster0", "k1_cluster1"]},
+            evidence=compile_advice.Evidence(
+                extra={"cost_1core_ms": 11.1,
+                       f"cost_{n_cores}core_ms": 2.26,
+                       "measured_speedup": 4.91,
+                       "parallel_efficiency": efficiency,
+                       "sync_overhead_us": 6982.0}))
+
+    def _bridge_then_apply(self, items, d):
+        ir_path = os.path.join(d, "graph.json")
+        with open(ir_path, "w") as f:
+            json.dump(self._ir(), f)
+        advice_path = os.path.join(d, "compile_advice.json")
+        compile_advice.write_advice(advice_path, items, schedule_id="spec")
+        hint_path = os.path.join(d, "hint.json")
+        rc = _run_cli("advice_to_shard_hint.py",
+                      ["--advice", advice_path, "--ir", ir_path,
+                       "--model", "m", "--out", hint_path])
+        return rc, ir_path, hint_path
+
+    def test_the_bridge_emits_a_hint_the_rewriter_accepts(self):
+        rewriter = _load_mb("apply_shard_hint")
+        with tempfile.TemporaryDirectory() as d:
+            rc, ir_path, hint_path = self._bridge_then_apply(
+                [self._advice(0), self._advice(1)], d)
+            self.assertEqual(rc, 0)
+            hint = json.load(open(hint_path))
+            self.assertEqual(hint["contract"], bundle.SHARD_CONTRACT)
+            ops = hint["networks"][0]["shard_ops"]
+            self.assertEqual({o["op"]: o["n_shards"] for o in ops},
+                             {0: 8, 1: 8})
+
+            out = rewriter.apply_shard_hint(json.load(open(ir_path)), ops)
+            self.assertEqual(
+                [o.get("shard_factor") for o in out["ops"]], [8, 8, None],
+                "the annotated ops, and only the annotated ops")
+
+    def test_the_graph_is_not_rewritten_only_annotated(self):
+        """The property that separates shard from split."""
+        rewriter = _load_mb("apply_shard_hint")
+        ir = self._ir()
+        out = rewriter.apply_shard_hint(ir, [{"op": 0, "n_shards": 8}])
+        self.assertEqual(len(out["ops"]), len(ir["ops"]))
+        self.assertEqual([o["dispatch_id"] for o in out["ops"]],
+                         [o["dispatch_id"] for o in ir["ops"]])
+        self.assertEqual([o["depends_on"] for o in out["ops"]],
+                         [o["depends_on"] for o in ir["ops"]])
+        self.assertNotIn("id_remap", out,
+                         "a shard needs no id remap -- every dispatch id "
+                         "still means the same dispatch")
+
+    def test_a_width_that_does_not_divide_is_walked_down_not_rounded(self):
+        """N=100 with 8 advised: 8, 7, 6 do not divide; 5 does.
+
+        Rounding UP would name a width `shard_conv_weights` skips, and a skip
+        there is invisible -- the build succeeds and is simply not sharded.
+        """
+        with tempfile.TemporaryDirectory() as d:
+            rc, _, hint_path = self._bridge_then_apply([self._advice(2)], d)
+            self.assertEqual(rc, 0)
+            ops = json.load(open(hint_path))["networks"][0]["shard_ops"]
+            self.assertEqual(ops, [{"op": 2, "n_shards": 5}])
+
+    def test_a_width_below_measured_efficiency_is_refused(self):
+        with tempfile.TemporaryDirectory() as d:
+            rc, _, _ = self._bridge_then_apply(
+                [self._advice(0, efficiency=0.2)], d)
+            self.assertEqual(rc, 1, "0.2 efficiency means more than half the "
+                                    "added cores go to the barrier")
+
+    def test_the_rewriter_refuses_a_width_that_does_not_divide(self):
+        """The bridge walks widths down, but the rewriter is the backstop."""
+        rewriter = _load_mb("apply_shard_hint")
+        with self.assertRaises(ValueError) as cm:
+            rewriter.apply_shard_hint(self._ir(), [{"op": 2, "n_shards": 8}])
+        self.assertIn("silently unsharded", str(cm.exception))
+
+    def test_the_rewriter_refuses_a_split_hint(self):
+        """The contracts spell the count differently on purpose."""
+        rewriter = _load_mb("apply_shard_hint")
+        with tempfile.TemporaryDirectory() as d:
+            ir_path = os.path.join(d, "graph.json")
+            with open(ir_path, "w") as f:
+                json.dump(self._ir(), f)
+            hint_path = os.path.join(d, "split.json")
+            with open(hint_path, "w") as f:
+                json.dump(bundle.split_hint({"m": [{"op": 0, "n_splits": 2}]},
+                                            reason="wrong verb"), f)
+            rc = rewriter.main(["--ir", ir_path, "--hint", hint_path,
+                                "--network", "m",
+                                "--out", os.path.join(d, "out.json")])
+        self.assertEqual(rc, 2)
