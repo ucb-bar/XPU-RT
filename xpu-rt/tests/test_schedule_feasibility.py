@@ -38,9 +38,12 @@ chk = _load(os.path.join(_REPO, "scripts", "check_schedule_feasibility.py"),
 TOL = 1e-6
 
 
-def _d(start, dur, target="CPU_P#0", deps=()):
-    return {"start_time": start, "duration": dur, "hardware_target": target,
-            "dependencies": list(deps)}
+def _d(start, dur, target="CPU_P#0", deps=(), impl=None):
+    d = {"start_time": start, "duration": dur, "hardware_target": target,
+         "dependencies": list(deps)}
+    if impl is not None:
+        d["impl"] = impl
+    return d
 
 
 class DoubleBookingIsFoundInFull(unittest.TestCase):
@@ -127,6 +130,44 @@ class TargetsMustExistOnTheBoard(unittest.TestCase):
     def test_every_hart_of_the_cluster_is_allowed(self):
         d = {f"d{i}": _d(float(i), 1.0, f"CPU_P#{i}") for i in range(4)}
         self.assertEqual(chk.find_out_of_range_targets(d, 4), [])
+
+
+class AnImplementationMustExistWhereItWasPlaced(unittest.TestCase):
+    """The Level-2 hazard: the solver chooses an impl PER DISPATCH, and
+    nothing between that choice and the board re-checks it.
+
+    This one is not a slowdown. `smt.vmadot` is unimplemented on harts 4-7, so
+    an ime dispatch on CPU_E takes SIGILL and the run produces no output --
+    the failure arrives as a missing results file, not as a wrong number.
+    """
+
+    def test_ime_on_cluster_one_is_refused(self):
+        d = {"a": _d(0.0, 1.0, "CPU_E#1", impl="ime")}
+        bad = chk.find_illegal_implementations(d)
+        self.assertEqual(len(bad), 1)
+        self.assertEqual(bad[0]["impl"], "ime")
+        self.assertIn("CPU_E", bad[0]["why"])
+
+    def test_ime_on_cluster_zero_is_allowed(self):
+        d = {f"d{i}": _d(float(i), 1.0, f"CPU_P#{i}", impl="ime")
+             for i in range(4)}
+        self.assertEqual(chk.find_illegal_implementations(d), [])
+
+    def test_rvv_is_legal_on_both_clusters(self):
+        d = {"a": _d(0.0, 1.0, "CPU_P#0", impl="rvv"),
+             "b": _d(0.0, 1.0, "CPU_E#0", impl="rvv")}
+        self.assertEqual(chk.find_illegal_implementations(d), [])
+
+    def test_a_dispatch_with_no_impl_is_not_guessed_at(self):
+        """Every schedule written before `postprocessing` recorded `impl` is
+        in this state. Defaulting them to rvv would be legal everywhere and
+        would prove nothing."""
+        d = {"a": _d(0.0, 1.0, "CPU_E#1")}
+        self.assertEqual(chk.find_illegal_implementations(d), [])
+
+    def test_a_sharded_target_is_checked_per_core(self):
+        d = {"a": _d(0.0, 1.0, "CPU_E#0+CPU_E#1", impl="ime")}
+        self.assertEqual(len(chk.find_illegal_implementations(d)), 2)
 
 
 if __name__ == "__main__":

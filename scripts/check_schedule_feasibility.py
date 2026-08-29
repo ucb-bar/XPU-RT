@@ -45,6 +45,8 @@ from typing import Any, Dict, List, Tuple
 sys.path.insert(0, os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "xpu-rt"))
 
+from capabilities import (  # noqa: E402
+    K1_CAPABILITIES, machine_type_prefix)
 from schedule_trace import split_hardware_target  # noqa: E402
 
 #: Physical harts on the K1: two 4-core clusters. A target indexing past this
@@ -171,6 +173,49 @@ def find_out_of_range_targets(dispatches, harts_per_cluster: int):
     return bad
 
 
+def find_illegal_implementations(dispatches, capabilities=None):
+    """Dispatches asking for an implementation their core cannot execute.
+
+    WHY THIS IS NOT REDUNDANT WITH `capabilities.check_profile_hw_map`. That
+    check runs when the workload is BUILT and sees one implementation per
+    machine KIND -- it is the right guard for a Level-1 config that declares
+    `profile_hw: {cpu_p: ime, cpu_e: rvv_x60}`. It cannot see a Level-2
+    schedule, where the solver picks an implementation PER DISPATCH from
+    `build_machine_combinations_with_impls` and writes it into the dispatch as
+    `impl`. Nothing between that choice and the board re-checks it, and the
+    two-block transformer schedule is the first artifact in this repo that
+    exercises both clusters and both implementations at once.
+
+    WHAT THE BOARD DOES IF THIS IS WRONG, which is why it is INFEASIBLE and
+    not a warning. Unlike double-booking -- which merely runs slow -- an IME
+    dispatch scheduled onto cluster 1 does not degrade. `smt.vmadot` is not
+    implemented on harts 4-7: the process takes SIGILL and the run dies with
+    no output at all, so the failure arrives as a missing results file rather
+    than as a wrong number.
+
+    A dispatch with no `impl` is not checked. Every schedule written before
+    `postprocessing.output_scheduled_json` learned to record it is in that
+    state, and inventing `rvv` for them would be legal everywhere and prove
+    nothing.
+    """
+    caps = K1_CAPABILITIES if capabilities is None else capabilities
+    bad = []
+    for key, d in dispatches.items():
+        impl = d.get("impl")
+        if not impl:
+            continue
+        raw = str(d.get("hardware_target", ""))
+        for part in [p for p in raw.split("+") if p]:
+            kind = machine_type_prefix(part)
+            allowed = caps.get(kind)
+            if allowed is None or impl in allowed:
+                continue
+            bad.append({"key": key, "target": part, "impl": impl,
+                        "why": f"{kind} executes {sorted(allowed)}, not "
+                               f"{impl!r}"})
+    return bad
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--schedule", required=True)
@@ -193,6 +238,7 @@ def main() -> int:
     dep_bad = find_dependency_violations(dispatches, a.tol_ms)
     fwd = find_forward_edges(dispatches, a.tol_ms)
     oor = find_out_of_range_targets(dispatches, a.harts_per_cluster)
+    illegal = find_illegal_implementations(dispatches)
 
     makespan = max(float(d.get("start_time", 0.0)) + float(d.get("duration", 0.0))
                    for d in dispatches.values())
@@ -239,15 +285,26 @@ def main() -> int:
         print(f"\nINFEASIBLE: {len(oor)} target(s) outside this machine.")
         for r in oor[:a.top]:
             print(f"    {r['key']}: {r['target']} -- {r['why']}")
+    if illegal:
+        ok = False
+        print(f"\nINFEASIBLE: {len(illegal)} dispatch(es) request an "
+              f"implementation their core cannot execute. This one SIGILLs on "
+              f"the board -- it does not run slowly, it produces no output.")
+        for r in illegal[:a.top]:
+            print(f"    {r['key']}: {r['impl']} on {r['target']} -- {r['why']}")
+        if len(illegal) > a.top:
+            print(f"    ... and {len(illegal) - a.top} more")
 
     if ok:
         print("\nFEASIBLE: no double-booking, no dependency violation, no "
-              "forward edge, every target on the board.")
+              "forward edge, every target on the board, every implementation "
+              "available where it was placed.")
     if a.json:
         json.dump({"schedule": a.schedule, "feasible": ok,
                    "n_dispatches": len(dispatches), "makespan_ms": makespan,
                    "overlaps": overlaps, "dependency_violations": dep_bad,
-                   "forward_edges": fwd, "out_of_range_targets": oor},
+                   "forward_edges": fwd, "out_of_range_targets": oor,
+                   "illegal_implementations": illegal},
                   open(a.json, "w"), indent=1)
         print(f"wrote {a.json}")
     return 0 if ok else 1
