@@ -1,0 +1,5 @@
+# Everything under gen/ is regenerable by flow_c.py:
+#   gen/ir/      extract_graph output (graph.json, weights.npz, io.npz)
+#   gen/onnx/    torch.onnx.export of the same modules
+#   gen/runtime/ emitted dispatch_table.h + runtime_main.cpp
+gen/
