@@ -818,25 +818,34 @@ order they cost time:
 
 ### Where each piece of the loop actually lives
 
-The modules are not named after the concepts, which has cost more than one
-person an afternoon. There is no `granularity.py`, `rewrite.py`, `bundle.py` or
-`decision.py`; every one of those concepts exists under another name, and one
-of them was genuinely missing until recently.
+The modules are not all named after the concepts, which has cost more than one
+person an afternoon.
 
-| the concept | what it is called here |
+| the concept | where it lives |
 |---|---|
-| granularity analysis | `xpu-rt/granularity_advisor.py` (analysis), `scripts/granularity_loop.py` (ranked candidates + hint) |
+| granularity analysis | `xpu-rt/granularity_advisor.py` (the verdict) |
+| candidate generation + scoring | `xpu-rt/rewrite.py` (`Candidate`, `score_candidates`) |
+| the driver | `scripts/granularity_loop.py` — verdict → scored candidates → Contract-2 hint |
+| hint assembly | `xpu-rt/bundle.py` |
 | the rewriters | three, not one: `ModelBlaster/pipeline/apply_{fusion,split,unfuse}_hint.py` |
-| candidate bundle | `scripts/run_xpurt_bundle.py`, `scripts/run_bundle_firesim.sh` (FireSim-era) |
 | the decision | search: `ModelBlaster/scripts/decision_loop.py` · **verdict: `scripts/compare_candidates.py`** |
 | advice → hint | `scripts/advice_to_{fusion,split,unfuse}_hint.py`, `advice_to_kernel_choice.py` |
 | the acceptance rule | `xpu-rt/candidate_objective.py` |
+| board bundles | `scripts/run_xpurt_bundle.py`, `run_bundle_firesim.sh` (FireSim-era) |
 
-**`scripts/granularity_loop.py` had been deleted** with the IREE path while
-`decision_loop.py` still shelled out to it, so `decision_loop --help` worked and
-a real run died at its first step. It is restored, driving the current tooling.
-It ranks candidates on a PREDICTION and says so in every record
-(`predicted_basis`); it does not decide.
+`rewrite.py`, `bundle.py` and `granularity_loop.py` were absent from this branch
+for a while — they were added on `origin/xpurt-scheduler-advisor` and never
+merged forward, so `decision_loop.py` shelled out to a file that was not there
+and the automated loop could not run at all. Restored in
+`feat/k1-granularity-bridge`.
+
+**The predicted cost model has no per-dispatch launch overhead**, so fusing
+tiny dispatches leaves the predicted makespan unchanged — every fuse candidate
+scores Δmakespan 0.00. `granularity_loop.py` therefore judges MERGE by the
+dispatches and cross-device transitions it removes, and SPLIT by makespan
+delta, which is visible in prediction because parallelism is. The merge payoff
+is real but only shows on hardware, so the predicted number ranks; it does not
+decide.
 
 **Searching and deciding are different jobs.** `decision_loop.py` accepts on
 total cycles, which is `candidate_objective`'s ninth and last term. That is
