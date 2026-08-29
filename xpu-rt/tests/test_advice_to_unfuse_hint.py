@@ -115,15 +115,39 @@ class ItRefusesToWidenTheGate(unittest.TestCase):
     `rvv_x60` -- 99.8% of 4974.8 ms, 0.81x against pure scalar. Unfusing on any
     basis other than that measured fallback reproduces it."""
 
-    def test_a_working_fused_kernel_is_refused(self):
+    def test_a_working_fused_kernel_with_no_probe_is_refused(self):
+        """Refused on the ABSENCE of a justification, not on the impl alone.
+
+        The bridge accepts exactly two triggers: a measured reference fallback,
+        and `runtime_share_probe` from a fused KIND that dominates the model
+        with all constituents covered. Anything else is the 0.81x result.
+
+        This test used to assert that a curated fused kernel is refused
+        outright. That belief was encoded here AND in `unfuse_advice`, so
+        fixing only the producer left the bridge still refusing -- which is how
+        a measured 19% win on yolov8_nano's shipping build stayed unreachable.
+        """
         anchor_op, anchor_item = _anchor()
         code, res, err = _run(
             [_item(0, fused_impl="curated[rvv]/rvv_oc_blocked_bn_silu_epilogue"),
              anchor_item], [_fused(0), anchor_op])
         self.assertEqual(code, 1)
         self.assertIsNone(res)
-        self.assertIn("not a reference fallback", err)
+        self.assertIn("no runtime-share probe", err)
         self.assertIn("epilogue fusion", err)
+
+    def test_a_working_fused_kernel_WITH_a_probe_is_accepted(self):
+        """The producer only emits that trigger when the kind dominates and
+        every constituent has a curated kernel, so the bridge trusts it."""
+        anchor_op, anchor_item = _anchor()
+        probe = _item(0, fused_impl="curated[rvv]/rvv_oc_blocked_bn_silu_epilogue")
+        probe["evidence"]["trigger"] = "runtime_share_probe"
+        probe["evidence"]["kind_runtime_share"] = 0.962
+        code, res, _ = _run([probe, anchor_item], [_fused(0), anchor_op])
+        self.assertEqual(code, 0)
+        self.assertEqual(res["networks"][0]["unfuse_ops"], [{"op": 0}])
+        self.assertEqual(res["_provenance"]["derivation"][0]["trigger"],
+                         "runtime_share_probe")
 
     def test_an_op_the_ir_does_not_record_as_fused_is_refused(self):
         anchor_op, anchor_item = _anchor()

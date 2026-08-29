@@ -366,6 +366,8 @@ def schedule(
     debug_constraints: bool = False,
     prune_overlap_constraints_for_dependency_chain: bool = True,
     target_diversity_weight: float = 0.0,
+    freshness_weight: float = 0.0,
+    freshness_producer_op_indices: Optional[list] = None,
     cvxpy_solver: str = "MOSEK",
     emit_report_to: Optional[str] = None,
 ) -> Tuple[np.ndarray, np.ndarray, Optional[Workload], Optional[dict]]:
@@ -810,9 +812,23 @@ def schedule(
                     constraints.append(used[m_idx] >= alpha[i, k])
         objective_func = objective_func - target_diversity_weight * cp.sum(used)
 
+    # Optional freshness term: add a small positive weight on the START times of
+    # producer operations (those feeding a downstream freshness edge). Minimizing
+    # C_max alone lets the solver DELAY producers to pack the makespan tighter,
+    # which makes consumers read stale inputs (high deadline-success, low freshness).
+    # Penalizing producer start times pulls them as early as possible, so the freshest
+    # producer output is available when a consumer runs -- without touching the makespan
+    # objective for everything else. Weight is caller-tuned (0.0 = pure makespan).
+    if freshness_weight and freshness_weight > 0.0 and freshness_producer_op_indices:
+        valid_idx = [i for i in freshness_producer_op_indices if 0 <= i < num_operations]
+        if valid_idx:
+            objective_func = objective_func + freshness_weight * cp.sum(
+                [t[i] for i in valid_idx]
+            )
+
     objective = cp.Minimize(objective_func)
     problem = cp.Problem(objective, constraints)
-    
+
     # Print problem statistics
     if verbose:
         print(f"\n{'='*60}")

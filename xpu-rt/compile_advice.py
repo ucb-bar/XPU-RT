@@ -322,7 +322,8 @@ def blocking_advice(model: str, profile: Dict[int, dict],
 def unfuse_advice(model: str, profile: Dict[int, dict],
                   ops_by_id: Dict[int, dict],
                   kernels_dir: Optional[str] = None,
-                  backend: str = "rvv") -> List[Advice]:
+                  backend: str = "rvv",
+                  probe_share: float = 0.25) -> List[Advice]:
     """Recommend undoing a fusion -- but only for the one case that is a win.
 
     THE CASE THIS EXISTS FOR, and it is a failure this project actually hit.
@@ -354,6 +355,25 @@ def unfuse_advice(model: str, profile: Dict[int, dict],
     the reason, so a later round does not re-propose it.
     """
     out: List[Advice] = []
+    # The probe below asks whether a fused op KIND is a big enough share of the
+    # model to be worth a board rung -- the kind, not the dispatch. Unfusing is
+    # a statement about a KERNEL, so it is applied to every dispatch of that
+    # kind at once, and that is how the yolov8_nano rung was actually run: 57
+    # dispatches together.
+    #
+    # Per-dispatch share cannot express this. yolov8_nano's fused convs are
+    # 1.69% each and 96.2% together, so any per-dispatch threshold low enough
+    # to catch them fires on everything, and any threshold high enough to be
+    # selective never fires at all.
+    total_ms = sum(float(r.get("median_ms") or 0.0) for r in profile.values())
+    kind_ms: Dict[str, float] = {}
+    kind_n: Dict[str, int] = {}
+    for _did, _rec in profile.items():
+        _op = (ops_by_id.get(_did) or {}).get("op", "")
+        if not _op:
+            continue
+        kind_ms[_op] = kind_ms.get(_op, 0.0) + float(_rec.get("median_ms") or 0.0)
+        kind_n[_op] = kind_n.get(_op, 0) + 1
     for did, rec in sorted(profile.items()):
         op = ops_by_id.get(did) or {}
         subs = op.get("sub_ops") or []
@@ -363,23 +383,9 @@ def unfuse_advice(model: str, profile: Dict[int, dict],
         fused_kind = op.get("op", "")
         svc = float(rec.get("median_ms") or 0.0)
 
-        if impl.split("/")[0] != "reference":
-            # The fused kernel is doing its job. This is the common and
-            # correct case; record the refusal so it is not revisited.
-            out.append(Advice(
-                model=model, dispatch_id=did, recommendation="unchanged",
-                priority=5, confidence="high",
-                evidence=Evidence(
-                    service_time_us=round(svc * 1000, 2),
-                    extra={"reason": "fused kernel is not a reference fallback",
-                           "fused_impl": impl or "unknown",
-                           "op": fused_kind}),
-                rationale=(f"{fused_kind} runs {impl or 'an unrecorded kernel'}; "
-                           f"unfusing a working fused kernel loses the epilogue "
-                           f"fusion and doubles the dispatch count.")))
-            continue
-
-        # It fell back. Do the constituents have kernels to fall forward to?
+        # Hoisted above the fallback check: BOTH branches now depend on whether
+        # the constituents have kernels to land on -- the fallback case as its
+        # justification, the probe case as its safety condition.
         constituent_impls: Dict[str, Optional[str]] = {}
         for sub in subs:
             kind = sub.get("op", "")
@@ -392,6 +398,72 @@ def unfuse_advice(model: str, profile: Dict[int, dict],
         all_covered = kernels_dir is not None and all(
             v is not None for v in constituent_impls.values())
 
+        if impl.split("/")[0] != "reference":
+            # The fused kernel is not a fallback. That USED to end the matter,
+            # on the reasoning that a curated fused kernel beats its
+            # constituents. Measured on the board, that reasoning is wrong for
+            # yolov8_nano: unfusing the WORKING curated build is 218.128 ->
+            # 176.370 ms, -19.1%, accepted at term 5. The lost epilogue fusion
+            # costs 4.655 ms (57 BN + 57 SiLU passes) and buys 46.5 ms, because
+            # rvv_conv2d_batchnorm2d_silu_s8_rvv_oc_blocked_bn_silu_epilogue.c
+            # has a slower conv inner loop than rvv_conv2d_s8_rvv_vsmul_vnclip.c.
+            #
+            # The old gate was ASSERTING an outcome the loop exists to MEASURE,
+            # and the cost of that certainty was a 19% win nobody could see. So
+            # a fused op big enough to be worth a board slot, whose constituents
+            # all have curated kernels, is now PROPOSED as a probe rather than
+            # refused -- at lower confidence and priority, and worded as a
+            # question. If the fused kernel is genuinely better the loop rejects
+            # it, which costs one rung and is the loop working.
+            share = ((kind_ms.get(fused_kind, 0.0) / total_ms)
+                     if total_ms > 0 else 0.0)
+            if all_covered and share >= probe_share:
+                out.append(Advice(
+                    model=model, dispatch_id=did, recommendation="unfuse",
+                    priority=3, confidence="low",
+                    evidence=Evidence(
+                        service_time_us=round(svc * 1000, 2),
+                        on_critical_path=True,
+                        extra={"trigger": "runtime_share_probe",
+                               "fused_impl": impl,
+                               "constituent_impls": constituent_impls,
+                               "n_constituents": len(subs),
+                               "kind_runtime_share": round(share, 4),
+                               "kind_dispatch_count": kind_n.get(fused_kind, 1),
+                               "probe_share_threshold": probe_share,
+                               "op": fused_kind}),
+                    constraints={"requires_constituent_kernels": True,
+                                 "measure_before_adopting": True},
+                    rationale=(
+                        f"{fused_kind} runs {impl} across "
+                        f"{kind_n.get(fused_kind, 1)} dispatches and is "
+                        f"{share:.1%} of {model}'s runtime, and all "
+                        f"{len(subs)} constituents have curated kernels. "
+                        f"Whether the fused kernel beats them is a "
+                        f"measurement, not an assumption -- it did not for "
+                        f"yolov8_nano. Worth one rung.")))
+                continue
+            out.append(Advice(
+                model=model, dispatch_id=did, recommendation="unchanged",
+                priority=5, confidence="high",
+                evidence=Evidence(
+                    service_time_us=round(svc * 1000, 2),
+                    extra={"reason": ("fused kernel is not a reference fallback"
+                                      if all_covered else
+                                      "not a fallback, and constituents are "
+                                      "not all covered"),
+                           "fused_impl": impl or "unknown",
+                           "kind_runtime_share": round(
+                               (kind_ms.get(fused_kind, 0.0) / total_ms)
+                               if total_ms > 0 else 0.0, 4),
+                           "op": fused_kind}),
+                rationale=(f"{fused_kind} runs {impl or 'an unrecorded kernel'} "
+                           f"and is too small a share of {model} to be worth a "
+                           f"board rung; unfusing also loses the epilogue "
+                           f"fusion and doubles the dispatch count.")))
+            continue
+
+        # It fell back, and coverage is already known from above.
         if not all_covered:
             missing = [k for k, v in constituent_impls.items() if v is None]
             # Built outside the f-string on purpose. Nesting a quoted literal

@@ -361,6 +361,31 @@ def schedule_iree_networks(
         # (heft/peft/edf/cpsat/milp_*/...). get_scheduler("mosek") is the
         # CVXPY/MOSEK MILP, so the default behaviour is unchanged.
         scheduler_fn = get_scheduler(scheduler)
+
+        # Freshness-aware objective (opt-in): identify the operations that belong to
+        # a producer network named in a freshness_edge, so the MILP can pull their
+        # start times early (fresh output for consumers) instead of only minimizing
+        # makespan (which delays producers and makes consumers read stale inputs).
+        fresh_kwargs = {}
+        if freshness_weight and freshness_weight > 0.0:
+            producer_tasks = {
+                str(e.get("producer_task", "")).lower()
+                for e in networks_data.get("freshness_edges", [])
+                if e.get("producer_task")
+            }
+            producer_idx = []
+            jn = combined_workload.job_names
+            for i, op in enumerate(combined_workload.operations):
+                name = ""
+                if op.job_id is not None and 0 <= op.job_id < len(jn):
+                    name = str(jn[op.job_id]).lower()
+                if any(name.startswith(pt) for pt in producer_tasks):
+                    producer_idx.append(i)
+            print(f"  Freshness-aware: weight={freshness_weight}, producers={sorted(producer_tasks)}, "
+                  f"{len(producer_idx)} producer ops pulled early")
+            fresh_kwargs = {"freshness_weight": freshness_weight,
+                            "freshness_producer_op_indices": producer_idx}
+
         solver_t0 = time.perf_counter()
         result = scheduler_fn(
             combined_workload,
@@ -368,6 +393,7 @@ def schedule_iree_networks(
             time_limit=effective_time_limit,
             restrict_makespan_to_nonperiodic=effective_restrict_makespan_to_nonperiodic,
             prune_cross_period_constraints=effective_prune_periodic,
+            **fresh_kwargs,
         )
         solver_wall_time_s = time.perf_counter() - solver_t0
         t, alpha, _, _ = result
@@ -863,6 +889,19 @@ if __name__ == "__main__":
             "missing artifact is a no-op."
         ),
     )
+    parser.add_argument(
+        "--freshness-weight",
+        type=float,
+        default=0.0,
+        help=(
+            "Freshness-aware objective weight (MILP only). 0.0 (default) = pure "
+            "makespan. A positive value adds w * sum(producer start times) to the "
+            "objective, pulling operations of any network named as a producer_task "
+            "in the spec's freshness_edges as early as possible, so consumers read "
+            "fresh inputs. Minimizing makespan alone delays producers and yields "
+            "stale outputs; this term counteracts that."
+        ),
+    )
     args = parser.parse_args()
 
     # Contention is additive and off unless asked for: installing None here
@@ -899,4 +938,5 @@ if __name__ == "__main__":
         restrict_makespan_to_nonperiodic=args.restrict_makespan_to_nonperiodic,
         scheduler=args.scheduler,
         max_periodic_iters=args.max_periodic_iters,
+        freshness_weight=args.freshness_weight,
     )

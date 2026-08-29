@@ -50,15 +50,25 @@ def _kernels(*names):
 
 class ItFiresOnlyOnAReferenceFallback(unittest.TestCase):
 
-    def test_a_working_fused_kernel_is_left_alone(self):
-        """The common case, and the one that must never be disturbed."""
+    def test_a_small_working_fused_kernel_is_left_alone(self):
+        """A working fused kernel that is a SMALL share of the model.
+
+        This used to assert that any working fused kernel is left alone, on
+        the reasoning that a curated fused kernel beats its constituents. That
+        reasoning was disproved on the board -- see
+        `AWorkingFusedKernelIsAQuestionNotAnAnswer` below -- so the rule now
+        turns on whether the op is worth a board rung, not on whether the
+        kernel is a fallback.
+        """
         kd = _kernels("rvv_conv2d_s8_a.c", "rvv_batchnorm2d_s8_a.c",
                       "rvv_silu_s8_a.c")
-        a = unfuse_advice("y", {0: {"median_ms": 3.8,
-                                    "implementation": "curated[rvv]/oc_blocked"}},
-                          {0: _fused()}, kd)
+        prof = {0: {"median_ms": 3.8,
+                    "implementation": "curated[rvv]/oc_blocked"},
+                1: {"median_ms": 96.2, "implementation": "curated[rvv]/x"}}
+        a = unfuse_advice("y", prof, {0: _fused()}, kd)
         self.assertEqual([x.recommendation for x in a], ["unchanged"])
         self.assertIn("not a reference fallback", a[0].evidence.extra["reason"])
+        self.assertLess(a[0].evidence.extra["kind_runtime_share"], 0.25)
 
     def test_a_reference_fallback_with_covered_constituents_fires(self):
         kd = _kernels("rvv_conv2d_s8_a.c", "rvv_batchnorm2d_s8_a.c",
@@ -120,11 +130,90 @@ class TheEvidenceIsMeasuredNotModelled(unittest.TestCase):
         """
         kd = _kernels("rvv_conv2d_s8_a.c", "rvv_batchnorm2d_s8_a.c",
                       "rvv_silu_s8_a.c")
+        # Op 0 is deliberately a SMALL share (5 of 100 ms), so the
+        # runtime-share probe cannot fire on it and the only thing that could
+        # make it fire is its `implementation` -- which is what this test is
+        # about.
         prof = {0: {"median_ms": 5.0, "implementation": "curated[rvv]/x"},
-                1: {"median_ms": 5.0, "implementation": "reference/scalar_ref"}}
+                1: {"median_ms": 5.0, "implementation": "reference/scalar_ref"},
+                2: {"median_ms": 90.0, "implementation": "curated[rvv]/x"}}
         a = unfuse_advice("y", prof, {0: _fused(), 1: _fused()}, kd)
         kinds = {x.dispatch_id: x.recommendation for x in a}
-        self.assertEqual(kinds, {0: "unchanged", 1: "unfuse"})
+        self.assertEqual(kinds, {0: "unchanged", 1: "unfuse"},
+                         "op 0 runs a curated kernel and is a small share, so "
+                         "it stays unchanged; op 1 is a reference fallback")
+
+
+class AWorkingFusedKernelIsAQuestionNotAnAnswer(unittest.TestCase):
+    """The rule this file used to encode was disproved on the board.
+
+    `unfuse_advice` refused to propose anything whose fused kernel was not a
+    reference fallback, reasoning that a curated fused kernel beats its
+    constituents. Measured on yolov8_nano, rvv_x60, K1:
+
+        curated fused conv+BN+SiLU   218.128 ms
+        unfused into constituents    176.370 ms   -19.1%, ACCEPTED at term 5
+
+    The lost epilogue fusion costs 4.655 ms (57 BN + 57 SiLU passes) and buys
+    46.5 ms, because the fused kernel's conv inner loop is slower than
+    `rvv_conv2d_s8_rvv_vsmul_vnclip.c`. The old gate was ASSERTING an outcome
+    the loop exists to MEASURE, and the price of that certainty was a 19% win
+    that nothing could propose.
+
+    So a big enough fused op with covered constituents is now a PROBE: low
+    confidence, priority 3, `measure_before_adopting`. If the fused kernel is
+    genuinely better the loop rejects it, which costs one rung and is the loop
+    working rather than failing.
+    """
+
+    def _kd(self):
+        return _kernels("rvv_conv2d_s8_a.c", "rvv_batchnorm2d_s8_a.c",
+                        "rvv_silu_s8_a.c")
+
+    def test_a_dominant_working_fused_kernel_is_proposed_as_a_probe(self):
+        a = unfuse_advice("y", {0: {"median_ms": 97.0,
+                                    "implementation": "curated[rvv]/oc_blocked"}},
+                          {0: _fused()}, self._kd())
+        self.assertEqual(a[0].recommendation, "unfuse")
+        self.assertEqual(a[0].evidence.extra["trigger"], "runtime_share_probe")
+        self.assertEqual(a[0].confidence, "low",
+                         "a probe must not claim the confidence of a measured "
+                         "fallback")
+        self.assertTrue(a[0].constraints["measure_before_adopting"])
+
+    def test_the_probe_needs_covered_constituents(self):
+        """Without kernels to land on, unfusing reproduces the 0.81x result."""
+        kd = _kernels("rvv_conv2d_s8_a.c")          # no bn, no silu
+        a = unfuse_advice("y", {0: {"median_ms": 97.0,
+                                    "implementation": "curated[rvv]/x"}},
+                          {0: _fused()}, kd)
+        self.assertEqual(a[0].recommendation, "unchanged")
+
+    def test_the_share_is_aggregated_over_the_op_KIND(self):
+        """The unit is the kernel, not the dispatch.
+
+        yolov8_nano's fused convs are 1.69% of runtime EACH and 96.2%
+        TOGETHER. Any per-dispatch threshold low enough to catch them fires on
+        everything; any threshold selective enough never fires. Measured on the
+        shipping build, a per-dispatch rule proposed nothing at all.
+        """
+        prof = {i: {"median_ms": 10.0, "implementation": "curated[rvv]/x"}
+                for i in range(10)}
+        ops = {i: _fused() for i in range(10)}
+        a = unfuse_advice("y", prof, ops, self._kd())
+        self.assertEqual({x.recommendation for x in a}, {"unfuse"},
+                         "10 dispatches of one kind at 10% each are 100% of "
+                         "the model as a KIND, which is the unit that decides")
+        self.assertEqual(a[0].evidence.extra["kind_dispatch_count"], 10)
+
+    def test_a_kind_that_is_a_small_share_of_the_model_proposes_nothing(self):
+        """One rung per probe, so only a kernel worth a rung may propose one."""
+        prof = {0: {"median_ms": 5.0, "implementation": "curated[rvv]/x"},
+                1: {"median_ms": 95.0, "implementation": "curated[rvv]/other"}}
+        ops = {0: _fused(), 1: {"op": "conv2d_s8"}}
+        a = unfuse_advice("y", prof, ops, self._kd())
+        self.assertEqual([x.recommendation for x in a], ["unchanged"],
+                         "5% of the model is not worth a board rung")
 
 
 if __name__ == "__main__":

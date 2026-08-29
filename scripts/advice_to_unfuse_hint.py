@@ -99,13 +99,29 @@ def main() -> int:
             refused += 1
             continue
         fused_impl = str(ev.get("fused_impl", ""))
-        if fused_impl.split("/")[0] != "reference":
-            # The whole justification is "it fell back to the reference". Any
-            # other basis reproduces the 0.81x result in the docstring above.
+        trigger = str(ev.get("trigger", "") or "reference_fallback")
+        if fused_impl.split("/")[0] != "reference" and trigger != "runtime_share_probe":
+            # Two justifications are accepted, and nothing else:
+            #
+            #   reference_fallback   the fused op matched no curated kernel and
+            #                        silently ran the scalar reference. Measured
+            #                        before the curated fused kernel existed: 57
+            #                        of 90 dispatches, 99.8% of runtime, 0.81x.
+            #   runtime_share_probe  the fused KIND dominates the model and all
+            #                        constituents have curated kernels, so
+            #                        whether the fused kernel wins is a question
+            #                        for the board. Measured on yolov8_nano's
+            #                        SHIPPING build: unfusing is -19.1% and was
+            #                        accepted at term 5.
+            #
+            # This refusal used to have no second branch, and that is why the
+            # 19% was invisible: the belief that a curated fused kernel beats
+            # its constituents was encoded in the producer AND here, so fixing
+            # only the producer left the bridge still refusing.
             print(f"REFUSED dispatch {did}: evidence says the fused op ran "
-                  f"{fused_impl!r}, not a reference fallback. Unfusing a "
-                  f"working fused kernel loses the epilogue fusion and doubles "
-                  f"the dispatch count.", file=sys.stderr)
+                  f"{fused_impl!r} and carries no runtime-share probe. "
+                  f"Unfusing on any other basis loses the epilogue fusion and "
+                  f"doubles the dispatch count.", file=sys.stderr)
             refused += 1
             continue
         unfuse_ops.append({"op": did})
@@ -113,6 +129,7 @@ def main() -> int:
                       "n_constituents": len(subs),
                       "constituents": [s.get("op") for s in subs],
                       "fused_impl": fused_impl,
+                      "trigger": trigger,
                       "constituent_impls": ev.get("constituent_impls"),
                       "service_time_us": ev.get("service_time_us")})
 
