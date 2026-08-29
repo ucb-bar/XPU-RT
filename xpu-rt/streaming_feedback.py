@@ -354,8 +354,15 @@ def main(argv: Optional[list[str]] = None) -> int:
     if args.windows_from:
         spec = json.loads(args.windows_from.read_text())
         windows_ms = {}
-        for net in spec.get("networks", []):
-            nm = net.get("name")
+        # `networks` is a MAPPING of name -> spec in every spec under
+        # data/toplevel/. Several sibling formats in this repo use a list and
+        # the two look identical until you index one.
+        nets = spec.get("networks", {})
+        items = (nets.items() if isinstance(nets, dict)
+                 else [(n.get("name"), n) for n in nets])
+        for nm, net in items:
+            if not isinstance(net, dict):
+                continue
             w = net.get("window_duration", net.get("period"))
             if nm and w:
                 windows_ms[str(nm)] = float(w)
