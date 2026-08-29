@@ -29,10 +29,33 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TOP_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
-_zcs_path="$(git -C "${TOP_ROOT}" config -f .gitmodules --get submodule.zephyr-chipyard-sw.path)"
-ZCS_ROOT="${TOP_ROOT}/${_zcs_path}"
-_mb_path="$(git -C "${ZCS_ROOT}" config -f .gitmodules --get submodule.modelblaster.path)"
-MB_ROOT="${ZCS_ROOT}/${_mb_path}"
+# ModelBlaster is reachable by two paths, and which ones are CHECKED OUT
+# differs per clone: XPU-RT declares it as a top-level submodule, and
+# zephyr-chipyard-sw declares it again for the spike/firesim flow. Both
+# should name the same commit -- but an uninitialised submodule is an empty
+# directory, not an error, so hardcoding either path makes this script fail
+# with `pip install -e <empty dir>` on a perfectly good checkout.
+#
+# Resolve to whichever is actually present, preferring the top-level one
+# because it is declared in THIS repo's .gitmodules and is the pointer this
+# repo can keep current on its own.
+_zcs_path="$(git -C "${TOP_ROOT}" config -f .gitmodules --get submodule.zephyr-chipyard-sw.path || true)"
+ZCS_ROOT="${TOP_ROOT}/${_zcs_path:-zephyr-chipyard-sw}"
+
+MB_ROOT=""
+for _cand in \
+    "${TOP_ROOT}/$(git -C "${TOP_ROOT}" config -f .gitmodules --get submodule.ModelBlaster.path 2>/dev/null || echo ModelBlaster)" \
+    "${ZCS_ROOT}/$(git -C "${ZCS_ROOT}" config -f .gitmodules --get submodule.modelblaster.path 2>/dev/null || echo modelblaster)"
+do
+    if [[ -f "${_cand}/pyproject.toml" ]]; then MB_ROOT="${_cand}"; break; fi
+done
+if [[ -z "${MB_ROOT}" ]]; then
+    echo "ERROR: no ModelBlaster checkout found. Initialise one:" >&2
+    echo "  git submodule update --init ModelBlaster" >&2
+    echo "  # or, for the spike/firesim flow:" >&2
+    echo "  git submodule update --init --recursive zephyr-chipyard-sw" >&2
+    exit 1
+fi
 
 MILP=""
 while (( $# )); do
