@@ -26,6 +26,7 @@
     "mlp_control": {
       "id": 0,
       "identifier": "mlp_control",
+      "quant": "fp32",
       "dispatch_deps_path": "zephyr-chipyard-sw/gen/vmfb/mlp_control/generic_riscv64/RVV/mlp_control.fp32/mlp_control.fp32_dispatch_graph.json"
     }
   },

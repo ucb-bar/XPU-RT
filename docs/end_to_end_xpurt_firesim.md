@@ -31,6 +31,48 @@ plots/microros_vs_xpurt_<name>.png         ← compare against the
                                              microros baseline
 ```
 
+## Quick start: one command
+
+`scripts/repro_workload.sh` runs every stage below — profile, dispatch
+graphs, schedule, codegen+build, FireSim run, trace plot — from the
+workload spec alone:
+
+```bash
+bash scripts/repro_workload.sh data/toplevel/networks_<name>.json
+```
+
+It reads `hardware.profile.target` to decide it is a FireSim workload
+(anything other than `spike` runs under `RUNNER=firesim`),
+`hardware.profile_hw` for the backends (`gemmini`, `gemmini_q31`, `RVV` /
+`<cfg>_rvv`, `scalar`) and for `CPU_P_KIND`/`CPU_E_KIND`,
+`hardware.profile.topo_tag` for `PROFILE_CORES`, and each network's
+`identifier` / `quant` / `dispatch_deps_path` for what to build and which
+dispatch graph to schedule against. The bitstream-specific bits it can't
+infer live in an optional `flow` block the scheduler ignores:
+
+```json
+"flow": {
+  "build": {
+    "registry": "cores/chipyard_dual_rocket_gemmini_q31.json",
+    "firesim_conf": "firesim_chipyard_dual_gemmini.conf",
+    "firesim_timeout": 900
+  },
+  "solver": "greedy_periodic",
+  "trace": true
+}
+```
+
+Without `flow.build.registry` the script picks the one
+`modelblaster/cores/*.json` whose core kinds are exactly the spec's
+`cpu_p`/`cpu_e` pair, and refuses to guess when several match. Run with
+`--dry-run` first to see the resolved plan (models, quants, backends, core
+kinds, registry, schedule path) without executing anything; `--skip-deps`,
+`--skip-profile`, `--skip-dispatch`, `--skip-schedule` and `--skip-build`
+re-run just the stages you need.
+
+The sections below are the manual walkthrough that script automates — read
+them for the "why" behind each stage.
+
 ## 1. Workload spec
 
 **Write:** `data/toplevel/networks_<name>.json`

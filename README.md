@@ -39,19 +39,9 @@ instead of merlin/IREE.
   — a simpler, no-FireSim variant of Flow A: same ModelBlaster codegen and
   checkout (`zephyr-chipyard-sw/modelblaster/`), profiled entirely on
   spike with the `greedy`/`greedy_periodic` solver (no MOSEK license
-  needed). Fresh clone to `OVERALL: PASS (3 models)` in six commands
-  (see that doc for the full step-by-step + troubleshooting):
-  ```bash
-  git clone git@github.com:ucb-bar/XPU-RT.git && cd XPU-RT
-  git submodule update --init zephyr-chipyard-sw
-  git -C zephyr-chipyard-sw submodule update --init modelblaster
-
-  cd zephyr-chipyard-sw
-  source scripts/install_conda.sh && bash scripts/install_submodules.sh && bash scripts/install_toolchain_sdk.sh
-  cd ..
-
-  bash scripts/repro_mlp_dronet_yolo_spike.sh --trace
-  ```
+  needed). Driven by the same one-command script as Flow A,
+  `scripts/repro_workload.sh <spec.json>`, which installs everything it
+  needs via `scripts/install_xpurt_deps.sh` — see that doc's §0.
 * [`zephyr-chipyard-sw/modelblaster/examples/microros_demo/ROS_FLOW.md`](zephyr-chipyard-sw/modelblaster/examples/microros_demo/ROS_FLOW.md)
   — micro-ROS fixed-pinning baseline flow (the reference against which
   the scheduler is benchmarked).

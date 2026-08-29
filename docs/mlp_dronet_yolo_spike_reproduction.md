@@ -24,14 +24,106 @@ in this repo.
 
 ## Reproduce from a fresh clone: exact steps
 
-Six commands, fresh clone to `OVERALL: PASS (3 models)`. This assumes a
-host that doesn't hit either of the two host-specific toolchain gaps below
-— check there first if step 2 fails.
+`scripts/repro_workload.sh` runs the entire flow below (sections
+0/1/2/3/5/6, and optionally 7) as a single command, against whatever
+workload spec you hand it:
 
 ```bash
-# 1. Clone + init only the submodules this flow needs (not --recursive:
-#    that would also pull hw/chipyard [large, SSH-only] and sims/IsaacLab,
-#    neither of which this spike-only flow touches).
+bash scripts/repro_workload.sh data/toplevel/networks_mlp_dronet_yolo_spike.json --trace
+```
+
+(`scripts/repro_mlp_dronet_yolo_spike.sh` still exists as a shim that
+forwards to it with that spec as the default, so older commands keep
+working.)
+
+It resolves the `zephyr-chipyard-sw`/`modelblaster` submodule checkouts from
+`.gitmodules` (not a hardcoded path), activates the conda/Zephyr-SDK env,
+profiles all 3 models on spike, generates dispatch graphs (with the
+basename-rename fixup), bridges profile data via symlinks, generates the
+schedule, builds+runs the combined `xpurt_demo` binary, and (with `--trace`)
+renders the real-execution timeline. Expect `OVERALL: PASS (3 models)` and a
+predicted/actual makespan within ~0.05% (see §10.3's caveat about
+`mlp_control`'s own residual deviation). It also installs
+`scripts/install_xpurt_deps.sh`'s dependencies into the active env before
+doing any of that (see §0) — pass `--skip-deps` once that's already been
+done for this env. Flags to skip already-fresh stages (`--skip-deps`,
+`--skip-profile`, `--skip-dispatch`, `--skip-schedule`, `--skip-build`) are
+documented in the script's `--help`.
+
+The script is **driven entirely by the workload spec** — there is no
+hardcoded model list, backend list or target anywhere in it. The JSON says
+what to run and the script does that:
+
+| spec field | drives |
+| --- | --- |
+| `hardware.profile.target` | `spike` → this doc's no-RTL flow; anything else (`firesim_rocket_saturn`, …) → `RUNNER=firesim`, i.e. `docs/end_to_end_xpurt_firesim.md` |
+| `hardware.profile.topo_tag` | `PROFILE_CORES` for the capture (`topo_0` → `0`, `topo_0_1` → `0,1`) |
+| `hardware.profile_hw` | which HW backends get profiled, get dispatch graphs, and are linked into the binary. Each value is both the on-disk profile dir and (mapped: `RVV`/`<cfg>_rvv` → `rvv`, plus `scalar`, `gemmini`, `gemmini_q31`) a modelblaster `TARGET=`. `cpu_p`/`cpu_e` also pick `CPU_P_KIND`/`CPU_E_KIND` |
+| `networks[*].identifier` | which models get profiled and built (deduped, in spec order) |
+| `networks[*].quant` | each model's modelblaster quant tree (§4). Absent → inferred from the `<model>.<quant>/` basename in `dispatch_deps_path`, else `fp32` |
+| `networks[*].dispatch_deps_path` | that network's IREE target and the dispatch-graph basename step 2 renames its output to — per network, so a spec may mix a spike-emitted graph with a FireSim one |
+| `scheduler.*` | `run_xpurt_schedule.py`, as always |
+| `flow.*` | optional, read by this script only (the scheduler ignores it): `flow.solver`, `flow.trace`, `flow.profile.{out_root,clock_mhz}`, `flow.build.{registry,backends,firesim_conf,firesim_timeout,force_regen}` |
+
+So the single-network repros of §9 are just a different JSON:
+
+```bash
+bash scripts/repro_workload.sh data/toplevel/networks_dronet_only_spike.json
+```
+
+and a FireSim workload is the same command again:
+
+```bash
+bash scripts/repro_workload.sh data/toplevel/networks_periodic_dronet_yolov8_firesim.json
+```
+
+`--dry-run` prints the fully resolved plan (models, quants, backends, core
+kinds, registry, schedule path) and exits without running anything — worth
+doing first on a spec you haven't run before. `--quants` overrides the
+spec's per-model quants (one comma-separated entry per model, in spec
+order) when you want the same topology at a different precision without
+editing the spec, and `--solver`/`--trace`/`--no-trace` override
+`flow.solver`/`flow.trace`.
+
+The one thing the spec can't express is the **bitstream**, which is what
+the core registry encodes. `flow.build.registry` names it; without one the
+script takes `xpurt_demo`'s default on spike (nothing to get wrong there),
+otherwise the single `modelblaster/cores/*.json` whose core kinds are
+exactly the spec's `cpu_p`/`cpu_e` pair — and refuses to guess when
+several match, listing them.
+
+The sections below (including the from-scratch environment setup in
+"Prerequisites") are the manual, step-by-step walkthrough the script
+automates — read them for the "why" behind each stage and the bugs each
+workaround is standing in for. Useful on its own for debugging a stage in
+isolation, or if the script's assumptions (model list, quants, backends)
+don't fit a variant you're trying.
+
+## Prerequisites: building the `zephyr` conda env + Zephyr SDK from scratch
+
+Everything below §0 assumes the `zephyr` conda env, the Zephyr SDK, and the
+`west` workspace already exist. Two earlier passes through this doc
+(including a from-scratch *repo* clone) explicitly skipped this by
+symlinking in an already-installed toolchain — this section closes that
+gap, verified via a genuine from-scratch install (conda + SDK + full
+pipeline run) on 2026-08-27. Good news: unlike the unrelated `xpurt`/Isaac
+Sim env elsewhere in this repo (see `docs/xpurt_env_setup.md`), **this
+environment already has a real, committed setup script** —
+`zephyr-chipyard-sw/README.md`'s "Standalone Installation" section plus
+`scripts/install_conda.sh` / `install_submodules.sh` / `install_toolchain_sdk.sh`.
+This section is just that flow, run for real, with the gaps it hit and the
+extra (undocumented) packages this specific pipeline needs on top of it.
+
+```bash
+# 1. Clone WITHOUT --recursive. This repo's top-level .gitmodules
+#    registers 4 submodules (merlin, zephyr-chipyard-sw, sims/IsaacLab,
+#    hw/chipyard) and zephyr-chipyard-sw itself registers 11 more
+#    (zephyr_ws/zephyr, modelblaster, XNNPACK, executorch, tinympc,
+#    riscv-gnu-toolchain, ...) -- `--recursive` would clone ALL of them,
+#    including hw/chipyard (the full Chipyard RTL/toolchain checkout,
+#    SSH-only, very large) and sims/IsaacLab (a large robotics sim
+#    framework), neither of which this spike-only flow touches. Init only
+#    the two submodules this flow actually needs, explicitly:
 git clone git@github.com:ucb-bar/XPU-RT.git
 cd XPU-RT
 git submodule update --init zephyr-chipyard-sw
@@ -128,6 +220,23 @@ export PATH="/usr/bin:${PATH}"
 export PATH="${CONDA_PREFIX}/bin:${PATH}"   # re-promote conda's python/pip ahead of /usr/bin's
 export PYTHONPATH="$PWD${PYTHONPATH:+:${PYTHONPATH}}"
 ```
+
+The `zephyr` env above is produced entirely by zephyr-chipyard-sw's own
+standalone install (`install_conda.sh`/`install_submodules.sh`/
+`install_toolchain_sdk.sh`) — nothing xpurt-specific. Everything this
+specific reproduction flow needs *on top of* that (modelblaster's own deps
+— torch, `ultralytics`, pillow, ...; xpu-rt's own scheduler deps; the
+pinned `spike` wheel; the `libgl1` system package for `ultralytics`'
+`opencv-python`, see Bug 16) is declared and installed from ONE place in
+*this* repo, into the same env:
+
+```bash
+cd "${FRESHSCHEDULER_ROOT}"
+bash scripts/install_xpurt_deps.sh
+```
+
+`scripts/repro_workload.sh` (below) runs this automatically —
+`--skip-deps` skips it once you've already run it for this env.
 
 ## 1. Profile each model on spike
 
@@ -246,16 +355,19 @@ generated):
   "networks": {
     "mlp_control": {
       "id": 0, "identifier": "mlp_control",
+      "quant": "fp32",
       "dispatch_deps_path": "zephyr-chipyard-sw/gen/vmfb/mlp_control/generic_riscv64/RVV/mlp_control.fp32/mlp_control.fp32_dispatch_graph.json",
       "period": 10, "window_duration": 10
     },
     "dronet": {
       "id": 1, "identifier": "dronet",
+      "quant": "int8",
       "dispatch_deps_path": "zephyr-chipyard-sw/gen/vmfb/dronet/generic_riscv64/RVV/dronet.fp32/dronet.fp32_dispatch_graph.json",
       "period": 1000, "window_duration": 1000
     },
     "yolov8_nano": {
       "id": 2, "identifier": "yolov8_nano",
+      "quant": "int8",
       "dispatch_deps_path": "zephyr-chipyard-sw/gen/vmfb/yolov8_nano/generic_riscv64/RVV/yolov8_nano.fp32/yolov8_nano.fp32_dispatch_graph.json"
     }
   },
@@ -263,13 +375,35 @@ generated):
 }
 ```
 
-`scheduler.prune_periodic` must stay `false` — its post-loop trim logic
-disagrees with the convergence loop's own periodic-instance detection for
-this workload shape and produces an internally-inconsistent schedule
-(dependency cycle) otherwise. `scheduler.time_limit` only applies to the
-`milp` solver; `greedy_periodic` (used here) ignores it — its only bound is
-`--max-periodic-iters` (CLI flag, default 4, an iteration cap, not a
-wall-clock one).
+`quant` is read by `scripts/repro_workload.sh` (not by the
+scheduler, which ignores unknown keys) to pick each model's
+`modelblaster/examples/<model>/<quant>/` tree for profiling, dispatch-graph
+emission, and the combined build. It has to be declared explicitly because
+the dispatch graphs are renamed to `.fp32` in §2 for the profile-CSV
+basename match, so `dispatch_deps_path` no longer records the real
+precision. Omitting it means `fp32`.
+
+Notes on settings that changed during debugging (see Bugs 5/6/7 below):
+- `period`/`window_duration` for mlp_control/dronet: 10ms/20ms (original,
+  mirroring the FireSim spec) → 100ms/150ms (loosened, per-user request, for
+  a fast test) → 1000ms/1000ms (isolation test to rule out "many periodic
+  instances" as the cause of the dependency-cycle bug) → **mlp_control back
+  to 10ms/10ms, dronet left at 1000ms/1000ms** (current — validated that the
+  1-instance result was purely a consequence of period vs. makespan, and
+  stress-tested the Bug 7 fix at a much higher periodic-instance count; see
+  §5.1 below).
+- `scheduler.prune_periodic`: `true` → **`false`** (works around Bug 5).
+- `scheduler.time_limit: 60` only applies to the `milp` solver — it is
+  **silently ignored** by `greedy_periodic` (used here). The only bound on
+  `greedy_periodic`'s convergence loop is `--max-periodic-iters` (CLI flag,
+  default 4) — this caps loop *iterations*, not wall-clock time, and setting
+  it to `1` produces an invalid (non-converged) schedule, not just a fast
+  one. Don't use it as a time-limit substitute.
+
+`yolov8_nano`'s `dispatch_deps_path` currently points at the RVV
+dispatch-graph file, which was **just regenerated** (mtime 14:45, see §2) —
+newer than the schedule below (mtime 14:24). The schedule on disk was built
+against the file's *previous* content, not this latest regeneration.
 
 ## 5. Generate the schedule
 
@@ -337,26 +471,3 @@ python3 -m modelblaster.scripts.plot_xpurt_trace \
   --out "${XPURT_ROOT}/plots/xpurt_trace_mlp_dronet_yolo_spike.png" \
   --csv "${XPURT_ROOT}/schedules/xpurt_trace_mlp_dronet_yolo_spike.csv"
 ```
-
-**Use `--clock-mhz 10`, not `1000`.** `actual_start/end_cycles` in the
-trace come from `k_cycle_get_64()`, which is `mtime`-based (RISC-V CLINT,
-`CONFIG_SYS_CLOCK_HW_CYCLES_PER_SEC=10000000`) — a genuinely different
-clock from the `rdcycle()`-based per-op profiling that feeds the
-*predicted* side (`PROFILE_CLOCK_MHZ=1000`, an arbitrary placeholder, not a
-calibrated physical value). Using `1000` here to interpret the *actual*
-side is a unit error, not a real finding — it makes real execution look
-~5x faster than predicted and periodic instances look bunched at the start.
-
-## Known limitations
-
-- **`mlp_control`'s own ops run ~15-17% faster than predicted**, always in
-  the same direction, not fully root-caused at the instruction level.
-  Ruled out: stale profiling data, cross-backend weight-symbol collisions
-  (n/a — `mlp_control` has no curated kernels or backend-specific weight
-  packing), intra-op thread-pool interference (pools are NULL for this
-  hardware spec), and an obvious RVV vector-length state bug (checked via
-  disassembly). Low impact — `mlp_control` is ~4% of total schedule time,
-  so this doesn't affect overall schedule-accuracy conclusions.
-- This repo has three configured remotes pointing at three different repo
-  names (`origin`→`Scheduler.git`, `new`→`XPURT.git`, `ucb-bar`→`XPU-RT.git`) —
-  confirm which one you mean before pushing.
