@@ -143,6 +143,7 @@ def schedule_iree_networks(
     scheduler: str = "mosek",
     max_periodic_iters: int = 4,
     freshness_weight: float = 0.0,
+    contention_model=None,
 ) -> tuple[Workload, np.ndarray, np.ndarray]:
     """
     Main function to schedule networks from a hierarchical network dependencies JSON file.
@@ -271,8 +272,35 @@ def schedule_iree_networks(
     except ImportError:
         pass  # capabilities.py is K1-specific; other targets need not have it
 
-    machines, machine_combinations = build_machine_combinations(
-        machine_core_counts, mode=machine_combination_mode)
+    # Optional per-dispatch implementation axis (rvv vs ime/NPU). Off by default
+    # (spec `scheduler.enable_impls: true` turns it on). When on, each core-group
+    # combination is emitted once per legal implementation, so a dispatch that is
+    # cheaper on the IME (measured: transformer MLP M>=16 wins 1.3-2.4x over RVV,
+    # crossover M~10) can be placed there while attention/GEMV (M<=8) stays on RVV.
+    # IME is CLUSTER-0-ONLY and that is enforced structurally: K1_CAPABILITIES
+    # gives CPU_E no `ime`, so build_machine_combinations_with_impls emits zero
+    # ime combinations on cluster 1 (harts 4-7 SIGILL on smt.vmadot). A combo's
+    # ime cost comes from its ime_x60 profile; absent that CSV the cell is excluded
+    # (INFEASIBLE_COST) and the solver simply never places there — no free NPU.
+    combo_impls = None
+    enable_impls = bool(networks_data.get("scheduler", {}).get("enable_impls", False))
+    if enable_impls:
+        from capabilities import build_machine_combinations_with_impls, K1_CAPABILITIES
+        # Expose only rvv+ime as placement choices (scalar is a correctness
+        # fallback, never a preferred placement); intersect with each kind's caps.
+        machine_impls = {
+            k: [i for i in ("rvv", "ime") if i in K1_CAPABILITIES.get(k, frozenset())]
+            for k in machine_core_counts
+        }
+        _gran = "per_core" if machine_combination_mode == "singletons" else machine_combination_mode
+        machines, machine_combinations, combo_impls = build_machine_combinations_with_impls(
+            machine_core_counts, machine_impls, K1_CAPABILITIES, granularity=_gran)
+        n_ime = sum(1 for x in combo_impls if x == "ime")
+        print(f"  Impl-aware combinations: {len(machine_combinations)} total, "
+              f"{n_ime} ime (cluster-0 only), rest rvv")
+    else:
+        machines, machine_combinations = build_machine_combinations(
+            machine_core_counts, mode=machine_combination_mode)
     n_cores = len(machines)
     transfer_times = np.zeros((n_cores, n_cores))
 
@@ -282,12 +310,19 @@ def schedule_iree_networks(
     # CPU/GPU/HTP) work the same way as the legacy CPU_P/CPU_E split.
     profile_hw_map = cfg["profile_hw_map"]
     combo_hw = []
-    for combo in machine_combinations:
+    for ci, combo in enumerate(machine_combinations):
         core_type = machine_type_prefix(combo[0])
         hw = profile_hw_map.get(core_type.lower())
         if hw is None:
             # Fall back to the legacy two-machine convention.
             hw = cpu_p_profile_hw if core_type == CPU_P else cpu_e_profile_hw
+        # For an ime-impl combination, read the IME profile instead of the RVV
+        # one: swap the leading rvv->ime in the hw label (rvv_x60 -> ime_x60),
+        # which is where the curated IME profiles land. combo_hw drives the CSV
+        # lookup in load_profiled_processing_times, so this is the whole plumbing.
+        if combo_impls is not None and combo_impls[ci] == "ime" and hw \
+                and hw.lower().startswith("rvv"):
+            hw = "ime" + hw[3:]  # rvv_x60 -> ime_x60, RVV -> ime
         combo_hw.append(hw)
 
     # Optional: build profiled processing times if requested
@@ -336,6 +371,34 @@ def schedule_iree_networks(
         # scheduler (default "mosek" == the CVXPY/MOSEK MILP), post-process trim.
         print(f"\nCreating workload from network hierarchy...")
         combined_workload = _build_workload()
+
+        # MILP contention term: the MOSEK/MILP path (unlike greedy) has no notion
+        # of co-runner slowdown. Mirror greedy's `base * contention_factor(op,
+        # placement)` by folding the measured per-placement multiplier into each
+        # (op, combination) processing time BEFORE the solve, so MOSEK optimizes
+        # against contention-scaled costs (e.g. cross-cluster placements, measured
+        # 1.185x, become genuinely more expensive). Non-circular: the factor keys
+        # off the COMBINATION's placement (same/other cluster), not on which ops
+        # actually co-run — identical modeling choice to greedy_scheduler._duration.
+        # Off unless a contention model is passed (--contention). Never raises.
+        if contention_model is not None:
+            combos = combined_workload.get_machine_combinations()
+            n_scaled = 0
+            for op in combined_workload.operations:
+                pt = op.processing_times
+                for k, combo in enumerate(combos):
+                    if k >= len(pt):
+                        continue
+                    try:
+                        placement = contention_model.placement_for_combination(combo)
+                        factor = float(contention_model.contention_factor(op, placement))
+                    except Exception:
+                        factor = 1.0
+                    if factor > 0 and factor != 1.0:
+                        pt[k] = pt[k] * factor
+                        n_scaled += 1
+            print(f"  MILP contention: folded measured co-runner factors into "
+                  f"{n_scaled} (op,combination) costs")
 
         print(f"\nWorkload created successfully!")
         print(f"  Total operations: {len(combined_workload.operations)}")
@@ -697,6 +760,7 @@ def schedule_iree_networks(
         profiled_times_by_network=profiled_by_network,
         pdb_hash=_pdb_hash,
         pdb_files=_pdb_files,
+        combo_impls=combo_impls,
     )
 
     # Feedback-driven compilation: surface any dispatch-granularity mismatch
@@ -906,6 +970,7 @@ if __name__ == "__main__":
 
     # Contention is additive and off unless asked for: installing None here
     # leaves the schedulers on the plain solo profile.
+    _model = None
     if args.contention is not None:
         import contention_model
         import greedy_scheduler
@@ -939,4 +1004,5 @@ if __name__ == "__main__":
         scheduler=args.scheduler,
         max_periodic_iters=args.max_periodic_iters,
         freshness_weight=args.freshness_weight,
+        contention_model=_model,
     )

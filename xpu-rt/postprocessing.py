@@ -48,6 +48,7 @@ def output_scheduled_json(
     profiled_times_by_network: dict[str, dict[str, dict[int, dict]]] | None = None,
     pdb_hash: str | None = None,
     pdb_files: list[str] | None = None,
+    combo_impls: list[str] | None = None,
 ):
     """
     Output a combined JSON file with all dispatches, their hardware targets, and start times.
@@ -59,6 +60,15 @@ def output_scheduled_json(
         output_path: Path to save the output JSON file
         profiled_times_p: Optional dict mapping dispatch_id -> {"time_ms": float, "module_name": str} for P-core
         profiled_times_e: Optional dict mapping dispatch_id -> {"time_ms": float, "module_name": str} for E-core
+        combo_impls: Optional per-combination implementation tag ("rvv" /
+            "ime"), parallel to machine_combinations. WITHOUT IT A
+            HETEROGENEOUS SCHEDULE IS UNREADABLE: with `enable_impls` on, the
+            same core appears in several combinations -- one per legal
+            implementation -- so `hardware_target: CPU_P#1` says which core ran
+            a dispatch and NOT whether it used the MAC unit. The two facts that
+            make a placement heterogeneous are then both absent from the
+            artifact, and a reader can only recover them by matching durations
+            against the profile CSVs and hoping the costs differ.
     """
     machine_combinations = combined_workload.get_machine_combinations()
 
@@ -104,7 +114,7 @@ def output_scheduled_json(
         dispatch_name = op.operation_name if hasattr(op, 'operation_name') and op.operation_name else f"op_{op_idx}"
 
         # Get hardware target (which combination was assigned)
-        combo_idx = np.argmax(alpha[op_idx])
+        combo_idx = int(np.argmax(alpha[op_idx]))
         hardware_target = "+".join(machine_combinations[combo_idx]) if len(machine_combinations[combo_idx]) > 1 else machine_combinations[combo_idx][0]
 
         # Get start time
@@ -152,6 +162,11 @@ def output_scheduled_json(
 
         dispatch_info_list.append({
             'op_idx': op_idx,
+            # Carried explicitly. The dispatch dict is built in a SECOND pass
+            # below, where `combo_idx` from this loop is stale -- it holds
+            # whatever the last operation happened to get. Reading it there
+            # tagged every dispatch with the final op's implementation.
+            'combo_idx': combo_idx,
             'dispatch_name': dispatch_name,
             'dispatch_id': dispatch_id,
             'hardware_target': hardware_target,
@@ -275,6 +290,16 @@ def output_scheduled_json(
             if overrun is not None:
                 dispatch_entry["deadline_overrun_us"] = float(overrun)
 
+        # Which IMPLEMENTATION ran this dispatch, when the solve had more than
+        # one to choose from. `hardware_target` names the core; with
+        # `enable_impls` on the same core appears in several combinations and
+        # the core alone does not say whether the MAC unit was used. Recorded
+        # only when there is a choice to record, so a single-impl schedule is
+        # byte-identical to before.
+        _ci = info['combo_idx']
+        if combo_impls is not None and _ci < len(combo_impls):
+            dispatch_entry["impl"] = combo_impls[_ci]
+
         combined_dispatches[dispatch_name] = dispatch_entry
 
     # Feedback-driven compilation: derive periodic-network periods and
@@ -312,6 +337,9 @@ def output_scheduled_json(
             "num_operations": len(combined_workload.operations),
             "machines": combined_workload.machines,
             "machine_combinations": [combo if isinstance(combo, list) else [combo] for combo in machine_combinations],
+            # Parallel to machine_combinations: which implementation each one
+            # denotes. Absent when the solve had a single implementation.
+            **({"combo_impls": list(combo_impls)} if combo_impls is not None else {}),
             # profile_hw persists the bitstream-level identity of each
             # CPU role (e.g. CPU_P → "gemmini_q31", CPU_E → "RVV") so that
             # downstream re-plotting (scripts/plot_scheduled_json.py) can

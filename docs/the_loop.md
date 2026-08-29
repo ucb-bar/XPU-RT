@@ -228,6 +228,64 @@ term its verdict turned on. `diff_dispatch_graph` proves the *graph* changed;
 this shows whether the *schedule* did, which is a different question and the one
 that decides.
 
+## 4b. The other axis: which UNIT runs a dispatch
+
+Everything above rewrites the graph and re-schedules it. The second axis is
+leaving the graph alone and changing the implementation — the K1 has an int8
+MAC unit (`smt.vmadot`, IME) on cluster 0, and a dispatch can run there instead
+of on the vector unit.
+
+It is a scheduling decision rather than a build flag because **the accelerator
+does not always win**, and where it stops winning is measurable:
+
+| M (K=N=256) | RVV | IME | |
+|---|---|---|---|
+| 4 | 0.188 ms | 0.387 ms | RVV |
+| 8 | 0.375 ms | 0.440 ms | RVV |
+| 16 | 0.751 ms | 0.581 ms | **IME** |
+| 64 | 3.007 ms | 1.379 ms | **IME** |
+| 128 | 6.012 ms | 2.534 ms | **IME** |
+
+Both are linear in M — `RVV = 0.047·M` and `IME = 0.0173·M + 0.297` — and the
+fits say why. RVV needs no repacking, so it is pure per-row work with no fixed
+cost. IME does 2.7× less work per row and pays a fixed ~0.30 ms packing its
+operands into the 4×8 tiles the MAC unit requires. **They cross at M = 10.1.**
+
+So attention (M=8) stays on the vector unit and a transformer MLP (M in the
+hundreds) moves to the MAC unit, and only a scheduler holding both measured
+costs can tell them apart.
+
+```bash
+# both sides, same graph, same dispatch ids
+scripts/run_model_k1.sh ffn_block int8 rvv_x60 0
+scripts/run_model_k1.sh ffn_block int8 ime_x60 0
+
+python scripts/run_xpurt_schedule.py --networks-json \
+    data/toplevel/networks_k1_ffn_ime.json --solver greedy --profiled \
+    --max-periodic-iters 1        # scheduler.enable_impls: true
+
+python scripts/plot_loop_iterations.py --color-by impl \
+  --iteration "1 · all-RVV=schedules/scheduled_networks_k1_ffn_rvv_greedy_profiled.json" \
+  --iteration "2 · impl-aware=schedules/scheduled_networks_k1_ffn_ime_greedy_profiled.json" \
+  --windows-from data/toplevel/networks_k1_ffn_ime.json \
+  --critical-models mlp_control --heavy-model ffn_block \
+  --window-ms 100 --out-dir out/figures --stem k1_hetero_placement
+```
+
+→ `out/figures/k1_hetero_placement.png`. The FFN block goes from 43.4 ms
+entirely on the vector unit to 30.6 ms with its two linears on the MAC unit,
+while `mlp_control`'s 10 ms ticks are undisturbed. **ACCEPT on heavy-model max
+latency.** `--color-by impl` colours by which unit ran a dispatch rather than
+by network, because that is the question this figure answers.
+
+**An `ime` COMBINATION is not the same as MAC-unit work.** With `enable_impls`
+on, a core appears in several combinations, one per implementation, and a
+combination is costed from its backend's profile whatever the op is. A
+layernorm scheduled on an ime combination fell through to the identical RVV
+kernel; only `linear_s8` and `matmul_s8` there are genuine accelerator work.
+The figure distinguishes them, and conflating them would overstate how much of
+the schedule the NPU carries.
+
 ## 5. Guard rails, and what each one caught
 
 Every one of these exists because it failed silently at least once.
@@ -271,6 +329,20 @@ Every one of these exists because it failed silently at least once.
   a deadline and the scorer reported `misses: 0` with
   `response_p50 = −47954 ms`. `job_names.py` owns that split now; it had seven
   independent implementations that disagreed.
+* **`impl` was read from a stale loop variable.** The dispatch dict is built
+  in a SECOND pass over the operations, so `combo_idx` from the first pass
+  holds whatever the last operation was assigned. Every dispatch in a
+  heterogeneous schedule came out tagged `rvv` while its duration was plainly
+  the IME cost. Caught by cross-checking the field against the report's own
+  `combo_idx` rather than by reading it — a schedule that agrees with itself
+  proves nothing.
+* **A vector kernel that compiles to no vector instructions.** Asking the
+  generator for the generic `direct` algorithm on `rvv_x60` produced four
+  scalar transformer kernels; all four cross-compiled, verified bit-exact, and
+  would have been committed as curated RVV kernels. `cross_compile_verify` now
+  disassembles the object — reading the OBJECT, not the source, because
+  GCC auto-vectorizes some plain C (softmax, layernorm) and IME's `vmadot` is
+  a `.insn` that never looks like an intrinsic.
 * **The window is the deadline.** `D = windows_ms.get(m, T)` — omit
   `--windows-from` and you score against the period, a more forgiving test than
   the workload declared.

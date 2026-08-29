@@ -83,3 +83,45 @@ class InstanceCountTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ImplTagTests(unittest.TestCase):
+    """`impl` must name the implementation that ran EACH dispatch.
+
+    The field was first read from a loop variable left over from an earlier
+    pass over the operations, so every dispatch inherited whatever the LAST
+    operation happened to be assigned -- which tagged an entire heterogeneous
+    schedule `rvv` while the durations were plainly the IME costs. It was
+    caught by cross-checking against the report's own `combo_idx`, not by
+    reading the field, which is the point of this test.
+    """
+
+    def test_impl_matches_the_combination_actually_chosen(self):
+        import glob, json, os
+        sched = os.path.join(os.path.dirname(os.path.dirname(_HERE)),
+                             "schedules",
+                             "scheduled_networks_k1_ffn_ime_greedy_profiled.json")
+        report = sched.replace(".json", "_report.json")
+        if not (os.path.exists(sched) and os.path.exists(report)):
+            self.skipTest("impl-aware schedule not solved in this tree")
+        d = json.load(open(sched))
+        impls = (d.get("metadata") or {}).get("combo_impls")
+        self.assertIsNotNone(impls, "an impl-aware solve must record combo_impls")
+        chosen = {e["name"]: e["combo_idx"] for e in json.load(open(report))["dispatches"]}
+        mismatched = [n for n, v in d["dispatches"].items()
+                      if n in chosen and v.get("impl") != impls[chosen[n]]]
+        self.assertEqual(mismatched, [],
+                         "impl disagrees with the combination the solver chose")
+
+    def test_more_than_one_implementation_is_actually_used(self):
+        """A heterogeneous schedule that uses one implementation is not one."""
+        import json, os
+        sched = os.path.join(os.path.dirname(os.path.dirname(_HERE)),
+                             "schedules",
+                             "scheduled_networks_k1_ffn_ime_greedy_profiled.json")
+        if not os.path.exists(sched):
+            self.skipTest("impl-aware schedule not solved in this tree")
+        d = json.load(open(sched))
+        used = {v.get("impl") for v in d["dispatches"].values() if v.get("impl")}
+        self.assertIn("ime", used)
+        self.assertIn("rvv", used)

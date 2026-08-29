@@ -67,8 +67,47 @@ def load(spec):
         return label, json.load(f), path
 
 
-def panel(ax, schedule, known, window_ms, title, subtitle):
+#: Roles for the implementation axis. The accelerator gets vermillion because
+#: it is the exception being pointed at; everything still on the vector unit is
+#: the muted default. Deliberately NOT the model palette -- this figure is
+#: about where a dispatch ran, not which network it belongs to, and reusing
+#: model colours here would make two figures disagree about what blue means.
+IMPL_COLOR = {"ime": figstyle.VERMILLION, "rvv": figstyle.SKY, None: figstyle.C_MUTED}
+
+#: Ops the K1's MAC unit can actually execute. An "ime" COMBINATION is costed
+#: from the ime_x60 profile whatever the op is, so a layernorm scheduled there
+#: did not touch the MAC unit -- it fell through to the same RVV kernel. Only
+#: these ops on an ime combination are genuine accelerator work, and conflating
+#: the two would overstate how much of the schedule the NPU is carrying.
+IME_CAPABLE_OPS = ("linear_s8", "matmul_s8")
+
+
+def _default_impl(schedule):
+    """The implementation a single-impl schedule used, from its profile_hw.
+
+    A solve with `enable_impls` off writes no per-dispatch `impl`, because
+    there was nothing to choose. That is not "unknown" -- it is whichever
+    backend the whole solve was costed from, and rendering it as grey
+    "unspecified" beside an impl-aware panel invents an ambiguity the baseline
+    does not have.
+    """
+    hw = (schedule.get("metadata") or {}).get("profile_hw") or {}
+    names = {str(v).split("_")[0] for v in hw.values() if v}
+    return names.pop() if len(names) == 1 else None
+
+
+def _impl_of(d, default=None):
+    """`'ime'` only when this dispatch really ran on the MAC unit."""
+    impl = d.get("impl") or default
+    if impl != "ime":
+        return impl
+    mod = d.get("module_name") or ""
+    return "ime" if any(op in mod for op in IME_CAPABLE_OPS) else "rvv"
+
+
+def panel(ax, schedule, known, window_ms, title, subtitle, color_by="network"):
     disp = schedule["dispatches"]
+    default_impl = _default_impl(schedule) if color_by == "impl" else None
     lanes = sorted({d["hardware_target"] for d in disp.values()})
     y = {lane: i for i, lane in enumerate(lanes)}
     seen = {}
@@ -77,9 +116,15 @@ def panel(ax, schedule, known, window_ms, title, subtitle):
         dur = float(d.get("duration", 0.0))
         if window_ms and st > window_ms:
             continue
-        net = job_names.model_of(d.get("job_name", ""), known)
-        c = figstyle.model_color(net)
-        seen[net] = c
+        if color_by == "impl":
+            key = _impl_of(d, default_impl)
+            c = IMPL_COLOR.get(key, figstyle.C_MUTED)
+            key = {"ime": "IME (smt.vmadot, cluster 0)",
+                   "rvv": "RVV"}.get(key, "unspecified")
+        else:
+            key = job_names.model_of(d.get("job_name", ""), known)
+            c = figstyle.model_color(key)
+        seen[key] = c
         ax.broken_barh([(st, max(dur, 1e-3))], (y[d["hardware_target"]] - 0.38, 0.76),
                        facecolors=c, edgecolors="none")
     ax.set_yticks(range(len(lanes)))
@@ -116,6 +161,11 @@ def main() -> int:
     ap.add_argument("--critical-models", default="")
     ap.add_argument("--heavy-model", default=None)
     ap.add_argument("--window-ms", type=float, default=200.0)
+    ap.add_argument("--color-by", choices=("network", "impl"), default="network",
+                    help="'impl' colours each bar by the implementation that "
+                         "ran it rather than by which network it belongs to. "
+                         "Use it for a heterogeneous schedule, where the "
+                         "question is WHERE a dispatch ran, not whose it is.")
     ap.add_argument("--out-dir", default=None)
     ap.add_argument("--stem", default="k1_loop_evolution")
     ap.add_argument("--title", default="The loop, iteration by iteration")
@@ -192,15 +242,17 @@ def main() -> int:
                f"p99={o.worst_p99():.2f} ms · makespan={o.makespan_ms:.1f} ms"
                f"\n{v}")
         seen.update(panel(axes[i][0], sch, known, a.window_ms,
-                          f"{chr(97+i)}  {lbl}", sub))
+                          f"{chr(97+i)}  {lbl}", sub, color_by=a.color_by))
         if i < n - 1:
             axes[i][0].set_xticklabels([])
     axes[-1][0].set_xlabel("Time on the K1 (ms)")
     handles = [Patch(facecolor=c, label=k) for k, c in sorted(seen.items())]
-    fig.legend(handles=handles, loc="upper right", ncol=len(handles),
-               frameon=False, fontsize=5, bbox_to_anchor=(0.99, 1.0))
-    fig.suptitle(a.title, fontsize=7, x=0.01, ha="left")
-    fig.tight_layout(rect=(0, 0, 1, 0.94), h_pad=2.4)
+    # Legend under the title, not beside it: a long title and a wide legend
+    # collided on the same line and the title lost.
+    fig.legend(handles=handles, loc="upper left", ncol=len(handles),
+               frameon=False, fontsize=5, bbox_to_anchor=(0.01, 0.965))
+    fig.suptitle(a.title, fontsize=7, x=0.01, ha="left", y=0.995)
+    fig.tight_layout(rect=(0, 0, 1, 0.93), h_pad=2.4)
     png = figstyle.save(fig, a.stem, a.out_dir)
     print(f"wrote {png}")
 
