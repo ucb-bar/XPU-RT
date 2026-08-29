@@ -720,7 +720,81 @@ def schedule(
                         )
     end()
 
-    # (6) Makespan constraints:
+    # (6) Makespan constraints.
+    #
+    # Predecessor-aware lower bound (Phase-E cost_by_pred / gamma). When an op
+    # carries `processing_times_by_pred`, its effective duration depends on
+    # WHERE its dominant predecessor ran (the cross-cluster cold-fetch cost the
+    # k1_cost_by_pred harness measures). We linearise the bilinear
+    # alpha[pred,k_pred] * alpha[i,k_curr] into a gamma tensor and contribute
+    # cost[k_pred,k_curr] * gamma. When the map is empty we fall back to the
+    # flat 2D dur_vec, so workloads WITHOUT cost_by_pred are byte-identical to
+    # before. NOTE: pmap keys are (pred_combo_idx, cur_combo_idx); the loader
+    # (workload_factory) keys them by MACHINE index, which equals the
+    # combination index only in singletons mode — the correct mode for the
+    # single-dispatch cross-cluster transitions Phase E models. This helper is
+    # shared by both the non-periodic and all-ops makespan branches so the
+    # gamma path is live on the actually-used scheduler.schedule() code path
+    # (the _mosek registry entry forwards here), not only in schedule_window.
+    pred_aware_gammas = {}
+
+    # Guard (flagged by the profiling agent): pmap keys are MACHINE indices used
+    # here as COMBINATION indices — valid ONLY when combinations are singletons
+    # (combo k == [machines[k]]). In shard/prefix mode a combination is a block of
+    # harts, so the same integer denotes a different thing and the costs would be
+    # silently misindexed. Detect the identity once; when it does not hold, DROP
+    # the predecessor-aware map (fall back to the flat 2D dur) rather than charge
+    # the wrong cost. cost_by_pred is only ever measured on named singleton
+    # machines, so this loses nothing real and prevents a silent shard-mode bug.
+    _combos_are_singletons = (
+        num_combinations == len(workload.machines)
+        and all(list(machine_combinations[k]) == [workload.machines[k]]
+                for k in range(num_combinations))
+    )
+    _warned_pred_map_skipped = [False]
+
+    def _add_cmax_lb(i):
+        op = workload.operations[i]
+        pmap = getattr(op, "processing_times_by_pred", None) or {}
+        if pmap and not _combos_are_singletons:
+            if not _warned_pred_map_skipped[0]:
+                print("  (warning) cost_by_pred present but machine-combinations are "
+                      "not singletons; dropping the predecessor-aware (gamma) term to "
+                      "avoid misindexing — falling back to flat 2D duration.")
+                _warned_pred_map_skipped[0] = True
+            pmap = {}
+        preds = op.get_predecessors()
+        dom_pred = preds[0] if preds and pmap else None
+        i_pred = None
+        if dom_pred is not None:
+            try:
+                i_pred = workload.operations.index(dom_pred)
+            except ValueError:
+                i_pred = None
+        if i_pred is not None:
+            gamma = cp.Variable((num_combinations, num_combinations), boolean=True)
+            pred_aware_gammas[i] = (i_pred, gamma)
+            constraints.append(cp.sum(gamma) == 1)
+            for k_pred in range(num_combinations):
+                constraints.append(cp.sum(gamma[k_pred, :]) <= alpha[i_pred, k_pred])
+            for k_curr in range(num_combinations):
+                constraints.append(cp.sum(gamma[:, k_curr]) <= alpha[i, k_curr])
+            base_dur_vec = [
+                op.get_duration_for_combination(k, machine_combinations, workload.machines)
+                for k in range(num_combinations)
+            ]
+            cost_matrix = np.zeros((num_combinations, num_combinations))
+            for k_pred in range(num_combinations):
+                for k_curr in range(num_combinations):
+                    cost_matrix[k_pred, k_curr] = pmap.get((k_pred, k_curr), base_dur_vec[k_curr])
+            constraints.append(C_max >= t[i] + cp.sum(cp.multiply(cost_matrix, gamma)))
+        else:
+            dur_vec = [
+                op.get_duration_for_combination(k, machine_combinations, workload.machines)
+                for k in range(num_combinations)
+            ]
+            constraints.append(C_max >= t[i] + cp.sum(cp.multiply(dur_vec, alpha[i, :])))
+
     if restrict_makespan_to_nonperiodic:
         # C_max tracks only NON-periodic operations (operations without explicit time-window bounds).
         # Periodic/background operations (with min_start_t or max_end_t set) do NOT constrain C_max.
@@ -733,14 +807,7 @@ def schedule(
             if is_periodic:
                 continue
             non_periodic_ops_exist = True
-            # Build duration vector for all combinations
-            dur_vec = [
-                workload.operations[i].get_duration_for_combination(k, machine_combinations, workload.machines)
-                for k in range(num_combinations)
-            ]
-            constraints.append(
-                C_max >= t[i] + cp.sum(cp.multiply(dur_vec, alpha[i, :]))
-            )
+            _add_cmax_lb(i)
         # If there are no non-periodic operations, C_max is unconstrained from below
         # (objective will be trivial), which is acceptable: only periodic tasks exist.
         end()
@@ -748,13 +815,7 @@ def schedule(
         # Original behavior: C_max covers all operations (including periodic ones)
         end = log("(6) makespan lower bound (C_max) - all operations")
         for i in range(num_operations):
-            dur_vec = [
-                workload.operations[i].get_duration_for_combination(k, machine_combinations, workload.machines)
-                for k in range(num_combinations)
-            ]
-            constraints.append(
-                C_max >= t[i] + cp.sum(cp.multiply(dur_vec, alpha[i, :]))
-            )
+            _add_cmax_lb(i)
         end()
     
     # Debug: Print durations for first operation to verify they're correct

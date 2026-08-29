@@ -11,6 +11,49 @@ CPU_P = "CPU_P"
 CPU_E = "CPU_E"
 
 
+def parse_cost_by_pred(dispatch_info: dict, machines: List[str]) -> Dict[Tuple[int, int], float]:
+    """Parse a dispatch's optional per-(pred machine, cur machine) cost map into
+    the {(pred_idx, cur_idx): ms} form Operation.processing_times_by_pred wants.
+
+    Format in the dispatch graph: {"<pred machine>-><cur machine>": ms, ...}
+    (e.g. {"cpu_p->cpu_e": 1.94, "cpu_p->cpu_p": 1.87, ...}). Names are mapped
+    through `machines` to indices; a side that names no known machine (a
+    `_cold_` root, or an unmatched hart-level name) is skipped, so that edge
+    falls back to the flat 2D duration. Keys become combination indices in the
+    MILP; that equals the machine index only in singletons mode — the correct
+    mode for the single-dispatch cross-cluster transitions this models (Phase E).
+
+    Shared by BOTH create_workload_from_dependencies and
+    create_workload_from_network_hierarchy so the gamma path is fed on the
+    profiled (hierarchy) code path too — without this it is silently dropped.
+    """
+    raw = dispatch_info.get('cost_by_pred', {}) or {}
+    ptbp: Dict[Tuple[int, int], float] = {}
+    if not raw:
+        return ptbp
+    m_idx = {m: i for i, m in enumerate(machines)}
+    for key, v in raw.items():
+        if "->" not in key:
+            continue
+        pred_name, cur_name = key.split("->", 1)
+        cur_i = m_idx.get(cur_name)
+        pred_i = m_idx.get(pred_name)
+        if cur_i is None or pred_i is None:
+            continue
+        ptbp[(pred_i, cur_i)] = float(v)
+    return ptbp
+
+
+def parse_infeasible_combinations(dispatch_info: dict, machines: List[str]) -> set:
+    """Map a dispatch's optional {"infeasible_machines": [name, ...]} to the set
+    of combination indices to hard-exclude (MILP constraint (2b)). Shared by both
+    workload builders so the profiled (hierarchy) path honours pins too — without
+    this the field is silently dropped there, same class as cost_by_pred."""
+    infe_names = dispatch_info.get("infeasible_machines", []) or []
+    m_idx = {m: i for i, m in enumerate(machines)}
+    return {m_idx[n] for n in infe_names if n in m_idx}
+
+
 def machine_type_prefix(machine_name: str) -> str:
     """Return the type prefix of a per-core machine name, e.g. 'CPU_P#2' -> 'CPU_P'."""
     return machine_name.split("#")[0] if "#" in machine_name else machine_name
@@ -304,38 +347,11 @@ def create_workload_from_dependencies(
         # flags from PR5 of the rosy-sundae plan.
         deadline_us = dispatch_info.get('deadline_us', None)
         skip_allowed = bool(dispatch_info.get('skip_allowed', False))
-        # Optional per-(predecessor target, current target) cost map. Format
-        # in the schedule.json: {"CPU_P->CPU_E": 700.0, "CPU_E->CPU_E": 250.0,
-        # ...}. Translated here to combination indices keyed against
-        # machines list.
-        cost_by_pred_str = dispatch_info.get('cost_by_pred', {}) or {}
-        ptbp = {}
-        if cost_by_pred_str:
-            m_idx = {m: i for i, m in enumerate(machines)}
-            for key, v in cost_by_pred_str.items():
-                if "->" not in key:
-                    continue
-                pred_name, cur_name = key.split("->", 1)
-                cur_i = m_idx.get(cur_name)
-                if cur_i is None:
-                    continue
-                pred_i = m_idx.get(pred_name)
-                if pred_i is None:
-                    continue  # _cold_ (root op) skipped here, fallback to 2D
-                ptbp[(pred_i, cur_i)] = float(v)
-        # Infeasible machine-combination indices for this op. Workload
-        # JSON form: {"infeasible_machines": ["HTA", "GPU"]} — the names
-        # are mapped through the machine list to combination indices,
-        # treating each machine as its own singleton combination by
-        # default (matches the heterogeneous-QNN workflow). Used by the
-        # MILP's "(2b) infeasibility hard exclusion" branch.
-        infe_names = dispatch_info.get("infeasible_machines", []) or []
-        infe_idx: set[int] = set()
-        m_idx = {m: i for i, m in enumerate(machines)}
-        for name in infe_names:
-            i = m_idx.get(name)
-            if i is not None:
-                infe_idx.add(i)
+        # Optional per-(predecessor target, current target) cost map — see
+        # parse_cost_by_pred. Shared with the hierarchy builder so they can't drift.
+        ptbp = parse_cost_by_pred(dispatch_info, machines)
+        # Infeasible machine-combination indices — see parse_infeasible_combinations.
+        infe_idx = parse_infeasible_combinations(dispatch_info, machines)
 
         operations_map[dispatch_name] = Operation(
             proc_times,
@@ -797,13 +813,19 @@ def create_workload_from_network_hierarchy(
             # Extract dispatch ID and create operation
             # Inherit time constraints from network if present
             dispatch_id = dispatch_info.get('id', None)
+            # Phase-E: feed the gamma path on the profiled code path too. Without
+            # this the per-dispatch cost_by_pred map is silently dropped here
+            # (create_workload_from_dependencies reads it, but the profiled
+            # scheduler builds workloads through THIS function).
             operation = Operation(
                 proc_times,
                 operation_id=dispatch_id,
                 operation_name=prefixed_dispatch_name,
                 job_id=network_id,
                 min_start_t=network_min_start_t,
-                max_end_t=network_max_end_t
+                max_end_t=network_max_end_t,
+                processing_times_by_pred=parse_cost_by_pred(dispatch_info, machines),
+                infeasible_combinations=parse_infeasible_combinations(dispatch_info, machines),
             )
             
             network_ops_map[dispatch_name] = operation
