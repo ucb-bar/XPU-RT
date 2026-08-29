@@ -39,6 +39,9 @@ reading before quoting either number, because one of them is a **null result**
 and the other is a model fitted to three measured classes rather than 64
 independent measurements.
 
+Operationally, [`docs/k1_board.md`](../docs/k1_board.md) is the runbook --
+commands, timings, and the failure table. This page is what lives here.
+
 ## Before any of them
 
 ```bash

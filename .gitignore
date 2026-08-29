@@ -144,3 +144,8 @@ out/figures/
 # Downloaded cross toolchain (6 GB). scripts/setup_spacemit_toolchain.sh
 # fetches it here on demand; it is an artifact, never a commit.
 /tools/riscv-tools-spacemit/
+
+# Inward-facing working notes: session narrative, blockers, post-mortems.
+# Useful to keep locally, not repo documentation -- committing it publishes
+# an internal account as if it were a changelog.
+/docs/CHANGES.md

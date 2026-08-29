@@ -31,12 +31,14 @@ same reason a road can keep a Roman route: every reader already speaks it.
 
 ### Start here
 
-* **[`docs/CHANGES.md`](docs/CHANGES.md)** — what recently landed across both
-  repos, and the order to read it in. If you have been away, read this one.
 * **[`docs/the_loop.md`](docs/the_loop.md)** — the index: every arrow of the
-  compiler↔scheduler cycle and which script owns it.
+  compiler↔scheduler cycle and which script owns it. If you have been away,
+  read this one.
 * **[`docs/environment.md`](docs/environment.md)** — recreating the
   environment. Two flows, two environments, and neither is merlin's `.venv`.
+* **[`docs/k1_board.md`](docs/k1_board.md)** — running on the K1: the
+  commands, the timings, the two compiler traps, and what to do when it
+  breaks.
 * **[`examples/`](examples/)** — runnable, one per topic:
   `.venv/bin/python examples/run_all.py`
 

@@ -541,8 +541,8 @@ The modules are not all named after the concepts.
 | the solver registry | `docs/solvers.md`, `xpu-rt/schedulers.py` |
 | what a spec's fields mean | `docs/workload_specs.md` |
 | runnable walkthroughs | `examples/` |
-| what recently landed, both repos | `docs/CHANGES.md` |
 | recreating the environment | `docs/environment.md` |
+| running on the board | `docs/k1_board.md` |
 
 ## 8. Examples
 
