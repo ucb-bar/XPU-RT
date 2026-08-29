@@ -98,7 +98,7 @@ def _compute_alap_deadlines(workload, machine_combinations) -> dict:
     for i, op in enumerate(workload.operations):
         for pred in op.predecessors:
             try:
-                pred_idx = workload.operations.index(pred)
+                pred_idx = _OPIDX(workload)[id(pred)]
                 succ[pred_idx].append(i)
             except ValueError:
                 continue
@@ -164,7 +164,7 @@ def _earliest_start_for(
     # Wait for predecessors + their transfer cost into this combination's
     # first machine.
     for pred in op.predecessors:
-        pred_idx = workload.operations.index(pred)
+        pred_idx = _OPIDX(workload)[id(pred)]
         pred_combo_idx = int(np.argmax(alpha[pred_idx, :]))
         pred_dur = workload.operations[pred_idx].get_duration_for_combination(
             pred_combo_idx, machine_combinations, machines
@@ -186,6 +186,36 @@ def _earliest_start_for(
         combo_idx, machine_combinations, machines
     )
     return earliest_start, duration
+
+
+def _op_index_map(workload):
+    """Identity-keyed {operation -> position} for O(1) predecessor lookup.
+
+    Every hot loop in this module resolved predecessors with
+    `_OPIDX(workload)[id(pred)]`, an O(N) linear scan. Nested inside the
+    per-op loop of a pass that schedules ONE op per pass, that made the
+    scheduler O(N^3) in the operation count. It was tolerable at the 295-op
+    3-net workload (seconds) and effectively hung at the ~400-op generated
+    sweep workloads. Operation defines no __eq__, so list.index() was already
+    identity comparison and this map is exactly equivalent, just constant-time.
+    """
+    return {id(op): i for i, op in enumerate(workload.operations)}
+
+
+_OPIDX_CACHE: dict = {}
+
+
+def _OPIDX(workload):
+    """Memoised _op_index_map, keyed on the workload object's identity.
+
+    Rebuilt if the operation count changes (the periodic-refinement loop
+    reconstructs the workload between passes).
+    """
+    m = _OPIDX_CACHE.get(id(workload))
+    if m is None or len(m) != len(workload.operations):
+        m = _op_index_map(workload)
+        _OPIDX_CACHE[id(workload)] = m
+    return m
 
 
 def _schedule_loop(workload, mode: str) -> tuple[np.ndarray, np.ndarray]:
@@ -234,7 +264,7 @@ def _schedule_loop(workload, mode: str) -> tuple[np.ndarray, np.ndarray]:
             # Predecessors must all be scheduled.
             can_schedule = True
             for pred in op.predecessors:
-                pred_idx = workload.operations.index(pred)
+                pred_idx = _OPIDX(workload)[id(pred)]
                 if not scheduled[pred_idx]:
                     can_schedule = False
                     break
@@ -411,7 +441,7 @@ def _per_instance_independent_makespan(
             ok = True
             for pred in op.predecessors:
                 try:
-                    pred_idx = workload.operations.index(pred)
+                    pred_idx = _OPIDX(workload)[id(pred)]
                 except ValueError:
                     continue
                 if pred_idx in op_set and pred_idx not in local_t:
@@ -425,7 +455,7 @@ def _per_instance_independent_makespan(
                 # Predecessor-end constraints (within instance).
                 for pred in op.predecessors:
                     try:
-                        pred_idx = workload.operations.index(pred)
+                        pred_idx = _OPIDX(workload)[id(pred)]
                     except ValueError:
                         continue
                     if pred_idx not in op_set:
@@ -529,7 +559,7 @@ def _compute_alap_deadlines_with_np(
     for i, op in enumerate(workload.operations):
         for pred in op.predecessors:
             try:
-                pred_idx = workload.operations.index(pred)
+                pred_idx = _OPIDX(workload)[id(pred)]
                 succ[pred_idx].append(i)
             except ValueError:
                 continue
@@ -640,7 +670,7 @@ def decomposed_schedule(workload: Workload) -> tuple[np.ndarray, np.ndarray]:
         op = workload.operations[op_idx]
         for pred in op.predecessors:
             try:
-                pred_idx = workload.operations.index(pred)
+                pred_idx = _OPIDX(workload)[id(pred)]
             except ValueError:
                 continue
             if not scheduled[pred_idx]:
@@ -729,7 +759,7 @@ def decomposed_schedule(workload: Workload) -> tuple[np.ndarray, np.ndarray]:
         pred_floor = 0.0
         for pred in op.predecessors:
             try:
-                pred_idx = workload.operations.index(pred)
+                pred_idx = _OPIDX(workload)[id(pred)]
             except ValueError:
                 continue
             if not scheduled[pred_idx]:
