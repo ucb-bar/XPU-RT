@@ -375,7 +375,7 @@ def load_profiled_processing_times(
                 if strict:
                     missing.append(
                         f"  - {net_id} @ {hw}/{topo}: no profile CSV under "
-                        f"gen/profile/{hw}/{profile_target}/<model>/<basename>/.../{topo}/results.csv"
+                        f"{gen_root}/profile/{hw}/{profile_target}/<model>/<basename>/.../{topo}/results.csv"
                     )
         if not all_profiles:
             if not strict:
