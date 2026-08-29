@@ -209,9 +209,17 @@ def cpsat_schedule(
     deadline_vars: List[Any] = []  # boolean miss flags
     lateness_vars: List[Any] = []
     for i, op in enumerate(ops):
-        if op.deadline_us is None:
+        # A PERIODIC op carries its deadline as max_end_t (= release + window),
+        # while deadline_us is a separate optional robotics hard deadline. Use
+        # whichever is set (deadline_us wins) so the deadline-miss / lateness
+        # objective (weights 10^12 / 10^8) is ACTIVE for periodic workloads too
+        # — otherwise a windowed spec falls through to makespan-only and the
+        # solver trades deadlines away (the greedy-beats-CP-SAT gap).
+        dl = op.deadline_us if op.deadline_us is not None \
+            else getattr(op, "max_end_t", None)
+        if dl is None:
             continue
-        d = _to_int_us(float(op.deadline_us))
+        d = _to_int_us(float(dl))
         lat = model.NewIntVar(0, horizon, f"lat_{i}")
         # lateness = max(0, chosen_end[i] - d)
         diff = model.NewIntVar(-horizon, horizon, f"diff_{i}")

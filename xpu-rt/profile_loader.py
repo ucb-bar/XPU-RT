@@ -419,6 +419,14 @@ def load_profiled_processing_times(
                 # places it on the NPU. Only rvv/scalar misses are fatal.
                 if hw.lower().startswith("ime"):
                     continue
+                # A net profiled on this hw at its base (single-core) width but
+                # missing a WIDER multi-hart shard topo simply cannot be sharded
+                # — its shard-block cells are excluded (INFEASIBLE 1e8) below, so
+                # the solver keeps it single-core, exactly as for a missing ime
+                # kernel. Only a net with NO profile at all on this hw is a real
+                # data gap that must stay fatal (the synthetic-random guard).
+                if any(h == hw for (h, _t) in all_profiles):
+                    continue
                 if strict:
                     missing.append(
                         f"  - {net_id} @ {hw}/{topo}: no profile CSV under "
@@ -536,6 +544,14 @@ def load_profiled_processing_times(
                     # Exclude the cell with the scheduler's INFEASIBLE_COST
                     # sentinel (1e8) so the op is NEVER placed on the NPU — a
                     # 0.0 here would make a non-ime op look free on cluster 0.
+                    base_t = 1e8
+                elif prof is None:
+                    # No profile CSV at all for this (hw, topo) — e.g. a
+                    # single-core-only net facing a multi-hart shard combo it
+                    # was never profiled on. It physically cannot run there, so
+                    # exclude the cell (INFEASIBLE 1e8) rather than count it as
+                    # free (0.0). A genuinely-unprofiled net is still caught by
+                    # the `missing` fatal above (it has no base-width profile).
                     base_t = 1e8
                 else:
                     if strict:
