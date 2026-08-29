@@ -32,8 +32,6 @@ import csv
 import glob
 import json
 import os
-
-import workload_spec
 import sys
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -43,14 +41,24 @@ for _p in (_sys_xpu, _repo_root):
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
+import workload_spec  # noqa: E402
 from workload_factory import resolve_dispatch_deps_path  # noqa: E402
 
+# These four were COPIED here from profile_metrics, and three of them were
+# still byte-identical to it. The fourth had drifted: this copy returned
+# (csv_p, csv_e, model) where the module's returned (csv_p, csv_e). Two copies
+# of the profile-CSV discovery rules is two answers to "which CSV describes
+# this network", and the profile tree's layout is exactly the kind of thing
+# that gets changed in one place. profile_metrics now returns the 3-tuple --
+# the superset, so nothing here loses information -- and owns them.
+from profile_metrics import (  # noqa: E402
+    _find_profile_csv,
+    _first_nonempty,
+    _pick_csv_pair_for_network,
+    load_times_ms_by_dispatch_id,
+)
 
-def _first_nonempty(*vals: Optional[str], default: str = "") -> str:
-    for v in vals:
-        if isinstance(v, str) and v.strip():
-            return v.strip()
-    return default
+
 
 
 def _load_hardware(
@@ -90,94 +98,10 @@ def _load_hardware(
     return gen_root, target, topo, hw_p, hw_e
 
 
-def _find_profile_csv(
-    repo_base: str,
-    *,
-    gen_root: str,
-    model: str,
-    target: str,
-    hw: str,
-    basename: str,
-    topo_tag: str,
-) -> Optional[str]:
-    profile_root = os.path.join(repo_base, gen_root, "profile")
-    pat1 = os.path.join(
-        profile_root, hw, target, model, basename, "*", topo_tag, "results.csv"
-    )
-    matches = glob.glob(pat1)
-    if not matches:
-        pat2 = os.path.join(
-            profile_root, hw, target, model, basename, topo_tag, "results.csv"
-        )
-        matches = glob.glob(pat2)
-    if not matches:
-        return None
-    return max(matches, key=lambda p: os.path.getmtime(p))
 
 
-def _pick_csv_pair_for_network(
-    repo_base: str,
-    gen_root: str,
-    target: str,
-    topo: str,
-    hw_p: str,
-    hw_e: str,
-    net_key: str,
-    net_info: dict,
-    dispatch_rel: str,
-) -> Tuple[Optional[str], Optional[str], str]:
-    basename = workload_spec.basename_from_dispatch_deps_path(dispatch_rel)
-    for model in workload_spec.model_candidates(net_key, net_info, basename):
-        csv_p = _find_profile_csv(
-            repo_base,
-            gen_root=gen_root,
-            model=model,
-            target=target,
-            hw=hw_p,
-            basename=basename,
-            topo_tag=topo,
-        )
-        csv_e = _find_profile_csv(
-            repo_base,
-            gen_root=gen_root,
-            model=model,
-            target=target,
-            hw=hw_e,
-            basename=basename,
-            topo_tag=topo,
-        )
-        if csv_p or csv_e:
-            return csv_p, csv_e, model
-    return None, None, workload_spec.model_candidates(net_key, net_info, basename)[0]
 
 
-def load_times_ms_by_dispatch_id(csv_path: Optional[str]) -> Dict[int, float]:
-    if not csv_path or not os.path.exists(csv_path):
-        return {}
-    out: Dict[int, float] = {}
-    with open(csv_path, newline="") as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            raw_id = row.get("dispatch_id")
-            if raw_id is None or str(raw_id).strip() == "":
-                continue
-            try:
-                did = int(raw_id)
-            except ValueError:
-                continue
-            try:
-                mean = float(row.get("mean_time", 0.0))
-            except ValueError:
-                continue
-            unit = (row.get("mean_unit") or "ms").strip()
-            if unit == "us":
-                mean_ms = mean / 1000.0
-            elif unit == "s":
-                mean_ms = mean * 1000.0
-            else:
-                mean_ms = mean
-            out[did] = mean_ms
-    return out
 
 
 def _should_include_network(

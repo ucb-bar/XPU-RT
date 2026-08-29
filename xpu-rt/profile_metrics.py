@@ -96,7 +96,7 @@ def _pick_csv_pair_for_network(
     net_key: str,
     net_info: dict,
     dispatch_rel: str,
-) -> Tuple[Optional[str], Optional[str]]:
+) -> Tuple[Optional[str], Optional[str], str]:
     basename = workload_spec.basename_from_dispatch_deps_path(dispatch_rel)
     for model in workload_spec.model_candidates(net_key, net_info, basename):
         csv_p = _find_profile_csv(
@@ -118,8 +118,8 @@ def _pick_csv_pair_for_network(
             topo_tag=topo,
         )
         if csv_p or csv_e:
-            return csv_p, csv_e
-    return None, None
+            return csv_p, csv_e, model
+    return None, None, workload_spec.model_candidates(net_key, net_info, basename)[0]
 
 
 def load_times_ms_by_dispatch_id(csv_path: Optional[str]) -> Dict[int, float]:
@@ -185,7 +185,7 @@ def worst_case_layer_sum_ms_for_network(
     if not full or not os.path.exists(full):
         return None
 
-    csv_p, csv_e = _pick_csv_pair_for_network(
+    csv_p, csv_e, _model_used = _pick_csv_pair_for_network(
         repo_base_path,
         gen_root,
         target,
