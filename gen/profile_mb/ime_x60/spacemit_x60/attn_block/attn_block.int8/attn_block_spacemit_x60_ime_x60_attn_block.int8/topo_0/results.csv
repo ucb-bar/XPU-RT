@@ -1,0 +1,15 @@
+dispatch_id,module_name,vmfb_path,mlir_path,mean_time,mean_unit,mean_time_ns,returncode,log_path,source,op,shape,cycles,cycles_n,cycles_cv_pct,implementation
+0,attn_block$dispatch_0_ime_x60_layernorm_s8_M8xK32,,,0.030542,ms,30541.666667,0,,k1,layernorm_s8,M=8;K=32,733,1,,reference
+1,attn_block$dispatch_1_ime_x60_linear_s8_M8xK32xN32,,,0.019833,ms,19833.333333,0,,k1,linear_s8,M=8;K=32;N=32,476,1,,curated[ime]/ime_vmadot_4x4x8
+2,attn_block$dispatch_2_ime_x60_sin_s8_n256,,,0.040333,ms,40333.333333,0,,k1,sin_s8,n=256,968,1,,reference
+3,attn_block$dispatch_3_ime_x60_cos_s8_n256,,,0.032125,ms,32125.000000,0,,k1,cos_s8,n=256,771,1,,reference
+4,attn_block$dispatch_4_ime_x60_mul_s8_n256,,,0.014333,ms,14333.333333,0,,k1,mul_s8,n=256,344,1,,reference
+5,attn_block$dispatch_5_ime_x60_linear_s8_M8xK32xN32,,,0.017167,ms,17166.666667,0,,k1,linear_s8,M=8;K=32;N=32,412,1,,curated[ime]/ime_vmadot_4x4x8
+6,attn_block$dispatch_6_ime_x60_mul_s8_n256,,,0.013625,ms,13625.000000,0,,k1,mul_s8,n=256,327,1,,reference
+7,attn_block$dispatch_7_ime_x60_linear_s8_M8xK32xN32,,,0.048167,ms,48166.666667,0,,k1,linear_s8,M=8;K=32;N=32,1156,1,,curated[ime]/ime_vmadot_4x4x8
+8,attn_block$dispatch_8_ime_x60_mul_s8_n256,,,0.013667,ms,13666.666667,0,,k1,mul_s8,n=256,328,1,,reference
+9,attn_block$dispatch_9_ime_x60_linear_s8_M8xK32xN32,,,0.016792,ms,16791.666667,0,,k1,linear_s8,M=8;K=32;N=32,403,1,,curated[ime]/ime_vmadot_4x4x8
+10,attn_block$dispatch_10_ime_x60_matmul_s8_M8xK32xN8xtranspose_b1,,,0.008583,ms,8583.333333,0,,k1,matmul_s8,M=8;K=32;N=8;transpose_b=1,206,1,,curated[ime]/ime_vmadot_4x4x8
+11,attn_block$dispatch_11_ime_x60_softmax_s8_M8xK8,,,0.010458,ms,10458.333333,0,,k1,softmax_s8,M=8;K=8,251,1,,reference
+12,attn_block$dispatch_12_ime_x60_matmul_s8_M8xK8xN32xtranspose_b0,,,0.015750,ms,15750.000000,0,,k1,matmul_s8,M=8;K=8;N=32;transpose_b=0,378,1,,curated[ime]/ime_vmadot_4x4x8
+13,attn_block$dispatch_13_ime_x60_linear_s8_M8xK32xN32,,,0.014708,ms,14708.333333,0,,k1,linear_s8,M=8;K=32;N=32,353,1,,curated[ime]/ime_vmadot_4x4x8
