@@ -29,10 +29,70 @@ python3 -m venv .venv
 `pillow` and `ultralytics`; `-e .` brings XPU-RT's own. Nothing else is
 required to schedule, build, deploy, profile and adjudicate.
 
-Verified on a clean venv on 2026-08-29:
+Verified on a clean venv on 2026-08-29 (with `cvxpy` also installed):
 
 ```
 722 passed, 2 failed, 2 skipped        # both failures: "MOSEK is not installed"
+```
+
+Without `cvxpy` the two MOSEK tests skip instead, and the numbers are the ones
+in the next section.
+
+## What a fresh clone can and cannot do
+
+Verified by cloning `dev` into an empty directory and following this page
+verbatim — 1666 files, 389 MB, no board:
+
+```
+711 passed, 9 skipped        xpu-rt/tests tests
+all 4 examples ran           examples/run_all.py
+Makespan: 8.00 ms            a real solve on committed profiles
+```
+
+**Committed, so it works immediately:** the measured profiles
+(`gen/profile_mb`, four core widths for dronet / ffn_block /
+yolov8_nano_64x96), the dispatch graphs (`gen_mb/vmfb`), 69 workload specs,
+`data/banks`, and two model checkpoints (`dronet`, `mlp_control`).
+
+That is enough to schedule, produce real advice, bridge it, rewrite a graph
+and reach a verdict — the whole loop except the board steps.
+
+**Generated, so you make them:** the IR under `ModelBlaster/build/`. It is a
+build artifact and not tracked, which is why
+`examples/feedback_loop/one_revolution.py` stops at step 3 on a clean checkout.
+One command, no board:
+
+```bash
+cd ModelBlaster
+PYTHONPATH=.:src ../.venv/bin/python pipeline/extract_graph.py \
+    --model ffn_block --quant int8 --out-dir build/k1/ffn_block/int8
+```
+
+≈1.7 s. Re-run the example and it goes through the bridge and the rewrite.
+
+**Needs the network:** `yolov8_nano` pulls its weights through ultralytics on
+first use. `ffn_block`, `attn_block`, `norm_block`, `lstm_tiny`,
+`vitfly_frontend` and `fused_full` are synthetic and need nothing;
+`dronet` and `mlp_control` have vendored checkpoints.
+
+**Needs a board:** anything that profiles or runs. See
+[`k1_board.md`](k1_board.md).
+
+**Not in the repo at all:** the ViNT calibration data (`datasets/idsia/samples/sc`
+and the IsaacLab forest renders). Its two kernels are verified standalone on the
+board but have never run inside the model.
+
+### What the 9 skips are
+
+Six are missing local artifacts and say so by name — `artifacts/k1_run/contention.json`,
+multi-core profiles for models that only have `topo_0`, a sweep aggregate. Two
+are `cvxpy not available`. One is an impl-aware schedule this tree has not
+solved. None is a silent pass.
+
+Installing `cvxpy` clears two of them even without a MOSEK licence:
+
+```bash
+.venv/bin/pip install cvxpy
 ```
 
 ### Optional: MOSEK

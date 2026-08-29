@@ -149,3 +149,4 @@ out/figures/
 # Useful to keep locally, not repo documentation -- committing it publishes
 # an internal account as if it were a changelog.
 /docs/CHANGES.md
+/docs/merging_to_dev.md
