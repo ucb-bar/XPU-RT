@@ -207,6 +207,44 @@ flow_c/
     └── emit_runtime.py       dispatch_table.h + runtime_main.cpp
 ```
 
+## Splitting for coverage: FusedSensorNet
+
+The monolithic `fused_full` graph composes on DSP int8 and CPU fp32 only —
+HTA rejects the whole thing on the `Transpose` its `Flatten` lowers to, and
+the CPU op package rejects the quantized `Reshape` in the LSTM tail. Cutting
+the graph gives the scheduler back the placements the op set was hiding:
+
+| Tile | HTA int8 | DSP int8 | CPU int8 | CPU fp32 |
+|---|---|---|---|---|
+| `vision_conv` (4 convs) | **1.42 ms** | 0.58 | 12.22 | — |
+| `depth_conv` (2 convs) | **1.13 ms** | 0.38 | **0.014** | — |
+| `vision_head` (+Flatten+FC) | ✗ Transpose | 1.30 | 14.27 | — |
+| `depth_head` (+Flatten+FC) | ✗ Transpose | 0.80 | 0.037 | — |
+| `tail` (cat + 3x LSTM + head) | ✗ Transpose | 3.06 | ✗ Reshape | **0.37 ms** |
+
+The Flatten is the boundary that costs HTA, so the useful cut is before it:
+two parallel conv branches plus the tail. `bindings/fused_split.json` is that
+manifest — and its tail is the first tile with non-contiguous IR ops (4-5 and
+8-15, with the depth branch's 6-7 in between), because parallel branches
+interleave in dispatch-id order.
+
+What it buys, measured over 3 reps of the 4-way schedule (MOSEK optimal on
+66 ops, which puts the vision branch on HTA):
+
+| | monolith | split |
+|---|---|---|
+| FusedSensorNet CPU work per instance | 6.39 ms | **1.48 ms** |
+| mlp_control exec p50 / p90 | 0.106 / 0.138 ms | **0.058 / 0.085 ms** |
+| mlp_control worst lateness | +9.32 ms | **+2.36 ms** |
+| dronet exec p50 / max | 2.50 / 6.02 ms | **1.77 / 2.27 ms** |
+
+The makespan barely moves (yolov8n bounds it either way) — the win is that
+4.9 ms of contended CPU work per instance moves onto idle accelerator
+silicon, and every other network on the shared cores gets faster and more
+punctual. Note CPU int8 is only worth taking on the small branch: QnnCpu's
+int8 conv is a reference kernel (12.2 ms for the vision branch against
+0.014 ms for the 8x8 depth branch).
+
 ## Known gaps
 
 * **A CPU-heavy network's real cost is not its isolated cell.** FusedSensorNet

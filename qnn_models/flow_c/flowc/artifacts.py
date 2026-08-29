@@ -47,7 +47,7 @@ def coarse_ir(bset: BindingSet, ir: dict) -> dict:
             "dispatch_id": b.id,
             "depends_on": list(b.depends_on),
             "hardware_target": "any",
-            "n_ir_ops": b.last - b.first + 1,
+            "n_ir_ops": b.n_ops(),
             "ir_op_kinds": kinds,
         })
     return {"name": bset.network, "quant": bset.quant, "version": 1, "ops": ops}
@@ -95,11 +95,11 @@ def emit_profiles(bset: BindingSet, feas: list[Feasibility], measurements: dict,
                 warnings.append(f"{key} on {kind}: excluded ({why}); "
                                 f"cost set to {excluded:.0f} us")
                 records.append({"name": f"{b.name}#excluded", "op": "qnn_graph",
-                                "shape": f"ir_ops={b.last - b.first + 1}",
+                                "shape": f"ir_ops={b.n_ops()}",
                                 "cycles": excluded})
             else:
                 records.append({"name": b.name, "op": "qnn_graph",
-                                "shape": f"ir_ops={b.last - b.first + 1}",
+                                "shape": f"ir_ops={b.n_ops()}",
                                 "cycles": measured})
         meta = pw.ProfileMeta(
             model=bset.network, quant=bset.quant, backend=hw,
