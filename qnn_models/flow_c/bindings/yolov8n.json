@@ -1,28 +1,60 @@
 {
   "network": "yolov8n",
-  "ir": {"source": "onnx:yolov8n", "quant": "int8",
-         "graph_json": "boards/qrb5165_v66/graphs/yolov8n_HTA_split.json"},
-  "_comment": "Two tiles, cut at the backbone/head boundary the partitioner found (IR ops 0..102 vs 103..248). The cut is load-bearing: the head's Resize/Slice/Softmax reject on HTA, so a single whole-network tile would pin the entire detector to one backend. Sub-DLCs come from slice_to_subonnx.py + build_subdlcs.sh.",
+  "ir": {
+    "source": "onnx:yolov8n",
+    "quant": "int8",
+    "graph_json": "boards/qrb5165_v66/graphs/yolov8n_HTA_split.json"
+  },
+  "_comment": "Two tiles, cut where the partitioner cut. The ranges are derived from the partition JSON's contiguous hardware_target runs rather than transcribed, so a re-slice upstream moves them here too. The cut is load-bearing: the head's Resize/Slice/Softmax reject on HTA, so a single whole-network tile would pin the whole detector to one backend. Sub-DLCs come from slice_to_subonnx.py + build_subdlcs.sh.",
   "bindings": [
     {
       "id": 0,
       "name": "yolov8n_backbone",
-      "ops": {"first": 0, "last": 102},
+      "ops": {
+        "from_partition": {
+          "group": 0
+        }
+      },
       "backends": {
-        "hta": {"ctx": "ctx_yolov8n_backbone__Hta.bin", "graph": "yolov8n_HTA_split_seg100"},
-        "dsp": {"ctx": "ctx_yolov8n_backbone__Dsp.bin", "graph": "yolov8n_HTA_split_seg100"},
-        "cpu": {"ctx": "ctx_yolov8n_backbone__Cpu.bin", "graph": "yolov8n_HTA_split_seg100"}
-      }
+        "hta": {
+          "ctx": "ctx_yolov8n_backbone__Hta.bin",
+          "graph": "yolov8n_HTA_split_seg100"
+        },
+        "dsp": {
+          "ctx": "ctx_yolov8n_backbone__Dsp.bin",
+          "graph": "yolov8n_HTA_split_seg100"
+        },
+        "cpu": {
+          "ctx": "ctx_yolov8n_backbone__Cpu.bin",
+          "graph": "yolov8n_HTA_split_seg100"
+        }
+      },
+      "source_onnx": "yolov8n_backbone.onnx"
     },
     {
       "id": 1,
       "name": "yolov8n_head",
-      "ops": {"first": 103, "last": 248},
-      "depends_on": [0],
+      "ops": {
+        "from_partition": {
+          "group": 1
+        }
+      },
+      "depends_on": [
+        0
+      ],
       "backends": {
-        "dsp": {"ctx": "ctx_yolov8n_head__Dsp.bin", "graph": "yolov8n_HTA_split_seg101"},
-        "cpu": {"ctx": "ctx_yolov8n_head__Cpu.bin", "graph": "yolov8n_HTA_split_seg101"}
-      }
+        "dsp": {
+          "ctx": "ctx_yolov8n_head__Dsp.bin",
+          "graph": "yolov8n_HTA_split_seg101"
+        },
+        "cpu": {
+          "ctx": "ctx_yolov8n_head__Cpu.bin",
+          "graph": "yolov8n_HTA_split_seg101"
+        }
+      },
+      "source_onnx": "yolov8n_head.onnx"
     }
-  ]
+  ],
+  "partition": "boards/qrb5165_v66/graphs/yolov8n_HTA_split.json",
+  "_id_space_note": "The IR this manifest indexes (yolov8n_HTA_split.json, 249 ops) is the QNN/TFLite route; the artifacts the tiles name were sliced from the ONNX route (yolov8n.onnx, 233 nodes -> backbone 103 + head 138 = 241, the slicer materialising the 8 Split ops at the cut). Same network, three op counts, and the tile *boundary* is what agrees across them: group 0 ends where the backbone ONNX ends, and its three outputs are the head's three inputs. Op-level correspondence would need runtime/build_qnn_to_onnx_namemap.py; tile-level is what the runtime dispatches on."
 }

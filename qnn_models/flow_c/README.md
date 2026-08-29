@@ -115,6 +115,46 @@ Two things worth keeping:
    accelerator lane on `SCHED_FIFO` starves the FastRPC callbacks it is
    itself waiting on.
 
+## Where the partitioning comes from
+
+A tile boundary has three possible provenances, and the manifest says which
+one each binding used (`flow_c.py ir` prints it as `range from:`):
+
+| Binding | Range | Provenance |
+|---|---|---|
+| `dronet_full` | ops 0..23 | `ops: "all"` — a coarse *declaration*: whole network, one graph. The rationale (whole-DSP 0.92 ms vs 3.49 ms summed over 7 segments) is prose in the manifest, backed by the measurements file. |
+| `mlp_control_full` | ops 0..6 | `ops: "all"` — 70k MACs; any cut costs a dispatch to save microseconds. |
+| `yolov8n_backbone` / `_head` | ops 0..102 / 103..248 | **derived** — `ops: {from_partition: {group: N}}` reads the contiguous `hardware_target` runs out of `boards/qrb5165_v66/graphs/yolov8n_HTA_split.json`, the file `build_yolov8n_hta_split.py` wrote when it chose the cut. Re-slice upstream and the ranges move here too. |
+
+So the coarse choices are *encoded* (there is no automatic "is this network
+worth splitting" pass), and the one real cut is *derived* from the
+partitioner's own output rather than transcribed.
+
+The cut is also materialised as artifacts — `yolov8n_backbone.onnx` and
+`yolov8n_head.onnx`, sliced by `slice_to_subonnx.py`, built into sub-DLCs
+by `build_subdlcs.sh` — and the runtime dispatches purely on
+`(context, graph)`. The op range never reaches the runtime except as trace
+metadata, which means a manifest can describe a cut the artifact no longer
+has. `bindings.verify_against_artifacts()` is the guard: it counts nodes in
+each tile's `source_onnx` and checks the partition's `handoff_tensors` are
+produced by one tile and consumed by the next.
+
+That check surfaces a real and expected discrepancy: the head declares 146
+IR ops but its ONNX holds 138 nodes. Same network, three op counts —
+`yolov8n.onnx` 233 nodes (ONNX route), backbone 103 + head 138 = 241 after
+slicing materialises the 8 `Split` ops at the cut, and 249 in the QNN-route
+IR the partition file carries. The tile *boundary* is what agrees across
+all three: group 0 ends where the backbone ONNX ends, and its three outputs
+are exactly the head's three inputs. Op-level correspondence between the
+routes would need `runtime/build_qnn_to_onnx_namemap.py`; tile-level is
+what the runtime actually dispatches on.
+
+The one automated signal about granularity is xpu-rt's
+`granularity_advisor.py`, which fires during the solve — on the greedy
+schedule it said yolov8n's largest dispatch (21.58 ms) exceeds
+mlp_control's free slot (1.97 ms). Flow C prints it and does not act on it;
+feeding it back into the manifest would close that loop.
+
 ## Capabilities instead of sentinels
 
 The old coarse cost model carried `100_000.0` µs sentinels to keep the
