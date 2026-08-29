@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import os
 import subprocess
 import sys
@@ -99,6 +100,9 @@ def stage_artifacts(wl: dict, args) -> None:
     with open(_p(wl["measurements"])) as f:
         meas = json.load(f)
 
+    periodic = {n["name"] for n in wl["networks"] if n.get("period")}
+    horizon_ms = artifacts.measured_horizon_ms(bsets, meas, periodic)
+
     gen_vmfb = os.path.join(REPO, "gen", "qnn_vmfb")
     gen_prof = os.path.join(REPO, "gen", "profile")
     nets_for_spec, all_warnings = [], []
@@ -114,10 +118,15 @@ def stage_artifacts(wl: dict, args) -> None:
         print(f"{name}: {len(graphs)} dispatch graph(s), {len(paths)} profile CSV(s)")
         rel = os.path.relpath(artifacts.mb.emit_dispatch_graph().output_path(
             gen_vmfb, name, wl["target"], sorted(used_kinds.values())[0], bset.quant), REPO)
+        n_inst = (math.ceil(horizon_ms / net["period"]) if net.get("period") else None)
         nets_for_spec.append({"name": name, "dispatch_deps_path": rel,
-                              "period": net.get("period")})
+                              "period": net.get("period"),
+                              "num_instances": n_inst})
     for w in all_warnings:
         print(f"  excluded: {w}")
+    print(f"measured horizon (non-periodic worst case): {horizon_ms:.2f} ms -> "
+          + ", ".join(f"{n['name']}x{n['num_instances']}"
+                      for n in nets_for_spec if n.get("num_instances")))
 
     spec = artifacts.emit_workload_spec(
         nets_for_spec,
@@ -141,12 +150,16 @@ def stage_schedule(wl: dict, args) -> None:
     subprocess.run(cmd, check=True, cwd=REPO)
 
 
+def _tag(args) -> str:
+    return f"_{args.tag}" if args.tag else ""
+
+
 def stage_runtime(wl: dict, args) -> None:
     irs, bsets, _ = resolve(wl)
     sched = args.schedule or _find_schedule(wl, args.solver)
     entries = smod.ingest(sched, bsets, irs, _p(wl["registry"]), wl["slots"])
     print(smod.summarize(entries))
-    out_dir = args.out_dir or _p("gen", "runtime", wl["name"])
+    out_dir = args.out_dir or _p("gen", "runtime", wl["name"] + _tag(args))
     info = emit_runtime.emit(entries, out_dir, wl.get("ctx_dir", "/root/qnn_runtime_ctx"),
                              lane_mode=args.lane_mode)
     print(f"\nemitted {out_dir}/dispatch_table.h + runtime_main.cpp")
@@ -186,27 +199,28 @@ def stage_stage(wl: dict, args) -> None:
 
 
 def stage_run(wl: dict, args) -> None:
-    out_dir = args.out_dir or _p("gen", "runtime", wl["name"])
+    out_dir = args.out_dir or _p("gen", "runtime", wl["name"] + _tag(args))
     env = dict(os.environ)
     if args.log_dir:
         env["LOG_DIR"] = args.log_dir
     cmd = ["bash", "qnn_models/runtime/deploy_and_run.sh",
-           os.path.relpath(out_dir, REPO), args.board, args.board_dir]
+           os.path.relpath(out_dir, REPO), args.board,
+           args.board_dir + _tag(args)]
     print("+", " ".join(cmd))
     subprocess.run(cmd, check=False, cwd=REPO, env=env)
 
 
 def stage_plots(wl: dict, args) -> None:
     # deploy_and_run.sh defaults LOG_DIR to runs/<gen dir basename>.
-    log_dir = args.log_dir or os.path.join(REPO, "runs", wl["name"])
+    log_dir = args.log_dir or os.path.join(REPO, "runs", wl["name"] + _tag(args))
     log = os.path.join(log_dir, "run.log")
     if not os.path.exists(log):
         raise FileNotFoundError(f"no run log at {log} — run `flow_c.py run` first")
     out_dir = os.path.join(REPO, "plots")
     res = plotmod.render(
         log,
-        out_full=os.path.join(out_dir, f"{wl['name']}_predicted_vs_actual.png"),
-        out_zoom=os.path.join(out_dir, f"{wl['name']}_predicted_vs_actual_zoom.png"),
+        out_full=os.path.join(out_dir, f"{wl['name']}{_tag(args)}_predicted_vs_actual.png"),
+        out_zoom=os.path.join(out_dir, f"{wl['name']}{_tag(args)}_predicted_vs_actual_zoom.png"),
         csv_path=os.path.join(log_dir, "trace.csv"),
         source=f"{wl.get('board', 'board')} (QNN lanes)")
     print(res["summary"])
@@ -216,10 +230,15 @@ def stage_plots(wl: dict, args) -> None:
     print(f"  flat trace CSV     : {os.path.relpath(os.path.join(log_dir, 'trace.csv'), REPO)}")
     # The scheduler drew the predicted-only timeline when it solved.
     import glob
-    pred = sorted(glob.glob(os.path.join(out_dir, f"networks_{wl['name']}*profiled.png")),
-                  key=os.path.getmtime, reverse=True)
-    if pred:
-        print(f"  scheduler timeline : {os.path.relpath(pred[0], REPO)}")
+    # The scheduler names its own timeline after the solver it ran.
+    sched_png = os.path.join(out_dir, f"networks_{wl['name']}_profiled.png") if args.tag \
+        else os.path.join(out_dir, f"networks_{wl['name']}_{args.solver}_profiled.png")
+    if not os.path.exists(sched_png):
+        hits = sorted(glob.glob(os.path.join(out_dir, f"networks_{wl['name']}*profiled.png")),
+                      key=os.path.getmtime, reverse=True)
+        sched_png = hits[0] if hits else ""
+    if sched_png:
+        print(f"  scheduler timeline : {os.path.relpath(sched_png, REPO)}")
 
 
 def main() -> None:
@@ -232,6 +251,8 @@ def main() -> None:
     ap.add_argument("--schedule", default=None, help="explicit schedules/*.json")
     ap.add_argument("--lane-mode", default="kind", choices=["kind", "kind-network"])
     ap.add_argument("--out-dir", default=None)
+    ap.add_argument("--tag", default="", help="suffix for the runtime dir, log dir and "
+                                              "plot names — lets two solvers coexist")
     ap.add_argument("--board", default=os.environ.get("QNN_BOARD_HOST", "root@10.44.120.201"))
     ap.add_argument("--board-dir", default="/root/flowc_runtime")
     ap.add_argument("--ctx-source", default="/root/repro_perlane",
