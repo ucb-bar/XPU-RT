@@ -35,7 +35,17 @@ import numpy as np
 _HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.dirname(_HERE))
 
-import scheduler as S  # noqa: E402
+try:
+    import scheduler as S  # noqa: E402
+except ImportError as exc:                      # pragma: no cover
+    # `scheduler` imports cvxpy at module scope. An interpreter without it
+    # should SKIP this file, not fail it: cvxpy is an optional solver
+    # dependency (pyproject's `[solvers]` extra) and every other test that
+    # needs it skips -- see test_scheduler_registry. An ImportError here turns
+    # "the MILP extras are not installed" into a red suite, which is a
+    # different and much louder claim.
+    raise unittest.SkipTest(f"cvxpy not available: {exc}")
+
 from workload import Workload, Operation  # noqa: E402
 from workload_factory import (  # noqa: E402
     create_workload_from_network_hierarchy,
