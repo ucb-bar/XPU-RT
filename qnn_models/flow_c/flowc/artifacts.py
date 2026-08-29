@@ -110,6 +110,30 @@ def emit_profiles(bset: BindingSet, feas: list[Feasibility], measurements: dict,
     return paths, warnings
 
 
+def measured_horizon_ms(bsets, measurements: dict, periodic: set[str]) -> float:
+    """Worst-case makespan over the *non-periodic* networks, counting only
+    cells we actually measured.
+
+    xpu-rt sizes periodic instance counts as ceil(horizon / period), where
+    its own horizon is the sum of each non-periodic op's slowest machine.
+    Feed it capability-excluded cells and that sum explodes — the yolov8n
+    head's exclusion cost alone took the workload from 47 operations to
+    5,576. Flow C knows which cells are real, so it computes the horizon
+    from those and pins the counts through the `num_instances` override
+    the toplevel spec already supports.
+    """
+    cells = measurements.get("cells", {})
+    horizon_us = 0.0
+    for net, bset in bsets.items():
+        if net in periodic:
+            continue
+        for b in bset.bindings:
+            measured = [v for v in cells.get(f"{net}/{b.name}", {}).values() if v]
+            if measured:
+                horizon_us += max(measured)
+    return horizon_us / 1000.0
+
+
 def emit_workload_spec(networks: list[dict], out_path: str, target: str,
                        slot_to_hw: dict[str, str], gen_root: str = "gen",
                        time_limit: int = 60, comment: str = "") -> str:
@@ -141,6 +165,8 @@ def emit_workload_spec(networks: list[dict], out_path: str, target: str,
         if net.get("period"):
             entry["period"] = net["period"]
             entry["window_duration"] = net.get("window_duration", net["period"])
+            if net.get("num_instances"):
+                entry["num_instances"] = int(net["num_instances"])
         doc["networks"][net["name"]] = entry
     os.makedirs(os.path.dirname(os.path.abspath(out_path)), exist_ok=True)
     with open(out_path, "w") as f:
