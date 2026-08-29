@@ -37,5 +37,10 @@
     }
   },
 
-  "edges": []
+  "edges": [],
+
+  "flow": {
+    "_comment": "Read by scripts/repro_workload.sh only; the scheduler ignores it. The registry names the bitstream this spec was captured on (chipyard-dual-rocket-saturn-gemmini): hart 0 gemmini-attached, hart 1 saturn-RVV-only, matching profile_hw cpu_p/cpu_e.",
+    "build": { "registry": "cores/chipyard_dual_gemmini.json" }
+  }
 }

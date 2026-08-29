@@ -26,6 +26,7 @@
     "yolov8_nano": {
       "id": 0,
       "identifier": "yolov8_nano",
+      "quant": "int8",
       "dispatch_deps_path": "zephyr-chipyard-sw/gen/vmfb/yolov8_nano/generic_riscv64/RVV/yolov8_nano.fp32/yolov8_nano.fp32_dispatch_graph.json"
     }
   },
