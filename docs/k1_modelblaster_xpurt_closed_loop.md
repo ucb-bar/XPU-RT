@@ -816,6 +816,35 @@ order they cost time:
 4. The trace's labels must be provably generated from the same artifact the
    binary executed.
 
+### Where each piece of the loop actually lives
+
+The modules are not named after the concepts, which has cost more than one
+person an afternoon. There is no `granularity.py`, `rewrite.py`, `bundle.py` or
+`decision.py`; every one of those concepts exists under another name, and one
+of them was genuinely missing until recently.
+
+| the concept | what it is called here |
+|---|---|
+| granularity analysis | `xpu-rt/granularity_advisor.py` (analysis), `scripts/granularity_loop.py` (ranked candidates + hint) |
+| the rewriters | three, not one: `ModelBlaster/pipeline/apply_{fusion,split,unfuse}_hint.py` |
+| candidate bundle | `scripts/run_xpurt_bundle.py`, `scripts/run_bundle_firesim.sh` (FireSim-era) |
+| the decision | search: `ModelBlaster/scripts/decision_loop.py` · **verdict: `scripts/compare_candidates.py`** |
+| advice → hint | `scripts/advice_to_{fusion,split,unfuse}_hint.py`, `advice_to_kernel_choice.py` |
+| the acceptance rule | `xpu-rt/candidate_objective.py` |
+
+**`scripts/granularity_loop.py` had been deleted** with the IREE path while
+`decision_loop.py` still shelled out to it, so `decision_loop --help` worked and
+a real run died at its first step. It is restored, driving the current tooling.
+It ranks candidates on a PREDICTION and says so in every record
+(`predicted_basis`); it does not decide.
+
+**Searching and deciding are different jobs.** `decision_loop.py` accepts on
+total cycles, which is `candidate_objective`'s ninth and last term. That is
+fine as a cheap search filter and wrong as a verdict — the DroNet split was
+rejected at term 5 while *improving* critical-task p99, which a cycles gate
+cannot see in either direction. Search with `decision_loop`, decide with
+`compare_candidates.py`.
+
 ### The four verbs, and how each one reaches the compiler
 
 The scheduler never edits C. It states a recommendation with evidence, a
