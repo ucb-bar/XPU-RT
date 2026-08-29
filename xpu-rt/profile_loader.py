@@ -13,6 +13,8 @@ import hashlib
 import json
 import os
 
+import workload_spec
+
 import numpy as np
 
 from compile_advice import n_cores_from_topo_tag
@@ -188,22 +190,6 @@ def find_profile_csv(
     return max(matches, key=lambda p: os.path.getmtime(p))
 
 
-def _basename_from_dispatch_deps_path(path: str) -> str:
-    """Extract the parent directory name from a dispatch deps path."""
-    return os.path.basename(os.path.dirname(path)) if path else ""
-
-
-def _model_candidates(net_id: str, net_info: dict, dispatch_deps_path: str) -> list[str]:
-    """Return candidate model names to try when searching for profiling CSVs."""
-    basename = _basename_from_dispatch_deps_path(dispatch_deps_path) or f"{net_id}.q.int8"
-    basename_model = os.path.basename(basename).split(".")[0]
-    candidates = []
-    for c in (net_id, net_info.get("identifier"), basename_model):
-        if isinstance(c, str) and c and c not in candidates:
-            candidates.append(c)
-    return candidates or [net_id]
-
-
 def _resolve_topo_for(
     hw: str, combo: list[str], topo_tag_override
 ) -> str:
@@ -254,8 +240,8 @@ def _load_all_topo_profiles(
     machine, four physical harts under the hood) read its multi-core
     profile data while a singleton cpu_p still reads topo_0.
     """
-    basename = _basename_from_dispatch_deps_path(dispatch_deps_path) or f"{net_id}.q.int8"
-    candidates = _model_candidates(net_id, net_info, dispatch_deps_path)
+    basename = workload_spec.basename_from_dispatch_deps_path(dispatch_deps_path) or f"{net_id}.q.int8"
+    candidates = workload_spec.model_candidates(net_id, net_info, dispatch_deps_path)
     profiles: dict[tuple[str, str], dict[int, dict]] = {}
 
     hw_types = set(combo_hw)

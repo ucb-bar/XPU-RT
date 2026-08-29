@@ -32,6 +32,8 @@ import csv
 import glob
 import json
 import os
+
+import workload_spec
 import sys
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -88,21 +90,6 @@ def _load_hardware(
     return gen_root, target, topo, hw_p, hw_e
 
 
-def _basename_from_dispatch_deps_path(path: str) -> str:
-    if not path:
-        return ""
-    return os.path.basename(os.path.dirname(path))
-
-
-def _model_candidates(net_key: str, net_info: dict, basename: str) -> List[str]:
-    out: List[str] = []
-    bm = os.path.basename(basename).split(".")[0] if basename else ""
-    for c in (net_key, net_info.get("identifier"), bm):
-        if isinstance(c, str) and c and c not in out:
-            out.append(c)
-    return out or [net_key]
-
-
 def _find_profile_csv(
     repo_base: str,
     *,
@@ -139,8 +126,8 @@ def _pick_csv_pair_for_network(
     net_info: dict,
     dispatch_rel: str,
 ) -> Tuple[Optional[str], Optional[str], str]:
-    basename = _basename_from_dispatch_deps_path(dispatch_rel)
-    for model in _model_candidates(net_key, net_info, basename):
+    basename = workload_spec.basename_from_dispatch_deps_path(dispatch_rel)
+    for model in workload_spec.model_candidates(net_key, net_info, basename):
         csv_p = _find_profile_csv(
             repo_base,
             gen_root=gen_root,
@@ -161,7 +148,7 @@ def _pick_csv_pair_for_network(
         )
         if csv_p or csv_e:
             return csv_p, csv_e, model
-    return None, None, _model_candidates(net_key, net_info, basename)[0]
+    return None, None, workload_spec.model_candidates(net_key, net_info, basename)[0]
 
 
 def load_times_ms_by_dispatch_id(csv_path: Optional[str]) -> Dict[int, float]:
@@ -193,19 +180,6 @@ def load_times_ms_by_dispatch_id(csv_path: Optional[str]) -> Dict[int, float]:
     return out
 
 
-def _is_automatic_periodic(net_info: dict) -> bool:
-    return net_info.get("period") is not None and net_info.get(
-        "window_duration"
-    ) is not None
-
-
-def _is_windowed_slice(net_info: dict) -> bool:
-    return (
-        net_info.get("min_start_t") is not None
-        and net_info.get("max_end_t") is not None
-    )
-
-
 def _should_include_network(
     net_key: str,
     net_info: dict,
@@ -215,9 +189,9 @@ def _should_include_network(
 ) -> bool:
     if only_keys and net_key not in only_keys:
         return False
-    if _is_automatic_periodic(net_info):
+    if workload_spec.is_automatic_periodic(net_info):
         return False
-    if _is_windowed_slice(net_info) and not include_windowed:
+    if workload_spec.is_windowed_slice(net_info) and not include_windowed:
         return False
     return True
 

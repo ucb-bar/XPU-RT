@@ -103,6 +103,7 @@ def is_modelblaster(rows: List[Dict[str, Any]]) -> bool:
 
 def normalise(rows: List[Dict[str, Any]],
               slot_maps: Dict[str, Dict[int, int]] | None = None,
+              fill_queue_delay: bool = True,
               ) -> List[Dict[str, Any]]:
     """Map a ModelBlaster trace onto merlin's column names; pass others through.
 
@@ -115,10 +116,17 @@ def normalise(rows: List[Dict[str, Any]],
     identity rather than on array position.
 
     `queue_delay_us` is derived as actual start minus PREDICTED start, which is
-    not the same quantity merlin measures (submit-to-start inside the runtime).
-    It is the one the trace can support and it answers the same question --
-    "did this wait?" -- so it is emitted under a distinct name as well, and the
-    difference is recorded rather than smoothed over.
+    NOT the quantity merlin measures (submit-to-start inside the runtime): it
+    is scheduler slack, not runtime queueing. It answers the related question
+    "did this wait?", so renderers get it, and `schedule_slip_us` always
+    carries it under its own honest name.
+
+    `fill_queue_delay=False` suppresses BOTH the derived value and the zero
+    default, leaving the column absent. `trace_metrics.summarise_trace` then
+    reports `queue_us: None` and omits `queue_share_pct` -- which is right,
+    because calling scheduler slack a "queue share" would put a number on a
+    thing this producer never measured. `schedule_slip_us` is still there for
+    anyone who wants the slack itself.
     """
     if not is_modelblaster(rows):
         return rows
@@ -151,8 +159,15 @@ def normalise(rows: List[Dict[str, Any]],
             planned = float(r["predicted_start_ms"]) * 1000.0
             d["planned_start_us"] = planned
             d["schedule_slip_us"] = start_us - planned
-            d["queue_delay_us"] = max(start_us - planned, 0.0)
-        d.setdefault("queue_delay_us", 0.0)
+            if fill_queue_delay:
+                d["queue_delay_us"] = max(start_us - planned, 0.0)
+        # `fill_queue_delay=False` leaves it ABSENT when the producer measured
+        # none, so `trace_metrics.summarise_trace` reports `queue_us: None`
+        # rather than a 0 indistinguishable from a run that genuinely never
+        # queued. Renderers that index the column unconditionally want the
+        # fill; the scorer does not.
+        if fill_queue_delay:
+            d.setdefault("queue_delay_us", 0.0)
         # merlin's `target` is CPU_P/CPU_E; the equivalent identity here is the
         # worker the walker actually ran it on.
         d.setdefault("target", f'{r.get("core_kind", "")}#{r.get("hart", "")}')
@@ -161,9 +176,9 @@ def normalise(rows: List[Dict[str, Any]],
 
 
 def read(path: str, slot_maps: Dict[str, Dict[int, int]] | None = None,
-         ) -> List[Dict[str, Any]]:
+         fill_queue_delay: bool = True) -> List[Dict[str, Any]]:
     with open(path, newline="") as f:
-        return normalise(list(csv.DictReader(f)), slot_maps)
+        return normalise(list(csv.DictReader(f)), slot_maps, fill_queue_delay)
 
 
 def slot_maps_from_irs(ir_paths: List[str]) -> Dict[str, Dict[int, int]]:

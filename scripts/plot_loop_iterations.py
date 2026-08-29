@@ -37,10 +37,12 @@ sys.path.insert(0, os.path.join(_REPO, "xpu-rt"))
 sys.path.insert(0, _HERE)
 
 import candidate_objective as objective  # noqa: E402
+from schedule_scoring import score  # noqa: E402
 import figstyle  # noqa: E402
 import job_names  # noqa: E402
 import schedule_trace  # noqa: E402
 import trace_metrics  # noqa: E402
+import workload_spec  # noqa: E402
 
 figstyle.use()
 
@@ -54,17 +56,6 @@ def load(spec):
     label, path = spec.rsplit("=", 1)
     with open(path) as f:
         return label, json.load(f), path
-
-
-def score(label, schedule, windows, critical, heavy, known):
-    rows = schedule_trace.trace_rows_from_schedule(schedule)
-    periods = schedule_trace.periods_ms(schedule, known)
-    summary = trace_metrics.summarise_trace(
-        rows, periods, {k: v for k, v in windows.items() if k in periods})
-    return objective.from_trace_summary(
-        label, summary, critical_models=critical, heavy_model=heavy,
-        standalone_cycles=int(round(
-            schedule_trace.standalone_service_us(schedule))))
 
 
 def panel(ax, schedule, known, window_ms, title, subtitle):
@@ -112,15 +103,12 @@ def main() -> int:
 
     windows, known = {}, None
     if a.windows_from:
-        spec = json.load(open(a.windows_from))
-        nets = spec.get("networks") or {}
-        windows = {str(k): float(v.get("window_duration", v.get("period", 0)))
-                   for k, v in nets.items()}
-        known = set(nets)
+        windows, known = workload_spec.windows_and_names(
+            json.load(open(a.windows_from)))
     critical = tuple(m.strip() for m in a.critical_models.split(",") if m.strip())
 
     iters = [load(s) for s in a.iteration]
-    outcomes = [score(lbl, sch, windows, critical, a.heavy_model, known)
+    outcomes = [score(lbl, sch, windows, critical, a.heavy_model, known)[1]
                 for lbl, sch, _ in iters]
 
     verdicts = ["baseline"]

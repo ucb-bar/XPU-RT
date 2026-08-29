@@ -45,6 +45,7 @@ import csv
 from collections import defaultdict
 
 import job_names
+import k1_trace
 from typing import Dict, Iterable, List, Optional, Sequence
 
 
@@ -80,39 +81,20 @@ K1_RDTIME_HZ = 24_000_000.0
 def normalise_modelblaster(rows: List[dict]) -> List[dict]:
     """Map ModelBlaster's `harness_xpurt` trace onto this module's columns.
 
-    Two producers emit measured K1 traces and they disagree on spelling, not on
-    meaning: merlin's runner writes `start_us`/`end_us`/`run_us`/
-    `queue_delay_us`/`job_name`/`cores`; ModelBlaster's writes
-    `actual_start_cycles`/`actual_end_cycles` plus `network`+`instance`. Doing
-    the mapping here rather than in each caller is the whole reason this module
-    exists -- `metrics.py` and `k1_baselines.py` disagreeing about what a miss
-    is, in different files, is what it was written to end.
+    Delegates to `k1_trace.normalise`, which owns the mapping for the whole
+    repo -- it had three implementations and they disagreed about whether the
+    trace's `dispatch_id` is a record slot or an IR id.
 
-    Cycles are rdtime ticks, and the run is stamped from the first tick observed
-    rather than from 0, so t=0 is the run's own start.
-
-    `queue_delay_us` has no counterpart in this producer, so it is left ABSENT
-    rather than filled with 0 -- `summarise_trace` then reports `queue_us: None`
-    instead of a zero that would read as "no queueing was measured".
+    `fill_queue_delay=False` is the one thing this caller needs differently:
+    that producer measures no queueing, and inventing a 0 here would make
+    `summarise_trace` report "no queueing" for a run where it was simply never
+    measured. Absent stays absent, and `queue_us` comes out None.
     """
-    if not rows or "actual_start_cycles" not in rows[0]:
-        return rows
-    t0 = min(int(r["actual_start_cycles"]) for r in rows)
-    out = []
-    for r in rows:
-        s, e = int(r["actual_start_cycles"]), int(r["actual_end_cycles"])
-        d = dict(r)
-        d["start_us"] = (s - t0) / K1_RDTIME_HZ * 1e6
-        d["end_us"] = (e - t0) / K1_RDTIME_HZ * 1e6
-        d["run_us"] = max(e - s, 0) / K1_RDTIME_HZ * 1e6
-        d["job_name"] = f'{r.get("network", "")}{r.get("instance", "")}'
-        out.append(d)
-    return out
+    return k1_trace.normalise(rows, fill_queue_delay=False)
 
 
 def read_trace(path: str) -> List[dict]:
-    with open(path, newline="") as f:
-        return normalise_modelblaster(list(csv.DictReader(f)))
+    return k1_trace.read(path, fill_queue_delay=False)
 
 
 def _held_cores(row: dict) -> List[str]:

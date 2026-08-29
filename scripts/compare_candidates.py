@@ -42,38 +42,10 @@ sys.path.insert(0, os.path.join(_REPO, "xpu-rt"))
 sys.path.insert(0, _HERE)
 
 import candidate_objective as objective  # noqa: E402
+from schedule_scoring import score  # noqa: E402
 import schedule_trace  # noqa: E402
 import trace_metrics  # noqa: E402
-
-
-def windows_and_names(networks_json):
-    """`(windows_ms, network_names)` from a workload spec."""
-    if not networks_json:
-        return {}, None
-    spec = json.load(open(networks_json))
-    nets = spec.get("networks") or {}
-    windows = {}
-    for key, info in nets.items():
-        w = info.get("window_duration", info.get("period"))
-        if w is not None:
-            windows[str(key)] = float(w)
-    return windows, set(nets)
-
-
-def score(name, schedule, windows_ms, critical, heavy, known):
-    """`profile_schedulers.score`, plus the name repair for old artifacts.
-
-    Not imported from there because that module runs a whole sweep at import
-    time; the six lines below are its body, and the schema test pins them.
-    """
-    rows = schedule_trace.trace_rows_from_schedule(schedule)
-    periods = schedule_trace.periods_ms(schedule, known)
-    summary = trace_metrics.summarise_trace(
-        rows, periods, {k: v for k, v in windows_ms.items() if k in periods})
-    return summary, objective.from_trace_summary(
-        name, summary, critical_models=critical, heavy_model=heavy,
-        standalone_cycles=int(round(
-            schedule_trace.standalone_service_us(schedule))))
+import workload_spec  # noqa: E402
 
 
 def _row(o):
@@ -99,7 +71,10 @@ def main() -> int:
     ap.add_argument("--json", default=None)
     a = ap.parse_args()
 
-    windows, known = windows_and_names(a.windows_from)
+    windows, known = ({}, None)
+    if a.windows_from:
+        windows, known = workload_spec.windows_and_names(
+            json.load(open(a.windows_from)))
     critical = tuple(m.strip() for m in a.critical_models.split(",") if m.strip())
 
     base_s = json.load(open(a.baseline_schedule))
@@ -114,10 +89,10 @@ def main() -> int:
               "would be, it is not about the rewrite.", file=sys.stderr)
         return 2
 
-    _, base = score(a.baseline_label, base_s, windows, critical,
-                    a.heavy_model, known)
-    _, cand = score(a.candidate_label, cand_s, windows, critical,
-                    a.heavy_model, known)
+    _, base, _ = score(a.baseline_label, base_s, windows, critical,
+                       a.heavy_model, known)
+    _, cand, _ = score(a.candidate_label, cand_s, windows, critical,
+                       a.heavy_model, known)
 
     ok, why = objective.accept(cand, base)
     order, _ = objective.compare(cand, base)

@@ -82,7 +82,8 @@ sys.path.insert(0, os.path.join(REPO, "scripts"))
 
 import candidate_objective as objective  # noqa: E402
 import schedule_trace  # noqa: E402
-import trace_metrics  # noqa: E402
+import trace_metrics
+from schedule_scoring import heavy_stats, score  # noqa: F401  # noqa: E402
 
 
 # --------------------------------------------------------------- solver table
@@ -274,29 +275,6 @@ def run_cell(networks_json: str, name: str, *, timeout: int, profiled: bool,
 
 # -------------------------------------------------------------------- scoring
 
-def heavy_stats(rows, model: str) -> Tuple[float, float]:
-    """(max instance latency ms, completion rate Hz) for a model with no period.
-
-    `trace_metrics` only reports models it was given a period for, which is the
-    right behaviour -- but the objective's heavy-model terms also apply to a
-    non-periodic background net (a one-shot YOLO pass). Latency is then the
-    instance's own span, not a response from a release that does not exist.
-    """
-    spans: Dict[str, List[float]] = defaultdict(lambda: [1e18, -1e18])
-    for r in rows:
-        if trace_metrics.model_of(r["job_name"]) != model:
-            continue
-        j = r["job_name"]
-        spans[j][0] = min(spans[j][0], float(r["start_us"]) / 1000.0)
-        spans[j][1] = max(spans[j][1], float(r["end_us"]) / 1000.0)
-    if not spans:
-        return 0.0, 0.0
-    latencies = [en - st for st, en in spans.values()]
-    last_end = max(en for _, en in spans.values())
-    hz = (len(spans) / (last_end / 1000.0)) if last_end > 0 else 0.0
-    return max(latencies), hz
-
-
 def advise(schedule_path: str) -> dict:
     """The deadline-aware advisor's read on one cell.
 
@@ -322,23 +300,6 @@ def advise(schedule_path: str) -> dict:
     except Exception as exc:  # noqa: BLE001 - advice must never break a cell
         return {"top_recommendation": f"advisor failed: {exc}"}
 
-
-def score(name: str, schedule: dict, windows_ms: Dict[str, float],
-          critical: Tuple[str, ...], heavy: Optional[str]
-          ) -> Tuple[dict, objective.CandidateOutcome, list]:
-    rows = schedule_trace.trace_rows_from_schedule(schedule)
-    periods = schedule_trace.periods_ms(schedule)
-    summary = trace_metrics.summarise_trace(
-        rows, periods, {k: v for k, v in windows_ms.items() if k in periods})
-    out = objective.from_trace_summary(
-        name, summary, critical_models=critical, heavy_model=heavy,
-        standalone_cycles=int(round(schedule_trace.standalone_service_us(schedule))))
-    if heavy and heavy not in out.per_model:
-        out.heavy_max_latency_ms, out.heavy_throughput_hz = heavy_stats(rows, heavy)
-    return summary, out, rows
-
-
-# --------------------------------------------------------------------- output
 
 def write_csv(path: str, cells: List[dict], models: List[str]) -> str:
     base = ["rank", "solver", "status", "detail", "solver_s", "wall_s",

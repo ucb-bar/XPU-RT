@@ -33,6 +33,8 @@ from __future__ import annotations
 import argparse
 import json
 import os
+
+import workload_spec
 import sys
 from collections import defaultdict
 from typing import Any, Dict, List, Optional, Tuple
@@ -45,19 +47,6 @@ for _p in (_sys_xpu, _repo_root, _scripts_dir):
         sys.path.insert(0, _p)
 
 import worst_case_nonperiodic_duration as wcnp  # noqa: E402
-
-
-def _is_windowed_slice(net_info: dict) -> bool:
-    return (
-        net_info.get("min_start_t") is not None
-        and net_info.get("max_end_t") is not None
-    )
-
-
-def _is_automatic_periodic(net_info: dict) -> bool:
-    return net_info.get("period") is not None and net_info.get(
-        "window_duration"
-    ) is not None
 
 
 def _window_ms_from_slice(net_info: dict) -> float:
@@ -126,9 +115,9 @@ def main() -> None:
     for net_key, net_info in networks.items():
         if not isinstance(net_info, dict):
             continue
-        if _is_windowed_slice(net_info):
+        if workload_spec.is_windowed_slice(net_info):
             windowed_groups[_group_key_windowed(net_info)].append((net_key, net_info))
-        elif _is_automatic_periodic(net_info):
+        elif workload_spec.is_automatic_periodic(net_info):
             automatic_candidates.append((net_key, net_info))
 
     results: List[dict] = []
