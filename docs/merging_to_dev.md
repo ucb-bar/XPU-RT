@@ -1,17 +1,27 @@
-# Landing this branch on `dev`
+# Landing this branch: what happened, and the one thing still open
 
-All of `dev` is merged. `HEAD..dev = 0` and `HEAD..origin/dev = 0`, and both
-are ancestors of HEAD, so the push is a **fast-forward** — no merge commit:
+**Done.** Both landed as fast-forwards — no merge commits:
 
-```bash
-git push origin HEAD:dev                      # XPU-RT
-git -C ModelBlaster push origin HEAD:main     # ModelBlaster's integration branch
+```
+ucb-bar/ModelBlaster  main  dbbdcf0..04ecdcd   (295 commits)
+ucb-bar/XPU-RT        dev   935ce59..2d49451   (195 commits)
 ```
 
-Do the ModelBlaster push first. XPU-RT records a gitlink; pushing a parent that
-points at a commit no one can fetch is the one ordering that breaks a clone.
+ModelBlaster went first, because XPU-RT records a gitlink and pushing a parent
+that points at an unfetchable commit is the one ordering that breaks a clone.
 
-## One thing is blocked, and it is not ours to unblock
+**A mistake worth recording, because it nearly shipped.** `git add -A` swept
+the `zephyr-chipyard-sw` gitlink into two commits, pointing it at a commit that
+exists only on a personal fork. A gitlink no one can fetch breaks
+`git submodule update --init` for every clone, with an error about a missing
+object rather than about a missing permission. Caught before the push and
+reverted in `2d49451`. Stage submodule pointers by name, never with `-A`.
+
+Every gitlink on `dev` now resolves from the URL `.gitmodules` declares:
+`ModelBlaster`, `zephyr-chipyard-sw`, `hw/chipyard`, `sims/IsaacLab`. `merlin`
+is gone from both the tree and `.gitmodules`.
+
+## The one thing still open, and it is not ours to close
 
 `zephyr-chipyard-sw` needs a commit that only exists on a personal fork.
 
@@ -82,7 +92,7 @@ something to fix by rewriting published branches.
 * per-dispatch implementation choice is honoured by the binary rather than
   silently ignored.
 
-## Before pushing
+## What was verified before the push
 
 ```bash
 .venv/bin/python -m pytest xpu-rt/tests tests -q
@@ -90,6 +100,19 @@ cd ModelBlaster && python -m pytest tests pipeline/tests -q   # needs CROSS
 eval "$(scripts/setup_spacemit_toolchain.sh)"
 ```
 
-And run Flow A at least once from the merged ModelBlaster commit —
-`scripts/repro_workload.sh` plus the four `networks_*_spike.json` specs. A green
-K1 suite is not evidence that Flow A survived.
+711 passed / 1 skipped and 179 passed / 4 skipped respectively, plus
+`examples/run_all.py`.
+
+**Flow A was NOT verified end to end, and that is a real gap rather than an
+oversight.** `scripts/repro_workload.sh` needs
+`zephyr-chipyard-sw/tools/miniforge3`, and that conda env has never been
+installed in this checkout — all four `networks_*_spike.json` specs fail at env
+activation, before reaching anything this branch touched. The nested
+`zephyr-chipyard-sw/modelblaster` submodule is uninitialised too.
+
+What *can* be said: the merged ModelBlaster commit passes its own suite,
+including the kernelbench and `harness_shared_input` work Flow A depends on;
+and `repro_workload.sh`, `install_xpurt_deps.sh` and the four spec files are
+untouched by this branch. Someone with a working Flow A environment should run
+it once against `main` — a green K1 suite is not evidence that Flow A
+survived.
