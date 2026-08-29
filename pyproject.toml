@@ -1,0 +1,48 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "xpu-rt"
+version = "0.1.0"
+description = "An adaptable full-stack end-to-end (E2E) compilation and scheduling flow for efficient mapping of robotic multi-model workloads onto heterogeneous shared-memory SoCs."
+requires-python = ">=3.9"
+dependencies = [
+    "numpy",
+    "scipy",
+    "matplotlib",
+    "pandas",
+]
+
+[project.optional-dependencies]
+# Only needed for --solver milp (greedy/greedy_periodic need nothing beyond
+# the base deps above). mosek itself is license-gated and not pip-friendly
+# in general -- installing it is a separate, manual step; this extra just
+# covers cvxpy, the modeling layer that would call into it.
+milp = ["cvxpy"]
+
+# The sweep in `scripts/profile_schedulers.py` probes for these and reports a
+# policy as "unavailable" rather than failing, so "the sweep only ran four of
+# six policies" has a one-line fix instead of a guess:
+#
+#     pip install -e '.[solvers]'
+#
+# One correction to the note above, verified in this checkout: the `mosek`
+# WHEEL does install from pip (11.2.3 is what cvxpy 1.9.1 calls into here).
+# What is license-gated is USING it -- without ~/mosek/mosek.lic or
+# $MOSEKLM_LICENSE_FILE the import succeeds and every solve fails. So it is
+# listed, and the licence remains a separate manual step.
+solvers = ["cvxpy", "ortools", "mosek"]
+
+# xpu-rt/ isn't actually consumed as an installed package -- every script
+# (see scripts/run_xpurt_schedule.py) inserts the xpu-rt/ directory onto
+# sys.path itself and does flat `from workload import ...`-style imports,
+# because "xpu-rt" isn't a valid Python identifier anyway. This file's real
+# job is declaring the dependencies above (previously undeclared/implicit,
+# satisfied by accident via whatever env happened to already have numpy
+# etc.) -- not making xpu-rt/*.py importable as a package. Disable
+# setuptools' package auto-discovery explicitly so `pip install -e .` in
+# this (large, multi-project) repo root doesn't try to walk into
+# zephyr-chipyard-sw/, hw/chipyard/, etc. looking for packages.
+[tool.setuptools]
+py-modules = []
