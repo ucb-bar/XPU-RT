@@ -531,6 +531,33 @@ The modules are not all named after the concepts.
 | producer-consumer edge cost | `runtime/scripts/k1_cost_by_pred.py`, `docs/k1_cost_by_pred.md` |
 | which implementations a core can run | `xpu-rt/capabilities.py` |
 | the chained-AVL kernel lint | `ModelBlaster/scripts/check_rvv_avl.py` |
+| shard: advice -> hint | `scripts/advice_to_shard_hint.py` |
+| shard: hint -> annotated IR | `ModelBlaster/pipeline/apply_shard_hint.py` |
+| per-dispatch implementation, board side | `ModelBlaster/pipeline/ingest_xpurt_schedule.py` (`impl`) |
+| runtime feedback, batch | `scripts/run_xpurt_schedule.py --emit-feedback` |
+| runtime feedback, streaming | `xpu-rt/streaming_feedback.py`, `MB_XPURT_STREAM=1` |
+| both feedback channels, explained | `docs/modelblaster_integration.md` |
+| the solver registry | `docs/solvers.md`, `xpu-rt/schedulers.py` |
+| what a spec's fields mean | `docs/workload_specs.md` |
+| runnable walkthroughs | `examples/` |
+
+## 8. Examples
+
+Every arrow above has a runnable version under `examples/`, and the test suite
+runs the subset that needs neither a board nor a licence — so an example
+cannot rot quietly into a description of code that no longer exists.
+
+```bash
+.venv/bin/python examples/run_all.py
+```
+
+| example | shows |
+|---|---|
+| `examples/feedback_loop/one_revolution.py` | profile -> advice -> hint -> rewrite -> verdict, on measured data |
+| `examples/verbs/all_five_verbs.py` | each verb's producer/bridge/consumer, and what each bridge refuses |
+| `examples/workloads/anatomy_of_a_spec.py` | the six load-bearing spec fields and their failure modes |
+| `examples/k1_board/board_flow.py` | the board flow and every precondition checkable from the host |
+| `examples/solvers/compare_solvers.py` | the registry on one workload; slow, opt-in |
 
 `rewrite.py`, `bundle.py` and `granularity_loop.py` were absent from this branch
 for a while — added on `origin/xpurt-scheduler-advisor` and never merged

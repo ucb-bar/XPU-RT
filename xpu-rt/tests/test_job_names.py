@@ -16,6 +16,7 @@ import json
 import os
 import sys
 import unittest
+from pathlib import Path
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.dirname(_HERE))
@@ -151,3 +152,70 @@ class OldSchedulesStillScore(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ModelBlastersCopyAgreesWithOurs(unittest.TestCase):
+    """The one copy that stays separate, and the test that keeps it honest.
+
+    Longest-match `<network><instance>` splitting was written independently in
+    four places, and each was written after the previous one broke. Three now
+    delegate to `job_names`. ModelBlaster's `_split_job_name` cannot: it is a
+    different repo, installable on its own, and importing XPU-RT to parse a
+    string would be a dependency for nothing.
+
+    So it is a deliberate duplicate, and a duplicate nobody checks is just a
+    divergence that has not happened yet. The failure is silent in the worst
+    way: `yolov8_nano_64x96` reads as `yolov8_nano_64x` + instance 960, the
+    deadline becomes `960 * T + D`, and the network reports zero misses
+    forever -- a structural zero that looks exactly like a pass.
+    """
+
+    def _mb_split(self):
+        import importlib.util
+        path = (Path(__file__).resolve().parents[2] / "ModelBlaster"
+                / "pipeline" / "generate_xpurt_main.py")
+        if not path.exists():
+            raise unittest.SkipTest(f"ModelBlaster not checked out: {path}")
+        spec = importlib.util.spec_from_file_location("_mb_gen", path)
+        mod = importlib.util.module_from_spec(spec)
+        assert spec.loader is not None
+        try:
+            spec.loader.exec_module(mod)
+        except ImportError as e:                       # pragma: no cover
+            raise unittest.SkipTest(f"cannot import the generator: {e}")
+        return mod._split_job_name
+
+    #: Every shape that has actually bitten, plus the ordinary cases.
+    CASES = [
+        ("yolov8_nano_64x960", {"yolov8_nano_64x96"}),
+        ("yolov8_nano_64x96",  {"yolov8_nano_64x96"}),
+        ("dronet0",            {"dronet"}),
+        ("dronet",             {"dronet"}),
+        ("mlp_control12",      {"mlp_control"}),
+        # Longest match wins: both are known, and the longer one is meant.
+        ("yolov8_nano_64x960", {"yolov8_nano", "yolov8_nano_64x96"}),
+    ]
+
+    def test_the_two_splitters_agree_on_every_shape_that_has_bitten(self):
+        mb_split = self._mb_split()
+        for job, known in self.CASES:
+            with self.subTest(job=job, known=sorted(known)):
+                self.assertEqual(mb_split(job, known),
+                                 job_names.split_job_name(job, known),
+                                 f"{job!r} splits differently in the two "
+                                 f"repos; one of them is scoring the wrong "
+                                 f"deadline")
+
+    def test_they_agree_on_the_fallback_too(self):
+        """No known set: both must degrade the SAME way, wrong or not.
+
+        Ours is documented as wrong here -- it strips trailing digits, which
+        is ambiguous for a digit-ending name. What matters is that they are
+        wrong identically, so a caller that passes no names does not get two
+        different answers from two halves of one pipeline.
+        """
+        mb_split = self._mb_split()
+        for job, _ in self.CASES:
+            with self.subTest(job=job):
+                self.assertEqual(mb_split(job, None),
+                                 job_names.split_job_name(job, None))

@@ -1,78 +1,95 @@
-# Merging this branch into `dev`
+# Landing this branch on `dev`
 
-Verified end to end on 2026-08-28 in a throwaway worktree. Three conflicts are
-reported and **a fourth is not** — that one is the reason this file exists.
-
-## The conflict that is not reported
-
-`.gitmodules` auto-merges, and the auto-merge is wrong.
-
-Both sides deleted three lines from it, so git takes both deletions and reports
-success. But they are *different* three lines: `dev` removed the **ModelBlaster**
-entry (Dima's `b66dd8c`), and this branch removed the **merlin** entry. Applying
-both leaves `.gitmodules` with no ModelBlaster stanza while the ModelBlaster
-*gitlink* — which is separately in conflict, and which you will resolve in
-favour of keeping it — stays in the index.
-
-A gitlink with no matching `.gitmodules` entry is a submodule that
-`git submodule update --init` cannot resolve: it has a commit and no URL. Nobody
-cloning the result can check ModelBlaster out, and nothing in the merge says so.
-
-Reverting `b66dd8c` is a deliberate decision, not an accident of the merge:
-ModelBlaster is a top-level submodule of XPU-RT again.
-
-## The four resolutions
-
-| path | resolution | why |
-|---|---|---|
-| `.gitmodules` | keep merlin's removal, **restore ModelBlaster's entry** | the two deletions are different lines; see above |
-| `ModelBlaster` | **ours** | reverts `b66dd8c`; ModelBlaster is a submodule again |
-| `pyproject.toml` | **ours** | ours is a strict superset — same 35 lines plus the `[solvers]` extra |
-| `zephyr-chipyard-sw` | **theirs** | `b76ad31f` (2026-08-27 16:43) is newer than ours (11:48) and is not our work; the two have diverged, neither is an ancestor |
+All of `dev` is merged. `HEAD..dev = 0` and `HEAD..origin/dev = 0`, and both
+are ancestors of HEAD, so the push is a **fast-forward** — no merge commit:
 
 ```bash
-git merge origin/dev --no-commit --no-ff        # reports 3 of the 4
-
-printf '[submodule "ModelBlaster"]\n\tpath = ModelBlaster\n\turl = https://github.com/ucb-bar/ModelBlaster.git\n' >> .gitmodules
-git add .gitmodules
-
-git checkout HEAD -- ModelBlaster && git add ModelBlaster
-git checkout --ours pyproject.toml && git add pyproject.toml
-
-git rm --cached -q zephyr-chipyard-sw
-git update-index --add --cacheinfo \
-    160000,$(git rev-parse origin/dev:zephyr-chipyard-sw),zephyr-chipyard-sw
+git push origin HEAD:dev                      # XPU-RT
+git -C ModelBlaster push origin HEAD:main     # ModelBlaster's integration branch
 ```
 
-## Check before committing the merge
+Do the ModelBlaster push first. XPU-RT records a gitlink; pushing a parent that
+points at a commit no one can fetch is the one ordering that breaks a clone.
 
-Every `.gitmodules` entry must have a gitlink and every gitlink an entry — the
-asymmetry is what the silent auto-merge produces, so check it explicitly:
+## One thing is blocked, and it is not ours to unblock
+
+`zephyr-chipyard-sw` needs a commit that only exists on a personal fork.
+
+The submodule pointer and the checkout had genuinely diverged — 7 commits
+against 4, neither an ancestor. They merge cleanly (disjoint paths: ours
+touched the `modelblaster` gitlink, theirs added FireSim profile CSVs), and the
+merge is on
+`copparihollmann/zephyr-chipyard-sw @ feat/firesim-bitexact-profile-recalibration`.
+It carries the bit-exact FireSim profile-DB recalibration for dronet and
+yolov8_nano hetero cycles — scheduler input data, not incidental — plus the
+`modelblaster` bump described below.
+
+Pushing it to `ucb-bar/zephyr-chipyard-sw` is refused with a 403. So XPU-RT's
+zephyr pointer **stays at `b76ad31`** (ucb-bar `dev`'s tip). Recording a gitlink
+only a fork can resolve would break `git submodule update --init` for everyone,
+which is precisely the class of breakage this branch spent its time removing.
+
+**Someone with write access needs to land that zephyr branch.** Until then the
+two ModelBlaster checkouts cannot converge — see below.
+
+## Why there are two ModelBlaster checkouts, and why they must match
+
+ModelBlaster is reachable twice: XPU-RT's own top-level submodule (Flow B, the
+K1 board) and `zephyr-chipyard-sw/modelblaster` (Flow A, spike/firesim). Dima's
+`b66dd8c` removed the top-level one as redundant; this branch restores it
+deliberately, and that decision stands.
+
+What the duplication costs is worth stating plainly: they had drifted **214
+commits against 77**, which means Flow A and the K1 flow were compiling
+different kernels from the same op names, with nothing anywhere to say so. An
+uninitialised submodule is an empty directory rather than an error, so it goes
+unnoticed.
+
+They are now merged onto one commit. Both pointers should name it:
+
+* XPU-RT `ModelBlaster` → done, on this branch.
+* `zephyr-chipyard-sw/modelblaster` → done on the fork, **blocked by the 403.**
+
+When you bump one, bump the other.
+
+## The license
+
+`mosek.lic` is reachable from HEAD through the second parent of the merge that
+took local `dev`'s CompGen snapshot. It is already on four `origin` branches
+including this one, so this push adds no new exposure — but it makes later
+removal a rewrite of five refs rather than four.
+
+Three things in the tree already said it should not be committed: `.gitignore`
+carries `*.lic` with "machine-local, never commit",
+`benchmarks/freshness_eval/README.md` says it "must be present at the repo root
+(gitignored)", and nothing reads it by path.
+
+Treat it as compromised and re-issue it. That is its owner's call, not
+something to fix by rewriting published branches.
+
+## What the push carries
+
+* merlin retired — the submodule, the IREE/VMFB runtime, and nine QRB5165
+  scripts that could not run without it. Flow B is the K1 board now.
+  `qnn_scheduler/` and `qrb5165_costs.json` stay: measured data outlives the
+  compiler that fed it.
+* the cross toolchain moved out of `merlin/build_tools/` into
+  `tools/riscv-tools-spacemit/`, so nothing depends on merlin being on disk.
+* all five compiler↔scheduler verbs have complete chains, `shard` included.
+* both feedback channels reach ModelBlaster — batch through
+  `run_xpurt_schedule.py --emit-feedback`, streaming through the walker's
+  per-dispatch JSON lines.
+* per-dispatch implementation choice is honoured by the binary rather than
+  silently ignored.
+
+## Before pushing
 
 ```bash
-python3 - <<'PY'
-import configparser, subprocess
-c = configparser.ConfigParser(); c.read(".gitmodules")
-declared = {c[s]["path"] for s in c.sections()}
-linked = {l.split("\t")[1] for l in
-          subprocess.run(["git","ls-files","-s"],capture_output=True,text=True)
-          .stdout.splitlines() if l.startswith("160000")}
-assert declared == linked, (sorted(declared ^ linked))
-print("submodules consistent:", sorted(declared))
-PY
-
-git diff --name-only --diff-filter=U          # must be empty
-python -m pytest xpu-rt/tests/ -q
+.venv/bin/python -m pytest xpu-rt/tests tests -q
+cd ModelBlaster && python -m pytest tests pipeline/tests -q   # needs CROSS
+eval "$(scripts/setup_spacemit_toolchain.sh)"
 ```
 
-The suite on the merged tree gives **646 passed, 11 skipped** against 656/1 on
-this branch. The 10 extra skips are not a regression: a fresh worktree has no
-ModelBlaster checkout and no gitignored measured artifacts, and those tests skip
-on exactly that. `pytest -rs` names each one.
-
-## Order of operations
-
-**Push ModelBlaster first.** The gitlink this merge records
-(`ModelBlaster` at its `feat/k1-xpurt` head) does not resolve for anyone else
-until that commit exists on the remote. Merging first produces a `dev` that is
-broken for every other clone until the second push lands.
+And run Flow A at least once from the merged ModelBlaster commit —
+`scripts/repro_workload.sh` plus the four `networks_*_spike.json` specs. A green
+K1 suite is not evidence that Flow A survived.
