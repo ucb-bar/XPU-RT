@@ -1144,6 +1144,39 @@ short version, because three earlier claims in this document were wrong:
   without naming the permutation. The control is that the same binary exits
   132 (SIGILL) on hart 5: had the instruction been elided or ignored, cluster 1
   would have printed the same numbers instead of dying.
+* **A REAL IME MATMUL NOW EXISTS, AND IT WINS 2.30x — ON SOME SHAPES.**
+  `ModelBlaster/kernels/ime/ime_matmul_s8_ime_vmadot_4x4x8.c`, bit-exact
+  (`max_abs_err=0`) over 9 shapes and both data regimes. Measured on the board
+  against the RVV matmul back to back:
+
+  | shape | RVV | IME | IME |
+  |---|---|---|---|
+  | M=7 K=512 N=512 | 0.982 ms | 3.978 ms | **0.25x — loses** |
+  | M=64 K=512 N=512 | 8.966 ms | 6.263 ms | 1.43x |
+  | M=128 K=256 N=256 tbᵀ | 5.998 ms | 2.609 ms | **2.30x** |
+
+  The crossover is structural, not tuning noise: the micro-tile is a
+  hardware-forced 4 rows, so at M=7 one row in eight is padding and the
+  B-panel packing amortizes over two m-tiles instead of thirty-two. Attention
+  matmuls (M=8) are in the losing regime; transformer MLP shapes are in the
+  winning one. **This is what makes `ime` a per-dispatch scheduling choice
+  rather than a backend** — a unit that won everywhere would need no
+  scheduler to select it.
+* **The ceiling is 3.33x, and the obvious comparison gets it wrong.**
+  `ModelBlaster/scripts/k1_mac_throughput_probe.c` issues each MAC instruction
+  on preloaded registers with no memory traffic: `smt.vmadot` sustains
+  **34.02 GMAC/s**, `vwmacc.vv` 25.56, and `vwmul.vv + vwadd.wv` **10.22**.
+  The middle number is a straw man — `vwmacc.vv` accumulates into i16, which
+  a real int8 matmul cannot use (at K=512 the sum reaches ~8.2M against
+  i16's 32767), so bit-exact RVV must pay two instructions per 32 MACs.
+  Against i16 the ceiling reads 1.33x; against what RVV actually needs it is
+  3.33x. The measured 2.30x is 69% of achievable.
+* **Packing, not the MAC unit, is the whole performance story.** The first
+  correct IME kernel packed tiles inside the `(m0, n0)` loop — repacking
+  O(M·N·K/4) against O(M·N·K) MACs — and measured **6.5x SLOWER** than RVV.
+  Packing A once per m-tile block and each B panel once made the same
+  instruction 9x faster. Reporting that first number as a fact about IME
+  would have been wrong.
 * **The "IME wins" in `compile_advice.json` are not IME wins.** Dispatches 14
   and 7 contain no `vmadot` at all; the speedups are incidental codegen variation
   from the `+xsmtvdot` data-tiling path.
