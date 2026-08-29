@@ -7,7 +7,7 @@ both are called "feedback".
 | channel | says | file | consumed by |
 |---|---|---|---|
 | **compile advice** | how to REWRITE the graph | `compile_advice.json` | `advice_to_*_hint.py` → `apply_*_hint.py` |
-| **runtime feedback** | how to PLACE and SIZE what is already there | `xpurt_feedback.json` | `ingest_xpurt_schedule.py` |
+| **runtime feedback** | how to PLACE and SIZE what is already there | `xpurt_feedback.json` | `emit_compile_advice.py --feedback` |
 
 The first changes what the dispatches ARE — fuse, split, unfuse, shard, choose
 an implementation. The second leaves the graph alone and says a dispatch ran
@@ -127,6 +127,60 @@ measurement is the failure mode this channel is shaped to avoid.
 The signals derivable from the stream alone are therefore about the **cost
 model** — measured duration against predicted — which is what drives
 `prefer_finer` / `prefer_coarser`.
+
+## The return edge: who reads `xpurt_feedback.json`
+
+`scripts/emit_compile_advice.py --feedback <xpurt_feedback.json>`.
+
+For a while nothing did, which made channel 2 a producer with no consumer —
+the same shape as the problem the shard chain was written to fix, pointing the
+other way.
+
+**The consumer is the advice producer, not ModelBlaster directly**, and that
+is forced rather than chosen. The obvious move is a `feedback_to_hints.py`
+beside the five `advice_to_*_hint.py` bridges. It cannot be written honestly:
+
+| hint | what a hint file would have to invent |
+|---|---|
+| `prefer_finer` | the split factor `ceil(service / slot)` — no slot budget in the feedback |
+| `consider_fuse_with_pred` | the *group* of dispatches to fuse — needs the graph |
+| `pin_target=<x>` | `x` is a machine combination, not a kernel implementation |
+
+Only `emit_compile_advice` holds both the graph and the periodic budget. A
+bridge that guessed them would be inventing exactly the numbers the loop
+exists to measure.
+
+So the measured run **corroborates or contradicts** advice derived from
+profiles, and never manufactures it:
+
+* an item the run agrees with gains confidence (`medium` → `high`);
+* an item the run contradicts is demoted to `unchanged`, with the reason in
+  the rationale and `demoted_by_measurement` in the evidence;
+* everything is recorded either way, so a reader can see *why* an item's
+  confidence is what it is — and can undo the judgement by ignoring the field.
+
+The contradiction table is deliberately **not** the complement of the
+corroboration one. `prefer_coarser` contradicts splitting, but `prefer_finer`
+does not contradict fusing: a dispatch can be both slower than predicted and
+worth fusing with its neighbour, and treating the hints as opposites would
+suppress correct advice on exactly the dispatches under most pressure.
+
+Feedback is keyed per **instance** (`dronet7_dispatch_3`) and advice is per
+**dispatch**, so instances are unioned — a dispatch that earned a hint in any
+instance carries it. Union rather than majority because these hints already
+survived `streaming_feedback`'s own rate thresholds; requiring a majority
+would be filtering twice with the second filter undocumented.
+
+The report distinguishes two things that are easy to conflate:
+
+```
+feedback (k1_2026...): 1 corroborated, 0 contradicted,
+                       5 reported-on but unrelated, 23 not reported on
+```
+
+"the run said nothing about this dispatch" and "the run said something that
+does not bear on this recommendation" are different facts, and only the first
+means the measurement missed it.
 
 ## Hint vocabulary
 

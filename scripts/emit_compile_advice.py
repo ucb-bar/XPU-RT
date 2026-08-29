@@ -86,6 +86,12 @@ def main() -> int:
     ap.add_argument("--models", default="mlp:mlp.q.int8,dronet:dronet.q.int8")
     ap.add_argument("--impls", default="rvv_x60,scalar")
     ap.add_argument("--baseline-impl", default="rvv_x60")
+    ap.add_argument("--feedback", default=None,
+                    help="xpurt_feedback.json from a MEASURED run "
+                         "(run_xpurt_schedule.py --emit-feedback, or "
+                         "streaming_feedback.py). Used to CORROBORATE or "
+                         "CONTRADICT the advice below -- never to invent it. "
+                         "Omit and nothing changes.")
     ap.add_argument("--profile-format", choices=("jsonl", "csv"),
                     default="csv",
                     help="which producer wrote the profiles. `jsonl` is "
@@ -296,6 +302,37 @@ def main() -> int:
             # thresholds for the same dispatch, and only one of them could be
             # right.
             advice += shard_advice(model, by_cores, dispatch_budget(model, base))
+
+    # THE MEASURED RUN, if there is one. The static advice above comes from
+    # profiles and a solved schedule -- what the model PREDICTS. A feedback
+    # file comes from a run that actually happened. Joining them raises
+    # confidence where the two agree and demotes advice the run contradicts;
+    # it never manufactures advice, because turning "ran slower than
+    # predicted" into a split factor needs the periodic budget and the graph,
+    # and inventing either is what the loop exists to avoid.
+    fb_counts = {}
+    if a.feedback:
+        import feedback_join
+        doc = feedback_join.load(a.feedback)
+        if doc is None:
+            print(f"  feedback: {a.feedback} absent or unreadable -- "
+                  f"advice unchanged")
+        else:
+            known = {spec.split(":")[0] for spec in a.models.split(",")
+                     if ":" in spec}
+            total = {"corroborated": 0, "contradicted": 0,
+                     "not_applicable": 0, "silent": 0}
+            for model in sorted(known):
+                per_model = [x for x in advice if x.model == model]
+                _, c = feedback_join.join(per_model, doc, model, known)
+                for k in total:
+                    total[k] += c[k]
+            fb_counts = total
+            print(f"  feedback ({doc.get('run_id')}): "
+                  f"{total['corroborated']} corroborated, "
+                  f"{total['contradicted']} contradicted, "
+                  f"{total['not_applicable']} reported-on but unrelated, "
+                  f"{total['silent']} not reported on")
 
     # Highest-priority first; the consumer is expected to apply a bounded number.
     advice.sort(key=lambda x: (x.priority, -x.evidence.service_time_us))

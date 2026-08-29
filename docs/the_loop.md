@@ -536,6 +536,7 @@ The modules are not all named after the concepts.
 | per-dispatch implementation, board side | `ModelBlaster/pipeline/ingest_xpurt_schedule.py` (`impl`) |
 | runtime feedback, batch | `scripts/run_xpurt_schedule.py --emit-feedback` |
 | runtime feedback, streaming | `xpu-rt/streaming_feedback.py`, `MB_XPURT_STREAM=1` |
+| measured run -> back onto the advice | `xpu-rt/feedback_join.py`, `emit_compile_advice.py --feedback` |
 | both feedback channels, explained | `docs/modelblaster_integration.md` |
 | the solver registry | `docs/solvers.md`, `xpu-rt/schedulers.py` |
 | what a spec's fields mean | `docs/workload_specs.md` |
