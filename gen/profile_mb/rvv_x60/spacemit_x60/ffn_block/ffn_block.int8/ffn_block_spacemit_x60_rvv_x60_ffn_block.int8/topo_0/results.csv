@@ -1,6 +1,6 @@
 dispatch_id,module_name,vmfb_path,mlir_path,mean_time,mean_unit,mean_time_ns,returncode,log_path,source,op,shape,cycles,cycles_n,cycles_cv_pct,implementation
-0,ffn_block$dispatch_0_rvv_x60_layernorm_s8_M128xK256,,,2.575750,ms,2575750.000000,0,,k1,layernorm_s8,M=128;K=256,61818,6,0.69,reference
-1,ffn_block$dispatch_1_rvv_x60_linear_s8_M128xK256xN1024,,,14.087125,ms,14087125.000000,0,,k1,linear_s8,M=128;K=256;N=1024,338091,6,0.37,curated[rvv]/direct
-2,ffn_block$dispatch_2_rvv_x60_gelu_s8_n131072,,,0.477750,ms,477750.000000,0,,k1,gelu_s8,n=131072,11466,6,2.7,curated[rvv]/rvv_memo_lut_gather
-3,ffn_block$dispatch_3_rvv_x60_linear_s8_M128xK1024xN256,,,11.095542,ms,11095541.666667,0,,k1,linear_s8,M=128;K=1024;N=256,266293,6,1.25,curated[rvv]/direct
-4,ffn_block$dispatch_4_rvv_x60_add_s8_n32768,,,0.169542,ms,169541.666667,0,,k1,add_s8,n=32768,4069,6,0.57,curated[rvv]/rvv_frm_rmm
+0,ffn_block$dispatch_0_rvv_x60_layernorm_s8_M128xK256,,,0.732333,ms,732333.333333,0,,k1,layernorm_s8,M=128;K=256,17576,6,2.46,curated[rvv]/rvv_f64_tail
+1,ffn_block$dispatch_1_rvv_x60_linear_s8_M128xK256xN1024,,,14.125333,ms,14125333.333333,0,,k1,linear_s8,M=128;K=256;N=1024,339008,6,0.5,curated[rvv]/direct
+2,ffn_block$dispatch_2_rvv_x60_gelu_s8_n131072,,,0.478250,ms,478250.000000,0,,k1,gelu_s8,n=131072,11478,6,0.34,curated[rvv]/rvv_memo_lut_gather
+3,ffn_block$dispatch_3_rvv_x60_linear_s8_M128xK1024xN256,,,11.104958,ms,11104958.333333,0,,k1,linear_s8,M=128;K=1024;N=256,266519,6,0.47,curated[rvv]/direct
+4,ffn_block$dispatch_4_rvv_x60_add_s8_n32768,,,0.169958,ms,169958.333333,0,,k1,add_s8,n=32768,4079,6,0.39,curated[rvv]/rvv_frm_rmm
