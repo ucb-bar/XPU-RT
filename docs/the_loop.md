@@ -102,7 +102,7 @@ DroNet's dispatch 0 (`conv2d_s8`, OC=32) split along OC, in a 3-model workload
 #    gen_mb/profile is a SYMLINK and the profiler writes in place -- back up
 #    the baseline results.csv first or you destroy what everything else was
 #    solved from.
-export CROSS=<spacemit>/bin/riscv64-unknown-linux-gnu-   # NOT the default; see §6
+eval "$(scripts/setup_spacemit_toolchain.sh)"   # sets CROSS; see below
 MB_IR=artifacts/k1_run/round_B3_dronet_split/graph.split_x4.json \
 PROFILE_OUT_ROOT=$PWD/gen_mb/profile \
   bash ModelBlaster/scripts/run_model_k1.sh dronet int8 rvv_x60 0
@@ -209,8 +209,12 @@ Every one of these exists because it failed silently at least once.
 
 ## 6. Two traps that cost a board slot each
 
-**Use GCC 14.3, not 13.2.** `run_xpurt_k1.sh` defaults `CROSS` to chipyard's
-13.2, while the single-model profiling path uses the spacemit 14.3. GCC 13.2
+**Use GCC 14.3, not 13.2.** Get it with
+`eval "$(scripts/setup_spacemit_toolchain.sh)"`, which finds an existing
+install (including an old merlin checkout) or fetches from the vendor, and
+REFUSES a 13.x it finds rather than letting you discover the problem on the
+board. merlin is no longer a submodule; that script is the whole reason the
+live path ever needed it. `run_xpurt_k1.sh` defaults `CROSS` to chipyard's 13.2, while the single-model profiling path uses the spacemit 14.3. GCC 13.2
 reorders the `__riscv_vsetvl_*` intrinsics so a widening instruction runs under
 the narrow vtype:
 

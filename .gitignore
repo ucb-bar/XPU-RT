@@ -129,3 +129,9 @@ data/toplevel/_probe_*.json
 # Figures are build products: a committed script plus measured data in the
 # repo reproduces every one of them. `scripts/figstyle.py` fixes the style.
 out/figures/
+
+# merlin is no longer a submodule: nothing on the live K1 path imports it,
+# and the one thing that did -- the SpaceMiT cross toolchain -- is now fetched
+# by scripts/setup_spacemit_toolchain.sh. A local checkout may still be present
+# for the retired IREE/runtime flow; it is not tracked.
+/merlin/

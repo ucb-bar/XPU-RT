@@ -135,12 +135,17 @@ if [[ "${TARGET}" == "spacemit" ]]; then
 
   RISCV_TOOLCHAIN_ROOT="${RISCV_TOOLCHAIN_ROOT:-}"
   if [[ -z "${RISCV_TOOLCHAIN_ROOT}" ]]; then
-    DEFAULT_TC="${MERLIN_ROOT}/build_tools/riscv-tools-spacemit/spacemit-toolchain-linux-glibc-x86_64-v1.1.2"
-    if [[ -d "${DEFAULT_TC}" ]]; then
-      RISCV_TOOLCHAIN_ROOT="${DEFAULT_TC}"
-      echo "  (using Merlin-installed toolchain: ${RISCV_TOOLCHAIN_ROOT})"
+    # merlin is no longer a submodule, so the toolchain is resolved by
+    # scripts/setup_spacemit_toolchain.sh -- which still finds a merlin
+    # checkout if one is present, and otherwise fetches from the vendor. It
+    # also REFUSES gcc 13.x, which miscompiles the RVV vsetvl intrinsics.
+    TC_BIN="$("${PROJECT_ROOT}/scripts/setup_spacemit_toolchain.sh" --path 2>/dev/null || true)"
+    if [[ -n "${TC_BIN}" ]]; then
+      RISCV_TOOLCHAIN_ROOT="$(cd "$(dirname "${TC_BIN}")/.." && pwd)"
+      echo "  (toolchain: ${RISCV_TOOLCHAIN_ROOT})"
     else
-      echo "Error: RISCV_TOOLCHAIN_ROOT not set and Merlin toolchain not found at ${DEFAULT_TC}" >&2
+      echo "Error: RISCV_TOOLCHAIN_ROOT not set and no toolchain found." >&2
+      echo "       Run scripts/setup_spacemit_toolchain.sh" >&2
       exit 1
     fi
   fi

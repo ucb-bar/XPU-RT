@@ -994,7 +994,7 @@ equal to that instruction's own encoding. Same source and flags, GCC 14.3
 emits `vsetvli e32,m4 / vle8 / vsext.vf4` and it runs. Set:
 
 ```bash
-export CROSS=<...>/spacemit-toolchain-linux-glibc-x86_64-v1.1.2/bin/riscv64-unknown-linux-gnu-
+eval "$(scripts/setup_spacemit_toolchain.sh)"
 ```
 
 This does not invalidate earlier scheduled runs: a wrong vtype is an *illegal

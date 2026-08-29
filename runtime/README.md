@@ -1,5 +1,16 @@
 # XPU-RT Runtime Tools
 
+> **This tree is the RETIRED merlin/IREE flow.** Its runners are built inside
+> merlin, which is no longer a submodule of XPU-RT -- nothing on the live K1
+> path imports it. To use anything here, clone merlin separately and point
+> `MERLIN_DIR` at it. The live path is ModelBlaster's generated C, driven by
+> `ModelBlaster/scripts/run_model_k1.sh` and `run_xpurt_k1.sh`; see
+> `docs/the_loop.md`.
+>
+> The one thing the live path still took from merlin -- the SpaceMiT cross
+> toolchain -- is now `scripts/setup_spacemit_toolchain.sh`.
+
+
 This directory contains scripts and tools for the compile/profile/run flow.
 The runtime dispatch runners are built inside merlin and used directly.
 
