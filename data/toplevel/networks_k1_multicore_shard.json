@@ -1,0 +1,45 @@
+{
+  "_comment": "What the scheduler DOES with per-hart-width profiles. DroNet and the 64x96 detector, both profiled on 1/2/4/8 harts (topo_0, topo_0_1, topo_0_1_2_3, topo_0_1_2_3_4_5_6_7), solved in shard mode so the solver picks a WIDTH PER DISPATCH rather than being told one for the model. This is the consumption side of the multi-core profiles committed in 58e042d / faa78cb / b45bc93.",
+  "_why_this_spec_exists": "The per-dispatch measurement (out/figures/k1_multicore_scaling.png) shows that sharding gain varies 4.8x WITHIN one model -- 4.02x on a wide-OC conv down to 0.83x on a 1x1. That says no single core width is right for a model. It does not by itself show that a solver can exploit it. This spec is the other half: the same profiles, handed to the scheduler, with the widths it chose recorded in the schedule.",
+  "_capabilities_comment": "IME is measured, not assumed: smt.vmadot executes on cores 0-3 and SIGILLs on 4-7 (artifacts/k1_bringup/*/ime_capability_probe.txt). Not exercised here -- these are rvv_x60 profiles and the question is core WIDTH, not implementation.",
+  "hardware": {
+    "machines": { "cpu_p": 4, "cpu_e": 4 },
+    "profile_hw": { "cpu_p": "rvv_x60", "cpu_e": "rvv_x60" },
+    "profile": {
+      "target": "spacemit_x60",
+      "topo_tag_override": false,
+      "gen_root": "gen_mb"
+    },
+    "p_core_speedup": 1.0
+  },
+  "scheduler": {
+    "random_seed": 42,
+    "solver_verbosity": 1,
+    "time_limit": 120,
+    "use_profiled": true,
+    "prune_periodic": true,
+    "restrict_makespan_to_nonperiodic": false,
+    "machine_combination_mode": "shard"
+  },
+  "networks": {
+    "dronet": {
+      "id": 0,
+      "identifier": "dronet",
+      "dispatch_deps_path": "gen_mb/vmfb/dronet/spacemit_x60/rvv_x60/dronet.int8/dronet.int8_dispatch_graph.json",
+      "period": 33.3,
+      "window_duration": 33.3,
+      "num_instances": 4
+    },
+    "yolov8_nano_64x96": {
+      "id": 1,
+      "identifier": "yolov8_nano_64x96",
+      "dispatch_deps_path": "gen_mb/vmfb/yolov8_nano_64x96/spacemit_x60/rvv_x60/yolov8_nano_64x96.int8/yolov8_nano_64x96.int8_dispatch_graph.json",
+      "period": 250,
+      "window_duration": 250,
+      "num_instances": 1
+    }
+  },
+  "edges": [],
+  "_topo_comment": "topo_tag_override is FALSE, and that is the whole point. With it true every combination is costed from topo_0, so a 4-hart block would be charged the SINGLE-hart time while occupying four harts -- the solver would correctly never choose one, and the run would report 'sharding does not help' for a purely clerical reason. Each block is costed from its own N-hart profile, which the combination's topo tag selects.",
+  "_instances_comment": "Pinned, not derived. The horizon heuristic sizes instance counts from the profiles, so a faster configuration produces FEWER releases and two solves stop being comparable -- see schedule_scoring.instances_per_model and the guard in compare_candidates."
+}

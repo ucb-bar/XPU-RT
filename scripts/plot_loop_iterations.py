@@ -81,6 +81,32 @@ IMPL_COLOR = {"ime": figstyle.VERMILLION, "rvv": figstyle.SKY, None: figstyle.C_
 #: the two would overstate how much of the schedule the NPU is carrying.
 IME_CAPABLE_OPS = ("linear_s8", "matmul_s8")
 
+#: Roles for the core-WIDTH axis, for a schedule solved in shard mode. A
+#: sequential ramp, not the qualitative palette: the quantity being shown is
+#: ordered (1 < 2 < 4 harts), and using three unrelated hues for it would say
+#: the widths are categories rather than more and less of one thing.
+#:
+#: WHY THIS AXIS IS WORTH ITS OWN COLOURING. The per-dispatch measurement says
+#: sharding gain varies 4.8x WITHIN a single model (4.02x on a wide-OC conv
+#: down to 0.83x on a 1x1), so no single core width is right for a model. That
+#: is a statement about the PROFILES. Whether a solver can act on it is a
+#: different claim, and this is the figure that shows it: the widths the
+#: scheduler actually chose, dispatch by dispatch.
+WIDTH_COLOR = {1: "#BDD7E7", 2: figstyle.SKY, 4: figstyle.BLUE,
+               8: figstyle.PURPLE}
+
+
+def _width_of(d) -> int:
+    """How many harts this dispatch was given.
+
+    `hardware_target` is a '+'-joined core list, so the width is a count and
+    not a field -- 'CPU_P#0' is one hart, 'CPU_P#0+CPU_P#1' is two. Reading it
+    this way means the figure cannot disagree with the feasibility checker,
+    which splits the same string the same way.
+    """
+    return max(1, len([p for p in str(d.get("hardware_target", "")).split("+")
+                       if p]))
+
 
 def _default_impl(schedule):
     """The implementation a single-impl schedule used, from its profile_hw.
@@ -116,7 +142,11 @@ def panel(ax, schedule, known, window_ms, title, subtitle, color_by="network"):
         dur = float(d.get("duration", 0.0))
         if window_ms and st > window_ms:
             continue
-        if color_by == "impl":
+        if color_by == "width":
+            w = _width_of(d)
+            c = WIDTH_COLOR.get(w, figstyle.C_MUTED)
+            key = f"{w} hart" + ("" if w == 1 else "s")
+        elif color_by == "impl":
             key = _impl_of(d, default_impl)
             c = IMPL_COLOR.get(key, figstyle.C_MUTED)
             key = {"ime": "IME (smt.vmadot, cluster 0)",
@@ -161,11 +191,15 @@ def main() -> int:
     ap.add_argument("--critical-models", default="")
     ap.add_argument("--heavy-model", default=None)
     ap.add_argument("--window-ms", type=float, default=200.0)
-    ap.add_argument("--color-by", choices=("network", "impl"), default="network",
+    ap.add_argument("--color-by", choices=("network", "impl", "width"),
+                    default="network",
                     help="'impl' colours each bar by the implementation that "
                          "ran it rather than by which network it belongs to. "
                          "Use it for a heterogeneous schedule, where the "
-                         "question is WHERE a dispatch ran, not whose it is.")
+                         "question is WHERE a dispatch ran, not whose it is. "
+                         "'width' colours by how many harts the dispatch was "
+                         "given -- for a shard-mode solve, where the question "
+                         "is HOW WIDE the solver went, per dispatch.")
     ap.add_argument("--out-dir", default=None)
     ap.add_argument("--stem", default="k1_loop_evolution")
     ap.add_argument("--title", default="The loop, iteration by iteration")
@@ -202,7 +236,11 @@ def main() -> int:
             raise SystemExit(f"--control {spec}: no such panel")
         controls.add(k)
 
-    verdicts = ["baseline"]
+    # "baseline" names a role in a COMPARISON. With one panel there is no
+    # comparison, so the word would assert a second schedule that does not
+    # exist -- a single-panel figure is a picture of one solve, and saying so
+    # is a blank rather than a label.
+    verdicts = ["" if len(iters) == 1 else "baseline"]
     for k in range(1, len(iters)):
         b = against[k]
         if k in controls:
