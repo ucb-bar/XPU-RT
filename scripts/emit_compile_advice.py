@@ -19,7 +19,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(_HERE), "xpu-rt"))
 from compile_advice import (  # noqa: E402
     blocking_advice, implementation_advice, load_profiles,
     load_profiles_by_cores, load_profiles_by_cores_csv, load_profiles_csv,
-    overhead_advice, shard_advice, write_advice,
+    overhead_advice, shard_advice, unfuse_advice, write_advice,
 )
 # The canonical granularity analysis. This file used to carry its own
 # `is_linear_chain` over a dispatch-graph FILE and its own notion of a free
@@ -28,6 +28,32 @@ from compile_advice import (  # noqa: E402
 from granularity_advisor import (  # noqa: E402
     _free_slot_ms, _is_linear_chain, from_schedule_json, group_by_periodicity,
 )
+
+
+def _backend_family(impl: str) -> str:
+    """`rvv_x60` -> `rvv`: the curated kernel directory is per FAMILY.
+
+    `unfuse_advice` globs `<kernels_dir>/<backend>_<op>_*.c` and the files are
+    named `rvv_conv2d_s8_...`, not `rvv_x60_conv2d_s8_...` -- the same
+    family/variant relationship `generate_kernels` calls `curated_aliases`.
+    Passing the variant tag here matches nothing and the verb silently refuses,
+    which looks identical to "no unfuse was warranted".
+    """
+    return (impl or "").split("_")[0] or impl
+
+
+def _load_irs(specs) -> dict:
+    """`{network: {dispatch_id: op}}` from repeated `<network>:<graph.json>`."""
+    out = {}
+    for spec in specs:
+        if ":" not in spec:
+            raise SystemExit(f"--ir needs <network>:<graph.json>, got {spec!r}")
+        net, path = spec.split(":", 1)
+        with open(path) as fh:
+            graph = json.load(fh)
+        out[net] = {o["dispatch_id"]: o for o in graph.get("ops", [])
+                    if o.get("dispatch_id") is not None}
+    return out
 
 
 def main() -> int:
@@ -44,6 +70,15 @@ def main() -> int:
     # returned {}, and the run wrote an EMPTY advice file and exited 0.
     # Measured: 118 advice items with the explicit flags, 0 with the defaults,
     # and nothing said why. The retired tree stays reachable by passing them.
+    ap.add_argument("--ir", action="append", default=[],
+                    help="<network>:<graph.json>, repeatable. Required for "
+                         "`unfuse` advice: it is the one verb whose trigger is "
+                         "not in the profile alone, needing the op's `sub_ops` "
+                         "to know what unfusing would restore.")
+    ap.add_argument("--kernels-dir", default=None,
+                    help="curated kernel library, e.g. ModelBlaster/kernels/rvv. "
+                         "Without it `unfuse_advice` refuses rather than "
+                         "guessing a constituent has a kernel to land on.")
     ap.add_argument("--gen-root", default="gen_mb")
     ap.add_argument("--target", default="spacemit_x60")
     ap.add_argument("--schedule", required=True)
@@ -175,6 +210,7 @@ def main() -> int:
         print("  measured misses: " + ", ".join(
             f"{m}={n}" for m, n in sorted(measured_misses.items())))
 
+    irs_by_network = _load_irs(a.ir)
     advice, notes = [], {}
     for spec in a.models.split(","):
         model, basename = spec.split(":")
@@ -223,6 +259,16 @@ def main() -> int:
         }
         advice += implementation_advice(model, profs, a.baseline_impl)
         advice += overhead_advice(model, base, chain)
+        # `unfuse` had a producer, a bridge and a rewriter but NO CALLER here,
+        # so the document could never contain it: the chain was complete
+        # everywhere except at its own first step. Found on the board, where
+        # the condition was reconstructed and the emitter still returned zero
+        # unfuse items.
+        ops_by_id = irs_by_network.get(model)
+        if ops_by_id:
+            advice += unfuse_advice(model, base, ops_by_id,
+                                    kernels_dir=a.kernels_dir,
+                                    backend=_backend_family(a.baseline_impl))
         # Only a model that cannot fit its own period is blocking anything.
         total = sum(r["median_ms"] for r in base.values())
         period = periods.get(model)

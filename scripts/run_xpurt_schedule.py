@@ -142,6 +142,7 @@ def schedule_iree_networks(
     restrict_makespan_to_nonperiodic: bool | None = None,
     scheduler: str = "mosek",
     max_periodic_iters: int = 4,
+    freshness_weight: float = 0.0,
 ) -> tuple[Workload, np.ndarray, np.ndarray]:
     """
     Main function to schedule networks from a hierarchical network dependencies JSON file.
