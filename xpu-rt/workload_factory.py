@@ -343,7 +343,7 @@ def create_workload_from_dependencies(
         operation_name = dispatch_name
         
         # Plumb robotics-deadline fields if the dispatch entry carries
-        # them. Used by the merlin_adapter --deadline-ms / --skip-allowed
+        # them. Used by the --deadline-ms / --skip-allowed
         # flags from PR5 of the rosy-sundae plan.
         deadline_us = dispatch_info.get('deadline_us', None)
         skip_allowed = bool(dispatch_info.get('skip_allowed', False))

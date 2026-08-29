@@ -1,71 +1,63 @@
-# XPU-RT Runtime Tools
+# Board tools
 
-> **This tree is the RETIRED merlin/IREE flow.** Its runners are built inside
-> merlin, which is no longer a submodule of XPU-RT -- nothing on the live K1
-> path imports it. To use anything here, clone merlin separately and point
-> `MERLIN_DIR` at it. The live path is ModelBlaster's generated C, driven by
-> `ModelBlaster/scripts/run_model_k1.sh` and `run_xpurt_k1.sh`; see
-> `docs/the_loop.md`.
->
-> The one thing the live path still took from merlin -- the SpaceMiT cross
-> toolchain -- is now `scripts/setup_spacemit_toolchain.sh`.
+Four scripts that talk to a SpaceMiT K1 (BananaPi) over ssh. Everything they
+deploy is ModelBlaster-generated C — there is no compiler, runtime library or
+`.vmfb` in this directory any more.
 
+## What used to be here
 
-This directory contains scripts and tools for the compile/profile/run flow.
-The runtime dispatch runners are built inside merlin and used directly.
+This tree was the merlin/IREE flow: `build_runtime.sh` linking against
+`libxpurt_standalone.a`, `xpurt_scheduler_runner.c` driving `.vmfb` modules,
+`compile_all_models.sh` invoking merlin, `profile_k1.py` benchmarking through
+`iree-benchmark-module`. All of it is retired along with the merlin submodule,
+because every kernel that runs on this board today comes out of ModelBlaster's
+curated tree — a number measured against IREE-compiled kernels is a number for
+code nobody runs.
 
-## Pre-built runners (recommended)
+Two things survived the move rather than being deleted:
 
-Merlin's build produces two dispatch runner binaries. These are the primary
-way to execute dispatch graphs on target hardware:
+* the **profile schema**. `results.csv` is still IREE-shaped, because that is
+  what `xpu-rt/profile_loader.py` and `compile_advice.load_profiles_csv` read.
+  ModelBlaster's `pipeline/profile_writer.py` writes it now. Old
+  `profile.jsonl` artifacts still parse through `load_profiles`.
+* the **cross toolchain**, which only ever lived inside merlin. It is now
+  `scripts/setup_spacemit_toolchain.sh`, fetching to
+  `tools/riscv-tools-spacemit/`.
 
-| Binary | Purpose |
+## The scripts
+
+| script | what it does |
 |---|---|
-| `merlin-baseline-async` | Baseline topo-order runner (sequential or parallel) |
-| `merlin-dispatch-scheduler` | Two-cluster CPU_P+CPU_E scheduled runner |
+| `scripts/deploy_k1.sh` | build, stage and run one model on the board |
+| `scripts/verify_ime_build.sh` | check an IME build assembles and stays on cluster 0 |
+| `scripts/k1_contention_mb.py` | how much co-runners slow a dispatch down |
+| `scripts/k1_cost_by_pred.py` | what it costs to read what the previous dispatch wrote, from elsewhere |
 
-After building merlin (`setup.sh` or `merlin build --profile spacemit`), the
-binaries are in:
+The last two are measurements with their own write-ups —
+`docs/k1_contention.md` and `docs/k1_cost_by_pred.md` — and both are worth
+reading before quoting either number, because one of them is a **null result**
+and the other is a model fitted to three measured classes rather than 64
+independent measurements.
 
-```
-merlin/build/<profile>/runtime/plugins/merlin-samples/
-```
-
-### Example: run a dispatch graph on SpacemiT
-
-```bash
-# From the XPU-RT root, after setup.sh:
-RUNNER=./merlin/build/spacemit-merlin-perf/runtime/plugins/merlin-samples/merlin-baseline-async
-
-$RUNNER gen/vmfb/mlp/spacemit_x60/RVV/mlp.q.int8/mlp.q.int8_dispatch_graph.json \
-  local-task 10 1 1
-```
-
-## Custom tools (advanced)
-
-If you need a custom runner, you can link against the standalone archive
-(`libxpurt_standalone.a`) which bundles the xpu-rt runtime objects and the
-full IREE runtime in a single `.a`:
+## Before any of them
 
 ```bash
-./runtime/build_runtime.sh --target spacemit \
-  --xpurt-lib ./merlin/build/spacemit-merlin-perf/runtime/src/iree/runtime/libxpurt_standalone.a
+eval "$(scripts/setup_spacemit_toolchain.sh)"     # exports CROSS
 ```
 
-The header for the C API is at `merlin/samples/common/xpu-rt/baseline_runner.h`.
+Not optional. GCC 13.2 — what `CROSS` defaults to via chipyard's riscv-tools —
+reorders the RVV `vsetvl` intrinsics so a widening instruction runs under the
+narrow vtype, and the binary SIGILLs on the board with no stdout at all. The
+script refuses anything below 14.
 
-### Zephyr integration
+GCC 14.3 has its own trap in the opposite direction: it substitutes a wrong AVL
+on a *chained* `vsetvl`, which is silent and wrong rather than loud. Pass the
+element count to every width, and run
+`ModelBlaster/scripts/check_rvv_avl.py` — that is what it is for.
 
-For Zephyr, cross-compile merlin with a Zephyr-compatible toolchain, then
-link `libxpurt_standalone.a` into your Zephyr app using
-`zephyr_library_import_from_static()` or `target_link_libraries()`.
-The standalone archive is self-contained — no IREE build tree needed at
-link time.
+## The rest of the loop
 
-### Notes
-
-- FlatBuffers verification in IREE VM needs FlatCC verifier helpers (symbols
-  like `flatcc_verify_field`). In this build those live in
-  `libflatcc_parsing.a`. `build_runtime.sh` will auto-detect it from the same
-  Merlin build tree, or you can override via
-  `XPURT_FLATCC_PARSING_LIB=/path/to/libflatcc_parsing.a`.
+Building, profiling and scheduling live outside this directory:
+`ModelBlaster/scripts/run_model_k1.sh` (with `PROFILE_OUT_ROOT` to emit a
+profile), `scripts/run_xpurt_schedule.py`, and `docs/the_loop.md` for how they
+fit together.

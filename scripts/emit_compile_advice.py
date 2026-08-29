@@ -89,7 +89,7 @@ def main() -> int:
     ap.add_argument("--profile-format", choices=("jsonl", "csv"),
                     default="csv",
                     help="which producer wrote the profiles. `jsonl` is "
-                         "runtime/scripts/profile_k1.py (samples, "
+                         "the retired IREE path (samples, "
                          "percentiles, cv). `csv` is ModelBlaster's "
                          "pipeline/profile_writer.py (IREE-shape results.csv, "
                          "one mean per dispatch, plus the `implementation` "

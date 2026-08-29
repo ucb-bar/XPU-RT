@@ -4,11 +4,11 @@ Why this module exists
 ----------------------
 Three copies of "collapse trace rows into periodic instances" had grown up
 independently -- in `xpu-rt/metrics.py` (predicted only), in
-`scripts/k1_baselines.py` (measured, per instance, no rate), and in
+the retired `k1_baselines.py` (measured, per instance, no rate), and in
 `scripts/plot_k1_evolution.py` (measured, the only one that computed response
 time from the nominal release k*T). They disagreed, and the disagreement was
 invisible: `metrics.py` reported 160 deadline misses for the same run that
-`k1_baselines.py` reported 10, because one counts dispatches and the other
+it reported 10, because one counts dispatches and the other
 counts job instances. Both numbers are defensible; publishing them under the
 same name is not.
 

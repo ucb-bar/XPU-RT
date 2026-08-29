@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import sys
 import os
+import pathlib
 import json
 import argparse
 import numpy as np
@@ -839,6 +840,29 @@ def schedule_iree_networks(
         combo_impls=combo_impls,
     )
 
+    # PER-DISPATCH RUNTIME FEEDBACK. `derive_dispatch_hints` wants the
+    # solver's (t, alpha) directly. They are in hand here, which is why this
+    # lives in the solver rather than in a script that reads the written
+    # schedule back: reconstructing alpha from a serialized schedule means
+    # inferring a one-hot assignment from a machine label, and any dispatch
+    # whose label is ambiguous silently becomes a hint about the wrong
+    # combination.
+    #
+    # This is the channel merlin consumed through merlin_adapter, which is
+    # retired. Nothing else called `feedback.py`.
+    if getattr(args, "emit_feedback", False):
+        import feedback as _feedback
+        _payload = _feedback.derive_dispatch_hints(
+            combined_workload, t, alpha,
+            run_id=args.feedback_run_id,
+            source_schedule=os.path.basename(json_output_path),
+        )
+        _fb_path = os.path.join(os.path.dirname(json_output_path) or ".",
+                                "xpurt_feedback.json")
+        _feedback.write_feedback_json(_payload, pathlib.Path(_fb_path))
+        print(f"feedback -> {_fb_path}  "
+              f"({len(_payload.get('dispatches', {}))} dispatches with hints)")
+
     # Feedback-driven compilation: surface any dispatch-granularity mismatch
     # between periodic and non-periodic jobs in this schedule. Advisory
     # only -- xpu-rt can't split a coarse dispatch itself; this just flags
@@ -1041,6 +1065,26 @@ if __name__ == "__main__":
             "fresh inputs. Minimizing makespan alone delays producers and yields "
             "stale outputs; this term counteracts that."
         ),
+    )
+    parser.add_argument(
+        "--emit-feedback",
+        action="store_true",
+        help=(
+            "Also write xpurt_feedback.json beside the schedule: per-dispatch "
+            "RUNTIME hints (prefer_coarser / prefer_finer / "
+            "consider_fuse_with_pred / pin_target / consider_split_backend) "
+            "derived from the solved schedule. This is the other feedback "
+            "channel -- compile_advice.json says how to REWRITE the graph, "
+            "this says how to place and size what is already there. Off by "
+            "default: without it the run is byte-identical to before."
+        ),
+    )
+    parser.add_argument(
+        "--feedback-run-id",
+        default=None,
+        help="run_id recorded in xpurt_feedback.json (default: UTC timestamp). "
+             "The ingest merges hints by set-union on the same run_id, so "
+             "repeated emissions during one campaign accumulate.",
     )
     args = parser.parse_args()
 

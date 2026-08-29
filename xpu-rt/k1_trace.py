@@ -1,19 +1,24 @@
-"""Reading a measured K1 trace, whichever producer wrote it.
+"""Reading a measured K1 trace.
 
-TWO PRODUCERS, ONE MEANING. merlin's runner and ModelBlaster's
-`harness_xpurt` both emit a measured per-dispatch trace, and they disagree on
-spelling, not on meaning:
+ONE PRODUCER NOW, AND A SCHEMA THAT OUTLIVED THE OTHER. Every consumer in this
+tree reads a trace by merlin's column names --
 
-    merlin          dispatch_key  start_us  run_us  queue_delay_us  job_name
-    ModelBlaster    (none)        actual_start_cycles / actual_end_cycles,
-                                  network + instance, predicted_start_ms
+    dispatch_key  start_us  run_us  queue_delay_us  job_name
 
-Every consumer that reads only one of them is a tool that works on the retired
-path and not the live one. `scripts/join_k1_trace.py` was exactly that -- the
-tool that answers "is this a slow kernel or a long queue", which is the
+-- because that is what they were written against. The producer is
+ModelBlaster's `harness_xpurt`, which measures the same things and spells them
+differently:
+
+    actual_start_cycles / actual_end_cycles, network + instance,
+    predicted_start_ms
+
+Normalising once, here, is what stops every renderer from carrying its own
+translation. `scripts/join_k1_trace.py` used to read only merlin's spelling --
+the tool that answers "is this a slow kernel or a long queue", which is the
 question a deadline miss turns on, and it could not read a single trace this
-project has taken since. Normalising once, here, is what stops the next
-renderer from being the fourth reader of exactly one producer.
+project had taken. Keeping the column names after retiring the producer that
+coined them is the same trade as `results.csv`: renaming would touch every
+reader to change nothing measurable.
 
 CYCLES ARE rdtime TICKS AT 24 MHz. Not the 1.6 GHz core clock and not 1 MHz:
 the device-tree `timebase-frequency` is 24000000. `rdcycle` SIGILLs from
@@ -105,7 +110,7 @@ def normalise(rows: List[Dict[str, Any]],
               slot_maps: Dict[str, Dict[int, int]] | None = None,
               fill_queue_delay: bool = True,
               ) -> List[Dict[str, Any]]:
-    """Map a ModelBlaster trace onto merlin's column names; pass others through.
+    """Map a ModelBlaster trace onto the canonical column names above.
 
     The run is stamped from the FIRST TICK OBSERVED rather than from 0, so the
     axis starts at the run's own t0 -- `rdtime` is a free-running counter and
@@ -116,7 +121,7 @@ def normalise(rows: List[Dict[str, Any]],
     identity rather than on array position.
 
     `queue_delay_us` is derived as actual start minus PREDICTED start, which is
-    NOT the quantity merlin measures (submit-to-start inside the runtime): it
+    NOT submit-to-start inside the runtime, which is what the name once meant: it
     is scheduler slack, not runtime queueing. It answers the related question
     "did this wait?", so renderers get it, and `schedule_slip_us` always
     carries it under its own honest name.
@@ -168,7 +173,7 @@ def normalise(rows: List[Dict[str, Any]],
         # fill; the scorer does not.
         if fill_queue_delay:
             d.setdefault("queue_delay_us", 0.0)
-        # merlin's `target` is CPU_P/CPU_E; the equivalent identity here is the
+        # `target` was CPU_P/CPU_E; the equivalent identity here is the
         # worker the walker actually ran it on.
         d.setdefault("target", f'{r.get("core_kind", "")}#{r.get("hart", "")}')
         out.append(d)

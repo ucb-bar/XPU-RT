@@ -148,7 +148,7 @@ def pct(xs, p):
 # One renderer, parameterised. This block used to be the body of figure1() with
 # the rungs, the two model colours, the eight K1 cores and the 140 ms window all
 # hardcoded, so anything else that needed a core-lane Gantt wrote its own -- and
-# by now `xpu-rt/plot_gantt.py` (terminal) and merlin's
+# by now `xpu-rt/plot_gantt.py` (terminal) and the retired merlin
 # `analysis/plot_dispatch_trace.py` already disagree with it about the schema.
 # The policy sweep needs exactly this picture per solver, so the picture became
 # a function and figure1 became its first caller. Nothing about the published

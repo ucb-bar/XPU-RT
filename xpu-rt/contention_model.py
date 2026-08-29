@@ -1,6 +1,6 @@
 """Co-runner contention multipliers, measured on hardware.
 
-A solo profile is necessary and not sufficient. `runtime/scripts/k1_contention.py`
+A solo profile is necessary and not sufficient. `runtime/scripts/k1_contention_mb.py`
 measures the *same* dispatch with and without a co-runner pinned to a chosen
 other core, and writes the ratio to an artifact (default
 ``artifacts/k1_run/contention.json``). This module is the read side: it loads

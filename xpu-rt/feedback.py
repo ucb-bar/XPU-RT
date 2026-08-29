@@ -1,4 +1,4 @@
-"""Hint derivation: turn solver state into per-dispatch feedback for Merlin.
+"""Hint derivation: turn solver state into per-dispatch runtime feedback.
 
 Pure functions over the scheduler's outputs (t, alpha, workload, solver_state).
 No MOSEK or board dependency — unit-testable from a hand-built Workload.
@@ -10,7 +10,7 @@ Hint vocabulary (closed set, target-agnostic):
   pin_target=<name>       — this op runs much faster on a specific combination
   consider_split_backend  — current target is the slow side; revisit elsewhere
 
-The output JSON schema is documented in docs/merlin_integration.md.
+The output JSON schema is documented in docs/modelblaster_integration.md.
 """
 
 from __future__ import annotations
@@ -23,9 +23,9 @@ from typing import Any, Optional
 
 import numpy as np
 
-# Thresholds. Tuned to err on the side of fewer hints — Merlin should
-# only see a hint when the signal is unambiguous. Adjust per workload via
-# kwargs if needed.
+# Thresholds. Tuned to err on the side of fewer hints — the compiler
+# should only see a hint when the signal is unambiguous. Adjust per
+# workload via kwargs if needed.
 _TRANSFER_RATIO_FUSE = 1.5      # cost_by_pred / nominal cost above this → fuse hint
 _IDLE_FRACTION_FINER = 0.30     # idle gap before op / op duration above this → finer
 _SLACK_RATIO_COARSER = 0.50     # deadline_slack / deadline above this → coarser
@@ -149,7 +149,7 @@ def derive_dispatch_hints(workload,
       source_schedule: optional path string for cross-referencing.
 
     Returns:
-      A dict matching the schema in docs/merlin_integration.md.
+      A dict matching the schema in docs/modelblaster_integration.md.
     """
     if t is None or alpha is None:
         return {
@@ -340,7 +340,7 @@ def derive_dispatch_hints(workload,
 
 def _dispatch_id(op, fallback_idx: int) -> str:
     """Stable identifier for an operation. Prefers operation_name (which
-    merlin_adapter sets to the merlin dispatch name), then operation_id,
+    the producer sets to the dispatch name), then operation_id,
     then a synthetic op_<idx> string.
     """
     name = getattr(op, "operation_name", None)

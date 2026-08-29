@@ -141,7 +141,7 @@ def compute_metrics(
         # workload asks. An "operation" is one dispatch, so a DroNet instance
         # whose last dispatch overruns contributes as many misses as it has
         # late dispatches -- which is how this file reported 160 misses for the
-        # same run that scripts/k1_baselines.py reported 10 (10 instances, all
+        # same run that the retired scripts/k1_baselines.py reported 10 (10 instances, all
         # late). Both are defensible; publishing them under one name is not.
         # The per-instance view lives in xpu-rt/trace_metrics.py, keyed
         # `instance_deadline_misses`, and is the one to quote for a frequency

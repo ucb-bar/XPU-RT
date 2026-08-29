@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Merge a per-target profiled_manifest.json into qnn_scheduler/qrb5165_costs.json.
 
-Each merlin compile + board_roundtrip cycle produces one
+Each compile + board_roundtrip cycle produces one
 `<output_dir>/breakdowns/profiled_manifest.json` per target. This script
 takes one or more such manifests (each tagged with the backend they were
 measured on) and writes their `mean_time_us` per-dispatch into the

@@ -525,7 +525,7 @@ def write_advice(path: str, advice: List[Advice], *,
 def _load_results_csv(path: str, n_cores: Optional[int] = None) -> Dict[int, dict]:
     """{dispatch_id: rec} from an IREE-shape `results.csv`.
 
-    The second profile producer on this board. `runtime/scripts/profile_k1.py`
+    The second profile format on this board. The retired IREE path
     writes `profile.jsonl` (all samples, percentiles, cv); ModelBlaster's
     `pipeline/profile_writer.py` writes IREE's `results.csv`, and that is the
     only format the corrected `rvv_x60` builds exist in. Without this the

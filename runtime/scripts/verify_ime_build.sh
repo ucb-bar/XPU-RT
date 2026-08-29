@@ -23,12 +23,16 @@
 set -uo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-OBJDUMP="${OBJDUMP:-${REPO_ROOT}/merlin/build/host-vanilla-release/llvm-project/bin/llvm-objdump}"
+# Any llvm-objdump that knows riscv64 will do. Prefer one beside the
+# SpaceMiT cross toolchain, then whatever is on PATH.
+_TC="$(bash "${REPO_ROOT}/scripts/setup_spacemit_toolchain.sh" --path 2>/dev/null || true)"
+OBJDUMP="${OBJDUMP:-${_TC%riscv64-unknown-linux-gnu-}llvm-objdump}"
+command -v "${OBJDUMP}" >/dev/null 2>&1 || OBJDUMP="$(command -v llvm-objdump || true)"
 MATTR="${MATTR:-+m,+a,+f,+d,+c,+v,+zvl256b,+xsmtvdot}"
 
 if [[ ! -x "${OBJDUMP}" ]]; then
   echo "error: llvm-objdump not found at ${OBJDUMP}" >&2
-  echo "       build merlin first, or set OBJDUMP=" >&2
+  echo "       install llvm-objdump, or set OBJDUMP=" >&2
   exit 2
 fi
 if [[ $# -lt 1 ]]; then

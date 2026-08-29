@@ -3,9 +3,9 @@
 
 WHY A SECOND CONTENTION HARNESS
 -------------------------------
-`k1_contention.py` measures the same thing and is the source of the numbers in
-`artifacts/k1_run/contention.json` -- but it drives `iree-benchmark-module`
-over `.vmfb` files, and the IREE path is retired. Every kernel that runs on
+The retired `k1_contention.py` measured the same thing and is the source of
+`artifacts/k1_run/contention.json` -- but it drove `iree-benchmark-module`
+over `.vmfb` files, and that path is gone. Every kernel that runs on
 this board today comes out of ModelBlaster's curated tree, so a contention
 multiplier measured against IREE-compiled kernels is a multiplier for code
 nobody runs.

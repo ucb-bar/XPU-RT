@@ -3,7 +3,7 @@
 Two regressions are guarded here.
 
 **1. `compile_advice` could only read one of the two profile producers.**
-`load_profiles` reads `profile.jsonl` (runtime/scripts/profile_k1.py).
+`load_profiles` reads `profile.jsonl`, which the retired IREE path wrote.
 ModelBlaster's `pipeline/profile_writer.py` writes an IREE-shape `results.csv`
 at a path with an extra spec directory, and the corrected `rvv_x60` builds --
 the ones where curated kernels are no longer silently falling back to the scalar

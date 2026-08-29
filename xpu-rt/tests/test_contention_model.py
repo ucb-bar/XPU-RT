@@ -285,7 +285,7 @@ class TestMeasuredInversion(unittest.TestCase):
         median slowdown, co-runner on the SAME cluster  : 1.043x
         median slowdown, co-runner on the OTHER cluster : 1.185x
 
-    This contradicts the shared-L2 intuition that k1_contention.py's own
+    This contradicts the shared-L2 intuition that the contention sweep's own
     docstring used to assert -- if the L2 were the bottleneck, sharing it would
     be the expensive case and spreading across clusters would be free. It is
     the other way round, so "spread work across clusters" is the WRONG default
@@ -293,7 +293,7 @@ class TestMeasuredInversion(unittest.TestCase):
     clusters to 'avoid cache contention' is optimising backwards.
 
     If this test fails because the measured artifact changed, do NOT flip the
-    assertion to match a theory -- re-run runtime/scripts/k1_contention.py and
+    assertion to match a theory -- re-run runtime/scripts/k1_contention_mb.py and
     update the numbers from the board.
     """
 

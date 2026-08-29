@@ -2,7 +2,7 @@
 Profile data loading utilities for the XPU-RT scheduler.
 
 Handles discovering, parsing, and assembling profiled dispatch runtimes
-from CSV files produced by runtime/scripts/profile_remote.sh.
+from CSV files produced by ModelBlaster's run_model_k1.sh (PROFILE_OUT_ROOT).
 """
 
 from __future__ import annotations
@@ -177,7 +177,7 @@ def find_profile_csv(
     gen_root: str = "gen",
 ) -> str | None:
     """
-    Find a profiling results.csv produced by runtime/scripts/profile_remote.sh.
+    Find a profiling results.csv produced by ModelBlaster's run_model_k1.sh.
 
     Expected layout:
       <gen_root>/profile/<hw>/<target>/<model>/<basename>/<input_tag>/<topo_tag>/results.csv
@@ -617,7 +617,8 @@ def load_profiled_processing_times(
             "Schedules generated against synthetic random times produce "
             "fictional predicted timelines (this used to be silent — see "
             "the rng.uniform(2.0, 10.0) fallback). Either:\n"
-            "  1. Run the missing profile sweeps (runtime/scripts/profile_remote.sh\n"
+            "  1. Run the missing profile sweeps (ModelBlaster's\n"
+            "     scripts/run_model_k1.sh with PROFILE_OUT_ROOT set\n"
             "     or profile_dispatches.py — make sure the harness flags match\n"
             "     the consumer of the schedule, e.g. xpurt_demo's BACKENDS /\n"
             "     prj.conf overlay), OR\n"

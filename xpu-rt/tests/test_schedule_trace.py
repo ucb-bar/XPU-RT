@@ -5,7 +5,7 @@ scored by two different definitions of "deadline miss".
 
 `output_scheduled_json` writes `start_time` and `duration` in **ms**;
 `trace_metrics` reads a trace in **us**. Because nothing converted between them,
-the only host-side scorer in the tree (`scripts/k1_baselines.predicted()`) grew
+the only host-side scorer in the tree then (`k1_baselines.predicted()`) grew
 its own fourth copy of the instance collapse -- per instance, no rate, no
 response time, no utilization -- while `trace_metrics` (the module written
 specifically to stop that happening) counted instances properly. Two numbers,

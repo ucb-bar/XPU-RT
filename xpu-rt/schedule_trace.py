@@ -8,7 +8,8 @@ time from the nominal release k*T, achieved frequency, per-core utilization. It
 reads a merlin dispatch-scheduler trace CSV.
 
 A host-side policy sweep has no board and therefore no trace. The previous
-answer to that was `scripts/k1_baselines.predicted()`, which re-derived a
+answer to that was `k1_baselines.predicted()` (retired with the merlin
+flow), which re-derived a
 *fourth* mini-version of the instance collapse (end > i*T + T, counted per
 instance, no rate, no response time, no utilization). So predicted schedules and
 measured runs were scored by two different definitions and the numbers were

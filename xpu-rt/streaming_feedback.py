@@ -1,32 +1,49 @@
-"""Host-side daemon that converts on-board telemetry into XPU-RT feedback.
+"""Host-side daemon that turns live board telemetry into XPU-RT feedback.
 
-Tails the JSON-Lines stream emitted by `samples/common/xpu-rt/
-scheduler_runner.cc`'s telemetry sink, maintains a rolling window of
-recent epochs, derives per-dispatch hints, and ingests them into the
-Merlin output dir via the `ingest_xpurt_feedback` MCP tool. The MCP tool's
-merge semantics (set-union on the same `run_id`) make repeated calls
-during a long run safe — hints accumulate rather than overwrite.
+Tails the JSON-Lines stream ModelBlaster's `harness_xpurt` writes when built
+with `-DMODELBLASTER_XPURT_STREAM`, keeps a rolling window of recent
+instances, derives per-dispatch hints, and writes `xpurt_feedback.json`.
 
-Two ingestion paths are supported:
-  1. Direct (default): import targetgen_mcp.tools and call
-     `dispatch_tool('ingest_xpurt_feedback', {...})`. Requires the merlin
-     repo on PYTHONPATH (or invocation from a merlin-dev env).
-  2. CLI: subprocess to `<merlin>/tools/targetgen_cmd.py` if available.
-     Fallback so this script can be deployed independently of the merlin
-     conda env.
+WHY STREAM AT ALL, when the walker already dumps a trace. The trace block is
+printed when the run ENDS. That is enough to explain a run afterwards and
+useless for responding to one: a schedule that starts missing deadlines in
+instance 3 of 60 keeps missing them for the remaining 57, and nothing can act
+until it is over. Streaming is the same numbers, available while there is
+still something to do about them.
 
-Telemetry stream format (one JSON object per line, produced by the C++
-TelemetrySink::EmitDispatchEnd):
-  {"epoch": int, "dispatch_id": str, "target": str,
-   "planned_start_us": int, "start_us": int, "end_us": int,
-   "run_us": int, "planned_duration_us": int,
-   "deadline_miss": bool, "skip_fired": bool}
+This used to target merlin -- it tailed a format merlin's runner was going to
+emit and posted the result through an `ingest_xpurt_feedback` MCP tool. Neither
+end ever existed: no merlin runner emitted that format, the MCP tool was not in
+the merlin checkout, and nothing imported this module. It is pointed at the
+real producer now, and writes a file instead of calling a tool, which also
+means it does not need an MCP server to be reachable.
+
+Telemetry line (one JSON object per DISPATCH END, from the walker):
+
+  {"entry_id": int, "network": str, "instance": int, "dispatch_id": int,
+   "impl": str, "hart": int,
+   "predicted_start_ms": float, "predicted_duration_ms": float,
+   "start_ticks": int, "end_ticks": int}
+
+TICKS ARE rdtime AT 24 MHz, not core cycles: `rdcycle` SIGILLs from userspace
+on this board, so the harness reads `rdtime`, whose device-tree
+`timebase-frequency` is 24000000.
+
+WHAT THE BOARD DOES NOT SAY, and this matters for reading the output. The
+walker does not know its own deadlines -- periods and `window_duration` live
+in the workload spec, not in the binary -- so it emits no `deadline_miss`, and
+there is no skip mechanism, so no `skip_fired`. The signals derivable from the
+stream alone are therefore about the COST MODEL: measured duration against the
+duration the scheduler predicted. Pass `--windows-from <spec.json>` to get real
+deadline misses as well; without it the miss rate is reported as unknown rather
+than as zero, because a structural zero that looks like a measurement is how
+the `yolov8_nano_64x96` deadline bug survived as long as it did.
 
 Example:
+
   python xpu-rt/streaming_feedback.py \\
-    --telemetry-stream /tmp/telemetry.jsonl \\
-    --merlin-dir /scratch2/agustin/merlin/eval/qrb5165/dronet \\
-    --run-id qrb5165_dronet_2026-04-28 \\
+    --telemetry-stream /tmp/xpurt.jsonl \\
+    --out schedules/xpurt_feedback.json \\
     --epoch-window 32 --post-every-n-epochs 8 --follow
 """
 
@@ -50,6 +67,57 @@ _RUNS_UNDER_PLANNED_FOR_COARSER = 0.60  # < this and no misses → coarser
 _DEADLINE_MISS_RATE_FOR_FINER = 0.10   # > 10% of epochs missed → finer / fuse
 _SKIP_RATE_FOR_FINER = 0.05            # > 5% of epochs skipped → finer
 _PIN_TARGET_STICKINESS = 0.95          # if 95% of epochs ran on same target → pin
+
+
+#: Board `rdtime` is a fixed 24.000 MHz (device-tree timebase-frequency).
+#: Not the 1.6 GHz core clock, and not 1 MHz.
+TICKS_PER_US = 24.0
+
+
+def normalise_event(line: dict[str, Any],
+                    windows_ms: Optional[dict[str, float]] = None
+                    ) -> Optional[dict[str, Any]]:
+    """One walker telemetry line -> the event the hint derivation consumes.
+
+    Returns None for a line that is not a dispatch-end record, so a stream
+    carrying other chatter does not have to be pre-filtered.
+
+    The key is `<network><instance>_dispatch_<id>` -- the same spelling the
+    schedule uses for a job, so a hint can be joined back to the dispatch that
+    produced it without a second naming convention.
+
+    `deadline_miss` is None unless `windows_ms` supplies the network's
+    deadline. None is not False: the derivation counts only explicit True, so
+    an unknown miss cannot be silently read as "no misses".
+    """
+    try:
+        net = str(line["network"])
+        inst = int(line["instance"])
+        did = int(line["dispatch_id"])
+        t0 = float(line["start_ticks"])
+        t1 = float(line["end_ticks"])
+    except (KeyError, TypeError, ValueError):
+        return None
+
+    run_us = max(0.0, (t1 - t0) / TICKS_PER_US)
+    planned_us = float(line.get("predicted_duration_ms", 0.0)) * 1000.0
+
+    miss = None
+    if windows_ms and net in windows_ms:
+        # End of this dispatch against the instance's deadline: instance k of
+        # a network with deadline D must be done by (k+1)*D from run start.
+        deadline_us = float(windows_ms[net]) * 1000.0 * (inst + 1)
+        miss = (t1 / TICKS_PER_US) > deadline_us
+
+    return {
+        "epoch": inst,
+        "dispatch_id": f"{net}{inst}_dispatch_{did}",
+        "target": str(line.get("impl") or "?"),
+        "run_us": run_us,
+        "planned_duration_us": planned_us,
+        "deadline_miss": miss,
+        "skip_fired": None,     # the walker has no skip mechanism
+    }
 
 
 def _derive_streaming_hints(window: list[dict[str, Any]],
@@ -153,50 +221,51 @@ def _derive_streaming_hints(window: list[dict[str, Any]],
     return payload
 
 
-def _post_payload_direct(merlin_dir: Path, payload: dict[str, Any]) -> dict:
-    """Path 1: import targetgen_mcp.tools and call dispatch_tool."""
-    try:
-        from targetgen_mcp.tools import dispatch_tool  # type: ignore
-    except ImportError as e:
-        raise RuntimeError(
-            "direct ingest path requires targetgen_mcp on PYTHONPATH; "
-            f"import failed: {e}")
-    return dispatch_tool("ingest_xpurt_feedback", {
-        "merlin_dir": str(merlin_dir),
-        "payload": payload,
-    })
+def write_payload(payload: dict[str, Any], out_path: Path) -> dict[str, Any]:
+    """Write `xpurt_feedback.json`, MERGING with what is already there.
 
-
-def _post_payload_subprocess(merlin_dir: Path, payload: dict[str, Any],
-                             python_bin: str) -> dict:
-    """Path 2: spawn a subprocess that imports targetgen_mcp.tools.
-
-    Used when running outside the merlin-dev env — we shell into it.
+    The merge is a set-union on hints per dispatch, keyed on `run_id`, which
+    is what makes it safe to call repeatedly during a long run: each window
+    contributes what it saw, and a dispatch that earned `prefer_finer` in
+    instance 4 does not lose it because instance 40 was quiet. A DIFFERENT
+    run_id starts fresh -- otherwise a new campaign would inherit the
+    conclusions of the last one.
     """
-    import subprocess
-    import tempfile
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
-        json.dump(payload, f)
-        payload_path = f.name
-    try:
-        cmd = [
-            python_bin, "-c",
-            "import json, sys, os\n"
-            "sys.path.insert(0, os.environ.get('TARGETGEN_TOOLS_DIR', ''))\n"
-            "from targetgen_mcp.tools import dispatch_tool\n"
-            "merlin_dir = sys.argv[1]\n"
-            "with open(sys.argv[2]) as f: payload = json.load(f)\n"
-            "result = dispatch_tool('ingest_xpurt_feedback', "
-            "{'merlin_dir': merlin_dir, 'payload': payload})\n"
-            "sys.stdout.write(json.dumps(result))\n",
-            str(merlin_dir),
-            payload_path,
-        ]
-        cp = subprocess.run(cmd, capture_output=True, text=True, check=True,
-                            env={**os.environ})
-        return json.loads(cp.stdout) if cp.stdout else {}
-    finally:
-        os.unlink(payload_path)
+    existing: dict[str, Any] = {}
+    if out_path.exists():
+        try:
+            existing = json.loads(out_path.read_text())
+        except (OSError, ValueError):
+            existing = {}
+
+    merged = payload
+    if existing.get("run_id") == payload.get("run_id"):
+        dispatches = dict(existing.get("dispatches") or {})
+        for did, rec in payload.get("dispatches", {}).items():
+            prev = dispatches.get(did)
+            if not prev:
+                dispatches[did] = rec
+                continue
+            hints = list(prev.get("hints") or [])
+            for h in rec.get("hints") or []:
+                if h not in hints:
+                    hints.append(h)
+            merged_rec = dict(rec)
+            merged_rec["hints"] = hints
+            dispatches[did] = merged_rec
+        merged = dict(payload)
+        merged["dispatches"] = dispatches
+
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text(json.dumps(merged, indent=1, sort_keys=True))
+    counts: dict[str, int] = {}
+    for rec in merged.get("dispatches", {}).values():
+        for h in rec.get("hints") or []:
+            counts[h.split("=")[0]] = counts.get(h.split("=")[0], 0) + 1
+    return {"n_dispatches_with_hints": len(merged.get("dispatches", {})),
+            "merged_with_existing": merged is not payload,
+            "hint_counts": counts,
+            "path": str(out_path)}
 
 
 def _stream_lines(path: Path, follow: bool, poll_s: float):
@@ -253,12 +322,19 @@ def main(argv: Optional[list[str]] = None) -> int:
     p = argparse.ArgumentParser(description=__doc__,
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--telemetry-stream", required=True, type=Path,
-                   help="JSON-Lines file written by scheduler_runner.cc's "
-                        "TelemetrySink (or `ssh tail -f` redirected to a "
-                        "local file).")
-    p.add_argument("--merlin-dir", required=True, type=Path,
-                   help="Merlin output dir whose breakdowns/feedback.json "
-                        "the MCP ingest tool will write.")
+                   help="JSON-Lines file written by harness_xpurt built with "
+                        "-DMODELBLASTER_XPURT_STREAM (or `ssh ... | tee` "
+                        "redirected to a local file).")
+    p.add_argument("--out", required=True, type=Path,
+                   help="xpurt_feedback.json to write. Re-written on every "
+                        "post, merging hints for the same run_id.")
+    p.add_argument("--windows-from", type=Path, default=None,
+                   help="workload spec, so a real DEADLINE MISS can be "
+                        "computed. Without it the miss rate is unknown "
+                        "rather than zero -- the board does not know its own "
+                        "deadlines, and a structural zero that reads as a "
+                        "measurement is exactly how the digit-suffixed "
+                        "network bug survived.")
     p.add_argument("--run-id", required=True,
                    help="Run identifier for this streaming session. "
                         "Reuse across consecutive POSTs to accumulate "
@@ -272,16 +348,23 @@ def main(argv: Optional[list[str]] = None) -> int:
                    help="tail -f the stream (default exits at EOF).")
     p.add_argument("--poll-s", type=float, default=0.25,
                    help="Sleep between EOF polls when --follow.")
-    p.add_argument("--ingest-mode", choices=["direct", "subprocess"],
-                   default="direct")
-    p.add_argument("--python-bin", default=sys.executable,
-                   help="Python binary used by --ingest-mode=subprocess "
-                        "(typically the merlin-dev env's python).")
     args = p.parse_args(argv)
 
-    if not args.merlin_dir.is_dir():
-        print(f"merlin-dir not found: {args.merlin_dir}", file=sys.stderr)
-        return 1
+    windows_ms: Optional[dict[str, float]] = None
+    if args.windows_from:
+        spec = json.loads(args.windows_from.read_text())
+        windows_ms = {}
+        for net in spec.get("networks", []):
+            nm = net.get("name")
+            w = net.get("window_duration", net.get("period"))
+            if nm and w:
+                windows_ms[str(nm)] = float(w)
+        print(f"[stream-fb] deadlines from {args.windows_from}: "
+              f"{windows_ms}", flush=True)
+    else:
+        print("[stream-fb] no --windows-from: deadline misses are UNKNOWN, "
+              "not zero; hints come from measured-vs-predicted duration only",
+              flush=True)
 
     window: collections.deque = collections.deque(maxlen=args.epoch_window
                                                    * 256)
@@ -304,25 +387,23 @@ def main(argv: Optional[list[str]] = None) -> int:
         if not payload["dispatches"]:
             return
         try:
-            if args.ingest_mode == "direct":
-                result = _post_payload_direct(args.merlin_dir, payload)
-            else:
-                result = _post_payload_subprocess(args.merlin_dir, payload,
-                                                   args.python_bin)
-        except Exception as exc:
-            print(f"[stream-fb] POST failed ({reason}): {exc}",
+            result = write_payload(payload, args.out)
+        except OSError as exc:
+            print(f"[stream-fb] write failed ({reason}): {exc}",
                   file=sys.stderr)
             return
-        n = result.get("n_dispatches_with_hints", "?")
-        merged = result.get("merged_with_existing", False)
-        print(f"[stream-fb] POST ({reason}): "
-              f"n_dispatches={n}, merged={merged}, "
-              f"hint_counts={result.get('hint_counts', {})}", flush=True)
+        print(f"[stream-fb] wrote ({reason}): "
+              f"n_dispatches={result['n_dispatches_with_hints']}, "
+              f"merged={result['merged_with_existing']}, "
+              f"hint_counts={result['hint_counts']}", flush=True)
 
     seen_epochs: set[int] = set()
     try:
-        for ev in _stream_lines(args.telemetry_stream, args.follow,
-                                args.poll_s):
+        for raw in _stream_lines(args.telemetry_stream, args.follow,
+                                 args.poll_s):
+            ev = normalise_event(raw, windows_ms)
+            if ev is None:
+                continue          # not a dispatch-end record
             window.append(ev)
             ep = ev.get("epoch")
             if isinstance(ep, int) and ep not in seen_epochs:
