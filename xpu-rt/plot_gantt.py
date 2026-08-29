@@ -26,6 +26,8 @@ from __future__ import annotations
 import argparse
 import csv
 import os
+
+import job_names
 import statistics
 import sys
 from collections import defaultdict
@@ -99,14 +101,18 @@ def _instance_shade(base_hex: str, inst: int, n_inst_for_network: int = 4) -> st
     return f"#{rr:02x}{gg:02x}{bb:02x}"
 
 
-def _network_root(name: str) -> str:
-    """Strip any trailing instance index from a network name.
-    'yolov8_nano_64' stays as-is (longest-prefix wins for known names).
-    """
-    for prefix in ("yolov8_nano_64", "yolov8_nano", "yolov8", "dronet", "mlp_control"):
-        if name.startswith(prefix):
-            return prefix
-    return name
+#: Names this renderer can recognise without being told. A hardcoded list is a
+#: guess: it mapped `yolov8_nano_64x96` (a real network) onto `yolov8_nano_64`,
+#: because that entry happened to come first. Callers that know the real names
+#: should pass them; `job_names` does the longest match.
+_FALLBACK_NETWORKS = ("yolov8_nano_64x96", "yolov8_nano_128x192",
+                      "yolov8_nano_64", "yolov8_nano", "dronet",
+                      "mlp_control", "fused_full")
+
+
+def _network_root(name: str, known=None) -> str:
+    """Strip the trailing instance index from a job name."""
+    return job_names.model_of(name, known or _FALLBACK_NETWORKS)
 
 
 def render_gantt(trace_csv: str, out_path: str,
