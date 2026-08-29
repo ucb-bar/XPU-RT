@@ -32,8 +32,36 @@
     "                        rates.  Omitted, the period falls back to 2x-8x",
     "                        the model's measured runtime.  Sporadic models",
     "                        ignore it.",
+    "  window_ms          -- optional {min,max} for the model's WINDOW in ms:",
+    "                        the deadline an instance has inside its period.",
+    "                        Drawn straight from this band, the same way the",
+    "                        period is, and NOT scaled by --min-scale /",
+    "                        --max-scale: a deadline is a property of the loop,",
+    "                        not a multiple of how fast the network happens to",
+    "                        run.  Scaling a 0.4 ms mlp_control gave it a 1 ms",
+    "                        window -- true to the measurement and useless as a",
+    "                        taskset, since nothing else can be scheduled",
+    "                        against a deadline that tight.  The draw is still",
+    "                        fitted to the period afterwards (see",
+    "                        fit_windows): a window never exceeds",
+    "                        period / --period-headroom and never drops below",
+    "                        the measured runtime.  Omitted, the window falls",
+    "                        back to measured runtime x U(--min-scale,",
+    "                        --max-scale).",
     "  count              -- {min,max} draws per generation; min 0 makes it",
     "                        optional.  Multiple draws get _a/_b suffixes.",
+    "  max_copies         -- optional ceiling on how many copies may be live",
+    "                        at once.  The count is drawn from `count` and",
+    "                        then clamped here, which is not the same as",
+    "                        narrowing `count`: clamping leaves the RNG",
+    "                        stream alone, so every other model in the",
+    "                        workload draws exactly what it drew before.",
+    "                        Copies of a model are concurrent by",
+    "                        construction -- shared period, chained",
+    "                        back-to-back inside the frame -- so this is how",
+    "                        a model that cannot run alongside itself says",
+    "                        so.  mlp_control caps at 1: two control MLPs a",
+    "                        frame is two loops flying one drone.",
     "  probability        -- optional chance in [0,1] that the model is drawn",
     "                        at all; below it the count draw is skipped and",
     "                        the model sits out this generation entirely.",
@@ -74,15 +102,18 @@
           "profile_model": "mlp_control",
           "profile_basename": "mlp_control.fp32",
           "role": "periodic",
-          "period_ms": { "min": 4, "max": 20 },
-          "count": { "min": 1, "max": 2 }
+          "period_ms": { "min": 5, "max": 20 },
+          "window_ms": { "min": 5, "max": 20 },
+          "count": { "min": 1, "max": 2 },
+          "max_copies": 1
         },
         "dronet": {
           "dispatch_deps_path": "zephyr-chipyard-sw/gen/vmfb/dronet/generic_riscv64/RVV/dronet.fp32/dronet.fp32_dispatch_graph.json",
           "profile_model": "dronet",
           "profile_basename": "dronet.fp32",
           "role": "periodic",
-          "period_ms": { "min": 50, "max": 200 },
+          "period_ms": { "min": 20, "max": 100 },
+          "window_ms": { "min": 20, "max": 100 },
           "count": { "min": 1, "max": 2 }
         },
         "yolov8_nano": {
@@ -90,9 +121,8 @@
           "profile_model": "yolov8_nano",
           "profile_basename": "yolov8_nano.fp32",
           "role": "sporadic",
-          "probability": 0.25,
-          "count": { "min": 1, "max": 1 },
-          "variant_note": "Occasional detector: without gemmini it costs 629 ms serial on RVV (10.4 s on scalar) against dronet's 28 ms and mlp_control's 0.4 ms, so one instance dominates the horizon and the periodic instance count with it. Drawn in a quarter of generations, one at a time -- the workloads that get it are the loaded ones, the rest stay a fast mlp+dronet control loop."
+          "count": { "min": 0, "max": 5 },
+          "variant_note": "Detection load, 0-5 instances per generation: without gemmini it costs 629 ms serial on RVV (10.4 s on scalar) against dronet's 28 ms and mlp_control's 0.4 ms, so each instance stretches the sporadic span and the horizon with it. The count draw alone decides how loaded a workload is -- a sixth of seeds get none and stay a fast mlp+dronet control loop, the rest carry one to five detections. Five of them is ~1060 operations before a single periodic instance, so --max-ops will bind: the horizon shrinks toward one hyperperiod and the periodic tasks cover less of the sporadic span."
         }
       }
     },
@@ -104,8 +134,10 @@
           "profile_model": "mlp_control",
           "profile_basename": "mlp_control.fp32",
           "role": "periodic",
-          "period_ms": { "min": 4, "max": 20 },
+          "period_ms": { "min": 5, "max": 20 },
+          "window_ms": { "min": 5, "max": 20 },
           "count": { "min": 1, "max": 2 },
+          "max_copies": 1,
           "variant_note": "fp32 build: the gemmini_q31 sweep profiles mlp_control.fp32, there is no int8 variant on disk."
         },
         "dronet": {
@@ -113,7 +145,8 @@
           "profile_model": "dronet",
           "profile_basename": "dronet.int8",
           "role": "periodic",
-          "period_ms": { "min": 50, "max": 200 },
+          "period_ms": { "min": 20, "max": 100 },
+          "window_ms": { "min": 20, "max": 100 },
           "count": { "min": 1, "max": 2 },
           "variant_note": "int8/gemmini build, matching the sweep_v8 profile data. The fp32 build at generic_riscv64/RVV/dronet.fp32 is the one the RVV-only FireSim configs use."
         },
@@ -122,9 +155,8 @@
           "profile_model": "yolov8_nano",
           "profile_basename": "yolov8_nano.int8",
           "role": "sporadic",
-          "probability": 0.25,
-          "count": { "min": 1, "max": 1 },
-          "variant_note": "Occasional detector, same draw rate as the spike platform's so the two RISC-V mixes stay comparable; gemmini brings its cost down but it is still the heaviest network here."
+          "count": { "min": 0, "max": 5 },
+          "variant_note": "Detection load, 0-5 instances per generation -- same count band as the spike platform's so the two RISC-V mixes stay comparable; gemmini brings its cost down but it is still the heaviest network here."
         }
       }
     }

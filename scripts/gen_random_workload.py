@@ -12,9 +12,11 @@ Everything the generator emits is backed by data that exists on disk:
     *every* backend in the hardware config -- mirroring profile_loader's search
     -- so `use_profiled: true` never hits the strict-mode FileNotFoundError.
   * Periods come from the bank's declared `period_ms` per model -- the rate
-    the task runs at -- and windows from the model's *measured* runtime on
-    that hardware scaled by a random factor in [--min-scale, --max-scale]
-    (default 1.2x - 5x), squeezed to fit inside the period.
+    the task runs at.  Windows come from the bank's `window_ms` where a model
+    declares one (drawn the same way, no scaling), and otherwise from the
+    model's *measured* runtime on that hardware scaled by a random factor in
+    [--min-scale, --max-scale] (default 1.2x - 5x).  Either way the draw is
+    squeezed to fit inside the period.
   * No `p_core_speedup` is emitted: it only scales the synthetic-timing
     fallback, so applying it on top of profiled CSVs would fabricate timings.
 
@@ -26,11 +28,15 @@ Workload shape:
     long the network happens to take.  Periods are then snapped to integer
     multiples of the fastest one, so the hyperperiod is the slowest period
     rather than an lcm of unrelated numbers.
-  * `window_duration` is the instance's DEADLINE inside its period, sized as
-    the measured runtime times a random factor in [--min-scale, --max-scale]
-    and squeezed if need be so a model's copies fit one frame with
-    --period-headroom to spare.  A window that does not fit means
-    consecutive instances of the same network overlap.
+  * `window_duration` is the instance's DEADLINE inside its period, drawn
+    from the model's `window_ms` band (or, without one, sized as the measured
+    runtime times a random factor in [--min-scale, --max-scale]) and squeezed
+    if need be so a model's copies fit one frame with --period-headroom to
+    spare.  A window that does not fit means consecutive instances of the
+    same network overlap.  Declaring the band is what keeps a fast network's
+    deadline meaningful: mlp_control runs in 0.393 ms, so any multiple of
+    that is a sub-millisecond deadline no other task can be scheduled
+    around.
   * The taskset is then checked against the hardware: each periodic task is
     packed onto the backend that stays least loaded, and any config asking
     for more than --max-utilization of a core has the worst offender's
@@ -40,7 +46,10 @@ Workload shape:
     range, gated by an optional `probability` -- so a model can be common in
     the mix or occasional in it without changing what it looks like when it
     does show up.  Copies of one model share its period, run back-to-back
-    inside the frame, and are chained by edges.  Models at *different* rates
+    inside the frame, and are chained by edges.  A model that cannot
+    meaningfully run alongside itself declares `max_copies` and the draw is
+    clamped there: mlp_control caps at 1, because two chained control MLPs
+    per frame is two control loops on one plant, not a busier drone.  Models at *different* rates
     get no edges between them: workload_factory pairs periodic instances by
     index, which only says something when both sides tick together.
   * Sporadic models (the yolos) get non-overlapping [min_start_t, max_end_t]
@@ -297,10 +306,12 @@ def draw_count(rng: random.Random, spec: dict) -> int:
     An optional `probability` gates the model first: below it the count draw
     is skipped and the model sits this one out.  That is a different shape
     from `count.min: 0`, which can only thin a model to 1-in-(max+1) and
-    still gives it a draw every time -- the gate is how a model that should
-    appear now and then (yolov8_nano) stays occasional without touching the
-    count range it uses when it *is* drawn.  The probability draw is taken
-    unconditionally so the RNG stream stays aligned across models.
+    still gives it a draw every time -- the gate is for a model that should
+    appear rarely but at full strength when it does.  No bank entry uses it
+    now: yolov8_nano is `count: {0, 5}` instead, so how *loaded* a workload
+    is comes out of the same draw as whether it has detections at all.  The
+    probability draw is taken unconditionally so the RNG stream stays
+    aligned across models.
     """
     p = spec.get("probability")
     drawn = rng.random() < float(p) if p is not None else True
@@ -309,6 +320,23 @@ def draw_count(rng: random.Random, spec: dict) -> int:
     hi = int(bounds.get("max", lo))
     count = rng.randint(min(lo, hi), max(lo, hi))
     return count if drawn else 0
+
+
+def copy_cap(spec: dict) -> Optional[int]:
+    """
+    The bank's ceiling on how many copies of one model may be live at once.
+
+    `count` says how many copies a generation *draws*; `max_copies` says how
+    many the workload is allowed to hold.  They are separate because the
+    copies of a model are concurrent by construction -- they share a period
+    and are chained back-to-back inside the frame -- so two copies of a
+    control net is two control loops running against the same plant, which
+    is not a taskset the drone stack ever has.  mlp_control declares 1 for
+    exactly that reason.  Absent, the model is uncapped and `count` alone
+    decides.
+    """
+    cap = spec.get("max_copies")
+    return None if cap is None else max(0, int(cap))
 
 
 def task_keys(name: str, count: int) -> List[str]:
@@ -348,6 +376,37 @@ def draw_period_ms(rng: random.Random, spec: dict, reference_ms: float) -> float
         hi = reference_ms * DEFAULT_PERIOD_SPAN[1]
     lo, hi = float(lo), float(hi)
     return rng.uniform(min(lo, hi), max(lo, hi))
+
+
+def draw_window_factor(rng: random.Random, spec: dict, reference_ms: float,
+                       min_scale: float, max_scale: float) -> float:
+    """The instance's deadline, as a multiple of the model's measured runtime.
+
+    A model that declares `window_ms` has its deadline drawn straight from
+    that band, the same way its period is -- the scale factors do not apply
+    to it.  Scaling is the wrong instrument for a task whose runtime is tiny
+    against its rate: 5x of mlp_control's 0.393 ms is a 2 ms deadline, which
+    is faithful to the measurement and useless as a taskset, because nothing
+    else can be scheduled against a deadline that tight (and, on a 1 s
+    timeline, it draws as a sub-pixel sliver).  A deadline is a property of
+    the loop the task sits in, so it is declared, like the period.
+
+    Returned as a factor rather than milliseconds because `fit_windows` works
+    in factors: it squeezes a deadline toward 1.0 (the measured runtime, the
+    tightest deadline that can still be met) when a model's copies do not fit
+    one frame.  That floor is why the draw is clamped up to 1.0 here -- a
+    band whose low end is under the model's own runtime asks for a deadline
+    the network cannot meet on any backend.
+    """
+    bounds = spec.get("window_ms") or {}
+    lo, hi = bounds.get("min"), bounds.get("max")
+    if lo is None or hi is None:
+        return rng.uniform(min_scale, max_scale)
+    lo, hi = float(lo), float(hi)
+    ms = rng.uniform(min(lo, hi), max(lo, hi))
+    if reference_ms <= 0:
+        return 1.0
+    return max(1.0, ms / reference_ms)
 
 
 @dataclass
@@ -595,6 +654,7 @@ def generate(args, hw_bank: dict, model_bank: dict) -> dict:
 
     scale = lambda: rng.uniform(args.min_scale, args.max_scale)
     notes_rate: List[str] = []
+    notes_cap: List[str] = []
 
     # --- periodic taskset: one period per model ---------------------------
     # Every draw is taken before anything is sized, so the RNG stream does
@@ -604,7 +664,23 @@ def generate(args, hw_bank: dict, model_bank: dict) -> dict:
         spec = models[name]
         count = draw_count(rng, spec)
         raw_period = draw_period_ms(rng, spec, timings[name].reference_ms)
-        factors = [scale() for _ in range(count)]
+        factors = [draw_window_factor(rng, spec, timings[name].reference_ms,
+                                      args.min_scale, args.max_scale)
+                   for _ in range(count)]
+        # `max_copies` caps the draw *after* it is taken, not by narrowing the
+        # bank's `count` band, so the RNG stream is untouched: every other
+        # model still sees the same periods, window factors and sporadic
+        # layout it saw before the cap existed, and only the capped model's
+        # extra copies go away.  Narrowing the band instead would change how
+        # many values randint consumes and redraw the whole workload.
+        cap = copy_cap(spec)
+        if cap is not None and count > cap:
+            notes_cap.append(
+                f"  {name}: {count} copies -> {cap} -- copies of a model are "
+                f"concurrent (shared period, back-to-back in the frame), and "
+                f"the bank allows {cap} of this one at a time")
+            count = cap
+            factors = factors[:cap]
         if count:
             draws.append((name, count, raw_period, factors))
 
@@ -751,6 +827,23 @@ def generate(args, hw_bank: dict, model_bank: dict) -> dict:
         horizon = max(float(hyperperiod), horizon / max(over, 1.02))
     capped = horizon < wanted_horizon
 
+    # The shrink only has periodic instances to give back, so a draw whose
+    # sporadic tasks alone exceed the budget lands over it however far the
+    # horizon falls -- five yolov8_nano is ~1060 operations before a single
+    # periodic instance.  Say so rather than emitting a quietly oversized
+    # workload: the schedulers are superlinear in the operation count.
+    if capped and horizon < span:
+        print(f"warning: the periodic tasks cover {horizon:.0f} ms of a "
+              f"{span:.0f} ms sporadic span -- {len(sporadic_tasks)} sporadic "
+              f"task(s) are {sporadic_ops} operations on their own against a "
+              f"--max-ops {args.max_ops} budget, and the horizon shrank to "
+              f"stay inside it. The control loop stops ticking a long way "
+              f"before the last detection finishes. Raise --max-ops (a "
+              f"horizon covering the whole span needs roughly "
+              f"{sporadic_ops + sum(timings[g.model].n_dispatches * len(g.keys) * int(math.ceil(span / g.period)) for g in groups)}"
+              f"), or lower the sporadic count band in the model bank.",
+              file=sys.stderr)
+
     instances_for = lambda period: instances_at(horizon, period)
 
     # An explicit --num-instances ignores the horizon, so there the horizon
@@ -826,15 +919,22 @@ def generate(args, hw_bank: dict, model_bank: dict) -> dict:
             f"({t.reference_basis}, {t.n_dispatches} dispatches), "
             f"{util * 100:.1f}% of a core, "
             f"{instances_for(g.period)} instances over the horizon")
+        wb = models[g.model].get("window_ms")
+        basis = (f"drawn from window_ms {wb['min']}-{wb['max']} ms, then fitted "
+                 f"to the period" if wb
+                 else f"measured runtime x U({args.min_scale}, {args.max_scale})")
         for key, window, start, factor in zip(g.keys, g.windows, g.starts, g.factors):
             notes.append(
-                f"    {key}: window {window} ms (deadline = "
+                f"    {key}: window {window} ms ({basis}; deadline = "
                 f"{factor:.2f}x measured runtime), start_time {start} ms")
     notes.append(
         f"Peak backend utilization of the periodic set: {peak:.2f} "
         f"(budget {args.max_utilization}) -- "
         + ", ".join(f"{hw} {load[hw]:.2f}/{capacity[hw]}" for hw in sorted(load))
         + ".")
+    if notes_cap:
+        notes.append("Copies capped by the model bank's max_copies:")
+        notes.extend(notes_cap)
     if notes_rate:
         notes.append("Rates adjusted to fit this hardware:")
         notes.extend(notes_rate)

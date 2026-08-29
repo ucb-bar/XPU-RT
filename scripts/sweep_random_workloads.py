@@ -1,19 +1,37 @@
 #!/usr/bin/env python3
 """
-Sweep gen_random_workload.py across the core-count hardware configs
-(single_core, dual_core, quad_core) and schedule every config that comes
-out of it.
+Sweep gen_random_workload.py across the spike core-count hardware configs
+(spike_single_core, spike_dual_core, spike_quad_core) and schedule every
+config that comes out of it.
 
-Hardware is the only axis that varies by default: every other generator
-knob sits at gen_random_workload.py's own default, so the out-of-the-box
-sweep is exactly three configs.  The other knobs are still exposed as
-flags (each takes a comma-separated list) if you want to widen the grid.
+That hardware axis picks the workload mix: spike's model bank is the
+RISC-V drone stack -- mlp_control at 5-20 ms (50-200 Hz) and dronet at
+20-100 ms (10-50 Hz) as independent periodic tasks, with 0-5 yolov8_nano
+detections laid into the gaps.  The qrb5165 configs (single_core,
+dual_core, quad_core) are the smolvlm platform and are still reachable
+with --hardware.
 
-Two phases:
+Hardware and seed are the axes that vary by default: three core counts x
+eight seeds, so the out-of-the-box sweep is twenty-four distinct
+workloads rather than one workload scheduled three times.  Each seed
+redraws the whole thing -- how many copies of each model, each model's
+period and window inside the bands its bank entry declares, how many
+detections land in the gaps -- so the sweep covers a spread of tasksets
+rather than one shape at three core counts.  Eight is a default, not a
+rule: --num-seeds N sweeps 0..N-1, --seeds takes them by hand, and
+--seed-file takes a file with one per line, which is the way to keep a
+named set of interesting workloads (a seed there can be any string --
+"nightly-a", "yolo-heavy" -- and its name follows it into the config
+filename and the results row).  Every other generator knob sits at
+gen_random_workload.py's own default and is exposed as a flag (each takes
+a comma-separated list) if you want to widen the grid.
+
+Two phases, one flow: a seed goes in, a workload JSON comes out, and that
+same JSON is what gets scheduled.
 
   1. GENERATE -- the cartesian product of the generator's knobs (hardware,
      seed, --min-scale/--max-scale, --period-headroom, --max-gap,
-     --num-instances/--cap-instances) is written to
+     --horizon-periods, --num-instances/--cap-instances) is written to
      data/toplevel/generated-data/<sweep>/.  gen_random_workload.py's own
      validate() gates each point: a config that fails is recorded as
      `gen-invalid` and never scheduled.
@@ -21,6 +39,13 @@ Two phases:
      scripts/run_xpurt_schedule.py once per --solver.  The plot and
      scheduled JSON the runner drops in plots/ and schedules/ are moved
      into the sweep directory, and the makespans are collected.
+
+results.csv carries the taskset each seed drew (`periods_ms`,
+`hyperperiod_ms`, `horizon_ms`, `periodic_instances`) next to what came
+out the far end (`scheduled_instances`).  Those last two columns are the
+ones to compare: a workload asking for 21 instances of mlp_control and a
+schedule containing 1 is periodicity being dropped in between, not a
+scheduling result.
 
 While phase 2 runs, every scheduler run is tracked (queued / running / its
 final status): each finished run prints as soon as it lands, a status block
@@ -48,11 +73,25 @@ Usage:
     # what would run, without running it
     python scripts/sweep_random_workloads.py --dry-run
 
-    # the default grid (single_core, dual_core, quad_core x greedy solvers)
+    # the default grid (spike single/dual/quad core x 8 seeds x 3 solvers)
     python scripts/sweep_random_workloads.py --name nightly --jobs 4
 
+    # more workloads per hardware config
+    python scripts/sweep_random_workloads.py --num-seeds 20
+
+    # a named set of seeds kept in a file, one per line
+    # (data/banks/seeds/ holds screened sets: smoke, full-horizon, yolo-heavy,
+    #  periodic-only, stress, named, qrb5165 -- see its README)
+    python scripts/sweep_random_workloads.py --seed-file data/banks/seeds/default.txt
+
     # just one of them
-    python scripts/sweep_random_workloads.py --hardware dual_core
+    python scripts/sweep_random_workloads.py --hardware spike_dual_core
+
+    # the smolvlm platform instead of the RISC-V drone stack
+    python scripts/sweep_random_workloads.py --hardware single_core,dual_core,quad_core
+
+    # longer runs: 8 hyperperiods of periodic ticks, bigger op budget
+    python scripts/sweep_random_workloads.py --horizon-periods 8 --max-ops 6000
 
     # widen an axis back out on top of the core-count sweep
     python scripts/sweep_random_workloads.py --seeds 0,1,2,3,4,5,6,7 \\
@@ -81,6 +120,7 @@ import subprocess
 import sys
 import threading
 import time
+import zlib
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, asdict
 from datetime import datetime
@@ -93,11 +133,17 @@ HARDWARE_BANK = os.path.join("data", "banks", "hardware_bank.json")
 CONFIG_ROOT = os.path.join("data", "toplevel", "generated-data")
 SWEEP_ROOT = os.path.join("runs", "sweeps")
 
-# The swept hardware axis: the three core-count configs from the hardware
-# bank, smallest first.  The bank holds other entries (qrb5165_hetero, the
-# firesim/spike boards); they are reachable with --hardware but are not part
-# of the default sweep.
-CORE_HARDWARE = ["single_core", "dual_core", "quad_core"]
+# The swept hardware axis: the three spike core-count configs from the
+# hardware bank, smallest first.  Hardware is also what selects the models
+# -- the generator draws from the model-bank platform matching the config's
+# profile.target -- so sweeping spike is what makes this an mlp_control +
+# dronet + occasional yolov8_nano sweep rather than a smolvlm one.  It also
+# feeds the generator's utilization check, which is why the same seed can
+# come out as a different taskset on one core than on four.  The
+# qrb5165 core-count entries (single_core/dual_core/quad_core, smolvlm) and
+# the firesim boards are reachable with --hardware but are not swept by
+# default.
+CORE_HARDWARE = ["spike_single_core", "spike_dual_core", "spike_quad_core"]
 
 # run_xpurt_schedule.py's output naming (see its "Output naming" comment):
 # plots/<stem><solver_tag><_profiled>.png and
@@ -118,8 +164,10 @@ RE_NONPERIODIC_MAKESPAN = re.compile(
 FIELDNAMES = [
     "status", "config", "solver",
     "hardware", "seed", "min_scale", "max_scale", "period_headroom",
-    "max_gap", "num_instances", "cap_instances",
-    "n_networks", "n_periodic", "n_sporadic", "n_edges", "period_ms",
+    "max_gap", "horizon_periods", "num_instances", "cap_instances",
+    "n_networks", "n_periodic", "n_sporadic", "n_edges",
+    "periods_ms", "hyperperiod_ms", "horizon_ms", "periodic_instances",
+    "scheduled_instances",
     "num_operations", "makespan_ms", "makespan_nonperiodic_ms",
     "greedy_iters", "gen_seconds", "sched_seconds",
     "schedule_json", "plot_png", "log", "detail",
@@ -135,36 +183,83 @@ def _num(v: float) -> str:
     return format(v, "g").replace(".", "p").replace("-", "m")
 
 
+def _seed_label(text: str) -> str:
+    """Filename-safe seed label: whatever is not [A-Za-z0-9_-] becomes '_'."""
+    return re.sub(r"[^A-Za-z0-9_-]+", "_", text.strip()) or "seed"
+
+
+def seed_value(label: str) -> int:
+    """The integer gen_random_workload.py is actually seeded with.
+
+    Seeds are carried as strings so a seed file can name its entries
+    ("nightly-a", "regression-yolo-heavy") and have that name land in the
+    config filename and the results row.  A label that is already an integer
+    is used as-is, so `--seeds 0,1,2` and a file of plain numbers behave
+    exactly as before.  Anything else is hashed with CRC32, not Python's
+    hash(): hash() is salted per process, so the same label would seed a
+    different workload on every run and the sweep would stop being
+    reproducible.
+    """
+    text = label.strip()
+    try:
+        return int(text)
+    except ValueError:
+        return zlib.crc32(text.encode("utf-8")) & 0x7FFFFFFF
+
+
+def read_seed_file(path: str, ap: argparse.ArgumentParser) -> List[str]:
+    """One seed per line.  Blank lines and `#` comments are skipped."""
+    try:
+        with open(path) as f:
+            lines = f.readlines()
+    except OSError as exc:
+        ap.error(f"--seed-file: {exc}")
+    seeds: List[str] = []
+    for raw in lines:
+        text = raw.split("#", 1)[0].strip()
+        if not text:
+            continue
+        if text not in seeds:      # a repeated seed is the same workload twice
+            seeds.append(text)
+    if not seeds:
+        ap.error(f"--seed-file {path}: no seeds in it (blank lines and lines "
+                 f"starting with # are skipped)")
+    return seeds
+
+
 @dataclass(frozen=True)
 class Point:
     """One generator invocation."""
     hardware: str
-    seed: int
+    seed: str
     min_scale: float
     max_scale: float
     period_headroom: float
     max_gap: float
+    horizon_periods: float
     num_instances: str
     cap_instances: Optional[int]
 
     @property
     def stem(self) -> str:
         cap = f"_cap{self.cap_instances}" if self.cap_instances else ""
-        return (f"networks_random_{self.hardware}_seed{self.seed}"
+        return (f"networks_random_{self.hardware}_seed{_seed_label(self.seed)}"
                 f"_sc{_num(self.min_scale)}-{_num(self.max_scale)}"
                 f"_ph{_num(self.period_headroom)}"
                 f"_gap{_num(self.max_gap)}"
+                f"_hz{_num(self.horizon_periods)}"
                 f"_ni{self.num_instances}{cap}")
 
 
 def build_grid(args) -> List[Point]:
     points = [
         Point(hardware=hw, seed=seed, min_scale=lo, max_scale=hi,
-              period_headroom=ph, max_gap=gap,
+              period_headroom=ph, max_gap=gap, horizon_periods=hz,
               num_instances=ni, cap_instances=args.cap_instances)
-        for hw, seed, (lo, hi), ph, gap, ni in itertools.product(
+        for hw, seed, (lo, hi), ph, gap, hz, ni in itertools.product(
             args.hardware, args.seeds, args.scale,
-            args.period_headroom, args.max_gap, args.num_instances)
+            args.period_headroom, args.max_gap, args.horizon_periods,
+            args.num_instances)
     ]
     if args.limit:
         points = points[:args.limit]
@@ -316,16 +411,27 @@ class Tracker:
 # --------------------------------------------------------------------------
 
 def config_stats(path: str) -> Dict[str, object]:
+    """The shape of one generated workload, for the results row.
+
+    Periods are per-network now, so a single `period_ms` column would be a
+    lie the moment a workload mixes rates -- record the whole taskset:
+    which network runs at what period, and how many instances of it the
+    horizon asks for.
+    """
     with open(path) as f:
         cfg = json.load(f)
     nets = cfg["networks"]
-    periodic = [v for v in nets.values() if "period" in v]
+    periodic = {k: v for k, v in nets.items() if "period" in v}
     return {
         "n_networks": len(nets),
         "n_periodic": len(periodic),
         "n_sporadic": len(nets) - len(periodic),
         "n_edges": len(cfg.get("edges", [])),
-        "period_ms": periodic[0]["period"] if periodic else "",
+        "periods_ms": " ".join(f"{k}={v['period']}" for k, v in periodic.items()),
+        "hyperperiod_ms": cfg.get("hyperperiod_ms", ""),
+        "horizon_ms": cfg.get("horizon_ms", ""),
+        "periodic_instances": " ".join(
+            f"{k}={v.get('num_instances', '?')}" for k, v in periodic.items()),
     }
 
 
@@ -339,13 +445,16 @@ def generate(point: Point, args, log_dir: str) -> Tuple[str, Optional[str], str,
     if args.resume and os.path.exists(abs_out):
         return "reused", out, "", 0.0
 
-    cmd = [sys.executable, GEN_SCRIPT, str(point.seed),
+    cmd = [sys.executable, GEN_SCRIPT, str(seed_value(point.seed)),
            "--repo-root", REPO_ROOT,
            "--hardware", point.hardware,
            "--min-scale", str(point.min_scale),
            "--max-scale", str(point.max_scale),
            "--period-headroom", str(point.period_headroom),
            "--max-gap", str(point.max_gap),
+           "--horizon-periods", str(point.horizon_periods),
+           "--max-ops", str(args.max_ops),
+           "--max-utilization", str(args.max_utilization),
            "--num-instances", point.num_instances,
            "-o", out]
     if point.cap_instances:
@@ -489,17 +598,37 @@ def find_artifact(directory: str, prefix: str, stem: str, solver: str,
     return None
 
 
+RE_INSTANCE = re.compile(r"^(?P<net>.+?)(?P<instance>\d*)_dispatch_\d+$")
+
+
 def read_schedule_metadata(path: str) -> Dict[str, object]:
     try:
         with open(path) as f:
-            meta = json.load(f).get("metadata", {})
+            sched = json.load(f)
     except (OSError, ValueError):
         return {}
+    meta = sched.get("metadata", {})
     out: Dict[str, object] = {"num_operations": meta.get("num_operations", "")}
     # metadata["makespan"] covers every op (periodic included); the runner's
     # stdout number is non-periodic only, so keep both.
     if meta.get("makespan") is not None:
         out["makespan_ms"] = round(float(meta["makespan"]), 2)
+
+    # How many instances of each network actually survived into the
+    # schedule.  This is the column to read against `periodic_instances`:
+    # the two disagreeing is the toolchain quietly dropping periodicity
+    # somewhere between the workload JSON and the emitted schedule, which
+    # is exactly what the instance-count clobber and the periodic trim used
+    # to do.
+    landed: Dict[str, set] = {}
+    for name in (sched.get("dispatches") or {}):
+        m = RE_INSTANCE.match(name)
+        if not m:
+            continue
+        landed.setdefault(m.group("net"), set()).add(m.group("instance"))
+    if landed:
+        out["scheduled_instances"] = " ".join(
+            f"{net}={len(seen)}" for net, seen in sorted(landed.items()))
     return out
 
 
@@ -554,9 +683,19 @@ def main(argv: Optional[List[str]] = None) -> int:
                     help="comma-separated hardware bank entries "
                          f"(default: {','.join(CORE_HARDWARE)})")
     # The remaining generator axes are pinned to gen_random_workload.py's own
-    # defaults so that hardware is the only thing the default sweep varies.
-    ap.add_argument("--seeds", type=csv_list(int), default=[0],
-                    help="comma-separated RNG seeds (default: 0)")
+    # defaults (--max-ops excepted) so that hardware is the only thing the
+    # default sweep varies.
+    ap.add_argument("--seeds", type=csv_list(str), default=None,
+                    help="comma-separated RNG seeds (default: 0..--num-seeds-1)")
+    ap.add_argument("--seed-file",
+                    help="file of seeds, one per line; blank lines and lines "
+                         "starting with # are skipped. Entries are strings: an "
+                         "integer seeds the generator directly, anything else "
+                         "is CRC32'd into one and keeps its name in the config "
+                         "filename and the results row")
+    ap.add_argument("--num-seeds", type=int, default=8,
+                    help="how many seeds to sweep when neither --seeds nor "
+                         "--seed-file is given: 0, 1, ... N-1 (default: 8)")
     ap.add_argument("--scale", type=csv_list(parse_scale),
                     default=[(1.2, 5.0)],
                     help="comma-separated MIN:MAX window/period scale bands "
@@ -565,6 +704,18 @@ def main(argv: Optional[List[str]] = None) -> int:
                     help="comma-separated --period-headroom values (default: 1.25)")
     ap.add_argument("--max-gap", type=csv_list(float), default=[1.0],
                     help="comma-separated --max-gap values (default: 1.0)")
+    ap.add_argument("--horizon-periods", type=csv_list(float), default=[3.0],
+                    help="comma-separated --horizon-periods values: how many "
+                         "hyperperiods each workload runs for, which is what "
+                         "sets the periodic instance counts (default: 3.0)")
+    ap.add_argument("--max-ops", type=int, default=3000,
+                    help="passed through to the generator: operation budget "
+                         "per workload (default: 3000, above "
+                         "gen_random_workload.py's own 1200, so a sweep point "
+                         "has room for several hyperperiods of ticks)")
+    ap.add_argument("--max-utilization", type=float, default=0.75,
+                    help="passed through to the generator: periodic load "
+                         "budget per backend core (default: 0.75)")
     ap.add_argument("--num-instances", type=csv_list(str), default=["auto"],
                     help="comma-separated --num-instances values (default: auto)")
     ap.add_argument("--cap-instances", type=int, default=None,
@@ -621,6 +772,18 @@ def main(argv: Optional[List[str]] = None) -> int:
         if args.max_time and args.max_time > 0:
             args.time_limit = min(args.time_limit, 0.8 * args.max_time)
 
+    # Seeds come from one place: the file, the flag, or the count.  Taking
+    # two of them at once would silently drop one, and which one it dropped
+    # would only show up as a sweep missing rows.
+    if args.seed_file and args.seeds:
+        ap.error("--seed-file and --seeds both given; pick one")
+    if args.seed_file:
+        args.seeds = read_seed_file(args.seed_file, ap)
+    elif args.seeds is None:
+        if args.num_seeds < 1:
+            ap.error("--num-seeds must be >= 1")
+        args.seeds = [str(i) for i in range(args.num_seeds)]
+
     check_hardware(args.hardware, ap)
     if not args.name:
         args.name = "sweep_" + datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -630,10 +793,15 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     print(f"sweep {args.name}")
     print(f"  hardware        : {', '.join(args.hardware)}")
-    print(f"  seeds           : {', '.join(str(s) for s in args.seeds)}")
+    print(f"  seeds           : "
+          + ", ".join(f"{lbl} (={seed_value(lbl)})" if str(seed_value(lbl)) != lbl
+                      else lbl for lbl in args.seeds)
+          + (f"  [from {args.seed_file}]" if args.seed_file else ""))
     print(f"  scale bands     : {', '.join(f'{lo}:{hi}' for lo, hi in args.scale)}")
     print(f"  period-headroom : {', '.join(str(v) for v in args.period_headroom)}")
     print(f"  max-gap         : {', '.join(str(v) for v in args.max_gap)}")
+    print(f"  horizon-periods : {', '.join(str(v) for v in args.horizon_periods)}"
+          f"  (max-ops {args.max_ops}, max-utilization {args.max_utilization})")
     print(f"  num-instances   : {', '.join(args.num_instances)}")
     print(f"  solvers         : {', '.join(args.solver)}")
     print(f"  max-time        : "
@@ -687,9 +855,13 @@ def main(argv: Optional[List[str]] = None) -> int:
             continue
         base.update(config_stats(os.path.join(REPO_ROOT, config)))
         runnable.append((point, config))
-        print(f"  [{i}/{len(points)}] {status:<12} {point.stem} "
-              f"({base['n_networks']} nets, {base['n_periodic']} periodic, "
-              f"{base['n_edges']} edges)")
+        print(f"  [{i}/{len(points)}] {status:<12} {point.stem}")
+        print(f"      {base['n_networks']} nets ({base['n_periodic']} periodic, "
+              f"{base['n_sporadic']} sporadic), {base['n_edges']} edges, "
+              f"hyperperiod {base['hyperperiod_ms']} ms, "
+              f"horizon {base['horizon_ms']} ms")
+        print(f"      periods  {base['periods_ms'] or '(none)'}")
+        print(f"      instances {base['periodic_instances'] or '(none)'}")
         point_base[point] = base
         if args.skip_schedule:
             # No solver rows are coming, so the config itself is the result.
@@ -771,6 +943,9 @@ def finish(rows: List[Dict[str, object]], args, sweep_dir: str,
                 "scale": [list(s) for s in args.scale],
                 "period_headroom": args.period_headroom,
                 "max_gap": args.max_gap,
+                "horizon_periods": args.horizon_periods,
+                "max_ops": args.max_ops,
+                "max_utilization": args.max_utilization,
                 "num_instances": args.num_instances,
                 "cap_instances": args.cap_instances,
                 "solver": args.solver,
