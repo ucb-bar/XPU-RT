@@ -250,7 +250,8 @@ def stage_plots(wl: dict, args) -> None:
         out_full=os.path.join(out_dir, f"{wl['name']}{_tag(args)}_predicted_vs_actual.png"),
         out_zoom=os.path.join(out_dir, f"{wl['name']}{_tag(args)}_predicted_vs_actual_zoom.png"),
         csv_path=os.path.join(log_dir, "trace.csv"),
-        source=f"{wl.get('board', 'board')} (QNN lanes)")
+        source=f"{wl.get('board', 'board')} (QNN lanes)",
+        style=args.plot_style)
     print(res["summary"])
     print(f"\npredicted vs actual : {os.path.relpath(res['full'], REPO)}")
     if "zoom" in res:
@@ -286,6 +287,9 @@ def main() -> None:
     ap.add_argument("--ctx-source", default="/root/repro_perlane",
                     help="board-side directory holding the context binaries to link")
     ap.add_argument("--log-dir", default=None)
+    ap.add_argument("--plot-style", default="hw", choices=["hw", "mb"],
+                    help="hw: both gantt panels lane by kind#hart (default); "
+                         "mb: modelblaster's renderer, actual panel by worker index")
     ap.add_argument("--tuned", action="store_true",
                     help="run in the state the cost model was measured in: "
                          "performance governor on the board plus a warm-up "
