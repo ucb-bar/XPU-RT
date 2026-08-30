@@ -44,13 +44,26 @@ from sweep_unbounded_nonperiodic import BINDINGS, model_of        # noqa: E402
 
 def sh(cmd, cwd=None, env=None, timeout=None, log=None):
     t0 = time.time()
-    p = subprocess.run(cmd, cwd=cwd, env=env, capture_output=True, text=True,
-                       timeout=timeout)
-    if log:
+    def write(stdout, stderr, note=""):
+        if not log:
+            return
         os.makedirs(os.path.dirname(log), exist_ok=True)
         with open(log, "w") as f:
-            f.write("+ " + " ".join(cmd) + f"\n(cwd={cwd})\n\n"
-                    + p.stdout + "\n--- stderr ---\n" + p.stderr)
+            f.write("+ " + " ".join(cmd) + f"\n(cwd={cwd})\n{note}\n"
+                    + (stdout or "") + "\n--- stderr ---\n" + (stderr or ""))
+    try:
+        p = subprocess.run(cmd, cwd=cwd, env=env, capture_output=True, text=True,
+                           timeout=timeout)
+    except subprocess.TimeoutExpired as e:
+        # Write the log anyway. Without this a timed-out solve leaves NO
+        # evidence at all -- the caller catches TimeoutExpired and falls back
+        # to greedy, and the only trace that the MILP was ever attempted is a
+        # missing file. Decoding matters because capture_output gives bytes here.
+        dec = lambda b: b.decode("utf-8", "replace") if isinstance(b, bytes) else (b or "")
+        write(dec(e.stdout), dec(e.stderr),
+              note=f"!! TIMED OUT after {timeout}s -- output captured up to the kill\n")
+        raise
+    write(p.stdout, p.stderr)
     return p, time.time() - t0
 
 

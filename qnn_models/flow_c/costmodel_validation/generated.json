@@ -1,0 +1,26 @@
+[
+ {
+  "arm": "validation",
+  "seed": 0,
+  "point": "baseline_seed0",
+  "status": "ok",
+  "workload": "workloads/baseline_seed0.json",
+  "flowc_spec": "workloads/baseline_seed0.flowc.json"
+ },
+ {
+  "arm": "validation",
+  "seed": 1,
+  "point": "fused_seed0",
+  "status": "ok",
+  "workload": "workloads/fused_seed0.json",
+  "flowc_spec": "workloads/fused_seed0.flowc.json"
+ },
+ {
+  "arm": "validation",
+  "seed": 2,
+  "point": "baseline_seed3",
+  "status": "ok",
+  "workload": "workloads/baseline_seed3.json",
+  "flowc_spec": "workloads/baseline_seed3.flowc.json"
+ }
+]
