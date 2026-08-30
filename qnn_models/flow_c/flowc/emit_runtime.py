@@ -642,6 +642,14 @@ static void worker(int lane, int core, int fifo_prio) {
 }
 
 int main() {
+    // deploy_and_run.sh captures the run as `> run.log 2>&1`, so stdout and
+    // stderr share one file description. stdout is block-buffered when it is
+    // a file, stderr is unbuffered: a 4 KiB flush boundary can land in the
+    // middle of a printf while an unbuffered stderr write slips into the gap,
+    // splitting a trace CSV row in two. Line-buffer stdout so every
+    // newline-terminated record is flushed as a unit, and flush before each
+    // stderr write so the two streams stay in program order.
+    std::setvbuf(stdout, nullptr, _IOLBF, 0);
     if (const char* v = std::getenv("FLOWC_WARMUP"))  g_warmup  = std::atoi(v);
     if (const char* v = std::getenv("FLOWC_SPIN_US")) {
         // "500" sets every lane; "200,2000,200" sets them in lane order.
@@ -784,9 +792,11 @@ int main() {
         wall = 0.0;
         for (auto& tr : g_trace) wall = std::max(wall, tr.end_ms);
         for (int i = 0; i < FLOWC_N_ENTRIES; ++i) sem_destroy(&g_done[i]);
-        if (iterations > 1)
+        if (iterations > 1) {
+            std::fflush(stdout);
             std::fprintf(stderr, "[main] iteration %d/%d wall=%.3f ms\n",
                          iter + 1, iterations, wall);
+        }
     }
 
     int ran = 0;

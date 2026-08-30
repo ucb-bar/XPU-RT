@@ -135,10 +135,15 @@ cd "$BOARD_DIR_ARG"
 # the lock for the duration. BOARD_LOCK= disables it.
 { exec {lockfd}> ${BOARD_LOCK:-/tmp/qnn_board.lock}; } 2>/dev/null   # scope the redirect
 flock -w 900 \$lockfd 2>/dev/null || true
+# Merge stderr into stdout ON THE BOARD, not here. `ssh ... > log 2>&1`
+# merges locally, after ssh has already carried the remote stdout and stderr
+# as two independent channels -- their relative order is then whatever the
+# local multiplexer produces, which can drop a progress line into the middle
+# of the trace CSV block. Merging remote-side gives ssh one ordered stream.
 LD_LIBRARY_PATH=$QNN_SDK_ROOT/lib/target \\
 ADSP_LIBRARY_PATH="$ADSP_FULL" \\
 $env_lines \\
-timeout -s KILL ${RUN_TIMEOUT:-120} ./qnn_runtime
+timeout -s KILL ${RUN_TIMEOUT:-120} ./qnn_runtime 2>&1
 EOF
 RC=$?
 
