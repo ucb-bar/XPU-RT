@@ -6,21 +6,21 @@
   "iters": 50,
   "cells": {
     "dronet/dronet_full": {
-      "hta": 2563.27,
-      "dsp": 891.62,
+      "hta": 2030.4,
+      "dsp": 645.4,
       "cpu": 6998.22
     },
     "mlp_control/mlp_control_full": {
-      "dsp": 542.27,
-      "cpu": 28.85
+      "dsp": 403.8,
+      "cpu": 28.5
     },
     "yolov8n/yolov8n_backbone": {
-      "hta": 21578.56,
-      "dsp": 14764.54,
+      "hta": 13909.6,
+      "dsp": 13267.9,
       "cpu": 34343.16
     },
     "yolov8n/yolov8n_head": {
-      "dsp": 16686.31,
+      "dsp": 15377.0,
       "cpu": 39464.62
     },
     "fused_full/fused_full_net": {
@@ -28,18 +28,18 @@
       "cpu": 1147.0
     },
     "fused_split/fused_vision_conv": {
-      "hta": 1419.0,
-      "dsp": 578.0,
-      "cpu": 12223.0
+      "hta": 931.0,
+      "dsp": 459.4,
+      "cpu": 12179.1
     },
     "fused_split/fused_depth_conv": {
-      "hta": 1133.0,
-      "dsp": 383.0,
+      "hta": 1568.5,
+      "dsp": 392.9,
       "cpu": 14.0
     },
     "fused_split/fused_tail": {
-      "dsp": 3064.0,
-      "cpu": 370.0
+      "dsp": 4303.5,
+      "cpu": 354.7
     }
   },
   "unit": "us",
@@ -85,5 +85,49 @@
     "fused_full/fused_full_net@cpu": "1147 us is the fp32 graph measured under the cpu lane's own execute mask (taskset -c 4-5, 30 iters) \u2014 the mask the runtime actually gives the QNN CPU op package. Unmasked on all 8 cores it measures 1460 us, and on the A55 little cluster 3948 us, so the cell is only meaningful alongside the mask. The earlier 2875 us cell was taken before the exec-mask mechanism existed.",
     "fused_full/fused_full_net@cpu#contention": "In-situ it costs ~5.6x the isolated cell: pooled over 3 reps of the 4-way schedule its exec p50 is 6.39 ms against a 1.147 ms cell (p90 10.2 ms). The per-lane exec mask constrains the lane thread, but the QNN CPU op package's own thread pool is created during bringup on the main thread and keeps full-machine affinity, so it contends with every other lane \u2014 including the real-time-gated mlp_control lane. This is the same class as the per-op MILP gap documented in runtime/HETEROGENEOUS_SCHEDULING_QRB5165.md: CPU contention is not in the cost model. dronet (2.50 vs 2.563) and yolov8n (15.55 vs 14.76) sit on their own silicon and match their cells.",
     "fused_split": "Measured under taskset -c 4-5, 40 iters, on the sliced sub-DLCs. The split recovers HTA coverage the monolith could not have (conv branches only) and CPU int8 for both branches, but CPU int8 is only worth taking on the small one: QnnCpu's int8 conv is a reference kernel, 12.2 ms for the vision branch against 0.014 ms for the 8x8 depth branch. The tail runs 0.37 ms on CPU fp32 vs 3.06 ms on DSP."
+  },
+  "_previous_cells_schedutil": {
+    "dronet/dronet_full": {
+      "hta": 2030.4,
+      "dsp": 645.4,
+      "cpu": 6998.22
+    },
+    "mlp_control/mlp_control_full": {
+      "dsp": 403.8,
+      "cpu": 28.5
+    },
+    "yolov8n/yolov8n_backbone": {
+      "hta": 13909.6,
+      "dsp": 13267.9,
+      "cpu": 34343.16
+    },
+    "yolov8n/yolov8n_head": {
+      "dsp": 15377.0,
+      "cpu": 39464.62
+    },
+    "fused_full/fused_full_net": {
+      "dsp": 4737.0,
+      "cpu": 1147.0
+    },
+    "fused_split/fused_vision_conv": {
+      "hta": 931.0,
+      "dsp": 459.4,
+      "cpu": 12179.1
+    },
+    "fused_split/fused_depth_conv": {
+      "hta": 1568.5,
+      "dsp": 392.9,
+      "cpu": 14.0
+    },
+    "fused_split/fused_tail": {
+      "dsp": 4303.5,
+      "cpu": 354.7
+    }
+  },
+  "conditions": {
+    "governor": "performance on all 8 cores",
+    "cpu_affinity": "taskset -c 4-5 for cpu cells (the lane's exec mask)",
+    "iters": 40,
+    "why": "Cells must be measured in the state the run executes in. Under schedutil the board idles at 710 MHz of 2419 and the accelerator cells come out 10-36% pessimistic \u2014 the host clock gates FastRPC dispatch, so DSP and HTA work is measured slow when the CPU is slow (yolov8n backbone on HTA: 21.6 ms under schedutil, 13.9 ms under performance). The previous cells are kept in _previous_cells_schedutil for comparison."
   }
 }
