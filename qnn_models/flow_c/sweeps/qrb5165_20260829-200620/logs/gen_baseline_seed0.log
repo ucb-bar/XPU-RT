@@ -1,0 +1,15 @@
+/usr/bin/python3 /scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c/sweeps/qrb5165_20260829-200620/gen_random_workload.py 0 --hardware qrb5165_flowc --repo-root /scratch2/dima/misc_sw/XPU-RT --unbounded-nonperiodic --include-models mlp_control,dronet,yolov8n --max-ops 800 --out /scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c/sweeps/qrb5165_20260829-200620/workloads/baseline_seed0.json
+
+wrote /scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c/sweeps/qrb5165_20260829-200620/workloads/baseline_seed0.json
+  hardware : qrb5165_flowc  {'cpu_p': 'HTA', 'cpu_e': 'DSP', 'cpu_x': 'CPU'}
+  horizon  : 42 ms (hyperperiod 14 ms)
+  networks : 7 (3 periodic, 4 sporadic)
+    mlp_control            period      7 ms  window      5 ms  x6 instances
+    dronet_a               period     14 ms  window      6 ms  x3 instances
+    dronet_b               period     14 ms  window      4 ms  x3 instances
+    yolov8n_a              non-periodic (unbounded: no release window, scheduled as early as deps allow)
+    yolov8n_b              non-periodic (unbounded: no release window, scheduled as early as deps allow)
+    yolov8n_c              non-periodic (unbounded: no release window, scheduled as early as deps allow)
+    yolov8n_d              non-periodic (unbounded: no release window, scheduled as early as deps allow)
+  edges    : 1 (acyclic, chains within a rate group)
+

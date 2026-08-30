@@ -1,0 +1,87 @@
+{
+  "_comment": [
+    "Model bank for the ported gen_random_workload.py, platform qrb5165_flowc.",
+    "One entry per Flow C binding manifest. dispatch_deps_path points at the",
+    "COARSE dispatch graph flowc/artifacts.py emits (one dispatch per tile),",
+    "because that is the dispatch space the schedule is solved in and the one",
+    "the emitted runtime can actually execute: mlp_control 1 tile, dronet 1,",
+    "fused_split 3, yolov8n 2, vint 2.",
+    "",
+    "Matched arms: `dronet` and `fused_split` carry IDENTICAL period_ms,",
+    "window_ms and count bands and sit in the same position of the bank's",
+    "order, so --include-models mlp_control,dronet,yolov8n and",
+    "--include-models mlp_control,fused_split,yolov8n consume the same RNG",
+    "draws in the same order. Only the model in the mid-size periodic slot",
+    "differs -- which is the comparison the sweep is for.",
+    "",
+    "Period bands are DECLARED rates, not multiples of measured runtime, the",
+    "same convention the FPGA bank uses. They are set from what Flow C's own",
+    "shipped workloads run these networks at on this board",
+    "(qnn_models/flow_c/workloads/*.json): mlp_control at 2 ms (500 Hz",
+    "control policy), the mid-size perception net at 5-20 ms. The FPGA bank's",
+    "5-20 / 20-100 ms bands are NOT reused: this board is 20-40x faster on",
+    "these networks, and a 100 ms period here is a nearly idle lane.",
+    "",
+    "yolov8n keeps the FPGA bank's count {0,5} band on purpose, including the",
+    "zero: a seed that draws no detection has no non-periodic work and is",
+    "REJECTED by predicate 4, exactly as on the FPGA (4 of 16 points there).",
+    "vint takes count {1,2} rather than the FPGA's {0,2}, because Sweep B is",
+    "only 2 points and its entire question is what a heavy vision model does",
+    "to the schedule -- a seed that drew zero ViNT would answer nothing. That",
+    "is the one deliberate deviation from the FPGA bank's draw shape and it",
+    "affects only the fused_vint arm."
+  ],
+  "platforms": {
+    "qrb5165_flowc": {
+      "models": {
+        "mlp_control": {
+          "dispatch_deps_path": "gen/qnn_vmfb/mlp_control/qrb5165_flowc/CPU/mlp_control.int8/mlp_control.int8_dispatch_graph.json",
+          "profile_model": "mlp_control",
+          "profile_basename": "mlp_control.int8",
+          "role": "periodic",
+          "period_ms": {"min": 2, "max": 8},
+          "window_ms": {"min": 2, "max": 8},
+          "count": {"min": 1, "max": 2},
+          "max_copies": 1,
+          "variant_note": "Control policy, 1 tile. CPU cell is the fp32 context (107.3 us): QnnCpu's int8 path returns a constant for this network regardless of input (measurements/qrb5165_v66.json, _correctness_note in bindings/mlp_control.json). HTA is capability-excluded (elu_s8), so its profile row carries the derived exclusion cost."
+        },
+        "dronet": {
+          "dispatch_deps_path": "gen/qnn_vmfb/dronet/qrb5165_flowc/CPU/dronet.int8/dronet.int8_dispatch_graph.json",
+          "profile_model": "dronet",
+          "profile_basename": "dronet.int8",
+          "role": "periodic",
+          "period_ms": {"min": 5, "max": 20},
+          "window_ms": {"min": 5, "max": 20},
+          "count": {"min": 1, "max": 2},
+          "variant_note": "Steering CNN, 1 tile, composes on all three lanes (hta 2.03 ms / dsp 0.645 / cpu 7.00). The baseline arm's mid-size periodic slot."
+        },
+        "fused_split": {
+          "dispatch_deps_path": "gen/qnn_vmfb/fused_split/qrb5165_flowc/CPU/fused_split.int8/fused_split.int8_dispatch_graph.json",
+          "profile_model": "fused_split",
+          "profile_basename": "fused_split.int8",
+          "role": "periodic",
+          "period_ms": {"min": 5, "max": 20},
+          "window_ms": {"min": 5, "max": 20},
+          "count": {"min": 1, "max": 2},
+          "variant_note": "FusedSensorNet cut into its two parallel conv branches plus the LSTM tail (3 tiles). This is the `fused_full` of SETUP.md's arm table -- SETUP.md's cell list for that arm is vision_conv/depth_conv/tail, which are fused_split's tiles, not the monolith's single fused_full_net cell. The split is also the only version with HTA coverage, so it is the one that exercises the third lane."
+        },
+        "yolov8n": {
+          "dispatch_deps_path": "gen/qnn_vmfb/yolov8n/qrb5165_flowc/CPU/yolov8n.int8/yolov8n.int8_dispatch_graph.json",
+          "profile_model": "yolov8n",
+          "profile_basename": "yolov8n.int8",
+          "role": "sporadic",
+          "count": {"min": 0, "max": 5},
+          "variant_note": "640x640 ultralytics export, backbone + head (2 tiles), ~28.6 ms serial on the DSP. The head is capability-excluded on HTA (Transpose), so its HTA profile row carries the derived exclusion cost. NOT the FPGA bank's 64x64 yolov8_nano -- no cross-target latency comparison is valid."
+        },
+        "vint": {
+          "dispatch_deps_path": "gen/qnn_vmfb/vint/qrb5165_flowc/CPU/vint.int8/vint.int8_dispatch_graph.json",
+          "profile_model": "vint",
+          "profile_basename": "vint.int8",
+          "role": "sporadic",
+          "count": {"min": 1, "max": 2},
+          "variant_note": "ViNT visual-nav transformer, encoders + decoder (2 tiles). The encoders run on the DSP (14.2 ms) and the decoder only on the CPU. Its CPU cell is load-dependent by construction -- see the confounds section of SETUP.md."
+        }
+      }
+    }
+  }
+}

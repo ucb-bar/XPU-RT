@@ -1,0 +1,30 @@
++ /usr/bin/python3 flow_c.py stage --workload /scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c/sweeps/qrb5165_20260829-200620/workloads/fused_vint_seed0.flowc.json --board root@10.44.120.201
+(cwd=/scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c)
+
+
+=== stage =======================================================
+lrwxrwxrwx 1 root root       49 Aug 29 23:55 ctx_fused_depth_conv__Cpu.bin -> /root/repro_perlane/ctx_fused_depth_conv__Cpu.bin
+lrwxrwxrwx 1 root root       49 Aug 29 23:55 ctx_fused_depth_conv__Dsp.bin -> /root/repro_perlane/ctx_fused_depth_conv__Dsp.bin
+lrwxrwxrwx 1 root root       49 Aug 29 23:55 ctx_fused_depth_conv__Hta.bin -> /root/repro_perlane/ctx_fused_depth_conv__Hta.bin
+lrwxrwxrwx 1 root root       53 Aug 29 23:55 ctx_fused_tail_from_conv__Dsp.bin -> /root/repro_perlane/ctx_fused_tail_from_conv__Dsp.bin
+lrwxrwxrwx 1 root root       58 Aug 29 23:55 ctx_fused_tail_from_conv_fp32__Cpu.bin -> /root/repro_perlane/ctx_fused_tail_from_conv_fp32__Cpu.bin
+lrwxrwxrwx 1 root root       50 Aug 29 23:55 ctx_fused_vision_conv__Cpu.bin -> /root/repro_perlane/ctx_fused_vision_conv__Cpu.bin
+lrwxrwxrwx 1 root root       50 Aug 29 23:55 ctx_fused_vision_conv__Dsp.bin -> /root/repro_perlane/ctx_fused_vision_conv__Dsp.bin
+lrwxrwxrwx 1 root root       50 Aug 29 23:55 ctx_fused_vision_conv__Hta.bin -> /root/repro_perlane/ctx_fused_vision_conv__Hta.bin
+lrwxrwxrwx 1 root root       44 Aug 29 03:13 ctx_mlp_control__Dsp.bin -> /root/repro_perlane/ctx_mlp_control__Dsp.bin
+lrwxrwxrwx 1 root root       49 Aug 30 03:37 ctx_mlp_control_fp32__Cpu.bin -> /root/repro_perlane/ctx_mlp_control_fp32__Cpu.bin
+lrwxrwxrwx 1 root root       50 Aug 30 03:37 ctx_vint_decoder_fp16__Gpu.bin -> /root/repro_perlane/ctx_vint_decoder_fp16__Gpu.bin
+lrwxrwxrwx 1 root root       50 Aug 30 01:57 ctx_vint_decoder_fp32__Cpu.bin -> /root/repro_perlane/ctx_vint_decoder_fp32__Cpu.bin
+lrwxrwxrwx 1 root root       46 Aug 30 01:57 ctx_vint_encoders__Dsp.bin -> /root/repro_perlane/ctx_vint_encoders__Dsp.bin
+lrwxrwxrwx 1 root root       51 Aug 30 01:57 ctx_vint_encoders_fp32__Cpu.bin -> /root/repro_perlane/ctx_vint_encoders_fp32__Cpu.bin
+lrwxrwxrwx 1 root root       49 Aug 29 01:49 ctx_yolov8n_HTA_split_seg100.bin -> /root/repro_perlane/ctx_yolov8n_backbone__Dsp.bin
+lrwxrwxrwx 1 root root       49 Aug 29 01:48 ctx_yolov8n_HTA_split_seg100__Dsp.bin -> /root/repro_perlane/ctx_yolov8n_backbone__Dsp.bin
+lrwxrwxrwx 1 root root       45 Aug 29 01:48 ctx_yolov8n_HTA_split_seg101__Dsp.bin -> /root/repro_perlane/ctx_yolov8n_head__Dsp.bin
+lrwxrwxrwx 1 root root       49 Aug 29 03:13 ctx_yolov8n_backbone__Cpu.bin -> /root/repro_perlane/ctx_yolov8n_backbone__Cpu.bin
+lrwxrwxrwx 1 root root       49 Aug 29 03:13 ctx_yolov8n_backbone__Dsp.bin -> /root/repro_perlane/ctx_yolov8n_backbone__Dsp.bin
+lrwxrwxrwx 1 root root       49 Aug 29 03:13 ctx_yolov8n_backbone__Hta.bin -> /root/repro_perlane/ctx_yolov8n_backbone__Hta.bin
+lrwxrwxrwx 1 root root       45 Aug 29 03:13 ctx_yolov8n_head__Cpu.bin -> /root/repro_perlane/ctx_yolov8n_head__Cpu.bin
+lrwxrwxrwx 1 root root       45 Aug 29 03:13 ctx_yolov8n_head__Dsp.bin -> /root/repro_perlane/ctx_yolov8n_head__Dsp.bin
+
+
+--- stderr ---
