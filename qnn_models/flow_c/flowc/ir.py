@@ -74,10 +74,35 @@ def from_graph_json(path: str) -> dict:
         return normalize(json.load(f))
 
 
+def from_pytorch_export(model_id: str, out_dir: str, quant: str = "int8",
+                        num_calibration: int = 1) -> dict:
+    """modelblaster's torch.export ingest, for models FX cannot trace.
+
+    ViNT is the case: EfficientNet's internals use `len(...)`, its forward has
+    in-place index assignment, and nn.MultiheadAttention's lowered form defeats
+    symbolic_trace — so modelblaster ships a second extractor and its own
+    example uses it. Same IR schema out, different door in.
+    """
+    out_dir = os.path.abspath(out_dir)   # the extractor runs with cwd=<mb root>
+    os.makedirs(out_dir, exist_ok=True)
+    env = dict(os.environ)
+    env["PYTHONPATH"] = os.path.join(mb.modelblaster_root(), "src") + \
+        os.pathsep + env.get("PYTHONPATH", "")
+    # The export extractor needs the model's own deps (vint_train,
+    # efficientnet_pytorch), which live in a different env than the FX path.
+    exe = os.environ.get("FLOWC_EXPORT_PYTHON") or mb.onnx_python()
+    subprocess.run([exe, "-m", "modelblaster.pipeline.extract_graph_export",
+                    "--model", model_id, "--out-dir", out_dir, "--quant", quant,
+                    "--num-calibration", str(num_calibration)],
+                   check=True, cwd=mb.modelblaster_root(), env=env)
+    return from_graph_json(os.path.join(out_dir, "graph.json"))
+
+
 def from_pytorch(model_id: str, out_dir: str, quant: str = "int8",
                  core_registry: str | None = None,
                  num_calibration: int = 1) -> dict:
     """Run modelblaster's extract_graph out-of-process; return the IR."""
+    out_dir = os.path.abspath(out_dir)   # the extractor runs with cwd=<mb root>
     os.makedirs(out_dir, exist_ok=True)
     cmd = [mb.mb_python(), "-m", "modelblaster.pipeline.extract_graph",
            "--model", model_id, "--out-dir", out_dir, "--quant", quant,
@@ -137,6 +162,13 @@ def onnx_from_pytorch(model_id: str, out_path: str, input_name: str = "input",
 def load(spec: str, work_dir: str, quant: str = "int8",
          core_registry: str | None = None) -> dict:
     """`pytorch:<id>` | `graph_json:<path>` | a bare path to a graph.json."""
+    if spec.startswith("pytorch_export:"):
+        model_id = spec.split(":", 1)[1]
+        out_dir = os.path.join(work_dir, model_id, quant)
+        cached = os.path.join(out_dir, "graph.json")
+        if os.path.exists(cached) and os.environ.get("FLOWC_REEXTRACT") != "1":
+            return from_graph_json(cached)
+        return from_pytorch_export(model_id, out_dir, quant)
     if spec.startswith("pytorch:"):
         model_id = spec.split(":", 1)[1]
         out_dir = os.path.join(work_dir, model_id, quant)

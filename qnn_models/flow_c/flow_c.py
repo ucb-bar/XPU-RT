@@ -238,6 +238,56 @@ def stage_run(wl: dict, args) -> None:
             print("  [tuned] governor restored to schedutil")
 
 
+def stage_feedback(wl: dict, args) -> None:
+    """Write measured in-situ durations back into the cost model.
+
+    A standalone cell cannot predict a multi-threaded CPU tile: ViNT's
+    transformer decoder measures 79 ms pinned to two cores, 12.7 ms unmasked
+    on an idle board, and 31-38 ms in the schedule, because the QNN CPU
+    backend's thread pool competes with every other lane. The measurement
+    that matches how the tile actually runs is the one taken *in* the
+    schedule, so this stage promotes the trace's per-tile medians to cells
+    and tags their provenance. Re-run `artifacts` + `schedule` afterwards.
+    """
+    import csv, io, statistics
+    log_dir = args.log_dir or os.path.join(REPO, "runs", wl["name"] + _tag(args))
+    with open(os.path.join(log_dir, "run.log")) as f:
+        text = f.read()
+    block = text.split("MODELBLASTER_XPURT_TRACE_BEGIN ===")[1] \
+                .split("=== MODELBLASTER_XPURT_TRACE_END")[0].strip()
+    rows = [r for r in csv.DictReader(io.StringIO(block)) if r.get("actual_end_cycles")]
+    seen: dict[tuple[str, str, str], list[float]] = {}
+    for r in rows:
+        dur = (int(r["actual_end_cycles"]) - int(r["actual_start_cycles"])) / 1000.0
+        seen.setdefault((r["network"], r["name"], r["core_kind"]), []).append(dur)
+
+    mpath = _p(wl["measurements"])
+    with open(mpath) as f:
+        meas = json.load(f)
+    changed = []
+    for (net, tile, kind), vals in sorted(seen.items()):
+        cell_key = f"{net}/{tile}"
+        new = round(statistics.median(vals) * 1000.0, 1)      # us
+        old = meas["cells"].get(cell_key, {}).get(kind)
+        if old is None or abs(new - old) / max(old, 1.0) > args.feedback_threshold:
+            meas["cells"].setdefault(cell_key, {})[kind] = new
+            changed.append((cell_key, kind, old, new, len(vals)))
+    meas.setdefault("_feedback", {})[os.path.basename(log_dir)] = {
+        "promoted": [{"cell": c, "backend": k, "was_us": o, "now_us": n, "samples": s}
+                     for c, k, o, n, s in changed],
+        "note": ("in-situ medians from this run, promoted because a standalone cell "
+                 "cannot see lane contention"),
+    }
+    with open(mpath, "w") as f:
+        json.dump(meas, f, indent=2)
+    print(f"promoted {len(changed)} cell(s) from {os.path.relpath(log_dir, REPO)}:")
+    for c, k, o, n, s in changed:
+        was = f"{o/1000:.3f}" if o else "  --  "
+        print(f"  {c+'@'+k:34} {was} -> {n/1000:7.3f} ms  (median of {s})")
+    if changed:
+        print("re-run `artifacts` then `schedule` to solve against them")
+
+
 def stage_plots(wl: dict, args) -> None:
     # deploy_and_run.sh defaults LOG_DIR to runs/<gen dir basename>.
     log_dir = args.log_dir or os.path.join(REPO, "runs", wl["name"] + _tag(args))
@@ -274,7 +324,7 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("stage", choices=["ir", "artifacts", "schedule", "runtime",
-                                      "stage", "run", "plots", "all"])
+                                      "stage", "run", "plots", "feedback", "all"])
     ap.add_argument("--workload", default="dronet_mlp_yolo.json")
     ap.add_argument("--solver", default="greedy_periodic")
     ap.add_argument("--schedule", default=None, help="explicit schedules/*.json")
@@ -287,6 +337,9 @@ def main() -> None:
     ap.add_argument("--ctx-source", default="/root/repro_perlane",
                     help="board-side directory holding the context binaries to link")
     ap.add_argument("--log-dir", default=None)
+    ap.add_argument("--feedback-threshold", type=float, default=0.25,
+                    help="promote an in-situ median to a cell when it differs from the "
+                         "current cell by more than this fraction (default 0.25)")
     ap.add_argument("--plot-style", default="hw", choices=["hw", "mb"],
                     help="hw: both gantt panels lane by kind#hart (default); "
                          "mb: modelblaster's renderer, actual panel by worker index")
@@ -301,7 +354,7 @@ def main() -> None:
     wl = load_workload(args.workload)
     stages = {"ir": stage_ir, "artifacts": stage_artifacts, "schedule": stage_schedule,
               "runtime": stage_runtime, "stage": stage_stage, "run": stage_run,
-              "plots": stage_plots}
+              "plots": stage_plots, "feedback": stage_feedback}
     order = ["ir", "artifacts", "schedule", "runtime", "stage", "run", "plots"] \
         if args.stage == "all" else [args.stage]
     for s in order:
