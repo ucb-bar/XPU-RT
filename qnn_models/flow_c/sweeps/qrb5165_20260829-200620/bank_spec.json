@@ -1,0 +1,17 @@
+{
+  "name": "sweepc_bank_qrb5165",
+  "_comment": "Flow C workload spec covering every network in this sweep's model bank. Used once, to (re)emit the coarse dispatch graphs and the per-lane profile CSVs the ported generator measures against, from the frozen cost model in this directory. Periods here are placeholders; the real periods come from the generated per-point workloads.",
+  "target": "qrb5165_flowc",
+  "board": "qrb5165_v66",
+  "registry": "cores/qrb5165_qnn.json",
+  "measurements": "sweeps/qrb5165_20260829-200620/cost_model.json",
+  "slots": {"CPU_P": "hta", "CPU_E": "dsp", "CPU_X": "cpu"},
+  "ctx_dir": "/root/qnn_runtime_ctx",
+  "networks": [
+    {"name": "mlp_control", "bindings": "bindings/mlp_control.json", "period": 2},
+    {"name": "dronet",      "bindings": "bindings/dronet.json",      "period": 5},
+    {"name": "fused_split", "bindings": "bindings/fused_split.json", "period": 20},
+    {"name": "yolov8n",     "bindings": "bindings/yolov8n.json"},
+    {"name": "vint",        "bindings": "bindings/vint.json"}
+  ]
+}

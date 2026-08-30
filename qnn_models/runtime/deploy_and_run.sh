@@ -133,7 +133,8 @@ cd "$BOARD_DIR_ARG"
 # Serialise against anything else using the board (other sessions, agents):
 # a timing run shares its silicon with whatever else is dispatching, so take
 # the lock for the duration. BOARD_LOCK= disables it.
-exec {lockfd}> ${BOARD_LOCK:-/tmp/qnn_board.lock} 2>/dev/null && flock -w 900 \$lockfd || true
+{ exec {lockfd}> ${BOARD_LOCK:-/tmp/qnn_board.lock}; } 2>/dev/null   # scope the redirect
+flock -w 900 \$lockfd 2>/dev/null || true
 LD_LIBRARY_PATH=$QNN_SDK_ROOT/lib/target \\
 ADSP_LIBRARY_PATH="$ADSP_FULL" \\
 $env_lines \\

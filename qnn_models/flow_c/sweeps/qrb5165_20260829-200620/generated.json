@@ -1,0 +1,764 @@
+[
+ {
+  "arm": "baseline",
+  "seed": 0,
+  "point": "baseline_seed0",
+  "status": "ok",
+  "periodic": 3,
+  "nonperiodic": 4,
+  "problems": [],
+  "horizon_ms": 42.0,
+  "hyperperiod_ms": 14,
+  "op_count": 20,
+  "networks": {
+   "mlp_control": {
+    "period": 7,
+    "window_duration": 5,
+    "num_instances": 6
+   },
+   "dronet_a": {
+    "period": 14,
+    "window_duration": 6,
+    "num_instances": 3
+   },
+   "dronet_b": {
+    "period": 14,
+    "window_duration": 4,
+    "num_instances": 3
+   },
+   "yolov8n_a": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   },
+   "yolov8n_b": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   },
+   "yolov8n_c": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   },
+   "yolov8n_d": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   }
+  },
+  "workload": "workloads/baseline_seed0.json",
+  "flowc_spec": "workloads/baseline_seed0.flowc.json",
+  "max_ops": 800
+ },
+ {
+  "arm": "baseline",
+  "seed": 1,
+  "point": "baseline_seed1",
+  "status": "ok",
+  "periodic": 2,
+  "nonperiodic": 5,
+  "problems": [],
+  "horizon_ms": 47.74,
+  "hyperperiod_ms": 10,
+  "op_count": 25,
+  "networks": {
+   "mlp_control": {
+    "period": 5,
+    "window_duration": 3,
+    "num_instances": 10
+   },
+   "dronet": {
+    "period": 10,
+    "window_duration": 8,
+    "num_instances": 5
+   },
+   "yolov8n_a": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   },
+   "yolov8n_b": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   },
+   "yolov8n_c": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   },
+   "yolov8n_d": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   },
+   "yolov8n_e": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   }
+  },
+  "workload": "workloads/baseline_seed1.json",
+  "flowc_spec": "workloads/baseline_seed1.flowc.json",
+  "max_ops": 800
+ },
+ {
+  "arm": "baseline",
+  "seed": 2,
+  "point": "baseline_seed2",
+  "status": "ok",
+  "periodic": 2,
+  "nonperiodic": 4,
+  "problems": [],
+  "horizon_ms": 45.0,
+  "hyperperiod_ms": 15,
+  "op_count": 26,
+  "networks": {
+   "mlp_control": {
+    "period": 3,
+    "window_duration": 2,
+    "num_instances": 15
+   },
+   "dronet": {
+    "period": 15,
+    "window_duration": 11,
+    "num_instances": 3
+   },
+   "yolov8n_a": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   },
+   "yolov8n_b": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   },
+   "yolov8n_c": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   },
+   "yolov8n_d": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   }
+  },
+  "workload": "workloads/baseline_seed2.json",
+  "flowc_spec": "workloads/baseline_seed2.flowc.json",
+  "max_ops": 800
+ },
+ {
+  "arm": "baseline",
+  "seed": 3,
+  "point": "baseline_seed3",
+  "status": "ok",
+  "periodic": 3,
+  "nonperiodic": 2,
+  "problems": [],
+  "horizon_ms": 36.0,
+  "hyperperiod_ms": 12,
+  "op_count": 16,
+  "networks": {
+   "mlp_control": {
+    "period": 6,
+    "window_duration": 3,
+    "num_instances": 6
+   },
+   "dronet_a": {
+    "period": 12,
+    "window_duration": 5,
+    "num_instances": 3
+   },
+   "dronet_b": {
+    "period": 12,
+    "window_duration": 4,
+    "num_instances": 3
+   },
+   "yolov8n_a": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   },
+   "yolov8n_b": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   }
+  },
+  "workload": "workloads/baseline_seed3.json",
+  "flowc_spec": "workloads/baseline_seed3.flowc.json",
+  "max_ops": 800
+ },
+ {
+  "arm": "baseline",
+  "seed": 4,
+  "point": "baseline_seed4",
+  "status": "REJECTED",
+  "periodic": 3,
+  "nonperiodic": 0,
+  "problems": [
+   "no non-periodic work: nothing to pack against the periodic load"
+  ],
+  "horizon_ms": 24.0,
+  "hyperperiod_ms": 8,
+  "op_count": 12,
+  "networks": {
+   "mlp_control": {
+    "period": 4,
+    "window_duration": 3,
+    "num_instances": 6
+   },
+   "dronet_a": {
+    "period": 8,
+    "window_duration": 2,
+    "num_instances": 3
+   },
+   "dronet_b": {
+    "period": 8,
+    "window_duration": 3,
+    "num_instances": 3
+   }
+  },
+  "workload": "workloads/rejected/baseline_seed4.json",
+  "max_ops": 800
+ },
+ {
+  "arm": "baseline",
+  "seed": 5,
+  "point": "baseline_seed5",
+  "status": "REJECTED",
+  "periodic": 2,
+  "nonperiodic": 0,
+  "problems": [
+   "no non-periodic work: nothing to pack against the periodic load"
+  ],
+  "horizon_ms": 54.0,
+  "hyperperiod_ms": 18,
+  "op_count": 12,
+  "networks": {
+   "mlp_control": {
+    "period": 6,
+    "window_duration": 4,
+    "num_instances": 9
+   },
+   "dronet": {
+    "period": 18,
+    "window_duration": 14,
+    "num_instances": 3
+   }
+  },
+  "workload": "workloads/rejected/baseline_seed5.json",
+  "max_ops": 800
+ },
+ {
+  "arm": "baseline",
+  "seed": 6,
+  "point": "baseline_seed6",
+  "status": "ok",
+  "periodic": 2,
+  "nonperiodic": 5,
+  "problems": [],
+  "horizon_ms": 47.74,
+  "hyperperiod_ms": 5,
+  "op_count": 30,
+  "networks": {
+   "mlp_control": {
+    "period": 5,
+    "window_duration": 4,
+    "num_instances": 10
+   },
+   "dronet": {
+    "period": 5,
+    "window_duration": 4,
+    "num_instances": 10
+   },
+   "yolov8n_a": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   },
+   "yolov8n_b": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   },
+   "yolov8n_c": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   },
+   "yolov8n_d": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   },
+   "yolov8n_e": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   }
+  },
+  "workload": "workloads/baseline_seed6.json",
+  "flowc_spec": "workloads/baseline_seed6.flowc.json",
+  "max_ops": 800
+ },
+ {
+  "arm": "baseline",
+  "seed": 7,
+  "point": "baseline_seed7",
+  "status": "REJECTED",
+  "periodic": 2,
+  "nonperiodic": 0,
+  "problems": [
+   "no non-periodic work: nothing to pack against the periodic load"
+  ],
+  "horizon_ms": 24.0,
+  "hyperperiod_ms": 8,
+  "op_count": 6,
+  "networks": {
+   "mlp_control": {
+    "period": 8,
+    "window_duration": 5,
+    "num_instances": 3
+   },
+   "dronet": {
+    "period": 8,
+    "window_duration": 6,
+    "num_instances": 3
+   }
+  },
+  "workload": "workloads/rejected/baseline_seed7.json",
+  "max_ops": 800
+ },
+ {
+  "arm": "fused",
+  "seed": 0,
+  "point": "fused_seed0",
+  "status": "ok",
+  "periodic": 2,
+  "nonperiodic": 4,
+  "problems": [],
+  "horizon_ms": 42.0,
+  "hyperperiod_ms": 14,
+  "op_count": 23,
+  "networks": {
+   "mlp_control": {
+    "period": 7,
+    "window_duration": 5,
+    "num_instances": 6
+   },
+   "fused_split": {
+    "period": 14,
+    "window_duration": 11,
+    "num_instances": 3
+   },
+   "yolov8n_a": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   },
+   "yolov8n_b": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   },
+   "yolov8n_c": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   },
+   "yolov8n_d": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   }
+  },
+  "workload": "workloads/fused_seed0.json",
+  "flowc_spec": "workloads/fused_seed0.flowc.json",
+  "max_ops": 800
+ },
+ {
+  "arm": "fused",
+  "seed": 1,
+  "point": "fused_seed1",
+  "status": "ok",
+  "periodic": 2,
+  "nonperiodic": 5,
+  "problems": [],
+  "horizon_ms": 47.74,
+  "hyperperiod_ms": 10,
+  "op_count": 35,
+  "networks": {
+   "mlp_control": {
+    "period": 5,
+    "window_duration": 3,
+    "num_instances": 10
+   },
+   "fused_split": {
+    "period": 10,
+    "window_duration": 7,
+    "num_instances": 5
+   },
+   "yolov8n_a": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   },
+   "yolov8n_b": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   },
+   "yolov8n_c": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   },
+   "yolov8n_d": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   },
+   "yolov8n_e": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   }
+  },
+  "workload": "workloads/fused_seed1.json",
+  "flowc_spec": "workloads/fused_seed1.flowc.json",
+  "max_ops": 800
+ },
+ {
+  "arm": "fused",
+  "seed": 2,
+  "point": "fused_seed2",
+  "status": "ok",
+  "periodic": 2,
+  "nonperiodic": 4,
+  "problems": [],
+  "horizon_ms": 45.0,
+  "hyperperiod_ms": 15,
+  "op_count": 32,
+  "networks": {
+   "mlp_control": {
+    "period": 3,
+    "window_duration": 2,
+    "num_instances": 15
+   },
+   "fused_split": {
+    "period": 15,
+    "window_duration": 11,
+    "num_instances": 3
+   },
+   "yolov8n_a": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   },
+   "yolov8n_b": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   },
+   "yolov8n_c": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   },
+   "yolov8n_d": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   }
+  },
+  "workload": "workloads/fused_seed2.json",
+  "flowc_spec": "workloads/fused_seed2.flowc.json",
+  "max_ops": 800
+ },
+ {
+  "arm": "fused",
+  "seed": 3,
+  "point": "fused_seed3",
+  "status": "ok",
+  "periodic": 2,
+  "nonperiodic": 2,
+  "problems": [],
+  "horizon_ms": 36.0,
+  "hyperperiod_ms": 12,
+  "op_count": 19,
+  "networks": {
+   "mlp_control": {
+    "period": 6,
+    "window_duration": 3,
+    "num_instances": 6
+   },
+   "fused_split": {
+    "period": 12,
+    "window_duration": 6,
+    "num_instances": 3
+   },
+   "yolov8n_a": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   },
+   "yolov8n_b": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   }
+  },
+  "workload": "workloads/fused_seed3.json",
+  "flowc_spec": "workloads/fused_seed3.flowc.json",
+  "max_ops": 800
+ },
+ {
+  "arm": "fused",
+  "seed": 4,
+  "point": "fused_seed4",
+  "status": "REJECTED",
+  "periodic": 2,
+  "nonperiodic": 0,
+  "problems": [
+   "no non-periodic work: nothing to pack against the periodic load"
+  ],
+  "horizon_ms": 24.0,
+  "hyperperiod_ms": 8,
+  "op_count": 15,
+  "networks": {
+   "mlp_control": {
+    "period": 4,
+    "window_duration": 3,
+    "num_instances": 6
+   },
+   "fused_split": {
+    "period": 8,
+    "window_duration": 6,
+    "num_instances": 3
+   }
+  },
+  "workload": "workloads/rejected/fused_seed4.json",
+  "max_ops": 800
+ },
+ {
+  "arm": "fused",
+  "seed": 5,
+  "point": "fused_seed5",
+  "status": "REJECTED",
+  "periodic": 2,
+  "nonperiodic": 0,
+  "problems": [
+   "no non-periodic work: nothing to pack against the periodic load"
+  ],
+  "horizon_ms": 54.0,
+  "hyperperiod_ms": 18,
+  "op_count": 18,
+  "networks": {
+   "mlp_control": {
+    "period": 6,
+    "window_duration": 4,
+    "num_instances": 9
+   },
+   "fused_split": {
+    "period": 18,
+    "window_duration": 14,
+    "num_instances": 3
+   }
+  },
+  "workload": "workloads/rejected/fused_seed5.json",
+  "max_ops": 800
+ },
+ {
+  "arm": "fused",
+  "seed": 6,
+  "point": "fused_seed6",
+  "status": "ok",
+  "periodic": 2,
+  "nonperiodic": 5,
+  "problems": [],
+  "horizon_ms": 47.74,
+  "hyperperiod_ms": 10,
+  "op_count": 35,
+  "networks": {
+   "mlp_control": {
+    "period": 5,
+    "window_duration": 4,
+    "num_instances": 10
+   },
+   "fused_split": {
+    "period": 10,
+    "window_duration": 7,
+    "num_instances": 5
+   },
+   "yolov8n_a": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   },
+   "yolov8n_b": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   },
+   "yolov8n_c": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   },
+   "yolov8n_d": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   },
+   "yolov8n_e": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   }
+  },
+  "workload": "workloads/fused_seed6.json",
+  "flowc_spec": "workloads/fused_seed6.flowc.json",
+  "max_ops": 800
+ },
+ {
+  "arm": "fused",
+  "seed": 7,
+  "point": "fused_seed7",
+  "status": "REJECTED",
+  "periodic": 2,
+  "nonperiodic": 0,
+  "problems": [
+   "no non-periodic work: nothing to pack against the periodic load"
+  ],
+  "horizon_ms": 24.0,
+  "hyperperiod_ms": 8,
+  "op_count": 12,
+  "networks": {
+   "mlp_control": {
+    "period": 8,
+    "window_duration": 5,
+    "num_instances": 3
+   },
+   "fused_split": {
+    "period": 8,
+    "window_duration": 6,
+    "num_instances": 3
+   }
+  },
+  "workload": "workloads/rejected/fused_seed7.json",
+  "max_ops": 800
+ },
+ {
+  "arm": "fused_vint",
+  "seed": 0,
+  "point": "fused_vint_seed0",
+  "status": "ok",
+  "periodic": 2,
+  "nonperiodic": 5,
+  "problems": [],
+  "horizon_ms": 78.855,
+  "hyperperiod_ms": 14,
+  "op_count": 40,
+  "networks": {
+   "mlp_control": {
+    "period": 7,
+    "window_duration": 5,
+    "num_instances": 12
+   },
+   "fused_split": {
+    "period": 14,
+    "window_duration": 11,
+    "num_instances": 6
+   },
+   "yolov8n_a": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   },
+   "yolov8n_b": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   },
+   "yolov8n_c": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   },
+   "yolov8n_d": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   },
+   "vint": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   }
+  },
+  "workload": "workloads/fused_vint_seed0.json",
+  "flowc_spec": "workloads/fused_vint_seed0.flowc.json",
+  "max_ops": 2000
+ },
+ {
+  "arm": "fused_vint",
+  "seed": 1,
+  "point": "fused_vint_seed1",
+  "status": "ok",
+  "periodic": 2,
+  "nonperiodic": 6,
+  "problems": [],
+  "horizon_ms": 88.403,
+  "hyperperiod_ms": 10,
+  "op_count": 57,
+  "networks": {
+   "mlp_control": {
+    "period": 5,
+    "window_duration": 3,
+    "num_instances": 18
+   },
+   "fused_split": {
+    "period": 10,
+    "window_duration": 7,
+    "num_instances": 9
+   },
+   "yolov8n_a": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   },
+   "yolov8n_b": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   },
+   "yolov8n_c": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   },
+   "yolov8n_d": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   },
+   "yolov8n_e": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   },
+   "vint": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   }
+  },
+  "workload": "workloads/fused_vint_seed1.json",
+  "flowc_spec": "workloads/fused_vint_seed1.flowc.json",
+  "max_ops": 2000
+ }
+]

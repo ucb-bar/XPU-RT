@@ -207,9 +207,15 @@ def stage_stage(wl: dict, args) -> None:
     print(out.stdout or out.stderr)
 
 
-_TUNED_PRE = ("for c in 0 1 2 3 4 5 6 7; do echo performance > "
+# Save whatever governor was in force and put it back, rather than assuming
+# schedutil — another tenant may have set `performance` for their own run, and
+# restoring blindly clobbers it.
+_TUNED_PRE = ("cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor "
+              "> /tmp/flowc_prev_governor 2>/dev/null; "
+              "for c in 0 1 2 3 4 5 6 7; do echo performance > "
               "/sys/devices/system/cpu/cpu$c/cpufreq/scaling_governor 2>/dev/null; done")
-_TUNED_POST = ("for c in 0 1 2 3 4 5 6 7; do echo schedutil > "
+_TUNED_POST = ("g=$(cat /tmp/flowc_prev_governor 2>/dev/null || echo schedutil); "
+               "for c in 0 1 2 3 4 5 6 7; do echo $g > "
                "/sys/devices/system/cpu/cpu$c/cpufreq/scaling_governor 2>/dev/null; done")
 
 
