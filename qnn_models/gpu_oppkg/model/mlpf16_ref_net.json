@@ -1,0 +1,700 @@
+{
+	"model.cpp": "/work/qnn_models/gpu_oppkg/model/mlpf16_ref.cpp",
+	"model.bin": "/work/qnn_models/gpu_oppkg/model/mlpf16_ref.bin",
+	"converter_command": "qnn-onnx-converter; act_bitwidth=8; act_quantizer=tf; act_quantizer_calibration=min-max; act_quantizer_schema=asymmetric; adjust_nms_features_dims=True; algorithms=[]; align_matmul_ranks=True; apply_masked_softmax=uncompressed; arch_checker=False; backend=None; batch=None; bias_bitwidth=8; calc_static_encodings=False; converter_op_package_lib=; copyright_file=None; custom_io=; custom_op_config_paths=None; debug=-1; defer_loading=False; define_symbol=None; disable_batchnorm_folding=False; disable_defer_loading=False; disable_node_validation=False; disable_qnn_op_config_validation=False; disable_relu_squashing=False; dry_run=None; dumpIR=False; dump_custom_io_config_template=; dump_encoding_json=False; dump_inferred_model=False; dump_ir=; dump_ir_optimizer_config_template=False; dump_optimization_pass_mode_config=False; dump_pass_trace_info=False; dump_qairt_io_config_yaml=; dump_qairt_quantizer_command=None; dump_value_info=False; enable_framework_trace=False; enable_match_gathernd=False; enable_match_topk=False; enable_per_row_quantized_bias=False; exclude_named_tensors=False; expand_gru_op_structure=True; expand_lstm_op_structure=False; expand_sparse_op_structure=False; export_format=cpp; extract_color_transform=True; float_bias_bitwidth=0; float_bias_bw=0; float_bitwidth=16; float_bw=32; float_fallback=False; force_prune_cast_ops=False; handle_gather_negative_indices=True; ignore_encodings=False; include_data_invariant_ops=False; inject_cast_for_gather=True; input_dim=None; input_dtype=[]; input_encoding=[]; input_layout=[]; input_list=None; input_type=[]; ir_optimizer_config=; keep_disconnected_nodes=False; keep_int64_inputs=False; keep_quant_nodes=False; keep_weights_quantized=False; match_caffe_ssd_to_tf=True; model_version=None; multi_time_steps_gru=False; multi_time_steps_lstm=False; no_simplification=False; op_package_lib=; optimization_pass_mode=ir_optimizer_mainline; optimization_pass_mode_config=; out_names=['output']; overwrite_model_prefix=False; pack_4_bit_weights=False; package_name=None; packed_masked_softmax_inputs=[]; packed_max_seq=1; param_quantizer=None; param_quantizer_calibration=min-max; param_quantizer_schema=asymmetric; percentile_calibration_value=99.99; perform_axes_to_spatial_first_order=True; perform_layout_transformation=False; prepare_inputs_as_params=False; preprocess_roi_pool_inputs=True; preserve_io=[]; preserve_onnx_output_order=False; quantization_overrides=; quantizer_log=None; quantizer_log_level=LogLevel.NONE; restrict_quantization_steps=[]; squash_box_decoder=True; unroll_gru_time_steps=True; unroll_lstm_time_steps=True; use_aimet_quantizer=False; use_convert_quantization_nodes=False; use_dynamic_16_bit_weights=False; use_native_dtype=False; use_native_input_files=False; use_native_output_files=False; use_per_channel_quantization=False; use_per_row_quantization=False; use_quantize_v2=False; validate_models=False; weights_bitwidth=8",
+	"copyright_str": "",
+	"op_types": [
+		"ElementWiseNeuron",
+		"FullyConnected"
+	],
+	"graph": {
+		"tensors": {
+			"obs": {
+				"id": 1,
+				"type": 0,
+				"dataFormat": 0,
+				"data_type": 534,
+				"unquantized_data_type": 534,
+				"permute_order_to_src": [
+					0,
+					1
+				],
+				"quant_params": {
+					"definition": 2147483647,
+					"encoding": 2147483647,
+					"is_overridden": false,
+					"scale_offset": {
+						"bitwidth": 0,
+						"minimum": 0.0,
+						"maximum": 0.0,
+						"scale": 0.0,
+						"offset": 0,
+						"is_symmetric": false,
+						"is_fixed_point": true
+					}
+				},
+				"dims": [
+					1,
+					16
+				],
+				"is_dynamic_dims": [],
+				"is_quantizable": true,
+				"is_updateable": false
+			},
+			"output": {
+				"id": 16,
+				"type": 1,
+				"dataFormat": 0,
+				"data_type": 534,
+				"unquantized_data_type": 534,
+				"permute_order_to_src": [
+					0,
+					1
+				],
+				"quant_params": {
+					"definition": 2147483647,
+					"encoding": 2147483647,
+					"is_overridden": false,
+					"scale_offset": {
+						"bitwidth": 0,
+						"minimum": 0.0,
+						"maximum": 0.0,
+						"scale": 0.0,
+						"offset": 0,
+						"is_symmetric": false,
+						"is_fixed_point": true
+					}
+				},
+				"dims": [
+					1,
+					4
+				],
+				"is_dynamic_dims": [],
+				"is_quantizable": true,
+				"is_updateable": false
+			},
+			"_mlp_mlp_0_Gemm_output_0": {
+				"id": 4,
+				"type": 3,
+				"dataFormat": 0,
+				"data_type": 534,
+				"unquantized_data_type": 534,
+				"permute_order_to_src": [
+					0,
+					1
+				],
+				"quant_params": {
+					"definition": 2147483647,
+					"encoding": 2147483647,
+					"is_overridden": false,
+					"scale_offset": {
+						"bitwidth": 0,
+						"minimum": 0.0,
+						"maximum": 0.0,
+						"scale": 0.0,
+						"offset": 0,
+						"is_symmetric": false,
+						"is_fixed_point": true
+					}
+				},
+				"dims": [
+					1,
+					256
+				],
+				"is_dynamic_dims": [],
+				"is_quantizable": true,
+				"is_updateable": false
+			},
+			"_mlp_mlp_1_Elu_output_0": {
+				"id": 5,
+				"type": 3,
+				"dataFormat": 0,
+				"data_type": 534,
+				"unquantized_data_type": 534,
+				"permute_order_to_src": [
+					0,
+					1
+				],
+				"quant_params": {
+					"definition": 2147483647,
+					"encoding": 2147483647,
+					"is_overridden": false,
+					"scale_offset": {
+						"bitwidth": 0,
+						"minimum": 0.0,
+						"maximum": 0.0,
+						"scale": 0.0,
+						"offset": 0,
+						"is_symmetric": false,
+						"is_fixed_point": true
+					}
+				},
+				"dims": [
+					1,
+					256
+				],
+				"is_dynamic_dims": [],
+				"is_quantizable": true,
+				"is_updateable": false
+			},
+			"_mlp_mlp_2_Gemm_output_0": {
+				"id": 8,
+				"type": 3,
+				"dataFormat": 0,
+				"data_type": 534,
+				"unquantized_data_type": 534,
+				"permute_order_to_src": [
+					0,
+					1
+				],
+				"quant_params": {
+					"definition": 2147483647,
+					"encoding": 2147483647,
+					"is_overridden": false,
+					"scale_offset": {
+						"bitwidth": 0,
+						"minimum": 0.0,
+						"maximum": 0.0,
+						"scale": 0.0,
+						"offset": 0,
+						"is_symmetric": false,
+						"is_fixed_point": true
+					}
+				},
+				"dims": [
+					1,
+					128
+				],
+				"is_dynamic_dims": [],
+				"is_quantizable": true,
+				"is_updateable": false
+			},
+			"_mlp_mlp_3_Elu_output_0": {
+				"id": 9,
+				"type": 3,
+				"dataFormat": 0,
+				"data_type": 534,
+				"unquantized_data_type": 534,
+				"permute_order_to_src": [
+					0,
+					1
+				],
+				"quant_params": {
+					"definition": 2147483647,
+					"encoding": 2147483647,
+					"is_overridden": false,
+					"scale_offset": {
+						"bitwidth": 0,
+						"minimum": 0.0,
+						"maximum": 0.0,
+						"scale": 0.0,
+						"offset": 0,
+						"is_symmetric": false,
+						"is_fixed_point": true
+					}
+				},
+				"dims": [
+					1,
+					128
+				],
+				"is_dynamic_dims": [],
+				"is_quantizable": true,
+				"is_updateable": false
+			},
+			"_mlp_mlp_4_Gemm_output_0": {
+				"id": 12,
+				"type": 3,
+				"dataFormat": 0,
+				"data_type": 534,
+				"unquantized_data_type": 534,
+				"permute_order_to_src": [
+					0,
+					1
+				],
+				"quant_params": {
+					"definition": 2147483647,
+					"encoding": 2147483647,
+					"is_overridden": false,
+					"scale_offset": {
+						"bitwidth": 0,
+						"minimum": 0.0,
+						"maximum": 0.0,
+						"scale": 0.0,
+						"offset": 0,
+						"is_symmetric": false,
+						"is_fixed_point": true
+					}
+				},
+				"dims": [
+					1,
+					64
+				],
+				"is_dynamic_dims": [],
+				"is_quantizable": true,
+				"is_updateable": false
+			},
+			"_mlp_mlp_5_Elu_output_0": {
+				"id": 13,
+				"type": 3,
+				"dataFormat": 0,
+				"data_type": 534,
+				"unquantized_data_type": 534,
+				"permute_order_to_src": [
+					0,
+					1
+				],
+				"quant_params": {
+					"definition": 2147483647,
+					"encoding": 2147483647,
+					"is_overridden": false,
+					"scale_offset": {
+						"bitwidth": 0,
+						"minimum": 0.0,
+						"maximum": 0.0,
+						"scale": 0.0,
+						"offset": 0,
+						"is_symmetric": false,
+						"is_fixed_point": true
+					}
+				},
+				"dims": [
+					1,
+					64
+				],
+				"is_dynamic_dims": [],
+				"is_quantizable": true,
+				"is_updateable": false
+			},
+			"mlp_0_bias": {
+				"id": 3,
+				"type": 4,
+				"dataFormat": 0,
+				"data_type": 534,
+				"unquantized_data_type": 534,
+				"permute_order_to_src": [
+					0
+				],
+				"quant_params": {
+					"definition": 2147483647,
+					"encoding": 2147483647,
+					"is_overridden": false,
+					"scale_offset": {
+						"bitwidth": 0,
+						"minimum": 0.0,
+						"maximum": 0.0,
+						"scale": 0.0,
+						"offset": 0,
+						"is_symmetric": false,
+						"is_fixed_point": true
+					}
+				},
+				"dims": [
+					256
+				],
+				"is_dynamic_dims": [],
+				"is_quantizable": true,
+				"is_updateable": false,
+				"params_count": "256 (0.55%)"
+			},
+			"mlp_0_weight_permute": {
+				"id": 2,
+				"type": 4,
+				"dataFormat": 0,
+				"data_type": 534,
+				"unquantized_data_type": 534,
+				"permute_order_to_src": [
+					0,
+					1
+				],
+				"quant_params": {
+					"definition": 2147483647,
+					"encoding": 2147483647,
+					"is_overridden": false,
+					"scale_offset": {
+						"bitwidth": 0,
+						"minimum": 0.0,
+						"maximum": 0.0,
+						"scale": 0.0,
+						"offset": 0,
+						"is_symmetric": false,
+						"is_fixed_point": true
+					}
+				},
+				"dims": [
+					256,
+					16
+				],
+				"is_dynamic_dims": [],
+				"is_quantizable": true,
+				"is_updateable": false,
+				"params_count": "4096 (8.95%)"
+			},
+			"mlp_2_bias": {
+				"id": 7,
+				"type": 4,
+				"dataFormat": 0,
+				"data_type": 534,
+				"unquantized_data_type": 534,
+				"permute_order_to_src": [
+					0
+				],
+				"quant_params": {
+					"definition": 2147483647,
+					"encoding": 2147483647,
+					"is_overridden": false,
+					"scale_offset": {
+						"bitwidth": 0,
+						"minimum": 0.0,
+						"maximum": 0.0,
+						"scale": 0.0,
+						"offset": 0,
+						"is_symmetric": false,
+						"is_fixed_point": true
+					}
+				},
+				"dims": [
+					128
+				],
+				"is_dynamic_dims": [],
+				"is_quantizable": true,
+				"is_updateable": false,
+				"params_count": "128 (0.27%)"
+			},
+			"mlp_2_weight_permute": {
+				"id": 6,
+				"type": 4,
+				"dataFormat": 0,
+				"data_type": 534,
+				"unquantized_data_type": 534,
+				"permute_order_to_src": [
+					0,
+					1
+				],
+				"quant_params": {
+					"definition": 2147483647,
+					"encoding": 2147483647,
+					"is_overridden": false,
+					"scale_offset": {
+						"bitwidth": 0,
+						"minimum": 0.0,
+						"maximum": 0.0,
+						"scale": 0.0,
+						"offset": 0,
+						"is_symmetric": false,
+						"is_fixed_point": true
+					}
+				},
+				"dims": [
+					128,
+					256
+				],
+				"is_dynamic_dims": [],
+				"is_quantizable": true,
+				"is_updateable": false,
+				"params_count": "32768 (71.6%)"
+			},
+			"mlp_4_bias": {
+				"id": 11,
+				"type": 4,
+				"dataFormat": 0,
+				"data_type": 534,
+				"unquantized_data_type": 534,
+				"permute_order_to_src": [
+					0
+				],
+				"quant_params": {
+					"definition": 2147483647,
+					"encoding": 2147483647,
+					"is_overridden": false,
+					"scale_offset": {
+						"bitwidth": 0,
+						"minimum": 0.0,
+						"maximum": 0.0,
+						"scale": 0.0,
+						"offset": 0,
+						"is_symmetric": false,
+						"is_fixed_point": true
+					}
+				},
+				"dims": [
+					64
+				],
+				"is_dynamic_dims": [],
+				"is_quantizable": true,
+				"is_updateable": false,
+				"params_count": "64 (0.13%)"
+			},
+			"mlp_4_weight_permute": {
+				"id": 10,
+				"type": 4,
+				"dataFormat": 0,
+				"data_type": 534,
+				"unquantized_data_type": 534,
+				"permute_order_to_src": [
+					0,
+					1
+				],
+				"quant_params": {
+					"definition": 2147483647,
+					"encoding": 2147483647,
+					"is_overridden": false,
+					"scale_offset": {
+						"bitwidth": 0,
+						"minimum": 0.0,
+						"maximum": 0.0,
+						"scale": 0.0,
+						"offset": 0,
+						"is_symmetric": false,
+						"is_fixed_point": true
+					}
+				},
+				"dims": [
+					64,
+					128
+				],
+				"is_dynamic_dims": [],
+				"is_quantizable": true,
+				"is_updateable": false,
+				"params_count": "8192 (17.9%)"
+			},
+			"mlp_6_bias": {
+				"id": 15,
+				"type": 4,
+				"dataFormat": 0,
+				"data_type": 534,
+				"unquantized_data_type": 534,
+				"permute_order_to_src": [
+					0
+				],
+				"quant_params": {
+					"definition": 2147483647,
+					"encoding": 2147483647,
+					"is_overridden": false,
+					"scale_offset": {
+						"bitwidth": 0,
+						"minimum": 0.0,
+						"maximum": 0.0,
+						"scale": 0.0,
+						"offset": 0,
+						"is_symmetric": false,
+						"is_fixed_point": true
+					}
+				},
+				"dims": [
+					4
+				],
+				"is_dynamic_dims": [],
+				"is_quantizable": true,
+				"is_updateable": false,
+				"params_count": "4 (0.00%)"
+			},
+			"mlp_6_weight_permute": {
+				"id": 14,
+				"type": 4,
+				"dataFormat": 0,
+				"data_type": 534,
+				"unquantized_data_type": 534,
+				"permute_order_to_src": [
+					0,
+					1
+				],
+				"quant_params": {
+					"definition": 2147483647,
+					"encoding": 2147483647,
+					"is_overridden": false,
+					"scale_offset": {
+						"bitwidth": 0,
+						"minimum": 0.0,
+						"maximum": 0.0,
+						"scale": 0.0,
+						"offset": 0,
+						"is_symmetric": false,
+						"is_fixed_point": true
+					}
+				},
+				"dims": [
+					4,
+					64
+				],
+				"is_dynamic_dims": [],
+				"is_quantizable": true,
+				"is_updateable": false,
+				"params_count": "256 (0.55%)"
+			}
+		},
+		"nodes": {
+			"_mlp_mlp_0_Gemm": {
+				"package": "qti.aisw",
+				"type": "FullyConnected",
+				"tensor_params": {},
+				"scalar_params": {
+					"packageName": {
+						"1544": "qti.aisw"
+					}
+				},
+				"param_map": {
+					"packageName": 2
+				},
+				"input_names": [
+					"obs",
+					"mlp_0_weight_permute",
+					"mlp_0_bias"
+				],
+				"output_names": [
+					"_mlp_mlp_0_Gemm_output_0"
+				],
+				"macs_per_inference": "0"
+			},
+			"_mlp_mlp_1_Elu": {
+				"package": "qti.aisw",
+				"type": "ElementWiseNeuron",
+				"tensor_params": {},
+				"scalar_params": {
+					"alpha": {
+						"562": 1.0
+					},
+					"operation": {
+						"306": 0
+					},
+					"packageName": {
+						"1544": "qti.aisw"
+					}
+				},
+				"param_map": {
+					"alpha": 1,
+					"operation": 1,
+					"packageName": 2
+				},
+				"input_names": [
+					"_mlp_mlp_0_Gemm_output_0"
+				],
+				"output_names": [
+					"_mlp_mlp_1_Elu_output_0"
+				],
+				"macs_per_inference": "0"
+			},
+			"_mlp_mlp_2_Gemm": {
+				"package": "qti.aisw",
+				"type": "FullyConnected",
+				"tensor_params": {},
+				"scalar_params": {
+					"packageName": {
+						"1544": "qti.aisw"
+					}
+				},
+				"param_map": {
+					"packageName": 2
+				},
+				"input_names": [
+					"_mlp_mlp_1_Elu_output_0",
+					"mlp_2_weight_permute",
+					"mlp_2_bias"
+				],
+				"output_names": [
+					"_mlp_mlp_2_Gemm_output_0"
+				],
+				"macs_per_inference": "0"
+			},
+			"_mlp_mlp_3_Elu": {
+				"package": "qti.aisw",
+				"type": "ElementWiseNeuron",
+				"tensor_params": {},
+				"scalar_params": {
+					"alpha": {
+						"562": 1.0
+					},
+					"operation": {
+						"306": 0
+					},
+					"packageName": {
+						"1544": "qti.aisw"
+					}
+				},
+				"param_map": {
+					"alpha": 1,
+					"operation": 1,
+					"packageName": 2
+				},
+				"input_names": [
+					"_mlp_mlp_2_Gemm_output_0"
+				],
+				"output_names": [
+					"_mlp_mlp_3_Elu_output_0"
+				],
+				"macs_per_inference": "0"
+			},
+			"_mlp_mlp_4_Gemm": {
+				"package": "qti.aisw",
+				"type": "FullyConnected",
+				"tensor_params": {},
+				"scalar_params": {
+					"packageName": {
+						"1544": "qti.aisw"
+					}
+				},
+				"param_map": {
+					"packageName": 2
+				},
+				"input_names": [
+					"_mlp_mlp_3_Elu_output_0",
+					"mlp_4_weight_permute",
+					"mlp_4_bias"
+				],
+				"output_names": [
+					"_mlp_mlp_4_Gemm_output_0"
+				],
+				"macs_per_inference": "0"
+			},
+			"_mlp_mlp_5_Elu": {
+				"package": "qti.aisw",
+				"type": "ElementWiseNeuron",
+				"tensor_params": {},
+				"scalar_params": {
+					"alpha": {
+						"562": 1.0
+					},
+					"operation": {
+						"306": 0
+					},
+					"packageName": {
+						"1544": "qti.aisw"
+					}
+				},
+				"param_map": {
+					"alpha": 1,
+					"operation": 1,
+					"packageName": 2
+				},
+				"input_names": [
+					"_mlp_mlp_4_Gemm_output_0"
+				],
+				"output_names": [
+					"_mlp_mlp_5_Elu_output_0"
+				],
+				"macs_per_inference": "0"
+			},
+			"_mlp_mlp_6_Gemm": {
+				"package": "qti.aisw",
+				"type": "FullyConnected",
+				"tensor_params": {},
+				"scalar_params": {
+					"packageName": {
+						"1544": "qti.aisw"
+					}
+				},
+				"param_map": {
+					"packageName": 2
+				},
+				"input_names": [
+					"_mlp_mlp_5_Elu_output_0",
+					"mlp_6_weight_permute",
+					"mlp_6_bias"
+				],
+				"output_names": [
+					"output"
+				],
+				"macs_per_inference": "0"
+			}
+		}
+	}
+}

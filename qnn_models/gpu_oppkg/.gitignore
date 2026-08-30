@@ -1,0 +1,8 @@
+# Regenerable bulk. The kernels, tools, inventory and written-up results are
+# tracked; the raw tensor dumps and repackaged model blobs they were derived
+# from are not — `make` and the tools/ scripts rebuild them.
+validation/out/
+validation/inputs/
+model/*.bin
+model/*.cpp
+inventory/*.qnn.json

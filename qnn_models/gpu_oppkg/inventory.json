@@ -1,0 +1,152 @@
+{
+  "_comment": "Measured GPU-composability inventory for the QRB5165 (Adreno 650) under QAIRT 2.45. Every 'composes' value is the exit status of qnn-context-binary-generator --backend libQnnGpu.so on the physical board at 10.44.120.201; every failure line is copied verbatim from that run's log (inventory/logs/gpu_compose_logs.txt). Nothing here is inferred from documentation.",
+  "target": "qrb5165_v66",
+  "backend": "libQnnGpu.so (Adreno 650, driver reports 'OpenCL 2.0 Adreno(TM) 650', tier 650, maxWorkGroupSize 1024, local memory yes, vector64 no)",
+  "captured_at": "2026-08-30",
+  "tool": "qnn-context-binary-generator --backend libQnnGpu.so --model libQnnModelDlc.so --dlc_path <dlc>",
+  "networks": {
+    "mlp_control": {
+      "int8": {
+        "artifact": "qnn_models/runtime/gen/mlp_control_full/mlp_control_quantized.dlc",
+        "composes_stock": false,
+        "first_failing_op": "/mlp/mlp.0/Gemm (FullyConnected)",
+        "error": "GPU_ERROR_INVALID_TYPE(10012) then GPU_ERROR_OP_PACKAGE_FAILED(10023) - OpPackage (qti.aisw) validation failure",
+        "composes_with_flowc_oppkg": true,
+        "ops_needed": {
+          "FullyConnected": 4,
+          "ElementWiseNeuron(ELU)": 3
+        }
+      },
+      "fp32": {
+        "artifact": "qnn_models/runtime/gen/mlp_control_full/mlp_control.dlc",
+        "composes_stock": true
+      },
+      "fp16": {
+        "artifact": "converter --float_bitwidth 16 model lib (gpu_oppkg/model/mlpf16_ref.cpp)",
+        "composes_stock": true,
+        "note": "no fp16 DLC for mlp_control exists in-tree; measured through the model-library path instead"
+      }
+    },
+    "dronet": {
+      "int8": {
+        "artifact": "qnn_models/boards/qrb5165_v66/dlcs/dronet_quantized.dlc",
+        "composes_stock": false,
+        "first_failing_op": "/conv_modules.0/Conv (Conv2d)",
+        "error": "GPU_ERROR_INVALID_TYPE(10012) then GPU_ERROR_OP_PACKAGE_FAILED(10023) - OpPackage (qti.aisw) validation failure",
+        "composes_with_flowc_oppkg": true,
+        "ops_needed": {
+          "Conv2d": 10,
+          "Batchnorm": 3,
+          "ElementWiseBinary(add)": 3,
+          "ElementWiseNeuron(relu)": 2,
+          "FullyConnected": 2,
+          "PoolMax2d": 1,
+          "Reshape": 1,
+          "Transpose": 1
+        }
+      },
+      "fp32": {
+        "artifact": "boards/qrb5165_v66/dlcs/dronet.dlc",
+        "composes_stock": true
+      },
+      "fp16": {
+        "artifact": "boards/qrb5165_v66/dlcs/dronet_fp16.dlc",
+        "composes_stock": true
+      }
+    },
+    "yolov8n": {
+      "int8": {
+        "artifact": "boards/qrb5165_v66/dlcs/yolov8n_quantized.dlc",
+        "composes_stock": false,
+        "first_failing_op": "pad_0 (Pad)",
+        "error": "GPU_ERROR_INVALID_TYPE(10012) then GPU_ERROR_OP_PACKAGE_FAILED(10023) - OpPackage (qti.aisw) validation failure",
+        "composes_with_flowc_oppkg": false,
+        "ops_needed": {
+          "Conv2d": 64,
+          "ElementWiseBinary": 69,
+          "ElementWiseNeuron(sigmoid)": 58,
+          "Transpose": 25,
+          "StridedSlice": 18,
+          "Concat": 17,
+          "Reshape": 8,
+          "Pad": 7,
+          "Pool": 3,
+          "Resize": 2,
+          "Softmax": 1
+        },
+        "still_missing_from_flowc_oppkg": [
+          "Pad",
+          "Concat",
+          "StridedSlice",
+          "Resize",
+          "Softmax",
+          "PoolAvg2d"
+        ],
+        "note": "op census is derived from qairt-dlc-to-json on the quantized DLC (inventory/yolov8n_int8.qnn.json); the flowc gap is derived from that census, not measured end-to-end, because this network's ONNX route does not survive the QNN ONNX converter (see qnn_models/README.md) so no package-renamed model library could be built for it"
+      },
+      "fp32": {
+        "artifact": "boards/qrb5165_v66/dlcs/yolov8n.dlc",
+        "composes_stock": true
+      },
+      "fp16": {
+        "artifact": "boards/qrb5165_v66/dlcs/yolov8n_fp16.dlc",
+        "composes_stock": true
+      }
+    },
+    "fused_full": {
+      "int8": {
+        "artifact": "qnn_models/flow_c/gen/convert/fused_full_quantized.dlc",
+        "composes_stock": false,
+        "first_failing_op": "/vision_cnn/vision_cnn.0/Conv (Conv2d)",
+        "error": "GPU_ERROR_INVALID_TYPE(10012) then GPU_ERROR_OP_PACKAGE_FAILED(10023) - OpPackage (qti.aisw) validation failure",
+        "composes_with_flowc_oppkg": false,
+        "first_failing_op_with_flowc_oppkg": "_Concat (Concat)",
+        "error_with_flowc_oppkg": "GPU_ERROR_DOES_NOT_EXIST(10005) - Operation does not exist: flowc.gpu Concat",
+        "ops_needed": {
+          "Conv2d": 6,
+          "Reshape": 6,
+          "FullyConnected": 3,
+          "Lstm": 3,
+          "Convert": 3,
+          "Transpose": 2,
+          "Concat": 1
+        },
+        "still_missing_from_flowc_oppkg": [
+          "Concat",
+          "Lstm",
+          "Convert"
+        ],
+        "note": "the six convolutions and six reshapes are accepted and built; compose stops at the Concat that joins the two branches, so the whole network does not run, but the fused_split vision_conv tile (4 convs) does -- measured, see README"
+      },
+      "fp32": {
+        "artifact": "qnn_models/flow_c/gen/convert/fused_full.dlc",
+        "composes_stock": true,
+        "note": "notable: GPU fp32 composes a graph that HTA rejects (Transpose) and that the CPU op package rejects at int8 (Reshape config)"
+      }
+    },
+    "fused_split/vision_conv": {
+      "int8": {
+        "artifact": "qnn_models/flow_c/gen/convert/tiles/fused_vision_conv.onnx -> converter -> model library",
+        "composes_stock": false,
+        "composes_with_flowc_oppkg": true,
+        "ops_needed": {
+          "Conv2d": 4
+        },
+        "note": "the converter squashes the four ReLUs into the convolutions' output encodings (output min = 0), so this tile is four pure Conv2d nodes"
+      }
+    }
+  },
+  "stock_gpu_op_package_datatypes": {
+    "_comment": "From the SDK's own GPU op definition supplement (docs/QAIRT-Docs/QNN/OpDef/GpuOpDefSupplement.html), cross-checked against the compose logs above.",
+    "documented_ops": 101,
+    "ops_accepting_UFIXED_POINT_8": [
+      "Dequantize (input only)"
+    ],
+    "conclusion": "the GPU backend's qti.aisw package is a float-only package: FLOAT_32 and FLOAT_16 for all 101 documented ops, with 8-bit fixed point accepted nowhere except as the input of Dequantize. The int8 gap is therefore not a handful of missing ops, it is the whole datatype."
+  },
+  "op_package_dispatch": {
+    "_comment": "Measured: how the GPU backend chooses which package serves a node.",
+    "finding": "dispatch is by Qnn_OpConfig_t::packageName, not by op type. Registering a package named 'flowc.gpu' that implements FullyConnected does not affect a DLC-composed node whose packageName is 'qti.aisw' -- the log still says 'OpPackage (qti.aisw) validation failure' and our validate() is never called. Registering the custom package *as* 'qti.aisw' is rejected: GPU_ERROR_OP_PACKAGE_FAILED(10023) - Duplicate operation name: FullyConnected.",
+    "consequence": "a DLC cannot be redirected to a custom op package. The route that works is the converter's C++ model output (qnn-onnx-converter -o model.cpp), whose per-node packageName string is rewritten before the model library is built. Everything measured here uses that route."
+  }
+}

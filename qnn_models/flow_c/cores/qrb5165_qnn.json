@@ -232,7 +232,7 @@
       "harts": [
         4
       ],
-      "description": "Adreno 650 via libQnnGpu. Present for completeness \u2014 no measured cells in this workload, and it rejects the transformer ops the SmolVLA models need.",
+      "description": "Adreno 650 via libQnnGpu.so. The stock qti.aisw GPU op package is float-only (fp32/fp16); it rejects every 8-bit fixed-point op, so `capabilities` below lists only the float kinds and no int8 cell was schedulable here. Measured 2026-08-30: with the custom OpenCL op package in qnn_models/gpu_oppkg registered at bringup, int8 mlp_control and dronet compose and run on this lane -- see qnn.op_package. `capabilities` is deliberately NOT extended with those int8 kinds, because the emitted runtime does not yet call QnnBackend_registerOpPackage; extending it would let the scheduler place work the runtime cannot dispatch.",
       "capabilities": [
         "add",
         "avgpool2d",
@@ -256,7 +256,43 @@
         "exec_serialized": false,
         "gate_spin_us": 200,
         "sched_fifo_prio": 0,
-        "exec_cores": []
+        "exec_cores": [],
+        "op_package": {
+          "lib": "qnn_models/gpu_oppkg/build/libQnnGpuOpPackageFlowC.so",
+          "interface_provider": "FlowCGpuOpPackage_interfaceProvider",
+          "package_name": "flowc.gpu",
+          "status": "measured on the board, not wired into flowc/emit_runtime.py",
+          "capabilities_int8_when_registered": [
+            "add_s8",
+            "batchnorm2d_s8",
+            "conv2d_s8",
+            "elu_s8",
+            "hardswish_s8",
+            "linear_s8",
+            "maxpool2d_s8",
+            "mul_s8",
+            "relu6_s8",
+            "relu_s8",
+            "reshape_s8",
+            "sigmoid_s8",
+            "sub_s8",
+            "tanh_s8",
+            "transpose_s8"
+          ],
+          "not_implemented": [
+            "concat_s8",
+            "pad_s8",
+            "slice_s8",
+            "resize_s8",
+            "softmax_s8",
+            "avgpool2d_s8",
+            "lstm_s8",
+            "cast_i8_to_f16",
+            "per-axis weight encodings"
+          ],
+          "measured_cells": "flow_c/measurements/qrb5165_v66.json -> gpu_oppkg_cells",
+          "caveat": "a DLC cannot be routed to this package: the GPU backend dispatches on Qnn_OpConfig_t::packageName, which the DLC path fixes to qti.aisw. The measured cells go through a converter-generated model library whose per-node package name was rewritten."
+        }
       }
     }
   ],

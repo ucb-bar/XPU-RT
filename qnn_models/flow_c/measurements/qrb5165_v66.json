@@ -12,7 +12,7 @@
     },
     "mlp_control/mlp_control_full": {
       "dsp": 589.0,
-      "cpu": 28.5
+      "cpu": 107.3
     },
     "yolov8n/yolov8n_backbone": {
       "hta": 13909.6,
@@ -139,6 +139,47 @@
       "hta": 541.4,
       "dsp": 357.7,
       "cpu": 2.1
+    },
+    "vint_par/vint_goal_enc": {
+      "dsp": 5809.1,
+      "cpu": 7075.3
+    },
+    "vint_par/vint_obs_enc": {
+      "dsp": 9532.6,
+      "cpu": 15549.4
+    },
+    "vint_par/vint_decoder": {
+      "cpu": 14422.6
+    },
+    "vint_parallel3/vint_goal_enc": {
+      "dsp": 5809.1,
+      "cpu": 7075.3,
+      "cpu@fp32": 13594.6
+    },
+    "vint_parallel3/vint_obs_enc": {
+      "dsp": 9532.6,
+      "cpu": 15549.4,
+      "cpu@fp32": 73844.3
+    },
+    "vint_parallel3/vint_decoder": {
+      "cpu@fp32": 14422.6,
+      "cpu": 42431.4
+    },
+    "fused_parallel3/fused_vision_conv": {
+      "hta": 763.3,
+      "dsp": 455.3,
+      "cpu": 164.8,
+      "cpu@fp32": 430.6
+    },
+    "fused_parallel3/fused_depth_conv": {
+      "hta": 919.2,
+      "dsp": 398.6,
+      "cpu": 48.3,
+      "cpu@fp32": 103.1
+    },
+    "fused_parallel3/fused_tail": {
+      "dsp": 3279.1,
+      "cpu@fp32": 334.9
     }
   },
   "unit": "us",
@@ -317,6 +358,52 @@
       "backend": "cpu",
       "reason": "validation failed for Reshape",
       "source": "qnn_models/slicing_study/experiments.jsonl"
+    },
+    {
+      "cell": "mlp_control/mlp_control_full, dronet/dronet_full, yolov8n/*, fused_full/fused_full_net",
+      "backend": "gpu@int8 (stock qti.aisw GPU op package)",
+      "reason": "GPU_ERROR_INVALID_TYPE(10012) / GPU_ERROR_OP_PACKAGE_FAILED(10023) on the graph's first op. The stock GPU package is float-only: UFIXED_POINT_8 appears in exactly one of the 101 documented GPU ops (Dequantize's input). Measured 2026-08-30, logs in qnn_models/gpu_oppkg/inventory/logs/. With qnn_models/gpu_oppkg's op package registered, mlp_control and dronet do compose and run at int8 on the GPU; yolov8n and fused_full still do not (missing Pad/Concat/StridedSlice/Resize/Softmax and Concat/Lstm/Convert respectively)."
+    },
+    {
+      "cell": "vint_parallel3/vint_goal_enc",
+      "backend": "hta",
+      "reason": "unsupported op StridedSlice",
+      "source": "qnn_models/slicing_study/experiments.jsonl"
+    },
+    {
+      "cell": "vint_parallel3/vint_obs_enc",
+      "backend": "hta",
+      "reason": "unsupported op Split",
+      "source": "qnn_models/slicing_study/experiments.jsonl"
+    },
+    {
+      "cell": "vint_parallel3/vint_decoder",
+      "backend": "hta",
+      "reason": "QnnHta [ ERROR ] QnnHtaHTA op Reshape supports only equal Input and Output dimensions",
+      "source": "qnn_models/slicing_study/experiments.jsonl"
+    },
+    {
+      "cell": "vint_parallel3/vint_decoder",
+      "backend": "dsp",
+      "reason": "Param[0] has incorrect Value 1.",
+      "source": "qnn_models/slicing_study/experiments.jsonl"
+    },
+    {
+      "cell": "fused_parallel3/fused_tail",
+      "backend": "hta",
+      "reason": "unsupported op Transpose",
+      "source": "qnn_models/slicing_study/experiments.jsonl"
+    },
+    {
+      "cell": "fused_parallel3/fused_tail",
+      "backend": "cpu",
+      "reason": "validation failed for Reshape",
+      "source": "qnn_models/slicing_study/experiments.jsonl"
+    },
+    {
+      "cell": "mlp_control/mlp_control_full",
+      "backend": "cpu@int8",
+      "reason": "composes but is numerically dead \u2014 constant output for any input; use the fp32 context"
     }
   ],
   "_notes": {
@@ -326,7 +413,9 @@
     "vint": "Single-shot measurements (n=1) under the performance governor, which is how the runtime dispatches each tile. The cpu cells are fp32 \u2014 int8 on CPU is far slower for both tiles (encoders 268.8 ms, decoder 100.6 ms) because QnnCpu's int8 kernels are reference implementations. Whole-network reference: 168.3 ms CPU fp32, 378.5 ms CPU int8, and it composes on no accelerator at all.",
     "cpu_cells_must_be_unmasked": "A CPU cell has to be measured the way the runtime runs it, and the runtime does NOT confine the backend: the lane's exec mask binds the lane thread, but the QNN CPU op package builds its thread pool at bringup on the main thread with full-machine affinity. ViNT's decoder makes the difference impossible to miss \u2014 79-83 ms measured under `taskset -c 4-5`, 12.7 ms unmasked, and 31.3 ms in-situ (sharing the machine with the DSP lane and the control loop). Cells for big multi-threaded CPU graphs are therefore taken unmasked; the masked convention only ever made sense for the tiny ones, where it changes nothing. A pessimistic cell is not harmless: at 83 ms the solver evacuated the CPU lane and put 40 mlp_control instances on the DSP, where they collided with ViNT's encoder and missed 26 of 48 deadlines.",
     "feedback_does_not_converge_for_contended_cpu_tiles": "The `feedback` stage promotes in-situ medians to cells, which fixes a cell that is wrong for a stable reason (wrong governor, wrong affinity mask). It does NOT converge for a multi-threaded CPU tile, because that tile's cost is a function of what runs beside it. ViNT's decoder went 12.7 ms (standalone, unmasked) -> 37.8 ms (in-situ) -> promoted to a cell -> 12.8 ms in the next run, because the new schedule gave it more of the machine. Measuring changed the schedule, which changed the measurement. Tiles on dedicated silicon do not have this problem: ViNT's encoders hit 1.01x of their DSP cell across every run. Two real fixes exist and neither is a better measurement: model contention explicitly (a per-lane concurrency term), or make the cost load-independent by actually binding the QNN CPU backend's thread pool, which the host runtime cannot do today.",
-    "slicing_study": "Cells whose name carries a #study suffix or a *_sliced*/ prefix come from qnn_models/slicing_study (RESULTS.md), a granularity sweep over five networks. They are appended, not substituted: the statistic differs from the rest of this file. Each is the MEDIAN of profile_seg's per-sweep median over 1-2 sweeps, under the performance governor, with CPU cells UNMASKED, 20-200 iters depending on graph size -- the median because two other workers share the board and a CPU sweep occasionally catches a contention spike (fused t0's CPU mean moved 0.44 -> 1.51 ms between sweeps while its median moved 0.44 -> 0.61). cpu@fp32 keys are the fp32 build of the same graph, kept alongside the int8 cpu cell because the better precision is a per-tile decision: CPU int8 beats fp32 4x on ViNT's encoders and loses 5x on dronet and 7x on ViNT's decoder. Three results here revise notes elsewhere in this file. (1) Resize DOES compose on HTA: yolov8n_sliced3/yolov8n_t0_op0_136 contains both FPN Resize ops, three MaxPool and eight residual Add and runs at 15.6 ms on HTA; the real blocker in the detect head is the Transpose the converter emits for its Reshape ops. (2) The shipped yolov8n cut at op 102 is 34 ops earlier than HTA requires -- op 136 is the last op before the first layout change. (3) No yolov8n tile reaches HTA at ANY granularity without the offline Split -> 2x Conv1x1 rewrite (optimizations.md #14); sliced from yolov8n.onnx directly, both the whole net and the backbone are rejected with 'unsupported op Split'. Measured per-dispatch overhead, from synthetic 1-MAC probes (label overhead_probe): DSP 0.367 ms, HTA 0.540 ms (median; 0.26 min, 2.96 p99), CPU 0.0026 ms. Confirmed against real cuts: an extra DSP dispatch costs 0.37 ms + 5.4 ns per byte of boundary tensor, which is why dronet (3 KB boundary) pays 0.37 ms per cut and yolov8n (717 KB) pays 4.4 ms."
+    "slicing_study": "Cells whose name carries a #study suffix or a *_sliced*/ prefix come from qnn_models/slicing_study (RESULTS.md), a granularity sweep over five networks. They are appended, not substituted: the statistic differs from the rest of this file. Each is the MEDIAN of profile_seg's per-sweep median over 1-2 sweeps, under the performance governor, with CPU cells UNMASKED, 20-200 iters depending on graph size -- the median because two other workers share the board and a CPU sweep occasionally catches a contention spike (fused t0's CPU mean moved 0.44 -> 1.51 ms between sweeps while its median moved 0.44 -> 0.61). cpu@fp32 keys are the fp32 build of the same graph, kept alongside the int8 cpu cell because the better precision is a per-tile decision: CPU int8 beats fp32 4x on ViNT's encoders and loses 5x on dronet and 7x on ViNT's decoder. Three results here revise notes elsewhere in this file. (1) Resize DOES compose on HTA: yolov8n_sliced3/yolov8n_t0_op0_136 contains both FPN Resize ops, three MaxPool and eight residual Add and runs at 15.6 ms on HTA; the real blocker in the detect head is the Transpose the converter emits for its Reshape ops. (2) The shipped yolov8n cut at op 102 is 34 ops earlier than HTA requires -- op 136 is the last op before the first layout change. (3) No yolov8n tile reaches HTA at ANY granularity without the offline Split -> 2x Conv1x1 rewrite (optimizations.md #14); sliced from yolov8n.onnx directly, both the whole net and the backbone are rejected with 'unsupported op Split'. Measured per-dispatch overhead, from synthetic 1-MAC probes (label overhead_probe): DSP 0.367 ms, HTA 0.540 ms (median; 0.26 min, 2.96 p99), CPU 0.0026 ms. Confirmed against real cuts: an extra DSP dispatch costs 0.37 ms + 5.4 ns per byte of boundary tensor, which is why dronet (3 KB boundary) pays 0.37 ms per cut and yolov8n (717 KB) pays 4.4 ms.",
+    "slicing_study_branch_parallel": "Follow-up to the slicing_study note: tiles are SETS of ops, not spans, so independent branches can be separate tiles on separate lanes. Two networks re-swept in branch mode (qnn_models/slicing_study/RESULTS.md section 8). ViNT is the win: the shipped two-tile cut holds both EfficientNet encoders in ONE graph, so they serialise on one lane; split apart they carry depends_on: [] and measure 23.955 ms of makespan (goal encoder CPU int8 6.615 ms overlapping obs encoder DSP 9.533 ms, then transformer CPU fp32 13.559 ms) against 29.379 ms for the two-tile set -- 18% off the critical path. The dispatch the split adds is exactly the predicted one: the same three tiles with no concurrency are 29.764 ms, +0.385 ms over the two-tile set against a 0.367 ms + 5.4 ns x 512 B prediction. FusedSensorNet is the honest negative: its branches are 0.150 and 0.048 ms on CPU int8, BELOW the 0.367 ms DSP / 0.540 ms HTA dispatch that overlapping them costs, so in isolation the best assignment runs both on the CPU lane back to back (0.548 ms) and the contiguous fused_k3_convs tiling is 0.096 ms faster still. The branch split is nonetheless the manifest to ship there, because both branches compose on HTA and the CPU cells that make the serial answer win are the ones this file records at ~5.6x in situ. A branch split pays only when a branch's runtime exceeds the dispatch it adds.",
+    "mlp_control@cpu_is_fp32_because_int8_is_broken": "QnnCpu's int8 path returns a constant for mlp_control regardless of input. Three distinct inputs through mlp_control_quantized.dlc give byte-identical outputs on CPU and three different outputs on DSP from the same DLC and the same input list, so the input path is fine and the backend is at fault. The cpu cell is therefore the fp32 context (107.3 us) rather than the int8 one (28.5 us) \u2014 3.8x slower and correct. Every schedule solved before 2026-08-30 placed mlp_control on the int8 CPU context; their timings stand (dispatch cost is real) but their mlp outputs were constant. Independently corroborated by the GPU op-package study, whose int8 GPU kernels are bit-exact for this network where the CPU is not."
   },
   "_previous_cells_schedutil": {
     "dronet/dronet_full": {
@@ -392,6 +481,77 @@
         }
       ],
       "note": "in-situ medians from this run, promoted because a standalone cell cannot see lane contention"
+    }
+  },
+  "gpu_oppkg_cells": {
+    "_comment": "GPU (Adreno 650) int8 cells, measured 2026-08-30 with the custom OpenCL op package in qnn_models/gpu_oppkg (libQnnGpuOpPackageFlowC.so). Kept in a separate block rather than merged into `cells` on purpose: these cells are only reachable when the runtime registers that op package via QnnBackend_registerOpPackage, which flowc/emit_runtime.py does not yet do, and they were taken under different conditions than the `cells` block (see gpu_oppkg_conditions). Merging them into `cells` would let the scheduler place int8 work on a GPU lane the emitted runtime cannot actually feed.",
+    "harness": "qnn_models/gpu_oppkg/runtime/opbench.cpp -- same wallclock-around-QnnGraph_execute measurement as runtime/profile_segments.cpp, but composing from a converter-generated model library instead of a context binary (a context binary cannot carry op-package ops).",
+    "unit": "us",
+    "statistic": "median of 200/100/50 iters, two independent repetitions reported as a/b",
+    "cells": {
+      "mlp_control/mlp_control_full": {
+        "gpu_int8_flowc_oppkg": [
+          258.0,
+          263.4
+        ],
+        "dsp_same_harness": [
+          395.5,
+          407.6
+        ],
+        "cpu_same_harness": [
+          29.6,
+          30.0
+        ]
+      },
+      "fused_split/fused_vision_conv": {
+        "gpu_int8_flowc_oppkg": [
+          812.4,
+          954.6
+        ],
+        "dsp_same_harness": [
+          446.6,
+          453.4
+        ],
+        "cpu_same_harness": [
+          163.4,
+          164.8
+        ]
+      },
+      "dronet/dronet_full": {
+        "gpu_int8_flowc_oppkg": [
+          3006.6,
+          3017.5
+        ],
+        "dsp_same_harness": [
+          725.4,
+          761.9
+        ],
+        "cpu_same_harness": [
+          2575.6,
+          2618.2
+        ]
+      }
+    },
+    "bringup_us": {
+      "_comment": "compose+finalize, excluded from the cells above; the GPU pays a large one-off OpenCL program build.",
+      "mlp_control@gpu": 160610.8,
+      "dronet@gpu": 569148.5,
+      "fused_vision_conv@gpu": 125429.8,
+      "dronet@dsp": 27329.6,
+      "dronet@cpu": 195.4
+    },
+    "accuracy": {
+      "_comment": "int8 agreement, measured against the CPU/DSP backends on identical input bytes; full tables in qnn_models/gpu_oppkg/README.md.",
+      "mlp_control@gpu_vs_fp64_emulation": "100% exact over 8 inputs, 0 LSB",
+      "mlp_control@gpu_vs_dsp": "78.1% exact, max 2 LSB",
+      "fused_vision_conv@gpu_vs_cpu": "95.3% exact, max 1 LSB (DSP vs CPU on the same tensors: 90.2%, max 2 LSB)",
+      "dronet@gpu_vs_cpu": "per-tensor exact rate >= the DSP's at every one of dronet's 21 intermediates; final steer differs by 6 LSB (DSP: 11)"
+    },
+    "gpu_oppkg_conditions": {
+      "governor": "schedutil (the brief for this work forbids changing the governor, so these cells are NOT directly comparable to the `cells` block, which was taken under `performance`)",
+      "cpu_affinity": "none (no taskset)",
+      "path": "converter model library composed at run time, not a context binary",
+      "board": "10.44.120.201, QAIRT 2.45, Adreno 650 (driver: OpenCL 2.0 Adreno(TM) 650)"
     }
   }
 }
