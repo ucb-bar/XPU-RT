@@ -29,6 +29,8 @@
         "relu6",
         "relu6_s8",
         "relu_s8",
+        "resize",
+        "resize_s8",
         "sigmoid_s8",
         "sub_s8",
         "tanh",
@@ -43,7 +45,8 @@
         "sched_fifo_prio": 0,
         "exec_cores": [
           7
-        ]
+        ],
+        "resize_note": "Resize composes on v66 HTA \u2014 measured, not assumed. The slicing study (qnn_models/slicing_study) built a yolov8n tile spanning ops 0..136, which contains both FPN upsamples, and it composed and ran at 15.6-16.1 ms across three independent records. The earlier 'Resize not in the HTA op set' note in this repo was wrong; the real blocker in the detect head is the Transpose the converter emits for its Reshape."
       }
     },
     {

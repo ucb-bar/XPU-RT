@@ -47,6 +47,98 @@
     },
     "vint/vint_decoder": {
       "cpu": 37826.0
+    },
+    "dronet/dronet_full#study_k1": {
+      "hta": 1653.2,
+      "dsp": 658.5,
+      "cpu@fp32": 1482.2,
+      "cpu": 7465.5
+    },
+    "dronet_k2/dronet_backbone_op0_26": {
+      "hta": 1394.1,
+      "dsp": 639.4,
+      "cpu@fp32": 1384.9,
+      "cpu": 6772.4
+    },
+    "dronet_k2/dronet_head_op27_28": {
+      "hta": 1104.3,
+      "dsp": 398.6,
+      "cpu": 11.6,
+      "cpu@fp32": 49.1
+    },
+    "mlp_control/mlp_control_full#study_k1": {
+      "dsp": 408.3,
+      "cpu": 27.9,
+      "cpu@fp32": 29.0
+    },
+    "yolov8n_nosplit/yolov8n_whole": {
+      "dsp": 25375.6,
+      "cpu": 74057.9,
+      "cpu@fp32": 226661.5
+    },
+    "yolov8n_sliced3/yolov8n_t0_op0_136": {
+      "hta": 15580.8,
+      "dsp": 15321.7,
+      "cpu": 43584.8,
+      "cpu@fp32": 134391.7
+    },
+    "yolov8n_sliced3/yolov8n_t1_op137_224": {
+      "dsp": 7879.3,
+      "cpu": 24209.8,
+      "cpu@fp32": 79306.0
+    },
+    "yolov8n_sliced3/yolov8n_t2_op225_240": {
+      "dsp": 11861.0,
+      "cpu": 7288.2,
+      "cpu@fp32": 20693.2
+    },
+    "yolov8n_sliced2_neck/yolov8n_t0_op0_136": {
+      "hta": 15689.6,
+      "dsp": 14629.4,
+      "cpu": 43770.6,
+      "cpu@fp32": 133012.5
+    },
+    "yolov8n_sliced2_neck/yolov8n_t1_op137_240": {
+      "dsp": 15127.0,
+      "cpu": 30271.0,
+      "cpu@fp32": 92068.0
+    },
+    "fused_sliced3/fused_t0_op0_7": {
+      "hta": 641.1,
+      "dsp": 447.2,
+      "cpu": 163.5,
+      "cpu@fp32": 412.1
+    },
+    "fused_sliced3/fused_t1_op8_13": {
+      "dsp": 737.1,
+      "cpu": 86.1,
+      "cpu@fp32": 235.7
+    },
+    "fused_sliced3/fused_t2_op14_90": {
+      "dsp": 3276.6,
+      "cpu@fp32": 197.3
+    },
+    "fused_full/fused_full_net#study_k1": {
+      "dsp": 3433.9,
+      "cpu@fp32": 895.9
+    },
+    "vint/vint_whole": {
+      "cpu": 59774.9,
+      "cpu@fp32": 98564.1
+    },
+    "vint_sliced2/vint_t0_op0_1069": {
+      "dsp": 16339.4,
+      "cpu": 21975.1,
+      "cpu@fp32": 89922.1
+    },
+    "vint_sliced2/vint_t1_op1070_1930": {
+      "cpu@fp32": 13740.6,
+      "cpu": 41019.6
+    },
+    "mlp_control/mlp_gemm_only_tile": {
+      "hta": 541.4,
+      "dsp": 357.7,
+      "cpu": 2.1
     }
   },
   "unit": "us",
@@ -60,7 +152,7 @@
     {
       "cell": "yolov8n/yolov8n_head",
       "backend": "hta",
-      "reason": "Resize/Slice/Softmax not in HTA op set"
+      "reason": "Transpose (emitted by the converter for the head's Reshape) \u2014 corrected 2026-08-30: the earlier reason named Resize as a blocker, but the slicing study composed a tile containing both FPN Resizes on HTA at 15.6 ms. Slice/Softmax remain untested in isolation."
     },
     {
       "cell": "fused_full/fused_full_net",
@@ -111,6 +203,120 @@
       "cell": "vint/vint_decoder",
       "backend": "hta",
       "reason": "transformer op set not in the HTA op package"
+    },
+    {
+      "cell": "mlp_control/mlp_control_full#study_k1",
+      "backend": "hta",
+      "reason": "40.9ms [ ERROR ] unsupported elementwise neuson op 0",
+      "source": "qnn_models/slicing_study/experiments.jsonl"
+    },
+    {
+      "cell": "yolov8n_nosplit/yolov8n_whole",
+      "backend": "hta",
+      "reason": "unsupported op Transpose",
+      "source": "qnn_models/slicing_study/experiments.jsonl"
+    },
+    {
+      "cell": "yolov8n_sliced3/yolov8n_t1_op137_224",
+      "backend": "hta",
+      "reason": "unsupported op Transpose",
+      "source": "qnn_models/slicing_study/experiments.jsonl"
+    },
+    {
+      "cell": "yolov8n_sliced3/yolov8n_t2_op225_240",
+      "backend": "hta",
+      "reason": "unsupported op Transpose",
+      "source": "qnn_models/slicing_study/experiments.jsonl"
+    },
+    {
+      "cell": "yolov8n_sliced2_neck/yolov8n_t1_op137_240",
+      "backend": "hta",
+      "reason": "unsupported op Transpose",
+      "source": "qnn_models/slicing_study/experiments.jsonl"
+    },
+    {
+      "cell": "fused_sliced3/fused_t1_op8_13",
+      "backend": "hta",
+      "reason": "unsupported op Transpose",
+      "source": "qnn_models/slicing_study/experiments.jsonl"
+    },
+    {
+      "cell": "fused_sliced3/fused_t2_op14_90",
+      "backend": "hta",
+      "reason": "unsupported op Transpose",
+      "source": "qnn_models/slicing_study/experiments.jsonl"
+    },
+    {
+      "cell": "fused_sliced3/fused_t2_op14_90",
+      "backend": "cpu",
+      "reason": "validation failed for Reshape",
+      "source": "qnn_models/slicing_study/experiments.jsonl"
+    },
+    {
+      "cell": "fused_full/fused_full_net#study_k1",
+      "backend": "hta",
+      "reason": "unsupported op Transpose",
+      "source": "qnn_models/slicing_study/experiments.jsonl"
+    },
+    {
+      "cell": "fused_full/fused_full_net#study_k1",
+      "backend": "cpu",
+      "reason": "validation failed for Reshape",
+      "source": "qnn_models/slicing_study/experiments.jsonl"
+    },
+    {
+      "cell": "vint/vint_whole",
+      "backend": "hta",
+      "reason": "unsupported op StridedSlice",
+      "source": "qnn_models/slicing_study/experiments.jsonl"
+    },
+    {
+      "cell": "vint/vint_whole",
+      "backend": "dsp",
+      "reason": "Param[0] has incorrect Value 1.",
+      "source": "qnn_models/slicing_study/experiments.jsonl"
+    },
+    {
+      "cell": "vint_sliced2/vint_t0_op0_1069",
+      "backend": "hta",
+      "reason": "unsupported op StridedSlice",
+      "source": "qnn_models/slicing_study/experiments.jsonl"
+    },
+    {
+      "cell": "vint_sliced2/vint_t1_op1070_1930",
+      "backend": "hta",
+      "reason": "unsupported op Transpose",
+      "source": "qnn_models/slicing_study/experiments.jsonl"
+    },
+    {
+      "cell": "vint_sliced2/vint_t1_op1070_1930",
+      "backend": "dsp",
+      "reason": "Param[0] has incorrect Value 1.",
+      "source": "qnn_models/slicing_study/experiments.jsonl"
+    },
+    {
+      "cell": "yolov8n/yolov8n_whole_no_split_rewrite",
+      "backend": "hta",
+      "reason": "unsupported op Split",
+      "source": "qnn_models/slicing_study/experiments.jsonl"
+    },
+    {
+      "cell": "yolov8n/yolov8n_backbone_no_split_rewrite",
+      "backend": "hta",
+      "reason": "unsupported op Split",
+      "source": "qnn_models/slicing_study/experiments.jsonl"
+    },
+    {
+      "cell": "fused_split/fused_tail_from_fc#study",
+      "backend": "hta",
+      "reason": "unsupported op Convert",
+      "source": "qnn_models/slicing_study/experiments.jsonl"
+    },
+    {
+      "cell": "fused_split/fused_tail_from_fc#study",
+      "backend": "cpu",
+      "reason": "validation failed for Reshape",
+      "source": "qnn_models/slicing_study/experiments.jsonl"
     }
   ],
   "_notes": {
@@ -119,7 +325,8 @@
     "fused_split": "Measured under taskset -c 4-5, 40 iters, on the sliced sub-DLCs. The split recovers HTA coverage the monolith could not have (conv branches only) and CPU int8 for both branches, but CPU int8 is only worth taking on the small one: QnnCpu's int8 conv is a reference kernel, 12.2 ms for the vision branch against 0.014 ms for the 8x8 depth branch. The tail runs 0.37 ms on CPU fp32 vs 3.06 ms on DSP.",
     "vint": "Single-shot measurements (n=1) under the performance governor, which is how the runtime dispatches each tile. The cpu cells are fp32 \u2014 int8 on CPU is far slower for both tiles (encoders 268.8 ms, decoder 100.6 ms) because QnnCpu's int8 kernels are reference implementations. Whole-network reference: 168.3 ms CPU fp32, 378.5 ms CPU int8, and it composes on no accelerator at all.",
     "cpu_cells_must_be_unmasked": "A CPU cell has to be measured the way the runtime runs it, and the runtime does NOT confine the backend: the lane's exec mask binds the lane thread, but the QNN CPU op package builds its thread pool at bringup on the main thread with full-machine affinity. ViNT's decoder makes the difference impossible to miss \u2014 79-83 ms measured under `taskset -c 4-5`, 12.7 ms unmasked, and 31.3 ms in-situ (sharing the machine with the DSP lane and the control loop). Cells for big multi-threaded CPU graphs are therefore taken unmasked; the masked convention only ever made sense for the tiny ones, where it changes nothing. A pessimistic cell is not harmless: at 83 ms the solver evacuated the CPU lane and put 40 mlp_control instances on the DSP, where they collided with ViNT's encoder and missed 26 of 48 deadlines.",
-    "feedback_does_not_converge_for_contended_cpu_tiles": "The `feedback` stage promotes in-situ medians to cells, which fixes a cell that is wrong for a stable reason (wrong governor, wrong affinity mask). It does NOT converge for a multi-threaded CPU tile, because that tile's cost is a function of what runs beside it. ViNT's decoder went 12.7 ms (standalone, unmasked) -> 37.8 ms (in-situ) -> promoted to a cell -> 12.8 ms in the next run, because the new schedule gave it more of the machine. Measuring changed the schedule, which changed the measurement. Tiles on dedicated silicon do not have this problem: ViNT's encoders hit 1.01x of their DSP cell across every run. Two real fixes exist and neither is a better measurement: model contention explicitly (a per-lane concurrency term), or make the cost load-independent by actually binding the QNN CPU backend's thread pool, which the host runtime cannot do today."
+    "feedback_does_not_converge_for_contended_cpu_tiles": "The `feedback` stage promotes in-situ medians to cells, which fixes a cell that is wrong for a stable reason (wrong governor, wrong affinity mask). It does NOT converge for a multi-threaded CPU tile, because that tile's cost is a function of what runs beside it. ViNT's decoder went 12.7 ms (standalone, unmasked) -> 37.8 ms (in-situ) -> promoted to a cell -> 12.8 ms in the next run, because the new schedule gave it more of the machine. Measuring changed the schedule, which changed the measurement. Tiles on dedicated silicon do not have this problem: ViNT's encoders hit 1.01x of their DSP cell across every run. Two real fixes exist and neither is a better measurement: model contention explicitly (a per-lane concurrency term), or make the cost load-independent by actually binding the QNN CPU backend's thread pool, which the host runtime cannot do today.",
+    "slicing_study": "Cells whose name carries a #study suffix or a *_sliced*/ prefix come from qnn_models/slicing_study (RESULTS.md), a granularity sweep over five networks. They are appended, not substituted: the statistic differs from the rest of this file. Each is the MEDIAN of profile_seg's per-sweep median over 1-2 sweeps, under the performance governor, with CPU cells UNMASKED, 20-200 iters depending on graph size -- the median because two other workers share the board and a CPU sweep occasionally catches a contention spike (fused t0's CPU mean moved 0.44 -> 1.51 ms between sweeps while its median moved 0.44 -> 0.61). cpu@fp32 keys are the fp32 build of the same graph, kept alongside the int8 cpu cell because the better precision is a per-tile decision: CPU int8 beats fp32 4x on ViNT's encoders and loses 5x on dronet and 7x on ViNT's decoder. Three results here revise notes elsewhere in this file. (1) Resize DOES compose on HTA: yolov8n_sliced3/yolov8n_t0_op0_136 contains both FPN Resize ops, three MaxPool and eight residual Add and runs at 15.6 ms on HTA; the real blocker in the detect head is the Transpose the converter emits for its Reshape ops. (2) The shipped yolov8n cut at op 102 is 34 ops earlier than HTA requires -- op 136 is the last op before the first layout change. (3) No yolov8n tile reaches HTA at ANY granularity without the offline Split -> 2x Conv1x1 rewrite (optimizations.md #14); sliced from yolov8n.onnx directly, both the whole net and the backbone are rejected with 'unsupported op Split'. Measured per-dispatch overhead, from synthetic 1-MAC probes (label overhead_probe): DSP 0.367 ms, HTA 0.540 ms (median; 0.26 min, 2.96 p99), CPU 0.0026 ms. Confirmed against real cuts: an extra DSP dispatch costs 0.37 ms + 5.4 ns per byte of boundary tensor, which is why dronet (3 KB boundary) pays 0.37 ms per cut and yolov8n (717 KB) pays 4.4 ms."
   },
   "_previous_cells_schedutil": {
     "dronet/dronet_full": {
