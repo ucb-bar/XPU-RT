@@ -1,0 +1,7 @@
+entry_id,network,instance,dispatch_id,op,name,core_kind,hart,worker_kind_idx,predicted_start_ms,predicted_duration_ms,actual_start_ms,actual_end_ms,actual_duration_ms
+0,dronet,0,0,qnn_graph,dronet_full,dsp,6,0,0.000000,0.645000,1.913000,2.628000,0.715000
+1,mlp_control,0,0,qnn_graph,mlp_control_full,cpu,5,1,0.000000,0.107000,1.907000,1.952000,0.045000
+2,dronet,1,0,qnn_graph,dronet_full,dsp,6,0,8.000000,0.645000,8.041000,10.159000,2.118000
+3,mlp_control,1,0,qnn_graph,mlp_control_full,cpu,5,1,8.000000,0.107000,8.008000,8.056000,0.048000
+4,dronet,2,0,qnn_graph,dronet_full,dsp,6,0,16.000000,0.645000,16.003000,18.193000,2.190000
+5,mlp_control,2,0,qnn_graph,mlp_control_full,cpu,5,1,16.000000,0.107000,16.012000,16.059000,0.047000

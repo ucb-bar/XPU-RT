@@ -1,0 +1,40 @@
+### premise check: which network owns the makespan?
+
+point                set       predicted owner      measured owner        mid-size?
+baseline_seed4       addendum  mlp_control5         mlp_control                  no
+baseline_seed5       addendum  mlp_control8         mlp_control                  no
+baseline_seed7       addendum  dronet2              dronet                      YES
+fused_seed4          addendum  mlp_control5         fused_split                 YES
+fused_seed5          addendum  mlp_control8         fused_split                 YES
+fused_seed7          addendum  fused_split2         fused_split                 YES
+baseline_seed0       main      --                   yolov8n_c                    no
+baseline_seed1       main      --                   yolov8n_e                    no
+baseline_seed2       main      --                   yolov8n_c                    no
+baseline_seed3       main      --                   yolov8n_a                    no
+baseline_seed6       main      --                   yolov8n_b                    no
+fused_seed0          main      --                   yolov8n_d                    no
+fused_seed1          main      --                   yolov8n_b                    no
+fused_seed2          main      --                   yolov8n_c                    no
+fused_seed3          main      --                   yolov8n_b                    no
+fused_seed6          main      --                   yolov8n_e                    no
+fused_vint_seed0     main      --                   yolov8n_a                    no
+fused_vint_seed1     main      --                   yolov8n_e                    no
+
+### Q1 matched pairs (periodic-only)
+
+seed  ops b/f    pred b   pred f     d% |    act b    act f     d% |  noise b/f %  informative  verdict
+4      12/15      20.11    20.11    0.0 |    20.04    20.46    2.1 |   0.0/0.1    YES          dronet wins
+5      12/18      48.11    48.11    0.0 |    48.04    48.05    0.0 |   0.0/2.0    YES          within noise
+7       6/12      16.64    16.81    1.0 |    18.19    18.97    4.3 |   0.4/1.1    YES          dronet wins
+
+### predicted vs actual, periodic-only regime (new: main sweep has no such point)
+
+point                  pred ms reps (ms)                         median   ratio
+baseline_seed4           20.11 [20.043, 20.039, 20.04]            20.04   1.000
+baseline_seed5           48.11 [48.041, 48.042, 48.046]           48.04   1.000
+baseline_seed7           16.64 [18.183, 18.261, 18.193]           18.19   1.090
+fused_seed4              20.11 [20.451, 20.459, 20.469]           20.46   1.020
+fused_seed5              48.11 [49.023, 48.046, 48.048]           48.05   1.000
+fused_seed7              16.81 [18.974, 19.034, 18.822]           18.97   1.130
+
+median ratio, periodic-only: 1.010x   (main sweep, mixed: 1.17x)

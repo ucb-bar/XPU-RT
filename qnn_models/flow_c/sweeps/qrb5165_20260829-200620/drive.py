@@ -31,6 +31,13 @@ MILP_PY = ("/tmp/claude-1172/-scratch2-dima-misc-sw-XPU-RT/"
 MOSEK_LIC = os.path.expanduser("~/mosek/mosek.lic")
 MILP_TIME_LIMIT = 300
 
+# Inputs (the frozen cost model, the generator module) always come from HERE.
+# Outputs -- generated.json, state, workloads, schedules, runtimes, runs, logs,
+# results, provenance -- go to OUT, which defaults to HERE. An addendum run
+# that reuses this sweep's frozen cost model but must not touch its
+# pre-registered record sets SWEEP_OUT to its own directory.
+OUT = os.path.abspath(os.environ.get("SWEEP_OUT", HERE))
+
 sys.path.insert(0, HERE)
 from sweep_unbounded_nonperiodic import BINDINGS, model_of        # noqa: E402
 
@@ -71,7 +78,7 @@ def lock_wait_s(timeout=900):
 
 
 def points(only=None):
-    rows = json.load(open(os.path.join(HERE, "generated.json")))
+    rows = json.load(open(os.path.join(OUT, "generated.json")))
     out = [r for r in rows if r["status"] == "ok"]
     if only:
         want = set(only.split(","))
@@ -85,12 +92,12 @@ def sha256(path):
 
 
 def load_state():
-    p = os.path.join(HERE, "state.json")
+    p = os.path.join(OUT, "state.json")
     return json.load(open(p)) if os.path.exists(p) else {}
 
 
 def save_state(st):
-    with open(os.path.join(HERE, "state.json"), "w") as f:
+    with open(os.path.join(OUT, "state.json"), "w") as f:
         json.dump(st, f, indent=1)
 
 
@@ -103,7 +110,7 @@ def cmd_solve(args):
     cost = json.load(open(os.path.join(HERE, "cost_model.json")))
     for r in points(args.only):
         pt = r["point"]
-        spec = os.path.join(HERE, "workloads", f"{pt}.flowc.json")
+        spec = os.path.join(OUT, "workloads", f"{pt}.flowc.json")
         rec = st.setdefault(pt, {})
         if rec.get("status") == "solved" and not args.force:
             print(f"  {pt:<22} already solved by {rec.get('solver')} "
@@ -114,7 +121,7 @@ def cmd_solve(args):
         #     CSVs the solver reads are the ones this sweep froze, even if
         #     another tenant re-emitted the shared tree in between.
         p, dt = sh([sys.executable, "flow_c.py", "artifacts", "--workload", spec],
-                   cwd=FLOWC, log=os.path.join(HERE, "logs", f"artifacts_{pt}.log"))
+                   cwd=FLOWC, log=os.path.join(OUT, "logs", f"artifacts_{pt}.log"))
         rec["artifacts_rc"] = p.returncode
         rec["artifacts_s"] = round(dt, 1)
         if p.returncode != 0:
@@ -124,7 +131,7 @@ def cmd_solve(args):
 
         # (b) solve. MILP first (SETUP: optimal at 66-86 ops), greedy_periodic
         #     on non-zero rc or on the 300 s limit.
-        wl = os.path.join(HERE, "workloads", f"{pt}.json")
+        wl = os.path.join(OUT, "workloads", f"{pt}.json")
         env = dict(os.environ, MOSEKLM_LICENSE_FILE=MOSEK_LIC)
         solver, sched_json, sres, dt = None, None, None, 0.0
         if os.path.exists(MILP_PY) and not args.greedy_only:
@@ -132,20 +139,20 @@ def cmd_solve(args):
                 sres, dt = sh([MILP_PY, os.path.join(REPO, "scripts", "run_xpurt_schedule.py"),
                                "--networks-json", wl, "--solver", "milp",
                                "--time-limit", str(MILP_TIME_LIMIT), "--profiled"],
-                              cwd=HERE, env=env, timeout=MILP_TIME_LIMIT + 120,
-                              log=os.path.join(HERE, "logs", f"sched_{pt}_milp.log"))
+                              cwd=OUT, env=env, timeout=MILP_TIME_LIMIT + 120,
+                              log=os.path.join(OUT, "logs", f"sched_{pt}_milp.log"))
             except subprocess.TimeoutExpired:
                 sres, dt = None, MILP_TIME_LIMIT + 120
                 rec["milp_timed_out_s"] = MILP_TIME_LIMIT + 120
-            cand = os.path.join(HERE, "schedules", f"scheduled_{pt}_profiled.json")
+            cand = os.path.join(OUT, "schedules", f"scheduled_{pt}_profiled.json")
             if sres is not None and sres.returncode == 0 and os.path.exists(cand):
                 solver, sched_json = "milp", cand
         if solver is None:
             sres, dt = sh([sys.executable, os.path.join(REPO, "scripts", "run_xpurt_schedule.py"),
                            "--networks-json", wl, "--solver", "greedy_periodic",
                            "--profiled"],
-                          cwd=HERE, log=os.path.join(HERE, "logs", f"sched_{pt}_greedy.log"))
-            cand = os.path.join(HERE, "schedules",
+                          cwd=OUT, log=os.path.join(OUT, "logs", f"sched_{pt}_greedy.log"))
+            cand = os.path.join(OUT, "schedules",
                                 f"scheduled_{pt}_greedy_periodic_profiled.json")
             if sres.returncode == 0 and os.path.exists(cand):
                 solver, sched_json = "greedy_periodic", cand
@@ -156,7 +163,7 @@ def cmd_solve(args):
             rec["status"] = "solve_failed"
             print(f"  {pt:<22} SOLVE FAILED")
             save_state(st); continue
-        rec["schedule"] = os.path.relpath(sched_json, HERE)
+        rec["schedule"] = os.path.relpath(sched_json, OUT)
         out = (sres.stdout or "")
         mk = [l.strip() for l in out.splitlines() if "makespan" in l.lower()]
         rec["makespan_line"] = mk[-1] if mk else None
@@ -208,14 +215,14 @@ def cmd_runtime(args):
         rec = st.setdefault(pt, {})
         if rec.get("status") not in ("solved", "emitted", "staged", "run"):
             print(f"  {pt:<22} skipped (status {rec.get('status')})"); continue
-        spec = os.path.join(HERE, "workloads", f"{pt}.flowc.json")
-        out_dir = os.path.join(HERE, "runtimes", pt)
+        spec = os.path.join(OUT, "workloads", f"{pt}.flowc.json")
+        out_dir = os.path.join(OUT, "runtimes", pt)
         shutil.rmtree(out_dir, ignore_errors=True)
         p, dt = sh([sys.executable, "flow_c.py", "runtime", "--workload", spec,
                     "--tag", pt, "--lane-mode", "kind-network",
-                    "--schedule", os.path.join(HERE, rec["schedule"]),
+                    "--schedule", os.path.join(OUT, rec["schedule"]),
                     "--out-dir", out_dir],
-                   cwd=FLOWC, log=os.path.join(HERE, "logs", f"runtime_{pt}.log"))
+                   cwd=FLOWC, log=os.path.join(OUT, "logs", f"runtime_{pt}.log"))
         rec["runtime_rc"] = p.returncode
         if p.returncode != 0 or not os.path.exists(os.path.join(out_dir, "dispatch_table.h")):
             rec["status"] = "runtime_failed"
@@ -285,10 +292,10 @@ def cmd_stage(args):
     for r in pts:
         pt, arm = r["point"], r["arm"]
         if arm not in staged_arms:
-            spec = os.path.join(HERE, "workloads", f"{pt}.flowc.json")
+            spec = os.path.join(OUT, "workloads", f"{pt}.flowc.json")
             p, dt = sh([sys.executable, "flow_c.py", "stage", "--workload", spec,
                         "--board", BOARD],
-                       cwd=FLOWC, log=os.path.join(HERE, "logs", f"stage_{arm}.log"))
+                       cwd=FLOWC, log=os.path.join(OUT, "logs", f"stage_{arm}.log"))
             staged_arms.add(arm)
             print(f"  [stage] arm {arm}: flow_c.py stage rc={p.returncode} "
                   f"(from {pt})")
@@ -318,17 +325,17 @@ def cmd_run(args):
         if rec.get("status") not in ("staged", "run"):
             print(f"  {pt:<22} skipped (status {rec.get('status')})"); continue
         rec.setdefault("reps", {})
-        out_dir = os.path.join(HERE, "runtimes", pt)
+        out_dir = os.path.join(OUT, "runtimes", pt)
         for rep in range(1, args.reps + 1):
             key = f"rep{rep}"
             if key in rec["reps"] and rec["reps"][key].get("ok") and not args.force:
                 continue
-            log_dir = os.path.join(HERE, "runs", pt, key)
+            log_dir = os.path.join(OUT, "runs", pt, key)
             os.makedirs(log_dir, exist_ok=True)
             wait, wrc = lock_wait_s()
             t0 = time.time()
             p, dt = sh([sys.executable, "flow_c.py", "run", "--workload",
-                        os.path.join(HERE, "workloads", f"{pt}.flowc.json"),
+                        os.path.join(OUT, "workloads", f"{pt}.flowc.json"),
                         "--tag", pt, "--tuned", "--out-dir", out_dir,
                         "--log-dir", log_dir, "--board", BOARD,
                         "--board-dir", "/root/flowc_sweepc"],
@@ -346,7 +353,7 @@ def cmd_run(args):
             save_state(st)
             # plots stage: writes trace.csv beside run.log (contract order)
             sh([sys.executable, "flow_c.py", "plots", "--workload",
-                os.path.join(HERE, "workloads", f"{pt}.flowc.json"),
+                os.path.join(OUT, "workloads", f"{pt}.flowc.json"),
                 "--tag", pt, "--log-dir", log_dir],
                cwd=FLOWC, log=os.path.join(log_dir, "plots.log"))
         if all(v.get("ok") for v in rec["reps"].values()):
@@ -419,7 +426,7 @@ def solver_status(pt, solver):
     got, because SETUP.md's solver plan ("MOSEK is optimal at 66-86 ops")
     only holds for the first.
     """
-    log = os.path.join(HERE, "logs", f"sched_{pt}_{'milp' if solver == 'milp' else 'greedy'}.log")
+    log = os.path.join(OUT, "logs", f"sched_{pt}_{'milp' if solver == 'milp' else 'greedy'}.log")
     if not os.path.exists(log):
         return None
     for line in open(log, errors="replace"):
@@ -430,9 +437,9 @@ def solver_status(pt, solver):
 
 def cmd_results(args):
     st = load_state()
-    gen = json.load(open(os.path.join(HERE, "generated.json")))
+    gen = json.load(open(os.path.join(OUT, "generated.json")))
     cost_sha = sha256(os.path.join(HERE, "cost_model.json"))
-    ppath = os.path.join(HERE, "provenance.json")
+    ppath = os.path.join(OUT, "provenance.json")
     prov = json.load(open(ppath)) if os.path.exists(ppath) else {}
     rows = []
     for g in gen:
@@ -537,7 +544,7 @@ def cmd_results(args):
                     }
             row["per_tile"] = tiles
         rows.append(row)
-    with open(os.path.join(HERE, "results.json"), "w") as f:
+    with open(os.path.join(OUT, "results.json"), "w") as f:
         json.dump(rows, f, indent=1)
     ok = sum(1 for r in rows if r["status"] == "run")
     print(f"wrote results.json: {ok} points run, "
