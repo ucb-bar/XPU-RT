@@ -459,20 +459,36 @@ def schedule_iree_networks(
                 combined_workload, t, alpha
             )
 
-    # Calculate makespan (non-periodic operations only, matching the solver objective)
+    # Calculate makespan over whatever set the solver objective actually covered.
+    # With restrict_makespan_to_nonperiodic the objective is the non-periodic
+    # makespan; without it, C_max bounds every operation. Reporting the
+    # non-periodic figure unconditionally printed "0.00 ms" for a purely
+    # periodic workload and mislabelled the all-operations case, so report the
+    # set that was optimised and say which one it is.
     machine_combinations = combined_workload.get_machine_combinations()
-    completion_times = []
+    all_completion, nonperiodic_completion = [], []
     for i in range(len(combined_workload.operations)):
         op = combined_workload.operations[i]
         combo_idx = int(np.argmax(alpha[i]))
         dur = op.get_duration_for_combination(combo_idx, machine_combinations, combined_workload.machines)
+        finish = float(t[i]) + float(dur)
+        all_completion.append(finish)
         is_periodic = (op.min_start_t is not None) or (op.max_end_t is not None)
         if not is_periodic:
-            completion_times.append(float(t[i]) + float(dur))
-    makespan = max(completion_times) if completion_times else 0.0
+            nonperiodic_completion.append(finish)
+
+    makespan_all = max(all_completion) if all_completion else 0.0
+    if effective_restrict_makespan_to_nonperiodic and nonperiodic_completion:
+        makespan = max(nonperiodic_completion)
+        label = "Makespan (non-periodic)"
+    else:
+        makespan = makespan_all
+        label = "Makespan (all operations)"
 
     print(f"\nScheduling completed!")
-    print(f"Makespan (non-periodic): {makespan:.2f} ms")
+    print(f"{label}: {makespan:.2f} ms")
+    if label.startswith("Makespan (non-periodic)"):
+        print(f"Makespan (all operations): {makespan_all:.2f} ms")
 
     # Build combination labels for display
     def _combo_label(combo: list[str]) -> str:

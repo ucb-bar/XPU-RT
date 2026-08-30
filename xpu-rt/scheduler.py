@@ -527,8 +527,22 @@ def schedule(
             constraints.append(
                 C_max >= t[i] + cp.sum(cp.multiply(dur_vec, alpha[i, :]))
             )
-        # If there are no non-periodic operations, C_max is unconstrained from below
-        # (objective will be trivial), which is acceptable: only periodic tasks exist.
+        # If there are no non-periodic operations, C_max would be unconstrained
+        # from below and the objective trivial -- MOSEK then fails outright with
+        # a SolverError rather than returning a degenerate answer. A purely
+        # periodic workload is a legitimate input (it just has no non-periodic
+        # work to pack against), so fall back to bounding C_max over ALL
+        # operations. That is exactly the `else` branch's semantics, and it
+        # keeps the intended behaviour whenever non-periodic ops do exist.
+        if not non_periodic_ops_exist:
+            for i in range(num_operations):
+                dur_vec = [
+                    workload.operations[i].get_duration_for_combination(k, machine_combinations, workload.machines)
+                    for k in range(num_combinations)
+                ]
+                constraints.append(
+                    C_max >= t[i] + cp.sum(cp.multiply(dur_vec, alpha[i, :]))
+                )
         end()
     else:
         # Original behavior: C_max covers all operations (including periodic ones)
