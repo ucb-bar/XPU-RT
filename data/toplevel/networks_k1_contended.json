@@ -1,0 +1,22 @@
+{
+ "_comment": "ADVERSARIAL-for-greedy workload (realistic): two heavy perception nets -- YOLOv8n detection + DroNet collision -- are released together and each wants to SHARD WIDE (4 harts) to hit its deadline, which grabs all 8 harts at once. Meanwhile the hard-real-time MLP controller fires @100Hz (10ms deadline). GREEDY/EDF commits both wide shards immediately (no lookahead) -> all 8 harts busy ~0-46ms -> the control instances due at 10/20/30ms cannot find a free hart and MISS their deadlines. A GLOBAL solver (CP-SAT/MOSEK) STAGGERS the two wide perception shards -- or narrows one -- so a hart is always free for control, meeting every deadline. Same 8 harts, same nets; only the scheduling intelligence differs. This is the 'optimal genuinely beats greedy' regime, and it is realistic: a fast drone with two onboard perception nets contending with hard-real-time flight control is exactly this conflict.",
+ "hardware": {
+  "machines": { "cpu_p": 4, "cpu_e": 4 },
+  "profile_hw": { "cpu_p": "rvv_x60", "cpu_e": "rvv_x60" },
+  "profile": { "target": "spacemit_x60", "topo_tag_override": false, "gen_root": "gen_mb" },
+  "p_core_speedup": 1.0
+ },
+ "scheduler": {
+  "random_seed": 42, "solver_verbosity": 1, "time_limit": 300,
+  "use_profiled": true, "prune_periodic": true,
+  "restrict_makespan_to_nonperiodic": false,
+  "machine_combination_mode": "shard", "enable_impls": false
+ },
+ "networks": {
+  "mlp_control": { "id": 0, "identifier": "mlp_control", "dispatch_deps_path": "gen_mb/vmfb/mlp_control/spacemit_x60/rvv_x60/mlp_control.int8/mlp_control.int8_dispatch_graph.json", "period": 10.0, "window_duration": 10.0, "num_instances": 6 },
+  "fused_full": { "id": 1, "identifier": "fused_full", "dispatch_deps_path": "gen_mb/vmfb/fused_full/spacemit_x60/rvv_x60/fused_full.int8/fused_full.int8_dispatch_graph.json", "period": 20.0, "window_duration": 20.0, "num_instances": 3, "stateful": true },
+  "yolov8_nano_64x96": { "id": 2, "identifier": "yolov8_nano_64x96", "dispatch_deps_path": "gen_mb/vmfb/yolov8_nano_64x96/spacemit_x60/rvv_x60/yolov8_nano_64x96.int8/yolov8_nano_64x96.int8_dispatch_graph.json", "period": 200.0, "window_duration": 200.0, "num_instances": 1 },
+  "dronet": { "id": 3, "identifier": "dronet", "dispatch_deps_path": "gen_mb/vmfb/dronet/spacemit_x60/rvv_x60/dronet.int8/dronet.int8_dispatch_graph.json", "period": 200.0, "window_duration": 200.0, "num_instances": 1 }
+ },
+ "edges": []
+}

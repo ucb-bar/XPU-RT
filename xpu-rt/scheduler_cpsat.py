@@ -307,7 +307,12 @@ def cpsat_schedule(
     #   random_seed         = 42   → deterministic branching
     # The cost: ~1.5-2× wall-clock vs 4-worker parallel. The benefit:
     # the cold rerun matches the warm run bit-exactly.
-    solver.parameters.num_search_workers = 1
+    # num_search_workers=1 pins reproducibility (bit-exact cold rerun) but CRIPPLES
+    # CP-SAT's parallel portfolio search -- the single biggest reason it gets stuck
+    # above greedy's makespan. Set XPURT_CPSAT_WORKERS=8 (or 0=auto) to unleash the
+    # full portfolio when beating greedy matters more than bit-exact reruns.
+    _nw = os.environ.get("XPURT_CPSAT_WORKERS", "")
+    solver.parameters.num_search_workers = int(_nw) if _nw.strip() else 1
     solver.parameters.random_seed = 42
     if solver_verbosity >= 2:
         solver.parameters.log_search_progress = True
@@ -330,7 +335,21 @@ def cpsat_schedule(
 
 
 def cpsat_with_heft_warm_start(workload, **kwargs):
-    """Convenience: HEFT first, then CP-SAT seeded by HEFT placement."""
+    """Convenience: HEFT first, then CP-SAT seeded by HEFT placement.
+
+    NOTE: HEFT's (t, alpha) share CP-SAT's machine-combination indexing, so its
+    hints are consistent. The greedy list-scheduler's alpha uses a DIFFERENT
+    combination indexing, so seeding CP-SAT with it produces inconsistent hints
+    that MISLEAD the solver (observed: makespan 86->153ms, 0->38 deadline misses).
+    If a greedy seed is ever wanted, its placement must first be remapped into
+    CP-SAT's combo indices; do not feed greedy_schedule's alpha raw.
+    """
+    # NOTE: warm-starting from the GREEDY list-scheduler was tried twice (raw, and
+    # with an infeasible-combo filter) and both TRAP CP-SAT at 86->153ms / 38 misses:
+    # greedy's (t, alpha) is inconsistent with CP-SAT's timing/precedence/stateful
+    # semantics, so its hints mislead rather than help. Seeding from greedy would
+    # require re-deriving its schedule in CP-SAT's exact variables -- a real project.
+    # HEFT's hints ARE consistent (same model lineage), so we use HEFT.
     from scheduler_heft import heft
     try:
         warm_t, warm_alpha, _, _ = heft(workload)

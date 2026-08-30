@@ -148,7 +148,14 @@ def _auto_big_m(operations, machine_combinations, machines, transfer_times,
             if v > max_transfer:
                 max_transfer = v
     H = float(2 * (sum(max_durs) + len(operations) * max_transfer + 1.0))
-    return max(H, 5000.0)
+    # The computed H = 2*(sum of durations) is already a VALID upper bound on any
+    # feasible makespan. The old hard floor of 5000 forces big-M to ~58x the actual
+    # makespan on ms-unit workloads (~86ms), which cripples MOSEK's LP relaxation
+    # (weak bound -> no incumbent). Make the floor env-tunable: XPURT_BIGM_FLOOR=1
+    # lets the tight computed H through, dramatically strengthening the relaxation
+    # for the branch-and-bound (MILP/MOSEK) path. Default 5000 keeps prior behavior.
+    _floor = float(os.environ.get("XPURT_BIGM_FLOOR", "5000") or "5000")
+    return max(H, _floor)
 
 
 def schedule_window(window: Window, debug_constraints: bool = False,
