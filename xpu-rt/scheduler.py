@@ -692,6 +692,21 @@ def schedule(
     dep_desc = None
     if prune_overlap_constraints_for_dependency_chain:
         dep_desc = _compute_dependency_descendants_bitset(workload.operations)
+    # PER-PAIR big-M (XPURT_PERPAIR_BIGM=1): tighten the disjunctive big-M from the
+    # global H to a valid per-pair bound, strengthening the LP relaxation for MOSEK.
+    # Correct bound (derived after two naive tries were infeasible): the slack term is
+    #   t[.] + dur_[.]_kX - t[.]   where dur_[.]_kX is the duration on a combo the op is
+    # NOT assigned to (so up to its MAX over combos), t[.] <= max_end_t (line 637), and
+    # t[.] >= min_start_t >= 0. So H_ij = max(max_end_t_i,max_end_t_j) + max(maxdur_i,maxdur_j)
+    # covers both constraints. Falls back to global H if either op lacks max_end_t.
+    _perpair_bigm = os.environ.get("XPURT_PERPAIR_BIGM", "").strip() in ("1", "true", "True")
+    _op_maxdur = None
+    if _perpair_bigm:
+        _op_maxdur = []
+        for _op in workload.operations:
+            _ds = [_op.get_duration_for_combination(_k, machine_combinations, workload.machines)
+                   for _k in range(num_combinations)]
+            _op_maxdur.append(max(_ds) if _ds else 0.0)
     for i in range(num_operations):
         for j in range(i+1, num_operations):
             op_i = workload.operations[i]
@@ -707,15 +722,12 @@ def schedule(
                 if ((dep_desc[i] >> j) & 1) or ((dep_desc[j] >> i) & 1):
                     continue
 
-            # PER-PAIR big-M attempt (reverted, kept for the record): tightening the
-            # disjunctive big-M per pair from the global H to a function of the two
-            # ops' deadlines is the right IDEA for MOSEK's weak relaxation, but BOTH
-            # a max() and a sum() of (max_end_t_i, max_end_t_j) made even tri_small
-            # INFEASIBLE -- so the exact valid per-pair bound couples with the makespan
-            # / transfer / deadline-skip terms in a way a naive deadline function does
-            # not capture. That derivation is the real (careful, separately-tested)
-            # reformulation project; the global H stays until it's done correctly.
             H_ij = H
+            if _perpair_bigm:
+                _ei = getattr(op_i, "max_end_t", None)
+                _ej = getattr(op_j, "max_end_t", None)
+                if _ei is not None and _ej is not None:
+                    H_ij = max(float(_ei), float(_ej)) + max(_op_maxdur[i], _op_maxdur[j])
             for k1 in range(num_combinations):
                 for k2 in range(num_combinations):
                     # Only add constraint if combinations overlap
