@@ -707,6 +707,15 @@ def schedule(
                 if ((dep_desc[i] >> j) & 1) or ((dep_desc[j] >> i) & 1):
                     continue
 
+            # PER-PAIR big-M attempt (reverted, kept for the record): tightening the
+            # disjunctive big-M per pair from the global H to a function of the two
+            # ops' deadlines is the right IDEA for MOSEK's weak relaxation, but BOTH
+            # a max() and a sum() of (max_end_t_i, max_end_t_j) made even tri_small
+            # INFEASIBLE -- so the exact valid per-pair bound couples with the makespan
+            # / transfer / deadline-skip terms in a way a naive deadline function does
+            # not capture. That derivation is the real (careful, separately-tested)
+            # reformulation project; the global H stays until it's done correctly.
+            H_ij = H
             for k1 in range(num_combinations):
                 for k2 in range(num_combinations):
                     # Only add constraint if combinations overlap
@@ -716,14 +725,14 @@ def schedule(
                             k2, machine_combinations, workload.machines
                         )
                         constraints.append(
-                            t[i] >= t[j] + dur_j_k2 - (2 - alpha[i, k1] - alpha[j, k2] + beta[i, j]) * H
+                            t[i] >= t[j] + dur_j_k2 - (2 - alpha[i, k1] - alpha[j, k2] + beta[i, j]) * H_ij
                         )
                         # (5) Operation j starts after i finishes (if j is on k2 and i is on k1)
                         dur_i_k1 = workload.operations[i].get_duration_for_combination(
                             k1, machine_combinations, workload.machines
                         )
                         constraints.append(
-                            t[j] >= t[i] + dur_i_k1 - (3 - alpha[i, k1] - alpha[j, k2] - beta[i, j]) * H
+                            t[j] >= t[i] + dur_i_k1 - (3 - alpha[i, k1] - alpha[j, k2] - beta[i, j]) * H_ij
                         )
     end()
 
