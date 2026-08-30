@@ -207,16 +207,35 @@ def stage_stage(wl: dict, args) -> None:
     print(out.stdout or out.stderr)
 
 
+_TUNED_PRE = ("for c in 0 1 2 3 4 5 6 7; do echo performance > "
+              "/sys/devices/system/cpu/cpu$c/cpufreq/scaling_governor 2>/dev/null; done")
+_TUNED_POST = ("for c in 0 1 2 3 4 5 6 7; do echo schedutil > "
+               "/sys/devices/system/cpu/cpu$c/cpufreq/scaling_governor 2>/dev/null; done")
+
+
 def stage_run(wl: dict, args) -> None:
     out_dir = args.out_dir or _p("gen", "runtime", wl["name"] + _tag(args))
     env = dict(os.environ)
     if args.log_dir:
         env["LOG_DIR"] = args.log_dir
+    if args.tuned:
+        # The measured-conditions run mode: pin the clocks so the board executes
+        # in the state its cost model was measured in, and walk the schedule
+        # twice so the reported trace starts warm (page faults, cold caches and
+        # the DVFS ramp land in iteration 1). Restores the governor afterwards.
+        env["XPURT_EXTRA_ENV"] = "FLOWC_ITERATIONS=2"
+        subprocess.run(["ssh", args.board, _TUNED_PRE], check=False)
+        print("  [tuned] governor -> performance, FLOWC_ITERATIONS=2")
     cmd = ["bash", "qnn_models/runtime/deploy_and_run.sh",
            os.path.relpath(out_dir, REPO), args.board,
            args.board_dir + _tag(args)]
     print("+", " ".join(cmd))
-    subprocess.run(cmd, check=False, cwd=REPO, env=env)
+    try:
+        subprocess.run(cmd, check=False, cwd=REPO, env=env)
+    finally:
+        if args.tuned:
+            subprocess.run(["ssh", args.board, _TUNED_POST], check=False)
+            print("  [tuned] governor restored to schedutil")
 
 
 def stage_plots(wl: dict, args) -> None:
@@ -267,6 +286,10 @@ def main() -> None:
     ap.add_argument("--ctx-source", default="/root/repro_perlane",
                     help="board-side directory holding the context binaries to link")
     ap.add_argument("--log-dir", default=None)
+    ap.add_argument("--tuned", action="store_true",
+                    help="run in the state the cost model was measured in: "
+                         "performance governor on the board plus a warm-up "
+                         "iteration (FLOWC_ITERATIONS=2). Restores the governor after.")
     ap.add_argument("--export-onnx", action="store_true",
                     help="also export ONNX from the same PyTorch module (ir stage)")
     args = ap.parse_args()

@@ -245,6 +245,38 @@ punctual. Note CPU int8 is only worth taking on the small branch: QnnCpu's
 int8 conv is a reference kernel (12.2 ms for the vision branch against
 0.014 ms for the 8x8 depth branch).
 
+## Predicted vs actual: measure in the state you run in
+
+The 4-way schedule ran 1.07-1.16x its prediction until the cost model and the
+run were put in the same machine state. Four causes, separated by experiment:
+
+| Cause | Evidence | Fix | Effect on makespan |
+|---|---|---|---|
+| Cells measured under a different governor | `schedutil` idles the board at 710 MHz of 2419; the host clock gates FastRPC, so accelerator cells come out 10-36% pessimistic (yolov8n backbone on HTA: 21.6 ms under schedutil, 13.9 ms under performance) | measure and run under `performance` | 1.16x → 1.07x |
+| Cold first walk — page faults, cold caches, DVFS ramp | iteration 1 vs iteration 2 of the same schedule | `FLOWC_ITERATIONS=2`, report iteration 2 | 1.16x → 1.06x |
+| Both together | | `flow_c.py run --tuned` | **1.16x → 1.00x**, 0.08 ms spread over 3 runs |
+| CPU-lane contention | the fp32 tail is 0.35 ms alone and 3.69 ms in-situ, while every accelerator tile lands at 0.95-1.12x | not fixed — see below | residual |
+
+Per-tile accuracy before and after, pooled over 3 runs each:
+
+```
+BEFORE  schedutil cells, schedutil run, no warm-up      ratio spread 0.70x .. 18.46x (median 1.14x)
+AFTER   performance cells, performance run + warm-up    ratio spread 0.64x .. 10.44x (median 0.96x)
+        of which: yolov8n backbone 0.95x  head 1.12x  vision_conv 0.96x  tail@dsp 0.95x
+                  dronet 0.79x  mlp_control 1.43x  tail@cpu 10.44x  <- the one outlier
+```
+
+`--tuned` sets the governor on the board, runs with a warm-up iteration, and
+restores the governor afterwards. `measurements/*.json` records the conditions
+its cells were taken under; the pre-governor cells are kept alongside in
+`_previous_cells_schedutil` so the two are comparable.
+
+One structural note: the makespan is bounded by a scheduler-inserted
+`time_dependency` — dronet's last instance waits for yolov8n's head because
+the solver serialised them onto the DSP — so a small overrun on the head
+propagates straight to the wall clock. That is the schedule working as
+specified, not runtime jitter.
+
 ## Known gaps
 
 * **A CPU-heavy network's real cost is not its isolated cell.** FusedSensorNet

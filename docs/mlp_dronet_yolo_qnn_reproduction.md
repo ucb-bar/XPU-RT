@@ -341,6 +341,42 @@ into use, and running it exposed two real bugs:
 KILL` on the board side) so a wedged runtime can no longer take the board
 out of ssh reach.
 
+## Running in the state the cost model was measured in
+
+The flow's default run leaves the board on `schedutil` and walks the
+schedule once, which costs about 15% of makespan accuracy. `--tuned`
+reproduces the warm-up configuration the earlier hand-written runtime used
+(`XPURT_SCHEDULE_ITERATIONS` + a `performance` governor):
+
+```bash
+python3 flow_c.py run --workload dronet_mlp_yolo_fused_split.json --tag tuned --tuned
+```
+
+It pins all eight cores to `performance`, runs with `FLOWC_ITERATIONS=2` so
+the reported trace is the second (warm) walk, and restores `schedutil`
+afterwards. Measured on the 4-network split workload, three runs each:
+
+| Configuration | wall (median) | ratio to prediction |
+|---|---|---|
+| baseline: schedutil, one walk | 37.42 ms | 1.16× |
+| warm-up only (2 walks) | 34.31 ms | 1.06× |
+| performance governor only | 34.52 ms | 1.07× |
+| **both (`--tuned`)** | **33.23 ms** | **1.03×** |
+
+Then re-measure the cells under the same governor and re-solve — the cells
+are what actually diverge. Under `schedutil` the board idles at 710 MHz of
+2419, and because the host clock gates FastRPC dispatch, *accelerator* cells
+come out pessimistic by 10-36% (yolov8n's backbone on HTA measures 21.6 ms
+under schedutil and 13.9 ms under performance). With cells and run in the
+same state the schedule tracked 1.00× on three consecutive runs with a
+0.08 ms spread, and per-tile ratios tightened from a 0.70-18.5× spread
+(median 1.14×) to 0.64-10.4× (median 0.96×), with every accelerator tile
+inside 0.95-1.12×.
+
+The one tile still far off is the fp32 LSTM tail on the CPU lane: 0.35 ms
+alone, 3.69 ms in-situ. That is the contention limitation in "Known
+limitations", not a measurement-state problem.
+
 ## How this differs from the standard modelblaster flow
 
 Flow A (spike/FireSim) and this flow share the front end and the scheduling

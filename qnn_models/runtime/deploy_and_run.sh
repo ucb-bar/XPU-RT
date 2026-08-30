@@ -29,6 +29,7 @@
 #   ADSP_EXTRA_PATHS   prepend to ADSP_LIBRARY_PATH (cloud: lib/hexagon-v66/unsigned)
 #   XPURT_DSP_CTX_BUDGET    lazy DSP context budget (multi-graph runtimes)
 #   XPURT_HTA_CTX_BUDGET    lazy HTA context budget
+#   XPURT_EXTRA_ENV    extra VAR=VAL pairs to set for the board-side run
 #   LOG_DIR            where to save the captured trace (default runs/<gen_dir basename>)
 #   RUN_TIMEOUT        board-side SIGKILL deadline in seconds (default 120). A
 #                      runtime that wedges its cores — e.g. two real-time lanes
@@ -69,6 +70,9 @@ fi
 env_lines=""
 [ -n "${XPURT_DSP_CTX_BUDGET:-}" ] && env_lines+="XPURT_DSP_CTX_BUDGET=$XPURT_DSP_CTX_BUDGET "
 [ -n "${XPURT_HTA_CTX_BUDGET:-}" ] && env_lines+="XPURT_HTA_CTX_BUDGET=$XPURT_HTA_CTX_BUDGET "
+# Free-form passthrough for runtime knobs the caller wants on the board side
+# (e.g. XPURT_EXTRA_ENV="FLOWC_ITERATIONS=2 FLOWC_SPIN_US=500").
+[ -n "${XPURT_EXTRA_ENV:-}" ] && env_lines+="$XPURT_EXTRA_ENV "
 
 echo "==> board     : $BOARD"
 echo "==> gen dir   : $GEN_DIR"
