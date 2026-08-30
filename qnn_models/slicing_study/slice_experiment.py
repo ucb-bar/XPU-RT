@@ -254,6 +254,238 @@ for i, n in enumerate(nodes):
 dyn = [i for i in range(len(nodes)) if i not in static]
 dyn_pos = {i: k for k, i in enumerate(dyn)}
 
+# ---- subgraph mode: tiles named by BOTH their inputs and their outputs --
+# The only way to name a tile that starts in the middle of the graph.  ViNT's
+# obs encoder is an EfficientNet run on a batch of 6 stacked frames; the tile
+# that holds one frame starts at the Concat that stacks them, which no
+# backward closure from an output can express.  `batch1` then rewrites the
+# leading dimension of every tile boundary from B to 1 and re-infers, turning
+# the batch-6 graph into the batch-1 graph that gets dispatched six times.
+subgraphs = req.get("subgraphs") or []
+if subgraphs:
+    tiles = []
+    for k, sg in enumerate(subgraphs):
+        ins, outs = list(sg["inputs"]), list(sg["outputs"])
+        path = os.path.join(out_dir, f"tile{k}.onnx")
+        onnx.utils.extract_model(src, path, ins, outs)
+        sub = onnx.load(path)
+        renames = {}
+        for gi in sub.graph.input:
+            if gi.name in graph_in:
+                continue
+            nn = "t_" + re.sub(r"[^A-Za-z0-9_]", "_", gi.name).strip("_")
+            if nn != gi.name:
+                renames[gi.name] = nn
+        if renames:
+            for gi in sub.graph.input:
+                if gi.name in renames:
+                    gi.name = renames[gi.name]
+            for n in sub.graph.node:
+                for j, t in enumerate(n.input):
+                    if t in renames:
+                        n.input[j] = renames[t]
+            for v in sub.graph.value_info:
+                if v.name in renames:
+                    v.name = renames[v.name]
+        if req.get("batch1"):
+            _b = int(req.get("batch") or 1)
+            for io in list(sub.graph.input) + list(sub.graph.output):
+                d = io.type.tensor_type.shape.dim
+                if len(d):
+                    d[0].ClearField("dim_param")
+                    d[0].dim_value = _b
+            del sub.graph.value_info[:]
+            try:
+                sub = shape_inference.infer_shapes(sub, strict_mode=False, data_prop=True)
+            except Exception as e:
+                print(f"  batch1 shape inference: {e}")
+        onnx.save(sub, path)
+        sub = onnx.load(path)
+        names = {n.name for n in sub.graph.node}
+        seg = sorted(i for i, n in enumerate(nodes) if n.name in names and i not in static)
+        rr = [[seg[0], seg[-1]]] if seg else [[0, 0]]
+        if seg:
+            rr, lo, prev = [], seg[0], seg[0]
+            for i in seg[1:]:
+                if all((j == i) or (j in static) for j in range(prev + 1, i + 1)):
+                    prev = i
+                    continue
+                rr.append([lo, prev]); lo = prev = i
+            rr.append([lo, prev])
+        vinfo = {v.name: v for v in list(sub.graph.input) + list(sub.graph.output)}
+        def sdims(t):
+            v = vinfo.get(t)
+            if v is None:
+                return dims(t)
+            return [(x.dim_value if x.dim_value else (x.dim_param or 0))
+                    for x in v.type.tensor_type.shape.dim]
+        tiles.append({
+            "index": k, "op_range": [rr[0][0], rr[-1][1]], "ranges": rr,
+            "n_src_nodes": len(seg), "n_tile_nodes": len(sub.graph.node),
+            "inputs": [{"src_name": t, "dlc_name": renames.get(t, t),
+                         "shape": sdims(renames.get(t, t)),
+                         "is_net_input": t in graph_in} for t in ins],
+            "outputs": [{"name": t, "shape": sdims(t), "is_net_output": t in graph_out}
+                        for t in outs],
+            "onnx": path,
+            "op_types": sorted({nodes[i].op_type for i in seg}),
+            "depends_on": [],
+        })
+    json.dump({"tiles": tiles, "n_src_nodes": len(nodes),
+                "n_static_nodes": len(static), "n_dynamic_nodes": len(dyn),
+                "mode": "subgraph", "batch1": bool(req.get("batch1")),
+                "independent_pairs": [],
+                "graph_inputs": graph_in, "graph_outputs": graph_out},
+              open(req["result"], "w"), indent=2)
+    print(f"sliced {len(tiles)} tile(s) from {src} in SUBGRAPH mode"
+          + (" with batch1 rewrite" if req.get("batch1") else ""))
+    for t in tiles:
+        print(f"  tile{t['index']}: ops {t['ranges']} ({t['n_src_nodes']} src nodes -> "
+              f"{t['n_tile_nodes']} tile nodes) "
+              f"in={[(i['dlc_name'], i['shape']) for i in t['inputs']]} "
+              f"out={[(o['name'], o['shape']) for o in t['outputs']]}")
+    raise SystemExit(0)
+
+# ---- branch mode: a tile is a SET of ops, named by what it produces -----
+# A contiguous span cannot express two independent branches: whichever comes
+# second in topological order ends up consuming the first one's output and
+# the two serialise inside one graph.  In branch mode each tile is given its
+# output tensors and claims the backward closure of them over the dynamic
+# nodes, minus whatever earlier tiles already claimed.  Independent branches
+# then fall out as tiles whose input sets touch no other tile's outputs.
+tile_outputs = req.get("tile_outputs") or []
+if tile_outputs:
+    consumers = {}
+    for i, n in enumerate(nodes):
+        for t in n.input:
+            if t:
+                consumers.setdefault(t, []).append(i)
+
+    def closure(outs):
+        seen, stack = set(), []
+        for t in outs:
+            if t not in producer:
+                raise SystemExit(f"tile output '{t}' is not produced by any node in {src}")
+            stack.append(producer[t])
+        while stack:
+            i = stack.pop()
+            if i in seen or i in static:
+                continue
+            seen.add(i)
+            for t in nodes[i].input:
+                if t and t in producer:
+                    stack.append(producer[t])
+        return seen
+
+    claimed, node_sets = set(), []
+    for outs in tile_outputs:
+        s = closure(outs) - claimed
+        if not s:
+            raise SystemExit(f"tile {outs} claims no ops (all already claimed)")
+        node_sets.append(sorted(s))
+        claimed |= s
+    rest = sorted(set(dyn) - claimed)
+    if rest:
+        node_sets.append(rest)
+
+    def boundary_set(seg_list):
+        seg = set(seg_list)
+        others = set(dyn) - seg
+        produced_dyn, consumed = set(), set()
+        for i in seg:
+            for t in nodes[i].input:
+                if t:
+                    consumed.add(t)
+            for t in nodes[i].output:
+                if t:
+                    produced_dyn.add(t)
+        produced_static = {t for i in static for t in nodes[i].output if t}
+        outside = {t for i in others for t in nodes[i].input if t}
+        ins = sorted(t for t in consumed
+                     if t not in produced_dyn and t not in produced_static and t not in init)
+        outs = sorted(t for t in produced_dyn if t in graph_out or t in outside)
+        return ins, outs
+
+    def _runs(ix, filler=frozenset()):
+        """Contiguous runs over sorted node indices. `filler` indices do not
+        break a run: static (constant) nodes belong to every tile, so a gap
+        made only of them is not a real discontinuity -- without this ViNT's
+        decoder declares 200 one-node ranges instead of one span."""
+        out, lo, prev = [], ix[0], ix[0]
+        for i in ix[1:]:
+            if all((j == i) or (j in filler) for j in range(prev + 1, i + 1)):
+                prev = i
+                continue
+            out.append([lo, prev]); lo = prev = i
+        out.append([lo, prev])
+        return out
+
+    def runs(ix):
+        return _runs(ix, filler=static)
+
+    tiles = []
+    for k, seg in enumerate(node_sets):
+        ins, outs = boundary_set(seg)
+        if not ins or not outs:
+            raise SystemExit(f"tile {k} has empty boundary in={ins} out={outs}")
+        path = os.path.join(out_dir, f"tile{k}.onnx")
+        onnx.utils.extract_model(src, path, ins, outs)
+        sub = onnx.load(path)
+        renames = {}
+        for gi in sub.graph.input:
+            if gi.name in graph_in:
+                continue
+            nn = "t_" + re.sub(r"[^A-Za-z0-9_]", "_", gi.name).strip("_")
+            if nn != gi.name:
+                renames[gi.name] = nn
+        if renames:
+            for gi in sub.graph.input:
+                if gi.name in renames:
+                    gi.name = renames[gi.name]
+            for n in sub.graph.node:
+                for j, t in enumerate(n.input):
+                    if t in renames:
+                        n.input[j] = renames[t]
+            for v in sub.graph.value_info:
+                if v.name in renames:
+                    v.name = renames[v.name]
+            onnx.save(sub, path)
+            sub = onnx.load(path)
+        rr = runs(seg)
+        rr_exact = _runs(seg)
+        tiles.append({
+            "index": k, "op_range": [rr[0][0], rr[-1][1]], "ranges": rr,
+            "ranges_exact_dynamic_only": rr_exact,
+            "n_src_nodes": len(seg), "n_tile_nodes": len(sub.graph.node),
+            "inputs": [{"src_name": t, "dlc_name": renames.get(t, t), "shape": dims(t),
+                         "is_net_input": t in graph_in} for t in ins],
+            "outputs": [{"name": t, "shape": dims(t), "is_net_output": t in graph_out}
+                        for t in outs],
+            "onnx": path,
+            "op_types": sorted({nodes[i].op_type for i in seg}),
+        })
+    prod_of = {o["name"]: t["index"] for t in tiles for o in t["outputs"]}
+    for t in tiles:
+        t["depends_on"] = sorted({prod_of[i["src_name"]] for i in t["inputs"]
+                                  if i["src_name"] in prod_of
+                                  and prod_of[i["src_name"]] != t["index"]})
+    parallel = [[a["index"], b["index"]] for a in tiles for b in tiles
+                if a["index"] < b["index"]
+                and b["index"] not in a["depends_on"] and a["index"] not in b["depends_on"]]
+    json.dump({"tiles": tiles, "n_src_nodes": len(nodes),
+                "n_static_nodes": len(static), "n_dynamic_nodes": len(dyn),
+                "mode": "branch", "independent_pairs": parallel,
+                "graph_inputs": graph_in, "graph_outputs": graph_out},
+              open(req["result"], "w"), indent=2)
+    print(f"sliced {len(tiles)} tile(s) from {src} in BRANCH mode ({len(nodes)} nodes)")
+    for t in tiles:
+        print(f"  tile{t['index']}: ops {t['ranges']} ({t['n_src_nodes']} src nodes -> "
+              f"{t['n_tile_nodes']} tile nodes) depends_on={t['depends_on']} "
+              f"in={[i['dlc_name'] for i in t['inputs']]} "
+              f"out={[o['name'] for o in t['outputs']]}")
+    print(f"  independent tile pairs (may run concurrently): {parallel or 'none'}")
+    raise SystemExit(0)
+
 # ---- resolve the cut into contiguous node-index ranges ------------------
 idx = []
 for c in cuts:
@@ -434,11 +666,22 @@ if want:
         feed = {name: arrs[i] for name, arrs, _ in feeds}
         res = sess.run(want, feed)
         for t, a in zip(want, res):
-            p = os.path.join(out_dir, "tensors", safe(t), f"sample_{i:04d}.raw")
             arr = np.asarray(a, dtype=np.float32)
-            arr.tofile(p)
-            captured[t].append(p)
-            shapes.setdefault(t, list(arr.shape))
+            bs = int(req.get("batch_split") or 0)
+            if bs and arr.ndim >= 2 and arr.shape[0] >= bs:
+                # a batch-N tile needs calibration in batch-N chunks, not one
+                # sample per forward pass
+                for b in range(0, arr.shape[0] - bs + 1, bs):
+                    p = os.path.join(out_dir, "tensors", safe(t),
+                                      f"sample_{i:04d}_{b:02d}.raw")
+                    arr[b:b + bs].tofile(p)
+                    captured[t].append(p)
+                shapes.setdefault(t, [bs] + list(arr.shape[1:]))
+            else:
+                p = os.path.join(out_dir, "tensors", safe(t), f"sample_{i:04d}.raw")
+                arr.tofile(p)
+                captured[t].append(p)
+                shapes.setdefault(t, list(arr.shape))
 
 json.dump({"n": n, "net_sample_paths": net_sample_paths,
             "captured": captured, "shapes": shapes},
@@ -714,34 +957,53 @@ def parse_board_output(out: str, jobs: list[dict]) -> dict:
 # --------------------------------------------------------------------------
 
 
-def cut_id(src_sha: str, cuts: list[str]) -> str:
+def cut_id(src_sha: str, cuts: list[str],
+           tile_outputs: list[list[str]] | None = None) -> str:
     h = hashlib.sha256()
     h.update(src_sha.encode())
     for c in cuts:
         h.update(b"\0")
         h.update(c.encode())
+    for group in (tile_outputs or []):
+        h.update(b"\1")
+        for t in group:
+            h.update(b"\0")
+            h.update(t.encode())
     return h.hexdigest()[:12]
 
 
 def experiment(net: str, cuts: list[str], name: str | None, backends: list[str],
                iters: int | None, n_samples: int, force: bool,
-               precisions: list[str], measure: bool) -> dict:
+               precisions: list[str], measure: bool,
+               tile_outputs: list[list[str]] | None = None,
+               subgraphs: list[dict] | None = None, batch1: int = 0) -> dict:
     spec = NETWORKS[net]
     src = os.path.join(REPO, spec["onnx"])
     if not os.path.exists(src):
         raise SystemExit(f"source ONNX missing: {src}")
     runner = Runner()
     src_sha = sha256(src)
-    cid = cut_id(src_sha, cuts)
-    label = name or (f"{net}_k{len(cuts)+1}_{cid}")
+    tile_outputs = tile_outputs or []
+    subgraphs = subgraphs or []
+    key_extra = [sg["inputs"] + [">"] + sg["outputs"] for sg in subgraphs]
+    if batch1:
+        key_extra.append([f"batch{int(batch1)}"])
+    cid = cut_id(src_sha, cuts, tile_outputs + key_extra)
+    n_declared = len(subgraphs) or len(tile_outputs) or (len(cuts) + 1)
+    label = name or (f"{net}_k{n_declared}_{cid}")
     work = os.path.join(GEN, net, f"{label}__{cid}")
     os.makedirs(work, exist_ok=True)
-    print(f"\n=== {label}  ({net}, {len(cuts)+1} tile(s), cut_id {cid})")
+    mode = ("subgraph" if subgraphs else "branch" if tile_outputs else "contiguous")
+    print(f"\n=== {label}  ({net}, {mode} mode, ~{n_declared} tile(s), cut_id {cid})")
     print(f"    src  {rel(src)}  sha256:{src_sha[:16]}")
 
     # 1. slice
     sl = run_helper(runner, SLICE_HELPER,
-                     {"src": src, "out_dir": work, "cuts": cuts},
+                     {"src": src, "out_dir": work, "cuts": cuts,
+                      "tile_outputs": tile_outputs,
+                 "subgraphs": subgraphs,
+                 "batch": int(batch1), "subgraphs": subgraphs,
+                      "batch1": bool(batch1), "batch": int(batch1)},
                      tag=f"slice_{label}")
     tiles = sl["tiles"]
 
@@ -751,6 +1013,7 @@ def experiment(net: str, cuts: list[str], name: str | None, backends: list[str],
     cal = run_helper(runner, CALIB_HELPER,
                       {"src": src, "capture": want, "net_inputs": spec["inputs"],
                        "out_dir": os.path.join(work, "calib"),
+                       "batch_split": int(batch1),
                        "n_samples": n_samples},
                       tag=f"calib_{label}")
 
@@ -833,14 +1096,22 @@ def experiment(net: str, cuts: list[str], name: str | None, backends: list[str],
         "source_onnx": rel(src),
         "source_onnx_sha256": src_sha,
         "cut": {"boundary_tensors": cuts,
+                 "tile_outputs": tile_outputs,
+                 "subgraphs": subgraphs,
+                 "batch": int(batch1),
+                 "mode": sl.get("mode", "contiguous"),
                  "n_tiles": len(tiles),
                  "op_ranges": [t["op_range"] for t in tiles],
+                 "op_range_sets": [t.get("ranges", [t["op_range"]]) for t in tiles],
+                 "independent_pairs": sl.get("independent_pairs", []),
+                 "static_nodes_shared": sl.get("n_static_nodes", 0),
                  "src_node_count": sl["n_src_nodes"]},
         "calibration": {"n_samples": cal["n"],
                          "boundary_tensors_captured": want,
                          "net_inputs": {k: v["samples"] for k, v in spec["inputs"].items()}},
         "tiles": [{k: v for k, v in t.items()
-                   if k in ("index", "base", "op_range", "n_src_nodes", "n_tile_nodes",
+                   if k in ("index", "base", "op_range", "ranges", "depends_on",
+                             "n_src_nodes", "n_tile_nodes",
                              "op_types", "inputs", "outputs", "status",
                              "onnx_sha256", "dlc_sha256", "qdlc_sha256",
                              "convert_log", "quantize_log", "input_list")}
@@ -1066,7 +1337,20 @@ def main() -> None:
                                   formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--network", choices=sorted(NETWORKS))
     ap.add_argument("--cut", nargs="*", default=[],
-                    help="ordered boundary tensor names; empty = whole network")
+                    help="contiguous mode: ordered boundary tensor names; empty = whole network")
+    ap.add_argument("--tile", action="append", default=[], metavar="OUT[,OUT...]",
+                    help="branch mode (repeatable): the tensors THIS tile must produce. "
+                          "The tile claims the backward closure of them minus what earlier "
+                          "--tile entries claimed; leftovers become a final tile. Tiles are "
+                          "sets of ops, so independent branches stay independent.")
+    ap.add_argument("--subgraph", action="append", default=[], metavar="IN[,IN]:OUT[,OUT]",
+                    help="subgraph mode (repeatable): one tile named by BOTH its input and "
+                          "its output tensors. The only way to name a tile that starts in the "
+                          "middle of the graph.")
+    ap.add_argument("--batch1", type=int, default=0, metavar="N",
+                    help="with --subgraph: rewrite the leading dim of every tile boundary to N "
+                          "and chunk captured calibration along it, turning a batched tile into "
+                          "the batch-N tile the runtime would dispatch B/N times.")
     ap.add_argument("--name", default=None, help="label for this slice set")
     ap.add_argument("--backends", default="hta,dsp,cpu")
     ap.add_argument("--precisions", default="int8,fp32")
@@ -1094,11 +1378,23 @@ def main() -> None:
         list_nodes(args.network)
         return
     cuts = [c for c in args.cut if c.strip()]
+    tile_outputs = [[t.strip() for t in grp.split(",") if t.strip()]
+                    for grp in args.tile]
+    subgraphs = []
+    for spec in args.subgraph:
+        ins, _, outs = spec.partition(":")
+        subgraphs.append({"inputs": [t.strip() for t in ins.split(",") if t.strip()],
+                           "outputs": [t.strip() for t in outs.split(",") if t.strip()]})
+    if sum(bool(x) for x in (cuts, tile_outputs, subgraphs)) > 1:
+        ap.error("--cut, --tile and --subgraph are different modes; pass one")
+    if args.batch1 and not subgraphs:
+        ap.error("--batch1 only applies to --subgraph mode")
     rec = experiment(args.network, cuts, args.name,
                       [b for b in args.backends.split(",") if b],
                       args.iters, args.samples, args.force,
                       [p for p in args.precisions.split(",") if p],
-                      measure=not args.no_measure)
+                      measure=not args.no_measure, tile_outputs=tile_outputs,
+                      subgraphs=subgraphs, batch1=args.batch1)
     append_record(rec)
     m = rec.get("measurements", {})
     if "cells" in m:

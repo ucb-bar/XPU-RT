@@ -1,0 +1,14 @@
+{
+  "name": "slicing_study_vint_parallel",
+  "_comment": "Board verification for qnn_models/slicing_study: ViNT sliced in branch mode so its two EfficientNet-b0 encoders are independent tiles. The point of the run is the trace -- do vint_goal_enc and vint_obs_enc actually overlap in wall-clock time on two lanes, as the makespan model predicts (goal on CPU int8 6.6 ms alongside obs on DSP 9.5 ms), or does the runtime serialise them?",
+  "target": "qrb5165_flowc",
+  "board": "qrb5165_v66",
+  "registry": "cores/qrb5165_qnn.json",
+  "measurements": "measurements/qrb5165_v66.json",
+  "slots": { "CPU_P": "hta", "CPU_E": "dsp", "CPU_X": "cpu" },
+  "ctx_dir": "/root/qnn_runtime_ctx_study",
+  "networks": [
+    { "name": "vint_par", "bindings": "../slicing_study/bindings/vint_parallel.json" },
+    { "name": "mlp_control", "bindings": "bindings/mlp_control.json", "period": 20 }
+  ]
+}

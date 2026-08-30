@@ -1,0 +1,26 @@
+{
+  "name": "flowc_vint_par4_qrb5165",
+  "_comment": "ViNT with branch-parallel encoders (obs and goal encoders are independent) across four lanes, decoder on the GPU. Combines the slicing study's 3-tile cut with the fp16 GPU lane.",
+  "target": "qrb5165_flowc",
+  "board": "qrb5165_v66",
+  "registry": "cores/qrb5165_qnn.json",
+  "measurements": "measurements/qrb5165_v66.json",
+  "slots": {
+    "CPU_P": "hta",
+    "CPU_E": "dsp",
+    "CPU_X": "cpu",
+    "CPU_G": "gpu"
+  },
+  "ctx_dir": "/root/qnn_runtime_ctx",
+  "networks": [
+    {
+      "name": "vint_par",
+      "bindings": "bindings/vint_par.json"
+    },
+    {
+      "name": "mlp_control",
+      "bindings": "bindings/mlp_control.json",
+      "period": 2
+    }
+  ]
+}

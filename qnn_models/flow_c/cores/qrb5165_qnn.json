@@ -235,19 +235,31 @@
       "description": "Adreno 650 via libQnnGpu.so. The stock qti.aisw GPU op package is float-only (fp32/fp16); it rejects every 8-bit fixed-point op, so `capabilities` below lists only the float kinds and no int8 cell was schedulable here. Measured 2026-08-30: with the custom OpenCL op package in qnn_models/gpu_oppkg registered at bringup, int8 mlp_control and dronet compose and run on this lane -- see qnn.op_package. `capabilities` is deliberately NOT extended with those int8 kinds, because the emitted runtime does not yet call QnnBackend_registerOpPackage; extending it would let the scheduler place work the runtime cannot dispatch.",
       "capabilities": [
         "add",
+        "add_s8",
         "avgpool2d",
         "batchnorm2d",
+        "cast_f16_to_i8",
+        "cast_i8_to_f16",
+        "cat2_c1_s8",
         "concat",
         "conv2d",
+        "gelu_s8",
         "hardswish",
+        "layer_norm_s8",
         "linear",
+        "linear_f16",
+        "linear_s8",
+        "matmul_s8",
         "maxpool2d",
         "mul",
         "prelu",
         "relu",
         "relu6",
+        "relu_f16",
         "sigmoid",
-        "tanh"
+        "softmax_s8",
+        "tanh",
+        "vint_action_post"
       ],
       "qnn": {
         "lib": "libQnnGpu.so",
@@ -292,7 +304,9 @@
           ],
           "measured_cells": "flow_c/measurements/qrb5165_v66.json -> gpu_oppkg_cells",
           "caveat": "a DLC cannot be routed to this package: the GPU backend dispatches on Qnn_OpConfig_t::packageName, which the DLC path fixes to qti.aisw. The measured cells go through a converter-generated model library whose per-node package name was rewritten."
-        }
+        },
+        "fp16_note": "Measured 2026-08-30. The stock GPU op package has NO int8 (every int8 graph fails at its first node with GPU_ERROR_INVALID_TYPE) but composes fp32 and fp16 for everything tried, including ViNT's transformer decoder \u2014 which HTA, DSP and CPU-int8 all reject. The op names listed in capabilities come from modelblaster's int8 IR; the artifact this lane runs is the fp16 build, and the binding declares that per backend, exactly as the cpu0 entry does for fp32 tiles.",
+        "concurrency_note": "The GPU shares the SoC memory subsystem, so overlap was measured rather than assumed (qnn_models/runtime/test_backend_concurrency.cpp, 10 iters): GPU+DSP serial 317.99 ms vs parallel 171.51 ms, ratio 1.85x against an ideal 1.94x; GPU+HTA 192.50 vs 168.70, ratio 1.14x against an ideal 1.16x. Both are near-perfect overlap, so a GPU lane buys real parallelism."
       }
     }
   ],

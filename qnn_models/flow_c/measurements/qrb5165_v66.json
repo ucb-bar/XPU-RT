@@ -43,10 +43,12 @@
     },
     "vint/vint_encoders": {
       "dsp": 14213.0,
-      "cpu": 84163.0
+      "cpu": 84163.0,
+      "gpu": 55854.0
     },
     "vint/vint_decoder": {
-      "cpu": 37826.0
+      "cpu": 37826.0,
+      "gpu": 16425.0
     },
     "dronet/dronet_full#study_k1": {
       "hta": 1653.2,
@@ -149,7 +151,7 @@
       "cpu": 15549.4
     },
     "vint_par/vint_decoder": {
-      "cpu": 14422.6
+      "cpu": 28468.0
     },
     "vint_parallel3/vint_goal_enc": {
       "dsp": 5809.1,
@@ -180,6 +182,21 @@
     "fused_parallel3/fused_tail": {
       "dsp": 3279.1,
       "cpu@fp32": 334.9
+    },
+    "vint_obs_batch/encoder_batch1": {
+      "dsp": 4689.6,
+      "cpu": 6064.0,
+      "cpu@fp32": 13765.8
+    },
+    "vint_obs_batch/encoder_batch2": {
+      "dsp": 5322.2,
+      "cpu": 5887.1,
+      "cpu@fp32": 25832.3
+    },
+    "vint_obs_batch/encoder_batch3": {
+      "dsp": 5342.2,
+      "cpu": 8212.6,
+      "cpu@fp32": 33832.5
     }
   },
   "unit": "us",
@@ -404,6 +421,29 @@
       "cell": "mlp_control/mlp_control_full",
       "backend": "cpu@int8",
       "reason": "composes but is numerically dead \u2014 constant output for any input; use the fp32 context"
+    },
+    {
+      "cell": "vint_obs_batch/encoder_batch1",
+      "backend": "hta",
+      "reason": "unsupported op Transpose",
+      "source": "qnn_models/slicing_study/experiments.jsonl"
+    },
+    {
+      "cell": "vint_obs_batch/encoder_batch2",
+      "backend": "hta",
+      "reason": "unsupported op Transpose",
+      "source": "qnn_models/slicing_study/experiments.jsonl"
+    },
+    {
+      "cell": "vint_obs_batch/encoder_batch3",
+      "backend": "hta",
+      "reason": "unsupported op Transpose",
+      "source": "qnn_models/slicing_study/experiments.jsonl"
+    },
+    {
+      "cell": "vint_par/vint_decoder",
+      "backend": "gpu@fp16",
+      "reason": "GPU_ERROR_INVALID_VALUE on _l2_norm_0. The branch-parallel 3-tile cut leaves ViNT's L2 normalisation inside the decoder tile and the stock GPU package rejects it; the 2-tile cut at the compress-Gemm outputs leaves that op on the encoder side and its decoder composes on GPU at 16.4 ms. The two wins are therefore incompatible as currently cut: branch-parallel encoders (-21% critical path, decoder CPU-only) OR a GPU decoder (contended tile removed, 0 deadline misses). Both needs a 3-tile cut whose decoder boundary matches the 2-tile one \u2014 push the L2Norm into the encoder tiles."
     }
   ],
   "_notes": {
@@ -415,7 +455,11 @@
     "feedback_does_not_converge_for_contended_cpu_tiles": "The `feedback` stage promotes in-situ medians to cells, which fixes a cell that is wrong for a stable reason (wrong governor, wrong affinity mask). It does NOT converge for a multi-threaded CPU tile, because that tile's cost is a function of what runs beside it. ViNT's decoder went 12.7 ms (standalone, unmasked) -> 37.8 ms (in-situ) -> promoted to a cell -> 12.8 ms in the next run, because the new schedule gave it more of the machine. Measuring changed the schedule, which changed the measurement. Tiles on dedicated silicon do not have this problem: ViNT's encoders hit 1.01x of their DSP cell across every run. Two real fixes exist and neither is a better measurement: model contention explicitly (a per-lane concurrency term), or make the cost load-independent by actually binding the QNN CPU backend's thread pool, which the host runtime cannot do today.",
     "slicing_study": "Cells whose name carries a #study suffix or a *_sliced*/ prefix come from qnn_models/slicing_study (RESULTS.md), a granularity sweep over five networks. They are appended, not substituted: the statistic differs from the rest of this file. Each is the MEDIAN of profile_seg's per-sweep median over 1-2 sweeps, under the performance governor, with CPU cells UNMASKED, 20-200 iters depending on graph size -- the median because two other workers share the board and a CPU sweep occasionally catches a contention spike (fused t0's CPU mean moved 0.44 -> 1.51 ms between sweeps while its median moved 0.44 -> 0.61). cpu@fp32 keys are the fp32 build of the same graph, kept alongside the int8 cpu cell because the better precision is a per-tile decision: CPU int8 beats fp32 4x on ViNT's encoders and loses 5x on dronet and 7x on ViNT's decoder. Three results here revise notes elsewhere in this file. (1) Resize DOES compose on HTA: yolov8n_sliced3/yolov8n_t0_op0_136 contains both FPN Resize ops, three MaxPool and eight residual Add and runs at 15.6 ms on HTA; the real blocker in the detect head is the Transpose the converter emits for its Reshape ops. (2) The shipped yolov8n cut at op 102 is 34 ops earlier than HTA requires -- op 136 is the last op before the first layout change. (3) No yolov8n tile reaches HTA at ANY granularity without the offline Split -> 2x Conv1x1 rewrite (optimizations.md #14); sliced from yolov8n.onnx directly, both the whole net and the backbone are rejected with 'unsupported op Split'. Measured per-dispatch overhead, from synthetic 1-MAC probes (label overhead_probe): DSP 0.367 ms, HTA 0.540 ms (median; 0.26 min, 2.96 p99), CPU 0.0026 ms. Confirmed against real cuts: an extra DSP dispatch costs 0.37 ms + 5.4 ns per byte of boundary tensor, which is why dronet (3 KB boundary) pays 0.37 ms per cut and yolov8n (717 KB) pays 4.4 ms.",
     "slicing_study_branch_parallel": "Follow-up to the slicing_study note: tiles are SETS of ops, not spans, so independent branches can be separate tiles on separate lanes. Two networks re-swept in branch mode (qnn_models/slicing_study/RESULTS.md section 8). ViNT is the win: the shipped two-tile cut holds both EfficientNet encoders in ONE graph, so they serialise on one lane; split apart they carry depends_on: [] and measure 23.955 ms of makespan (goal encoder CPU int8 6.615 ms overlapping obs encoder DSP 9.533 ms, then transformer CPU fp32 13.559 ms) against 29.379 ms for the two-tile set -- 18% off the critical path. The dispatch the split adds is exactly the predicted one: the same three tiles with no concurrency are 29.764 ms, +0.385 ms over the two-tile set against a 0.367 ms + 5.4 ns x 512 B prediction. FusedSensorNet is the honest negative: its branches are 0.150 and 0.048 ms on CPU int8, BELOW the 0.367 ms DSP / 0.540 ms HTA dispatch that overlapping them costs, so in isolation the best assignment runs both on the CPU lane back to back (0.548 ms) and the contiguous fused_k3_convs tiling is 0.096 ms faster still. The branch split is nonetheless the manifest to ship there, because both branches compose on HTA and the CPU cells that make the serial answer win are the ones this file records at ~5.6x in situ. A branch split pays only when a branch's runtime exceeds the dispatch it adds.",
-    "mlp_control@cpu_is_fp32_because_int8_is_broken": "QnnCpu's int8 path returns a constant for mlp_control regardless of input. Three distinct inputs through mlp_control_quantized.dlc give byte-identical outputs on CPU and three different outputs on DSP from the same DLC and the same input list, so the input path is fine and the backend is at fault. The cpu cell is therefore the fp32 context (107.3 us) rather than the int8 one (28.5 us) \u2014 3.8x slower and correct. Every schedule solved before 2026-08-30 placed mlp_control on the int8 CPU context; their timings stand (dispatch cost is real) but their mlp outputs were constant. Independently corroborated by the GPU op-package study, whose int8 GPU kernels are bit-exact for this network where the CPU is not."
+    "mlp_control@cpu_is_fp32_because_int8_is_broken": "QnnCpu's int8 path returns a constant for mlp_control regardless of input. Three distinct inputs through mlp_control_quantized.dlc give byte-identical outputs on CPU and three different outputs on DSP from the same DLC and the same input list, so the input path is fine and the backend is at fault. The cpu cell is therefore the fp32 context (107.3 us) rather than the int8 one (28.5 us) \u2014 3.8x slower and correct. Every schedule solved before 2026-08-30 placed mlp_control on the int8 CPU context; their timings stand (dispatch cost is real) but their mlp outputs were constant. Independently corroborated by the GPU op-package study, whose int8 GPU kernels are bit-exact for this network where the CPU is not.",
+    "vint_encoder_batching": "ViNT's obs encoder is ONE EfficientNet-b0 run on a batch of 6 stacked frames (obs_img is 1x18x64x85; a Split+Concat makes 6x3x64x85), not six subgraphs. Measured batching curve on DSP int8, median of 3 sweeps, from qnn_models/slicing_study (labels vint_obs_b1/b2/b3, tile sliced between /Concat_1_output_0 and /compress_obs_enc/Gemm_output_0 with the leading dim rewritten): batch 1 = 4.690 ms, batch 2 = 5.322, batch 3 = 5.342, batch 6 = 9.288 (the 4.690/2.661/1.781/1.548 ms per frame). So one extra frame inside a dispatch costs 0.920 ms while a dispatch of its own costs 4.690 -- the fixed part of a batch-1 encoder dispatch is 3.77 ms, ten times the 0.367 ms FastRPC round trip, because at batch 1 the graph is latency-bound rather than throughput-bound. Splitting the batch to spread frames over lanes therefore LOSES: six batch-1 dispatches are 28.1 ms against 9.288 ms batched (3.03x worse), and the best batch split that uses two lanes (3 on DSP || 3 on CPU) is 24.6-28.7 ms of ViNT critical path against 23.2 ms for leaving the batch intact and splitting obs-vs-goal instead. Batch-1 also does NOT unlock HTA: removing the 6-frame Split removes the 'unsupported op StridedSlice' rejection, but the tile then fails on 'unsupported op Transpose' from EfficientNet's static-padding lowering, so ViNT still composes on no accelerator but the DSP.",
+    "gpu_fp16_lane": "GPU fp16 measured on ViNT's tiles: decoder 16.4 ms, encoders 55.9 ms (DSP does the encoders in 14.2, so only the decoder is a candidate). Context init is 42 ms for the decoder and 256 ms for the encoders \u2014 a one-time bringup cost, not a per-dispatch one. Concurrency measured, not assumed: GPU+DSP 1.85x of an ideal 1.94x, GPU+HTA 1.14x of an ideal 1.16x.",
+    "vint_par_decoder_cpu_is_the_in_situ_value": "28468 us, not the 14423 us measured in isolation. The slicing study's own trace of this exact tile on the CPU lane recorded 28.468 ms \u2014 2.05x its isolated cell \u2014 while the GPU ran the same tile at 0.96x of its 16.4 ms cell in my run. Solved against the isolated number, MOSEK picks CPU (14.4 < 16.4) and then pays 28.5; solved against the in-situ number it picks the GPU and the prediction holds. This is the contention gap choosing a worse placement, not merely mispredicting one, which is the strongest argument yet for a contention term in the cost model.",
+    "tile_boundaries_determine_backend_eligibility": "Three independent instances now: FusedSensorNet's tail fails HTA on the boundary requantisation (Convert) when cut at the FC outputs but not at the conv outputs; yolov8n reaches HTA only when sliced from the nosplit rewrite; ViNT's decoder composes on GPU when cut at the compress Gemms and fails on L2Norm when cut one boundary earlier. Where a tile is cut decides which backends can run it, so slicing and placement cannot be optimised independently."
   },
   "_previous_cells_schedutil": {
     "dronet/dronet_full": {

@@ -1,0 +1,26 @@
+{
+  "name": "flowc_vint_nav4_qrb5165",
+  "_comment": "ViNT at 10 Hz + the 500 Hz control policy across FOUR lanes: HTA, DSP, CPU and the Adreno GPU at fp16. The GPU exists here because ViNT's transformer decoder composes on nothing else but the CPU, and the CPU is the contended lane.",
+  "target": "qrb5165_flowc",
+  "board": "qrb5165_v66",
+  "registry": "cores/qrb5165_qnn.json",
+  "measurements": "measurements/qrb5165_v66.json",
+  "slots": {
+    "CPU_P": "hta",
+    "CPU_E": "dsp",
+    "CPU_X": "cpu",
+    "CPU_G": "gpu"
+  },
+  "ctx_dir": "/root/qnn_runtime_ctx",
+  "networks": [
+    {
+      "name": "vint",
+      "bindings": "bindings/vint.json"
+    },
+    {
+      "name": "mlp_control",
+      "bindings": "bindings/mlp_control.json",
+      "period": 2
+    }
+  ]
+}
