@@ -472,6 +472,15 @@ struct TraceRec {
     double dep_done_ms = 0, gate_done_ms = 0, start_ms = 0, end_ms = 0;
     int    lane = -1;
     bool   ran = false;
+    // Boundary-handoff instrumentation. The cache_get loop runs BEFORE
+    // start_ms and the cache_put loop AFTER end_ms, so this cost is real lane
+    // wall time that the tile duration does not contain and the scheduler's
+    // transfer model -- a zero matrix, see run_xpurt_schedule.py -- does not
+    // predict. Measured per entry so it can be characterised by tensor size
+    // and lane pair rather than inferred.
+    double hin_ms = 0, hout_ms = 0;     // time in the get / put loops
+    long   hin_bytes = 0, hout_bytes = 0;
+    int    hin_hits = 0, hin_tensors = 0, hout_tensors = 0;
 };
 static std::vector<TraceRec> g_trace;
 static std::vector<sem_t>    g_done;
@@ -610,11 +619,17 @@ static void worker(int lane, int core, int fifo_prio) {
         if (e.exec_serialized) be_lk.lock();
         std::lock_guard<std::mutex> g_lk(gi.m);
 
+        double h0 = now_ms();
         for (size_t t = 0; t < gi.inputs.size(); ++t) {
             std::string key = std::string(e.network) + "/" + tensor_name(gi.inputs[t]);
-            if (cache_get(key, gi.inputBufs[t].data(), gi.inputBufs[t].size()))
+            tr.hin_tensors++;
+            if (cache_get(key, gi.inputBufs[t].data(), gi.inputBufs[t].size())) {
                 g_handoffs.fetch_add(1, std::memory_order_relaxed);
+                tr.hin_hits++;
+                tr.hin_bytes += (long)gi.inputBufs[t].size();
+            }
         }
+        tr.hin_ms = now_ms() - h0;
 
         tr.start_ms = now_ms() - g_t0;
         Qnn_ErrorHandle_t err = bc.sb->iface.graphExecute(
@@ -623,9 +638,14 @@ static void worker(int lane, int core, int fifo_prio) {
         tr.end_ms = now_ms() - g_t0;
         tr.ran = true;
 
-        for (size_t t = 0; t < gi.outputs.size(); ++t)
+        double h1 = now_ms();
+        for (size_t t = 0; t < gi.outputs.size(); ++t) {
             cache_put(std::string(e.network) + "/" + tensor_name(gi.outputs[t]),
                       gi.outputBufs[t].data(), gi.outputBufs[t].size());
+            tr.hout_tensors++;
+            tr.hout_bytes += (long)gi.outputBufs[t].size();
+        }
+        tr.hout_ms = now_ms() - h1;
 
         if (err != QNN_SUCCESS)
             std::fprintf(stderr, "[run] entry %d (%s/%s) execute failed: 0x%llx\n",
@@ -818,18 +838,23 @@ int main() {
         std::printf("entry_id,network,instance,dispatch_id,op,name,core_kind,hart,"
                     "predicted_start_ms,predicted_duration_ms,worker_kind_idx,"
                     "actual_start_cycles,actual_end_cycles,"
-                    "time_unit,backend,ctx,graph,dep_wait_ms,gate_ms,n_ir_ops\n");
+                    "time_unit,backend,ctx,graph,dep_wait_ms,gate_ms,n_ir_ops,"
+                    "hin_ms,hout_ms,hin_bytes,hout_bytes,hin_hits,hin_tensors,"
+                    "hout_tensors\n");
         for (int i = 0; i < FLOWC_N_ENTRIES; ++i) {
             const flowc_sched_entry_t& e = FLOWC_TABLE[i];
             const TraceRec& tr = g_trace[e.entry_id];
             std::printf("%d,%s,%d,%d,%s,%s,%s,%d,%.6f,%.6f,%d,%lld,%lld,"
-                        "us,%s,%s,%s,%.6f,%.6f,%d\n",
+                        "us,%s,%s,%s,%.6f,%.6f,%d,"
+                        "%.6f,%.6f,%ld,%ld,%d,%d,%d\n",
                         e.entry_id, e.network, e.instance, e.dispatch_id, e.op, e.name,
                         e.core_kind, FLOWC_LANE_HART[e.lane],
                         e.start_time_ms, e.duration_ms, e.lane,
                         (long long)(tr.start_ms * 1000.0), (long long)(tr.end_ms * 1000.0),
                         e.backend_label, e.ctx, e.graph,
-                        tr.dep_done_ms, tr.gate_done_ms, e.n_ir_ops);
+                        tr.dep_done_ms, tr.gate_done_ms, e.n_ir_ops,
+                        tr.hin_ms, tr.hout_ms, tr.hin_bytes, tr.hout_bytes,
+                        tr.hin_hits, tr.hin_tensors, tr.hout_tensors);
         }
         std::printf("=== MODELBLASTER_XPURT_TRACE_END ===\n");
     }

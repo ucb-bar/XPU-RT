@@ -1,0 +1,184 @@
+{
+ "baseline_seed0": {
+  "kind": "main",
+  "reps": {
+   "rep1": {
+    "ok": true,
+    "wall_ms": 89.834,
+    "handoffs": 3,
+    "rc": 0,
+    "s": 10.9
+   },
+   "rep2": {
+    "ok": true,
+    "wall_ms": 85.557,
+    "handoffs": 3,
+    "rc": 0,
+    "s": 10.7
+   },
+   "rep3": {
+    "ok": true,
+    "wall_ms": 84.736,
+    "handoffs": 3,
+    "rc": 0,
+    "s": 10.7
+   }
+  }
+ },
+ "baseline_seed3": {
+  "kind": "main",
+  "reps": {
+   "rep1": {
+    "ok": true,
+    "wall_ms": 57.515,
+    "handoffs": 3,
+    "rc": 0,
+    "s": 9.6
+   },
+   "rep2": {
+    "ok": true,
+    "wall_ms": 55.683,
+    "handoffs": 3,
+    "rc": 0,
+    "s": 4.8
+   },
+   "rep3": {
+    "ok": true,
+    "wall_ms": 54.229,
+    "handoffs": 3,
+    "rc": 0,
+    "s": 9.4
+   }
+  }
+ },
+ "fused_seed0": {
+  "kind": "main",
+  "reps": {
+   "rep1": {
+    "ok": true,
+    "wall_ms": 82.303,
+    "handoffs": 5,
+    "rc": 0,
+    "s": 5.1
+   },
+   "rep2": {
+    "ok": true,
+    "wall_ms": 91.488,
+    "handoffs": 5,
+    "rc": 0,
+    "s": 13.6
+   },
+   "rep3": {
+    "ok": true,
+    "wall_ms": 80.978,
+    "handoffs": 5,
+    "rc": 0,
+    "s": 13.6
+   }
+  }
+ },
+ "fused_seed1": {
+  "kind": "main",
+  "reps": {
+   "rep1": {
+    "ok": true,
+    "wall_ms": 101.734,
+    "handoffs": 3,
+    "rc": 0,
+    "s": 10.9
+   },
+   "rep2": {
+    "ok": true,
+    "wall_ms": 99.253,
+    "handoffs": 3,
+    "rc": 0,
+    "s": 10.6
+   },
+   "rep3": {
+    "ok": true,
+    "wall_ms": 98.199,
+    "handoffs": 3,
+    "rc": 0,
+    "s": 11.1
+   }
+  }
+ },
+ "fused_vint_seed0": {
+  "kind": "main",
+  "reps": {
+   "rep1": {
+    "ok": true,
+    "wall_ms": 113.608,
+    "handoffs": 3,
+    "rc": 0,
+    "s": 5.4
+   },
+   "rep2": {
+    "ok": true,
+    "wall_ms": 111.107,
+    "handoffs": 3,
+    "rc": 0,
+    "s": 5.4
+   },
+   "rep3": {
+    "ok": true,
+    "wall_ms": 107.208,
+    "handoffs": 3,
+    "rc": 0,
+    "s": 13.7
+   }
+  }
+ },
+ "fused_vint_seed1": {
+  "kind": "main",
+  "reps": {
+   "rep1": {
+    "ok": true,
+    "wall_ms": 130.255,
+    "handoffs": 2,
+    "rc": 0,
+    "s": 5.3
+   },
+   "rep2": {
+    "ok": true,
+    "wall_ms": 127.763,
+    "handoffs": 2,
+    "rc": 0,
+    "s": 14.5
+   },
+   "rep3": {
+    "ok": true,
+    "wall_ms": 127.452,
+    "handoffs": 2,
+    "rc": 0,
+    "s": 14.9
+   }
+  }
+ },
+ "fused_seed7": {
+  "kind": "add",
+  "reps": {
+   "rep1": {
+    "ok": true,
+    "wall_ms": 19.059,
+    "handoffs": 0,
+    "rc": 0,
+    "s": 7.3
+   },
+   "rep2": {
+    "ok": true,
+    "wall_ms": 18.869,
+    "handoffs": 0,
+    "rc": 0,
+    "s": 7.6
+   },
+   "rep3": {
+    "ok": true,
+    "wall_ms": 19.245,
+    "handoffs": 0,
+    "rc": 0,
+    "s": 7.3
+   }
+  }
+ }
+}
