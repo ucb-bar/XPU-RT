@@ -1,0 +1,44 @@
+{
+  "network": "mlp_control",
+  "ir": {
+    "source": "pytorch:mlp_control",
+    "quant": "int8"
+  },
+  "_comment": "7 ops, ~70k MACs -- the floor case, and it behaves like one. Whole network is 0.028 ms on CPU int8; k=2 is 0.029 ms and k=4 is 0.026 ms, i.e. indistinguishable, while on the DSP each of the 4 tiles costs a full 0.357-0.372 ms dispatch for 0.006-0.026 ms of work. HTA is blocked by elu_s8 at every granularity except the trailing Gemm-only tile, which does compose (0.541 ms) and is 250x slower than the 0.002 ms CPU cell. Never slice this network.",
+  "_provenance": {
+    "study": "qnn_models/slicing_study",
+    "experiment_label": "mlp_k1_whole",
+    "cut_id": "ea8cb82f5fd9",
+    "source_onnx": "qnn_models/flow_c/gen/onnx/mlp_control.onnx",
+    "source_onnx_sha256": "0888c857ee6eb1961a33139459be55497a0ef4ac1eff1ffd0a1993da389ca992",
+    "boundary_tensors": [],
+    "journal": "qnn_models/slicing_study/experiments.jsonl",
+    "board_ctx_dir": "/root/slicing_study/ctx",
+    "reproduce": "python3 qnn_models/slicing_study/slice_experiment.py --network mlp_control --name mlp_k1_whole",
+    "statistic": "median of per-sweep median_us, performance governor, CPU cells unmasked"
+  },
+  "bindings": [
+    {
+      "id": 0,
+      "name": "mlp_control_t0",
+      "ops": "all",
+      "backends": {
+        "dsp": {
+          "ctx": "ctx_mlp_k1_whole_t0_int8__dsp.bin",
+          "graph": "mlp_k1_whole_t0",
+          "precision": "int8",
+          "measured_us": 408.3
+        },
+        "cpu": {
+          "ctx": "ctx_mlp_k1_whole_t0_int8__cpu.bin",
+          "graph": "mlp_k1_whole_t0",
+          "precision": "int8",
+          "measured_us": 27.9
+        }
+      },
+      "compose_blocked": {
+        "hta@int8": "40.9ms [ ERROR ] unsupported elementwise neuson op 0"
+      }
+    }
+  ]
+}

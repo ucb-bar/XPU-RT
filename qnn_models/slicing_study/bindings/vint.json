@@ -1,0 +1,82 @@
+{
+  "network": "vint",
+  "ir": {
+    "source": "pytorch_export:vint",
+    "quant": "int8"
+  },
+  "_comment": "Two tiles at the compress projections -- the production cut, re-measured here and confirmed optimal. Whole network composes on CPU only (59.775 ms int8, 98.564 fp32; DSP rejects it with 'Param[0] has incorrect Value 1', HTA with 'unsupported op StridedSlice'). Cutting at /compress_obs_enc/Gemm_output_0 puts the encoders on the DSP (16.339 ms) and leaves the transformer on CPU fp32 (13.741 ms): 30.080 ms of critical path, half of it off the CPU. A third cut between the two encoders (vint_k3_enc) does not help -- 30.633 ms -- because a contiguous slice cannot express the two encoders as parallel tiles; their topological order in the ONNX serialises them. Note the gap in the op ranges (ops 0-5 and 1070 are absent): those are constant subgraphs -- nodes whose value does not depend on any graph input -- and they belong to every tile that needs them rather than to one. Assigning such a node to a single tile makes its output cross the cut as a tensor, which the converter rejects (KeyError on the promoted Constant) and the quantizer cannot calibrate. ViNT has 610 of them.",
+  "_provenance": {
+    "study": "qnn_models/slicing_study",
+    "experiment_label": "vint_k2_prod",
+    "cut_id": "a80df894ad50",
+    "source_onnx": "qnn_models/flow_c/gen/onnx/vint.onnx",
+    "source_onnx_sha256": "41788429c86b5f51bc2ccad02280ee9d7d4a2965f229d34c31417a0a337d0841",
+    "boundary_tensors": [
+      "/compress_obs_enc/Gemm_output_0"
+    ],
+    "journal": "qnn_models/slicing_study/experiments.jsonl",
+    "board_ctx_dir": "/root/slicing_study/ctx",
+    "reproduce": "python3 qnn_models/slicing_study/slice_experiment.py --network vint --name vint_k2_prod --cut /compress_obs_enc/Gemm_output_0",
+    "statistic": "median of per-sweep median_us, performance governor, CPU cells unmasked"
+  },
+  "bindings": [
+    {
+      "id": 0,
+      "name": "vint_t0",
+      "ops": {
+        "ranges": [
+          [
+            6,
+            1069
+          ]
+        ]
+      },
+      "source_onnx": "qnn_models/slicing_study/gen/vint/vint_k2_prod__a80df894ad50/tile0.onnx",
+      "backends": {
+        "dsp": {
+          "ctx": "ctx_vint_k2_prod_t0_int8__dsp.bin",
+          "graph": "vint_k2_prod_t0",
+          "precision": "int8",
+          "measured_us": 16339.4
+        },
+        "cpu": {
+          "ctx": "ctx_vint_k2_prod_t0_int8__cpu.bin",
+          "graph": "vint_k2_prod_t0",
+          "precision": "int8",
+          "measured_us": 21975.1
+        }
+      },
+      "compose_blocked": {
+        "hta@int8": "unsupported op StridedSlice"
+      }
+    },
+    {
+      "id": 1,
+      "name": "vint_t1",
+      "ops": {
+        "ranges": [
+          [
+            1071,
+            1930
+          ]
+        ]
+      },
+      "depends_on": [
+        0
+      ],
+      "source_onnx": "qnn_models/slicing_study/gen/vint/vint_k2_prod__a80df894ad50/tile1.onnx",
+      "backends": {
+        "cpu": {
+          "ctx": "ctx_vint_k2_prod_t1_fp32__cpu.bin",
+          "graph": "vint_k2_prod_t1",
+          "precision": "fp32",
+          "measured_us": 13740.6
+        }
+      },
+      "compose_blocked": {
+        "hta@int8": "unsupported op Transpose",
+        "dsp@int8": "Param[0] has incorrect Value 1."
+      }
+    }
+  ]
+}
