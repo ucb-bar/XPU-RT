@@ -51,8 +51,14 @@
           "ctx": "ctx_vint_decoder_fp32__Cpu.bin",
           "graph": "vint_decoder",
           "precision": "fp32"
+        },
+        "gpu": {
+          "ctx": "ctx_vint_decoder_fp16__Gpu.bin",
+          "graph": "vint_decoder_fp16",
+          "precision": "fp16"
         }
       }
     }
-  ]
+  ],
+  "_gpu_note": "The decoder's GPU cell is 16.4 ms against a CPU cell of 12.7 ms measured idle \u2014 but the CPU tile costs 31-38 ms inside a running schedule while the GPU is idle silicon, so the GPU is the faster of the two in situ and the only one whose cost does not depend on its neighbours."
 }

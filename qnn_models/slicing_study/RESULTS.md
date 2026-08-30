@@ -372,3 +372,179 @@ Full list, per tile, in `experiments.jsonl`.
   between tiles under ~2 ms should be read as order-of-magnitude only.
 * **`yolov8n_nosplit.onnx` was taken as given**, not rebuilt; the rewrite
   script referenced in `optimization_flow.md` (#14) is not in the tree.
+
+---
+
+# 8. Branch-parallel tiles: a tile is a set of ops, not a span
+
+§7's last caveat was that a contiguous slicer cannot express independent
+branches, so ViNT's two encoders and FusedSensorNet's two conv branches
+were forced to serialise. `slice_experiment.py` now has two more modes:
+
+* `--tile OUT[,OUT...]` (repeatable) — **branch mode**. Each tile is named
+  by the tensors it must produce and claims the backward closure of them
+  minus what earlier tiles claimed. Independent branches fall out as tiles
+  whose input sets touch no other tile's outputs; the record carries
+  `independent_pairs` and each tile a true `depends_on`.
+* `--subgraph IN[,IN]:OUT[,OUT]` with `--batch1 N` — **subgraph mode**, the
+  only way to name a tile that starts in the middle of the graph, plus a
+  rewrite of the leading dimension of every tile boundary (and of the
+  captured calibration) from B to N.
+
+`analyze.py` gained the matching cost model: a **makespan with one lane
+per machine kind**, minimised over every backend assignment. Two tiles on
+the same kind serialise even when the DAG says they are independent —
+without that, branch parallelism looks like free money, which it is not.
+`ir_branch_ranges.py` runs the same closure on flow_c's IR so a manifest's
+`ops.ranges` are derived rather than transcribed.
+
+## 8.1 ViNT — the win, and it is bigger than the model predicted
+
+ViNT's shipped cut puts **both** EfficientNet-b0 encoders in one graph, so
+they serialise inside one dispatch on one lane. They do not consume each
+other's output: the goal encoder takes `goal_img` plus the last `obs_img`
+frame, the obs encoder takes `obs_img`. In flow_c IR space the closure
+partition is exactly ops 0–295 / 296–538 / 539–604 with **no shared
+ancestor**, so the branches are genuinely independent.
+
+Cells are the median of 3 sweeps.
+
+| slice set | tiles | makespan (1 lane/kind) | same tiles, no concurrency | best assignment |
+|---|---:|---:|---:|---|
+| whole network | 1 | 59.775 ms | 59.775 | cpu int8 |
+| **shipped cut** (encoders / decoder) | 2 | **29.379 ms** | 29.379 | dsp → cpu fp32 |
+| contiguous 3-way (§5) | 3 | 30.633 ms | 30.633 | dsp → dsp → cpu |
+| **branch-parallel 3-way** | 3 | **23.201 ms** | 28.758 | goal@cpu ∥ obs@dsp → dec@cpu fp32 |
+
+* **6.178 ms (21 %) off the critical path** versus what ships today.
+* **The dispatch the split adds is free within noise.** The same three
+  tiles run with no concurrency are 28.758 ms against the two-tile
+  29.379 ms — a *negative* 0.621 ms, where the overhead model predicts
+  +0.367 ms (0.367 fixed + 5.4 ns × 512 boundary bytes ≈ 0.370). The
+  fused encoder tile's own sweep spread is 14.064–16.339 ms, so the honest
+  statement is: the extra dispatch costs less than the measurement can
+  resolve, and the concurrency is worth 5.557 ms.
+
+### Verified on the board, not just in the model
+
+The recommended manifest was run through flow_c end to end — `artifacts` →
+MILP (MOSEK) `schedule` → `runtime --lane-mode kind-network` → `stage` →
+`run --tuned` — and the per-tile actual start/end read out of the trace
+(`flowc/run_vint_parallel/run.log`, journal label
+`vint_par_enc__flowc_trace_verification`):
+
+```
+network   tile             kind   start_ms   end_ms   dur_ms
+vint_par  vint_goal_enc    cpu       0.222    6.590    6.368
+vint_par  vint_obs_enc     dsp       0.227    9.581    9.354     <- overlap 6.363 ms
+vint_par  vint_decoder     cpu       9.632   38.100   28.468
+```
+
+The goal encoder runs **entirely inside** the obs encoder's window:
+**6.363 ms of measured concurrency**, 96 % of the 6.615 ms the makespan
+model predicted. Whole-run wall 40.060 ms against a 40.000 ms prediction
+(1.00×).
+
+Per-tile in-situ / isolated-cell ratios: `vint_goal_enc@cpu` 0.96×,
+`vint_obs_enc@dsp` 1.01×, `vint_decoder@cpu fp32` **2.05×** (28.468 in situ
+vs a 13.913 ms cell). That last one is the CPU-contention effect this
+board's measurement notes already document — a multi-threaded CPU tile's
+cost is a function of what runs beside it. It does not change the ranking:
+the decoder pays the same inflation either way, so the split still wins in
+situ by about the same 6 ms.
+
+## 8.2 The batch split: measured, and it loses
+
+ViNT's obs encoder is **one** EfficientNet run on a batch of 6 stacked
+frames (`obs_img` 1×18×64×85, a `Split`+`Concat` making 6×3×64×85), not
+six subgraphs — so a natural idea is to dispatch it six times at batch 1
+and spread the frames over both accelerators. Sliced between
+`/Concat_1_output_0` and `/compress_obs_enc/Gemm_output_0` with the leading
+dim rewritten (journal labels `vint_obs_b1/b2/b3`, 3 sweeps each):
+
+| batch | DSP int8 | per frame | CPU int8 | HTA |
+|---:|---:|---:|---:|---|
+| 1 | **4.690 ms** | 4.690 | 6.064 | ✗ `unsupported op Transpose` |
+| 2 | 5.322 | 2.661 | 5.887 | ✗ same |
+| 3 | 5.342 | 1.781 | 8.213 | ✗ same |
+| 6 (as shipped) | 9.288 | 1.548 | 15.549 | ✗ `unsupported op Split` |
+
+**One extra frame inside a dispatch costs 0.920 ms; a dispatch of its own
+costs 4.690 ms.** The fixed part of a batch-1 encoder dispatch is 3.77 ms —
+*ten times* the 0.367 ms FastRPC round trip — because at batch 1 the graph
+is latency-bound, not throughput-bound: weights are re-streamed and HVX is
+underfed. So:
+
+| obs-encoder strategy | ViNT critical path |
+|---|---:|
+| keep the batch, split obs-vs-goal (recommended) | **23.201 ms** |
+| 2 × batch-3, both on DSP | 24.597 |
+| 3 + 3 across DSP ∥ CPU, goal on DSP | 24.813 |
+| 3 + 3 across DSP ∥ CPU, goal on CPU | 28.741 |
+| 6 × batch-1, all on DSP | 42.053 |
+
+Six batch-1 dispatches are **28.140 ms against 9.288 ms batched — 3.03×
+worse.** The 3+3 split does beat the batch-6 tile *on the encoder alone*
+(max(5.342 dsp, 8.213 cpu) = 8.213 vs 9.288), but the CPU half then
+collides with the decoder, which needs that lane for 13.9 ms, and the
+network as a whole loses. **No batch split pays.**
+
+**And batch-1 does not unlock HTA.** Removing the six-frame `Split` does
+remove the `unsupported op StridedSlice` rejection — but the tile then
+fails on `unsupported op Transpose`, from EfficientNet's static-padding
+lowering. StridedSlice was only the *first* op the log named. ViNT still
+composes on no accelerator but the DSP, at any batch size.
+
+## 8.3 FusedSensorNet — branch-parallel is expressible, and does not pay
+
+Branch mode reproduces flow_c's `fused_split` structure independently:
+tiles 0 and 1 come out with `depends_on: []`, and the tail with the
+non-contiguous ONNX range `[[8,9],[14,90]]` — the first tile in this study
+whose ops are not one span.
+
+| slice set | makespan | no concurrency | best assignment |
+|---|---:|---:|---|
+| whole network | 0.896 ms | 0.896 | cpu fp32 |
+| contiguous 3-way (§4) | **0.452 ms** | 0.452 | all three on cpu |
+| branch-parallel conv/depth/tail | 0.548 | 0.548 | both branches on cpu, back to back |
+| branch-parallel at the FC outputs | 0.503 | 0.503 | both branches on cpu |
+| contiguous 3-way at the FC outputs | 0.511 | 0.588 | cpu ∥ dsp → cpu |
+
+**The branches are too cheap to be worth a lane.** Vision is 0.150 ms and
+depth 0.048 ms on CPU int8; the cheapest accelerator placement that could
+overlap them is 0.398 ms (DSP) or 0.540 ms (HTA). Moving a branch to an
+accelerator to overlap it costs 3–11× the branch itself, so the best
+isolated assignment runs both on the CPU lane back to back and the
+concurrency column stays flat. **A branch split pays only when the
+branch's runtime exceeds the dispatch it adds** — 0.367 ms on DSP,
+0.540 ms on HTA. ViNT's 6.6 ms goal encoder clears that bar by 18×;
+FusedSensorNet's 0.048 ms depth branch misses it by 8×.
+
+It is still the manifest to ship, and that is a judgement, not a
+measurement: both branches compose on HTA (0.607 / 0.540 ms) where the
+contiguous variant's second tile does not, and the CPU cells that make the
+serial answer win are the ones this board measures at ~5.6× in situ (and
+which §8.1 just re-confirmed at 2.05× for ViNT's decoder). `bindings/
+fused_full.json` carries the branch-parallel set with that caveat stated;
+`fused_k3_convs` in the journal is the isolation optimum if the CPU lane
+is free.
+
+## 8.4 What changed in the recommendations
+
+| network | §7 said | now | why |
+|---|---|---|---|
+| ViNT | 2 tiles (shipped cut) | **3 tiles, branch-parallel** | 29.379 → 23.201 ms, 6.363 ms of overlap verified in a trace |
+| fused_full | 3 tiles, contiguous | 3 tiles, branch-parallel | same measured cost within noise; exposes two HTA-capable independent branches |
+| dronet / mlp_control / yolov8n | unchanged | unchanged | dronet and mlp have no parallel branches; yolov8n's are the three detect-head scales, all downstream of one backbone |
+
+### Index-space warning on the manifests
+
+`ops.ranges` in a flow_c manifest index the **IR**, and the artifacts are
+sliced from the **ONNX**; the two spaces differ (ViNT: 605 IR ops vs 1931
+ONNX nodes). The ViNT and fused_full bindings therefore carry IR ranges —
+ViNT's derived by `ir_branch_ranges.py`, fused_full's adopted from
+flow_c's own `fused_split.json` — with the ONNX node ranges kept alongside
+in `_ops_onnx_nodes`, and every binding now states its
+`_provenance.op_index_space`. **`bindings/yolov8n.json` is still in ONNX
+node space** and needs a remap before it can be dropped into flow_c; that
+is the one manifest here that is not directly runnable.

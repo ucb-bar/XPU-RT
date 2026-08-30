@@ -104,6 +104,59 @@ def critical_path(e: dict) -> tuple[float | None, list[str]]:
     return max(finish.values()), picks
 
 
+def _schedule(e: dict, d: dict[int, set[int]], assign: dict[int, str]) -> float:
+    """List-schedule the tile DAG with ONE LANE PER BACKEND KIND.
+
+    This is the model the runtime actually implements (`--lane-mode kind`):
+    a lane is a thread bound to one machine kind, so two tiles on the same
+    kind serialise even when the DAG says they are independent.  Without
+    this the 'parallel branches' story is free money, which it is not.
+    """
+    finish: dict[int, float] = {}
+    lane_free: dict[str, float] = defaultdict(float)
+    pending = set(assign)
+    while pending:
+        ready = [t for t in pending if d[t] <= set(finish)]
+        if not ready:
+            return float("inf")
+        # start the tile that can start earliest; tie-break on longest job
+        def start_of(t):
+            return max(max((finish[p] for p in d[t]), default=0.0),
+                       lane_free[assign[t].split("@")[0]])
+        t = min(ready, key=lambda t: (start_of(t), -e["cell"][(t, *assign[t].split("@"))]))
+        st = start_of(t)
+        dur = e["cell"][(t, *assign[t].split("@"))]
+        finish[t] = st + dur
+        lane_free[assign[t].split("@")[0]] = st + dur
+        pending.discard(t)
+    return max(finish.values())
+
+
+def best_makespan(e: dict) -> tuple[float | None, dict[int, str], float | None]:
+    """min over backend assignments of the one-lane-per-kind makespan.
+
+    Returns (makespan, assignment, single_lane_serial) where the last is the
+    same tiles all forced onto one lane -- the no-concurrency reference.
+    """
+    import itertools
+    tiles = [t["index"] for t in e["tiles"]]
+    opts = []
+    for ti in tiles:
+        o = [f"{b}@{p}" for (t, b, p) in e["cell"] if t == ti]
+        if not o:
+            return None, {}, None
+        opts.append(o)
+    d = deps(e["tiles"])
+    best, who = float("inf"), {}
+    for combo in itertools.product(*opts):
+        a = dict(zip(tiles, combo))
+        m = _schedule(e, d, a)
+        if m < best:
+            best, who = m, a
+    serial = sum(min(v for (t, b, p), v in e["cell"].items() if t == ti) for ti in tiles)
+    return best, who, serial
+
+
 def loads(e: dict) -> dict[str, float]:
     per: dict[str, float] = defaultdict(float)
     for t in e["tiles"]:
@@ -126,6 +179,7 @@ def main() -> None:
         rows.sort(key=lambda e: (e["cut"]["n_tiles"], e["label"]))
         for e in rows:
             cp, picks = critical_path(e)
+            mk, assign, serial = best_makespan(e)
             l = loads(e)
             print(f"\n-- {e['label']}  k={e['cut']['n_tiles']}  "
                   f"sweeps={e['sweeps']}  cut={e['cut']['boundary_tensors']}")
@@ -146,7 +200,14 @@ def main() -> None:
                         r = e["fails"].get((ti, b, p))
                         line += f"{('x ' + (r or '?'))[:13]:>14}"
                 print(line)
-            print(f"   critical path {cp/1000:8.3f} ms   via {' -> '.join(picks)}")
+            print(f"   critical path {cp/1000:8.3f} ms (unlimited lanes)  via {' -> '.join(picks)}")
+            if mk is not None:
+                pretty = " ".join(f"t{k}:{v}" for k, v in sorted(assign.items()))
+                print(f"   makespan      {mk/1000:8.3f} ms (one lane per kind)  {pretty}")
+                print(f"   serial-sum    {serial/1000:8.3f} ms (no concurrency)")
+            ip = e["cut"].get("independent_pairs")
+            if ip:
+                print(f"   independent tile pairs: {ip}")
             print(f"   per-lane load " + "  ".join(f"{k}={v/1000:.3f}ms"
                                                     for k, v in sorted(l.items())))
             if e["spread"]:

@@ -1,5 +1,5 @@
 {
-  "network": "vint",
+  "network": "vint_par",
   "ir": {
     "source": "pytorch_export:vint",
     "quant": "int8"
@@ -133,6 +133,11 @@
           "graph": "vint_par_enc_t2",
           "precision": "fp32",
           "measured_us": 14422.6
+        },
+        "gpu": {
+          "ctx": "ctx_vint_decoder_fp16__Gpu.bin",
+          "graph": "vint_decoder_fp16",
+          "precision": "fp16"
         }
       },
       "compose_blocked": {
@@ -150,5 +155,6 @@
         ]
       ]
     }
-  ]
+  ],
+  "_gpu_merge_note": "Branch-parallel encoders from the slicing study, plus the GPU option for the decoder measured separately (16.4 ms fp16, 0.96x of cell in a real run, on silicon nothing else uses). The study's own trace had the decoder on the contended CPU at 28.5 ms \u2014 2.05x its cell \u2014 so the two results compose: overlap the encoders AND take the decoder off the CPU."
 }

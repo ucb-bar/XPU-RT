@@ -15,7 +15,8 @@
     "journal": "qnn_models/slicing_study/experiments.jsonl",
     "board_ctx_dir": "/root/slicing_study/ctx",
     "reproduce": "python3 qnn_models/slicing_study/slice_experiment.py --network mlp_control --name mlp_k1_whole",
-    "statistic": "median of per-sweep median_us, performance governor, CPU cells unmasked"
+    "statistic": "median of per-sweep median_us, performance governor, CPU cells unmasked",
+    "op_index_space": "ops:'all' -- whole network, so no index space is involved."
   },
   "bindings": [
     {

@@ -18,7 +18,8 @@
     "journal": "qnn_models/slicing_study/experiments.jsonl",
     "board_ctx_dir": "/root/slicing_study/ctx",
     "reproduce": "python3 qnn_models/slicing_study/slice_experiment.py --network yolov8n_nosplit --name yolons_k3_neck_dfl --cut /model.15/cv2/act/Mul_output_0 /model.22/Concat_1_output_0",
-    "statistic": "median of per-sweep median_us, performance governor, CPU cells unmasked"
+    "statistic": "median of per-sweep median_us, performance governor, CPU cells unmasked",
+    "op_index_space": "ONNX node indices into qnn_models/yolov8n_nosplit.onnx (241 nodes). flow_c's shipped yolov8n.json indexes a 249-op QNN-route IR instead; the tile BOUNDARY agrees across both (see flow_c/README.md), the op numbering does not. Remap before dropping into flow_c."
   },
   "bindings": [
     {
@@ -32,7 +33,7 @@
           ]
         ]
       },
-      "source_onnx": "qnn_models/slicing_study/gen/yolov8n_nosplit/yolons_k3_neck_dfl__95eb077a4b72/tile0.onnx",
+      "source_onnx": "slicing_study/gen/yolov8n_nosplit/yolons_k3_neck_dfl__95eb077a4b72/tile0.onnx",
       "backends": {
         "hta": {
           "ctx": "ctx_yolons_k3_neck_dfl_t0_int8__hta.bin",
@@ -68,7 +69,7 @@
       "depends_on": [
         0
       ],
-      "source_onnx": "qnn_models/slicing_study/gen/yolov8n_nosplit/yolons_k3_neck_dfl__95eb077a4b72/tile1.onnx",
+      "source_onnx": "slicing_study/gen/yolov8n_nosplit/yolons_k3_neck_dfl__95eb077a4b72/tile1.onnx",
       "backends": {
         "dsp": {
           "ctx": "ctx_yolons_k3_neck_dfl_t1_int8__dsp.bin",
@@ -101,7 +102,7 @@
       "depends_on": [
         1
       ],
-      "source_onnx": "qnn_models/slicing_study/gen/yolov8n_nosplit/yolons_k3_neck_dfl__95eb077a4b72/tile2.onnx",
+      "source_onnx": "slicing_study/gen/yolov8n_nosplit/yolons_k3_neck_dfl__95eb077a4b72/tile2.onnx",
       "backends": {
         "dsp": {
           "ctx": "ctx_yolons_k3_neck_dfl_t2_int8__dsp.bin",

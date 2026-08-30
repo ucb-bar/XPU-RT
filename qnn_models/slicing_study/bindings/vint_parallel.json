@@ -1,5 +1,5 @@
 {
-  "network": "vint",
+  "network": "vint_par",
   "ir": {
     "source": "pytorch_export:vint",
     "quant": "int8"

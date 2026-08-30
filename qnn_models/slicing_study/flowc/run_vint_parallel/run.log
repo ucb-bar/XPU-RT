@@ -1,0 +1,17 @@
+/prj/qct/webtech_scratch20/mlg_user_admin/qaisw_source_repo/rel/qairt-2.45.0/release/SNPE_SRC/avante-tools/prebuilt/dsp/hexagon-sdk-4.1.0/ipc/fastrpc/rpcmem/src/rpcmem_android.c:38:dummy call to rpcmem_init, rpcmem APIs will be used from libxdsprpc
+[run] e=0   vint_par      #0  vint_goal_enc          lane=cpu|vint_par CPU predicted=  7.075 actual=  6.368 ms (start=   0.222, late=+0.222)
+[run] e=2   mlp_control   #0  mlp_control_full       lane=cpu|mlp_control CPU predicted=  0.028 actual=  0.062 ms (start=   9.519, late=+0.015)
+[run] e=1   vint_par      #0  vint_obs_enc           lane=dsp|vint_par DSP predicted=  9.532 actual=  9.353 ms (start=   0.228, late=+0.228)
+[run] e=3   vint_par      #0  vint_decoder           lane=cpu|vint_par CPU predicted= 14.422 actual= 28.468 ms (start=   9.632, late=+0.100)
+[run] e=4   mlp_control   #1  mlp_control_full       lane=cpu|mlp_control CPU predicted=  0.028 actual=  0.078 ms (start=  39.983, late=+0.011)
+
+[summary] 5/5 entries executed, wall=40.060 ms (predicted makespan 40.000 ms, ratio 1.00x), tensor handoffs=0
+
+=== MODELBLASTER_XPURT_TRACE_BEGIN ===
+entry_id,network,instance,dispatch_id,op,name,core_kind,hart,predicted_start_ms,predicted_duration_ms,worker_kind_idx,actual_start_cycles,actual_end_cycles,time_unit,backend,ctx,graph,dep_wait_ms,gate_ms,n_ir_ops
+0,vint_par,0,0,qnn_graph,vint_goal_enc,cpu,5,0.000000,7.075000,0,222,6590,us,CPU,ctx_vint_par_enc_t0_int8__cpu.bin,vint_par_enc_t0,0.002291,0.207834,296
+1,vint_par,0,1,qnn_graph,vint_obs_enc,dsp,6,0.000000,9.532000,1,227,9581,us,DSP,ctx_vint_par_enc_t1_int8__dsp.bin,vint_par_enc_t1,0.002083,0.220749,243
+2,mlp_control,0,0,qnn_graph,mlp_control_full,cpu,4,9.504000,0.028000,2,9518,9580,us,CPU,ctx_mlp_control__Cpu.bin,mlp_control,6.614662,9.504189,7
+3,vint_par,0,2,qnn_graph,vint_decoder,cpu,5,9.532000,14.422000,0,9632,38100,us,CPU,ctx_vint_par_enc_t2_fp32__cpu.bin,vint_par_enc_t2,9.619485,9.624276,66
+4,mlp_control,1,0,qnn_graph,mlp_control_full,cpu,4,39.972000,0.028000,2,39982,40060,us,CPU,ctx_mlp_control__Cpu.bin,mlp_control,38.129606,39.972671,7
+=== MODELBLASTER_XPURT_TRACE_END ===
