@@ -1,0 +1,63 @@
+[main] lane 1 (dsp|yolov8n_b) shares core 6 with lane 0 (dsp|dronet_a): dropping its SCHED_FIFO 0 and 200 us spin to avoid two real-time spinners on one core
+[main] lane 4 (hta|yolov8n_a) shares core 7 with lane 3 (hta|dronet_b): dropping its SCHED_FIFO 0 and 200 us spin to avoid two real-time spinners on one core
+[main] lane 5 (dsp|dronet_b) shares core 6 with lane 0 (dsp|dronet_a): dropping its SCHED_FIFO 0 and 200 us spin to avoid two real-time spinners on one core
+[main] lane 6 (hta|dronet_a) shares core 7 with lane 3 (hta|dronet_b): dropping its SCHED_FIFO 0 and 200 us spin to avoid two real-time spinners on one core
+[main] lane 7 (dsp|yolov8n_a) shares core 6 with lane 0 (dsp|dronet_a): dropping its SCHED_FIFO 0 and 200 us spin to avoid two real-time spinners on one core
+/prj/qct/webtech_scratch20/mlg_user_admin/qaisw_source_repo/rel/qairt-2.45.0/release/SNPE_SRC/avante-tools/prebuilt/dsp/hexagon-sdk-4.1.0/ipc/fastrpc/rpcmem/src/rpcmem_android.c:38:dummy call to rpcmem_init, rpcmem APIs will be used from libxdsprpc
+[bringup] DSP  /root/qnn_runtime_ctx/ctx_dronet_full_hta__Dsp.bin → 1 graph(s): dronet_full_hta
+[bringup] DSP  /root/qnn_runtime_ctx/ctx_yolov8n_backbone__Dsp.bin → 1 graph(s): yolov8n_HTA_split_seg100
+[bringup] CPU  /root/qnn_runtime_ctx/ctx_mlp_control_fp32__Cpu.bin → 1 graph(s): mlp_control_fp32
+Context handle already exists!
+[bringup] HTA  /root/qnn_runtime_ctx/ctx_dronet_full_hta__Hta.bin → 1 graph(s): dronet_full_hta
+Context handle already exists!
+[bringup] HTA  /root/qnn_runtime_ctx/ctx_yolov8n_backbone__Hta.bin → 1 graph(s): yolov8n_HTA_split_seg100
+[bringup] DSP  /root/qnn_runtime_ctx/ctx_yolov8n_head__Dsp.bin → 1 graph(s): yolov8n_HTA_split_seg101
+[main] 6 context(s), 16 entries, 8 lane(s):
+  lane 0  dsp|dronet_a   core 6  spin 200 us  fifo 0
+  lane 1  dsp|yolov8n_b  core 6  spin 0 us  fifo 0
+  lane 2  cpu|mlp_control core 5  spin 1499 us  fifo 40
+  lane 3  hta|dronet_b   core 7  spin 200 us  fifo 0
+  lane 4  hta|yolov8n_a  core 7  spin 0 us  fifo 0
+  lane 5  dsp|dronet_b   core 6  spin 0 us  fifo 0
+  lane 6  hta|dronet_a   core 7  spin 0 us  fifo 0
+  lane 7  dsp|yolov8n_a  core 6  spin 0 us  fifo 0
+[main] iteration 1/2 wall=55.329 ms
+[run] e=0   dronet_a      #0  dronet_full            lane=dsp|dronet_a DSP predicted=  1.068 actual=  1.168 ms (start=   0.034, late=+0.034)
+[run] e=2   mlp_control   #0  mlp_control_full       lane=cpu|mlp_control CPU predicted=  0.065 actual=  0.062 ms (start=   2.944, late=+0.009)
+[run] e=3   dronet_b      #0  dronet_full            lane=hta|dronet_b HTA predicted=  1.787 actual=  1.520 ms (start=   7.219, late=+0.006)
+[run] e=4   mlp_control   #1  mlp_control_full       lane=cpu|mlp_control CPU predicted=  0.065 actual=  0.052 ms (start=   8.944, late=+0.009)
+[run] e=1   yolov8n_b     #0  yolov8n_backbone       lane=dsp|yolov8n_b DSP predicted= 13.191 actual= 11.809 ms (start=   2.805, late=+0.064)
+[run] e=6   mlp_control   #2  mlp_control_full       lane=cpu|mlp_control CPU predicted=  0.065 actual=  0.131 ms (start=  16.786, late=+1.851)
+[run] e=7   dronet_a      #1  dronet_full            lane=dsp|dronet_a DSP predicted=  1.068 actual=  1.473 ms (start=  16.727, late=+0.795)
+[run] e=8   dronet_b      #1  dronet_full            lane=dsp|dronet_b DSP predicted=  1.068 actual=  0.750 ms (start=  18.727, late=+1.727)
+[run] e=10  mlp_control   #3  mlp_control_full       lane=cpu|mlp_control CPU predicted=  0.065 actual=  0.116 ms (start=  20.946, late=+0.011)
+[run] e=5   yolov8n_a     #0  yolov8n_backbone       lane=hta|yolov8n_a HTA predicted= 13.951 actual= 13.305 ms (start=  13.327, late=+0.065)
+[run] e=11  mlp_control   #4  mlp_control_full       lane=cpu|mlp_control CPU predicted=  0.065 actual=  0.063 ms (start=  26.945, late=+0.010)
+[run] e=12  dronet_a      #2  dronet_full            lane=hta|dronet_a HTA predicted=  1.787 actual=  1.742 ms (start=  27.289, late=+0.076)
+[run] e=13  dronet_b      #2  dronet_full            lane=hta|dronet_b HTA predicted=  1.787 actual=  1.632 ms (start=  29.204, late=+0.204)
+[run] e=14  mlp_control   #5  mlp_control_full       lane=cpu|mlp_control CPU predicted=  0.065 actual=  0.049 ms (start=  32.948, late=+0.013)
+[run] e=9   yolov8n_b     #0  yolov8n_head           lane=dsp|yolov8n_b DSP predicted= 17.468 actual= 18.176 ms (start=  19.710, late=+1.642)
+[run] e=15  yolov8n_a     #0  yolov8n_head           lane=dsp|yolov8n_a DSP predicted= 17.468 actual= 16.943 ms (start=  38.705, late=+3.169)
+[main] iteration 2/2 wall=55.648 ms
+
+[summary] 16/16 entries executed, wall=55.648 ms (predicted makespan 53.004 ms, ratio 1.05x), tensor handoffs=3
+
+=== MODELBLASTER_XPURT_TRACE_BEGIN ===
+entry_id,network,instance,dispatch_id,op,name,core_kind,hart,predicted_start_ms,predicted_duration_ms,worker_kind_idx,actual_start_cycles,actual_end_cycles,time_unit,backend,ctx,graph,dep_wait_ms,gate_ms,n_ir_ops
+0,dronet_a,0,0,qnn_graph,dronet_full,dsp,6,0.000000,1.068000,0,33,1201,us,DSP,ctx_dronet_full_hta__Dsp.bin,dronet_full_hta,0.005416,0.028591,24
+1,yolov8n_b,0,0,qnn_graph,yolov8n_backbone,dsp,6,2.741000,13.191000,1,2804,14613,us,DSP,ctx_yolov8n_backbone__Dsp.bin,yolov8n_HTA_split_seg100,1.331714,2.799459,103
+2,mlp_control,0,0,qnn_graph,mlp_control_full,cpu,5,2.935000,0.065000,2,2943,3005,us,CPU,ctx_mlp_control_fp32__Cpu.bin,mlp_control_fp32,0.000625,2.935541,7
+3,dronet_b,0,0,qnn_graph,dronet_full,hta,7,7.213000,1.787000,3,7218,8738,us,HTA,ctx_dronet_full_hta__Hta.bin,dronet_full_hta,1.532322,7.213525,24
+4,mlp_control,1,0,qnn_graph,mlp_control_full,cpu,5,8.935000,0.065000,2,8944,8996,us,CPU,ctx_mlp_control_fp32__Cpu.bin,mlp_control_fp32,3.112975,8.935364,7
+5,yolov8n_a,0,0,qnn_graph,yolov8n_backbone,hta,7,13.262000,13.951000,4,13326,26631,us,HTA,ctx_yolov8n_backbone__Hta.bin,yolov8n_HTA_split_seg100,9.186645,13.321204,103
+6,mlp_control,2,0,qnn_graph,mlp_control_full,cpu,5,14.935000,0.065000,2,16785,16916,us,CPU,ctx_mlp_control_fp32__Cpu.bin,mlp_control_fp32,9.097486,14.935499,7
+7,dronet_a,1,0,qnn_graph,dronet_full,dsp,6,15.932000,1.068000,0,16727,18200,us,DSP,ctx_dronet_full_hta__Dsp.bin,dronet_full_hta,1.327079,16.109414,24
+8,dronet_b,1,0,qnn_graph,dronet_full,dsp,6,17.000000,1.068000,5,18726,19476,us,DSP,ctx_dronet_full_hta__Dsp.bin,dronet_full_hta,18.538747,18.655716,24
+9,yolov8n_b,0,1,qnn_graph,yolov8n_head,dsp,6,18.068000,17.468000,1,19710,37886,us,DSP,ctx_yolov8n_head__Dsp.bin,yolov8n_HTA_split_seg101,19.615950,19.618763,146
+10,mlp_control,3,0,qnn_graph,mlp_control_full,cpu,5,20.935000,0.065000,2,20946,21062,us,CPU,ctx_mlp_control_fp32__Cpu.bin,mlp_control_fp32,17.084022,20.935270,7
+11,mlp_control,4,0,qnn_graph,mlp_control_full,cpu,5,26.935000,0.065000,2,26945,27008,us,CPU,ctx_mlp_control_fp32__Cpu.bin,mlp_control_fp32,21.204727,26.935405,7
+12,dronet_a,2,0,qnn_graph,dronet_full,hta,7,27.213000,1.787000,6,27289,29031,us,HTA,ctx_dronet_full_hta__Hta.bin,dronet_full_hta,9.009525,27.282408,24
+13,dronet_b,2,0,qnn_graph,dronet_full,hta,7,29.000000,1.787000,3,29204,30836,us,HTA,ctx_dronet_full_hta__Hta.bin,dronet_full_hta,29.197668,29.200637,24
+14,mlp_control,5,0,qnn_graph,mlp_control_full,cpu,5,32.935000,0.065000,2,32947,32996,us,CPU,ctx_mlp_control_fp32__Cpu.bin,mlp_control_fp32,27.110182,32.935332,7
+15,yolov8n_a,0,1,qnn_graph,yolov8n_head,dsp,6,35.536000,17.468000,7,38705,55647,us,DSP,ctx_yolov8n_head__Dsp.bin,yolov8n_HTA_split_seg101,38.611795,38.697518,146
+=== MODELBLASTER_XPURT_TRACE_END ===

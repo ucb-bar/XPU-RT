@@ -1,45 +1,45 @@
 {
   "_comment": "Per-(binding, backend) whole-graph wallclock around QnnGraph_execute, captured by qnn_models/runtime/profile_segments.cpp on the physical QRB5165 at 10.44.120.201. Every number here is measured; capability-excluded cells are absent by construction (the registry decides those) rather than carrying a sentinel cost.",
   "target": "qrb5165_v66",
-  "captured_at": "2026-08-28",
-  "harness": "qnn_models/runtime/profile_segments.cpp",
+  "captured_at": "2026-08-30",
+  "harness": "qnn_models/runtime/profile_segments.cpp for standalone cells (now two-phase: loop_* and gap_*); pooled run traces for in-situ cells, via qnn_models/flow_c/rebuild_cost_model.py",
   "iters": 50,
   "cells": {
     "dronet/dronet_full": {
-      "hta": 2030.4,
-      "dsp": 645.4,
+      "hta": 1814.0,
+      "dsp": 1035.0,
       "cpu": 6998.22
     },
     "mlp_control/mlp_control_full": {
-      "dsp": 589.0,
-      "cpu": 107.3
+      "dsp": 685.0,
+      "cpu": 66.5
     },
     "yolov8n/yolov8n_backbone": {
-      "hta": 13909.6,
-      "dsp": 13267.9,
+      "hta": 14017.0,
+      "dsp": 13188.0,
       "cpu": 34343.16
     },
     "yolov8n/yolov8n_head": {
-      "dsp": 15377.0,
-      "cpu": 39464.62
+      "dsp": 17652.0,
+      "cpu": 52166.5
     },
     "fused_full/fused_full_net": {
       "dsp": 4737.0,
       "cpu": 1147.0
     },
     "fused_split/fused_vision_conv": {
-      "hta": 931.0,
-      "dsp": 459.4,
+      "hta": 1109.0,
+      "dsp": 765.0,
       "cpu": 12179.1
     },
     "fused_split/fused_depth_conv": {
-      "hta": 1568.5,
-      "dsp": 392.9,
-      "cpu": 14.0
+      "hta": 994.0,
+      "dsp": 675.5,
+      "cpu": 147.0
     },
     "fused_split/fused_tail": {
-      "dsp": 4303.5,
-      "cpu": 354.7
+      "dsp": 3409.0,
+      "cpu": 1626.8
     },
     "vint/vint_encoders": {
       "dsp": 14213.0,
@@ -200,7 +200,7 @@
     }
   },
   "unit": "us",
-  "statistic": "mean",
+  "statistic": "in_situ_p50_pooled",
   "compose_failures": [
     {
       "cell": "mlp_control/mlp_control_full",
@@ -459,7 +459,10 @@
     "vint_encoder_batching": "ViNT's obs encoder is ONE EfficientNet-b0 run on a batch of 6 stacked frames (obs_img is 1x18x64x85; a Split+Concat makes 6x3x64x85), not six subgraphs. Measured batching curve on DSP int8, median of 3 sweeps, from qnn_models/slicing_study (labels vint_obs_b1/b2/b3, tile sliced between /Concat_1_output_0 and /compress_obs_enc/Gemm_output_0 with the leading dim rewritten): batch 1 = 4.690 ms, batch 2 = 5.322, batch 3 = 5.342, batch 6 = 9.288 (the 4.690/2.661/1.781/1.548 ms per frame). So one extra frame inside a dispatch costs 0.920 ms while a dispatch of its own costs 4.690 -- the fixed part of a batch-1 encoder dispatch is 3.77 ms, ten times the 0.367 ms FastRPC round trip, because at batch 1 the graph is latency-bound rather than throughput-bound. Splitting the batch to spread frames over lanes therefore LOSES: six batch-1 dispatches are 28.1 ms against 9.288 ms batched (3.03x worse), and the best batch split that uses two lanes (3 on DSP || 3 on CPU) is 24.6-28.7 ms of ViNT critical path against 23.2 ms for leaving the batch intact and splitting obs-vs-goal instead. Batch-1 also does NOT unlock HTA: removing the 6-frame Split removes the 'unsupported op StridedSlice' rejection, but the tile then fails on 'unsupported op Transpose' from EfficientNet's static-padding lowering, so ViNT still composes on no accelerator but the DSP.",
     "gpu_fp16_lane": "GPU fp16 measured on ViNT's tiles: decoder 16.4 ms, encoders 55.9 ms (DSP does the encoders in 14.2, so only the decoder is a candidate). Context init is 42 ms for the decoder and 256 ms for the encoders \u2014 a one-time bringup cost, not a per-dispatch one. Concurrency measured, not assumed: GPU+DSP 1.85x of an ideal 1.94x, GPU+HTA 1.14x of an ideal 1.16x.",
     "vint_par_decoder_cpu_is_the_in_situ_value": "28468 us, not the 14423 us measured in isolation. The slicing study's own trace of this exact tile on the CPU lane recorded 28.468 ms \u2014 2.05x its isolated cell \u2014 while the GPU ran the same tile at 0.96x of its 16.4 ms cell in my run. Solved against the isolated number, MOSEK picks CPU (14.4 < 16.4) and then pays 28.5; solved against the in-situ number it picks the GPU and the prediction holds. This is the contention gap choosing a worse placement, not merely mispredicting one, which is the strongest argument yet for a contention term in the cost model.",
-    "tile_boundaries_determine_backend_eligibility": "Three independent instances now: FusedSensorNet's tail fails HTA on the boundary requantisation (Convert) when cut at the FC outputs but not at the conv outputs; yolov8n reaches HTA only when sliced from the nosplit rewrite; ViNT's decoder composes on GPU when cut at the compress Gemms and fails on L2Norm when cut one boundary earlier. Where a tile is cut decides which backends can run it, so slicing and placement cannot be optimised independently."
+    "tile_boundaries_determine_backend_eligibility": "Three independent instances now: FusedSensorNet's tail fails HTA on the boundary requantisation (Convert) when cut at the FC outputs but not at the conv outputs; yolov8n reaches HTA only when sliced from the nosplit rewrite; ViNT's decoder composes on GPU when cut at the compress Gemms and fails on L2Norm when cut one boundary earlier. Where a tile is cut decides which backends can run it, so slicing and placement cannot be optimised independently.",
+    "cells_rebuilt_from_in_situ": "Cells for accelerator and single-threaded tiles are the MEDIAN of the per-placement in-situ p50 recorded by sweep qrb5165_20260829-200620 (12 points) and its periodic-only addendum (6 points), pooled over up to 41 placements per cell and requiring at least 5. Standalone cells are kept in _previous_cells_standalone. Rationale: standalone loop-mean cells ran 1.655x optimistic for tiles under 1 ms. A calibrated idle-gap measurement (measurements/calibration_gap_sweep.json) halves that error but leaves ~19% residual; the hypothesis that cost tracks the schedule's idle gap was tested against the traces and rejected (31% error, worse than any flat choice). Multi-threaded CPU tiles whose cost depends on what runs beside them are deliberately excluded -- see feedback_does_not_converge_for_contended_cpu_tiles.",
+    "residual_makespan_gap_is_scheduling_not_cells": "After rebuilding cells from in-situ medians, per-tile accuracy went from 5/18 cells within +/-15% to 11/14, median per-tile ratio 1.147 -> 1.043. The MAKESPAN ratio only fell 1.230 -> 1.110. Since the parts are now predicted well and the whole is not, the remaining ~10% is scheduling -- gate waits, dependency stalls and lane queueing that make a schedule take longer than the sum of its correctly-predicted tiles. Chasing it with more cell measurement will not work; it needs a scheduling-side term.",
+    "in_situ_promotion_converges": "Promoting in-situ medians was checked for convergence rather than assumed. Iteration 1 moved cells by +914%/+287%/+72%/-39%; iteration 2, pooling the runs produced by iteration 1's own schedules, moved 13 of 15 cells by <=4% (several by 0%). The exception is fused_tail@cpu at +18%, a multi-threaded CPU tile -- the same class as the cells excluded by feedback_does_not_converge_for_contended_cpu_tiles, and worth watching. Measured cost of the change: prediction error halved (median |ratio-1| 23.0% -> 11.0% over 3 A/B points, same tasksets and board conditions), but the schedules chosen got slightly SLOWER on 2 of 3 (+7.2%, +5.6%; -0.6% on the third). A more accurate model is not automatically a faster schedule."
   },
   "_previous_cells_schedutil": {
     "dronet/dronet_full": {
@@ -501,10 +504,11 @@
   },
   "conditions": {
     "governor": "performance on all 8 cores",
-    "cpu_affinity": "taskset -c 4-5 for cpu cells (the lane's exec mask)",
+    "cpu_affinity": "UNMASKED. Superseded 2026-08-30: the block previously claimed 'taskset -c 4-5 for cpu cells (the lane's exec mask)', which contradicted this file's own cpu_cells_must_be_unmasked note and was wrong. The exec mask binds only the lane thread; the QNN CPU op package builds its thread pool at bringup with full-machine affinity, so a masked measurement does not describe how the runtime executes the tile. Cells sourced from in-situ medians carry the runtime's real affinity by construction.",
     "iters": 40,
     "why": "Cells must be measured in the state the run executes in. Under schedutil the board idles at 710 MHz of 2419 and the accelerator cells come out 10-36% pessimistic \u2014 the host clock gates FastRPC dispatch, so DSP and HTA work is measured slow when the CPU is slow (yolov8n backbone on HTA: 21.6 ms under schedutil, 13.9 ms under performance). The previous cells are kept in _previous_cells_schedutil for comparison.",
-    "sweep_variance": "Three independent 20-iteration sweeps under the same governor, same board, minutes apart: dronet@hta 1.96/2.01/1.61, yolov8n_backbone@dsp 13.10/12.83/12.24, yolov8n_head@dsp 15.82/15.94/16.08, mlp_control@cpu 0.10/0.09/0.03 ms. So a cell carries roughly +-10% of sweep-to-sweep spread (much more for sub-100us graphs, where the measurement is noise-dominated), which is the floor on prediction accuracy unless cells are taken as a median of repeated sweeps. The one systematic residual is yolov8n's head: every sweep puts it at 15.4-16.5 ms while in-situ it is consistently 17.2-17.3 ms, and single-shot measurement (N=1) gives 17.2 \u2014 the runtime dispatches each tile once per instance, not in a loop, so for this graph the loop mean is the wrong statistic."
+    "sweep_variance": "Three independent 20-iteration sweeps under the same governor, same board, minutes apart: dronet@hta 1.96/2.01/1.61, yolov8n_backbone@dsp 13.10/12.83/12.24, yolov8n_head@dsp 15.82/15.94/16.08, mlp_control@cpu 0.10/0.09/0.03 ms. So a cell carries roughly +-10% of sweep-to-sweep spread (much more for sub-100us graphs, where the measurement is noise-dominated), which is the floor on prediction accuracy unless cells are taken as a median of repeated sweeps. The one systematic residual is yolov8n's head: every sweep puts it at 15.4-16.5 ms while in-situ it is consistently 17.2-17.3 ms, and single-shot measurement (N=1) gives 17.2 \u2014 the runtime dispatches each tile once per instance, not in a loop, so for this graph the loop mean is the wrong statistic.",
+    "statistic": "Cells with a sufficient in-situ sample are the pooled median of per-placement in-situ p50 from sweep qrb5165_20260829-200620 (see cells_rebuilt_from_in_situ). Remaining cells keep their standalone measurement; _previous_cells_standalone holds the pre-rebuild values."
   },
   "_feedback": {
     "flowc_vint_nav_qrb5165_nav": {
@@ -596,6 +600,201 @@
       "cpu_affinity": "none (no taskset)",
       "path": "converter model library composed at run time, not a context binary",
       "board": "10.44.120.201, QAIRT 2.45, Adreno 650 (driver: OpenCL 2.0 Adreno(TM) 650)"
+    }
+  },
+  "_previous_cells_standalone": {
+    "dronet/dronet_full": {
+      "hta": 2030.4,
+      "dsp": 645.4,
+      "cpu": 6998.22
+    },
+    "mlp_control/mlp_control_full": {
+      "dsp": 589.0,
+      "cpu": 107.3
+    },
+    "yolov8n/yolov8n_backbone": {
+      "hta": 13909.6,
+      "dsp": 13267.9,
+      "cpu": 34343.16
+    },
+    "yolov8n/yolov8n_head": {
+      "dsp": 15377.0,
+      "cpu": 39464.62
+    },
+    "fused_full/fused_full_net": {
+      "dsp": 4737.0,
+      "cpu": 1147.0
+    },
+    "fused_split/fused_vision_conv": {
+      "hta": 931.0,
+      "dsp": 459.4,
+      "cpu": 12179.1
+    },
+    "fused_split/fused_depth_conv": {
+      "hta": 1568.5,
+      "dsp": 392.9,
+      "cpu": 14.0
+    },
+    "fused_split/fused_tail": {
+      "dsp": 4303.5,
+      "cpu": 354.7
+    },
+    "vint/vint_encoders": {
+      "dsp": 14213.0,
+      "cpu": 84163.0,
+      "gpu": 55854.0
+    },
+    "vint/vint_decoder": {
+      "cpu": 37826.0,
+      "gpu": 16425.0
+    },
+    "dronet/dronet_full#study_k1": {
+      "hta": 1653.2,
+      "dsp": 658.5,
+      "cpu@fp32": 1482.2,
+      "cpu": 7465.5
+    },
+    "dronet_k2/dronet_backbone_op0_26": {
+      "hta": 1394.1,
+      "dsp": 639.4,
+      "cpu@fp32": 1384.9,
+      "cpu": 6772.4
+    },
+    "dronet_k2/dronet_head_op27_28": {
+      "hta": 1104.3,
+      "dsp": 398.6,
+      "cpu": 11.6,
+      "cpu@fp32": 49.1
+    },
+    "mlp_control/mlp_control_full#study_k1": {
+      "dsp": 408.3,
+      "cpu": 27.9,
+      "cpu@fp32": 29.0
+    },
+    "yolov8n_nosplit/yolov8n_whole": {
+      "dsp": 25375.6,
+      "cpu": 74057.9,
+      "cpu@fp32": 226661.5
+    },
+    "yolov8n_sliced3/yolov8n_t0_op0_136": {
+      "hta": 15580.8,
+      "dsp": 15321.7,
+      "cpu": 43584.8,
+      "cpu@fp32": 134391.7
+    },
+    "yolov8n_sliced3/yolov8n_t1_op137_224": {
+      "dsp": 7879.3,
+      "cpu": 24209.8,
+      "cpu@fp32": 79306.0
+    },
+    "yolov8n_sliced3/yolov8n_t2_op225_240": {
+      "dsp": 11861.0,
+      "cpu": 7288.2,
+      "cpu@fp32": 20693.2
+    },
+    "yolov8n_sliced2_neck/yolov8n_t0_op0_136": {
+      "hta": 15689.6,
+      "dsp": 14629.4,
+      "cpu": 43770.6,
+      "cpu@fp32": 133012.5
+    },
+    "yolov8n_sliced2_neck/yolov8n_t1_op137_240": {
+      "dsp": 15127.0,
+      "cpu": 30271.0,
+      "cpu@fp32": 92068.0
+    },
+    "fused_sliced3/fused_t0_op0_7": {
+      "hta": 641.1,
+      "dsp": 447.2,
+      "cpu": 163.5,
+      "cpu@fp32": 412.1
+    },
+    "fused_sliced3/fused_t1_op8_13": {
+      "dsp": 737.1,
+      "cpu": 86.1,
+      "cpu@fp32": 235.7
+    },
+    "fused_sliced3/fused_t2_op14_90": {
+      "dsp": 3276.6,
+      "cpu@fp32": 197.3
+    },
+    "fused_full/fused_full_net#study_k1": {
+      "dsp": 3433.9,
+      "cpu@fp32": 895.9
+    },
+    "vint/vint_whole": {
+      "cpu": 59774.9,
+      "cpu@fp32": 98564.1
+    },
+    "vint_sliced2/vint_t0_op0_1069": {
+      "dsp": 16339.4,
+      "cpu": 21975.1,
+      "cpu@fp32": 89922.1
+    },
+    "vint_sliced2/vint_t1_op1070_1930": {
+      "cpu@fp32": 13740.6,
+      "cpu": 41019.6
+    },
+    "mlp_control/mlp_gemm_only_tile": {
+      "hta": 541.4,
+      "dsp": 357.7,
+      "cpu": 2.1
+    },
+    "vint_par/vint_goal_enc": {
+      "dsp": 5809.1,
+      "cpu": 7075.3
+    },
+    "vint_par/vint_obs_enc": {
+      "dsp": 9532.6,
+      "cpu": 15549.4
+    },
+    "vint_par/vint_decoder": {
+      "cpu": 28468.0
+    },
+    "vint_parallel3/vint_goal_enc": {
+      "dsp": 5809.1,
+      "cpu": 7075.3,
+      "cpu@fp32": 13594.6
+    },
+    "vint_parallel3/vint_obs_enc": {
+      "dsp": 9532.6,
+      "cpu": 15549.4,
+      "cpu@fp32": 73844.3
+    },
+    "vint_parallel3/vint_decoder": {
+      "cpu@fp32": 14422.6,
+      "cpu": 42431.4
+    },
+    "fused_parallel3/fused_vision_conv": {
+      "hta": 763.3,
+      "dsp": 455.3,
+      "cpu": 164.8,
+      "cpu@fp32": 430.6
+    },
+    "fused_parallel3/fused_depth_conv": {
+      "hta": 919.2,
+      "dsp": 398.6,
+      "cpu": 48.3,
+      "cpu@fp32": 103.1
+    },
+    "fused_parallel3/fused_tail": {
+      "dsp": 3279.1,
+      "cpu@fp32": 334.9
+    },
+    "vint_obs_batch/encoder_batch1": {
+      "dsp": 4689.6,
+      "cpu": 6064.0,
+      "cpu@fp32": 13765.8
+    },
+    "vint_obs_batch/encoder_batch2": {
+      "dsp": 5322.2,
+      "cpu": 5887.1,
+      "cpu@fp32": 25832.3
+    },
+    "vint_obs_batch/encoder_batch3": {
+      "dsp": 5342.2,
+      "cpu": 8212.6,
+      "cpu@fp32": 33832.5
     }
   }
 }
