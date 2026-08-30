@@ -171,7 +171,7 @@ def cmd_solve(args):
         m = re.search(r"Makespan \(non-periodic\):\s*([\d.]+)\s*ms", line)
         if m:
             rec["sched_makespan_nonperiodic_ms"] = float(m.group(1))
-        m = re.search(r"all operations:\s*([\d.]+)\s*ms", line)
+        m = re.search(r"Makespan \(all operations\):\s*([\d.]+)\s*ms", line)
         if m:
             rec["sched_makespan_all_ms"] = float(m.group(1))
         rec["status"] = "solved"
