@@ -1,0 +1,78 @@
++ /tmp/claude-1172/-scratch2-dima-misc-sw-XPU-RT/3882980f-b60e-47b9-be3f-7fe85ec2bebb/scratchpad/milpenv/bin/python /scratch2/dima/misc_sw/XPU-RT/scripts/run_xpurt_schedule.py --networks-json /scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c/sweeps/qrb5165_20260829-200620/addendum_periodic_only/workloads/baseline_seed7.json --solver milp --time-limit 300 --profiled
+(cwd=/scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c/sweeps/qrb5165_20260829-200620/addendum_periodic_only)
+
+============================================================
+Loading network hierarchy from JSON...
+============================================================
+
+Loading networks from: /scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c/sweeps/qrb5165_20260829-200620/addendum_periodic_only/workloads/baseline_seed7.json
+
+Found 2 networks:
+  - mlp_control (id: 0, identifier: mlp_control)
+  - dronet (id: 1, identifier: dronet)
+
+Found 0 network-level dependencies:
+
+Resolved runtime configuration:
+  Machine core counts: {'CPU_P': 1, 'CPU_E': 1, 'CPU_X': 1}
+  Profile HW mapping: CPU_P->HTA, CPU_E->DSP
+  Profile target/topology: target=qrb5165_flowc, topo_tag=topo_0
+  p_core_speedup: 1.5
+  random_seed: 7
+  solver_verbosity: 0
+  time_limit: 300.0
+  use_profiled: True
+  prune_periodic: True
+  restrict_makespan_to_nonperiodic: False
+  machine_combination_mode: singletons
+  enforce_same_processor_combinations: True
+
+Using profiled runtimes where available...
+
+Creating workload from network hierarchy...
+
+Workload created successfully!
+  Total operations: 6
+  Scheduler machines (3 cores): ['CPU_P#0', 'CPU_E#0', 'CPU_X#0']
+  Machine combination options: 3 (mode=singletons)
+  Job names: ['mlp_control0', 'dronet0', 'mlp_control1', 'mlp_control2', 'dronet1', 'dronet2']
+  Operations with multiple predecessors: 0
+  Independent jobs (can run in parallel): 6
+
+============================================================
+Scheduling combined workload (MILP)...
+============================================================
+Status:  optimal
+Optimal value:  16.645000000000003
+Validation: All 6 operations have been scheduled.
+
+Scheduling completed!
+Makespan (non-periodic): 0.00 ms
+
+Combination assignments:
+  1xCPU_P: 0 operations
+  1xCPU_E: 3 operations
+  1xCPU_X: 3 operations
+
+Per-network combination assignments:
+  Mlp_control0: 1xCPU_X=1
+  Dronet0: 1xCPU_E=1
+  Mlp_control1: 1xCPU_X=1
+  Mlp_control2: 1xCPU_X=1
+  Dronet1: 1xCPU_E=1
+  Dronet2: 1xCPU_E=1
+Job 'mlp_control0' (job_id=0, color_index=0) -> color RGB=[0.59607843 0.8345098  0.57882353]
+Job 'dronet0' (job_id=1, color_index=1) -> color RGB=[0.57960784 0.77019608 0.87372549]
+Saving plot to plots/baseline_seed7_profiled.png...
+
+Plot saved to plots/baseline_seed7_profiled.png
+
+Outputting scheduled JSON...
+
+Scheduled JSON saved to: schedules/scheduled_baseline_seed7_profiled.json
+
+--- stderr ---
+/tmp/claude-1172/-scratch2-dima-misc-sw-XPU-RT/3882980f-b60e-47b9-be3f-7fe85ec2bebb/scratchpad/milpenv/lib/python3.12/site-packages/mosek/__init__.py:11539: UserWarning: Argument subi in putaijlist64: Incorrect array format causing data to be copied
+  warnings.warn("Argument subi in putaijlist64: Incorrect array format causing data to be copied");
+/tmp/claude-1172/-scratch2-dima-misc-sw-XPU-RT/3882980f-b60e-47b9-be3f-7fe85ec2bebb/scratchpad/milpenv/lib/python3.12/site-packages/mosek/__init__.py:11568: UserWarning: Argument subj in putaijlist64: Incorrect array format causing data to be copied
+  warnings.warn("Argument subj in putaijlist64: Incorrect array format causing data to be copied");

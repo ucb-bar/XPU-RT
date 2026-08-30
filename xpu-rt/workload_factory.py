@@ -412,14 +412,22 @@ def create_workload_from_network_hierarchy(
                 worst_dur = max(proc_times)
                 total_worst_nonperiodic += float(worst_dur)
 
-        # If there are no non-periodic operations, default to 1 instance per periodic network
+        # If there are no non-periodic operations there is no horizon to derive
+        # instance counts from, so fall back to 1 instance per periodic network.
+        # An explicit per-network `num_instances` still wins: it is the caller
+        # pinning the count directly (same override as below), and silently
+        # collapsing a workload that asks for 6 instances down to 1 makes a
+        # purely-periodic workload unschedulable rather than merely unbounded.
         if total_worst_nonperiodic <= 0.0:
             periodic_counts: Dict[str, int] = {}
             for net_id, net_info in networks.items():
                 period = net_info.get("period", None)
                 window_duration = net_info.get("window_duration", None)
                 if period is not None and window_duration is not None:
-                    periodic_counts[net_id] = 1
+                    forced = net_info.get("num_instances", None)
+                    periodic_counts[net_id] = (
+                        forced if isinstance(forced, int) and forced > 0 else 1
+                    )
             return periodic_counts
 
         profile_horizon = profile_based_horizon_ms(networks_data, repo_base_path)

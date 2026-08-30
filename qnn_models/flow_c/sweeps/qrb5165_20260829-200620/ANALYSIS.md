@@ -519,3 +519,69 @@ a side effect were unused (the solver reads this directory's `workloads/`)
 and were removed. `qnn_models/flow_c/measurements/qrb5165_v66.json` was read
 and never written. On the board, the 12 `/root/flowc_sweepc_*` build
 directories were removed and the governor was left on `schedutil`.
+
+---
+
+## Addendum: the six rejected periodic-only points
+
+The six points rejected on `no non-periodic work` were subsequently built and
+run. Full write-up and provenance: `addendum_periodic_only/README.md`;
+tables from `analyse_addendum.py`. The sweep's own pre-registered record is
+untouched -- the six still carry `status: REJECTED` in `generated.json` and
+do not appear in `results.json`. The addendum reuses this sweep's frozen
+`cost_model.json` and lands in its own tree via `drive.py`'s `SWEEP_OUT`.
+
+**Why they were worth running.** Q1 came back weak here for a structural
+reason: in all 12 accepted points a `yolov8n_head` finishes last, so the
+mid-size periodic slot cannot move the makespan by more than second order.
+These six have no yolov8n, so periodic work owns the makespan.
+
+**Q1 reverses.** 18 runs, 6 points x 3 reps, all clean:
+
+    seed  pred b  pred f    d%  |   act b   act f     d%  | noise b/f %  verdict
+    4      20.11   20.11   0.0  |   20.04   20.46    2.1  |  0.0/0.1     dronet wins
+    5      48.11   48.11   0.0  |   48.04   48.05    0.0  |  0.0/2.0     within noise
+    7      16.64   16.81   1.0  |   18.19   18.97    4.3  |  0.4/1.1     dronet wins
+
+Two of three pairs favour **dronet** by margins well outside rep noise. That
+is the opposite direction from the main sweep (fused better in 3 of 5,
+weakly) and from the FPGA (4 of 5).
+
+The mechanism is that `fused_split` is *more work*, not slower work:
+`fused_seed4` executes 13.903 ms of busy time against its baseline's 4.887 ms
+inside the same 20 ms release window. So Q1 is really "does the extra fused
+work fit in the schedule's slack", and the answer depends on what sets the
+makespan -- release-gated (hides it, 0.0-2.1%), compute-bound (exposes it,
+4.3%), or masked behind a yolov8n_head as in all 12 accepted points.
+
+**Combined reading across all three regimes: fused_full's FPGA advantage does
+not reproduce on this target, and where it is visible at all it is a cost.**
+
+**A clean decomposition of the 1.17x makespan ratio.** In the periodic-only
+regime the median ratio is **1.010x**. Three points land at exactly 1.000 --
+those whose makespan is release-gated, where the runtime hits its wall-clock
+release times to the microsecond. The error appears only in the compute-bound
+points: 1.090x and 1.130x, the same magnitude as the main sweep's per-lane
+ratios (hta 1.092, dsp 1.165, cpu 1.314). So the 1.17x is not a uniform
+modelling bias -- it is concentrated entirely in compute-bound portions of the
+schedule, and the release-gated portion contributes no error at all.
+
+**A scheduler bug this exposed.** The rejection predicate guarded a real
+limitation. Three places in the XPU-RT stack degrade when a workload has zero
+non-periodic operations, and one is a bug, now fixed:
+
+  * `xpu-rt/scheduler.py:510` -- `C_max` is unconstrained from below, so the
+    MILP objective is trivial and MOSEK raises `SolverError`. Worked around
+    per-point by setting `restrict_makespan_to_nonperiodic: false`, recorded
+    in each addendum workload's `_comment`. (Predicted makespans in the
+    addendum are therefore not comparable to this sweep's; the Q1 comparison
+    is internal to the addendum and unaffected.)
+  * `xpu-rt/postprocessing.py:312` -- trim no-ops. Benign, already handled.
+  * `xpu-rt/workload_factory.py:415` -- **fixed.** It collapsed every periodic
+    network to 1 instance while ignoring an explicit `num_instances`, so a
+    12-operation workload was silently scheduled as 3. The override at
+    `workload_factory.py:460` exists precisely so a toplevel JSON can pin
+    instance counts; the early return jumped over it. The fix executes only
+    when there are no non-periodic ops, which no accepted point in this sweep
+    has. Regression check: `baseline_seed0` re-solves to 20 operations,
+    `optimal`, **67.571 ms** -- identical to its pre-registered value.

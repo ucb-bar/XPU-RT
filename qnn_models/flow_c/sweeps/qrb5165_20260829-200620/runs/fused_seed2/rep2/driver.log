@@ -1,0 +1,28 @@
++ /usr/bin/python3 flow_c.py run --workload /scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c/sweeps/qrb5165_20260829-200620/workloads/fused_seed2.flowc.json --tag fused_seed2 --tuned --out-dir /scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c/sweeps/qrb5165_20260829-200620/runtimes/fused_seed2 --log-dir /scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c/sweeps/qrb5165_20260829-200620/runs/fused_seed2/rep2 --board root@10.44.120.201 --board-dir /root/flowc_sweepc
+(cwd=/scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c)
+
+==> board     : root@10.44.120.201
+==> gen dir   : qnn_models/flow_c/sweeps/qrb5165_20260829-200620/runtimes/fused_seed2
+==> board dir : /root/flowc_sweepc_fused_seed2
+==> ctx dir   : /root/qnn_runtime_ctx
+==> log dir   : /scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c/sweeps/qrb5165_20260829-200620/runs/fused_seed2/rep2
+==> runtime env: FLOWC_ITERATIONS=2 
+
+==> built 91296 B
+==> running...
+==> exit code: 0
+==> log: /scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c/sweeps/qrb5165_20260829-200620/runs/fused_seed2/rep2/run.log (71 lines)
+
+--- summary ---
+[summary] 32/32 entries executed, wall=83.590 ms (predicted makespan 73.343 ms, ratio 1.14x), tensor handoffs=5
+
+
+=== run =========================================================
+  [tuned] governor -> performance, FLOWC_ITERATIONS=2
++ bash qnn_models/runtime/deploy_and_run.sh qnn_models/flow_c/sweeps/qrb5165_20260829-200620/runtimes/fused_seed2 root@10.44.120.201 /root/flowc_sweepc_fused_seed2
+  [tuned] governor restored to schedutil
+
+--- stderr ---
+runtime_main.cpp:332:13: warning: 'void pin_to(int)' defined but not used [-Wunused-function]
+  332 | static void pin_to(int core) {
+      |             ^~~~~~
