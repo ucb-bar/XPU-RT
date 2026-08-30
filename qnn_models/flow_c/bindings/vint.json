@@ -1,0 +1,58 @@
+{
+  "network": "vint",
+  "ir": {
+    "source": "pytorch_export:vint",
+    "quant": "int8"
+  },
+  "_comment": "ViNT (visual navigation transformer): two EfficientNet-b0 encoders over a 6-frame observation stack plus a goal image, a 4-layer/4-head transformer over the resulting 7 tokens, and a waypoint head. modelblaster ingests it through torch.export rather than FX (EfficientNet's len() calls and MultiheadAttention's lowered form defeat symbolic_trace), and this flow does the same. Cut at the compress projections: the monolith runs nowhere but CPU, while the encoder tile \u2014 74M of its 88.7M MACs \u2014 composes on DSP and runs 6.8x faster there than the whole net does on CPU fp32.",
+  "bindings": [
+    {
+      "id": 0,
+      "name": "vint_encoders",
+      "ops": {
+        "ranges": [
+          [
+            0,
+            538
+          ]
+        ]
+      },
+      "source_onnx": "flow_c/gen/convert/tiles/vint_encoders.onnx",
+      "backends": {
+        "dsp": {
+          "ctx": "ctx_vint_encoders__Dsp.bin",
+          "graph": "vint_encoders",
+          "precision": "int8"
+        },
+        "cpu": {
+          "ctx": "ctx_vint_encoders_fp32__Cpu.bin",
+          "graph": "vint_encoders",
+          "precision": "fp32"
+        }
+      }
+    },
+    {
+      "id": 1,
+      "name": "vint_decoder",
+      "ops": {
+        "ranges": [
+          [
+            539,
+            604
+          ]
+        ]
+      },
+      "depends_on": [
+        0
+      ],
+      "source_onnx": "flow_c/gen/convert/tiles/vint_decoder.onnx",
+      "backends": {
+        "cpu": {
+          "ctx": "ctx_vint_decoder_fp32__Cpu.bin",
+          "graph": "vint_decoder",
+          "precision": "fp32"
+        }
+      }
+    }
+  ]
+}

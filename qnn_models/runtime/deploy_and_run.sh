@@ -31,6 +31,9 @@
 #   XPURT_HTA_CTX_BUDGET    lazy HTA context budget
 #   XPURT_EXTRA_ENV    extra VAR=VAL pairs to set for the board-side run
 #   LOG_DIR            where to save the captured trace (default runs/<gen_dir basename>)
+#   BOARD_LOCK         flock path used to serialise the run against other users
+#                      of the same board (default /tmp/qnn_board.lock; empty
+#                      string still locks that default — edit here to disable)
 #   RUN_TIMEOUT        board-side SIGKILL deadline in seconds (default 120). A
 #                      runtime that wedges its cores — e.g. two real-time lanes
 #                      spinning on one — can take the whole board out of reach
@@ -127,6 +130,10 @@ echo "==> running..."
 ssh "$BOARD" bash > "$RUN_LOG" 2>&1 <<EOF
 set -uo pipefail
 cd "$BOARD_DIR_ARG"
+# Serialise against anything else using the board (other sessions, agents):
+# a timing run shares its silicon with whatever else is dispatching, so take
+# the lock for the duration. BOARD_LOCK= disables it.
+exec {lockfd}> ${BOARD_LOCK:-/tmp/qnn_board.lock} 2>/dev/null && flock -w 900 \$lockfd || true
 LD_LIBRARY_PATH=$QNN_SDK_ROOT/lib/target \\
 ADSP_LIBRARY_PATH="$ADSP_FULL" \\
 $env_lines \\

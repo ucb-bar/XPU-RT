@@ -277,6 +277,29 @@ the solver serialised them onto the DSP — so a small overrun on the head
 propagates straight to the wall clock. That is the schedule working as
 specified, not runtime jitter.
 
+## Feedback: what it fixes and what it cannot
+
+`flow_c.py feedback --tag <t>` reads a run's trace and promotes each tile's
+in-situ median into the cost model, tagged with the run it came from. Use it
+when a cell is wrong for a *stable* reason — measured under the wrong
+governor, or under an affinity mask the runtime does not actually apply.
+
+It does not converge for a multi-threaded CPU tile, and ViNT shows why:
+
+```
+vint_decoder @cpu   12.7 ms  standalone, unmasked, idle board
+                    37.8 ms  in-situ, promoted to a cell by `feedback`
+                    12.8 ms  next run — the new schedule gave it more machine
+```
+
+Measuring changed the schedule, which changed the measurement. A scalar cell
+cannot express a cost that depends on concurrent load. Tiles on dedicated
+silicon have no such problem: ViNT's encoders hit 1.01x of their DSP cell in
+every run, and dronet/yolov8n sit inside 5-12% of theirs. The two real fixes
+are a contention term in the cost model, or binding the QNN CPU backend's
+thread pool so the cost stops depending on neighbours — neither of which is
+a measurement change.
+
 ## Known gaps
 
 * **A CPU-heavy network's real cost is not its isolated cell.** FusedSensorNet

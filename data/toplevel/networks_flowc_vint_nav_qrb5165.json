@@ -1,0 +1,46 @@
+{
+  "_comment": "A navigation stack: ViNT at 10 Hz (its critical path is ~96 ms, so 100 ms is the tightest honest period) alongside the 500 Hz mlp_control policy. Shows the scheduler putting ViNT's EfficientNet encoders on the DSP while the control loop keeps the CPU.",
+  "hardware": {
+    "machines": {
+      "cpu_p": 1,
+      "cpu_e": 1,
+      "cpu_x": 1
+    },
+    "profile_hw": {
+      "cpu_p": "HTA",
+      "cpu_e": "DSP",
+      "cpu_x": "CPU"
+    },
+    "profile": {
+      "target": "qrb5165_flowc",
+      "topo_tag": "topo_0",
+      "topo_tag_override": false,
+      "gen_root": "gen"
+    },
+    "p_core_speedup": 1.0
+  },
+  "scheduler": {
+    "random_seed": 42,
+    "solver_verbosity": 0,
+    "time_limit": 60,
+    "use_profiled": true,
+    "prune_periodic": true,
+    "restrict_makespan_to_nonperiodic": true
+  },
+  "networks": {
+    "vint": {
+      "id": 0,
+      "identifier": "vint",
+      "dispatch_deps_path": "gen/qnn_vmfb/vint/qrb5165_flowc/CPU/vint.int8/vint.int8_dispatch_graph.json"
+    },
+    "mlp_control": {
+      "id": 1,
+      "identifier": "mlp_control",
+      "dispatch_deps_path": "gen/qnn_vmfb/mlp_control/qrb5165_flowc/CPU/mlp_control.int8/mlp_control.int8_dispatch_graph.json",
+      "period": 2,
+      "window_duration": 2,
+      "num_instances": 61
+    }
+  },
+  "edges": []
+}
