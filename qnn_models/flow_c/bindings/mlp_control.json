@@ -1,0 +1,28 @@
+{
+  "network": "mlp_control",
+  "ir": {
+    "source": "pytorch:mlp_control",
+    "quant": "int8"
+  },
+  "_comment": "One binding = one QNN graphExecute = a contiguous run of IR dispatch ids. mlp_control is 7 IR ops (4 linear + 3 elu) and ~70k MACs, so the whole net is one tile: any finer split pays a second dispatch (~0.5 ms of FastRPC on dsp) to save microseconds of compute.",
+  "bindings": [
+    {
+      "id": 0,
+      "name": "mlp_control_full",
+      "ops": "all",
+      "backends": {
+        "cpu": {
+          "ctx": "ctx_mlp_control_fp32__Cpu.bin",
+          "graph": "mlp_control_fp32",
+          "precision": "fp32"
+        },
+        "dsp": {
+          "ctx": "ctx_mlp_control__Dsp.bin",
+          "graph": "mlp_control",
+          "precision": "int8"
+        }
+      }
+    }
+  ],
+  "_correctness_note": "The CPU tile is fp32 on purpose. The QNN CPU backend's int8 path is BROKEN for this network: with mlp_control_quantized.dlc, three genuinely different inputs produce byte-identical outputs, while the same DLC on the DSP produces three different ones. Verified with qnn-net-run on 2026-08-30 (same input list, backend the only variable). The int8 CPU context is 28.5 us and wrong; the fp32 context is 107.3 us and right."
+}

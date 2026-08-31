@@ -1,0 +1,16 @@
++ /usr/bin/python3 flow_c.py plots --workload /scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c/sweeps/qrb5165_20260829-200620/workloads/fused_seed2.flowc.json --tag fused_seed2 --log-dir /scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c/sweeps/qrb5165_20260829-200620/runs/fused_seed2/rep1
+(cwd=/scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c)
+
+
+=== plots =======================================================
+entries: 32
+  predicted makespan: 73.343 ms
+  actual    makespan: 90.179 ms (1.23x predicted)
+  mean per-entry: predicted=4.768 ms, actual=5.971 ms
+  entries finishing later than predicted: 21/32
+
+predicted vs actual : plots/fused_seed2_fused_seed2_predicted_vs_actual.png
+  zoom (first 23 ms): plots/fused_seed2_fused_seed2_predicted_vs_actual_zoom.png
+  flat trace CSV     : qnn_models/flow_c/sweeps/qrb5165_20260829-200620/runs/fused_seed2/rep1/trace.csv
+
+--- stderr ---

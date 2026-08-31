@@ -1,0 +1,18 @@
++ /usr/bin/python3 flow_c.py stage --workload /scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c/sweeps/qrb5165_20260829-200620/addendum_periodic_only/workloads/fused_seed4.flowc.json --board root@10.44.120.201
+(cwd=/scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c)
+
+
+=== stage =======================================================
+lrwxrwxrwx 1 root root       49 Aug 29 23:55 ctx_fused_depth_conv__Cpu.bin -> /root/repro_perlane/ctx_fused_depth_conv__Cpu.bin
+lrwxrwxrwx 1 root root       49 Aug 29 23:55 ctx_fused_depth_conv__Dsp.bin -> /root/repro_perlane/ctx_fused_depth_conv__Dsp.bin
+lrwxrwxrwx 1 root root       49 Aug 29 23:55 ctx_fused_depth_conv__Hta.bin -> /root/repro_perlane/ctx_fused_depth_conv__Hta.bin
+lrwxrwxrwx 1 root root       53 Aug 29 23:55 ctx_fused_tail_from_conv__Dsp.bin -> /root/repro_perlane/ctx_fused_tail_from_conv__Dsp.bin
+lrwxrwxrwx 1 root root       58 Aug 29 23:55 ctx_fused_tail_from_conv_fp32__Cpu.bin -> /root/repro_perlane/ctx_fused_tail_from_conv_fp32__Cpu.bin
+lrwxrwxrwx 1 root root       50 Aug 29 23:55 ctx_fused_vision_conv__Cpu.bin -> /root/repro_perlane/ctx_fused_vision_conv__Cpu.bin
+lrwxrwxrwx 1 root root       50 Aug 29 23:55 ctx_fused_vision_conv__Dsp.bin -> /root/repro_perlane/ctx_fused_vision_conv__Dsp.bin
+lrwxrwxrwx 1 root root       50 Aug 29 23:55 ctx_fused_vision_conv__Hta.bin -> /root/repro_perlane/ctx_fused_vision_conv__Hta.bin
+lrwxrwxrwx 1 root root       44 Aug 29 03:13 ctx_mlp_control__Dsp.bin -> /root/repro_perlane/ctx_mlp_control__Dsp.bin
+lrwxrwxrwx 1 root root       49 Aug 30 03:37 ctx_mlp_control_fp32__Cpu.bin -> /root/repro_perlane/ctx_mlp_control_fp32__Cpu.bin
+
+
+--- stderr ---

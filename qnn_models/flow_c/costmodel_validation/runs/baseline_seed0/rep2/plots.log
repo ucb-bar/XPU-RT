@@ -1,0 +1,16 @@
++ /usr/bin/python3 flow_c.py plots --workload /scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c/costmodel_validation/workloads/baseline_seed0.flowc.json --tag baseline_seed0 --log-dir /scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c/costmodel_validation/runs/baseline_seed0/rep2
+(cwd=/scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c)
+
+
+=== plots =======================================================
+entries: 20
+  predicted makespan: 80.231 ms
+  actual    makespan: 88.913 ms (1.11x predicted)
+  mean per-entry: predicted=8.423 ms, actual=9.801 ms
+  entries finishing later than predicted: 17/20
+
+predicted vs actual : plots/baseline_seed0_baseline_seed0_predicted_vs_actual.png
+  zoom (first 22 ms): plots/baseline_seed0_baseline_seed0_predicted_vs_actual_zoom.png
+  flat trace CSV     : qnn_models/flow_c/costmodel_validation/runs/baseline_seed0/rep2/trace.csv
+
+--- stderr ---

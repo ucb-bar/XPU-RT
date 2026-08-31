@@ -1,0 +1,30 @@
++ /usr/bin/python3 flow_c.py run --workload /scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c/costmodel_validation/workloads/baseline_seed0.flowc.json --tag baseline_seed0 --tuned --out-dir /scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c/costmodel_validation/runtimes/baseline_seed0 --log-dir /scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c/costmodel_validation/runs/baseline_seed0/rep3 --board root@10.44.120.201 --board-dir /root/flowc_sweepc
+(cwd=/scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c)
+
+==> board     : root@10.44.120.201
+==> gen dir   : qnn_models/flow_c/costmodel_validation/runtimes/baseline_seed0
+==> board dir : /root/flowc_sweepc_baseline_seed0
+==> ctx dir   : /root/qnn_runtime_ctx
+==> log dir   : /scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c/costmodel_validation/runs/baseline_seed0/rep3
+==> runtime env: FLOWC_ITERATIONS=2 
+
+==> built 87672 B
+==> running...
+==> exit code: 0
+==> log: /scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c/costmodel_validation/runs/baseline_seed0/rep3/run.log (80 lines)
+
+--- summary ---
+[main] iteration 1/2 wall=87.594 ms
+[main] iteration 2/2 wall=93.004 ms
+[summary] 20/20 entries executed, wall=93.004 ms (predicted makespan 80.231 ms, ratio 1.16x), tensor handoffs=3
+
+
+=== run =========================================================
+  [tuned] governor -> performance, FLOWC_ITERATIONS=2
++ bash qnn_models/runtime/deploy_and_run.sh qnn_models/flow_c/costmodel_validation/runtimes/baseline_seed0 root@10.44.120.201 /root/flowc_sweepc_baseline_seed0
+  [tuned] governor restored to schedutil
+
+--- stderr ---
+runtime_main.cpp:332:13: warning: 'void pin_to(int)' defined but not used [-Wunused-function]
+  332 | static void pin_to(int core) {
+      |             ^~~~~~

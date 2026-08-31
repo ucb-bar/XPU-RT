@@ -1,0 +1,322 @@
+{
+  "dot_file": "combined_schedule_periodic.json",
+  "dispatches": {
+    "mlp_control0_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_X#0",
+      "start_time": -0.0,
+      "duration": 0.065,
+      "job_name": "mlp_control0",
+      "module_name": "mlp_control$dispatch_0_HTA_qnn_graph_ir_ops7"
+    },
+    "mlp_control1_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_X#0",
+      "start_time": 7.0,
+      "duration": 0.065,
+      "job_name": "mlp_control1",
+      "module_name": "mlp_control$dispatch_0_HTA_qnn_graph_ir_ops7",
+      "time_dependency": "mlp_control0_dispatch_0"
+    },
+    "mlp_control2_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_X#0",
+      "start_time": 14.0,
+      "duration": 0.065,
+      "job_name": "mlp_control2",
+      "module_name": "mlp_control$dispatch_0_HTA_qnn_graph_ir_ops7",
+      "time_dependency": "mlp_control1_dispatch_0"
+    },
+    "mlp_control3_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_X#0",
+      "start_time": 21.0,
+      "duration": 0.065,
+      "job_name": "mlp_control3",
+      "module_name": "mlp_control$dispatch_0_HTA_qnn_graph_ir_ops7",
+      "time_dependency": "mlp_control2_dispatch_0"
+    },
+    "mlp_control4_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_X#0",
+      "start_time": 28.000000000000004,
+      "duration": 0.065,
+      "job_name": "mlp_control4",
+      "module_name": "mlp_control$dispatch_0_HTA_qnn_graph_ir_ops7",
+      "time_dependency": "mlp_control3_dispatch_0"
+    },
+    "mlp_control5_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_E#0",
+      "start_time": 35.0,
+      "duration": 0.668,
+      "job_name": "mlp_control5",
+      "module_name": "mlp_control$dispatch_0_HTA_qnn_graph_ir_ops7",
+      "time_dependency": "dronet_a2_dispatch_0"
+    },
+    "dronet_a0_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_E#0",
+      "start_time": -0.0,
+      "duration": 1.068,
+      "job_name": "dronet_a0",
+      "module_name": "dronet$dispatch_0_HTA_qnn_graph_ir_ops24"
+    },
+    "dronet_a1_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_E#0",
+      "start_time": 14.25900000000548,
+      "duration": 1.068,
+      "job_name": "dronet_a1",
+      "module_name": "dronet$dispatch_0_HTA_qnn_graph_ir_ops24",
+      "time_dependency": "yolov8n_b_dispatch_0"
+    },
+    "dronet_a2_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_E#0",
+      "start_time": 32.794999999998275,
+      "duration": 1.068,
+      "job_name": "dronet_a2",
+      "module_name": "dronet$dispatch_0_HTA_qnn_graph_ir_ops24",
+      "time_dependency": "dronet_a1_dispatch_0"
+    },
+    "dronet_b0_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dronet_a0_dispatch_0"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 6.0,
+      "duration": 1.787,
+      "job_name": "dronet_b0",
+      "module_name": "dronet$dispatch_0_HTA_qnn_graph_ir_ops24"
+    },
+    "dronet_b1_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dronet_a1_dispatch_0"
+      ],
+      "hardware_target": "CPU_P#0",
+      "start_time": 21.737999999997566,
+      "duration": 1.787,
+      "job_name": "dronet_b1",
+      "module_name": "dronet$dispatch_0_HTA_qnn_graph_ir_ops24",
+      "time_dependency": "yolov8n_a_dispatch_0"
+    },
+    "dronet_b2_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "dronet_a2_dispatch_0"
+      ],
+      "hardware_target": "CPU_E#0",
+      "start_time": 35.668000000000006,
+      "duration": 1.068,
+      "job_name": "dronet_b2",
+      "module_name": "dronet$dispatch_0_HTA_qnn_graph_ir_ops24",
+      "time_dependency": "mlp_control5_dispatch_0"
+    },
+    "yolov8n_a_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_P#0",
+      "start_time": 7.786999999996624,
+      "duration": 13.951,
+      "job_name": "yolov8n_a",
+      "module_name": "yolov8n$dispatch_0_HTA_qnn_graph_ir_ops103"
+    },
+    "yolov8n_a_dispatch_1": {
+      "id": 1,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "yolov8n_a_dispatch_0"
+      ],
+      "hardware_target": "CPU_X#0",
+      "start_time": 28.064999999999444,
+      "duration": 52.166,
+      "job_name": "yolov8n_a",
+      "module_name": "yolov8n$dispatch_1_HTA_qnn_graph_ir_ops146",
+      "time_dependency": "mlp_control3_dispatch_0"
+    },
+    "yolov8n_b_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_E#0",
+      "start_time": 1.0679999999993033,
+      "duration": 13.191,
+      "job_name": "yolov8n_b",
+      "module_name": "yolov8n$dispatch_0_HTA_qnn_graph_ir_ops103"
+    },
+    "yolov8n_b_dispatch_1": {
+      "id": 1,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "yolov8n_b_dispatch_0"
+      ],
+      "hardware_target": "CPU_E#0",
+      "start_time": 15.327000000004784,
+      "duration": 17.468,
+      "job_name": "yolov8n_b",
+      "module_name": "yolov8n$dispatch_1_HTA_qnn_graph_ir_ops146",
+      "time_dependency": "yolov8n_b_dispatch_0"
+    },
+    "yolov8n_c_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_P#0",
+      "start_time": 37.476000000000006,
+      "duration": 13.951,
+      "job_name": "yolov8n_c",
+      "module_name": "yolov8n$dispatch_0_HTA_qnn_graph_ir_ops103",
+      "time_dependency": "yolov8n_d_dispatch_0"
+    },
+    "yolov8n_c_dispatch_1": {
+      "id": 1,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "yolov8n_c_dispatch_0"
+      ],
+      "hardware_target": "CPU_E#0",
+      "start_time": 62.76299999999945,
+      "duration": 17.468,
+      "job_name": "yolov8n_c",
+      "module_name": "yolov8n$dispatch_1_HTA_qnn_graph_ir_ops146",
+      "time_dependency": "yolov8n_d_dispatch_1"
+    },
+    "yolov8n_d_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_P#0",
+      "start_time": 23.525000000000002,
+      "duration": 13.951,
+      "job_name": "yolov8n_d",
+      "module_name": "yolov8n$dispatch_0_HTA_qnn_graph_ir_ops103",
+      "time_dependency": "dronet_b1_dispatch_0"
+    },
+    "yolov8n_d_dispatch_1": {
+      "id": 1,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "yolov8n_d_dispatch_0"
+      ],
+      "hardware_target": "CPU_E#0",
+      "start_time": 37.476,
+      "duration": 17.468,
+      "job_name": "yolov8n_d",
+      "module_name": "yolov8n$dispatch_1_HTA_qnn_graph_ir_ops146",
+      "time_dependency": "dronet_b2_dispatch_0"
+    }
+  },
+  "metadata": {
+    "makespan": 80.23099999999945,
+    "num_operations": 20,
+    "machines": [
+      "CPU_P#0",
+      "CPU_E#0",
+      "CPU_X#0"
+    ],
+    "machine_combinations": [
+      [
+        "CPU_P#0"
+      ],
+      [
+        "CPU_E#0"
+      ],
+      [
+        "CPU_X#0"
+      ]
+    ],
+    "profile_hw": {
+      "CPU_P": "HTA",
+      "CPU_E": "DSP",
+      "CPU_X": "CPU"
+    },
+    "periodic_networks": {
+      "mlp_control": 7.0,
+      "dronet_a": 16.397,
+      "dronet_b": 14.834
+    },
+    "granularity_advice": [
+      {
+        "subject": "yolov8n_a",
+        "recommended": "finer",
+        "reason": "the desired granularity for yolov8n_a's dispatches should be finer: its largest dispatch (52.17 ms) exceeds mlp_control's available free slot (6.33 ms) (period 7.00 ms, free slot 6.33 ms after mlp_control's own utilization) -- it would overrun mlp_control's cadence if they shared a core",
+        "conflicting_periodic_job": "mlp_control",
+        "period_ms": 7.0,
+        "free_slot_ms": 6.332,
+        "max_dispatch_duration_ms": 52.166
+      },
+      {
+        "subject": "yolov8n_b",
+        "recommended": "finer",
+        "reason": "the desired granularity for yolov8n_b's dispatches should be finer: its largest dispatch (17.47 ms) exceeds mlp_control's available free slot (6.33 ms) (period 7.00 ms, free slot 6.33 ms after mlp_control's own utilization) -- it would overrun mlp_control's cadence if they shared a core",
+        "conflicting_periodic_job": "mlp_control",
+        "period_ms": 7.0,
+        "free_slot_ms": 6.332,
+        "max_dispatch_duration_ms": 17.468
+      },
+      {
+        "subject": "yolov8n_c",
+        "recommended": "finer",
+        "reason": "the desired granularity for yolov8n_c's dispatches should be finer: its largest dispatch (17.47 ms) exceeds mlp_control's available free slot (6.33 ms) (period 7.00 ms, free slot 6.33 ms after mlp_control's own utilization) -- it would overrun mlp_control's cadence if they shared a core",
+        "conflicting_periodic_job": "mlp_control",
+        "period_ms": 7.0,
+        "free_slot_ms": 6.332,
+        "max_dispatch_duration_ms": 17.468
+      },
+      {
+        "subject": "yolov8n_d",
+        "recommended": "finer",
+        "reason": "the desired granularity for yolov8n_d's dispatches should be finer: its largest dispatch (17.47 ms) exceeds mlp_control's available free slot (6.33 ms) (period 7.00 ms, free slot 6.33 ms after mlp_control's own utilization) -- it would overrun mlp_control's cadence if they shared a core",
+        "conflicting_periodic_job": "mlp_control",
+        "period_ms": 7.0,
+        "free_slot_ms": 6.332,
+        "max_dispatch_duration_ms": 17.468
+      }
+    ]
+  }
+}

@@ -5,7 +5,21 @@
 // which is what the runtime actually pays per segment.
 //
 // Usage:
-//   ./profile_seg <dlc_path> <backend_lib> <iters> [--csv <path>]
+//   ./profile_seg <dlc_path> <backend_lib> <iters> [--csv <path>] [--gap-us N]
+//
+// Two statistics are always reported, because they answer different questions:
+//
+//   loop_*   back-to-back executes with no gap. Steady-state throughput. This
+//            is what the cost model used to be built from.
+//   gap_*    each timed execute preceded by an idle gap of --gap-us (default
+//            3000). This reproduces how the runtime actually calls a tile: once
+//            per period, from a lane thread that was asleep in clock_nanosleep
+//            until its gate fired. Small tiles pay a fixed per-invocation cost
+//            here that a tight loop amortises away -- the sweep measured that
+//            gap as ~+0.234 ms on every tile under 1 ms, which is what made
+//            sub-millisecond cost cells run 1.65x optimistic in situ.
+//
+// Build the cost model from gap_median; keep loop_mean for comparison.
 // Example:
 //   ./profile_seg sub_dlc/dronet_HTA_split_seg0_quantized.dlc \
 //                 libQnnHta.so 100 --csv /tmp/seg0_hta.csv
@@ -18,6 +32,7 @@
 #include <cmath>
 #include <cstdarg>
 #include <cstdio>
+#include <ctime>
 #include <cstdlib>
 #include <cstring>
 #include <dlfcn.h>
@@ -90,16 +105,19 @@ static void set_buf(Qnn_Tensor_t& t, void* data, uint32_t bytes) {
 int main(int argc, char** argv) {
     if (argc < 4) {
         std::fprintf(stderr,
-            "usage: %s <dlc_path> <backend_lib> <iters> [--csv <path>]\n", argv[0]);
+            "usage: %s <dlc_path> <backend_lib> <iters> [--csv <path>] "
+            "[--gap-us N]\n", argv[0]);
         return 1;
     }
     std::string dlc = argv[1];
     std::string lib = argv[2];
     int iters = std::atoi(argv[3]);
     std::string csv;
+    long gap_us = 3000;                       // ~ a typical schedule period
     for (int i = 4; i < argc; ++i) {
         std::string a = argv[i];
         if (a == "--csv" && i + 1 < argc) csv = argv[++i];
+        else if (a == "--gap-us" && i + 1 < argc) gap_us = std::atol(argv[++i]);
     }
 
     // 1. dlopen + introspect via libQnnSystem.
@@ -203,46 +221,78 @@ int main(int argc, char** argv) {
         set_buf(outputs[i], outBufs[i].data(), (uint32_t)sz);
     }
 
-    // 5. Warmup + timed runs.
-    int warmup = std::min(5, iters/4 + 1);
-    for (int i=0;i<warmup;++i) {
+    // 5. Warmup, then two measurement phases.
+    auto exec_once = [&]() {
         CHECK(biface.graphExecute(graph,
             inputs.data(),  (uint32_t)inputs.size(),
             outputs.data(), (uint32_t)outputs.size(),
             nullptr, nullptr));
-    }
+    };
+    int warmup = std::min(5, iters/4 + 1);
+    for (int i=0;i<warmup;++i) exec_once();
+
+    // 5a. loop phase: back-to-back, steady state.
     std::vector<double> per_call;
     per_call.reserve(iters);
     for (int i=0;i<iters;++i) {
         double t0 = now_us();
-        CHECK(biface.graphExecute(graph,
-            inputs.data(),  (uint32_t)inputs.size(),
-            outputs.data(), (uint32_t)outputs.size(),
-            nullptr, nullptr));
+        exec_once();
         per_call.push_back(now_us() - t0);
     }
+
+    // 5b. gap phase: idle between calls so each execute pays the same
+    //     per-invocation cost the scheduled runtime pays.
+    std::vector<double> gap_call;
+    gap_call.reserve(iters);
+    for (int i=0;i<iters;++i) {
+        if (gap_us > 0) {
+            struct timespec ts;
+            ts.tv_sec  =  gap_us / 1000000L;
+            ts.tv_nsec = (gap_us % 1000000L) * 1000L;
+            nanosleep(&ts, nullptr);
+        }
+        double t0 = now_us();
+        exec_once();
+        gap_call.push_back(now_us() - t0);
+    }
+
+    auto stats = [](std::vector<double> v) {
+        std::sort(v.begin(), v.end());
+        double mean = std::accumulate(v.begin(), v.end(), 0.0) / v.size();
+        double sumsq = 0; for (double x : v) sumsq += (x-mean)*(x-mean);
+        struct S { double mean, p50, mn, mx, sd, p99; };
+        return S{mean, v[v.size()/2], v.front(), v.back(),
+                 std::sqrt(sumsq / v.size()),
+                 v[std::min(v.size()-1, v.size()*99/100)]};
+    };
+    auto L = stats(per_call);
+    auto G = stats(gap_call);
     std::sort(per_call.begin(), per_call.end());
-    double mean = std::accumulate(per_call.begin(), per_call.end(), 0.0) / per_call.size();
-    double mn = per_call.front();
-    double mx = per_call.back();
-    double p50 = per_call[per_call.size()/2];
-    double p99 = per_call[std::min(per_call.size()-1, per_call.size()*99/100)];
-    double sumsq = 0;
-    for (double x : per_call) sumsq += (x-mean)*(x-mean);
-    double std_us = std::sqrt(sumsq / per_call.size());
+    double mean = L.mean, mn = L.mn, mx = L.mx, p50 = L.p50, p99 = L.p99, std_us = L.sd;
 
     // 6. Emit one CSV row + a JSON-ish status line for the host parser.
+    // mean_us/median_us/... stay the LOOP numbers so every existing parser
+    // keeps working; the gap_* fields are additive.
     std::printf("{\"dlc\":\"%s\",\"backend\":\"%s\",\"status\":\"ok\","
                 "\"graph\":\"%s\",\"iters\":%d,\"init_us\":%.1f,"
                 "\"mean_us\":%.2f,\"median_us\":%.2f,\"min_us\":%.2f,"
-                "\"max_us\":%.2f,\"std_us\":%.2f,\"p99_us\":%.2f}\n",
+                "\"max_us\":%.2f,\"std_us\":%.2f,\"p99_us\":%.2f,"
+                "\"gap_us_setting\":%ld,"
+                "\"gap_mean_us\":%.2f,\"gap_median_us\":%.2f,"
+                "\"gap_min_us\":%.2f,\"gap_max_us\":%.2f,"
+                "\"gap_std_us\":%.2f,\"gap_p99_us\":%.2f,"
+                "\"gap_minus_loop_us\":%.2f}\n",
                 dlc.c_str(), lib.c_str(), graph_name.c_str(), iters, init_us,
-                mean, p50, mn, mx, std_us, p99);
+                mean, p50, mn, mx, std_us, p99,
+                gap_us, G.mean, G.p50, G.mn, G.mx, G.sd, G.p99,
+                G.p50 - L.p50);
     if (!csv.empty()) {
         std::ofstream f(csv);
-        f << "iter,call_us\n";
+        f << "phase,iter,call_us\n";
         for (size_t i=0;i<per_call.size();++i)
-            f << i << "," << per_call[i] << "\n";
+            f << "loop," << i << "," << per_call[i] << "\n";
+        for (size_t i=0;i<gap_call.size();++i)
+            f << "gap," << i << "," << gap_call[i] << "\n";
     }
     biface.contextFree(ctx, nullptr);
     biface.backendFree(backH);

@@ -1,0 +1,36 @@
+{
+  "_comment": [
+    "Hardware bank for the ported gen_random_workload.py, holding only the",
+    "config this sweep runs on. The FPGA sweep's bank had two machines",
+    "(gemmini_q31 CPU_P + rvv_f16 CPU_E); this board has three lanes, so",
+    "CPU_X is added and the packing problem is not the same shape. Arms are",
+    "matched to each other WITHIN this target only.",
+    "machines/profile_hw/profile are copied verbatim into every generated",
+    "workload's `hardware` block, and they are field-for-field the block in",
+    "data/toplevel/networks_flowc_4way_split_qrb5165.json, which is the",
+    "workload Flow C already solves and runs on this board."
+  ],
+  "default": "qrb5165_flowc",
+  "configs": {
+    "qrb5165_flowc": {
+      "description": "QRB5165 v66 through Flow C: HTA (CPU_P) + Hexagon v66 DSP (CPU_E) + Kryo 585 CPU (CPU_X), one lane each. Profiles are the tile-level results.csv files flowc/artifacts.py writes from measurements/qrb5165_v66.json.",
+      "available": true,
+      "machines": {
+        "cpu_p": 1,
+        "cpu_e": 1,
+        "cpu_x": 1
+      },
+      "profile_hw": {
+        "cpu_p": "HTA",
+        "cpu_e": "DSP",
+        "cpu_x": "CPU"
+      },
+      "profile": {
+        "gen_root": "gen",
+        "target": "qrb5165_flowc",
+        "topo_tag": "topo_0",
+        "topo_tag_override": false
+      }
+    }
+  }
+}

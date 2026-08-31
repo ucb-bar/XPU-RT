@@ -55,6 +55,13 @@ same reason a road can keep a Roman route: every reader already speaks it.
   needed). Driven by the same one-command script as Flow A,
   `scripts/repro_workload.sh <spec.json>`, which installs everything it
   needs via `scripts/install_xpurt_deps.sh` — see that doc's §0.
+* [`docs/mlp_dronet_yolo_qnn_reproduction.md`](docs/mlp_dronet_yolo_qnn_reproduction.md)
+  — the same three networks on a physical QRB5165 through QNN (Flow C):
+  modelblaster's `extract_graph`/registry/emitters/schedule-ingest reused as
+  a library, a QNN lane runtime instead of its codegen, and
+  predicted-vs-actual gantts from `plot_xpurt_trace.py`. Includes a
+  stage-by-stage diff against the standard modelblaster flow and a map to
+  the key files.
 * [`zephyr-chipyard-sw/modelblaster/examples/microros_demo/ROS_FLOW.md`](zephyr-chipyard-sw/modelblaster/examples/microros_demo/ROS_FLOW.md)
   — micro-ROS fixed-pinning baseline flow (the reference against which
   the scheduler is benchmarked).

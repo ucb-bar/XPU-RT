@@ -1,0 +1,3640 @@
+[
+ {
+  "point": "baseline_seed0",
+  "arm": "baseline",
+  "seed": 0,
+  "status": "run",
+  "validation_problems": [],
+  "max_ops": 800,
+  "op_count": 20,
+  "horizon_ms": 42.0,
+  "hyperperiod_ms": 14,
+  "periodic": 3,
+  "nonperiodic": 4,
+  "networks": {
+   "mlp_control": {
+    "period": 7,
+    "window_duration": 5,
+    "num_instances": 6
+   },
+   "dronet_a": {
+    "period": 14,
+    "window_duration": 6,
+    "num_instances": 3
+   },
+   "dronet_b": {
+    "period": 14,
+    "window_duration": 4,
+    "num_instances": 3
+   },
+   "yolov8n_a": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   },
+   "yolov8n_b": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   },
+   "yolov8n_c": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   },
+   "yolov8n_d": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   }
+  },
+  "workload": "workloads/baseline_seed0.json",
+  "flowc_spec": "workloads/baseline_seed0.flowc.json",
+  "solver": "milp",
+  "solver_status": "optimal",
+  "milp_timed_out_s": null,
+  "solve_s": 11.3,
+  "schedule": "schedules/scheduled_baseline_seed0_profiled.json",
+  "sched_makespan_nonperiodic_ms": 67.57,
+  "sched_makespan_all_ms": null,
+  "predicted_makespan_ms": 67.571,
+  "n_entries": 20,
+  "dispatch_table_sha256": "41c50a9c96cf43ef80c58760a34e22cd472da409c7db0387ec1d93603de1b68f",
+  "runtime_main_sha256": "7165655f8c1484e96428db5cc1f90dfbba72de073441ebe01b0956e25ab5e5c3",
+  "lane_entry_counts": {
+   "cpu": 6,
+   "dsp": 8,
+   "hta": 6
+  },
+  "lane_placement": {
+   "dronet_a/dronet_full": {
+    "dsp": 1,
+    "hta": 2
+   },
+   "mlp_control/mlp_control_full": {
+    "cpu": 5,
+    "dsp": 1
+   },
+   "yolov8n_c/yolov8n_backbone": {
+    "hta": 1
+   },
+   "dronet_b/dronet_full": {
+    "dsp": 2,
+    "hta": 1
+   },
+   "yolov8n_a/yolov8n_backbone": {
+    "dsp": 1
+   },
+   "yolov8n_b/yolov8n_backbone": {
+    "hta": 1
+   },
+   "yolov8n_a/yolov8n_head": {
+    "dsp": 1
+   },
+   "yolov8n_c/yolov8n_head": {
+    "cpu": 1
+   },
+   "yolov8n_d/yolov8n_backbone": {
+    "hta": 1
+   },
+   "yolov8n_b/yolov8n_head": {
+    "dsp": 1
+   },
+   "yolov8n_d/yolov8n_head": {
+    "dsp": 1
+   }
+  },
+  "contexts": [
+   "ctx_dronet_full_hta__Dsp.bin",
+   "ctx_dronet_full_hta__Hta.bin",
+   "ctx_mlp_control__Dsp.bin",
+   "ctx_mlp_control_fp32__Cpu.bin",
+   "ctx_yolov8n_backbone__Dsp.bin",
+   "ctx_yolov8n_backbone__Hta.bin",
+   "ctx_yolov8n_head__Cpu.bin",
+   "ctx_yolov8n_head__Dsp.bin"
+  ],
+  "provenance": {
+   "cost_model_sha256": "b4f1a68455ef50f67d5cb585ca92c706552ce3b3cdd094cf26dd5ea529311d81",
+   "predicate6_missing_contexts": [],
+   "predicate7_excluded_placements": [],
+   "table_vs_manifest_mismatches": [],
+   "trace_vs_table": {
+    "rep1": {
+     "entries_with_timings": 20,
+     "entries_expected": 20,
+     "all_entries_ran": true,
+     "n_mismatches": 0
+    },
+    "rep2": {
+     "entries_with_timings": 20,
+     "entries_expected": 20,
+     "all_entries_ran": true,
+     "n_mismatches": 0
+    },
+    "rep3": {
+     "entries_with_timings": 20,
+     "entries_expected": 20,
+     "all_entries_ran": true,
+     "n_mismatches": 0
+    }
+   },
+   "bringup_lines_unavailable": "deploy_and_run.sh's `exec {lockfd}> /tmp/qnn_board.lock 2>/dev/null` redirects the board-side shell's stderr for the rest of the script, so no [bringup] line reaches run.log. Replaced by predicate 6 (contexts verified staged before the run), the N/N entry count (the runtime skips entries whose context is missing), and trace_vs_table above, which checks the ctx actually used per entry. See verify_provenance.py."
+  },
+  "reps": {
+   "rep1": {
+    "wall_ms": 85.192,
+    "ratio": 1.26,
+    "entries": "20/20",
+    "lock_wait_s": 0.8,
+    "run_wall_s": 11.2,
+    "iterations": [],
+    "ok": true
+   },
+   "rep2": {
+    "wall_ms": 82.978,
+    "ratio": 1.23,
+    "entries": "20/20",
+    "lock_wait_s": 0.35,
+    "run_wall_s": 11.0,
+    "iterations": [],
+    "ok": true
+   },
+   "rep3": {
+    "wall_ms": 82.882,
+    "ratio": 1.23,
+    "entries": "20/20",
+    "lock_wait_s": 0.32,
+    "run_wall_s": 10.5,
+    "iterations": [],
+    "ok": true
+   }
+  },
+  "governor": "performance during run (flow_c.py run --tuned), restored to schedutil after each rep",
+  "warmup": "FLOWC_ITERATIONS=2; the reported trace is walk 2",
+  "actual_makespan_ms": [
+   85.192,
+   82.978,
+   82.882
+  ],
+  "actual_makespan_median_ms": 82.978,
+  "actual_makespan_spread_ms": 2.31,
+  "ratio_per_rep": [
+   1.26,
+   1.23,
+   1.23
+  ],
+  "ratio_median": 1.23,
+  "lock_wait_s": [
+   0.8,
+   0.35,
+   0.32
+  ],
+  "lock_wait_exceeds_run": [
+   true,
+   true,
+   true
+  ],
+  "per_tile": {
+   "dronet_a/dronet_full@dsp": {
+    "predicted_ms": 0.645,
+    "actual_p50_ms": 2.015,
+    "ratio": 3.124,
+    "reps": 3
+   },
+   "dronet_a/dronet_full@hta": {
+    "predicted_ms": 2.03,
+    "actual_p50_ms": 1.9395,
+    "ratio": 0.955,
+    "reps": 3
+   },
+   "dronet_b/dronet_full@dsp": {
+    "predicted_ms": 0.645,
+    "actual_p50_ms": 1.068,
+    "ratio": 1.656,
+    "reps": 3
+   },
+   "dronet_b/dronet_full@hta": {
+    "predicted_ms": 2.03,
+    "actual_p50_ms": 1.383,
+    "ratio": 0.681,
+    "reps": 3
+   },
+   "mlp_control/mlp_control_full@cpu": {
+    "predicted_ms": 0.107,
+    "actual_p50_ms": 0.082,
+    "ratio": 0.766,
+    "reps": 3
+   },
+   "mlp_control/mlp_control_full@dsp": {
+    "predicted_ms": 0.589,
+    "actual_p50_ms": 0.995,
+    "ratio": 1.689,
+    "reps": 3
+   },
+   "yolov8n_a/yolov8n_backbone@dsp": {
+    "predicted_ms": 13.267,
+    "actual_p50_ms": 13.378,
+    "ratio": 1.008,
+    "reps": 3
+   },
+   "yolov8n_a/yolov8n_head@dsp": {
+    "predicted_ms": 15.377,
+    "actual_p50_ms": 21.387,
+    "ratio": 1.391,
+    "reps": 3
+   },
+   "yolov8n_b/yolov8n_backbone@hta": {
+    "predicted_ms": 13.909,
+    "actual_p50_ms": 26.271,
+    "ratio": 1.889,
+    "reps": 3
+   },
+   "yolov8n_b/yolov8n_head@dsp": {
+    "predicted_ms": 15.377,
+    "actual_p50_ms": 18.819,
+    "ratio": 1.224,
+    "reps": 3
+   },
+   "yolov8n_c/yolov8n_backbone@hta": {
+    "predicted_ms": 13.909,
+    "actual_p50_ms": 13.869,
+    "ratio": 0.997,
+    "reps": 3
+   },
+   "yolov8n_c/yolov8n_head@cpu": {
+    "predicted_ms": 39.464,
+    "actual_p50_ms": 52.183,
+    "ratio": 1.322,
+    "reps": 3
+   },
+   "yolov8n_d/yolov8n_backbone@hta": {
+    "predicted_ms": 13.909,
+    "actual_p50_ms": 13.282,
+    "ratio": 0.955,
+    "reps": 3
+   },
+   "yolov8n_d/yolov8n_head@dsp": {
+    "predicted_ms": 15.377,
+    "actual_p50_ms": 16.717,
+    "ratio": 1.087,
+    "reps": 3
+   }
+  }
+ },
+ {
+  "point": "baseline_seed1",
+  "arm": "baseline",
+  "seed": 1,
+  "status": "run",
+  "validation_problems": [],
+  "max_ops": 800,
+  "op_count": 25,
+  "horizon_ms": 47.74,
+  "hyperperiod_ms": 10,
+  "periodic": 2,
+  "nonperiodic": 5,
+  "networks": {
+   "mlp_control": {
+    "period": 5,
+    "window_duration": 3,
+    "num_instances": 10
+   },
+   "dronet": {
+    "period": 10,
+    "window_duration": 8,
+    "num_instances": 5
+   },
+   "yolov8n_a": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   },
+   "yolov8n_b": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   },
+   "yolov8n_c": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   },
+   "yolov8n_d": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   },
+   "yolov8n_e": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   }
+  },
+  "workload": "workloads/baseline_seed1.json",
+  "flowc_spec": "workloads/baseline_seed1.flowc.json",
+  "solver": "milp",
+  "solver_status": "optimal_inaccurate",
+  "milp_timed_out_s": null,
+  "solve_s": 305.1,
+  "schedule": "schedules/scheduled_baseline_seed1_profiled.json",
+  "sched_makespan_nonperiodic_ms": 79.57,
+  "sched_makespan_all_ms": null,
+  "predicted_makespan_ms": 79.571,
+  "n_entries": 25,
+  "dispatch_table_sha256": "b71a929c05e130ce4a5905f2c5d46c55d460f9356eb051244a141deff9e41d70",
+  "runtime_main_sha256": "7165655f8c1484e96428db5cc1f90dfbba72de073441ebe01b0956e25ab5e5c3",
+  "lane_entry_counts": {
+   "cpu": 12,
+   "dsp": 8,
+   "hta": 5
+  },
+  "lane_placement": {
+   "mlp_control/mlp_control_full": {
+    "cpu": 9,
+    "dsp": 1
+   },
+   "yolov8n_c/yolov8n_backbone": {
+    "dsp": 1
+   },
+   "yolov8n_a/yolov8n_backbone": {
+    "hta": 1
+   },
+   "dronet/dronet_full": {
+    "cpu": 2,
+    "dsp": 2,
+    "hta": 1
+   },
+   "yolov8n_d/yolov8n_backbone": {
+    "hta": 1
+   },
+   "yolov8n_a/yolov8n_head": {
+    "dsp": 1
+   },
+   "yolov8n_b/yolov8n_backbone": {
+    "hta": 1
+   },
+   "yolov8n_c/yolov8n_head": {
+    "dsp": 1
+   },
+   "yolov8n_d/yolov8n_head": {
+    "cpu": 1
+   },
+   "yolov8n_e/yolov8n_backbone": {
+    "hta": 1
+   },
+   "yolov8n_b/yolov8n_head": {
+    "dsp": 1
+   },
+   "yolov8n_e/yolov8n_head": {
+    "dsp": 1
+   }
+  },
+  "contexts": [
+   "ctx_dronet_full_hta__Cpu.bin",
+   "ctx_dronet_full_hta__Dsp.bin",
+   "ctx_dronet_full_hta__Hta.bin",
+   "ctx_mlp_control__Dsp.bin",
+   "ctx_mlp_control_fp32__Cpu.bin",
+   "ctx_yolov8n_backbone__Dsp.bin",
+   "ctx_yolov8n_backbone__Hta.bin",
+   "ctx_yolov8n_head__Cpu.bin",
+   "ctx_yolov8n_head__Dsp.bin"
+  ],
+  "provenance": {
+   "cost_model_sha256": "b4f1a68455ef50f67d5cb585ca92c706552ce3b3cdd094cf26dd5ea529311d81",
+   "predicate6_missing_contexts": [],
+   "predicate7_excluded_placements": [],
+   "table_vs_manifest_mismatches": [],
+   "trace_vs_table": {
+    "rep1": {
+     "entries_with_timings": 25,
+     "entries_expected": 25,
+     "all_entries_ran": true,
+     "n_mismatches": 0
+    },
+    "rep2": {
+     "entries_with_timings": 25,
+     "entries_expected": 25,
+     "all_entries_ran": true,
+     "n_mismatches": 0
+    },
+    "rep3": {
+     "entries_with_timings": 25,
+     "entries_expected": 25,
+     "all_entries_ran": true,
+     "n_mismatches": 0
+    }
+   },
+   "bringup_lines_unavailable": "deploy_and_run.sh's `exec {lockfd}> /tmp/qnn_board.lock 2>/dev/null` redirects the board-side shell's stderr for the rest of the script, so no [bringup] line reaches run.log. Replaced by predicate 6 (contexts verified staged before the run), the N/N entry count (the runtime skips entries whose context is missing), and trace_vs_table above, which checks the ctx actually used per entry. See verify_provenance.py."
+  },
+  "reps": {
+   "rep1": {
+    "wall_ms": 93.087,
+    "ratio": 1.17,
+    "entries": "25/25",
+    "lock_wait_s": 0.31,
+    "run_wall_s": 11.9,
+    "iterations": [],
+    "ok": true
+   },
+   "rep2": {
+    "wall_ms": 92.133,
+    "ratio": 1.16,
+    "entries": "25/25",
+    "lock_wait_s": 0.32,
+    "run_wall_s": 11.8,
+    "iterations": [],
+    "ok": true
+   },
+   "rep3": {
+    "wall_ms": 94.822,
+    "ratio": 1.19,
+    "entries": "25/25",
+    "lock_wait_s": 0.29,
+    "run_wall_s": 11.8,
+    "iterations": [],
+    "ok": true
+   }
+  },
+  "governor": "performance during run (flow_c.py run --tuned), restored to schedutil after each rep",
+  "warmup": "FLOWC_ITERATIONS=2; the reported trace is walk 2",
+  "actual_makespan_ms": [
+   93.087,
+   92.133,
+   94.822
+  ],
+  "actual_makespan_median_ms": 93.087,
+  "actual_makespan_spread_ms": 2.689,
+  "ratio_per_rep": [
+   1.17,
+   1.16,
+   1.19
+  ],
+  "ratio_median": 1.17,
+  "lock_wait_s": [
+   0.31,
+   0.32,
+   0.29
+  ],
+  "lock_wait_exceeds_run": [
+   true,
+   true,
+   true
+  ],
+  "per_tile": {
+   "dronet/dronet_full@cpu": {
+    "predicted_ms": 6.998,
+    "actual_p50_ms": 8.388,
+    "ratio": 1.199,
+    "reps": 3
+   },
+   "dronet/dronet_full@dsp": {
+    "predicted_ms": 0.645,
+    "actual_p50_ms": 1.258,
+    "ratio": 1.95,
+    "reps": 3
+   },
+   "dronet/dronet_full@hta": {
+    "predicted_ms": 2.03,
+    "actual_p50_ms": 1.469,
+    "ratio": 0.724,
+    "reps": 3
+   },
+   "mlp_control/mlp_control_full@cpu": {
+    "predicted_ms": 0.107,
+    "actual_p50_ms": 0.067,
+    "ratio": 0.626,
+    "reps": 3
+   },
+   "mlp_control/mlp_control_full@dsp": {
+    "predicted_ms": 0.589,
+    "actual_p50_ms": 1.578,
+    "ratio": 2.679,
+    "reps": 3
+   },
+   "yolov8n_a/yolov8n_backbone@hta": {
+    "predicted_ms": 13.909,
+    "actual_p50_ms": 13.679,
+    "ratio": 0.983,
+    "reps": 3
+   },
+   "yolov8n_a/yolov8n_head@dsp": {
+    "predicted_ms": 15.377,
+    "actual_p50_ms": 18.385,
+    "ratio": 1.196,
+    "reps": 3
+   },
+   "yolov8n_b/yolov8n_backbone@hta": {
+    "predicted_ms": 13.909,
+    "actual_p50_ms": 28.384,
+    "ratio": 2.041,
+    "reps": 3
+   },
+   "yolov8n_b/yolov8n_head@dsp": {
+    "predicted_ms": 15.377,
+    "actual_p50_ms": 18.009,
+    "ratio": 1.171,
+    "reps": 3
+   },
+   "yolov8n_c/yolov8n_backbone@dsp": {
+    "predicted_ms": 13.267,
+    "actual_p50_ms": 15.623,
+    "ratio": 1.178,
+    "reps": 3
+   },
+   "yolov8n_c/yolov8n_head@dsp": {
+    "predicted_ms": 15.377,
+    "actual_p50_ms": 16.613,
+    "ratio": 1.08,
+    "reps": 3
+   },
+   "yolov8n_d/yolov8n_backbone@hta": {
+    "predicted_ms": 13.909,
+    "actual_p50_ms": 12.241,
+    "ratio": 0.88,
+    "reps": 3
+   },
+   "yolov8n_d/yolov8n_head@cpu": {
+    "predicted_ms": 39.464,
+    "actual_p50_ms": 51.528,
+    "ratio": 1.306,
+    "reps": 3
+   },
+   "yolov8n_e/yolov8n_backbone@hta": {
+    "predicted_ms": 13.909,
+    "actual_p50_ms": 14.122,
+    "ratio": 1.015,
+    "reps": 3
+   },
+   "yolov8n_e/yolov8n_head@dsp": {
+    "predicted_ms": 15.377,
+    "actual_p50_ms": 15.364,
+    "ratio": 0.999,
+    "reps": 3
+   }
+  }
+ },
+ {
+  "point": "baseline_seed2",
+  "arm": "baseline",
+  "seed": 2,
+  "status": "run",
+  "validation_problems": [],
+  "max_ops": 800,
+  "op_count": 26,
+  "horizon_ms": 45.0,
+  "hyperperiod_ms": 15,
+  "periodic": 2,
+  "nonperiodic": 4,
+  "networks": {
+   "mlp_control": {
+    "period": 3,
+    "window_duration": 2,
+    "num_instances": 15
+   },
+   "dronet": {
+    "period": 15,
+    "window_duration": 11,
+    "num_instances": 3
+   },
+   "yolov8n_a": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   },
+   "yolov8n_b": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   },
+   "yolov8n_c": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   },
+   "yolov8n_d": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   }
+  },
+  "workload": "workloads/baseline_seed2.json",
+  "flowc_spec": "workloads/baseline_seed2.flowc.json",
+  "solver": "milp",
+  "solver_status": "optimal",
+  "milp_timed_out_s": null,
+  "solve_s": 62.6,
+  "schedule": "schedules/scheduled_baseline_seed2_profiled.json",
+  "sched_makespan_nonperiodic_ms": 73.34,
+  "sched_makespan_all_ms": null,
+  "predicted_makespan_ms": 73.343,
+  "n_entries": 26,
+  "dispatch_table_sha256": "95dd503aa8274486c597ca3ae032a14b29d6dab8c0ffea2833b6fc2d18068fdb",
+  "runtime_main_sha256": "7165655f8c1484e96428db5cc1f90dfbba72de073441ebe01b0956e25ab5e5c3",
+  "lane_entry_counts": {
+   "cpu": 12,
+   "dsp": 10,
+   "hta": 4
+  },
+  "lane_placement": {
+   "dronet/dronet_full": {
+    "dsp": 1,
+    "cpu": 1,
+    "hta": 1
+   },
+   "mlp_control/mlp_control_full": {
+    "cpu": 10,
+    "dsp": 5
+   },
+   "yolov8n_d/yolov8n_backbone": {
+    "dsp": 1
+   },
+   "yolov8n_a/yolov8n_backbone": {
+    "hta": 1
+   },
+   "yolov8n_c/yolov8n_backbone": {
+    "hta": 1
+   },
+   "yolov8n_a/yolov8n_head": {
+    "dsp": 1
+   },
+   "yolov8n_c/yolov8n_head": {
+    "cpu": 1
+   },
+   "yolov8n_d/yolov8n_head": {
+    "dsp": 1
+   },
+   "yolov8n_b/yolov8n_backbone": {
+    "hta": 1
+   },
+   "yolov8n_b/yolov8n_head": {
+    "dsp": 1
+   }
+  },
+  "contexts": [
+   "ctx_dronet_full_hta__Cpu.bin",
+   "ctx_dronet_full_hta__Dsp.bin",
+   "ctx_dronet_full_hta__Hta.bin",
+   "ctx_mlp_control__Dsp.bin",
+   "ctx_mlp_control_fp32__Cpu.bin",
+   "ctx_yolov8n_backbone__Dsp.bin",
+   "ctx_yolov8n_backbone__Hta.bin",
+   "ctx_yolov8n_head__Cpu.bin",
+   "ctx_yolov8n_head__Dsp.bin"
+  ],
+  "provenance": {
+   "cost_model_sha256": "b4f1a68455ef50f67d5cb585ca92c706552ce3b3cdd094cf26dd5ea529311d81",
+   "predicate6_missing_contexts": [],
+   "predicate7_excluded_placements": [],
+   "table_vs_manifest_mismatches": [],
+   "trace_vs_table": {
+    "rep1": {
+     "entries_with_timings": 26,
+     "entries_expected": 26,
+     "all_entries_ran": true,
+     "n_mismatches": 0
+    },
+    "rep2": {
+     "entries_with_timings": 26,
+     "entries_expected": 26,
+     "all_entries_ran": true,
+     "n_mismatches": 0
+    },
+    "rep3": {
+     "entries_with_timings": 26,
+     "entries_expected": 26,
+     "all_entries_ran": true,
+     "n_mismatches": 0
+    }
+   },
+   "bringup_lines_unavailable": "deploy_and_run.sh's `exec {lockfd}> /tmp/qnn_board.lock 2>/dev/null` redirects the board-side shell's stderr for the rest of the script, so no [bringup] line reaches run.log. Replaced by predicate 6 (contexts verified staged before the run), the N/N entry count (the runtime skips entries whose context is missing), and trace_vs_table above, which checks the ctx actually used per entry. See verify_provenance.py."
+  },
+  "reps": {
+   "rep1": {
+    "wall_ms": 90.482,
+    "ratio": 1.23,
+    "entries": "26/26",
+    "lock_wait_s": 0.44,
+    "run_wall_s": 10.8,
+    "iterations": [],
+    "ok": true
+   },
+   "rep2": {
+    "wall_ms": 94.247,
+    "ratio": 1.29,
+    "entries": "26/26",
+    "lock_wait_s": 0.37,
+    "run_wall_s": 10.9,
+    "iterations": [],
+    "ok": true
+   },
+   "rep3": {
+    "wall_ms": 86.424,
+    "ratio": 1.18,
+    "entries": "26/26",
+    "lock_wait_s": 0.31,
+    "run_wall_s": 5.0,
+    "iterations": [],
+    "ok": true
+   }
+  },
+  "governor": "performance during run (flow_c.py run --tuned), restored to schedutil after each rep",
+  "warmup": "FLOWC_ITERATIONS=2; the reported trace is walk 2",
+  "actual_makespan_ms": [
+   90.482,
+   94.247,
+   86.424
+  ],
+  "actual_makespan_median_ms": 90.482,
+  "actual_makespan_spread_ms": 7.823,
+  "ratio_per_rep": [
+   1.23,
+   1.29,
+   1.18
+  ],
+  "ratio_median": 1.23,
+  "lock_wait_s": [
+   0.44,
+   0.37,
+   0.31
+  ],
+  "lock_wait_exceeds_run": [
+   true,
+   true,
+   true
+  ],
+  "per_tile": {
+   "dronet/dronet_full@cpu": {
+    "predicted_ms": 6.998,
+    "actual_p50_ms": 11.92,
+    "ratio": 1.703,
+    "reps": 3
+   },
+   "dronet/dronet_full@dsp": {
+    "predicted_ms": 0.645,
+    "actual_p50_ms": 1.215,
+    "ratio": 1.884,
+    "reps": 3
+   },
+   "dronet/dronet_full@hta": {
+    "predicted_ms": 2.03,
+    "actual_p50_ms": 14.425,
+    "ratio": 7.106,
+    "reps": 3
+   },
+   "mlp_control/mlp_control_full@cpu": {
+    "predicted_ms": 0.107,
+    "actual_p50_ms": 0.0635,
+    "ratio": 0.593,
+    "reps": 3
+   },
+   "mlp_control/mlp_control_full@dsp": {
+    "predicted_ms": 0.589,
+    "actual_p50_ms": 0.685,
+    "ratio": 1.163,
+    "reps": 3
+   },
+   "yolov8n_a/yolov8n_backbone@hta": {
+    "predicted_ms": 13.909,
+    "actual_p50_ms": 13.796,
+    "ratio": 0.992,
+    "reps": 3
+   },
+   "yolov8n_a/yolov8n_head@dsp": {
+    "predicted_ms": 15.377,
+    "actual_p50_ms": 20.26,
+    "ratio": 1.318,
+    "reps": 3
+   },
+   "yolov8n_b/yolov8n_backbone@hta": {
+    "predicted_ms": 13.909,
+    "actual_p50_ms": 12.917,
+    "ratio": 0.929,
+    "reps": 3
+   },
+   "yolov8n_b/yolov8n_head@dsp": {
+    "predicted_ms": 15.377,
+    "actual_p50_ms": 16.988,
+    "ratio": 1.105,
+    "reps": 3
+   },
+   "yolov8n_c/yolov8n_backbone@hta": {
+    "predicted_ms": 13.909,
+    "actual_p50_ms": 14.424,
+    "ratio": 1.037,
+    "reps": 3
+   },
+   "yolov8n_c/yolov8n_head@cpu": {
+    "predicted_ms": 39.464,
+    "actual_p50_ms": 52.538,
+    "ratio": 1.331,
+    "reps": 3
+   },
+   "yolov8n_d/yolov8n_backbone@dsp": {
+    "predicted_ms": 13.267,
+    "actual_p50_ms": 13.185,
+    "ratio": 0.994,
+    "reps": 3
+   },
+   "yolov8n_d/yolov8n_head@dsp": {
+    "predicted_ms": 15.377,
+    "actual_p50_ms": 17.955,
+    "ratio": 1.168,
+    "reps": 3
+   }
+  }
+ },
+ {
+  "point": "baseline_seed3",
+  "arm": "baseline",
+  "seed": 3,
+  "status": "run",
+  "validation_problems": [],
+  "max_ops": 800,
+  "op_count": 16,
+  "horizon_ms": 36.0,
+  "hyperperiod_ms": 12,
+  "periodic": 3,
+  "nonperiodic": 2,
+  "networks": {
+   "mlp_control": {
+    "period": 6,
+    "window_duration": 3,
+    "num_instances": 6
+   },
+   "dronet_a": {
+    "period": 12,
+    "window_duration": 5,
+    "num_instances": 3
+   },
+   "dronet_b": {
+    "period": 12,
+    "window_duration": 4,
+    "num_instances": 3
+   },
+   "yolov8n_a": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   },
+   "yolov8n_b": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   }
+  },
+  "workload": "workloads/baseline_seed3.json",
+  "flowc_spec": "workloads/baseline_seed3.flowc.json",
+  "solver": "milp",
+  "solver_status": "optimal",
+  "milp_timed_out_s": null,
+  "solve_s": 2.3,
+  "schedule": "schedules/scheduled_baseline_seed3_profiled.json",
+  "sched_makespan_nonperiodic_ms": 48.4,
+  "sched_makespan_all_ms": null,
+  "predicted_makespan_ms": 48.399,
+  "n_entries": 16,
+  "dispatch_table_sha256": "5566fa3790f0dc495be2d42a2d935d74aff26f3c345846d3d3dbcb25c83a87a9",
+  "runtime_main_sha256": "7165655f8c1484e96428db5cc1f90dfbba72de073441ebe01b0956e25ab5e5c3",
+  "lane_entry_counts": {
+   "cpu": 6,
+   "dsp": 6,
+   "hta": 4
+  },
+  "lane_placement": {
+   "dronet_a/dronet_full": {
+    "dsp": 2,
+    "hta": 1
+   },
+   "mlp_control/mlp_control_full": {
+    "cpu": 6
+   },
+   "yolov8n_b/yolov8n_backbone": {
+    "dsp": 1
+   },
+   "dronet_b/dronet_full": {
+    "hta": 2,
+    "dsp": 1
+   },
+   "yolov8n_a/yolov8n_backbone": {
+    "hta": 1
+   },
+   "yolov8n_b/yolov8n_head": {
+    "dsp": 1
+   },
+   "yolov8n_a/yolov8n_head": {
+    "dsp": 1
+   }
+  },
+  "contexts": [
+   "ctx_dronet_full_hta__Dsp.bin",
+   "ctx_dronet_full_hta__Hta.bin",
+   "ctx_mlp_control_fp32__Cpu.bin",
+   "ctx_yolov8n_backbone__Dsp.bin",
+   "ctx_yolov8n_backbone__Hta.bin",
+   "ctx_yolov8n_head__Dsp.bin"
+  ],
+  "provenance": {
+   "cost_model_sha256": "b4f1a68455ef50f67d5cb585ca92c706552ce3b3cdd094cf26dd5ea529311d81",
+   "predicate6_missing_contexts": [],
+   "predicate7_excluded_placements": [],
+   "table_vs_manifest_mismatches": [],
+   "trace_vs_table": {
+    "rep1": {
+     "entries_with_timings": 16,
+     "entries_expected": 16,
+     "all_entries_ran": true,
+     "n_mismatches": 0
+    },
+    "rep2": {
+     "entries_with_timings": 16,
+     "entries_expected": 16,
+     "all_entries_ran": true,
+     "n_mismatches": 0
+    },
+    "rep3": {
+     "entries_with_timings": 16,
+     "entries_expected": 16,
+     "all_entries_ran": true,
+     "n_mismatches": 0
+    }
+   },
+   "bringup_lines_unavailable": "deploy_and_run.sh's `exec {lockfd}> /tmp/qnn_board.lock 2>/dev/null` redirects the board-side shell's stderr for the rest of the script, so no [bringup] line reaches run.log. Replaced by predicate 6 (contexts verified staged before the run), the N/N entry count (the runtime skips entries whose context is missing), and trace_vs_table above, which checks the ctx actually used per entry. See verify_provenance.py."
+  },
+  "reps": {
+   "rep1": {
+    "wall_ms": 56.071,
+    "ratio": 1.16,
+    "entries": "16/16",
+    "lock_wait_s": 0.32,
+    "run_wall_s": 9.7,
+    "iterations": [],
+    "ok": true
+   },
+   "rep2": {
+    "wall_ms": 52.128,
+    "ratio": 1.08,
+    "entries": "16/16",
+    "lock_wait_s": 0.29,
+    "run_wall_s": 9.6,
+    "iterations": [],
+    "ok": true
+   },
+   "rep3": {
+    "wall_ms": 52.677,
+    "ratio": 1.09,
+    "entries": "16/16",
+    "lock_wait_s": 0.32,
+    "run_wall_s": 9.8,
+    "iterations": [],
+    "ok": true
+   }
+  },
+  "governor": "performance during run (flow_c.py run --tuned), restored to schedutil after each rep",
+  "warmup": "FLOWC_ITERATIONS=2; the reported trace is walk 2",
+  "actual_makespan_ms": [
+   56.071,
+   52.128,
+   52.677
+  ],
+  "actual_makespan_median_ms": 52.677,
+  "actual_makespan_spread_ms": 3.943,
+  "ratio_per_rep": [
+   1.16,
+   1.08,
+   1.09
+  ],
+  "ratio_median": 1.09,
+  "lock_wait_s": [
+   0.32,
+   0.29,
+   0.32
+  ],
+  "lock_wait_exceeds_run": [
+   true,
+   true,
+   true
+  ],
+  "per_tile": {
+   "dronet_a/dronet_full@dsp": {
+    "predicted_ms": 0.645,
+    "actual_p50_ms": 1.6035,
+    "ratio": 2.486,
+    "reps": 3
+   },
+   "dronet_a/dronet_full@hta": {
+    "predicted_ms": 2.03,
+    "actual_p50_ms": 1.76,
+    "ratio": 0.867,
+    "reps": 3
+   },
+   "dronet_b/dronet_full@dsp": {
+    "predicted_ms": 0.645,
+    "actual_p50_ms": 0.943,
+    "ratio": 1.462,
+    "reps": 3
+   },
+   "dronet_b/dronet_full@hta": {
+    "predicted_ms": 2.03,
+    "actual_p50_ms": 1.8195,
+    "ratio": 0.896,
+    "reps": 3
+   },
+   "mlp_control/mlp_control_full@cpu": {
+    "predicted_ms": 0.107,
+    "actual_p50_ms": 0.069,
+    "ratio": 0.645,
+    "reps": 3
+   },
+   "yolov8n_a/yolov8n_backbone@hta": {
+    "predicted_ms": 13.909,
+    "actual_p50_ms": 14.164,
+    "ratio": 1.018,
+    "reps": 3
+   },
+   "yolov8n_a/yolov8n_head@dsp": {
+    "predicted_ms": 15.377,
+    "actual_p50_ms": 16.208,
+    "ratio": 1.054,
+    "reps": 3
+   },
+   "yolov8n_b/yolov8n_backbone@dsp": {
+    "predicted_ms": 13.267,
+    "actual_p50_ms": 12.222,
+    "ratio": 0.921,
+    "reps": 3
+   },
+   "yolov8n_b/yolov8n_head@dsp": {
+    "predicted_ms": 15.377,
+    "actual_p50_ms": 16.495,
+    "ratio": 1.073,
+    "reps": 3
+   }
+  }
+ },
+ {
+  "point": "baseline_seed4",
+  "arm": "baseline",
+  "seed": 4,
+  "status": "REJECTED",
+  "validation_problems": [
+   "no non-periodic work: nothing to pack against the periodic load"
+  ],
+  "max_ops": 800,
+  "op_count": 12,
+  "horizon_ms": 24.0,
+  "hyperperiod_ms": 8,
+  "periodic": 3,
+  "nonperiodic": 0,
+  "networks": {
+   "mlp_control": {
+    "period": 4,
+    "window_duration": 3,
+    "num_instances": 6
+   },
+   "dronet_a": {
+    "period": 8,
+    "window_duration": 2,
+    "num_instances": 3
+   },
+   "dronet_b": {
+    "period": 8,
+    "window_duration": 3,
+    "num_instances": 3
+   }
+  },
+  "workload": "workloads/rejected/baseline_seed4.json"
+ },
+ {
+  "point": "baseline_seed5",
+  "arm": "baseline",
+  "seed": 5,
+  "status": "REJECTED",
+  "validation_problems": [
+   "no non-periodic work: nothing to pack against the periodic load"
+  ],
+  "max_ops": 800,
+  "op_count": 12,
+  "horizon_ms": 54.0,
+  "hyperperiod_ms": 18,
+  "periodic": 2,
+  "nonperiodic": 0,
+  "networks": {
+   "mlp_control": {
+    "period": 6,
+    "window_duration": 4,
+    "num_instances": 9
+   },
+   "dronet": {
+    "period": 18,
+    "window_duration": 14,
+    "num_instances": 3
+   }
+  },
+  "workload": "workloads/rejected/baseline_seed5.json"
+ },
+ {
+  "point": "baseline_seed6",
+  "arm": "baseline",
+  "seed": 6,
+  "status": "run",
+  "validation_problems": [],
+  "max_ops": 800,
+  "op_count": 30,
+  "horizon_ms": 47.74,
+  "hyperperiod_ms": 5,
+  "periodic": 2,
+  "nonperiodic": 5,
+  "networks": {
+   "mlp_control": {
+    "period": 5,
+    "window_duration": 4,
+    "num_instances": 10
+   },
+   "dronet": {
+    "period": 5,
+    "window_duration": 4,
+    "num_instances": 10
+   },
+   "yolov8n_a": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   },
+   "yolov8n_b": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   },
+   "yolov8n_c": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   },
+   "yolov8n_d": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   },
+   "yolov8n_e": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   }
+  },
+  "workload": "workloads/baseline_seed6.json",
+  "flowc_spec": "workloads/baseline_seed6.flowc.json",
+  "solver": "milp",
+  "solver_status": "optimal_inaccurate",
+  "milp_timed_out_s": null,
+  "solve_s": 307.5,
+  "schedule": "schedules/scheduled_baseline_seed6_profiled.json",
+  "sched_makespan_nonperiodic_ms": 91.69,
+  "sched_makespan_all_ms": null,
+  "predicted_makespan_ms": 91.693,
+  "n_entries": 30,
+  "dispatch_table_sha256": "9b3f74f886f40496cc7ad1c2e216e19d2a65e3fe305971ee4689a7d131f16c00",
+  "runtime_main_sha256": "7165655f8c1484e96428db5cc1f90dfbba72de073441ebe01b0956e25ab5e5c3",
+  "lane_entry_counts": {
+   "cpu": 11,
+   "dsp": 9,
+   "hta": 10
+  },
+  "lane_placement": {
+   "dronet/dronet_full": {
+    "hta": 7,
+    "dsp": 3
+   },
+   "mlp_control/mlp_control_full": {
+    "cpu": 10
+   },
+   "yolov8n_d/yolov8n_backbone": {
+    "dsp": 1
+   },
+   "yolov8n_b/yolov8n_backbone": {
+    "hta": 1
+   },
+   "yolov8n_d/yolov8n_head": {
+    "dsp": 1
+   },
+   "yolov8n_a/yolov8n_backbone": {
+    "dsp": 1
+   },
+   "yolov8n_a/yolov8n_head": {
+    "dsp": 1
+   },
+   "yolov8n_e/yolov8n_backbone": {
+    "hta": 1
+   },
+   "yolov8n_b/yolov8n_head": {
+    "cpu": 1
+   },
+   "yolov8n_c/yolov8n_backbone": {
+    "hta": 1
+   },
+   "yolov8n_e/yolov8n_head": {
+    "dsp": 1
+   },
+   "yolov8n_c/yolov8n_head": {
+    "dsp": 1
+   }
+  },
+  "contexts": [
+   "ctx_dronet_full_hta__Dsp.bin",
+   "ctx_dronet_full_hta__Hta.bin",
+   "ctx_mlp_control_fp32__Cpu.bin",
+   "ctx_yolov8n_backbone__Dsp.bin",
+   "ctx_yolov8n_backbone__Hta.bin",
+   "ctx_yolov8n_head__Cpu.bin",
+   "ctx_yolov8n_head__Dsp.bin"
+  ],
+  "provenance": {
+   "cost_model_sha256": "b4f1a68455ef50f67d5cb585ca92c706552ce3b3cdd094cf26dd5ea529311d81",
+   "predicate6_missing_contexts": [],
+   "predicate7_excluded_placements": [],
+   "table_vs_manifest_mismatches": [],
+   "trace_vs_table": {
+    "rep1": {
+     "entries_with_timings": 30,
+     "entries_expected": 30,
+     "all_entries_ran": true,
+     "n_mismatches": 0
+    },
+    "rep2": {
+     "entries_with_timings": 30,
+     "entries_expected": 30,
+     "all_entries_ran": true,
+     "n_mismatches": 0
+    },
+    "rep3": {
+     "entries_with_timings": 30,
+     "entries_expected": 30,
+     "all_entries_ran": true,
+     "n_mismatches": 0
+    }
+   },
+   "bringup_lines_unavailable": "deploy_and_run.sh's `exec {lockfd}> /tmp/qnn_board.lock 2>/dev/null` redirects the board-side shell's stderr for the rest of the script, so no [bringup] line reaches run.log. Replaced by predicate 6 (contexts verified staged before the run), the N/N entry count (the runtime skips entries whose context is missing), and trace_vs_table above, which checks the ctx actually used per entry. See verify_provenance.py."
+  },
+  "reps": {
+   "rep1": {
+    "wall_ms": 109.312,
+    "ratio": 1.19,
+    "entries": "30/30",
+    "lock_wait_s": 0.31,
+    "run_wall_s": 4.9,
+    "iterations": [],
+    "ok": true
+   },
+   "rep2": {
+    "wall_ms": 106.472,
+    "ratio": 1.16,
+    "entries": "30/30",
+    "lock_wait_s": 0.33,
+    "run_wall_s": 4.9,
+    "iterations": [],
+    "ok": true
+   },
+   "rep3": {
+    "wall_ms": 111.109,
+    "ratio": 1.21,
+    "entries": "30/30",
+    "lock_wait_s": 0.31,
+    "run_wall_s": 10.9,
+    "iterations": [],
+    "ok": true
+   }
+  },
+  "governor": "performance during run (flow_c.py run --tuned), restored to schedutil after each rep",
+  "warmup": "FLOWC_ITERATIONS=2; the reported trace is walk 2",
+  "actual_makespan_ms": [
+   109.312,
+   106.472,
+   111.109
+  ],
+  "actual_makespan_median_ms": 109.312,
+  "actual_makespan_spread_ms": 4.637,
+  "ratio_per_rep": [
+   1.19,
+   1.16,
+   1.21
+  ],
+  "ratio_median": 1.19,
+  "lock_wait_s": [
+   0.31,
+   0.33,
+   0.31
+  ],
+  "lock_wait_exceeds_run": [
+   true,
+   true,
+   true
+  ],
+  "per_tile": {
+   "dronet/dronet_full@dsp": {
+    "predicted_ms": 0.645,
+    "actual_p50_ms": 0.832,
+    "ratio": 1.29,
+    "reps": 3
+   },
+   "dronet/dronet_full@hta": {
+    "predicted_ms": 2.03,
+    "actual_p50_ms": 1.814,
+    "ratio": 0.894,
+    "reps": 3
+   },
+   "mlp_control/mlp_control_full@cpu": {
+    "predicted_ms": 0.107,
+    "actual_p50_ms": 0.0665,
+    "ratio": 0.621,
+    "reps": 3
+   },
+   "yolov8n_a/yolov8n_backbone@dsp": {
+    "predicted_ms": 13.267,
+    "actual_p50_ms": 11.827,
+    "ratio": 0.891,
+    "reps": 3
+   },
+   "yolov8n_a/yolov8n_head@dsp": {
+    "predicted_ms": 15.377,
+    "actual_p50_ms": 27.038,
+    "ratio": 1.758,
+    "reps": 3
+   },
+   "yolov8n_b/yolov8n_backbone@hta": {
+    "predicted_ms": 13.909,
+    "actual_p50_ms": 13.584,
+    "ratio": 0.977,
+    "reps": 3
+   },
+   "yolov8n_b/yolov8n_head@cpu": {
+    "predicted_ms": 39.464,
+    "actual_p50_ms": 57.047,
+    "ratio": 1.446,
+    "reps": 3
+   },
+   "yolov8n_c/yolov8n_backbone@hta": {
+    "predicted_ms": 13.909,
+    "actual_p50_ms": 12.734,
+    "ratio": 0.916,
+    "reps": 3
+   },
+   "yolov8n_c/yolov8n_head@dsp": {
+    "predicted_ms": 15.377,
+    "actual_p50_ms": 15.384,
+    "ratio": 1.0,
+    "reps": 3
+   },
+   "yolov8n_d/yolov8n_backbone@dsp": {
+    "predicted_ms": 13.267,
+    "actual_p50_ms": 12.316,
+    "ratio": 0.928,
+    "reps": 3
+   },
+   "yolov8n_d/yolov8n_head@dsp": {
+    "predicted_ms": 15.377,
+    "actual_p50_ms": 16.51,
+    "ratio": 1.074,
+    "reps": 3
+   },
+   "yolov8n_e/yolov8n_backbone@hta": {
+    "predicted_ms": 13.909,
+    "actual_p50_ms": 22.147,
+    "ratio": 1.592,
+    "reps": 3
+   },
+   "yolov8n_e/yolov8n_head@dsp": {
+    "predicted_ms": 15.377,
+    "actual_p50_ms": 17.229,
+    "ratio": 1.12,
+    "reps": 3
+   }
+  }
+ },
+ {
+  "point": "baseline_seed7",
+  "arm": "baseline",
+  "seed": 7,
+  "status": "REJECTED",
+  "validation_problems": [
+   "no non-periodic work: nothing to pack against the periodic load"
+  ],
+  "max_ops": 800,
+  "op_count": 6,
+  "horizon_ms": 24.0,
+  "hyperperiod_ms": 8,
+  "periodic": 2,
+  "nonperiodic": 0,
+  "networks": {
+   "mlp_control": {
+    "period": 8,
+    "window_duration": 5,
+    "num_instances": 3
+   },
+   "dronet": {
+    "period": 8,
+    "window_duration": 6,
+    "num_instances": 3
+   }
+  },
+  "workload": "workloads/rejected/baseline_seed7.json"
+ },
+ {
+  "point": "fused_seed0",
+  "arm": "fused",
+  "seed": 0,
+  "status": "run",
+  "validation_problems": [],
+  "max_ops": 800,
+  "op_count": 23,
+  "horizon_ms": 42.0,
+  "hyperperiod_ms": 14,
+  "periodic": 2,
+  "nonperiodic": 4,
+  "networks": {
+   "mlp_control": {
+    "period": 7,
+    "window_duration": 5,
+    "num_instances": 6
+   },
+   "fused_split": {
+    "period": 14,
+    "window_duration": 11,
+    "num_instances": 3
+   },
+   "yolov8n_a": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   },
+   "yolov8n_b": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   },
+   "yolov8n_c": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   },
+   "yolov8n_d": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   }
+  },
+  "workload": "workloads/fused_seed0.json",
+  "flowc_spec": "workloads/fused_seed0.flowc.json",
+  "solver": "milp",
+  "solver_status": "optimal",
+  "milp_timed_out_s": null,
+  "solve_s": 71.7,
+  "schedule": "schedules/scheduled_fused_seed0_profiled.json",
+  "sched_makespan_nonperiodic_ms": 66.34,
+  "sched_makespan_all_ms": null,
+  "predicted_makespan_ms": 66.343,
+  "n_entries": 23,
+  "dispatch_table_sha256": "6ff0e4bec0283ea814bb25898b508b180889f4a86edbfa59c2613d25784d80db",
+  "runtime_main_sha256": "7165655f8c1484e96428db5cc1f90dfbba72de073441ebe01b0956e25ab5e5c3",
+  "lane_entry_counts": {
+   "cpu": 9,
+   "dsp": 10,
+   "hta": 4
+  },
+  "lane_placement": {
+   "fused_split/fused_vision_conv": {
+    "dsp": 2,
+    "hta": 1
+   },
+   "yolov8n_b/yolov8n_backbone": {
+    "hta": 1
+   },
+   "fused_split/fused_depth_conv": {
+    "cpu": 2,
+    "dsp": 1
+   },
+   "mlp_control/mlp_control_full": {
+    "cpu": 4,
+    "dsp": 2
+   },
+   "fused_split/fused_tail": {
+    "cpu": 2,
+    "dsp": 1
+   },
+   "yolov8n_a/yolov8n_backbone": {
+    "dsp": 1
+   },
+   "yolov8n_a/yolov8n_head": {
+    "dsp": 1
+   },
+   "yolov8n_c/yolov8n_backbone": {
+    "hta": 1
+   },
+   "yolov8n_b/yolov8n_head": {
+    "cpu": 1
+   },
+   "yolov8n_d/yolov8n_backbone": {
+    "hta": 1
+   },
+   "yolov8n_c/yolov8n_head": {
+    "dsp": 1
+   },
+   "yolov8n_d/yolov8n_head": {
+    "dsp": 1
+   }
+  },
+  "contexts": [
+   "ctx_fused_depth_conv__Cpu.bin",
+   "ctx_fused_depth_conv__Dsp.bin",
+   "ctx_fused_tail_from_conv__Dsp.bin",
+   "ctx_fused_tail_from_conv_fp32__Cpu.bin",
+   "ctx_fused_vision_conv__Dsp.bin",
+   "ctx_fused_vision_conv__Hta.bin",
+   "ctx_mlp_control__Dsp.bin",
+   "ctx_mlp_control_fp32__Cpu.bin",
+   "ctx_yolov8n_backbone__Dsp.bin",
+   "ctx_yolov8n_backbone__Hta.bin",
+   "ctx_yolov8n_head__Cpu.bin",
+   "ctx_yolov8n_head__Dsp.bin"
+  ],
+  "provenance": {
+   "cost_model_sha256": "b4f1a68455ef50f67d5cb585ca92c706552ce3b3cdd094cf26dd5ea529311d81",
+   "predicate6_missing_contexts": [],
+   "predicate7_excluded_placements": [],
+   "table_vs_manifest_mismatches": [],
+   "trace_vs_table": {
+    "rep1": {
+     "entries_with_timings": 23,
+     "entries_expected": 23,
+     "all_entries_ran": true,
+     "n_mismatches": 0
+    },
+    "rep2": {
+     "entries_with_timings": 23,
+     "entries_expected": 23,
+     "all_entries_ran": true,
+     "n_mismatches": 0
+    },
+    "rep3": {
+     "entries_with_timings": 23,
+     "entries_expected": 23,
+     "all_entries_ran": true,
+     "n_mismatches": 0
+    }
+   },
+   "bringup_lines_unavailable": "deploy_and_run.sh's `exec {lockfd}> /tmp/qnn_board.lock 2>/dev/null` redirects the board-side shell's stderr for the rest of the script, so no [bringup] line reaches run.log. Replaced by predicate 6 (contexts verified staged before the run), the N/N entry count (the runtime skips entries whose context is missing), and trace_vs_table above, which checks the ctx actually used per entry. See verify_provenance.py."
+  },
+  "reps": {
+   "rep1": {
+    "wall_ms": 82.778,
+    "ratio": 1.25,
+    "entries": "23/23",
+    "lock_wait_s": 0.29,
+    "run_wall_s": 13.3,
+    "iterations": [],
+    "ok": true
+   },
+   "rep2": {
+    "wall_ms": 83.229,
+    "ratio": 1.25,
+    "entries": "23/23",
+    "lock_wait_s": 0.33,
+    "run_wall_s": 5.2,
+    "iterations": [],
+    "ok": true
+   },
+   "rep3": {
+    "wall_ms": 83.638,
+    "ratio": 1.26,
+    "entries": "23/23",
+    "lock_wait_s": 0.37,
+    "run_wall_s": 13.6,
+    "iterations": [],
+    "ok": true
+   }
+  },
+  "governor": "performance during run (flow_c.py run --tuned), restored to schedutil after each rep",
+  "warmup": "FLOWC_ITERATIONS=2; the reported trace is walk 2",
+  "actual_makespan_ms": [
+   82.778,
+   83.229,
+   83.638
+  ],
+  "actual_makespan_median_ms": 83.229,
+  "actual_makespan_spread_ms": 0.86,
+  "ratio_per_rep": [
+   1.25,
+   1.25,
+   1.26
+  ],
+  "ratio_median": 1.25,
+  "lock_wait_s": [
+   0.29,
+   0.33,
+   0.37
+  ],
+  "lock_wait_exceeds_run": [
+   true,
+   true,
+   true
+  ],
+  "per_tile": {
+   "fused_split/fused_depth_conv@cpu": {
+    "predicted_ms": 0.014,
+    "actual_p50_ms": 0.147,
+    "ratio": 10.5,
+    "reps": 3
+   },
+   "fused_split/fused_depth_conv@dsp": {
+    "predicted_ms": 0.392,
+    "actual_p50_ms": 0.81,
+    "ratio": 2.066,
+    "reps": 3
+   },
+   "fused_split/fused_tail@cpu": {
+    "predicted_ms": 0.354,
+    "actual_p50_ms": 2.9915,
+    "ratio": 8.451,
+    "reps": 3
+   },
+   "fused_split/fused_tail@dsp": {
+    "predicted_ms": 4.303,
+    "actual_p50_ms": 3.364,
+    "ratio": 0.782,
+    "reps": 3
+   },
+   "fused_split/fused_vision_conv@dsp": {
+    "predicted_ms": 0.459,
+    "actual_p50_ms": 0.9445,
+    "ratio": 2.058,
+    "reps": 3
+   },
+   "fused_split/fused_vision_conv@hta": {
+    "predicted_ms": 0.931,
+    "actual_p50_ms": 1.046,
+    "ratio": 1.124,
+    "reps": 3
+   },
+   "mlp_control/mlp_control_full@cpu": {
+    "predicted_ms": 0.107,
+    "actual_p50_ms": 0.096,
+    "ratio": 0.897,
+    "reps": 3
+   },
+   "mlp_control/mlp_control_full@dsp": {
+    "predicted_ms": 0.589,
+    "actual_p50_ms": 0.931,
+    "ratio": 1.581,
+    "reps": 3
+   },
+   "yolov8n_a/yolov8n_backbone@dsp": {
+    "predicted_ms": 13.267,
+    "actual_p50_ms": 14.183,
+    "ratio": 1.069,
+    "reps": 3
+   },
+   "yolov8n_a/yolov8n_head@dsp": {
+    "predicted_ms": 15.377,
+    "actual_p50_ms": 19.968,
+    "ratio": 1.299,
+    "reps": 3
+   },
+   "yolov8n_b/yolov8n_backbone@hta": {
+    "predicted_ms": 13.909,
+    "actual_p50_ms": 15.568,
+    "ratio": 1.119,
+    "reps": 3
+   },
+   "yolov8n_b/yolov8n_head@cpu": {
+    "predicted_ms": 39.464,
+    "actual_p50_ms": 49.76,
+    "ratio": 1.261,
+    "reps": 3
+   },
+   "yolov8n_c/yolov8n_backbone@hta": {
+    "predicted_ms": 13.909,
+    "actual_p50_ms": 14.831,
+    "ratio": 1.066,
+    "reps": 3
+   },
+   "yolov8n_c/yolov8n_head@dsp": {
+    "predicted_ms": 15.377,
+    "actual_p50_ms": 16.823,
+    "ratio": 1.094,
+    "reps": 3
+   },
+   "yolov8n_d/yolov8n_backbone@hta": {
+    "predicted_ms": 13.909,
+    "actual_p50_ms": 14.112,
+    "ratio": 1.015,
+    "reps": 3
+   },
+   "yolov8n_d/yolov8n_head@dsp": {
+    "predicted_ms": 15.377,
+    "actual_p50_ms": 17.187,
+    "ratio": 1.118,
+    "reps": 3
+   }
+  }
+ },
+ {
+  "point": "fused_seed1",
+  "arm": "fused",
+  "seed": 1,
+  "status": "run",
+  "validation_problems": [],
+  "max_ops": 800,
+  "op_count": 35,
+  "horizon_ms": 47.74,
+  "hyperperiod_ms": 10,
+  "periodic": 2,
+  "nonperiodic": 5,
+  "networks": {
+   "mlp_control": {
+    "period": 5,
+    "window_duration": 3,
+    "num_instances": 10
+   },
+   "fused_split": {
+    "period": 10,
+    "window_duration": 7,
+    "num_instances": 5
+   },
+   "yolov8n_a": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   },
+   "yolov8n_b": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   },
+   "yolov8n_c": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   },
+   "yolov8n_d": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   },
+   "yolov8n_e": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   }
+  },
+  "workload": "workloads/fused_seed1.json",
+  "flowc_spec": "workloads/fused_seed1.flowc.json",
+  "solver": "milp",
+  "solver_status": "optimal_inaccurate",
+  "milp_timed_out_s": null,
+  "solve_s": 307.1,
+  "schedule": "schedules/scheduled_fused_seed1_profiled.json",
+  "sched_makespan_nonperiodic_ms": 84.57,
+  "sched_makespan_all_ms": null,
+  "predicted_makespan_ms": 84.571,
+  "n_entries": 35,
+  "dispatch_table_sha256": "82ddf95533a76ffa912866d6be54a95165eb7b4e1bab4e0266cebc1bc0758af5",
+  "runtime_main_sha256": "7165655f8c1484e96428db5cc1f90dfbba72de073441ebe01b0956e25ab5e5c3",
+  "lane_entry_counts": {
+   "cpu": 20,
+   "dsp": 9,
+   "hta": 6
+  },
+  "lane_placement": {
+   "fused_split/fused_vision_conv": {
+    "dsp": 3,
+    "hta": 2
+   },
+   "fused_split/fused_depth_conv": {
+    "cpu": 4,
+    "dsp": 1
+   },
+   "yolov8n_e/yolov8n_backbone": {
+    "hta": 1
+   },
+   "mlp_control/mlp_control_full": {
+    "cpu": 10
+   },
+   "yolov8n_c/yolov8n_backbone": {
+    "dsp": 1
+   },
+   "fused_split/fused_tail": {
+    "cpu": 5
+   },
+   "yolov8n_d/yolov8n_backbone": {
+    "hta": 1
+   },
+   "yolov8n_e/yolov8n_head": {
+    "dsp": 1
+   },
+   "yolov8n_b/yolov8n_backbone": {
+    "hta": 1
+   },
+   "yolov8n_d/yolov8n_head": {
+    "dsp": 1
+   },
+   "yolov8n_b/yolov8n_head": {
+    "cpu": 1
+   },
+   "yolov8n_c/yolov8n_head": {
+    "dsp": 1
+   },
+   "yolov8n_a/yolov8n_backbone": {
+    "hta": 1
+   },
+   "yolov8n_a/yolov8n_head": {
+    "dsp": 1
+   }
+  },
+  "contexts": [
+   "ctx_fused_depth_conv__Cpu.bin",
+   "ctx_fused_depth_conv__Dsp.bin",
+   "ctx_fused_tail_from_conv_fp32__Cpu.bin",
+   "ctx_fused_vision_conv__Dsp.bin",
+   "ctx_fused_vision_conv__Hta.bin",
+   "ctx_mlp_control_fp32__Cpu.bin",
+   "ctx_yolov8n_backbone__Dsp.bin",
+   "ctx_yolov8n_backbone__Hta.bin",
+   "ctx_yolov8n_head__Cpu.bin",
+   "ctx_yolov8n_head__Dsp.bin"
+  ],
+  "provenance": {
+   "cost_model_sha256": "b4f1a68455ef50f67d5cb585ca92c706552ce3b3cdd094cf26dd5ea529311d81",
+   "predicate6_missing_contexts": [],
+   "predicate7_excluded_placements": [],
+   "table_vs_manifest_mismatches": [],
+   "trace_vs_table": {
+    "rep1": {
+     "entries_with_timings": 35,
+     "entries_expected": 35,
+     "all_entries_ran": true,
+     "n_mismatches": 0
+    },
+    "rep2": {
+     "entries_with_timings": 35,
+     "entries_expected": 35,
+     "all_entries_ran": true,
+     "n_mismatches": 0
+    },
+    "rep3": {
+     "entries_with_timings": 35,
+     "entries_expected": 35,
+     "all_entries_ran": true,
+     "n_mismatches": 0
+    }
+   },
+   "bringup_lines_unavailable": "deploy_and_run.sh's `exec {lockfd}> /tmp/qnn_board.lock 2>/dev/null` redirects the board-side shell's stderr for the rest of the script, so no [bringup] line reaches run.log. Replaced by predicate 6 (contexts verified staged before the run), the N/N entry count (the runtime skips entries whose context is missing), and trace_vs_table above, which checks the ctx actually used per entry. See verify_provenance.py."
+  },
+  "reps": {
+   "rep1": {
+    "wall_ms": 99.661,
+    "ratio": 1.18,
+    "entries": "35/35",
+    "lock_wait_s": 0.36,
+    "run_wall_s": 11.2,
+    "iterations": [],
+    "ok": true
+   },
+   "rep2": {
+    "wall_ms": 95.425,
+    "ratio": 1.13,
+    "entries": "35/35",
+    "lock_wait_s": 0.36,
+    "run_wall_s": 10.6,
+    "iterations": [],
+    "ok": true
+   },
+   "rep3": {
+    "wall_ms": 98.871,
+    "ratio": 1.17,
+    "entries": "35/35",
+    "lock_wait_s": 0.3,
+    "run_wall_s": 10.7,
+    "iterations": [],
+    "ok": true
+   }
+  },
+  "governor": "performance during run (flow_c.py run --tuned), restored to schedutil after each rep",
+  "warmup": "FLOWC_ITERATIONS=2; the reported trace is walk 2",
+  "actual_makespan_ms": [
+   99.661,
+   95.425,
+   98.871
+  ],
+  "actual_makespan_median_ms": 98.871,
+  "actual_makespan_spread_ms": 4.236,
+  "ratio_per_rep": [
+   1.18,
+   1.13,
+   1.17
+  ],
+  "ratio_median": 1.17,
+  "lock_wait_s": [
+   0.36,
+   0.36,
+   0.3
+  ],
+  "lock_wait_exceeds_run": [
+   true,
+   true,
+   true
+  ],
+  "per_tile": {
+   "fused_split/fused_depth_conv@cpu": {
+    "predicted_ms": 0.014,
+    "actual_p50_ms": 0.203,
+    "ratio": 14.5,
+    "reps": 3
+   },
+   "fused_split/fused_depth_conv@dsp": {
+    "predicted_ms": 0.392,
+    "actual_p50_ms": 1.362,
+    "ratio": 3.474,
+    "reps": 3
+   },
+   "fused_split/fused_tail@cpu": {
+    "predicted_ms": 0.354,
+    "actual_p50_ms": 1.2,
+    "ratio": 3.39,
+    "reps": 3
+   },
+   "fused_split/fused_vision_conv@dsp": {
+    "predicted_ms": 0.459,
+    "actual_p50_ms": 1.633,
+    "ratio": 3.558,
+    "reps": 3
+   },
+   "fused_split/fused_vision_conv@hta": {
+    "predicted_ms": 0.931,
+    "actual_p50_ms": 1.167,
+    "ratio": 1.253,
+    "reps": 3
+   },
+   "mlp_control/mlp_control_full@cpu": {
+    "predicted_ms": 0.107,
+    "actual_p50_ms": 0.069,
+    "ratio": 0.645,
+    "reps": 3
+   },
+   "yolov8n_a/yolov8n_backbone@hta": {
+    "predicted_ms": 13.909,
+    "actual_p50_ms": 15.962,
+    "ratio": 1.148,
+    "reps": 3
+   },
+   "yolov8n_a/yolov8n_head@dsp": {
+    "predicted_ms": 15.377,
+    "actual_p50_ms": 16.435,
+    "ratio": 1.069,
+    "reps": 3
+   },
+   "yolov8n_b/yolov8n_backbone@hta": {
+    "predicted_ms": 13.909,
+    "actual_p50_ms": 14.052,
+    "ratio": 1.01,
+    "reps": 3
+   },
+   "yolov8n_b/yolov8n_head@cpu": {
+    "predicted_ms": 39.464,
+    "actual_p50_ms": 52.15,
+    "ratio": 1.321,
+    "reps": 3
+   },
+   "yolov8n_c/yolov8n_backbone@dsp": {
+    "predicted_ms": 13.267,
+    "actual_p50_ms": 14.301,
+    "ratio": 1.078,
+    "reps": 3
+   },
+   "yolov8n_c/yolov8n_head@dsp": {
+    "predicted_ms": 15.377,
+    "actual_p50_ms": 18.598,
+    "ratio": 1.209,
+    "reps": 3
+   },
+   "yolov8n_d/yolov8n_backbone@hta": {
+    "predicted_ms": 13.909,
+    "actual_p50_ms": 13.585,
+    "ratio": 0.977,
+    "reps": 3
+   },
+   "yolov8n_d/yolov8n_head@dsp": {
+    "predicted_ms": 15.377,
+    "actual_p50_ms": 16.493,
+    "ratio": 1.073,
+    "reps": 3
+   },
+   "yolov8n_e/yolov8n_backbone@hta": {
+    "predicted_ms": 13.909,
+    "actual_p50_ms": 12.242,
+    "ratio": 0.88,
+    "reps": 3
+   },
+   "yolov8n_e/yolov8n_head@dsp": {
+    "predicted_ms": 15.377,
+    "actual_p50_ms": 19.388,
+    "ratio": 1.261,
+    "reps": 3
+   }
+  }
+ },
+ {
+  "point": "fused_seed2",
+  "arm": "fused",
+  "seed": 2,
+  "status": "run",
+  "validation_problems": [],
+  "max_ops": 800,
+  "op_count": 32,
+  "horizon_ms": 45.0,
+  "hyperperiod_ms": 15,
+  "periodic": 2,
+  "nonperiodic": 4,
+  "networks": {
+   "mlp_control": {
+    "period": 3,
+    "window_duration": 2,
+    "num_instances": 15
+   },
+   "fused_split": {
+    "period": 15,
+    "window_duration": 11,
+    "num_instances": 3
+   },
+   "yolov8n_a": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   },
+   "yolov8n_b": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   },
+   "yolov8n_c": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   },
+   "yolov8n_d": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   }
+  },
+  "workload": "workloads/fused_seed2.json",
+  "flowc_spec": "workloads/fused_seed2.flowc.json",
+  "solver": "milp",
+  "solver_status": "optimal",
+  "milp_timed_out_s": null,
+  "solve_s": 195.9,
+  "schedule": "schedules/scheduled_fused_seed2_profiled.json",
+  "sched_makespan_nonperiodic_ms": 73.34,
+  "sched_makespan_all_ms": null,
+  "predicted_makespan_ms": 73.343,
+  "n_entries": 32,
+  "dispatch_table_sha256": "ffb6ddada0ac5cd62eff60109b737dffa5ee7070096b0167c10652af88cfaa01",
+  "runtime_main_sha256": "7165655f8c1484e96428db5cc1f90dfbba72de073441ebe01b0956e25ab5e5c3",
+  "lane_entry_counts": {
+   "cpu": 17,
+   "dsp": 9,
+   "hta": 6
+  },
+  "lane_placement": {
+   "fused_split/fused_vision_conv": {
+    "dsp": 1,
+    "hta": 2
+   },
+   "fused_split/fused_depth_conv": {
+    "cpu": 2,
+    "hta": 1
+   },
+   "yolov8n_d/yolov8n_backbone": {
+    "hta": 1
+   },
+   "mlp_control/mlp_control_full": {
+    "cpu": 12,
+    "dsp": 3
+   },
+   "fused_split/fused_tail": {
+    "cpu": 2,
+    "dsp": 1
+   },
+   "yolov8n_b/yolov8n_backbone": {
+    "dsp": 1
+   },
+   "yolov8n_a/yolov8n_backbone": {
+    "hta": 1
+   },
+   "yolov8n_d/yolov8n_head": {
+    "dsp": 1
+   },
+   "yolov8n_b/yolov8n_head": {
+    "cpu": 1
+   },
+   "yolov8n_a/yolov8n_head": {
+    "dsp": 1
+   },
+   "yolov8n_c/yolov8n_backbone": {
+    "hta": 1
+   },
+   "yolov8n_c/yolov8n_head": {
+    "dsp": 1
+   }
+  },
+  "contexts": [
+   "ctx_fused_depth_conv__Cpu.bin",
+   "ctx_fused_depth_conv__Hta.bin",
+   "ctx_fused_tail_from_conv__Dsp.bin",
+   "ctx_fused_tail_from_conv_fp32__Cpu.bin",
+   "ctx_fused_vision_conv__Dsp.bin",
+   "ctx_fused_vision_conv__Hta.bin",
+   "ctx_mlp_control__Dsp.bin",
+   "ctx_mlp_control_fp32__Cpu.bin",
+   "ctx_yolov8n_backbone__Dsp.bin",
+   "ctx_yolov8n_backbone__Hta.bin",
+   "ctx_yolov8n_head__Cpu.bin",
+   "ctx_yolov8n_head__Dsp.bin"
+  ],
+  "provenance": {
+   "cost_model_sha256": "b4f1a68455ef50f67d5cb585ca92c706552ce3b3cdd094cf26dd5ea529311d81",
+   "predicate6_missing_contexts": [],
+   "predicate7_excluded_placements": [],
+   "table_vs_manifest_mismatches": [],
+   "trace_vs_table": {
+    "rep1": {
+     "entries_with_timings": 32,
+     "entries_expected": 32,
+     "all_entries_ran": true,
+     "n_mismatches": 0
+    },
+    "rep2": {
+     "entries_with_timings": 32,
+     "entries_expected": 32,
+     "all_entries_ran": true,
+     "n_mismatches": 0
+    },
+    "rep3": {
+     "entries_with_timings": 32,
+     "entries_expected": 32,
+     "all_entries_ran": true,
+     "n_mismatches": 0
+    }
+   },
+   "bringup_lines_unavailable": "deploy_and_run.sh's `exec {lockfd}> /tmp/qnn_board.lock 2>/dev/null` redirects the board-side shell's stderr for the rest of the script, so no [bringup] line reaches run.log. Replaced by predicate 6 (contexts verified staged before the run), the N/N entry count (the runtime skips entries whose context is missing), and trace_vs_table above, which checks the ctx actually used per entry. See verify_provenance.py."
+  },
+  "reps": {
+   "rep1": {
+    "wall_ms": 90.179,
+    "ratio": 1.23,
+    "entries": "32/32",
+    "lock_wait_s": 0.38,
+    "run_wall_s": 5.2,
+    "iterations": [],
+    "ok": true
+   },
+   "rep2": {
+    "wall_ms": 83.59,
+    "ratio": 1.14,
+    "entries": "32/32",
+    "lock_wait_s": 0.33,
+    "run_wall_s": 12.0,
+    "iterations": [],
+    "ok": true
+   },
+   "rep3": {
+    "wall_ms": 86.558,
+    "ratio": 1.18,
+    "entries": "32/32",
+    "lock_wait_s": 0.33,
+    "run_wall_s": 11.7,
+    "iterations": [],
+    "ok": true
+   }
+  },
+  "governor": "performance during run (flow_c.py run --tuned), restored to schedutil after each rep",
+  "warmup": "FLOWC_ITERATIONS=2; the reported trace is walk 2",
+  "actual_makespan_ms": [
+   90.179,
+   83.59,
+   86.558
+  ],
+  "actual_makespan_median_ms": 86.558,
+  "actual_makespan_spread_ms": 6.589,
+  "ratio_per_rep": [
+   1.23,
+   1.14,
+   1.18
+  ],
+  "ratio_median": 1.18,
+  "lock_wait_s": [
+   0.38,
+   0.33,
+   0.33
+  ],
+  "lock_wait_exceeds_run": [
+   true,
+   true,
+   true
+  ],
+  "per_tile": {
+   "fused_split/fused_depth_conv@cpu": {
+    "predicted_ms": 0.014,
+    "actual_p50_ms": 0.269,
+    "ratio": 19.214,
+    "reps": 3
+   },
+   "fused_split/fused_depth_conv@hta": {
+    "predicted_ms": 1.568,
+    "actual_p50_ms": 0.669,
+    "ratio": 0.427,
+    "reps": 3
+   },
+   "fused_split/fused_tail@cpu": {
+    "predicted_ms": 0.354,
+    "actual_p50_ms": 1.374,
+    "ratio": 3.881,
+    "reps": 3
+   },
+   "fused_split/fused_tail@dsp": {
+    "predicted_ms": 4.303,
+    "actual_p50_ms": 3.277,
+    "ratio": 0.762,
+    "reps": 3
+   },
+   "fused_split/fused_vision_conv@dsp": {
+    "predicted_ms": 0.459,
+    "actual_p50_ms": 1.632,
+    "ratio": 3.556,
+    "reps": 3
+   },
+   "fused_split/fused_vision_conv@hta": {
+    "predicted_ms": 0.931,
+    "actual_p50_ms": 1.0515,
+    "ratio": 1.129,
+    "reps": 3
+   },
+   "mlp_control/mlp_control_full@cpu": {
+    "predicted_ms": 0.107,
+    "actual_p50_ms": 0.0565,
+    "ratio": 0.528,
+    "reps": 3
+   },
+   "mlp_control/mlp_control_full@dsp": {
+    "predicted_ms": 0.589,
+    "actual_p50_ms": 0.383,
+    "ratio": 0.65,
+    "reps": 3
+   },
+   "yolov8n_a/yolov8n_backbone@hta": {
+    "predicted_ms": 13.909,
+    "actual_p50_ms": 14.112,
+    "ratio": 1.015,
+    "reps": 3
+   },
+   "yolov8n_a/yolov8n_head@dsp": {
+    "predicted_ms": 15.377,
+    "actual_p50_ms": 18.638,
+    "ratio": 1.212,
+    "reps": 3
+   },
+   "yolov8n_b/yolov8n_backbone@dsp": {
+    "predicted_ms": 13.267,
+    "actual_p50_ms": 13.191,
+    "ratio": 0.994,
+    "reps": 3
+   },
+   "yolov8n_b/yolov8n_head@cpu": {
+    "predicted_ms": 39.464,
+    "actual_p50_ms": 49.003,
+    "ratio": 1.242,
+    "reps": 3
+   },
+   "yolov8n_c/yolov8n_backbone@hta": {
+    "predicted_ms": 13.909,
+    "actual_p50_ms": 13.645,
+    "ratio": 0.981,
+    "reps": 3
+   },
+   "yolov8n_c/yolov8n_head@dsp": {
+    "predicted_ms": 15.377,
+    "actual_p50_ms": 16.621,
+    "ratio": 1.081,
+    "reps": 3
+   },
+   "yolov8n_d/yolov8n_backbone@hta": {
+    "predicted_ms": 13.909,
+    "actual_p50_ms": 13.645,
+    "ratio": 0.981,
+    "reps": 3
+   },
+   "yolov8n_d/yolov8n_head@dsp": {
+    "predicted_ms": 15.377,
+    "actual_p50_ms": 23.331,
+    "ratio": 1.517,
+    "reps": 3
+   }
+  }
+ },
+ {
+  "point": "fused_seed3",
+  "arm": "fused",
+  "seed": 3,
+  "status": "run",
+  "validation_problems": [],
+  "max_ops": 800,
+  "op_count": 19,
+  "horizon_ms": 36.0,
+  "hyperperiod_ms": 12,
+  "periodic": 2,
+  "nonperiodic": 2,
+  "networks": {
+   "mlp_control": {
+    "period": 6,
+    "window_duration": 3,
+    "num_instances": 6
+   },
+   "fused_split": {
+    "period": 12,
+    "window_duration": 6,
+    "num_instances": 3
+   },
+   "yolov8n_a": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   },
+   "yolov8n_b": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   }
+  },
+  "workload": "workloads/fused_seed3.json",
+  "flowc_spec": "workloads/fused_seed3.flowc.json",
+  "solver": "milp",
+  "solver_status": "optimal",
+  "milp_timed_out_s": null,
+  "solve_s": 2.4,
+  "schedule": "schedules/scheduled_fused_seed3_profiled.json",
+  "sched_makespan_nonperiodic_ms": 44.02,
+  "sched_makespan_all_ms": null,
+  "predicted_makespan_ms": 44.021,
+  "n_entries": 19,
+  "dispatch_table_sha256": "ea1d815a8f1d0b8bb39dbb65e17f34ea9ee1501f39af3365c8c166273548d551",
+  "runtime_main_sha256": "7165655f8c1484e96428db5cc1f90dfbba72de073441ebe01b0956e25ab5e5c3",
+  "lane_entry_counts": {
+   "cpu": 11,
+   "dsp": 3,
+   "hta": 5
+  },
+  "lane_placement": {
+   "fused_split/fused_depth_conv": {
+    "cpu": 2,
+    "hta": 1
+   },
+   "yolov8n_a/yolov8n_backbone": {
+    "dsp": 1
+   },
+   "fused_split/fused_vision_conv": {
+    "hta": 3
+   },
+   "mlp_control/mlp_control_full": {
+    "cpu": 6
+   },
+   "yolov8n_b/yolov8n_backbone": {
+    "hta": 1
+   },
+   "fused_split/fused_tail": {
+    "cpu": 3
+   },
+   "yolov8n_a/yolov8n_head": {
+    "dsp": 1
+   },
+   "yolov8n_b/yolov8n_head": {
+    "dsp": 1
+   }
+  },
+  "contexts": [
+   "ctx_fused_depth_conv__Cpu.bin",
+   "ctx_fused_depth_conv__Hta.bin",
+   "ctx_fused_tail_from_conv_fp32__Cpu.bin",
+   "ctx_fused_vision_conv__Hta.bin",
+   "ctx_mlp_control_fp32__Cpu.bin",
+   "ctx_yolov8n_backbone__Dsp.bin",
+   "ctx_yolov8n_backbone__Hta.bin",
+   "ctx_yolov8n_head__Dsp.bin"
+  ],
+  "provenance": {
+   "cost_model_sha256": "b4f1a68455ef50f67d5cb585ca92c706552ce3b3cdd094cf26dd5ea529311d81",
+   "predicate6_missing_contexts": [],
+   "predicate7_excluded_placements": [],
+   "table_vs_manifest_mismatches": [],
+   "trace_vs_table": {
+    "rep1": {
+     "entries_with_timings": 19,
+     "entries_expected": 19,
+     "all_entries_ran": true,
+     "n_mismatches": 0
+    },
+    "rep2": {
+     "entries_with_timings": 19,
+     "entries_expected": 19,
+     "all_entries_ran": true,
+     "n_mismatches": 0
+    },
+    "rep3": {
+     "entries_with_timings": 19,
+     "entries_expected": 19,
+     "all_entries_ran": true,
+     "n_mismatches": 0
+    }
+   },
+   "bringup_lines_unavailable": "deploy_and_run.sh's `exec {lockfd}> /tmp/qnn_board.lock 2>/dev/null` redirects the board-side shell's stderr for the rest of the script, so no [bringup] line reaches run.log. Replaced by predicate 6 (contexts verified staged before the run), the N/N entry count (the runtime skips entries whose context is missing), and trace_vs_table above, which checks the ctx actually used per entry. See verify_provenance.py."
+  },
+  "reps": {
+   "rep1": {
+    "wall_ms": 48.517,
+    "ratio": 1.1,
+    "entries": "19/19",
+    "lock_wait_s": 0.36,
+    "run_wall_s": 9.8,
+    "iterations": [],
+    "ok": true
+   },
+   "rep2": {
+    "wall_ms": 48.359,
+    "ratio": 1.1,
+    "entries": "19/19",
+    "lock_wait_s": 0.31,
+    "run_wall_s": 9.8,
+    "iterations": [],
+    "ok": true
+   },
+   "rep3": {
+    "wall_ms": 48.371,
+    "ratio": 1.1,
+    "entries": "19/19",
+    "lock_wait_s": 0.28,
+    "run_wall_s": 9.5,
+    "iterations": [],
+    "ok": true
+   }
+  },
+  "governor": "performance during run (flow_c.py run --tuned), restored to schedutil after each rep",
+  "warmup": "FLOWC_ITERATIONS=2; the reported trace is walk 2",
+  "actual_makespan_ms": [
+   48.517,
+   48.359,
+   48.371
+  ],
+  "actual_makespan_median_ms": 48.371,
+  "actual_makespan_spread_ms": 0.158,
+  "ratio_per_rep": [
+   1.1,
+   1.1,
+   1.1
+  ],
+  "ratio_median": 1.1,
+  "lock_wait_s": [
+   0.36,
+   0.31,
+   0.28
+  ],
+  "lock_wait_exceeds_run": [
+   true,
+   true,
+   true
+  ],
+  "per_tile": {
+   "fused_split/fused_depth_conv@cpu": {
+    "predicted_ms": 0.014,
+    "actual_p50_ms": 0.1325,
+    "ratio": 9.464,
+    "reps": 3
+   },
+   "fused_split/fused_depth_conv@hta": {
+    "predicted_ms": 1.568,
+    "actual_p50_ms": 0.954,
+    "ratio": 0.608,
+    "reps": 3
+   },
+   "fused_split/fused_tail@cpu": {
+    "predicted_ms": 0.354,
+    "actual_p50_ms": 0.942,
+    "ratio": 2.661,
+    "reps": 3
+   },
+   "fused_split/fused_vision_conv@hta": {
+    "predicted_ms": 0.931,
+    "actual_p50_ms": 1.195,
+    "ratio": 1.284,
+    "reps": 3
+   },
+   "mlp_control/mlp_control_full@cpu": {
+    "predicted_ms": 0.107,
+    "actual_p50_ms": 0.061,
+    "ratio": 0.57,
+    "reps": 3
+   },
+   "yolov8n_a/yolov8n_backbone@dsp": {
+    "predicted_ms": 13.267,
+    "actual_p50_ms": 13.54,
+    "ratio": 1.021,
+    "reps": 3
+   },
+   "yolov8n_a/yolov8n_head@dsp": {
+    "predicted_ms": 15.377,
+    "actual_p50_ms": 17.468,
+    "ratio": 1.136,
+    "reps": 3
+   },
+   "yolov8n_b/yolov8n_backbone@hta": {
+    "predicted_ms": 13.909,
+    "actual_p50_ms": 14.055,
+    "ratio": 1.01,
+    "reps": 3
+   },
+   "yolov8n_b/yolov8n_head@dsp": {
+    "predicted_ms": 15.377,
+    "actual_p50_ms": 16.981,
+    "ratio": 1.104,
+    "reps": 3
+   }
+  }
+ },
+ {
+  "point": "fused_seed4",
+  "arm": "fused",
+  "seed": 4,
+  "status": "REJECTED",
+  "validation_problems": [
+   "no non-periodic work: nothing to pack against the periodic load"
+  ],
+  "max_ops": 800,
+  "op_count": 15,
+  "horizon_ms": 24.0,
+  "hyperperiod_ms": 8,
+  "periodic": 2,
+  "nonperiodic": 0,
+  "networks": {
+   "mlp_control": {
+    "period": 4,
+    "window_duration": 3,
+    "num_instances": 6
+   },
+   "fused_split": {
+    "period": 8,
+    "window_duration": 6,
+    "num_instances": 3
+   }
+  },
+  "workload": "workloads/rejected/fused_seed4.json"
+ },
+ {
+  "point": "fused_seed5",
+  "arm": "fused",
+  "seed": 5,
+  "status": "REJECTED",
+  "validation_problems": [
+   "no non-periodic work: nothing to pack against the periodic load"
+  ],
+  "max_ops": 800,
+  "op_count": 18,
+  "horizon_ms": 54.0,
+  "hyperperiod_ms": 18,
+  "periodic": 2,
+  "nonperiodic": 0,
+  "networks": {
+   "mlp_control": {
+    "period": 6,
+    "window_duration": 4,
+    "num_instances": 9
+   },
+   "fused_split": {
+    "period": 18,
+    "window_duration": 14,
+    "num_instances": 3
+   }
+  },
+  "workload": "workloads/rejected/fused_seed5.json"
+ },
+ {
+  "point": "fused_seed6",
+  "arm": "fused",
+  "seed": 6,
+  "status": "run",
+  "validation_problems": [],
+  "max_ops": 800,
+  "op_count": 35,
+  "horizon_ms": 47.74,
+  "hyperperiod_ms": 10,
+  "periodic": 2,
+  "nonperiodic": 5,
+  "networks": {
+   "mlp_control": {
+    "period": 5,
+    "window_duration": 4,
+    "num_instances": 10
+   },
+   "fused_split": {
+    "period": 10,
+    "window_duration": 7,
+    "num_instances": 5
+   },
+   "yolov8n_a": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   },
+   "yolov8n_b": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   },
+   "yolov8n_c": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   },
+   "yolov8n_d": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   },
+   "yolov8n_e": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   }
+  },
+  "workload": "workloads/fused_seed6.json",
+  "flowc_spec": "workloads/fused_seed6.flowc.json",
+  "solver": "milp",
+  "solver_status": "optimal_inaccurate",
+  "milp_timed_out_s": null,
+  "solve_s": 306.1,
+  "schedule": "schedules/scheduled_fused_seed6_profiled.json",
+  "sched_makespan_nonperiodic_ms": 84.3,
+  "sched_makespan_all_ms": null,
+  "predicted_makespan_ms": 84.298,
+  "n_entries": 35,
+  "dispatch_table_sha256": "e6fcc4c5c599cf2fc11ab618cb01c91e8a4a7bd3a43a263397259a991df6f5cd",
+  "runtime_main_sha256": "7165655f8c1484e96428db5cc1f90dfbba72de073441ebe01b0956e25ab5e5c3",
+  "lane_entry_counts": {
+   "cpu": 20,
+   "dsp": 7,
+   "hta": 8
+  },
+  "lane_placement": {
+   "fused_split/fused_vision_conv": {
+    "hta": 4,
+    "dsp": 1
+   },
+   "fused_split/fused_depth_conv": {
+    "cpu": 5
+   },
+   "yolov8n_a/yolov8n_backbone": {
+    "dsp": 1
+   },
+   "mlp_control/mlp_control_full": {
+    "cpu": 9,
+    "dsp": 1
+   },
+   "yolov8n_b/yolov8n_backbone": {
+    "hta": 1
+   },
+   "fused_split/fused_tail": {
+    "cpu": 5
+   },
+   "yolov8n_a/yolov8n_head": {
+    "dsp": 1
+   },
+   "yolov8n_e/yolov8n_backbone": {
+    "hta": 1
+   },
+   "yolov8n_b/yolov8n_head": {
+    "dsp": 1
+   },
+   "yolov8n_d/yolov8n_backbone": {
+    "hta": 1
+   },
+   "yolov8n_e/yolov8n_head": {
+    "cpu": 1
+   },
+   "yolov8n_d/yolov8n_head": {
+    "dsp": 1
+   },
+   "yolov8n_c/yolov8n_backbone": {
+    "hta": 1
+   },
+   "yolov8n_c/yolov8n_head": {
+    "dsp": 1
+   }
+  },
+  "contexts": [
+   "ctx_fused_depth_conv__Cpu.bin",
+   "ctx_fused_tail_from_conv_fp32__Cpu.bin",
+   "ctx_fused_vision_conv__Dsp.bin",
+   "ctx_fused_vision_conv__Hta.bin",
+   "ctx_mlp_control__Dsp.bin",
+   "ctx_mlp_control_fp32__Cpu.bin",
+   "ctx_yolov8n_backbone__Dsp.bin",
+   "ctx_yolov8n_backbone__Hta.bin",
+   "ctx_yolov8n_head__Cpu.bin",
+   "ctx_yolov8n_head__Dsp.bin"
+  ],
+  "provenance": {
+   "cost_model_sha256": "b4f1a68455ef50f67d5cb585ca92c706552ce3b3cdd094cf26dd5ea529311d81",
+   "predicate6_missing_contexts": [],
+   "predicate7_excluded_placements": [],
+   "table_vs_manifest_mismatches": [],
+   "trace_vs_table": {
+    "rep1": {
+     "entries_with_timings": 35,
+     "entries_expected": 35,
+     "all_entries_ran": true,
+     "n_mismatches": 0
+    },
+    "rep2": {
+     "entries_with_timings": 35,
+     "entries_expected": 35,
+     "all_entries_ran": true,
+     "n_mismatches": 0
+    },
+    "rep3": {
+     "entries_with_timings": 35,
+     "entries_expected": 35,
+     "all_entries_ran": true,
+     "n_mismatches": 0
+    }
+   },
+   "bringup_lines_unavailable": "deploy_and_run.sh's `exec {lockfd}> /tmp/qnn_board.lock 2>/dev/null` redirects the board-side shell's stderr for the rest of the script, so no [bringup] line reaches run.log. Replaced by predicate 6 (contexts verified staged before the run), the N/N entry count (the runtime skips entries whose context is missing), and trace_vs_table above, which checks the ctx actually used per entry. See verify_provenance.py."
+  },
+  "reps": {
+   "rep1": {
+    "wall_ms": 97.778,
+    "ratio": 1.16,
+    "entries": "35/35",
+    "lock_wait_s": 0.35,
+    "run_wall_s": 11.7,
+    "iterations": [],
+    "ok": true
+   },
+   "rep2": {
+    "wall_ms": 98.635,
+    "ratio": 1.17,
+    "entries": "35/35",
+    "lock_wait_s": 0.28,
+    "run_wall_s": 11.7,
+    "iterations": [],
+    "ok": true
+   },
+   "rep3": {
+    "wall_ms": 103.191,
+    "ratio": 1.22,
+    "entries": "35/35",
+    "lock_wait_s": 0.29,
+    "run_wall_s": 5.0,
+    "iterations": [],
+    "ok": true
+   }
+  },
+  "governor": "performance during run (flow_c.py run --tuned), restored to schedutil after each rep",
+  "warmup": "FLOWC_ITERATIONS=2; the reported trace is walk 2",
+  "actual_makespan_ms": [
+   97.778,
+   98.635,
+   103.191
+  ],
+  "actual_makespan_median_ms": 98.635,
+  "actual_makespan_spread_ms": 5.413,
+  "ratio_per_rep": [
+   1.16,
+   1.17,
+   1.22
+  ],
+  "ratio_median": 1.17,
+  "lock_wait_s": [
+   0.35,
+   0.28,
+   0.29
+  ],
+  "lock_wait_exceeds_run": [
+   true,
+   true,
+   true
+  ],
+  "per_tile": {
+   "fused_split/fused_depth_conv@cpu": {
+    "predicted_ms": 0.014,
+    "actual_p50_ms": 0.071,
+    "ratio": 5.071,
+    "reps": 3
+   },
+   "fused_split/fused_tail@cpu": {
+    "predicted_ms": 0.354,
+    "actual_p50_ms": 2.62,
+    "ratio": 7.401,
+    "reps": 3
+   },
+   "fused_split/fused_vision_conv@dsp": {
+    "predicted_ms": 0.459,
+    "actual_p50_ms": 0.765,
+    "ratio": 1.667,
+    "reps": 3
+   },
+   "fused_split/fused_vision_conv@hta": {
+    "predicted_ms": 0.931,
+    "actual_p50_ms": 1.109,
+    "ratio": 1.191,
+    "reps": 3
+   },
+   "mlp_control/mlp_control_full@cpu": {
+    "predicted_ms": 0.107,
+    "actual_p50_ms": 0.079,
+    "ratio": 0.738,
+    "reps": 3
+   },
+   "mlp_control/mlp_control_full@dsp": {
+    "predicted_ms": 0.589,
+    "actual_p50_ms": 0.54,
+    "ratio": 0.917,
+    "reps": 3
+   },
+   "yolov8n_a/yolov8n_backbone@dsp": {
+    "predicted_ms": 13.267,
+    "actual_p50_ms": 13.045,
+    "ratio": 0.983,
+    "reps": 3
+   },
+   "yolov8n_a/yolov8n_head@dsp": {
+    "predicted_ms": 15.377,
+    "actual_p50_ms": 18.787,
+    "ratio": 1.222,
+    "reps": 3
+   },
+   "yolov8n_b/yolov8n_backbone@hta": {
+    "predicted_ms": 13.909,
+    "actual_p50_ms": 13.964,
+    "ratio": 1.004,
+    "reps": 3
+   },
+   "yolov8n_b/yolov8n_head@dsp": {
+    "predicted_ms": 15.377,
+    "actual_p50_ms": 19.06,
+    "ratio": 1.24,
+    "reps": 3
+   },
+   "yolov8n_c/yolov8n_backbone@hta": {
+    "predicted_ms": 13.909,
+    "actual_p50_ms": 13.529,
+    "ratio": 0.973,
+    "reps": 3
+   },
+   "yolov8n_c/yolov8n_head@dsp": {
+    "predicted_ms": 15.377,
+    "actual_p50_ms": 15.195,
+    "ratio": 0.988,
+    "reps": 3
+   },
+   "yolov8n_d/yolov8n_backbone@hta": {
+    "predicted_ms": 13.909,
+    "actual_p50_ms": 19.724,
+    "ratio": 1.418,
+    "reps": 3
+   },
+   "yolov8n_d/yolov8n_head@dsp": {
+    "predicted_ms": 15.377,
+    "actual_p50_ms": 17.652,
+    "ratio": 1.148,
+    "reps": 3
+   },
+   "yolov8n_e/yolov8n_backbone@hta": {
+    "predicted_ms": 13.909,
+    "actual_p50_ms": 13.439,
+    "ratio": 0.966,
+    "reps": 3
+   },
+   "yolov8n_e/yolov8n_head@cpu": {
+    "predicted_ms": 39.464,
+    "actual_p50_ms": 53.724,
+    "ratio": 1.361,
+    "reps": 3
+   }
+  }
+ },
+ {
+  "point": "fused_seed7",
+  "arm": "fused",
+  "seed": 7,
+  "status": "REJECTED",
+  "validation_problems": [
+   "no non-periodic work: nothing to pack against the periodic load"
+  ],
+  "max_ops": 800,
+  "op_count": 12,
+  "horizon_ms": 24.0,
+  "hyperperiod_ms": 8,
+  "periodic": 2,
+  "nonperiodic": 0,
+  "networks": {
+   "mlp_control": {
+    "period": 8,
+    "window_duration": 5,
+    "num_instances": 3
+   },
+   "fused_split": {
+    "period": 8,
+    "window_duration": 6,
+    "num_instances": 3
+   }
+  },
+  "workload": "workloads/rejected/fused_seed7.json"
+ },
+ {
+  "point": "fused_vint_seed0",
+  "arm": "fused_vint",
+  "seed": 0,
+  "status": "run",
+  "validation_problems": [],
+  "max_ops": 2000,
+  "op_count": 40,
+  "horizon_ms": 78.855,
+  "hyperperiod_ms": 14,
+  "periodic": 2,
+  "nonperiodic": 5,
+  "networks": {
+   "mlp_control": {
+    "period": 7,
+    "window_duration": 5,
+    "num_instances": 12
+   },
+   "fused_split": {
+    "period": 14,
+    "window_duration": 11,
+    "num_instances": 6
+   },
+   "yolov8n_a": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   },
+   "yolov8n_b": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   },
+   "yolov8n_c": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   },
+   "yolov8n_d": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   },
+   "vint": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   }
+  },
+  "workload": "workloads/fused_vint_seed0.json",
+  "flowc_spec": "workloads/fused_vint_seed0.flowc.json",
+  "solver": "milp",
+  "solver_status": "optimal_inaccurate",
+  "milp_timed_out_s": null,
+  "solve_s": 309.4,
+  "schedule": "schedules/scheduled_fused_vint_seed0_profiled.json",
+  "sched_makespan_nonperiodic_ms": 94.34,
+  "sched_makespan_all_ms": null,
+  "predicted_makespan_ms": 94.343,
+  "n_entries": 40,
+  "dispatch_table_sha256": "6f5b2d12207a25e9b715d825c21d0066d6c6fc70aceff4044062d10b2dad1df7",
+  "runtime_main_sha256": "7165655f8c1484e96428db5cc1f90dfbba72de073441ebe01b0956e25ab5e5c3",
+  "lane_entry_counts": {
+   "cpu": 15,
+   "dsp": 15,
+   "hta": 10
+  },
+  "lane_placement": {
+   "fused_split/fused_vision_conv": {
+    "hta": 5,
+    "dsp": 1
+   },
+   "fused_split/fused_depth_conv": {
+    "cpu": 3,
+    "dsp": 2,
+    "hta": 1
+   },
+   "vint/vint_encoders": {
+    "dsp": 1
+   },
+   "mlp_control/mlp_control_full": {
+    "cpu": 7,
+    "dsp": 5
+   },
+   "yolov8n_b/yolov8n_backbone": {
+    "hta": 1
+   },
+   "fused_split/fused_tail": {
+    "cpu": 4,
+    "dsp": 2
+   },
+   "yolov8n_b/yolov8n_head": {
+    "dsp": 1
+   },
+   "yolov8n_c/yolov8n_backbone": {
+    "hta": 1
+   },
+   "yolov8n_a/yolov8n_backbone": {
+    "hta": 1
+   },
+   "yolov8n_c/yolov8n_head": {
+    "dsp": 1
+   },
+   "vint/vint_decoder": {
+    "cpu": 1
+   },
+   "yolov8n_d/yolov8n_backbone": {
+    "hta": 1
+   },
+   "yolov8n_d/yolov8n_head": {
+    "dsp": 1
+   },
+   "yolov8n_a/yolov8n_head": {
+    "dsp": 1
+   }
+  },
+  "contexts": [
+   "ctx_fused_depth_conv__Cpu.bin",
+   "ctx_fused_depth_conv__Dsp.bin",
+   "ctx_fused_depth_conv__Hta.bin",
+   "ctx_fused_tail_from_conv__Dsp.bin",
+   "ctx_fused_tail_from_conv_fp32__Cpu.bin",
+   "ctx_fused_vision_conv__Dsp.bin",
+   "ctx_fused_vision_conv__Hta.bin",
+   "ctx_mlp_control__Dsp.bin",
+   "ctx_mlp_control_fp32__Cpu.bin",
+   "ctx_vint_decoder_fp32__Cpu.bin",
+   "ctx_vint_encoders__Dsp.bin",
+   "ctx_yolov8n_backbone__Hta.bin",
+   "ctx_yolov8n_head__Dsp.bin"
+  ],
+  "provenance": {
+   "cost_model_sha256": "b4f1a68455ef50f67d5cb585ca92c706552ce3b3cdd094cf26dd5ea529311d81",
+   "predicate6_missing_contexts": [],
+   "predicate7_excluded_placements": [],
+   "table_vs_manifest_mismatches": [],
+   "trace_vs_table": {
+    "rep1": {
+     "entries_with_timings": 40,
+     "entries_expected": 40,
+     "all_entries_ran": true,
+     "n_mismatches": 0
+    },
+    "rep2": {
+     "entries_with_timings": 40,
+     "entries_expected": 40,
+     "all_entries_ran": true,
+     "n_mismatches": 0
+    },
+    "rep3": {
+     "entries_with_timings": 40,
+     "entries_expected": 40,
+     "all_entries_ran": true,
+     "n_mismatches": 0
+    }
+   },
+   "bringup_lines_unavailable": "deploy_and_run.sh's `exec {lockfd}> /tmp/qnn_board.lock 2>/dev/null` redirects the board-side shell's stderr for the rest of the script, so no [bringup] line reaches run.log. Replaced by predicate 6 (contexts verified staged before the run), the N/N entry count (the runtime skips entries whose context is missing), and trace_vs_table above, which checks the ctx actually used per entry. See verify_provenance.py."
+  },
+  "reps": {
+   "rep1": {
+    "wall_ms": 113.679,
+    "ratio": 1.2,
+    "entries": "40/40",
+    "lock_wait_s": 0.28,
+    "run_wall_s": 5.4,
+    "iterations": [],
+    "ok": true
+   },
+   "rep2": {
+    "wall_ms": 102.433,
+    "ratio": 1.09,
+    "entries": "40/40",
+    "lock_wait_s": 0.28,
+    "run_wall_s": 5.3,
+    "iterations": [],
+    "ok": true
+   },
+   "rep3": {
+    "wall_ms": 103.551,
+    "ratio": 1.1,
+    "entries": "40/40",
+    "lock_wait_s": 0.37,
+    "run_wall_s": 5.2,
+    "iterations": [],
+    "ok": true
+   }
+  },
+  "governor": "performance during run (flow_c.py run --tuned), restored to schedutil after each rep",
+  "warmup": "FLOWC_ITERATIONS=2; the reported trace is walk 2",
+  "actual_makespan_ms": [
+   113.679,
+   102.433,
+   103.551
+  ],
+  "actual_makespan_median_ms": 103.551,
+  "actual_makespan_spread_ms": 11.246,
+  "ratio_per_rep": [
+   1.2,
+   1.09,
+   1.1
+  ],
+  "ratio_median": 1.1,
+  "lock_wait_s": [
+   0.28,
+   0.28,
+   0.37
+  ],
+  "lock_wait_exceeds_run": [
+   true,
+   true,
+   true
+  ],
+  "per_tile": {
+   "fused_split/fused_depth_conv@cpu": {
+    "predicted_ms": 0.014,
+    "actual_p50_ms": 0.132,
+    "ratio": 9.429,
+    "reps": 3
+   },
+   "fused_split/fused_depth_conv@dsp": {
+    "predicted_ms": 0.392,
+    "actual_p50_ms": 0.674,
+    "ratio": 1.719,
+    "reps": 3
+   },
+   "fused_split/fused_depth_conv@hta": {
+    "predicted_ms": 1.568,
+    "actual_p50_ms": 1.034,
+    "ratio": 0.659,
+    "reps": 3
+   },
+   "fused_split/fused_tail@cpu": {
+    "predicted_ms": 0.354,
+    "actual_p50_ms": 1.8795,
+    "ratio": 5.309,
+    "reps": 3
+   },
+   "fused_split/fused_tail@dsp": {
+    "predicted_ms": 4.303,
+    "actual_p50_ms": 3.469,
+    "ratio": 0.806,
+    "reps": 3
+   },
+   "fused_split/fused_vision_conv@dsp": {
+    "predicted_ms": 0.459,
+    "actual_p50_ms": 0.485,
+    "ratio": 1.057,
+    "reps": 3
+   },
+   "fused_split/fused_vision_conv@hta": {
+    "predicted_ms": 0.931,
+    "actual_p50_ms": 1.122,
+    "ratio": 1.205,
+    "reps": 3
+   },
+   "mlp_control/mlp_control_full@cpu": {
+    "predicted_ms": 0.107,
+    "actual_p50_ms": 0.084,
+    "ratio": 0.785,
+    "reps": 3
+   },
+   "mlp_control/mlp_control_full@dsp": {
+    "predicted_ms": 0.589,
+    "actual_p50_ms": 0.652,
+    "ratio": 1.107,
+    "reps": 3
+   },
+   "vint/vint_decoder@cpu": {
+    "predicted_ms": 37.826,
+    "actual_p50_ms": 22.852,
+    "ratio": 0.604,
+    "reps": 3
+   },
+   "vint/vint_encoders@dsp": {
+    "predicted_ms": 14.213,
+    "actual_p50_ms": 16.222,
+    "ratio": 1.141,
+    "reps": 3
+   },
+   "yolov8n_a/yolov8n_backbone@hta": {
+    "predicted_ms": 13.909,
+    "actual_p50_ms": 15.589,
+    "ratio": 1.121,
+    "reps": 3
+   },
+   "yolov8n_a/yolov8n_head@dsp": {
+    "predicted_ms": 15.377,
+    "actual_p50_ms": 16.128,
+    "ratio": 1.049,
+    "reps": 3
+   },
+   "yolov8n_b/yolov8n_backbone@hta": {
+    "predicted_ms": 13.909,
+    "actual_p50_ms": 13.373,
+    "ratio": 0.961,
+    "reps": 3
+   },
+   "yolov8n_b/yolov8n_head@dsp": {
+    "predicted_ms": 15.377,
+    "actual_p50_ms": 18.357,
+    "ratio": 1.194,
+    "reps": 3
+   },
+   "yolov8n_c/yolov8n_backbone@hta": {
+    "predicted_ms": 13.909,
+    "actual_p50_ms": 14.017,
+    "ratio": 1.008,
+    "reps": 3
+   },
+   "yolov8n_c/yolov8n_head@dsp": {
+    "predicted_ms": 15.377,
+    "actual_p50_ms": 19.914,
+    "ratio": 1.295,
+    "reps": 3
+   },
+   "yolov8n_d/yolov8n_backbone@hta": {
+    "predicted_ms": 13.909,
+    "actual_p50_ms": 12.946,
+    "ratio": 0.931,
+    "reps": 3
+   },
+   "yolov8n_d/yolov8n_head@dsp": {
+    "predicted_ms": 15.377,
+    "actual_p50_ms": 16.5,
+    "ratio": 1.073,
+    "reps": 3
+   }
+  }
+ },
+ {
+  "point": "fused_vint_seed1",
+  "arm": "fused_vint",
+  "seed": 1,
+  "status": "run",
+  "validation_problems": [],
+  "max_ops": 2000,
+  "op_count": 57,
+  "horizon_ms": 88.403,
+  "hyperperiod_ms": 10,
+  "periodic": 2,
+  "nonperiodic": 6,
+  "networks": {
+   "mlp_control": {
+    "period": 5,
+    "window_duration": 3,
+    "num_instances": 18
+   },
+   "fused_split": {
+    "period": 10,
+    "window_duration": 7,
+    "num_instances": 9
+   },
+   "yolov8n_a": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   },
+   "yolov8n_b": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   },
+   "yolov8n_c": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   },
+   "yolov8n_d": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   },
+   "yolov8n_e": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   },
+   "vint": {
+    "period": null,
+    "window_duration": null,
+    "num_instances": null
+   }
+  },
+  "workload": "workloads/fused_vint_seed1.json",
+  "flowc_spec": "workloads/fused_vint_seed1.flowc.json",
+  "solver": "milp",
+  "solver_status": "optimal_inaccurate",
+  "milp_timed_out_s": null,
+  "solve_s": 310.8,
+  "schedule": "schedules/scheduled_fused_vint_seed1_profiled.json",
+  "sched_makespan_nonperiodic_ms": 116.63,
+  "sched_makespan_all_ms": null,
+  "predicted_makespan_ms": 116.627,
+  "n_entries": 57,
+  "dispatch_table_sha256": "bc6fbc4ebf0fd2e62f2d8e8e87280fb0af7df0362138a4e42fb06beadfcb12b5",
+  "runtime_main_sha256": "7165655f8c1484e96428db5cc1f90dfbba72de073441ebe01b0956e25ab5e5c3",
+  "lane_entry_counts": {
+   "cpu": 25,
+   "dsp": 20,
+   "hta": 12
+  },
+  "lane_placement": {
+   "fused_split/fused_depth_conv": {
+    "hta": 3,
+    "cpu": 3,
+    "dsp": 3
+   },
+   "mlp_control/mlp_control_full": {
+    "cpu": 13,
+    "dsp": 5
+   },
+   "fused_split/fused_vision_conv": {
+    "dsp": 5,
+    "hta": 4
+   },
+   "vint/vint_encoders": {
+    "dsp": 1
+   },
+   "yolov8n_a/yolov8n_backbone": {
+    "hta": 1
+   },
+   "fused_split/fused_tail": {
+    "cpu": 8,
+    "dsp": 1
+   },
+   "yolov8n_a/yolov8n_head": {
+    "dsp": 1
+   },
+   "yolov8n_b/yolov8n_backbone": {
+    "hta": 1
+   },
+   "yolov8n_c/yolov8n_backbone": {
+    "hta": 1
+   },
+   "yolov8n_b/yolov8n_head": {
+    "dsp": 1
+   },
+   "yolov8n_d/yolov8n_backbone": {
+    "hta": 1
+   },
+   "yolov8n_c/yolov8n_head": {
+    "dsp": 1
+   },
+   "vint/vint_decoder": {
+    "cpu": 1
+   },
+   "yolov8n_e/yolov8n_backbone": {
+    "hta": 1
+   },
+   "yolov8n_d/yolov8n_head": {
+    "dsp": 1
+   },
+   "yolov8n_e/yolov8n_head": {
+    "dsp": 1
+   }
+  },
+  "contexts": [
+   "ctx_fused_depth_conv__Cpu.bin",
+   "ctx_fused_depth_conv__Dsp.bin",
+   "ctx_fused_depth_conv__Hta.bin",
+   "ctx_fused_tail_from_conv__Dsp.bin",
+   "ctx_fused_tail_from_conv_fp32__Cpu.bin",
+   "ctx_fused_vision_conv__Dsp.bin",
+   "ctx_fused_vision_conv__Hta.bin",
+   "ctx_mlp_control__Dsp.bin",
+   "ctx_mlp_control_fp32__Cpu.bin",
+   "ctx_vint_decoder_fp32__Cpu.bin",
+   "ctx_vint_encoders__Dsp.bin",
+   "ctx_yolov8n_backbone__Hta.bin",
+   "ctx_yolov8n_head__Dsp.bin"
+  ],
+  "provenance": {
+   "cost_model_sha256": "b4f1a68455ef50f67d5cb585ca92c706552ce3b3cdd094cf26dd5ea529311d81",
+   "predicate6_missing_contexts": [],
+   "predicate7_excluded_placements": [],
+   "table_vs_manifest_mismatches": [],
+   "trace_vs_table": {
+    "rep1": {
+     "entries_with_timings": 57,
+     "entries_expected": 57,
+     "all_entries_ran": true,
+     "n_mismatches": 0
+    },
+    "rep2": {
+     "entries_with_timings": 57,
+     "entries_expected": 57,
+     "all_entries_ran": true,
+     "n_mismatches": 0
+    },
+    "rep3": {
+     "entries_with_timings": 57,
+     "entries_expected": 57,
+     "all_entries_ran": true,
+     "n_mismatches": 0
+    }
+   },
+   "bringup_lines_unavailable": "deploy_and_run.sh's `exec {lockfd}> /tmp/qnn_board.lock 2>/dev/null` redirects the board-side shell's stderr for the rest of the script, so no [bringup] line reaches run.log. Replaced by predicate 6 (contexts verified staged before the run), the N/N entry count (the runtime skips entries whose context is missing), and trace_vs_table above, which checks the ctx actually used per entry. See verify_provenance.py."
+  },
+  "reps": {
+   "rep1": {
+    "wall_ms": 127.12,
+    "ratio": 1.09,
+    "entries": "57/57",
+    "lock_wait_s": 0.38,
+    "run_wall_s": 5.2,
+    "iterations": [],
+    "ok": true
+   },
+   "rep2": {
+    "wall_ms": 126.911,
+    "ratio": 1.09,
+    "entries": "57/57",
+    "lock_wait_s": 0.34,
+    "run_wall_s": 14.9,
+    "iterations": [],
+    "ok": true
+   },
+   "rep3": {
+    "wall_ms": 132.663,
+    "ratio": 1.14,
+    "entries": "57/57",
+    "lock_wait_s": 0.3,
+    "run_wall_s": 5.3,
+    "iterations": [],
+    "ok": true
+   }
+  },
+  "governor": "performance during run (flow_c.py run --tuned), restored to schedutil after each rep",
+  "warmup": "FLOWC_ITERATIONS=2; the reported trace is walk 2",
+  "actual_makespan_ms": [
+   127.12,
+   126.911,
+   132.663
+  ],
+  "actual_makespan_median_ms": 127.12,
+  "actual_makespan_spread_ms": 5.752,
+  "ratio_per_rep": [
+   1.09,
+   1.09,
+   1.14
+  ],
+  "ratio_median": 1.09,
+  "lock_wait_s": [
+   0.38,
+   0.34,
+   0.3
+  ],
+  "lock_wait_exceeds_run": [
+   true,
+   true,
+   true
+  ],
+  "per_tile": {
+   "fused_split/fused_depth_conv@cpu": {
+    "predicted_ms": 0.014,
+    "actual_p50_ms": 0.137,
+    "ratio": 9.786,
+    "reps": 3
+   },
+   "fused_split/fused_depth_conv@dsp": {
+    "predicted_ms": 0.392,
+    "actual_p50_ms": 0.46,
+    "ratio": 1.173,
+    "reps": 3
+   },
+   "fused_split/fused_depth_conv@hta": {
+    "predicted_ms": 1.568,
+    "actual_p50_ms": 0.806,
+    "ratio": 0.514,
+    "reps": 3
+   },
+   "fused_split/fused_tail@cpu": {
+    "predicted_ms": 0.354,
+    "actual_p50_ms": 0.931,
+    "ratio": 2.63,
+    "reps": 3
+   },
+   "fused_split/fused_tail@dsp": {
+    "predicted_ms": 4.303,
+    "actual_p50_ms": 3.449,
+    "ratio": 0.802,
+    "reps": 3
+   },
+   "fused_split/fused_vision_conv@dsp": {
+    "predicted_ms": 0.459,
+    "actual_p50_ms": 0.725,
+    "ratio": 1.58,
+    "reps": 3
+   },
+   "fused_split/fused_vision_conv@hta": {
+    "predicted_ms": 0.931,
+    "actual_p50_ms": 1.142,
+    "ratio": 1.227,
+    "reps": 3
+   },
+   "mlp_control/mlp_control_full@cpu": {
+    "predicted_ms": 0.107,
+    "actual_p50_ms": 0.07,
+    "ratio": 0.654,
+    "reps": 3
+   },
+   "mlp_control/mlp_control_full@dsp": {
+    "predicted_ms": 0.589,
+    "actual_p50_ms": 0.608,
+    "ratio": 1.032,
+    "reps": 3
+   },
+   "vint/vint_decoder@cpu": {
+    "predicted_ms": 37.826,
+    "actual_p50_ms": 22.332,
+    "ratio": 0.59,
+    "reps": 3
+   },
+   "vint/vint_encoders@dsp": {
+    "predicted_ms": 14.213,
+    "actual_p50_ms": 15.946,
+    "ratio": 1.122,
+    "reps": 3
+   },
+   "yolov8n_a/yolov8n_backbone@hta": {
+    "predicted_ms": 13.909,
+    "actual_p50_ms": 13.538,
+    "ratio": 0.973,
+    "reps": 3
+   },
+   "yolov8n_a/yolov8n_head@dsp": {
+    "predicted_ms": 15.377,
+    "actual_p50_ms": 18.02,
+    "ratio": 1.172,
+    "reps": 3
+   },
+   "yolov8n_b/yolov8n_backbone@hta": {
+    "predicted_ms": 13.909,
+    "actual_p50_ms": 14.112,
+    "ratio": 1.015,
+    "reps": 3
+   },
+   "yolov8n_b/yolov8n_head@dsp": {
+    "predicted_ms": 15.377,
+    "actual_p50_ms": 18.911,
+    "ratio": 1.23,
+    "reps": 3
+   },
+   "yolov8n_c/yolov8n_backbone@hta": {
+    "predicted_ms": 13.909,
+    "actual_p50_ms": 12.552,
+    "ratio": 0.902,
+    "reps": 3
+   },
+   "yolov8n_c/yolov8n_head@dsp": {
+    "predicted_ms": 15.377,
+    "actual_p50_ms": 17.156,
+    "ratio": 1.116,
+    "reps": 3
+   },
+   "yolov8n_d/yolov8n_backbone@hta": {
+    "predicted_ms": 13.909,
+    "actual_p50_ms": 13.938,
+    "ratio": 1.002,
+    "reps": 3
+   },
+   "yolov8n_d/yolov8n_head@dsp": {
+    "predicted_ms": 15.377,
+    "actual_p50_ms": 18.52,
+    "ratio": 1.204,
+    "reps": 3
+   },
+   "yolov8n_e/yolov8n_backbone@hta": {
+    "predicted_ms": 13.909,
+    "actual_p50_ms": 15.485,
+    "ratio": 1.113,
+    "reps": 3
+   },
+   "yolov8n_e/yolov8n_head@dsp": {
+    "predicted_ms": 15.377,
+    "actual_p50_ms": 16.168,
+    "ratio": 1.051,
+    "reps": 3
+   }
+  }
+ }
+]

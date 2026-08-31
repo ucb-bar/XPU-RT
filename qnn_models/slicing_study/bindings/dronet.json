@@ -1,0 +1,54 @@
+{
+  "network": "dronet",
+  "ir": {
+    "source": "pytorch:dronet",
+    "quant": "int8"
+  },
+  "_comment": "Whole network, one tile -- the measured optimum. Sweeping k=1,2,3,4,5 at the residual-block boundaries (qnn_models/slicing_study/experiments.jsonl, labels dronet_k*) shows every extra tile costs 0.367-0.379 ms of DSP dispatch against a 0.659 ms whole-network graph, so the k=1 critical path (0.659 ms on dsp) is never beaten: k=2 1.030, k=3 1.243, k=4 1.228, k=5 1.308 ms. Every dronet tile composes on HTA at every granularity tried, so the cut is a free choice -- it just does not pay. dronet_k2_head in the journal is the one alternative worth knowing: backbone ops 0-26 on HTA (1.394 ms) plus the two head convs on CPU int8 (0.012 ms) is 1.406 ms, cheaper than any whole-network placement that is not the DSP.",
+  "_provenance": {
+    "study": "qnn_models/slicing_study",
+    "experiment_label": "dronet_k1_whole",
+    "cut_id": "3d9904661a73",
+    "source_onnx": "qnn_models/dronet_full_hta.onnx",
+    "source_onnx_sha256": "9c9c1a73a5ac2bc37a31e70df3a0f66fefaaf187c69d6fbdc88ad236ee4b34b5",
+    "boundary_tensors": [],
+    "journal": "qnn_models/slicing_study/experiments.jsonl",
+    "board_ctx_dir": "/root/slicing_study/ctx",
+    "reproduce": "python3 qnn_models/slicing_study/slice_experiment.py --network dronet --name dronet_k1_whole",
+    "statistic": "median of per-sweep median_us, performance governor, CPU cells unmasked",
+    "op_index_space": "ops:'all' -- whole network, so no index space is involved."
+  },
+  "bindings": [
+    {
+      "id": 0,
+      "name": "dronet_t0",
+      "ops": "all",
+      "backends": {
+        "hta": {
+          "ctx": "ctx_dronet_k1_whole_t0_int8__hta.bin",
+          "graph": "dronet_k1_whole_t0",
+          "precision": "int8",
+          "measured_us": 1653.2
+        },
+        "dsp": {
+          "ctx": "ctx_dronet_k1_whole_t0_int8__dsp.bin",
+          "graph": "dronet_k1_whole_t0",
+          "precision": "int8",
+          "measured_us": 658.5
+        },
+        "cpu": {
+          "ctx": "ctx_dronet_k1_whole_t0_fp32__cpu.bin",
+          "graph": "dronet_k1_whole_t0",
+          "precision": "fp32",
+          "measured_us": 1482.2
+        }
+      }
+    }
+  ],
+  "lowering": [
+    "fold_batchnorm_into_conv",
+    "fuse_activation_into_conv",
+    "conv_head_for_fc",
+    "drop_trailing_views"
+  ]
+}

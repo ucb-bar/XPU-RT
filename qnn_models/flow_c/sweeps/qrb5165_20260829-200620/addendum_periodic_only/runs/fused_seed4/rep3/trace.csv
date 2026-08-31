@@ -1,0 +1,16 @@
+entry_id,network,instance,dispatch_id,op,name,core_kind,hart,worker_kind_idx,predicted_start_ms,predicted_duration_ms,actual_start_ms,actual_end_ms,actual_duration_ms
+0,fused_split,0,1,qnn_graph,fused_depth_conv,hta,7,0,0.129000,1.568000,0.134000,0.493000,0.359000
+1,mlp_control,0,0,qnn_graph,mlp_control_full,dsp,6,1,0.649000,0.589000,0.654000,1.122000,0.468000
+2,fused_split,0,0,qnn_graph,fused_vision_conv,dsp,6,2,1.238000,0.459000,1.299000,2.078000,0.779000
+3,fused_split,0,2,qnn_graph,fused_tail,dsp,6,2,1.697000,4.303000,2.095000,5.537000,3.442000
+4,mlp_control,1,0,qnn_graph,mlp_control_full,cpu,5,3,6.893000,0.107000,6.905000,6.967000,0.062000
+5,fused_split,1,0,qnn_graph,fused_vision_conv,hta,7,0,8.530010,0.931000,8.534000,9.717000,1.183000
+6,fused_split,1,1,qnn_graph,fused_depth_conv,dsp,6,2,9.069010,0.392000,10.215000,10.637000,0.422000
+7,mlp_control,2,0,qnn_graph,mlp_control_full,dsp,6,1,9.461010,0.589000,9.474000,10.185000,0.711000
+8,mlp_control,3,0,qnn_graph,mlp_control_full,cpu,5,3,12.000000,0.107000,12.008000,12.056000,0.048000
+9,fused_split,1,2,qnn_graph,fused_tail,cpu,4,4,12.107000,0.354000,12.118000,15.586000,3.468000
+10,fused_split,2,0,qnn_graph,fused_vision_conv,hta,7,0,16.000000,0.931000,16.008000,16.475000,0.467000
+11,mlp_control,4,0,qnn_graph,mlp_control_full,dsp,6,1,16.911000,0.589000,16.917000,17.284000,0.367000
+12,fused_split,2,1,qnn_graph,fused_depth_conv,hta,7,0,16.931000,1.568000,16.934000,17.470000,0.536000
+13,fused_split,2,2,qnn_graph,fused_tail,cpu,4,4,19.646000,0.354000,19.658000,20.469000,0.811000
+14,mlp_control,5,0,qnn_graph,mlp_control_full,cpu,5,3,20.000000,0.107000,20.009000,20.062000,0.053000

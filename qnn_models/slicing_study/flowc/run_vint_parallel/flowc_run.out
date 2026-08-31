@@ -1,0 +1,23 @@
+
+=== run =========================================================
+  [tuned] governor -> performance, FLOWC_ITERATIONS=2
++ bash qnn_models/runtime/deploy_and_run.sh qnn_models/flow_c/gen/runtime/slicing_study_vint_parallel root@10.44.120.201 /root/flowc_runtime
+==> board     : root@10.44.120.201
+==> gen dir   : qnn_models/flow_c/gen/runtime/slicing_study_vint_parallel
+==> board dir : /root/flowc_runtime
+==> ctx dir   : /root/qnn_runtime_ctx
+==> log dir   : /scratch2/dima/misc_sw/XPU-RT/qnn_models/slicing_study/flowc/run_vint_parallel
+==> runtime env: FLOWC_ITERATIONS=2 
+
+runtime_main.cpp:332:13: warning: 'void pin_to(int)' defined but not used [-Wunused-function]
+  332 | static void pin_to(int core) {
+      |             ^~~~~~
+==> built 79528 B
+==> running...
+==> exit code: 0
+==> log: /scratch2/dima/misc_sw/XPU-RT/qnn_models/slicing_study/flowc/run_vint_parallel/run.log (17 lines)
+
+--- summary ---
+[summary] 5/5 entries executed, wall=40.060 ms (predicted makespan 40.000 ms, ratio 1.00x), tensor handoffs=0
+
+  [tuned] governor restored to schedutil

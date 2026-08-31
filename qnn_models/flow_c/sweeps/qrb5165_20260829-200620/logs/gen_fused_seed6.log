@@ -1,0 +1,15 @@
+/usr/bin/python3 /scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c/sweeps/qrb5165_20260829-200620/gen_random_workload.py 6 --hardware qrb5165_flowc --repo-root /scratch2/dima/misc_sw/XPU-RT --unbounded-nonperiodic --include-models mlp_control,fused_split,yolov8n --max-ops 800 --out /scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c/sweeps/qrb5165_20260829-200620/workloads/fused_seed6.json
+
+wrote /scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c/sweeps/qrb5165_20260829-200620/workloads/fused_seed6.json
+  hardware : qrb5165_flowc  {'cpu_p': 'HTA', 'cpu_e': 'DSP', 'cpu_x': 'CPU'}
+  horizon  : 48 ms (hyperperiod 10 ms)
+  networks : 7 (2 periodic, 5 sporadic)
+    mlp_control            period      5 ms  window      4 ms  x10 instances
+    fused_split            period     10 ms  window      7 ms  x5 instances
+    yolov8n_a              non-periodic (unbounded: no release window, scheduled as early as deps allow)
+    yolov8n_b              non-periodic (unbounded: no release window, scheduled as early as deps allow)
+    yolov8n_c              non-periodic (unbounded: no release window, scheduled as early as deps allow)
+    yolov8n_d              non-periodic (unbounded: no release window, scheduled as early as deps allow)
+    yolov8n_e              non-periodic (unbounded: no release window, scheduled as early as deps allow)
+  edges    : 0 (acyclic, chains within a rate group)
+

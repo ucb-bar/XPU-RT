@@ -1,0 +1,76 @@
++ /usr/bin/python3 /scratch2/dima/misc_sw/XPU-RT/scripts/run_xpurt_schedule.py --networks-json /scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c/sweeps/qrb5165_20260829-200620/addendum_periodic_only/workloads/baseline_seed4.json --solver greedy_periodic --profiled
+(cwd=/scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c/sweeps/qrb5165_20260829-200620/addendum_periodic_only)
+
+============================================================
+Loading network hierarchy from JSON...
+============================================================
+
+Loading networks from: /scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c/sweeps/qrb5165_20260829-200620/addendum_periodic_only/workloads/baseline_seed4.json
+
+Found 3 networks:
+  - mlp_control (id: 0, identifier: mlp_control)
+  - dronet_a (id: 1, identifier: dronet_a)
+  - dronet_b (id: 2, identifier: dronet_b)
+
+Found 1 network-level dependencies:
+  - dronet_a → dronet_b
+
+Resolved runtime configuration:
+  Machine core counts: {'CPU_P': 1, 'CPU_E': 1, 'CPU_X': 1}
+  Profile HW mapping: CPU_P->HTA, CPU_E->DSP
+  Profile target/topology: target=qrb5165_flowc, topo_tag=topo_0
+  p_core_speedup: 1.5
+  random_seed: 4
+  solver_verbosity: 0
+  time_limit: 20
+  use_profiled: True
+  prune_periodic: True
+  restrict_makespan_to_nonperiodic: True
+  machine_combination_mode: singletons
+  enforce_same_processor_combinations: True
+
+Using profiled runtimes where available...
+  (info) profile fallback: dronet_a/DSP/topo_0 -> model=dronet
+  (info) profile fallback: dronet_a/CPU/topo_0 -> model=dronet
+  (info) profile fallback: dronet_a/HTA/topo_0 -> model=dronet
+  (info) profile fallback: dronet_b/DSP/topo_0 -> model=dronet
+  (info) profile fallback: dronet_b/CPU/topo_0 -> model=dronet
+  (info) profile fallback: dronet_b/HTA/topo_0 -> model=dronet
+
+--- greedy_periodic iteration 1 ---
+  Total operations: 3
+  Job names: ['mlp_control0', 'dronet_a0', 'dronet_b0']
+  Makespan: 0.00 ms (non-periodic only; all-ops max-end = 2.65 ms)
+  Periodic 'mlp_control': period=4ms current=1 needed=1
+  Periodic 'dronet_a': period=8ms current=1 needed=1
+  Periodic 'dronet_b': period=8ms current=1 needed=1
+  All periodic counts cover makespan — converged.
+
+Final greedy makespan: 0.00 ms (after 1 iteration)
+
+Scheduling completed!
+Makespan (non-periodic): 0.00 ms
+
+Combination assignments:
+  1xCPU_P: 0 operations
+  1xCPU_E: 2 operations
+  1xCPU_X: 1 operations
+
+Per-network combination assignments:
+  Mlp_control0: 1xCPU_X=1
+  Dronet_a0: 1xCPU_E=1
+  Dronet_b0: 1xCPU_E=1
+Job ID to color index mapping: {0: 0, 1: 1, 2: 2}
+Job ID distribution: {0: 1, 1: 1, 2: 1}
+Job 'mlp_control0' (job_id=0, color_index=0) -> color RGB=[0.85033449 0.14686659 0.13633218]
+Job 'dronet_a0' (job_id=1, color_index=1) -> color RGB=[0.18246828 0.59332564 0.30675894]
+Job 'dronet_b0' (job_id=2, color_index=2) -> color RGB=[0.44884275 0.38396002 0.67387928]
+Saving plot to plots/baseline_seed4_greedy_periodic_profiled.png...
+
+Plot saved to plots/baseline_seed4_greedy_periodic_profiled.png
+
+Outputting scheduled JSON...
+
+Scheduled JSON saved to: schedules/scheduled_baseline_seed4_greedy_periodic_profiled.json
+
+--- stderr ---

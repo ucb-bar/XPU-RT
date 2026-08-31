@@ -29,7 +29,15 @@
 #   ADSP_EXTRA_PATHS   prepend to ADSP_LIBRARY_PATH (cloud: lib/hexagon-v66/unsigned)
 #   XPURT_DSP_CTX_BUDGET    lazy DSP context budget (multi-graph runtimes)
 #   XPURT_HTA_CTX_BUDGET    lazy HTA context budget
+#   XPURT_EXTRA_ENV    extra VAR=VAL pairs to set for the board-side run
 #   LOG_DIR            where to save the captured trace (default runs/<gen_dir basename>)
+#   BOARD_LOCK         flock path used to serialise the run against other users
+#                      of the same board (default /tmp/qnn_board.lock; empty
+#                      string still locks that default — edit here to disable)
+#   RUN_TIMEOUT        board-side SIGKILL deadline in seconds (default 120). A
+#                      runtime that wedges its cores — e.g. two real-time lanes
+#                      spinning on one — can take the whole board out of reach
+#                      of ssh, so the run is never left unbounded.
 
 set -uo pipefail
 
@@ -65,6 +73,9 @@ fi
 env_lines=""
 [ -n "${XPURT_DSP_CTX_BUDGET:-}" ] && env_lines+="XPURT_DSP_CTX_BUDGET=$XPURT_DSP_CTX_BUDGET "
 [ -n "${XPURT_HTA_CTX_BUDGET:-}" ] && env_lines+="XPURT_HTA_CTX_BUDGET=$XPURT_HTA_CTX_BUDGET "
+# Free-form passthrough for runtime knobs the caller wants on the board side
+# (e.g. XPURT_EXTRA_ENV="FLOWC_ITERATIONS=2 FLOWC_SPIN_US=500").
+[ -n "${XPURT_EXTRA_ENV:-}" ] && env_lines+="$XPURT_EXTRA_ENV "
 
 echo "==> board     : $BOARD"
 echo "==> gen dir   : $GEN_DIR"
@@ -119,10 +130,20 @@ echo "==> running..."
 ssh "$BOARD" bash > "$RUN_LOG" 2>&1 <<EOF
 set -uo pipefail
 cd "$BOARD_DIR_ARG"
+# Serialise against anything else using the board (other sessions, agents):
+# a timing run shares its silicon with whatever else is dispatching, so take
+# the lock for the duration. BOARD_LOCK= disables it.
+{ exec {lockfd}> ${BOARD_LOCK:-/tmp/qnn_board.lock}; } 2>/dev/null   # scope the redirect
+flock -w 900 \$lockfd 2>/dev/null || true
+# Merge stderr into stdout ON THE BOARD, not here. `ssh ... > log 2>&1`
+# merges locally, after ssh has already carried the remote stdout and stderr
+# as two independent channels -- their relative order is then whatever the
+# local multiplexer produces, which can drop a progress line into the middle
+# of the trace CSV block. Merging remote-side gives ssh one ordered stream.
 LD_LIBRARY_PATH=$QNN_SDK_ROOT/lib/target \\
 ADSP_LIBRARY_PATH="$ADSP_FULL" \\
 $env_lines \\
-./qnn_runtime
+timeout -s KILL ${RUN_TIMEOUT:-120} ./qnn_runtime 2>&1
 EOF
 RC=$?
 

@@ -1,0 +1,229 @@
+[
+ {
+  "arm": "baseline",
+  "seed": 4,
+  "point": "baseline_seed4",
+  "status": "ok",
+  "periodic": 3,
+  "nonperiodic": 0,
+  "problems": [
+   "no non-periodic work: nothing to pack against the periodic load"
+  ],
+  "horizon_ms": 24.0,
+  "hyperperiod_ms": 8,
+  "op_count": 12,
+  "networks": {
+   "mlp_control": {
+    "period": 4,
+    "window_duration": 3,
+    "num_instances": 6
+   },
+   "dronet_a": {
+    "period": 8,
+    "window_duration": 2,
+    "num_instances": 3
+   },
+   "dronet_b": {
+    "period": 8,
+    "window_duration": 3,
+    "num_instances": 3
+   }
+  },
+  "workload": "workloads/baseline_seed4.json",
+  "max_ops": 800,
+  "reinstated_from": {
+   "record": "generated.json",
+   "original_status": "REJECTED",
+   "original_problems": [
+    "no non-periodic work: nothing to pack against the periodic load"
+   ],
+   "rationale": "periodic-only draw: the mid-size periodic model is the critical path, which is the condition Q1 needs and the 12 accepted points never provide"
+  },
+  "flowc_spec": "workloads/baseline_seed4.flowc.json"
+ },
+ {
+  "arm": "baseline",
+  "seed": 5,
+  "point": "baseline_seed5",
+  "status": "ok",
+  "periodic": 2,
+  "nonperiodic": 0,
+  "problems": [
+   "no non-periodic work: nothing to pack against the periodic load"
+  ],
+  "horizon_ms": 54.0,
+  "hyperperiod_ms": 18,
+  "op_count": 12,
+  "networks": {
+   "mlp_control": {
+    "period": 6,
+    "window_duration": 4,
+    "num_instances": 9
+   },
+   "dronet": {
+    "period": 18,
+    "window_duration": 14,
+    "num_instances": 3
+   }
+  },
+  "workload": "workloads/baseline_seed5.json",
+  "max_ops": 800,
+  "reinstated_from": {
+   "record": "generated.json",
+   "original_status": "REJECTED",
+   "original_problems": [
+    "no non-periodic work: nothing to pack against the periodic load"
+   ],
+   "rationale": "periodic-only draw: the mid-size periodic model is the critical path, which is the condition Q1 needs and the 12 accepted points never provide"
+  },
+  "flowc_spec": "workloads/baseline_seed5.flowc.json"
+ },
+ {
+  "arm": "baseline",
+  "seed": 7,
+  "point": "baseline_seed7",
+  "status": "ok",
+  "periodic": 2,
+  "nonperiodic": 0,
+  "problems": [
+   "no non-periodic work: nothing to pack against the periodic load"
+  ],
+  "horizon_ms": 24.0,
+  "hyperperiod_ms": 8,
+  "op_count": 6,
+  "networks": {
+   "mlp_control": {
+    "period": 8,
+    "window_duration": 5,
+    "num_instances": 3
+   },
+   "dronet": {
+    "period": 8,
+    "window_duration": 6,
+    "num_instances": 3
+   }
+  },
+  "workload": "workloads/baseline_seed7.json",
+  "max_ops": 800,
+  "reinstated_from": {
+   "record": "generated.json",
+   "original_status": "REJECTED",
+   "original_problems": [
+    "no non-periodic work: nothing to pack against the periodic load"
+   ],
+   "rationale": "periodic-only draw: the mid-size periodic model is the critical path, which is the condition Q1 needs and the 12 accepted points never provide"
+  },
+  "flowc_spec": "workloads/baseline_seed7.flowc.json"
+ },
+ {
+  "arm": "fused",
+  "seed": 4,
+  "point": "fused_seed4",
+  "status": "ok",
+  "periodic": 2,
+  "nonperiodic": 0,
+  "problems": [
+   "no non-periodic work: nothing to pack against the periodic load"
+  ],
+  "horizon_ms": 24.0,
+  "hyperperiod_ms": 8,
+  "op_count": 15,
+  "networks": {
+   "mlp_control": {
+    "period": 4,
+    "window_duration": 3,
+    "num_instances": 6
+   },
+   "fused_split": {
+    "period": 8,
+    "window_duration": 6,
+    "num_instances": 3
+   }
+  },
+  "workload": "workloads/fused_seed4.json",
+  "max_ops": 800,
+  "reinstated_from": {
+   "record": "generated.json",
+   "original_status": "REJECTED",
+   "original_problems": [
+    "no non-periodic work: nothing to pack against the periodic load"
+   ],
+   "rationale": "periodic-only draw: the mid-size periodic model is the critical path, which is the condition Q1 needs and the 12 accepted points never provide"
+  },
+  "flowc_spec": "workloads/fused_seed4.flowc.json"
+ },
+ {
+  "arm": "fused",
+  "seed": 5,
+  "point": "fused_seed5",
+  "status": "ok",
+  "periodic": 2,
+  "nonperiodic": 0,
+  "problems": [
+   "no non-periodic work: nothing to pack against the periodic load"
+  ],
+  "horizon_ms": 54.0,
+  "hyperperiod_ms": 18,
+  "op_count": 18,
+  "networks": {
+   "mlp_control": {
+    "period": 6,
+    "window_duration": 4,
+    "num_instances": 9
+   },
+   "fused_split": {
+    "period": 18,
+    "window_duration": 14,
+    "num_instances": 3
+   }
+  },
+  "workload": "workloads/fused_seed5.json",
+  "max_ops": 800,
+  "reinstated_from": {
+   "record": "generated.json",
+   "original_status": "REJECTED",
+   "original_problems": [
+    "no non-periodic work: nothing to pack against the periodic load"
+   ],
+   "rationale": "periodic-only draw: the mid-size periodic model is the critical path, which is the condition Q1 needs and the 12 accepted points never provide"
+  },
+  "flowc_spec": "workloads/fused_seed5.flowc.json"
+ },
+ {
+  "arm": "fused",
+  "seed": 7,
+  "point": "fused_seed7",
+  "status": "ok",
+  "periodic": 2,
+  "nonperiodic": 0,
+  "problems": [
+   "no non-periodic work: nothing to pack against the periodic load"
+  ],
+  "horizon_ms": 24.0,
+  "hyperperiod_ms": 8,
+  "op_count": 12,
+  "networks": {
+   "mlp_control": {
+    "period": 8,
+    "window_duration": 5,
+    "num_instances": 3
+   },
+   "fused_split": {
+    "period": 8,
+    "window_duration": 6,
+    "num_instances": 3
+   }
+  },
+  "workload": "workloads/fused_seed7.json",
+  "max_ops": 800,
+  "reinstated_from": {
+   "record": "generated.json",
+   "original_status": "REJECTED",
+   "original_problems": [
+    "no non-periodic work: nothing to pack against the periodic load"
+   ],
+   "rationale": "periodic-only draw: the mid-size periodic model is the critical path, which is the condition Q1 needs and the 12 accepted points never provide"
+  },
+  "flowc_spec": "workloads/fused_seed7.flowc.json"
+ }
+]

@@ -1,0 +1,46 @@
+{
+ "baseline_seed0": {
+  "artifacts_rc": 0,
+  "artifacts_s": 0.1,
+  "solver": "milp",
+  "solve_s": 15.9,
+  "sched_rc": 0,
+  "schedule": "schedules/scheduled_baseline_seed0_profiled.json",
+  "makespan_line": "Makespan (all operations): 80.23 ms",
+  "sched_makespan_all_ms": 80.23,
+  "status": "solved"
+ },
+ "fused_seed0": {
+  "artifacts_rc": 0,
+  "artifacts_s": 0.1,
+  "solver": "milp",
+  "solve_s": 13.9,
+  "sched_rc": 0,
+  "schedule": "schedules/scheduled_fused_seed0_profiled.json",
+  "makespan_line": "Makespan (all operations): 73.23 ms",
+  "sched_makespan_all_ms": 73.23,
+  "status": "solved"
+ },
+ "baseline_seed3": {
+  "artifacts_rc": 0,
+  "artifacts_s": 0.1,
+  "solver": "milp",
+  "solve_s": 2.7,
+  "sched_rc": 0,
+  "schedule": "schedules/scheduled_baseline_seed3_profiled.json",
+  "makespan_line": "Makespan (all operations): 53.00 ms",
+  "sched_makespan_all_ms": 53.0,
+  "status": "solved"
+ },
+ "fused_vint_seed0": {
+  "artifacts_rc": 0,
+  "artifacts_s": 0.1,
+  "solver": "milp",
+  "solve_s": 308.5,
+  "sched_rc": 0,
+  "schedule": "schedules/scheduled_fused_vint_seed0_profiled.json",
+  "makespan_line": "Makespan (all operations): 100.89 ms",
+  "sched_makespan_all_ms": 100.89,
+  "status": "solved"
+ }
+}
