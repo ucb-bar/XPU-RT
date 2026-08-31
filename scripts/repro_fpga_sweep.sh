@@ -304,7 +304,7 @@ if [[ -z "${CONDA_OK}" ]]; then
 fi
 # Fail early and legibly rather than deep inside the scheduler.
 python3 - <<'PYCHK' || { echo "ERROR: python deps missing (see above)" >&2; exit 1; }
-import importlib, sys
+import importlib.util, sys   # NB: `import importlib` alone does NOT bind .util
 missing = [m for m in ("numpy", "matplotlib") if not importlib.util.find_spec(m)]
 if missing:
     sys.exit(f"  python3 ({sys.executable}) is missing: {', '.join(missing)}")
