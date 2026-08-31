@@ -26,9 +26,37 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 FLOWC = os.path.abspath(os.path.join(HERE, "..", ".."))          # qnn_models/flow_c
 REPO = os.path.abspath(os.path.join(FLOWC, "..", ".."))          # XPU-RT
 BOARD = os.environ.get("QNN_BOARD_HOST", "root@10.44.120.201")
-MILP_PY = ("/tmp/claude-1172/-scratch2-dima-misc-sw-XPU-RT/"
-           "3882980f-b60e-47b9-be3f-7fe85ec2bebb/scratchpad/milpenv/bin/python")
-MOSEK_LIC = os.path.expanduser("~/mosek/mosek.lic")
+def _find_milp_python():
+    """Locate an interpreter that can actually run the MILP.
+
+    This used to be a hardcoded path into the scratch directory the sweep was
+    first driven from. That path does not exist on any other machine, and the
+    solve step gates on os.path.exists() and falls back to greedy_periodic when
+    it is missing -- SILENTLY. A re-run elsewhere would therefore solve all 18
+    points with a different solver than the one results.json records, and look
+    fine doing it. Resolve it properly and let the caller fail loudly instead.
+
+    Order: $XPURT_MILP_PYTHON, then a venv beside the repo, then this
+    interpreter if it can already import cvxpy + mosek.
+    """
+    env = os.environ.get("XPURT_MILP_PYTHON")
+    if env:
+        return env if os.path.exists(env) else None
+    for cand in (os.path.join(REPO, ".venv", "bin", "python"),
+                 os.path.join(REPO, "milpenv", "bin", "python"),
+                 os.path.join(os.path.expanduser("~"), "milpenv", "bin", "python")):
+        if os.path.exists(cand):
+            return cand
+    try:
+        import cvxpy, mosek            # noqa: F401
+        return sys.executable
+    except Exception:
+        return None
+
+
+MILP_PY = _find_milp_python()
+MOSEK_LIC = os.environ.get("MOSEKLM_LICENSE_FILE",
+                           os.path.expanduser("~/mosek/mosek.lic"))
 MILP_TIME_LIMIT = 300
 
 # Inputs (the frozen cost model, the generator module) always come from HERE.
@@ -147,7 +175,14 @@ def cmd_solve(args):
         wl = os.path.join(OUT, "workloads", f"{pt}.json")
         env = dict(os.environ, MOSEKLM_LICENSE_FILE=MOSEK_LIC)
         solver, sched_json, sres, dt = None, None, None, 0.0
-        if os.path.exists(MILP_PY) and not args.greedy_only:
+        if MILP_PY is None and not args.greedy_only:
+            sys.exit(
+                "no MILP interpreter found -- results.json records solver=milp for\n"
+                "every point, and falling back to greedy_periodic here would silently\n"
+                "produce different numbers under the same file names.\n"
+                "Set XPURT_MILP_PYTHON=/path/to/python (needs cvxpy + mosek), or pass\n"
+                "--greedy-only to acknowledge you want the greedy solver.")
+        if MILP_PY and not args.greedy_only:
             try:
                 sres, dt = sh([MILP_PY, os.path.join(REPO, "scripts", "run_xpurt_schedule.py"),
                                "--networks-json", wl, "--solver", "milp",

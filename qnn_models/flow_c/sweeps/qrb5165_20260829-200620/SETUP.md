@@ -125,3 +125,63 @@ The FPGA sweep gates on the uartlog's embedded schedule name and
     runs/         run.log + trace.csv per point per rep
     results.json  per-point predicted vs actual, per-tile ratios, provenance
     ANALYSIS.md   written after the run
+
+---
+
+## Reproducing this sweep
+
+### Prerequisites
+
+    XPURT_MILP_PYTHON   interpreter with cvxpy + mosek. REQUIRED.
+    MOSEKLM_LICENSE_FILE   defaults to ~/mosek/mosek.lic
+    QNN_BOARD_HOST      defaults to root@10.44.120.201 (needed from `stage` on)
+
+`drive.py` resolves the MILP interpreter from `$XPURT_MILP_PYTHON`, then a
+`.venv`/`milpenv` beside the repo, then the current interpreter if it can
+already import cvxpy and mosek. **If none is found it exits rather than
+running.** That guard exists because the earlier version hardcoded a path into
+the scratch directory the sweep was first driven from, gated on
+`os.path.exists()`, and fell back to `greedy_periodic` when it was missing --
+silently. results.json records `solver: milp` for all 18 points, and the same
+point solves to 80.23 ms under MILP against 255.99 ms under greedy, so a
+silent fallback would have produced numbers 3x off under identical file names.
+Pass `--greedy-only` if you actually want the greedy solver.
+
+### Running it
+
+    export XPURT_MILP_PYTHON=/path/to/venv/bin/python
+    cd qnn_models/flow_c/sweeps/qrb5165_20260829-200620
+
+    python3 sweep_unbounded_nonperiodic.py --arms baseline,fused --seeds 0-7
+    python3 sweep_unbounded_nonperiodic.py --arms fused_vint --seeds 0-1
+    python3 drive.py solve          # artifacts + MILP, host only
+    python3 drive.py runtime        # emit dispatch_table.h + runtime_main.cpp
+    python3 drive.py stage          # link context binaries on the board
+    python3 drive.py run --reps 3   # board, serialised behind the board lock
+    python3 drive.py results
+    python3 analyse.py && python3 analyse2.py
+    python3 verify_provenance.py
+
+Steps 1-3 are host-only and reproduce the predicted numbers exactly. From
+`stage` on you need the board.
+
+### What is pinned, and what is not
+
+`cost_model.json` is frozen in this directory and every point's flow-c spec
+points at it, so `drive.py solve` re-emits the shared `gen/` artifacts from it
+immediately before each solve. That makes the predicted numbers independent of
+whatever `measurements/qrb5165_v66.json` currently holds -- which matters,
+because that file has since been rebuilt from in-situ medians and now yields
+80.23 ms for baseline_seed0 where this sweep recorded 67.571 ms. Both are
+correct for their own cost model. `results.json` records the frozen model's
+sha256 per point; `verify_provenance.py` checks it.
+
+Measured numbers (anything from `run` onward) will not reproduce bit-exactly:
+rep-to-rep spread on this board is ~4.4%, and the sweep's own reps show up to
+8.7% on a single point.
+
+### Addendum
+
+The six points this sweep rejected were run separately -- see
+`addendum_periodic_only/README.md`. That tree carries its own `generated.json`
+and reuses this directory's frozen cost model via `drive.py`'s `SWEEP_OUT`.
