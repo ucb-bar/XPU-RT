@@ -56,6 +56,29 @@ does not rewrite the graph at all. It annotates one dispatch with a core width,
 so the dispatch count, ids and edges are unchanged. Everything else in this
 table is a graph rewrite.
 
+## Schedule-selected sharding reaches the runtime
+
+The scheduler may also choose the width directly. With
+`machine_combination_mode: "shard"`, a dispatch carries a composite target
+such as `CPU_P#0+CPU_P#1+CPU_P#2+CPU_P#3`. That serialized target is the
+execution contract—not merely a Gantt label:
+
+1. `ingest_xpurt_schedule.py` preserves every hart and rejects mixed runtime
+   kinds, duplicate harts, and unbound harts.
+2. `schedule_shards.py` derives per-dispatch codegen widths. Packed convolution
+   weights are re-packed per output-channel shard; inconsistent periodic
+   widths and non-divisible channel counts are refused.
+3. `generate_xpurt_main.py` creates one persistent pool per distinct hart set,
+   binds the exact pool through dispatch-local state, and locks all reserved
+   harts in numeric order while the dispatch runs.
+4. `modelblaster_pool_create_on_harts` pins the caller/helpers to precisely the
+   physical harts selected by XPU-RT. Singleton targets remain serial.
+
+`hardware_target` chooses where and how wide; `impl` independently chooses the
+kernel implementation. The complete contract, supported operations, failure
+conditions, and run command are in
+[`ModelBlaster/docs/xpurt_schedule_sharding.md`](../ModelBlaster/docs/xpurt_schedule_sharding.md).
+
 ## Channel 2 — runtime feedback (place and size)
 
 Two ways in, same file out.

@@ -867,7 +867,7 @@ debugged alone.
 | `split` | `blocking_advice` | `advice_to_split_hint.py` | `apply_split_hint.py` | **rejected**, +13.7% | ⚠️ that rung used a hand-written hint |
 | `unfuse` | `unfuse_advice` | `advice_to_unfuse_hint.py` | `apply_unfuse_hint.py` | never | host only |
 | `choose_implementation` | `implementation_advice` | `advice_to_kernel_choice.py` | `generate_kernels --keep-reference-ops` | never | host only |
-| `shard` | `shard_advice` | — | `MB_SHARD_FACTOR` (build-level) | never | **cannot fire**: see below |
+| `shard` | `shard_advice` or schedule width | `advice_to_shard_hint.py` or composite target | `apply_shard_hint.py` / `schedule_shards.py` | **accepted**, exact-cycle feedback | ✅ schedule-selected path; advice path host-tested |
 
 **Read the last two columns separately.** "The verb reached a board verdict" and
 "this chain produced that verdict" are different claims, and only
@@ -877,11 +877,12 @@ then — so the split bridge is verified against the rewriter and against real
 advice, but has not yet been the thing that produced a board number. Collapsing
 the two columns is how a chain gets credited with a measurement it did not make.
 
-Two verbs have reached a board verdict and **both were rejected on
-measurement**. That is the loop working, not failing, and it is the reason the
-rejections are on the record rather than the successes.
+Three verbs have reached a board verdict. Fusion and split were rejected on
+measurement; schedule-selected sharding was accepted and produced the
+solver-independent exact-cycle separation. Keeping both outcomes is the loop
+working: measurement decides, not the recommendation's name.
 
-A third measured result is a refusal rather than a rung: on the `dense2`
+A separate measured result is a refusal rather than a rung: on the `dense2`
 workload `advice_to_split_hint` emits **0 splits**, because yolov8_nano's
 largest dispatch is 2.238 ms against a 16.527 ms periodic slot (13.5%) and
 `blocking_advice` fires only above 100%. Nothing blocks, so nothing needs
@@ -1007,11 +1008,15 @@ failed the build; it also greyed the model out of every figure. Pass
 `--networks` to `generate_xpurt_main` (the runner does), and prefer the trace's
 own `network` column in any renderer.
 
-### `shard`: documented, deliberately not wired
+### `shard`: schedule-selected and wired end to end
 
-`shard_advice` is per dispatch; the mechanism (`MB_SHARD_FACTOR`, with
-per-shard re-packed weights) is **build-level and whole-model**. Before building
-a bridge across that gap, two things had to be true, and neither is:
+`shard_advice` is per dispatch. The legacy `MB_SHARD_FACTOR` is build-level and
+whole-model, but it is no longer the deployed path: XPU-RT chooses a measured
+width per dispatch, serializes it as a composite `hardware_target`, and
+ModelBlaster derives a codegen-only IR with `schedule_shards.py`. Packed
+convolution weights are re-packed for that width, while the runtime creates a
+persistent pool on the exact selected harts and locks the complete block while
+the dispatch runs.
 
 * ~~**The advice cannot fire at all.** It needs `profiles_by_cores` with a
   1-core baseline *and* multi-core measurements. Only `topo_0` exists — all 16
@@ -1028,11 +1033,12 @@ a bridge across that gap, two things had to be true, and neither is:
   ffn_block's two linears. Do not transfer the split cap to sharding; see
   `docs/the_loop.md` §4c.
 
-So the verb stays documented and unwired, which is an outcome rather than an
-omission. The mechanism is real and tested (`_OC_SLICEABLE_CONV_OPS`, per-shard
-weight re-packing) and reachable by setting `MB_SHARD_FACTOR` at codegen. What
-does not exist is advice that selects it, and it should not be written against
-data that does not exist.
+The explicit advice bridge also exists:
+`advice_to_shard_hint.py` emits `modelblaster.shard_hints/v1`, and
+`apply_shard_hint.py` annotates the named dispatch without changing IDs or
+edges. For a deployed XPU-RT schedule, however, the serialized machine
+combination is authoritative. The complete current contract is
+`ModelBlaster/docs/xpurt_schedule_sharding.md`.
 
 ### Two worked round-trips, both rejections
 
@@ -1113,7 +1119,9 @@ $PY scripts/plot_predicted_vs_measured.py --schedule <sched.json> --trace <trace
   instructions at all.
 * **The harness stamps a record slot, not the IR `dispatch_id`** — see above.
   Every consumer works around it; the producer should be fixed.
-* **`shard_advice` cannot fire** for want of multi-core profiles — see above.
+* **Composite shards require a consistent width across periodic instances of
+  one packed-convolution dispatch.** One generated weight layout cannot encode
+  invocation-dependent widths; `schedule_shards.py` rejects that schedule.
 
 Previously listed here and now resolved: `emit_compile_advice.py` reads
 ModelBlaster profiles (`--profile-format csv`, now the default);

@@ -37,8 +37,8 @@ alone, which is the reason for the file boundaries.
 | schedule | `run_xpurt_schedule.py` | `schedules/scheduled_*.json` |
 | run | `run_xpurt_k1.sh` → `harness_xpurt` | `*_trace.csv` |
 | advice | `emit_compile_advice.py` | `compile_advice.json` |
-| hint | `advice_to_{fusion,split,unfuse}_hint.py`, `advice_to_kernel_choice.py` | `modelblaster.*_hints/v1` |
-| rewrite | `apply_{fusion,split,unfuse}_hint.py` | `graph.<rewritten>.json` + `id_remap` |
+| hint | `advice_to_{fusion,split,unfuse,shard}_hint.py`, `advice_to_kernel_choice.py` | `modelblaster.*_hints/v1` |
+| rewrite/annotate | `apply_{fusion,split,unfuse,shard}_hint.py` | rewritten graph + `id_remap`, or a shard-annotated graph with stable IDs |
 | gate | `diff_dispatch_graph.py` | exit 0 / 3 / 4 |
 | verdict | `compare_candidates.py` | accept / reject + the deciding term |
 
@@ -50,11 +50,15 @@ alone, which is the reason for the file boundaries.
 | `split` | `blocking_advice` | `advice_to_split_hint.py` | `apply_split_hint.py` |
 | `unfuse` | `unfuse_advice` | `advice_to_unfuse_hint.py` | `apply_unfuse_hint.py` |
 | `choose_implementation` | `implementation_advice` | `advice_to_kernel_choice.py` | `generate_kernels --keep-reference-ops` |
-| `shard` | `shard_advice` | — | `MB_SHARD_FACTOR` (build-level) |
+| `shard` | `shard_advice` or schedule width | `advice_to_shard_hint.py` or composite `hardware_target` | `apply_shard_hint.py` or `schedule_shards.py` |
 
-`shard` has no bridge because it is not a graph rewrite: the width is chosen by
-the SCHEDULER, per dispatch, out of multi-core profiles, rather than by a hint
-that changes the IR. See section 5c.
+`shard` is not a graph rewrite. An explicit advice round can annotate an IR
+through `advice_to_shard_hint.py` and `apply_shard_hint.py`; the deployed
+schedule path instead treats the scheduler's composite `hardware_target` as
+authoritative and derives the codegen-only annotation with
+`ModelBlaster/pipeline/schedule_shards.py`. Both preserve dispatch IDs and
+edges. See section 5c and
+`ModelBlaster/docs/xpurt_schedule_sharding.md`.
 
 This entry used to read "deliberately unwired: it needs multi-core profiles
 that do not exist, and B4 measured a 2.27x ceiling." Both halves are now

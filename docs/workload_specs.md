@@ -94,6 +94,10 @@ Measured per-dispatch scaling varies **4.8× within one model** — 4.02× on a
 wide-OC conv down to 0.83× on a 1×1 — so one width per model is wrong for
 nearly every dispatch in it.
 
+The selected composite target is consumed end to end by ModelBlaster; see
+[`ModelBlaster/docs/xpurt_schedule_sharding.md`](../ModelBlaster/docs/xpurt_schedule_sharding.md)
+for codegen, weight packing, exact-hart pools, locking, and refusal rules.
+
 Those tags are produced by `MB_CORES` in `run_model_k1.sh`, which derives the
 pool width, the affinity mask, the binary suffix and the tag together, so a
 profile cannot claim a core count it did not run on.
