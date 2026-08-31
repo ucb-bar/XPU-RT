@@ -194,27 +194,48 @@ def solve(out):
 
 # -------------------------------------------------------------- runtime
 def runtime(out):
+    """Compare the emitted C++ against the record, distinguishing two cases.
+
+    dispatch_table.h encodes the SCHEDULE -- entry order, lanes, start times,
+    contexts, graphs. A mismatch there means the reproduction produced a
+    different schedule, which is a real failure.
+
+    runtime_main.cpp is the harness around it. It legitimately evolves: the
+    transfer study (5ebba96) added per-entry handoff instrumentation, so every
+    runtime emitted after that differs from the recorded sha by construction.
+    Reporting that as a failure would conflate 'the schedule changed' with
+    'the runtime source moved on', so it is a warning when the table matches.
+    """
     print("\nruntime -- emitted C++ sha256 vs the record")
     r = run([sys.executable, "-u", os.path.join(HERE, "drive.py"), "runtime"],
             env={"SWEEP_OUT": out}, cwd=HERE, timeout=3600)
     if r.returncode != 0:
         print(f"{BAD} drive.py runtime exited {r.returncode}"); return False
-    rec, good, bad = record(), 0, 0
+    rec = record()
+    dt_ok = rm_ok = n = 0
     for pt, ref in sorted(rec.items()):
         if ref["status"] != "run":
             continue
+        n += 1
         d = os.path.join(out, "runtimes", pt)
-        hit = all(os.path.exists(os.path.join(d, f)) for f in ("dispatch_table.h", "runtime_main.cpp")) \
-            and sha256(os.path.join(d, "dispatch_table.h")) == ref["dispatch_table_sha256"] \
-            and sha256(os.path.join(d, "runtime_main.cpp")) == ref["runtime_main_sha256"]
-        good, bad = good + hit, bad + (not hit)
-        if not hit:
-            print(f"{BAD} {pt:<20} sha mismatch")
-    print(f"{OK if not bad else BAD} {good}/{good+bad} runtimes byte-identical to the record")
-    if bad:
-        print("       (a mismatch here is expected if flowc/emit_runtime.py changed since;")
-        print("        the transfer study added handoff instrumentation, which changes it)")
-    return bad == 0
+        try:
+            a = sha256(os.path.join(d, "dispatch_table.h")) == ref["dispatch_table_sha256"]
+            b = sha256(os.path.join(d, "runtime_main.cpp")) == ref["runtime_main_sha256"]
+        except FileNotFoundError:
+            a = b = False
+        dt_ok += a; rm_ok += b
+        if not a:
+            print(f"{BAD} {pt:<20} dispatch_table.h differs -- SCHEDULE changed")
+    print(f"{OK if dt_ok == n else BAD} {dt_ok}/{n} dispatch_table.h byte-identical "
+          f"(the schedule encoding)")
+    if rm_ok == n:
+        print(f"{OK} {rm_ok}/{n} runtime_main.cpp byte-identical (the harness)")
+    else:
+        print(f"  \033[33mWARN\033[0m {rm_ok}/{n} runtime_main.cpp byte-identical -- expected if")
+        print("       flowc/emit_runtime.py has changed since the sweep ran. The transfer")
+        print("       study (5ebba96) added handoff instrumentation, which changes every")
+        print("       emitted runtime. Not a reproduction failure while the table matches.")
+    return dt_ok == n
 
 
 # ---------------------------------------------------------------- board

@@ -166,7 +166,8 @@ checked against. It verifies, in increasing order of what it proves:
 |---|---|---|
 | generate | regenerated workloads byte-identical to the committed ones | yes -- the generator is seeded |
 | solve | predicted makespan and solver identity match `results.json` | yes -- artifacts re-emitted from the frozen `cost_model.json` |
-| runtime | `dispatch_table.h` / `runtime_main.cpp` sha256 match | yes -- proves the same C++ ran |
+| runtime | `dispatch_table.h` sha256 matches | yes -- proves the same **schedule** was emitted |
+| runtime | `runtime_main.cpp` sha256 matches | warning only -- the harness legitimately evolves |
 | board | measured makespan drift vs the record | **no** -- ~4.4% rep spread, reported not asserted |
 
 The stages can still be driven by hand:
