@@ -1,0 +1,62 @@
+{
+  "_comment": "The 3-way workload plus FusedSensorNet cut into its two parallel conv branches and the LSTM tail, so the conv work can leave the contended CPU lane for HTA/DSP.",
+  "hardware": {
+    "machines": {
+      "cpu_p": 1,
+      "cpu_e": 1,
+      "cpu_x": 1
+    },
+    "profile_hw": {
+      "cpu_p": "HTA",
+      "cpu_e": "DSP",
+      "cpu_x": "CPU"
+    },
+    "profile": {
+      "target": "qrb5165_flowc",
+      "topo_tag": "topo_0",
+      "topo_tag_override": false,
+      "gen_root": "gen"
+    },
+    "p_core_speedup": 1.0
+  },
+  "scheduler": {
+    "random_seed": 42,
+    "solver_verbosity": 0,
+    "time_limit": 60,
+    "use_profiled": true,
+    "prune_periodic": true,
+    "restrict_makespan_to_nonperiodic": true
+  },
+  "networks": {
+    "dronet": {
+      "id": 0,
+      "identifier": "dronet",
+      "dispatch_deps_path": "gen/qnn_vmfb/dronet/qrb5165_flowc/CPU/dronet.int8/dronet.int8_dispatch_graph.json",
+      "period": 5,
+      "window_duration": 5,
+      "num_instances": 15
+    },
+    "mlp_control": {
+      "id": 1,
+      "identifier": "mlp_control",
+      "dispatch_deps_path": "gen/qnn_vmfb/mlp_control/qrb5165_flowc/CPU/mlp_control.int8/mlp_control.int8_dispatch_graph.json",
+      "period": 2,
+      "window_duration": 2,
+      "num_instances": 37
+    },
+    "yolov8n": {
+      "id": 2,
+      "identifier": "yolov8n",
+      "dispatch_deps_path": "gen/qnn_vmfb/yolov8n/qrb5165_flowc/CPU/yolov8n.int8/yolov8n.int8_dispatch_graph.json"
+    },
+    "fused_split": {
+      "id": 3,
+      "identifier": "fused_split",
+      "dispatch_deps_path": "gen/qnn_vmfb/fused_split/qrb5165_flowc/CPU/fused_split.int8/fused_split.int8_dispatch_graph.json",
+      "period": 20,
+      "window_duration": 20,
+      "num_instances": 4
+    }
+  },
+  "edges": []
+}

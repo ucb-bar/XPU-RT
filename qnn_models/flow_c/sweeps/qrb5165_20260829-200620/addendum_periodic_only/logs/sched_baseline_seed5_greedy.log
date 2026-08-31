@@ -1,0 +1,65 @@
++ /usr/bin/python3 /scratch2/dima/misc_sw/XPU-RT/scripts/run_xpurt_schedule.py --networks-json /scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c/sweeps/qrb5165_20260829-200620/addendum_periodic_only/workloads/baseline_seed5.json --solver greedy_periodic --profiled
+(cwd=/scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c/sweeps/qrb5165_20260829-200620/addendum_periodic_only)
+
+============================================================
+Loading network hierarchy from JSON...
+============================================================
+
+Loading networks from: /scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c/sweeps/qrb5165_20260829-200620/addendum_periodic_only/workloads/baseline_seed5.json
+
+Found 2 networks:
+  - mlp_control (id: 0, identifier: mlp_control)
+  - dronet (id: 1, identifier: dronet)
+
+Found 0 network-level dependencies:
+
+Resolved runtime configuration:
+  Machine core counts: {'CPU_P': 1, 'CPU_E': 1, 'CPU_X': 1}
+  Profile HW mapping: CPU_P->HTA, CPU_E->DSP
+  Profile target/topology: target=qrb5165_flowc, topo_tag=topo_0
+  p_core_speedup: 1.5
+  random_seed: 5
+  solver_verbosity: 0
+  time_limit: 20
+  use_profiled: True
+  prune_periodic: True
+  restrict_makespan_to_nonperiodic: True
+  machine_combination_mode: singletons
+  enforce_same_processor_combinations: True
+
+Using profiled runtimes where available...
+
+--- greedy_periodic iteration 1 ---
+  Total operations: 2
+  Job names: ['mlp_control0', 'dronet0']
+  Makespan: 0.00 ms (non-periodic only; all-ops max-end = 0.65 ms)
+  Periodic 'mlp_control': period=6ms current=1 needed=1
+  Periodic 'dronet': period=18ms current=1 needed=1
+  All periodic counts cover makespan — converged.
+
+Final greedy makespan: 0.00 ms (after 1 iteration)
+
+Scheduling completed!
+Makespan (non-periodic): 0.00 ms
+
+Combination assignments:
+  1xCPU_P: 0 operations
+  1xCPU_E: 1 operations
+  1xCPU_X: 1 operations
+
+Per-network combination assignments:
+  Mlp_control0: 1xCPU_X=1
+  Dronet0: 1xCPU_E=1
+Job ID to color index mapping: {0: 0, 1: 1}
+Job ID distribution: {0: 1, 1: 1}
+Job 'mlp_control0' (job_id=0, color_index=0) -> color RGB=[0.18246828 0.59332564 0.30675894]
+Job 'dronet0' (job_id=1, color_index=1) -> color RGB=[0.17914648 0.49287197 0.73542484]
+Saving plot to plots/baseline_seed5_greedy_periodic_profiled.png...
+
+Plot saved to plots/baseline_seed5_greedy_periodic_profiled.png
+
+Outputting scheduled JSON...
+
+Scheduled JSON saved to: schedules/scheduled_baseline_seed5_greedy_periodic_profiled.json
+
+--- stderr ---

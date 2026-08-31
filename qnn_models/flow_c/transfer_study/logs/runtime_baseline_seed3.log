@@ -1,0 +1,20 @@
++ /usr/bin/python3 flow_c.py runtime --workload /scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c/sweeps/qrb5165_20260829-200620/workloads/baseline_seed3.flowc.json --tag xfer_baseline_seed3 --lane-mode kind-network --schedule /scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c/sweeps/qrb5165_20260829-200620/schedules/scheduled_baseline_seed3_profiled.json --out-dir /scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c/transfer_study/runtimes/baseline_seed3
+(cwd=/scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c)
+
+
+=== runtime =====================================================
+16 entries  predicted makespan 48.399 ms
+  per network: {'dronet_a': 3, 'mlp_control': 6, 'yolov8n_b': 2, 'dronet_b': 3, 'yolov8n_a': 2}
+  per lane:    {'dsp(DSP)': 6, 'cpu(CPU)': 6, 'hta(HTA)': 4}
+  contexts:    6
+    DSP  ctx_dronet_full_hta__Dsp.bin  ::dronet_full_hta
+    HTA  ctx_dronet_full_hta__Hta.bin  ::dronet_full_hta
+    CPU  ctx_mlp_control_fp32__Cpu.bin  ::mlp_control_fp32
+    DSP  ctx_yolov8n_backbone__Dsp.bin  ::yolov8n_HTA_split_seg100
+    HTA  ctx_yolov8n_backbone__Hta.bin  ::yolov8n_HTA_split_seg100
+    DSP  ctx_yolov8n_head__Dsp.bin  ::yolov8n_HTA_split_seg101
+
+emitted /scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c/transfer_study/runtimes/baseline_seed3/dispatch_table.h + runtime_main.cpp
+  lane mode kind-network: dsp|dronet_a, cpu|mlp_control, dsp|yolov8n_b, hta|dronet_b, hta|yolov8n_a, dsp|dronet_b, hta|dronet_a, dsp|yolov8n_a
+
+--- stderr ---

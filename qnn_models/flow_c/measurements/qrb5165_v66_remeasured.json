@@ -1,0 +1,237 @@
+{
+ "_comment": "Two-phase re-measurement. loop_* reproduces the original methodology (back-to-back executes); gap_* inserts an idle gap before each execute so the measurement matches how the scheduled runtime invokes a tile. Build cost cells from gap_median_us.",
+ "target": "qrb5165_v66",
+ "iters": 40,
+ "gap_us": 3000,
+ "harness": "qnn_models/runtime/profile_segments.cpp",
+ "conditions": {
+  "governor": "performance on all 8 cores",
+  "cpu_affinity": "taskset -c 4-5 for cpu cells"
+ },
+ "results": [
+  {
+   "cell": "dronet/dronet_full",
+   "backend": "hta",
+   "ctx": "ctx_dronet_full_hta__Hta.bin",
+   "graph": "dronet_full_hta",
+   "manifest": "dronet.json",
+   "status": "missing_or_failed"
+  },
+  {
+   "cell": "dronet/dronet_full",
+   "backend": "dsp",
+   "ctx": "ctx_dronet_full_hta__Dsp.bin",
+   "graph": "dronet_full_hta",
+   "manifest": "dronet.json",
+   "status": "missing_or_failed"
+  },
+  {
+   "cell": "dronet/dronet_full",
+   "backend": "cpu",
+   "ctx": "ctx_dronet_full_hta__Cpu.bin",
+   "graph": "dronet_full_hta",
+   "manifest": "dronet.json",
+   "status": "missing_or_failed"
+  },
+  {
+   "cell": "fused_full/fused_full_net",
+   "backend": "dsp",
+   "ctx": "ctx_fused_full__Dsp.bin",
+   "graph": "fused_full",
+   "manifest": "fused_full.json",
+   "status": "missing_or_failed"
+  },
+  {
+   "cell": "fused_full/fused_full_net",
+   "backend": "cpu",
+   "ctx": "ctx_fused_full_fp32__Cpu.bin",
+   "graph": "fused_full",
+   "manifest": "fused_full.json",
+   "status": "missing_or_failed"
+  },
+  {
+   "cell": "fused_split/fused_vision_conv",
+   "backend": "hta",
+   "ctx": "ctx_fused_vision_conv__Hta.bin",
+   "graph": "fused_vision_conv",
+   "manifest": "fused_split.json",
+   "status": "missing_or_failed"
+  },
+  {
+   "cell": "fused_split/fused_vision_conv",
+   "backend": "dsp",
+   "ctx": "ctx_fused_vision_conv__Dsp.bin",
+   "graph": "fused_vision_conv",
+   "manifest": "fused_split.json",
+   "status": "missing_or_failed"
+  },
+  {
+   "cell": "fused_split/fused_vision_conv",
+   "backend": "cpu",
+   "ctx": "ctx_fused_vision_conv__Cpu.bin",
+   "graph": "fused_vision_conv",
+   "manifest": "fused_split.json",
+   "status": "missing_or_failed"
+  },
+  {
+   "cell": "fused_split/fused_depth_conv",
+   "backend": "hta",
+   "ctx": "ctx_fused_depth_conv__Hta.bin",
+   "graph": "fused_depth_conv",
+   "manifest": "fused_split.json",
+   "status": "missing_or_failed"
+  },
+  {
+   "cell": "fused_split/fused_depth_conv",
+   "backend": "dsp",
+   "ctx": "ctx_fused_depth_conv__Dsp.bin",
+   "graph": "fused_depth_conv",
+   "manifest": "fused_split.json",
+   "status": "missing_or_failed"
+  },
+  {
+   "cell": "fused_split/fused_depth_conv",
+   "backend": "cpu",
+   "ctx": "ctx_fused_depth_conv__Cpu.bin",
+   "graph": "fused_depth_conv",
+   "manifest": "fused_split.json",
+   "status": "missing_or_failed"
+  },
+  {
+   "cell": "fused_split/fused_tail",
+   "backend": "dsp",
+   "ctx": "ctx_fused_tail_from_conv__Dsp.bin",
+   "graph": "fused_tail_from_conv",
+   "manifest": "fused_split.json",
+   "status": "missing_or_failed"
+  },
+  {
+   "cell": "fused_split/fused_tail",
+   "backend": "cpu",
+   "ctx": "ctx_fused_tail_from_conv_fp32__Cpu.bin",
+   "graph": "fused_tail_from_conv",
+   "manifest": "fused_split.json",
+   "status": "missing_or_failed"
+  },
+  {
+   "cell": "mlp_control/mlp_control_full",
+   "backend": "cpu",
+   "ctx": "ctx_mlp_control_fp32__Cpu.bin",
+   "graph": "mlp_control_fp32",
+   "manifest": "mlp_control.json",
+   "status": "missing_or_failed"
+  },
+  {
+   "cell": "mlp_control/mlp_control_full",
+   "backend": "dsp",
+   "ctx": "ctx_mlp_control__Dsp.bin",
+   "graph": "mlp_control",
+   "manifest": "mlp_control.json",
+   "status": "missing_or_failed"
+  },
+  {
+   "cell": "vint/vint_encoders",
+   "backend": "dsp",
+   "ctx": "ctx_vint_encoders__Dsp.bin",
+   "graph": "vint_encoders",
+   "manifest": "vint.json",
+   "status": "missing_or_failed"
+  },
+  {
+   "cell": "vint/vint_encoders",
+   "backend": "cpu",
+   "ctx": "ctx_vint_encoders_fp32__Cpu.bin",
+   "graph": "vint_encoders",
+   "manifest": "vint.json",
+   "status": "missing_or_failed"
+  },
+  {
+   "cell": "vint/vint_decoder",
+   "backend": "cpu",
+   "ctx": "ctx_vint_decoder_fp32__Cpu.bin",
+   "graph": "vint_decoder",
+   "manifest": "vint.json",
+   "status": "missing_or_failed"
+  },
+  {
+   "cell": "vint_par/vint_goal_enc",
+   "backend": "dsp",
+   "ctx": "ctx_vint_par_enc_t0_int8__dsp.bin",
+   "graph": "vint_par_enc_t0",
+   "manifest": "vint_par.json",
+   "status": "missing_or_failed"
+  },
+  {
+   "cell": "vint_par/vint_goal_enc",
+   "backend": "cpu",
+   "ctx": "ctx_vint_par_enc_t0_int8__cpu.bin",
+   "graph": "vint_par_enc_t0",
+   "manifest": "vint_par.json",
+   "status": "missing_or_failed"
+  },
+  {
+   "cell": "vint_par/vint_obs_enc",
+   "backend": "dsp",
+   "ctx": "ctx_vint_par_enc_t1_int8__dsp.bin",
+   "graph": "vint_par_enc_t1",
+   "manifest": "vint_par.json",
+   "status": "missing_or_failed"
+  },
+  {
+   "cell": "vint_par/vint_obs_enc",
+   "backend": "cpu",
+   "ctx": "ctx_vint_par_enc_t1_int8__cpu.bin",
+   "graph": "vint_par_enc_t1",
+   "manifest": "vint_par.json",
+   "status": "missing_or_failed"
+  },
+  {
+   "cell": "vint_par/vint_decoder",
+   "backend": "cpu",
+   "ctx": "ctx_vint_par_enc_t2_fp32__cpu.bin",
+   "graph": "vint_par_enc_t2",
+   "manifest": "vint_par.json",
+   "status": "missing_or_failed"
+  },
+  {
+   "cell": "yolov8n/yolov8n_backbone",
+   "backend": "hta",
+   "ctx": "ctx_yolov8n_backbone__Hta.bin",
+   "graph": "yolov8n_HTA_split_seg100",
+   "manifest": "yolov8n.json",
+   "status": "missing_or_failed"
+  },
+  {
+   "cell": "yolov8n/yolov8n_backbone",
+   "backend": "dsp",
+   "ctx": "ctx_yolov8n_backbone__Dsp.bin",
+   "graph": "yolov8n_HTA_split_seg100",
+   "manifest": "yolov8n.json",
+   "status": "missing_or_failed"
+  },
+  {
+   "cell": "yolov8n/yolov8n_backbone",
+   "backend": "cpu",
+   "ctx": "ctx_yolov8n_backbone__Cpu.bin",
+   "graph": "yolov8n_HTA_split_seg100",
+   "manifest": "yolov8n.json",
+   "status": "missing_or_failed"
+  },
+  {
+   "cell": "yolov8n/yolov8n_head",
+   "backend": "dsp",
+   "ctx": "ctx_yolov8n_head__Dsp.bin",
+   "graph": "yolov8n_HTA_split_seg101",
+   "manifest": "yolov8n.json",
+   "status": "missing_or_failed"
+  },
+  {
+   "cell": "yolov8n/yolov8n_head",
+   "backend": "cpu",
+   "ctx": "ctx_yolov8n_head__Cpu.bin",
+   "graph": "yolov8n_HTA_split_seg101",
+   "manifest": "yolov8n.json",
+   "status": "missing_or_failed"
+  }
+ ]
+}

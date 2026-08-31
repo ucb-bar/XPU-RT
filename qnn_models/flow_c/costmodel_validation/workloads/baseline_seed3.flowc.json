@@ -1,0 +1,39 @@
+{
+  "name": "baseline_seed3",
+  "_comment": "Cost-model validation copy of sweep point baseline_seed3. Identical taskset and bindings; the only change is that measurements points at the rebuilt in-situ cost model instead of the sweep's frozen cost_model.json, so the makespan ratio before/after is a clean A/B.",
+  "target": "qrb5165_flowc",
+  "board": "qrb5165_v66",
+  "registry": "cores/qrb5165_qnn.json",
+  "measurements": "measurements/qrb5165_v66.json",
+  "slots": {
+    "CPU_P": "hta",
+    "CPU_E": "dsp",
+    "CPU_X": "cpu"
+  },
+  "ctx_dir": "/root/qnn_runtime_ctx",
+  "networks": [
+    {
+      "name": "mlp_control",
+      "bindings": "bindings/mlp_control.json",
+      "period": 6
+    },
+    {
+      "name": "dronet_a",
+      "bindings": "bindings/dronet.json",
+      "period": 12
+    },
+    {
+      "name": "dronet_b",
+      "bindings": "bindings/dronet.json",
+      "period": 12
+    },
+    {
+      "name": "yolov8n_a",
+      "bindings": "bindings/yolov8n.json"
+    },
+    {
+      "name": "yolov8n_b",
+      "bindings": "bindings/yolov8n.json"
+    }
+  ]
+}

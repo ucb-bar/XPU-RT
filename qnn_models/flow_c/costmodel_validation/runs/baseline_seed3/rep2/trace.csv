@@ -1,0 +1,17 @@
+entry_id,network,instance,dispatch_id,op,name,core_kind,hart,worker_kind_idx,predicted_start_ms,predicted_duration_ms,actual_start_ms,actual_end_ms,actual_duration_ms
+0,dronet_a,0,0,qnn_graph,dronet_full,dsp,6,0,0.000000,1.068000,0.033000,1.195000,1.162000
+1,yolov8n_b,0,0,qnn_graph,yolov8n_backbone,dsp,6,1,2.741000,13.191000,2.804000,15.083000,12.279000
+2,mlp_control,0,0,qnn_graph,mlp_control_full,cpu,5,2,2.935000,0.065000,2.944000,3.009000,0.065000
+3,dronet_b,0,0,qnn_graph,dronet_full,hta,7,3,7.213000,1.787000,7.318000,10.740000,3.422000
+4,mlp_control,1,0,qnn_graph,mlp_control_full,cpu,5,2,8.935000,0.065000,9.110000,9.163000,0.053000
+5,yolov8n_a,0,0,qnn_graph,yolov8n_backbone,hta,7,4,13.262000,13.951000,13.323000,27.517000,14.194000
+6,mlp_control,2,0,qnn_graph,mlp_control_full,cpu,5,2,14.935000,0.065000,16.726000,16.840000,0.114000
+7,dronet_a,1,0,qnn_graph,dronet_full,dsp,6,0,15.932000,1.068000,16.938000,18.458000,1.520000
+8,dronet_b,1,0,qnn_graph,dronet_full,dsp,6,5,17.000000,1.068000,18.630000,19.417000,0.787000
+9,yolov8n_b,0,1,qnn_graph,yolov8n_head,dsp,6,1,18.068000,17.468000,19.755000,38.398000,18.643000
+10,mlp_control,3,0,qnn_graph,mlp_control_full,cpu,5,2,20.935000,0.065000,20.946000,21.052000,0.106000
+11,mlp_control,4,0,qnn_graph,mlp_control_full,cpu,5,2,26.935000,0.065000,26.945000,27.018000,0.073000
+12,dronet_a,2,0,qnn_graph,dronet_full,hta,7,6,27.213000,1.787000,27.708000,29.916000,2.208000
+13,dronet_b,2,0,qnn_graph,dronet_full,hta,7,3,29.000000,1.787000,30.101000,32.026000,1.925000
+14,mlp_control,5,0,qnn_graph,mlp_control_full,cpu,5,2,32.935000,0.065000,32.945000,33.000000,0.055000
+15,yolov8n_a,0,1,qnn_graph,yolov8n_head,dsp,6,7,35.536000,17.468000,39.090000,56.137000,17.047000

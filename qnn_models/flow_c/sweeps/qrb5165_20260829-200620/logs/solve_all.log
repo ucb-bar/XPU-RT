@@ -1,0 +1,12 @@
+  baseline_seed0         already solved by milp (11.3s) — skipping
+  baseline_seed1         milp              305.1s  Makespan (non-periodic): 79.57 ms
+  baseline_seed2         milp               62.6s  Makespan (non-periodic): 73.34 ms
+  baseline_seed3         milp                2.3s  Makespan (non-periodic): 48.40 ms
+  baseline_seed6         milp              307.5s  Makespan (non-periodic): 91.69 ms
+  fused_seed0            milp               71.7s  Makespan (non-periodic): 66.34 ms
+  fused_seed1            milp              307.1s  Makespan (non-periodic): 84.57 ms
+  fused_seed2            milp              195.9s  Makespan (non-periodic): 73.34 ms
+  fused_seed3            milp                2.4s  Makespan (non-periodic): 44.02 ms
+  fused_seed6            milp              306.1s  Makespan (non-periodic): 84.30 ms
+  fused_vint_seed0       milp              309.4s  Makespan (non-periodic): 94.34 ms
+  fused_vint_seed1       milp              310.8s  Makespan (non-periodic): 116.63 ms

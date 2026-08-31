@@ -1,0 +1,25 @@
+{
+  "name": "flowc_vint_nav_qrb5165",
+  "_comment": "A navigation stack: ViNT at 10 Hz (its critical path is ~96 ms, so 100 ms is the tightest honest period) alongside the 500 Hz mlp_control policy. Shows the scheduler putting ViNT's EfficientNet encoders on the DSP while the control loop keeps the CPU.",
+  "target": "qrb5165_flowc",
+  "board": "qrb5165_v66",
+  "registry": "cores/qrb5165_qnn.json",
+  "measurements": "measurements/qrb5165_v66.json",
+  "slots": {
+    "CPU_P": "hta",
+    "CPU_E": "dsp",
+    "CPU_X": "cpu"
+  },
+  "ctx_dir": "/root/qnn_runtime_ctx",
+  "networks": [
+    {
+      "name": "vint",
+      "bindings": "bindings/vint.json"
+    },
+    {
+      "name": "mlp_control",
+      "bindings": "bindings/mlp_control.json",
+      "period": 2
+    }
+  ]
+}

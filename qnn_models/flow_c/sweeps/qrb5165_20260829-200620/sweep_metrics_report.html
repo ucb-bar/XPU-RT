@@ -1,0 +1,614 @@
+<title>QRB5165 Sweep Metrics</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:ital,wght@0,400;0,500;1,400&display=swap">
+<style>
+:root{
+  --paper:#F4F6F7; --surface:#FFFFFF; --sunk:#EAEEF0;
+  --ink:#14181C; --ink-soft:#54626C; --ink-faint:#8A97A0;
+  --rule:#D6DDE1; --rule-soft:#E5EAED;
+  --accent:#0E6E8A; --accent-soft:#D9EBF2;
+  --good:#1B7A4B; --good-bg:#DFF0E7;
+  --warn:#9A6206; --warn-bg:#F7EBD6;
+  --bad:#B23A18;  --bad-bg:#F8E3DC;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,Segoe UI,sans-serif;
+  --serif:"IBM Plex Serif",Georgia,"Times New Roman",serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#0E1418; --surface:#151D23; --sunk:#111920;
+    --ink:#DCE4E9; --ink-soft:#93A3AD; --ink-faint:#6B7C86;
+    --rule:#26333B; --rule-soft:#1D272E;
+    --accent:#52B9D8; --accent-soft:#12303C;
+    --good:#5BC38A; --good-bg:#122C1F;
+    --warn:#D9A441; --warn-bg:#2E2312;
+    --bad:#E8785A;  --bad-bg:#2F1811;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0E1418; --surface:#151D23; --sunk:#111920;
+  --ink:#DCE4E9; --ink-soft:#93A3AD; --ink-faint:#6B7C86;
+  --rule:#26333B; --rule-soft:#1D272E;
+  --accent:#52B9D8; --accent-soft:#12303C;
+  --good:#5BC38A; --good-bg:#122C1F;
+  --warn:#D9A441; --warn-bg:#2E2312;
+  --bad:#E8785A;  --bad-bg:#2F1811;
+}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--serif);
+  font-size:16.5px;line-height:1.62;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1120px;margin:0 auto;padding:0 28px 96px}
+.col{max-width:70ch}
+h1,h2,h3,.lbl,th,.chip,.num,.k-lbl{font-family:var(--sans)}
+code,.mono,td,.n{font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+/* ---- masthead ---- */
+header{border-bottom:2px solid var(--ink);margin-bottom:38px;padding:52px 0 22px}
+.eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.13em;
+  text-transform:uppercase;color:var(--accent);font-weight:500;margin:0 0 14px}
+h1{font-size:clamp(30px,5vw,46px);line-height:1.06;letter-spacing:-.022em;
+  font-weight:600;margin:0 0 16px;text-wrap:balance}
+.standfirst{font-size:19px;color:var(--ink-soft);margin:0;max-width:60ch;line-height:1.5}
+.meta{display:flex;flex-wrap:wrap;gap:6px 26px;margin-top:22px;
+  font-family:var(--mono);font-size:12px;color:var(--ink-faint)}
+.meta b{color:var(--ink-soft);font-weight:500}
+
+/* ---- key numbers ---- */
+.keys{display:grid;grid-template-columns:repeat(auto-fit,minmax(158px,1fr));
+  gap:1px;background:var(--rule);border:1px solid var(--rule);margin:0 0 46px}
+.key{background:var(--surface);padding:16px 18px 15px}
+.k-lbl{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--ink-faint);font-weight:600;margin:0 0 7px}
+.k-val{font-family:var(--mono);font-size:26px;font-weight:600;line-height:1;
+  letter-spacing:-.02em;margin:0 0 6px}
+.k-val.pos{color:var(--good)} .k-val.neg{color:var(--bad)} .k-val.acc{color:var(--accent)}
+.k-sub{font-family:var(--sans);font-size:12.5px;color:var(--ink-soft);
+  line-height:1.36;margin:0}
+
+/* ---- sections ---- */
+section{margin:0 0 54px;scroll-margin-top:20px}
+h2{font-size:12px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;
+  color:var(--accent);margin:0 0 10px;display:flex;align-items:baseline;gap:11px}
+h2::before{content:attr(data-n);font-family:var(--mono);font-size:11px;
+  color:var(--ink-faint);font-weight:500;letter-spacing:0}
+h3{font-size:25px;line-height:1.2;letter-spacing:-.015em;font-weight:600;
+  margin:0 0 16px;text-wrap:balance;font-family:var(--sans)}
+p{margin:0 0 15px}
+.lead{font-size:17.5px}
+strong{font-weight:600}
+em.t{font-style:normal;font-family:var(--mono);font-size:.9em;
+  background:var(--sunk);padding:1px 5px;border-radius:2px}
+
+/* ---- verdict callout ---- */
+.verdict{border-left:3px solid var(--accent);background:var(--surface);
+  padding:16px 20px;margin:0 0 22px}
+.verdict p{margin:0}
+.verdict.warnbox{border-left-color:var(--warn)}
+.verdict.badbox{border-left-color:var(--bad)}
+
+/* ---- tables ---- */
+.tw{overflow-x:auto;margin:0 0 14px;border:1px solid var(--rule);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:13px;min-width:520px}
+th{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;font-weight:600;
+  color:var(--ink-faint);text-align:right;padding:11px 13px 9px;
+  border-bottom:1px solid var(--rule);white-space:nowrap;background:var(--sunk)}
+th:first-child,td:first-child{text-align:left}
+td{padding:8px 13px;border-bottom:1px solid var(--rule-soft);text-align:right;white-space:nowrap}
+tbody tr:last-child td{border-bottom:0}
+td.name{font-family:var(--sans);font-size:12.5px}
+tr.tot td{border-top:2px solid var(--rule);font-weight:600;background:var(--sunk)}
+.cap{font-family:var(--sans);font-size:12.5px;color:var(--ink-soft);
+  margin:0 0 30px;line-height:1.45}
+.chip{display:inline-block;font-size:10px;font-weight:600;letter-spacing:.05em;
+  text-transform:uppercase;padding:2.5px 7px;border-radius:2px;white-space:nowrap}
+.c-good{background:var(--good-bg);color:var(--good)}
+.c-warn{background:var(--warn-bg);color:var(--warn)}
+.c-bad{background:var(--bad-bg);color:var(--bad)}
+.n.g{color:var(--good)} .n.w{color:var(--warn)} .n.b{color:var(--bad)}
+
+/* ---- occupancy bars ---- */
+.bars{border:1px solid var(--rule);background:var(--surface);padding:20px 22px;margin:0 0 14px}
+.bar-row{display:grid;grid-template-columns:64px 1fr 62px;align-items:center;
+  gap:14px;margin-bottom:13px}
+.bar-row:last-child{margin-bottom:0}
+.bar-lbl{font-family:var(--mono);font-size:12.5px;font-weight:500;text-transform:uppercase}
+.bar-track{height:22px;background:var(--sunk);position:relative;overflow:hidden}
+.bar-fill{height:100%;background:var(--accent);opacity:.85}
+.bar-fill.hot{background:var(--bad)}
+.bar-fill.cool{background:var(--ink-faint)}
+.bar-num{font-family:var(--mono);font-size:13px;text-align:right;font-weight:500}
+
+/* ---- scatter ---- */
+figure{margin:0 0 14px;border:1px solid var(--rule);background:var(--surface);padding:18px}
+figure svg{display:block;width:100%;height:auto}
+.ax{font-family:var(--mono);font-size:10px;fill:var(--ink-faint)}
+.axt{font-family:var(--sans);font-size:11px;fill:var(--ink-soft);font-weight:500}
+.grid{stroke:var(--rule-soft);stroke-width:1}
+.unity{stroke:var(--ink-faint);stroke-width:1;stroke-dasharray:4 3}
+.split{stroke:var(--accent);stroke-width:1;stroke-dasharray:2 3;opacity:.8}
+.pt-s{fill:var(--bad)} .pt-l{fill:var(--good)}
+.plbl{font-family:var(--mono);font-size:8.5px;fill:var(--ink-faint)}
+
+/* ---- findings list ---- */
+ol.find{list-style:none;counter-reset:f;padding:0;margin:0}
+ol.find li{counter-increment:f;position:relative;padding:0 0 18px 42px;margin:0}
+ol.find li::before{content:counter(f);position:absolute;left:0;top:1px;
+  font-family:var(--mono);font-size:11px;font-weight:600;color:var(--accent);
+  border:1px solid var(--rule);width:26px;height:26px;display:grid;
+  place-items:center;background:var(--surface)}
+ol.find b{font-family:var(--sans);font-weight:600}
+
+ul.plain{padding-left:20px;margin:0 0 15px}
+ul.plain li{margin-bottom:8px}
+
+footer{border-top:1px solid var(--rule);margin-top:14px;padding-top:20px;
+  font-family:var(--mono);font-size:11.5px;color:var(--ink-faint);line-height:1.7}
+footer b{color:var(--ink-soft);font-weight:500}
+@media(max-width:640px){
+  .wrap{padding:0 18px 64px} body{font-size:16px}
+  .bar-row{grid-template-columns:52px 1fr 54px;gap:10px}
+}
+</style>
+
+<div class="wrap">
+
+<header>
+  <p class="eyebrow">Flow C · QRB5165 v66 · sweep qrb5165_20260829-200620</p>
+  <h1>Where the Schedule Model Loses Its Accuracy</h1>
+  <p class="standfirst">Eighteen scheduling points, 54 board runs and 1,299 traced tile executions on a
+  three-lane heterogeneous SoC — and one clean answer for where the 17% makespan gap actually comes from.</p>
+  <div class="meta">
+    <span><b>18</b> points</span>
+    <span><b>54</b> board runs · 3 reps each</span>
+    <span><b>1,299</b> entry executions</span>
+    <span><b>3</b> lanes — HTA / Hexagon DSP / Kryo CPU</span>
+    <span><b>0</b> greedy fallbacks</span>
+  </div>
+</header>
+
+<div class="keys">
+  <div class="key">
+    <p class="k-lbl">Makespan ratio</p>
+    <p class="k-val acc">1.115&times;</p>
+    <p class="k-sub">median over 18 points, actual / predicted</p>
+  </div>
+  <div class="key">
+    <p class="k-lbl">Tiles &ge; 1 ms</p>
+    <p class="k-val pos">0.999&times;</p>
+    <p class="k-sub">the cost model is essentially exact here</p>
+  </div>
+  <div class="key">
+    <p class="k-lbl">Tiles &lt; 1 ms</p>
+    <p class="k-val neg">1.655&times;</p>
+    <p class="k-sub">missing by a near-fixed +0.234 ms</p>
+  </div>
+  <div class="key">
+    <p class="k-lbl">Runtime overhead</p>
+    <p class="k-val pos">9 µs</p>
+    <p class="k-sub">per dispatch — 1% of median tile execution</p>
+  </div>
+  <div class="key">
+    <p class="k-lbl">DSP occupancy</p>
+    <p class="k-val neg">92.5%</p>
+    <p class="k-sub">the bottleneck lane; CPU sits at 26.3%</p>
+  </div>
+</div>
+
+<div class="col">
+<section>
+  <h2 data-n="§1">The short version</h2>
+  <h3>The runtime is not the problem. The cost model is — and only for small tiles.</h3>
+  <p class="lead">The headline number from this sweep was that measured makespans run about
+  <strong>17% longer than predicted</strong>. It would be easy to read that as runtime overhead —
+  thread wake-ups, gate jitter, dispatch cost. The traces say otherwise, and the decomposition is
+  unusually clean.</p>
+
+  <div class="verdict">
+    <p>Summed tile execution time runs <strong>1.147&times;</strong> its prediction, while the
+    makespan runs <strong>1.115&times;</strong>. The two track each other point for point. Meanwhile the
+    runtime's own dispatch latency is <strong>8.6 µs</strong> — about 1% of a median tile. Essentially
+    all of the gap is the cost model under-predicting how long tiles take, not the machinery that
+    runs them.</p>
+  </div>
+
+  <p>And that error is not spread evenly. It is almost entirely concentrated in tiles the model
+  predicts at under a millisecond, which over-run by a roughly <em class="t">fixed</em> amount rather
+  than a proportional one. Large accelerator tiles — the ones that actually dominate these
+  schedules — predict to within a fraction of a percent.</p>
+</section>
+</div>
+
+<section>
+  <h2 data-n="§2">Prediction accuracy</h2>
+  <div class="col">
+    <h3>Two regimes, and they behave completely differently</h3>
+    <p>Twelve points mix periodic control models with heavy non-periodic vision work. Six are purely
+    periodic. Splitting on that line separates the sweep into two populations that barely overlap.</p>
+  </div>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>Regime</th><th>Points</th><th>Median ratio</th><th>Range</th><th>What sets the makespan</th></tr></thead>
+      <tbody>
+        <tr><td class="name">Mixed periodic + non-periodic</td><td class="n">12</td>
+            <td class="n b">1.170&times;</td><td class="n">1.090 – 1.250</td>
+            <td class="name" style="text-align:right">a <em class="t">yolov8n_head</em>, in all 12</td></tr>
+        <tr><td class="name">Periodic only</td><td class="n">6</td>
+            <td class="n g">1.010&times;</td><td class="n">1.000 – 1.130</td>
+            <td class="name" style="text-align:right">wall-clock release times</td></tr>
+        <tr class="tot"><td class="name">All points</td><td class="n">18</td>
+            <td class="n">1.115&times;</td><td class="n">1.000 – 1.250</td>
+            <td class="name" style="text-align:right">&mdash;</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="cap">Mean 1.123&times;, standard deviation 0.082. Three of the six periodic-only points land at
+  exactly <b>1.000&times;</b>.</p>
+
+  <div class="col">
+    <p>Those 1.000&times; points are worth pausing on. Where a schedule is <strong>release-gated</strong> —
+    the next instance cannot start until its wall-clock release time regardless of how fast the
+    hardware is — the runtime hits its targets to the microsecond and the model is exact by
+    construction. Error appears only where the schedule becomes <strong>compute-bound</strong>. The two
+    periodic-only points that are compute-bound come in at 1.090&times; and 1.130&times;, right in line with
+    the mixed population.</p>
+    <p>So the 17% is not a uniform modelling bias smeared across every schedule. It is concentrated
+    entirely in the compute-bound portions, and the release-gated portions contribute none of it.</p>
+  </div>
+</section>
+
+<section>
+  <h2 data-n="§3">Where the error lives</h2>
+  <div class="col">
+    <h3>Only 5 of 18 cost cells predict within &plusmn;15%</h3>
+    <p>Pooling every point that placed a given tile on a given lane gives 18 distinct
+    <em class="t">tile@lane</em> cells. Sorted by error, the pattern is immediate.</p>
+  </div>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>tile @ lane</th><th>Points</th><th>Predicted</th><th>Actual p50</th><th>Ratio</th><th>Verdict</th></tr></thead>
+      <tbody>
+        <tr><td class="name">fused_depth_conv @ cpu</td><td class="n">8</td><td class="n">0.014</td><td class="n">0.142</td><td class="n b">10.143</td><td><span class="chip c-bad">cell wrong</span></td></tr>
+        <tr><td class="name">fused_tail @ cpu</td><td class="n">9</td><td class="n">0.354</td><td class="n">1.374</td><td class="n b">3.881</td><td><span class="chip c-bad">cell wrong</span></td></tr>
+        <tr><td class="name">fused_depth_conv @ dsp</td><td class="n">6</td><td class="n">0.392</td><td class="n">0.675</td><td class="n b">1.723</td><td><span class="chip c-bad">cell wrong</span></td></tr>
+        <tr><td class="name">dronet_full @ dsp</td><td class="n">11</td><td class="n">0.645</td><td class="n">1.068</td><td class="n b">1.656</td><td><span class="chip c-bad">cell wrong</span></td></tr>
+        <tr><td class="name">fused_vision_conv @ dsp</td><td class="n">8</td><td class="n">0.459</td><td class="n">0.759</td><td class="n b">1.654</td><td><span class="chip c-bad">cell wrong</span></td></tr>
+        <tr><td class="name">dronet_full @ cpu</td><td class="n">2</td><td class="n">6.998</td><td class="n">10.154</td><td class="n w">1.451</td><td><span class="chip c-warn">contended</span></td></tr>
+        <tr><td class="name">yolov8n_head @ cpu</td><td class="n">8</td><td class="n">39.464</td><td class="n">52.166</td><td class="n w">1.321</td><td><span class="chip c-warn">contended</span></td></tr>
+        <tr><td class="name">fused_vision_conv @ hta</td><td class="n">10</td><td class="n">0.931</td><td class="n">1.115</td><td class="n w">1.198</td><td><span class="chip c-warn">contended</span></td></tr>
+        <tr><td class="name">yolov8n_head @ dsp</td><td class="n">41</td><td class="n">15.377</td><td class="n">17.468</td><td class="n g">1.136</td><td><span class="chip c-good">good</span></td></tr>
+        <tr><td class="name">mlp_control_full @ dsp</td><td class="n">10</td><td class="n">0.589</td><td class="n">0.669</td><td class="n g">1.135</td><td><span class="chip c-good">good</span></td></tr>
+        <tr><td class="name">vint_encoders @ dsp</td><td class="n">2</td><td class="n">14.213</td><td class="n">16.084</td><td class="n g">1.132</td><td><span class="chip c-good">good</span></td></tr>
+        <tr><td class="name">yolov8n_backbone @ hta</td><td class="n">38</td><td class="n">13.909</td><td class="n">13.951</td><td class="n g">1.003</td><td><span class="chip c-good">good</span></td></tr>
+        <tr><td class="name">yolov8n_backbone @ dsp</td><td class="n">11</td><td class="n">13.267</td><td class="n">13.191</td><td class="n g">0.994</td><td><span class="chip c-good">good</span></td></tr>
+        <tr><td class="name">dronet_full @ hta</td><td class="n">8</td><td class="n">2.030</td><td class="n">1.787</td><td class="n w">0.880</td><td><span class="chip c-warn">optimistic</span></td></tr>
+        <tr><td class="name">fused_tail @ dsp</td><td class="n">6</td><td class="n">4.303</td><td class="n">3.429</td><td class="n w">0.797</td><td><span class="chip c-warn">optimistic</span></td></tr>
+        <tr><td class="name">fused_depth_conv @ hta</td><td class="n">7</td><td class="n">1.568</td><td class="n">0.954</td><td class="n b">0.608</td><td><span class="chip c-bad">cell wrong</span></td></tr>
+        <tr><td class="name">mlp_control_full @ cpu</td><td class="n">18</td><td class="n">0.107</td><td class="n">0.065</td><td class="n b">0.607</td><td><span class="chip c-bad">cell wrong</span></td></tr>
+        <tr><td class="name">vint_decoder @ cpu</td><td class="n">2</td><td class="n">37.826</td><td class="n">22.592</td><td class="n b">0.597</td><td><span class="chip c-bad">cell wrong</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="cap">All times in milliseconds. &ldquo;Points&rdquo; is how many of the 18 scheduling points placed
+  that tile on that lane, so heavily-used cells carry more weight than rare ones.</p>
+
+  <div class="col">
+    <p>The two cells that matter most by placement count — <em class="t">yolov8n_backbone</em> on HTA (38
+    placements) and <em class="t">yolov8n_head</em> on DSP (41) — are also two of the most accurate, at
+    1.003&times; and 1.136&times;. The catastrophic cells are all small, rarely on the critical path, and
+    cheap in absolute terms: <em class="t">fused_depth_conv@cpu</em> is off by 10&times;, but 10&times; of
+    0.014 ms is 0.128 ms.</p>
+  </div>
+</section>
+
+<section>
+  <h2 data-n="§4">The size effect</h2>
+  <div class="col">
+    <h3>Small tiles are over-run by a fixed cost, not a proportional one</h3>
+    <p>Plotting every cell's error against its predicted duration on log axes makes the structure
+    obvious, and it is not noise: the correlation between log predicted duration and log ratio is
+    <strong>r = &minus;0.579</strong>.</p>
+  </div>
+
+  <figure>
+    <svg viewBox="0 0 760 340" role="img" aria-label="Scatter of cost-model ratio against predicted tile duration on log axes, showing small tiles clustered above 1.0 and large tiles converging on 1.0">
+      <!-- y gridlines -->
+      <line class="grid" x1="60" y1="290" x2="730" y2="290"/>
+      <line class="grid" x1="60" y1="173.4" x2="730" y2="173.4"/>
+      <line class="grid" x1="60" y1="96.3" x2="730" y2="96.3"/>
+      <line class="grid" x1="60" y1="37.9" x2="730" y2="37.9"/>
+      <!-- x gridlines -->
+      <line class="grid" x1="241.1" y1="30" x2="241.1" y2="290"/>
+      <line class="grid" x1="603.2" y1="30" x2="603.2" y2="290"/>
+      <!-- unity + 1ms split -->
+      <line class="unity" x1="60" y1="231.7" x2="730" y2="231.7"/>
+      <line class="split" x1="422.2" y1="30" x2="422.2" y2="290"/>
+      <text class="ax" x="426" y="42">1 ms</text>
+      <text class="ax" x="64" y="228">ratio 1.0 — perfect</text>
+      <!-- y labels -->
+      <text class="ax" x="52" y="294" text-anchor="end">0.5</text>
+      <text class="ax" x="52" y="235" text-anchor="end">1</text>
+      <text class="ax" x="52" y="177" text-anchor="end">2</text>
+      <text class="ax" x="52" y="100" text-anchor="end">5</text>
+      <text class="ax" x="52" y="41" text-anchor="end">10</text>
+      <!-- x labels -->
+      <text class="ax" x="60" y="306" text-anchor="middle">0.01</text>
+      <text class="ax" x="241.1" y="306" text-anchor="middle">0.1</text>
+      <text class="ax" x="422.2" y="306" text-anchor="middle">1</text>
+      <text class="ax" x="603.2" y="306" text-anchor="middle">10</text>
+      <text class="axt" x="395" y="328" text-anchor="middle">predicted tile duration (ms, log)</text>
+      <text class="axt" x="16" y="160" text-anchor="middle" transform="rotate(-90 16 160)">actual / predicted (log)</text>
+      <!-- points: small (<1ms) -->
+      <circle class="pt-s" cx="86.4"  cy="36.8"  r="4.5"/>
+      <circle class="pt-s" cx="246.4" cy="273.6" r="4.5"/>
+      <circle class="pt-s" cx="340.5" cy="117.6" r="4.5"/>
+      <circle class="pt-s" cx="348.5" cy="185.9" r="4.5"/>
+      <circle class="pt-s" cx="360.9" cy="189.4" r="4.5"/>
+      <circle class="pt-s" cx="380.5" cy="221.0" r="4.5"/>
+      <circle class="pt-s" cx="387.7" cy="189.3" r="4.5"/>
+      <circle class="pt-s" cx="416.5" cy="216.5" r="4.5"/>
+      <!-- points: large (>=1ms) -->
+      <circle class="pt-l" cx="457.5" cy="273.5" r="4.5"/>
+      <circle class="pt-l" cx="477.8" cy="242.4" r="4.5"/>
+      <circle class="pt-l" cx="536.9" cy="250.8" r="4.5"/>
+      <circle class="pt-l" cx="575.1" cy="200.4" r="4.5"/>
+      <circle class="pt-l" cx="625.5" cy="232.2" r="4.5"/>
+      <circle class="pt-l" cx="629.2" cy="231.4" r="4.5"/>
+      <circle class="pt-l" cx="630.9" cy="221.3" r="4.5"/>
+      <circle class="pt-l" cx="637.1" cy="221.0" r="4.5"/>
+      <circle class="pt-l" cx="707.9" cy="275.1" r="4.5"/>
+      <circle class="pt-l" cx="711.2" cy="208.2" r="4.5"/>
+      <!-- annotations -->
+      <text class="plbl" x="95"  y="34">fused_depth_conv@cpu  10.1&#215;</text>
+      <text class="plbl" x="349" y="114">fused_tail@cpu  3.9&#215;</text>
+      <text class="plbl" x="645" y="228">yolov8n_head@dsp</text>
+      <text class="plbl" x="601" y="245">backbone@hta / @dsp — 1.00&#215;</text>
+      <text class="plbl" x="660" y="285">vint_decoder@cpu</text>
+    </svg>
+  </figure>
+  <p class="cap"><span style="color:var(--bad)">&#9679;</span> tiles predicted under 1 ms &nbsp;·&nbsp;
+  <span style="color:var(--good)">&#9679;</span> tiles predicted at 1 ms or more. The dashed horizontal
+  line is a perfect prediction; the vertical line is the 1 ms split.</p>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>Tile size class</th><th>Cells</th><th>Median ratio</th><th>Median absolute miss</th></tr></thead>
+      <tbody>
+        <tr><td class="name">Predicted &lt; 1 ms</td><td class="n">8</td><td class="n b">1.655&times;</td><td class="n b">+0.234 ms</td></tr>
+        <tr><td class="name">Predicted &ge; 1 ms</td><td class="n">10</td><td class="n g">0.999&times;</td><td class="n g">&minus;0.017 ms</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="col">
+    <p>A multiplicative cost model cannot express this. The fix is structural, not a matter of
+    re-measuring cells: <strong>add a fixed per-dispatch offset of roughly 0.234 ms to every cell,
+    then re-fit the multiplicative part.</strong> The large accelerator tiles already sit at
+    0.99&ndash;1.00&times; and would barely move.</p>
+    <p>Where does 0.234 ms come from? Not the runtime — measured dispatch latency is 8.6 µs, nearly
+    thirty times smaller. It sits <em>inside</em> the QNN execute call, which is what you would expect
+    if the cost cells were measured in a warm loop where per-invocation setup amortises away, then
+    executed single-shot in situ where it does not.</p>
+  </div>
+</section>
+
+<section>
+  <h2 data-n="§5">Lane balance</h2>
+  <div class="col">
+    <h3>One lane is saturated, one is nearly idle</h3>
+  </div>
+  <div class="bars">
+    <div class="bar-row">
+      <span class="bar-lbl">dsp</span>
+      <span class="bar-track"><span class="bar-fill hot" style="width:92.5%"></span></span>
+      <span class="bar-num">92.5%</span>
+    </div>
+    <div class="bar-row">
+      <span class="bar-lbl">hta</span>
+      <span class="bar-track"><span class="bar-fill" style="width:56.2%"></span></span>
+      <span class="bar-num">56.2%</span>
+    </div>
+    <div class="bar-row">
+      <span class="bar-lbl">cpu</span>
+      <span class="bar-track"><span class="bar-fill cool" style="width:26.3%"></span></span>
+      <span class="bar-num">26.3%</span>
+    </div>
+  </div>
+  <p class="cap">Median occupancy — lane busy time divided by makespan — across all 18 points. Combined
+  three-lane utilization is <b>60.8%</b>.</p>
+
+  <div class="col">
+    <p>The Hexagon DSP is the bottleneck in every mixed point, sitting between 89% and 99% occupied
+    while the CPU lane idles at a quarter. That asymmetry explains why optimistic cost cells hurt
+    disproportionately: an under-predicted DSP tile makes the solver pack an already-saturated lane
+    tighter than the hardware can sustain, and the overflow has nowhere to go.</p>
+    <p>It also points at the clearest available headroom. Moving work off DSP onto the idle CPU lane
+    is the single largest structural gain on the table — and the placement data shows the solver
+    already reaches for it when it has to.</p>
+  </div>
+</section>
+
+<section>
+  <h2 data-n="§6">Placement</h2>
+  <div class="col">
+    <h3>Each tile has a strongly preferred lane, and the solver defends it</h3>
+  </div>
+  <div class="tw">
+    <table>
+      <thead><tr><th>tile</th><th>hta</th><th>dsp</th><th>cpu</th><th>total</th><th>Dominant lane</th></tr></thead>
+      <tbody>
+        <tr><td class="name">mlp_control_full</td><td class="n">0</td><td class="n">27</td><td class="n">133</td><td class="n">160</td><td class="n">cpu 83%</td></tr>
+        <tr><td class="name">yolov8n_backbone</td><td class="n">38</td><td class="n">11</td><td class="n">0</td><td class="n">49</td><td class="n">hta 78%</td></tr>
+        <tr><td class="name">yolov8n_head</td><td class="n">0</td><td class="n">41</td><td class="n">8</td><td class="n">49</td><td class="n">dsp 84%</td></tr>
+        <tr><td class="name">fused_vision_conv</td><td class="n">27</td><td class="n">16</td><td class="n">0</td><td class="n">43</td><td class="n">hta 63%</td></tr>
+        <tr><td class="name">fused_depth_conv</td><td class="n">12</td><td class="n">9</td><td class="n">22</td><td class="n">43</td><td class="n">cpu 51%</td></tr>
+        <tr><td class="name">fused_tail</td><td class="n">0</td><td class="n">9</td><td class="n">34</td><td class="n">43</td><td class="n">cpu 79%</td></tr>
+        <tr><td class="name">dronet_full</td><td class="n">16</td><td class="n">23</td><td class="n">3</td><td class="n">42</td><td class="n">dsp 55%</td></tr>
+        <tr><td class="name">vint_encoders</td><td class="n">0</td><td class="n">2</td><td class="n">0</td><td class="n">2</td><td class="n">dsp 100%</td></tr>
+        <tr><td class="name">vint_decoder</td><td class="n">0</td><td class="n">0</td><td class="n">2</td><td class="n">2</td><td class="n">cpu 100%</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="cap">Counts are individual tile placements summed across all 18 points.</p>
+
+  <div class="col">
+    <p>The interesting behaviour is what happens under pressure. A <em class="t">yolov8n_head</em> normally
+    prefers DSP but spills onto the CPU lane when DSP is full — which happens in <strong>8 of the 10</strong>
+    points without ViNT. Add ViNT, whose decoder composes on nothing but the CPU, and that spilling stops
+    completely: <strong>0 of 2</strong>. The solver reserves the CPU lane for the only tile that can use it.</p>
+    <div class="verdict">
+      <p>That is a capability effect on <strong>placement</strong>, not a magnitude effect on the critical
+      path. It reproduces cleanly and is arguably the most robust structural finding in the sweep.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2 data-n="§7">Solver</h2>
+  <div class="col">
+    <h3>MILP solved every point; the time limit binds above ~30 operations</h3>
+  </div>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Status</th><th>Points</th><th>Median solve</th><th>Max solve</th><th>Reading</th></tr></thead>
+      <tbody>
+        <tr><td class="name">optimal</td><td class="n">12</td><td class="n">2.1 s</td><td class="n">195.9 s</td><td class="name" style="text-align:right">proven optimal</td></tr>
+        <tr><td class="name">optimal_inaccurate</td><td class="n">6</td><td class="n">307.3 s</td><td class="n">310.8 s</td><td class="name" style="text-align:right">hit the 300 s cap</td></tr>
+        <tr class="tot"><td class="name">greedy fallback</td><td class="n">0</td><td class="n">&mdash;</td><td class="n">&mdash;</td><td class="name" style="text-align:right">never needed</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="cap">Every one of the six capped points has 25 operations or more; every point at 23 or fewer
+  solved to proven optimality, most in under three seconds.</p>
+  <div class="col">
+    <p>The cliff is sharp and sits right around 25&ndash;30 operations. Below it the MILP is nearly free;
+    above it the 300 s limit binds every time. Since the capped solutions still produced the best
+    measured makespans in the sweep, the practical cost of the cap looks low — but it does mean the
+    largest points are not proven optima, and any claim of optimality there should be hedged.</p>
+  </div>
+</section>
+
+<section>
+  <h2 data-n="§8">Trends</h2>
+  <div class="col">
+    <h3>What actually correlates</h3>
+  </div>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Relationship</th><th>Pearson r</th><th>Reading</th></tr></thead>
+      <tbody>
+        <tr><td class="name">predicted vs actual makespan</td><td class="n g">+0.992</td><td class="name" style="text-align:right">the model gets the <em>shape</em> right</td></tr>
+        <tr><td class="name">op count vs actual makespan</td><td class="n">+0.886</td><td class="name" style="text-align:right">size drives duration, as expected</td></tr>
+        <tr><td class="name">entry count vs actual makespan</td><td class="n">+0.886</td><td class="name" style="text-align:right">identical — entries track ops</td></tr>
+        <tr><td class="name">actual makespan vs rep noise %</td><td class="n w">+0.631</td><td class="name" style="text-align:right">longer runs are less repeatable</td></tr>
+        <tr><td class="name">actual makespan vs ratio</td><td class="n w">+0.592</td><td class="name" style="text-align:right">bigger schedules drift further</td></tr>
+        <tr><td class="name">op count vs ratio</td><td class="n">+0.324</td><td class="name" style="text-align:right">weak — it is duration, not count</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="col">
+    <p>The r = +0.992 between predicted and actual is the reassuring one: the model ranks and scales
+    schedules correctly even while it mis-levels them. For choosing between candidate schedules — which
+    is what the scheduler is actually for — that matters more than the absolute offset.</p>
+    <p>The +0.592 between makespan and ratio is the caution. Error compounds with schedule length, so
+    the 17% median is optimistic for the largest workloads and pessimistic for the smallest.</p>
+  </div>
+</section>
+
+<section>
+  <h2 data-n="§9">A result that reversed</h2>
+  <div class="col">
+    <h3>fused_full only looks better while something else owns the critical path</h3>
+    <p>The sweep's first question was whether substituting <em class="t">fused_full</em> for
+    <em class="t">dronet</em> in the mid-size periodic slot improves the makespan. Across the 12 mixed
+    points it looked mildly favourable — 3 of 5 matched pairs, only one clearing the noise floor. The
+    six periodic-only points, where the mid-size model is actually exposed, reverse it.</p>
+  </div>
+  <div class="tw">
+    <table>
+      <thead><tr><th>seed</th><th>dronet</th><th>fused</th><th>&Delta;</th><th>rep noise</th><th>Verdict</th></tr></thead>
+      <tbody>
+        <tr><td class="name">4</td><td class="n">20.04</td><td class="n">20.46</td><td class="n b">+2.1%</td><td class="n">0.0 / 0.1%</td><td><span class="chip c-bad">dronet wins</span></td></tr>
+        <tr><td class="name">5</td><td class="n">48.04</td><td class="n">48.05</td><td class="n">0.0%</td><td class="n">0.0 / 2.0%</td><td><span class="chip c-warn">tie</span></td></tr>
+        <tr><td class="name">7</td><td class="n">18.19</td><td class="n">18.97</td><td class="n b">+4.3%</td><td class="n">0.4 / 1.1%</td><td><span class="chip c-bad">dronet wins</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="cap">Measured makespans in ms, median of 3 reps. Positive &Delta; means fused_full is slower.</p>
+  <div class="col">
+    <p>The mechanism is not that <em class="t">fused_split</em> dispatches more slowly — it is simply
+    <strong>more work</strong>. One point executes 13.9 ms of busy time against its baseline's 4.9 ms
+    inside the same 20 ms release window. So the real question is whether that extra work fits in the
+    schedule's slack, and the answer depends entirely on what sets the makespan: release-gated schedules
+    hide it, compute-bound ones expose it, and a dominant <em class="t">yolov8n_head</em> masks it
+    altogether.</p>
+    <div class="verdict badbox">
+      <p>Across all three regimes, <strong>fused_full's advantage does not reproduce on this target</strong>,
+      and where it is visible at all it is a cost. The FPGA result this sweep was designed to mirror does
+      not carry over.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2 data-n="§10">Instrumentation defects found</h2>
+  <div class="col">
+    <h3>Two bugs the aggregate analysis exposed</h3>
+    <ol class="find">
+      <li><b>Trace CSV corruption from stream interleaving — 2 of 54 runs.</b>
+      The capture ran the board process under <em class="t">ssh … &gt; run.log 2&gt;&amp;1</em>, merging the
+      streams <em>locally</em> — so ssh carried remote stdout and stderr as two independent channels and
+      interleaved them on arrival, dropping a progress line into the middle of a CSV row. Reported
+      makespans were unaffected (they parse the summary line, which stayed intact), but derived traces
+      were. Fixed on both sides: line-buffered stdout in the emitted runtime so a record is never split,
+      and merging stderr into stdout <em>on the board</em> so ssh carries one ordered stream.
+      Verified clean on 6 of 6 fresh runs.</li>
+
+      <li><b>Periodic instance counts silently collapsed.</b>
+      With no non-periodic work, <em class="t">workload_factory.py</em> reset every periodic network to a
+      single instance while ignoring an explicit <em class="t">num_instances</em> — a 12-operation workload
+      was scheduled as 3. This is what made the six periodic-only points look unschedulable in the first
+      place. Fixed; a regression check re-solves an untouched point to a bit-identical 67.571 ms.</li>
+    </ol>
+  </div>
+</section>
+
+<section>
+  <h2 data-n="§11">What to do with this</h2>
+  <div class="col">
+    <h3>Four changes, in order of expected return</h3>
+    <ul class="plain">
+      <li><strong>Add a fixed per-dispatch offset to the cost model (~0.234 ms), then re-fit.</strong>
+      This is the single highest-value change. It targets the one structural error in the model and
+      leaves the already-accurate large-tile cells essentially untouched.</li>
+      <li><strong>Re-measure cost cells single-shot rather than in a warm loop.</strong> The offset above
+      is a correction for a measurement-methodology mismatch; fixing the methodology addresses the cause
+      rather than the symptom.</li>
+      <li><strong>Rebalance away from the DSP.</strong> At 92.5% median occupancy against a 26.3% CPU lane,
+      the DSP is where every scheduling error becomes visible. This is also where the GPU lane, already
+      demonstrated as a genuine fourth lane, would pay off most.</li>
+      <li><strong>Report optimality honestly above ~25 operations.</strong> Six of 18 points hit the 300 s
+      cap and are <em class="t">optimal_inaccurate</em>. Either raise the limit for large points or stop
+      describing those solutions as optimal.</li>
+    </ul>
+  </div>
+</section>
+
+<div class="col">
+<footer>
+  <p><b>Source.</b> qnn_models/flow_c/sweeps/qrb5165_20260829-200620 — results.json (12 points),
+  addendum_periodic_only/results.json (6 points), and all 54 run.log traces.
+  Regenerate every table with <b>python3 analyse_full.py</b>; captured output in
+  logs/full_analysis.txt.</p>
+  <p><b>Method.</b> 3 reps per point, run serially under a board lock with the governor pinned to
+  <b>performance</b> and two warm-up walks per run (the reported trace is walk 2). Ratios are medians
+  over reps. Cost cells are frozen in cost_model.json and shared by both the main sweep and the addendum;
+  predicted makespans are not comparable across the two because the addendum uses an all-operations
+  makespan objective, so every comparison here is made within a regime, never across.</p>
+  <p><b>Caveat.</b> Two of the 54 traces were repaired in software after the interleaving defect above;
+  their reported makespans were never affected. The 2 ViNT points and the 2-point cells derived from them
+  rest on a single taskset each and should be treated as indicative.</p>
+</footer>
+</div>
+
+</div>

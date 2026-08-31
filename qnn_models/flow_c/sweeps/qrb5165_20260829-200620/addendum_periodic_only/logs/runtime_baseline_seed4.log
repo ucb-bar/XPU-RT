@@ -1,0 +1,16 @@
++ /usr/bin/python3 flow_c.py runtime --workload /scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c/sweeps/qrb5165_20260829-200620/addendum_periodic_only/workloads/baseline_seed4.flowc.json --tag baseline_seed4 --lane-mode kind-network --schedule /scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c/sweeps/qrb5165_20260829-200620/addendum_periodic_only/schedules/scheduled_baseline_seed4_profiled.json --out-dir /scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c/sweeps/qrb5165_20260829-200620/addendum_periodic_only/runtimes/baseline_seed4
+(cwd=/scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c)
+
+
+=== runtime =====================================================
+12 entries  predicted makespan 20.107 ms
+  per network: {'dronet_a': 3, 'mlp_control': 6, 'dronet_b': 3}
+  per lane:    {'dsp(DSP)': 6, 'cpu(CPU)': 6}
+  contexts:    2
+    DSP  ctx_dronet_full_hta__Dsp.bin  ::dronet_full_hta
+    CPU  ctx_mlp_control_fp32__Cpu.bin  ::mlp_control_fp32
+
+emitted /scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c/sweeps/qrb5165_20260829-200620/addendum_periodic_only/runtimes/baseline_seed4/dispatch_table.h + runtime_main.cpp
+  lane mode kind-network: dsp|dronet_a, cpu|mlp_control, dsp|dronet_b
+
+--- stderr ---

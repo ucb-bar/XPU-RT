@@ -1,0 +1,22 @@
++ /usr/bin/python3 flow_c.py runtime --workload /scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c/sweeps/qrb5165_20260829-200620/addendum_periodic_only/workloads/fused_seed7.flowc.json --tag fused_seed7 --lane-mode kind-network --schedule /scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c/sweeps/qrb5165_20260829-200620/addendum_periodic_only/schedules/scheduled_fused_seed7_profiled.json --out-dir /scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c/sweeps/qrb5165_20260829-200620/addendum_periodic_only/runtimes/fused_seed7
+(cwd=/scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c)
+
+
+=== runtime =====================================================
+12 entries  predicted makespan 16.813 ms
+  per network: {'fused_split': 9, 'mlp_control': 3}
+  per lane:    {'dsp(DSP)': 4, 'cpu(CPU)': 6, 'hta(HTA)': 2}
+  contexts:    8
+    CPU  ctx_fused_depth_conv__Cpu.bin  ::fused_depth_conv
+    DSP  ctx_fused_depth_conv__Dsp.bin  ::fused_depth_conv
+    HTA  ctx_fused_depth_conv__Hta.bin  ::fused_depth_conv
+    CPU  ctx_fused_tail_from_conv_fp32__Cpu.bin  ::fused_tail_from_conv
+    DSP  ctx_fused_vision_conv__Dsp.bin  ::fused_vision_conv
+    HTA  ctx_fused_vision_conv__Hta.bin  ::fused_vision_conv
+    DSP  ctx_mlp_control__Dsp.bin  ::mlp_control
+    CPU  ctx_mlp_control_fp32__Cpu.bin  ::mlp_control_fp32
+
+emitted /scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c/sweeps/qrb5165_20260829-200620/addendum_periodic_only/runtimes/fused_seed7/dispatch_table.h + runtime_main.cpp
+  lane mode kind-network: dsp|fused_split, cpu|mlp_control, cpu|fused_split, hta|fused_split, dsp|mlp_control
+
+--- stderr ---
