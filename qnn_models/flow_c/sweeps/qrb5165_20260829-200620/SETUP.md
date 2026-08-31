@@ -149,7 +149,28 @@ Pass `--greedy-only` if you actually want the greedy solver.
 
 ### Running it
 
+One command, checked against the committed record:
+
     export XPURT_MILP_PYTHON=/path/to/venv/bin/python
+    cd qnn_models/flow_c/sweeps/qrb5165_20260829-200620
+
+    python3 reproduce.py --check       # prerequisites only
+    python3 reproduce.py --host-only   # generate + solve + emit, no board
+    python3 reproduce.py               # everything, including board runs
+
+`reproduce.py` works in a scratch directory (`--out`, default a fresh tmpdir),
+never in this one, so an attempt can never overwrite the record it is being
+checked against. It verifies, in increasing order of what it proves:
+
+| stage | check | exact? |
+|---|---|---|
+| generate | regenerated workloads byte-identical to the committed ones | yes -- the generator is seeded |
+| solve | predicted makespan and solver identity match `results.json` | yes -- artifacts re-emitted from the frozen `cost_model.json` |
+| runtime | `dispatch_table.h` / `runtime_main.cpp` sha256 match | yes -- proves the same C++ ran |
+| board | measured makespan drift vs the record | **no** -- ~4.4% rep spread, reported not asserted |
+
+The stages can still be driven by hand:
+
     cd qnn_models/flow_c/sweeps/qrb5165_20260829-200620
 
     python3 sweep_unbounded_nonperiodic.py --arms baseline,fused --seeds 0-7
