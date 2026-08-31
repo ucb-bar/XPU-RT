@@ -1,9 +1,14 @@
 # Reproducible FPGA sweep runbook
 
 End-to-end steps to reproduce a scheduled-workload FPGA sweep. `SETUP.md` is
-the experiment design; this file is the mechanics. The `drivers/` here are the
-originals, copied out of a session scratchpad -- they were NOT in the repo
-before, which is why the FPGA half of this sweep was not reproducible.
+the experiment design; this file is the mechanics.
+
+Everything this run needed now lives in the repo under `soc/sw/xpu-rt/scripts/`
+and `soc/sw/xpu-rt/data/`; nothing here points back into this run directory.
+The one-off shell drivers this sweep was actually driven with came out of a
+session scratchpad and are superseded by `scripts/repro_fpga_sweep.sh` -- the
+three Python helpers among them were moved to `scripts/` (see the mapping at
+the bottom of this file).
 
 **All six steps below are now automated by one maintained script**,
 `soc/sw/xpu-rt/scripts/repro_fpga_sweep.sh` (the FPGA counterpart of
@@ -14,9 +19,7 @@ submit without touching an FPGA. Sweep A above:
     bash scripts/repro_fpga_sweep.sh --seeds 0-7 --arms baseline,fused \
         --max-ops 2000 --out-dir runs/sweeps/<TAG> [--dry-run]
 
-Read the rest of this file for the *why*; run the script for the *how*. The
-`drivers/` are kept as the provenance of the recorded results, not as the
-go-forward path.
+Read the rest of this file for the *why*; run the script for the *how*.
 
 Prereqs: `docs/FPGA_QUEUE_USAGE.md` (AWS fq queue), an F2 run host in the pool,
 and `~/.ssh/firesim.pem`. All profiling runs on AWS.
@@ -62,19 +65,22 @@ The generator names rate groups `dronet_a`, `fused_full_b`, ... but
 
     mkdir -p runs/sweeps/<TAG>/schedules_flat
     for f in schedules/scheduled_*_greedy_profiled.json; do
-        python3 runs/sweeps/<TAG>/drivers/alias_fix.py "$f" \
+        python3 scripts/flatten_schedule_aliases.py "$f" \
             runs/sweeps/<TAG>/schedules_flat/$(basename "$f")
     done
 
-Expect `N jobs -> N instances; dangling 0`. `alias_fix.py` derives base names
-from the model bank (it was previously hardcoded to three models, silently
-leaving fused_full/vint aliases unflattened).
+Expect `N jobs -> N instances; dangling 0`.
+`scripts/flatten_schedule_aliases.py` derives base names from the model bank
+(it was previously hardcoded to three models, silently leaving fused_full/vint
+aliases unflattened). `repro_fpga_sweep.sh` inlines the same transform, so
+running the script does this step for you.
 
 ## 3. Build + submit each point
-    bash runs/sweeps/<TAG>/drivers/drive_fpga.sh          # baseline/fused arms
-    bash runs/sweeps/<TAG>/drivers/drive_fpga_vint.sh     # vint arms
+    bash scripts/repro_fpga_sweep.sh --out-dir runs/sweeps/<TAG> \
+        --seeds 0-7 --arms baseline,fused --max-ops 2000 \
+        --skip-generate --skip-flatten          # steps 3-6 only
 
-Per point the driver: deletes stale ELFs, builds with
+Per point the script: deletes stale ELFs, builds with
 `BACKENDS=gemmini_q31,rvv_f16`,
 `REGISTRY=cores/chipyard_dual_rocket_gemmini_q31_f16.json`,
 `CPU_P_KIND=gemmini_q31 CPU_E_KIND=rvv_f16`, `XPURT_TRACE=1`,
@@ -117,7 +123,7 @@ emulation frequency and is irrelevant here; using 60 would scale results
 16.7x.
 
 To turn a single-model uartlog into a scheduler-ingestible profile:
-    python3 drivers/uartlog_to_profile.py --uartlog U --model M --quant int8 \
+    python3 scripts/uartlog_to_profile.py --uartlog U --model M --quant int8 \
         --backend {gemmini_q31|V256D128_rvv} --cpu firesim_f2_armB \
         --cores 0 --clock-mhz 1000 --out-root soc/sw/xpu-rt/gen/profile
 
@@ -142,7 +148,8 @@ per-dispatch IRQ guard -- see "Known workarounds" below. Per-op error stays
 * **`harness_xpurt/backends/rvv_f16.conf`** must exist. Without it a scheduled
   build with an rvv_f16 backend gets no Kconfig overlay,
   `CONFIG_RISCV_ISA_EXT_V` is unset, and the first `vsetvli` traps.
-* `serialize_instances.py` removes same-network instance overlap. NOT needed
+* `scripts/serialize_instances.py` (also `repro_fpga_sweep.sh --serialize`)
+  removes same-network instance overlap. NOT needed
   for the vstate fault (that hypothesis was disproven) but the underlying
   hazard is real: `buffers.c` is one scratch set per model, so concurrent
   instances of one network do corrupt each other.
@@ -155,3 +162,41 @@ per-dispatch IRQ guard -- see "Known workarounds" below. Per-op error stays
   fused_full has 1 input at fp16, 3 at int8).
 * `ls` output carries ANSI colour here; parse filenames with python/glob, not
   `ls | grep`.
+
+## Where this run's helpers went
+
+The sweep was driven by throwaway shell scripts plus three Python helpers.
+The helpers are now maintained under `soc/sw/xpu-rt/scripts/`:
+
+    drivers/alias_fix.py           ->  scripts/flatten_schedule_aliases.py
+    drivers/serialize_instances.py ->  scripts/serialize_instances.py
+    drivers/uartlog_to_profile.py  ->  scripts/uartlog_to_profile.py
+
+(`uartlog_to_profile.py` carried a hardcoded `/scratch/dima/...` on its
+`sys.path`; the committed copy resolves the `zephyr-chipyard-sw` submodule from
+`.gitmodules` instead.)
+
+The shell drivers -- `generate.sh`, `drive_fpga.sh`, `drive_fpga_vint.sh` --
+are NOT committed: they hardcode absolute paths into this run directory and
+every step they perform is in `scripts/repro_fpga_sweep.sh`, which is the
+maintained path.
+
+## What a fresh clone needs
+
+Step 1 reads three things that must exist in the checkout:
+
+* `scripts/sweep_unbounded_nonperiodic.py` and the `--unbounded-nonperiodic` /
+  `--include-models` / `--no-horizon-covers-nonperiodic` flags in
+  `scripts/gen_random_workload.py`;
+* `data/banks/model_bank.json` platform `firesim_f2_armB` (including the
+  `fused_full` and `vint` entries) and `data/banks/hardware_bank.json` config
+  `f2_gemmini_q31_opt`;
+* the measured cost model: `gen/profile/{gemmini_q31,V256D128_rvv}/firesim_f2_armB/`.
+
+Those are all in this repo. The dispatch graphs the bank points at
+(`zephyr-chipyard-sw/gen/vmfb/<model>/firesim_f2_armB/.../*_dispatch_graph.json`)
+and the build inputs for step 3
+(`modelblaster/examples/xpurt_demo_armB/`, `harness_xpurt/backends/rvv_f16.conf`,
+`cores/chipyard_dual_rocket_gemmini_q31_f16.json`) live in the
+`zephyr-chipyard-sw` submodule and its nested `modelblaster` submodule, and
+must be committed there separately.

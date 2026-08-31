@@ -253,7 +253,22 @@ esac
 SCHED_SUFFIX="${SOLVER_TAG}_profiled.json"
 
 EX_ROOT="${MB_ROOT}/examples/${EXAMPLE_DIR}"
-[[ -d "${EX_ROOT}" ]] || { echo "ERROR: no example tree at ${EX_ROOT}" >&2; exit 1; }
+# The example tree is a STEP 3 input (it is what gets built). Steps 1+2 --
+# generate/validate/schedule/flatten, i.e. everything --dry-run does -- touch
+# only this repo, so a checkout without it can still rehearse a sweep. Fail
+# hard only when a build is actually going to happen.
+if [[ ! -d "${EX_ROOT}" ]]; then
+    if [[ -n "${DRY_RUN}" || -n "${SKIP_BUILD}" ]]; then
+        echo "WARNING: no example tree at ${EX_ROOT}" >&2
+        echo "  steps 1+2 do not need it; step 3 would." >&2
+        echo "  It lives in the modelblaster submodule and must be committed there." >&2
+    else
+        echo "ERROR: no example tree at ${EX_ROOT}" >&2
+        echo "  It lives in the modelblaster submodule; check it out (or commit" >&2
+        echo "  it there) before building. Use --dry-run to rehearse without it." >&2
+        exit 1
+    fi
+fi
 
 JOBS_TSV="${OUT_DIR}/jobs.tsv"
 FLAT_DIR="${OUT_DIR}/schedules_flat"
@@ -263,16 +278,37 @@ log() { echo "[repro_fpga_sweep] $*"; }
 
 # --- Step 0: environment (RUNBOOK section 0) -------------------------------
 log "activating zephyr toolchain env"
+# activate_conda.sh `return 1`s when there is no in-tree miniforge (a fresh
+# clone, before scripts/install_conda.sh) -- under `set -e` that killed this
+# script with no message at all. Steps 1+2 need only python3 + numpy +
+# matplotlib, so a missing env is a WARNING here and a hard error at step 3,
+# where the zephyr build genuinely cannot proceed without it.
+CONDA_OK=1
 # shellcheck disable=SC1091
-source "${ZCS_ROOT}/scripts/activate_conda.sh"
+source "${ZCS_ROOT}/scripts/activate_conda.sh" || CONDA_OK=""
 # NOTE: set_envvars_sdk.sh reassigns REPO_ROOT to the zephyr-chipyard-sw
 # root. Nothing below reads REPO_ROOT (run.sh recomputes its own), so we let
 # it stand rather than save/restore.
 # shellcheck disable=SC1091
-source "${ZCS_ROOT}/scripts/set_envvars_sdk.sh"
+source "${ZCS_ROOT}/scripts/set_envvars_sdk.sh" || true
 export PATH="/usr/bin:${PATH}"
-export PATH="${CONDA_PREFIX}/bin:${PATH}"
+[[ -n "${CONDA_PREFIX:-}" ]] && export PATH="${CONDA_PREFIX}/bin:${PATH}"
 export PYTHONPATH="${ZCS_ROOT}${PYTHONPATH:+:${PYTHONPATH}}"
+if [[ -z "${CONDA_OK}" ]]; then
+    echo "WARNING: no 'zephyr' conda env (run ${_zcs_path}/scripts/install_conda.sh)" >&2
+    echo "  continuing with $(command -v python3); steps 1+2 only need numpy+matplotlib." >&2
+    if [[ -z "${DRY_RUN}" && -z "${SKIP_BUILD}" ]]; then
+        echo "ERROR: step 3 builds zephyr and cannot run without that env." >&2
+        exit 1
+    fi
+fi
+# Fail early and legibly rather than deep inside the scheduler.
+python3 - <<'PYCHK' || { echo "ERROR: python deps missing (see above)" >&2; exit 1; }
+import importlib, sys
+missing = [m for m in ("numpy", "matplotlib") if not importlib.util.find_spec(m)]
+if missing:
+    sys.exit(f"  python3 ({sys.executable}) is missing: {', '.join(missing)}")
+PYCHK
 
 # vint arms MUST turn horizon extension off, or the greedy solver never
 # finishes (RUNBOOK step 1). Force it rather than trusting the caller.
