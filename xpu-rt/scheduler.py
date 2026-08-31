@@ -31,6 +31,28 @@ except ImportError:
     from granularity_advisor import analyze_granularity, from_workload
 
 
+def _parse_mosek_params(raw: str) -> dict:
+    """Parse generic MOSEK names with the value type their prefix requires."""
+    parsed = {}
+    for item in (raw or "").split(";"):
+        if "=" not in item:
+            continue
+        key, value = (part.strip() for part in item.split("=", 1))
+        if not key:
+            continue
+        try:
+            if key.startswith("MSK_IPAR_"):
+                parsed[key] = int(value)
+            elif key.startswith("MSK_DPAR_"):
+                parsed[key] = float(value)
+            else:
+                parsed[key] = value
+        except ValueError:
+            # Let MOSEK report malformed values using its native diagnostics.
+            parsed[key] = value
+    return parsed
+
+
 def _constraints_section_logger(enabled: bool, constraints: list):
     """
     Lightweight logger for timing constraint-generation sections.
@@ -973,16 +995,7 @@ def schedule(
                 pass
         _extra = os.environ.get("XPURT_MOSEK_PARAMS", "")
         if _extra:
-            for kv in _extra.split(";"):
-                if "=" not in kv:
-                    continue
-                k, v = kv.split("=", 1)
-                k = k.strip(); v = v.strip()
-                # Try float first, then string.
-                try:
-                    mosek_params[k] = float(v)
-                except ValueError:
-                    mosek_params[k] = v
+            mosek_params.update(_parse_mosek_params(_extra))
         if mosek_params:
             solver_kwargs["mosek_params"] = mosek_params
     elif cvxpy_solver == "GUROBI":

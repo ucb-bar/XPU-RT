@@ -1,0 +1,563 @@
+{
+  "schema_version": 1,
+  "experiment_id": "k1-exact-cycle-feedback-separation-v1",
+  "verdict": "PROVEN",
+  "headline": "Feedback reduces the globally optimal worst critical response from 8.001335 ms to 4.890542 ms (38.88%).",
+  "claim_scope": "Identical 100 ms release cycle, model graphs, instance counts, hardware, measured K1 profile database, accuracy contract, and lexicographic real-time objective. Feedback only exposes measured multi-hart implementations requested by XPU-RT.",
+  "critical_models": [
+    "mlp_control",
+    "fused_full",
+    "dronet"
+  ],
+  "heavy_model": "ffn_block",
+  "workload_changes": [
+    {
+      "path": "hardware.profile.topo_tag_override",
+      "from": true,
+      "to": false
+    },
+    {
+      "path": "scheduler.machine_combination_mode",
+      "from": "singletons",
+      "to": "shard"
+    }
+  ],
+  "allowed_workload_changes": [
+    "hardware.profile.topo_tag_override",
+    "scheduler.machine_combination_mode"
+  ],
+  "unexpected_workload_changes": [],
+  "inputs": {
+    "original_workload": {
+      "path": "results/k1_feedback_exact/data/exact_original_workload.json",
+      "sha256": "795eab8e913d85dee1e4f9930f5125920339400c7be1fe1dd0e6438ccbb08c6a"
+    },
+    "original_schedule": {
+      "path": "results/k1_feedback_exact/data/exact_original_schedule.json",
+      "sha256": "8144c278c0eb40be2ae9f99ea1c97093551c2a93bf04df2f5c505852c146a13e"
+    },
+    "feedback_workload": {
+      "path": "results/k1_feedback_exact/data/exact_feedback_workload.json",
+      "sha256": "2facb4fe11482554cfeafa3d59aa3dbd72ffa3e040aa633470f26ec281016972"
+    },
+    "feedback_schedule": {
+      "path": "results/k1_feedback_exact/data/exact_feedback_schedule.json",
+      "sha256": "770e201e5b4bd63554b0b155116037c1a3eea32f35d3bc245d1f23ce3372239f"
+    }
+  },
+  "feedback_provenance": {
+    "path": "results/k1_feedback_story/data/original_xpurt_feedback.json",
+    "sha256": "a6810d9815edd4061368e1483842353bc0c803e7c2627334539dd4a41f169e88"
+  },
+  "profile_database_audit": {
+    "original": {
+      "status": "pass",
+      "expected_aggregate_sha256": "eb320b4246de7f38c1078f272da42789fe84c08a62edd2d46c18ae6a59b078c5",
+      "observed_aggregate_sha256": "eb320b4246de7f38c1078f272da42789fe84c08a62edd2d46c18ae6a59b078c5",
+      "files": [
+        {
+          "path": "gen/profile_mb/ime_x60/spacemit_x60/ffn_block/ffn_block.int8/ffn_block_spacemit_x60_ime_x60_ffn_block.int8/topo_0/results.csv",
+          "sha256": "2b7068d7c3bd1a27dd257c5aef5e31b819aaed956872f6fe9f1c1f057f5e5eb3"
+        },
+        {
+          "path": "gen/profile_mb/rvv_x60/spacemit_x60/dronet/dronet.int8/dronet_spacemit_x60_rvv_x60_dronet.int8/topo_0/results.csv",
+          "sha256": "620fae21696428bf3130e1d062479fed92c6bfe4f154b00dca670088853d4ec0"
+        },
+        {
+          "path": "gen/profile_mb/rvv_x60/spacemit_x60/ffn_block/ffn_block.int8/ffn_block_spacemit_x60_rvv_x60_ffn_block.int8/topo_0/results.csv",
+          "sha256": "1cf75e38b025f970c9a93fdc8ee9f348ce98805cb06b7df5018f72091989d501"
+        },
+        {
+          "path": "gen/profile_mb/rvv_x60/spacemit_x60/fused_full/fused_full.int8/fused_full_spacemit_x60_rvv_x60_fused_full.int8/topo_0/results.csv",
+          "sha256": "52c4ce12ecb0cd339898aa856d05d90b0c9e499fdf27cc860af6f537f81bf880"
+        },
+        {
+          "path": "gen/profile_mb/rvv_x60/spacemit_x60/mlp_control/mlp_control.int8/mlp_control_spacemit_x60_rvv_x60_mlp_control.int8/topo_0/results.csv",
+          "sha256": "3dc78daba940daa421a92c2a0f9ca539309b01cc0ed9ffe1071cca7008d5dfe7"
+        }
+      ]
+    },
+    "feedback": {
+      "status": "pass",
+      "expected_aggregate_sha256": "d1719c860f667ee9e4e38b7031a91b5fa082a0e047febb2e782d350af8eac9c5",
+      "observed_aggregate_sha256": "d1719c860f667ee9e4e38b7031a91b5fa082a0e047febb2e782d350af8eac9c5",
+      "files": [
+        {
+          "path": "gen/profile_mb/ime_x60/spacemit_x60/ffn_block/ffn_block.int8/ffn_block_spacemit_x60_ime_x60_ffn_block.int8/topo_0/results.csv",
+          "sha256": "2b7068d7c3bd1a27dd257c5aef5e31b819aaed956872f6fe9f1c1f057f5e5eb3"
+        },
+        {
+          "path": "gen/profile_mb/rvv_x60/spacemit_x60/dronet/dronet.int8/dronet_spacemit_x60_rvv_x60_dronet.int8/topo_0/results.csv",
+          "sha256": "620fae21696428bf3130e1d062479fed92c6bfe4f154b00dca670088853d4ec0"
+        },
+        {
+          "path": "gen/profile_mb/rvv_x60/spacemit_x60/dronet/dronet.int8/dronet_spacemit_x60_rvv_x60_dronet.int8/topo_0_1/results.csv",
+          "sha256": "24ead3a685beb352d4395a2735ae6933026b9b0df3f540703f1fb31157e295a1"
+        },
+        {
+          "path": "gen/profile_mb/rvv_x60/spacemit_x60/dronet/dronet.int8/dronet_spacemit_x60_rvv_x60_dronet.int8/topo_0_1_2_3/results.csv",
+          "sha256": "82ce12cda2ac1dcdc6deda411eeff0d871395ba86390f44ed3131505dfc65385"
+        },
+        {
+          "path": "gen/profile_mb/rvv_x60/spacemit_x60/ffn_block/ffn_block.int8/ffn_block_spacemit_x60_rvv_x60_ffn_block.int8/topo_0/results.csv",
+          "sha256": "1cf75e38b025f970c9a93fdc8ee9f348ce98805cb06b7df5018f72091989d501"
+        },
+        {
+          "path": "gen/profile_mb/rvv_x60/spacemit_x60/ffn_block/ffn_block.int8/ffn_block_spacemit_x60_rvv_x60_ffn_block.int8/topo_0_1/results.csv",
+          "sha256": "d0931a9adb13dd13365a44e9ec6a9d065e2c431705fc18864ee7a2777f735490"
+        },
+        {
+          "path": "gen/profile_mb/rvv_x60/spacemit_x60/ffn_block/ffn_block.int8/ffn_block_spacemit_x60_rvv_x60_ffn_block.int8/topo_0_1_2_3/results.csv",
+          "sha256": "c2c568245e39e44369e7e586d6609bfdace0519c0057736a42e5fb612fa3e9b6"
+        },
+        {
+          "path": "gen/profile_mb/rvv_x60/spacemit_x60/fused_full/fused_full.int8/fused_full_spacemit_x60_rvv_x60_fused_full.int8/topo_0/results.csv",
+          "sha256": "52c4ce12ecb0cd339898aa856d05d90b0c9e499fdf27cc860af6f537f81bf880"
+        },
+        {
+          "path": "gen/profile_mb/rvv_x60/spacemit_x60/mlp_control/mlp_control.int8/mlp_control_spacemit_x60_rvv_x60_mlp_control.int8/topo_0/results.csv",
+          "sha256": "3dc78daba940daa421a92c2a0f9ca539309b01cc0ed9ffe1071cca7008d5dfe7"
+        }
+      ]
+    }
+  },
+  "board_validation": {
+    "path": "results/k1_feedback_exact/board_result.json",
+    "sha256": "a3075fb1a0f3f2a1ba27023397ab067f597b2aa55dbd69e0c25230ae83f56468",
+    "verdict": "CORROBORATED",
+    "runs_per_phase": 10,
+    "execution_protocol": {
+      "minimum_runs_per_phase": 10,
+      "required_runner_policy": "SCHED_FIFO"
+    },
+    "checks": {
+      "all_runtime_audits_pass": true,
+      "total_deadline_misses": 0,
+      "all_cycle_boundaries_clear": true
+    },
+    "comparison": {
+      "original_median_critical_response_ms": 10.491,
+      "feedback_median_critical_response_ms": 7.208520833333333,
+      "original_median_heavy_response_ms": 19.022583333333333,
+      "feedback_median_heavy_response_ms": 14.409604166666666,
+      "median_critical_improvement_pct": 31.288525084993484,
+      "median_heavy_improvement_pct": 24.25001423746337,
+      "feedback_max_below_original_min": true,
+      "feedback_runs_below_original_min": 10,
+      "feedback_runs_below_original_median": 10,
+      "pairwise_feedback_superiority_pct": 100.0,
+      "exact_mann_whitney_less_p": 5.412544112234515e-06
+    }
+  },
+  "proof": {
+    "schema_version": 1,
+    "verdict": "PROVEN",
+    "claim": "The feedback schedule's feasible worst critical response is below a solver-independent lower bound for every schedule available to the original implementation graph.",
+    "original": {
+      "schema_version": 1,
+      "status": "pass",
+      "schedule_sha256": "aba0092149d6b36f2a9cee0bb705fb732a41548bfd6db5824fc58b63ec3d4581",
+      "contract": {
+        "cycle_ms": 100.0,
+        "semantics": "exact release count and frequency; repeat indefinitely",
+        "models": {
+          "dronet": {
+            "period_ms": 33.333333333333336,
+            "window_ms": 33.333333333333336,
+            "instances": 3,
+            "frequency_hz": 30.0
+          },
+          "ffn_block": {
+            "period_ms": 100.0,
+            "window_ms": 100.0,
+            "instances": 1,
+            "frequency_hz": 10.0
+          },
+          "fused_full": {
+            "period_ms": 20.0,
+            "window_ms": 20.0,
+            "instances": 5,
+            "frequency_hz": 50.0
+          },
+          "mlp_control": {
+            "period_ms": 20.0,
+            "window_ms": 20.0,
+            "instances": 5,
+            "frequency_hz": 50.0
+          }
+        },
+        "total_instances": 14
+      },
+      "model_instances_observed": {
+        "dronet": 3,
+        "ffn_block": 1,
+        "fused_full": 5,
+        "mlp_control": 5
+      },
+      "dispatches_observed": 178,
+      "dispatches_expected": 178,
+      "boundary_clear": true,
+      "dependency_closed": true,
+      "physical_cores_exclusive": true,
+      "objective": {
+        "job_deadline_misses": 0,
+        "max_job_lateness_ms": 0.0,
+        "worst_critical_response_ms": 8.001335000000026,
+        "heavy_max_response_ms": 16.552833
+      },
+      "per_instance": [
+        {
+          "job": "dronet0",
+          "model": "dronet",
+          "instance": 0,
+          "release_ms": 0.0,
+          "completion_ms": 8.001335,
+          "response_ms": 8.001335,
+          "lateness_ms": 0.0
+        },
+        {
+          "job": "dronet1",
+          "model": "dronet",
+          "instance": 1,
+          "release_ms": 33.333333333333336,
+          "completion_ms": 41.33466833333335,
+          "response_ms": 8.001335000000012,
+          "lateness_ms": 0.0
+        },
+        {
+          "job": "dronet2",
+          "model": "dronet",
+          "instance": 2,
+          "release_ms": 66.66666666666667,
+          "completion_ms": 74.6680016666667,
+          "response_ms": 8.001335000000026,
+          "lateness_ms": 0.0
+        },
+        {
+          "job": "ffn_block0",
+          "model": "ffn_block",
+          "instance": 0,
+          "release_ms": 0.0,
+          "completion_ms": 16.552833,
+          "response_ms": 16.552833,
+          "lateness_ms": 0.0
+        },
+        {
+          "job": "fused_full0",
+          "model": "fused_full",
+          "instance": 0,
+          "release_ms": 0.0,
+          "completion_ms": 3.4459579999999996,
+          "response_ms": 3.4459579999999996,
+          "lateness_ms": 0.0
+        },
+        {
+          "job": "fused_full1",
+          "model": "fused_full",
+          "instance": 1,
+          "release_ms": 20.0,
+          "completion_ms": 23.445958000000008,
+          "response_ms": 3.445958000000008,
+          "lateness_ms": 0.0
+        },
+        {
+          "job": "fused_full2",
+          "model": "fused_full",
+          "instance": 2,
+          "release_ms": 40.0,
+          "completion_ms": 43.44595799999999,
+          "response_ms": 3.4459579999999903,
+          "lateness_ms": 0.0
+        },
+        {
+          "job": "fused_full3",
+          "model": "fused_full",
+          "instance": 3,
+          "release_ms": 60.0,
+          "completion_ms": 63.44595799999999,
+          "response_ms": 3.4459579999999903,
+          "lateness_ms": 0.0
+        },
+        {
+          "job": "fused_full4",
+          "model": "fused_full",
+          "instance": 4,
+          "release_ms": 80.0,
+          "completion_ms": 83.44595799999998,
+          "response_ms": 3.445957999999976,
+          "lateness_ms": 0.0
+        },
+        {
+          "job": "mlp_control0",
+          "model": "mlp_control",
+          "instance": 0,
+          "release_ms": 0.0,
+          "completion_ms": 0.08300000000000002,
+          "response_ms": 0.08300000000000002,
+          "lateness_ms": 0.0
+        },
+        {
+          "job": "mlp_control1",
+          "model": "mlp_control",
+          "instance": 1,
+          "release_ms": 20.0,
+          "completion_ms": 20.083,
+          "response_ms": 0.08299999999999841,
+          "lateness_ms": 0.0
+        },
+        {
+          "job": "mlp_control2",
+          "model": "mlp_control",
+          "instance": 2,
+          "release_ms": 40.0,
+          "completion_ms": 40.083,
+          "response_ms": 0.08299999999999841,
+          "lateness_ms": 0.0
+        },
+        {
+          "job": "mlp_control3",
+          "model": "mlp_control",
+          "instance": 3,
+          "release_ms": 60.0,
+          "completion_ms": 60.083,
+          "response_ms": 0.08299999999999841,
+          "lateness_ms": 0.0
+        },
+        {
+          "job": "mlp_control4",
+          "model": "mlp_control",
+          "instance": 4,
+          "release_ms": 80.0,
+          "completion_ms": 80.083,
+          "response_ms": 0.08299999999999841,
+          "lateness_ms": 0.0
+        }
+      ],
+      "errors": []
+    },
+    "feedback": {
+      "schema_version": 1,
+      "status": "pass",
+      "schedule_sha256": "7cd326816a45978f2012d7cad6ee48d46d5cdc98bd6794486eb38898310512b2",
+      "contract": {
+        "cycle_ms": 100.0,
+        "semantics": "exact release count and frequency; repeat indefinitely",
+        "models": {
+          "dronet": {
+            "period_ms": 33.333333333333336,
+            "window_ms": 33.333333333333336,
+            "instances": 3,
+            "frequency_hz": 30.0
+          },
+          "ffn_block": {
+            "period_ms": 100.0,
+            "window_ms": 100.0,
+            "instances": 1,
+            "frequency_hz": 10.0
+          },
+          "fused_full": {
+            "period_ms": 20.0,
+            "window_ms": 20.0,
+            "instances": 5,
+            "frequency_hz": 50.0
+          },
+          "mlp_control": {
+            "period_ms": 20.0,
+            "window_ms": 20.0,
+            "instances": 5,
+            "frequency_hz": 50.0
+          }
+        },
+        "total_instances": 14
+      },
+      "model_instances_observed": {
+        "dronet": 3,
+        "ffn_block": 1,
+        "fused_full": 5,
+        "mlp_control": 5
+      },
+      "dispatches_observed": 178,
+      "dispatches_expected": 178,
+      "boundary_clear": true,
+      "dependency_closed": true,
+      "physical_cores_exclusive": true,
+      "objective": {
+        "job_deadline_misses": 0,
+        "max_job_lateness_ms": 0.0,
+        "worst_critical_response_ms": 4.890542000000011,
+        "heavy_max_response_ms": 11.558584
+      },
+      "per_instance": [
+        {
+          "job": "dronet0",
+          "model": "dronet",
+          "instance": 0,
+          "release_ms": 0.0,
+          "completion_ms": 4.890541999999999,
+          "response_ms": 4.890541999999999,
+          "lateness_ms": 0.0
+        },
+        {
+          "job": "dronet1",
+          "model": "dronet",
+          "instance": 1,
+          "release_ms": 33.333333333333336,
+          "completion_ms": 38.22387533333334,
+          "response_ms": 4.8905420000000035,
+          "lateness_ms": 0.0
+        },
+        {
+          "job": "dronet2",
+          "model": "dronet",
+          "instance": 2,
+          "release_ms": 66.66666666666667,
+          "completion_ms": 71.55720866666668,
+          "response_ms": 4.890542000000011,
+          "lateness_ms": 0.0
+        },
+        {
+          "job": "ffn_block0",
+          "model": "ffn_block",
+          "instance": 0,
+          "release_ms": 0.0,
+          "completion_ms": 11.558584,
+          "response_ms": 11.558584,
+          "lateness_ms": 0.0
+        },
+        {
+          "job": "fused_full0",
+          "model": "fused_full",
+          "instance": 0,
+          "release_ms": 0.0,
+          "completion_ms": 3.4459579999999996,
+          "response_ms": 3.4459579999999996,
+          "lateness_ms": 0.0
+        },
+        {
+          "job": "fused_full1",
+          "model": "fused_full",
+          "instance": 1,
+          "release_ms": 20.0,
+          "completion_ms": 23.445958000000008,
+          "response_ms": 3.445958000000008,
+          "lateness_ms": 0.0
+        },
+        {
+          "job": "fused_full2",
+          "model": "fused_full",
+          "instance": 2,
+          "release_ms": 40.0,
+          "completion_ms": 43.44595799999999,
+          "response_ms": 3.4459579999999903,
+          "lateness_ms": 0.0
+        },
+        {
+          "job": "fused_full3",
+          "model": "fused_full",
+          "instance": 3,
+          "release_ms": 60.0,
+          "completion_ms": 63.44595799999999,
+          "response_ms": 3.4459579999999903,
+          "lateness_ms": 0.0
+        },
+        {
+          "job": "fused_full4",
+          "model": "fused_full",
+          "instance": 4,
+          "release_ms": 80.0,
+          "completion_ms": 83.44595799999998,
+          "response_ms": 3.445957999999976,
+          "lateness_ms": 0.0
+        },
+        {
+          "job": "mlp_control0",
+          "model": "mlp_control",
+          "instance": 0,
+          "release_ms": 0.0,
+          "completion_ms": 0.08300000000000002,
+          "response_ms": 0.08300000000000002,
+          "lateness_ms": 0.0
+        },
+        {
+          "job": "mlp_control1",
+          "model": "mlp_control",
+          "instance": 1,
+          "release_ms": 20.0,
+          "completion_ms": 20.083,
+          "response_ms": 0.08299999999999841,
+          "lateness_ms": 0.0
+        },
+        {
+          "job": "mlp_control2",
+          "model": "mlp_control",
+          "instance": 2,
+          "release_ms": 40.0,
+          "completion_ms": 40.083,
+          "response_ms": 0.08299999999999841,
+          "lateness_ms": 0.0
+        },
+        {
+          "job": "mlp_control3",
+          "model": "mlp_control",
+          "instance": 3,
+          "release_ms": 60.0,
+          "completion_ms": 60.083,
+          "response_ms": 0.08299999999999841,
+          "lateness_ms": 0.0
+        },
+        {
+          "job": "mlp_control4",
+          "model": "mlp_control",
+          "instance": 4,
+          "release_ms": 80.0,
+          "completion_ms": 80.083,
+          "response_ms": 0.08299999999999841,
+          "lateness_ms": 0.0
+        }
+      ],
+      "errors": []
+    },
+    "original_lower_bounds": {
+      "kind": "fastest_legal_implementation_dag_critical_path",
+      "interpretation": "Solver-independent response lower bound: unlimited cores, zero contention, zero transfer cost, fastest legal measured duration for every dispatch. A real schedule cannot be faster.",
+      "per_model_ms": {
+        "dronet": 8.001335,
+        "ffn_block": 14.598916,
+        "fused_full": 3.445958,
+        "mlp_control": 0.083
+      },
+      "worst_critical_response_lower_bound_ms": 8.001335,
+      "heavy_response_lower_bound_ms": 14.598916
+    },
+    "feedback_lower_bounds": {
+      "kind": "fastest_legal_implementation_dag_critical_path",
+      "interpretation": "Solver-independent response lower bound: unlimited cores, zero contention, zero transfer cost, fastest legal measured duration for every dispatch. A real schedule cannot be faster.",
+      "per_model_ms": {
+        "dronet": 4.890542,
+        "ffn_block": 7.848125,
+        "fused_full": 3.445958,
+        "mlp_control": 0.083
+      },
+      "worst_critical_response_lower_bound_ms": 4.890542,
+      "heavy_response_lower_bound_ms": 7.848125
+    },
+    "original_response_ms": 8.001335000000026,
+    "feedback_response_ms": 4.890542000000011,
+    "original_response_floor_ms": 8.001335,
+    "feedback_response_floor_ms": 4.890542,
+    "original_global_optimum_proven": true,
+    "feedback_global_optimum_proven": true,
+    "separation_ms": 3.1107929999999886,
+    "improvement_pct": 38.87842466288424
+  },
+  "observed_secondary_metrics": {
+    "original_heavy_max_response_ms": 16.552833,
+    "feedback_heavy_max_response_ms": 11.558584,
+    "heavy_improvement_pct": 30.171566401956692
+  },
+  "interpretation": {
+    "original_optimum": "The original feasible schedule attains the fastest-legal-DAG lower bound, so 8.001335 ms is the global optimum over every possible scheduler for the original implementation graph.",
+    "feedback_optimum": "The feedback feasible schedule also attains its lower bound. The 4.890542 ms result is therefore globally optimal for the feedback-expanded implementation graph.",
+    "causality": "Because 4.890542 ms is below the original graph's 8.001335 ms solver-independent floor, the improvement cannot be caused by choosing a better scheduler. Feedback changed the attainable implementation space."
+  }
+}

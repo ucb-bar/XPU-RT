@@ -52,6 +52,7 @@ import job_names  # noqa: E402
 import schedule_trace  # noqa: E402
 import trace_metrics  # noqa: E402
 import workload_spec  # noqa: E402
+import plot_k1_evolution as physical_gantt  # noqa: E402
 
 figstyle.use()
 
@@ -134,7 +135,9 @@ def _impl_of(d, default=None):
 def panel(ax, schedule, known, window_ms, title, subtitle, color_by="network"):
     disp = schedule["dispatches"]
     default_impl = _default_impl(schedule) if color_by == "impl" else None
-    lanes = sorted({d["hardware_target"] for d in disp.values()})
+    # A '+'-joined target holds physical harts; it is not a synthetic lane.
+    # Expand it exactly as the feasibility checker and policy-sweep renderer do.
+    lanes = physical_gantt.cores_from_schedule(disp)
     y = {lane: i for i, lane in enumerate(lanes)}
     seen = {}
     for d in disp.values():
@@ -155,8 +158,13 @@ def panel(ax, schedule, known, window_ms, title, subtitle, color_by="network"):
             key = job_names.model_of(d.get("job_name", ""), known)
             c = figstyle.model_color(key)
         seen[key] = c
-        ax.broken_barh([(st, max(dur, 1e-3))], (y[d["hardware_target"]] - 0.38, 0.76),
-                       facecolors=c, edgecolors="none")
+        span = physical_gantt.held_lane_span(d.get("hardware_target", ""), lanes)
+        if span is None:
+            continue
+        lo, hi = span
+        ax.broken_barh([(st, max(dur, 1e-3))],
+                       (lo - 0.38, (hi - lo) + 0.76),
+                       facecolors=c, edgecolors="white", linewidth=0.15)
     ax.set_yticks(range(len(lanes)))
     ax.set_yticklabels(lanes, fontsize=4.0)
     ax.tick_params(axis="y", pad=1, length=0)
@@ -205,14 +213,16 @@ def main() -> int:
     ap.add_argument("--title", default="The loop, iteration by iteration")
     a = ap.parse_args()
 
-    windows, known = {}, None
+    windows, known, declared_periods = {}, None, None
     if a.windows_from:
-        windows, known = workload_spec.windows_and_names(
-            json.load(open(a.windows_from)))
+        workload = json.load(open(a.windows_from))
+        windows, known = workload_spec.windows_and_names(workload)
+        declared_periods = workload_spec.periods_ms(workload)
     critical = tuple(m.strip() for m in a.critical_models.split(",") if m.strip())
 
     iters = [load(s) for s in a.iteration]
-    outcomes = [score(lbl, sch, windows, critical, a.heavy_model, known)[1]
+    outcomes = [score(lbl, sch, windows, critical, a.heavy_model, known,
+                      declared_periods)[1]
                 for lbl, sch, _ in iters]
 
     # Which panel each rung is judged against; panel 1 unless told otherwise.

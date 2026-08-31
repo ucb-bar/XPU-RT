@@ -34,7 +34,9 @@ artifacts/repo_reconciliation/*.bundle
 #
 # This supersedes the narrower `schedules/*_report.json` rule that preceded it,
 # which existed only because the reports are ~680K each.
-/schedules/
+/schedules/*
+!/schedules/scheduled_networks_k1_tri_exact_100ms_greedy_profiled.json
+!/schedules/scheduled_networks_k1_tri_exact_100ms_feedback_greedy_profiled.json
 
 # ---------------------------------------------------------------------------
 # Working output. None of this is outward-facing: it is generated, it is

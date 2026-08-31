@@ -149,6 +149,12 @@ class OldSchedulesStillScore(unittest.TestCase):
             schedule_trace.periods_ms(self._sched("mystery"), KNOWN),
             {"mystery": 50.0})
 
+    def test_period_repair_prefers_longest_known_prefix(self):
+        known = {"yolov8_nano_64", "yolov8_nano_64x96"}
+        self.assertEqual(
+            schedule_trace.periods_ms(self._sched("yolov8_nano_6"), known),
+            {"yolov8_nano_64x96": 50.0})
+
 
 if __name__ == "__main__":
     unittest.main()

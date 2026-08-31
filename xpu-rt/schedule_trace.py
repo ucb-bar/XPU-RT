@@ -157,7 +157,8 @@ def periods_ms(schedule: dict, known=None) -> Dict[str, float]:
             out[key] = period
             continue
         # Longest match first: the stored key is a PREFIX of the real name.
-        hits = sorted((n for n in known if n.startswith(key)), key=len)
+        hits = sorted((n for n in known if n.startswith(key)),
+                      key=len, reverse=True)
         out[hits[0] if hits else key] = period
     return out
 

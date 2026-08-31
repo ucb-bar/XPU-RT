@@ -1,0 +1,65 @@
+{
+  "_comment": "Exact-work feedback twin of networks_k1_tri_exact_100ms.json. Releases, counts, periods, hardware, profiles, model graphs, accuracy, and objective are identical. The only semantic change is the XPU-RT-requested exposure of already measured 2/4/8-hart ModelBlaster implementations.",
+  "horizon_ms": 100.0,
+  "hardware": {
+    "machines": {"cpu_p": 4, "cpu_e": 4},
+    "profile_hw": {"cpu_p": "rvv_x60", "cpu_e": "rvv_x60"},
+    "profile": {
+      "target": "spacemit_x60",
+      "topo_tag": "topo_0",
+      "topo_tag_override": false,
+      "gen_root": "gen_mb"
+    },
+    "p_core_speedup": 1.0
+  },
+  "scheduler": {
+    "random_seed": 42,
+    "solver_verbosity": 1,
+    "time_limit": 0,
+    "use_profiled": true,
+    "prune_periodic": false,
+    "restrict_makespan_to_nonperiodic": false,
+    "machine_combination_mode": "shard",
+    "enable_impls": true,
+    "objective_mode": "exact_cycle_worst_response",
+    "critical_models": ["mlp_control", "fused_full", "dronet"],
+    "heavy_model": "ffn_block",
+    "objective_stop_after": "heavy_max_response"
+  },
+  "networks": {
+    "mlp_control": {
+      "id": 0,
+      "identifier": "mlp_control",
+      "dispatch_deps_path": "gen_mb/vmfb/mlp_control/spacemit_x60/rvv_x60/mlp_control.int8/mlp_control.int8_dispatch_graph.json",
+      "period": 20.0,
+      "window_duration": 20.0,
+      "num_instances": 5
+    },
+    "fused_full": {
+      "id": 1,
+      "identifier": "fused_full",
+      "dispatch_deps_path": "gen_mb/vmfb/fused_full/spacemit_x60/rvv_x60/fused_full.int8/fused_full.int8_dispatch_graph.json",
+      "period": 20.0,
+      "window_duration": 20.0,
+      "num_instances": 5,
+      "stateful": true
+    },
+    "dronet": {
+      "id": 2,
+      "identifier": "dronet",
+      "dispatch_deps_path": "gen_mb/vmfb/dronet/spacemit_x60/rvv_x60/dronet.int8/dronet.int8_dispatch_graph.json",
+      "period": 33.333333333333336,
+      "window_duration": 33.333333333333336,
+      "num_instances": 3
+    },
+    "ffn_block": {
+      "id": 3,
+      "identifier": "ffn_block",
+      "dispatch_deps_path": "gen_mb/vmfb/ffn_block/spacemit_x60/rvv_x60/ffn_block.int8/ffn_block.int8_dispatch_graph.json",
+      "period": 100.0,
+      "window_duration": 100.0,
+      "num_instances": 1
+    }
+  },
+  "edges": []
+}

@@ -1,8 +1,10 @@
 # The loop, end to end
 
 How a measurement becomes a compiler change, and how the compiler change gets
-accepted or rejected. Every number here was measured on the physical SpaceMiT
-K1; every command is one that has actually been run.
+accepted or rejected. Dispatch costs come from physical SpaceMiT K1
+measurements. A figure says **predicted schedule** when XPU-RT placed those
+measured costs and **board trace** only when the placement itself was observed
+on hardware.
 
 The one-line summary: **the loop searches on predictions and decides on
 measurements, and those are different jobs done by different tools.** Most of
@@ -52,7 +54,7 @@ alone, which is the reason for the file boundaries.
 
 `shard` has no bridge because it is not a graph rewrite: the width is chosen by
 the SCHEDULER, per dispatch, out of multi-core profiles, rather than by a hint
-that changes the IR. See section 4c.
+that changes the IR. See section 5c.
 
 This entry used to read "deliberately unwired: it needs multi-core profiles
 that do not exist, and B4 measured a 2.27x ceiling." Both halves are now
@@ -99,7 +101,304 @@ Term 9 is last on purpose. `candidate_objective.py`'s own worked examples:
 Neither is visible without scheduling the rewritten graph. A rung that stops at
 "reprofiled on the board" has not been adjudicated at all.
 
-## 4. A worked round trip, with the real numbers
+## 4. The strongest result: a solver-independent separation
+
+The exact-cycle experiment is the result to lead with. It compares the same
+100 ms of work before and after XPU-RT asks ModelBlaster to expose measured
+multi-hart implementations:
+
+![Exact-cycle feedback proof and K1 corroboration](../results/k1_feedback_exact/exact_cycle_feedback.png)
+
+[Vector PDF](../results/k1_feedback_exact/exact_cycle_feedback.pdf) ·
+[machine-readable proof](../results/k1_feedback_exact/result.json) ·
+[full explanation and reproduction commands](../results/k1_feedback_exact/README.md)
+
+| | original graph | after feedback | improvement |
+|---|---:|---:|---:|
+| certified global optimum, worst critical response | 8.001335 ms | **4.890542 ms** | **38.88%** |
+| predicted FFN response | 16.552833 ms | **11.558584 ms** | 30.17% |
+| K1 median, worst critical response (10 RT runs each) | 10.491000 ms | **7.208521 ms** | **31.29%** |
+| K1 median, FFN response (10 RT runs each) | 19.022583 ms | **14.409604 ms** | **24.25%** |
+
+This is deliberately an **exact-frequency cyclic** workload: five
+`mlp_control` jobs at 50 Hz, five `fused_full` jobs at 50 Hz, three `dronet`
+jobs at 30 Hz, and one `ffn_block` job at 10 Hz. Both sides contain exactly 14
+jobs and 178 dispatches. Every dependency closes inside the 100 ms window, no
+dispatch crosses its boundary, no physical cores overlap, and every deadline
+is met. The frame can therefore repeat forever. There is no arbitrary plot
+crop and no tail where DroNet is shown running alone after the rest of the
+workload has ended.
+
+The proof has two parts. First, an analytic lower bound uses each dispatch's
+fastest legal measured implementation and assumes unlimited cores, zero
+contention, and zero transfer cost. Any real schedule must be at least as slow
+as that model-DAG critical path. Second, the independently validated feasible
+schedules attain those bounds: 8.001335 ms before feedback and 4.890542 ms
+after. Thus both are global optima in their respective implementation spaces.
+The feedback optimum is strictly below the original space's floor, so **no
+choice of MOSEK, CP-SAT, Greedy, time limit, or tuning can obtain it from the
+original graph**. Feedback improved the attainable design space, not merely
+the solver search.
+
+The K1 evidence is a separate corroboration, not part of the mathematical
+certificate. Ten complete runs per phase all execute 178 dispatches under an
+audited `SCHED_FIFO` priority of 80 with zero deadline misses. Every dispatch
+honors its schedule-issued earliest start and both phases finish before the
+100 ms runtime boundary. The feedback runs span 7.115917–7.370917 ms critical
+response; the original runs span 10.269542–10.593583 ms, so all 100 cross-phase
+pairs favor feedback. The exact one-sided rank-sum p-value is 5.41×10⁻⁶.
+Runtime values exceed the dispatch-cost prediction because they include
+launch, synchronization, and other harness effects. The direction remains
+clear.
+
+Read the four panels as follows. A and B show the same periodic releases on
+physical K1 lanes; blank space is release slack. A vertically tall bar is one
+dispatch reserving multiple harts, not duplicated work. Panel C is the
+optimality certificate: feasible schedule equals lower bound on both sides.
+Panel D is the repeated-board check: every point is a complete run. Hatched
+bars are genuine IME `linear`/`matmul` implementations, and the dashed right
+edge is the exact repeat boundary.
+
+### Board reproduction
+
+The scheduled Linux harness now consumes composite targets end to end. Ingest
+preserves every hart in a target such as `CPU_P#0+CPU_P#1`; codegen repacks
+packed convolution weights for the width selected for each dispatch; the
+runtime creates a persistent pool on that exact hart set and takes ordered
+per-hart locks so pool helpers cannot oversubscribe scheduler workers. The run
+log records requested and observed affinity, all composite pools, and both the
+requested and in-process-observed Linux scheduling policy.
+
+From `ModelBlaster/`, invoke each exact schedule ten times (alternating phase
+order) with the K1 toolchain. The real-time policy is part of the experiment,
+not an unrecorded machine setting:
+
+```bash
+env CORE_KINDS=rvv,ime,rvv_c1 \
+  CROSS=../tools/riscv-tools-spacemit/spacemit-toolchain-linux-glibc-x86_64-v1.1.2/bin/riscv64-unknown-linux-gnu- \
+  PY="$PWD/.venv/bin/python" \
+  MB_FUSED_CALIB_PKL=/scratch/dima/rose-infra/RoSE/experiments/rose_nav_cosim/calib/calib_real.pkl \
+  MB_FUSED_LOWDIM_FLOAT=1 NUM_CALIBRATION=32 \
+  MODELBLASTER_K1_RT_PRIORITY=80 \
+  MODELBLASTER_KERNEL_CC=../tools/riscv-tools-spacemit/spacemit-toolchain-linux-glibc-x86_64-v1.1.2/bin/riscv64-unknown-linux-gnu-gcc \
+  ./scripts/run_xpurt_k1.sh \
+    --schedule ../schedules/scheduled_networks_k1_tri_exact_100ms_feedback_greedy_profiled.json \
+    --models mlp_control,fused_full,dronet,ffn_block \
+    --backends rvv_x60,ime_x60,rvv_x60 --jobs 4
+```
+
+Replace the schedule with the non-`feedback` filename for the control. The raw
+20-run traces and logs are retained under
+`results/k1_feedback_exact/board_runs_rt_observed/`;
+`evaluate_exact_cycle_board.py`
+rechecks completeness, timing, affinity, pools, policy, numerical outputs, and
+deadlines. It requires ten matched runs per phase. The walker waits until every
+DAG leaf in periodic instance 0 has completed before capturing that model's
+output. Integer models are bit-exact; the stateful FP16 `fused_full` result has
+maximum absolute/relative errors 0.000183105469/0.00162337662 within `1e-2`.
+The first instance is used because the baked golden represents one invocation,
+while later recurrent instances intentionally carry evolved state.
+
+An earlier `SCHED_OTHER` exploration is retained in `board_runs/`. One noisy
+feedback run missed four deadlines, so those samples are not silently filtered
+into the headline. The final experiment reruns both phases under the same
+explicit real-time protocol, and the evaluator rejects a log that does not
+both request and observe `SCHED_FIFO` at the same priority.
+
+From the XPU-RT root, reproduce the checked-in aggregate and all of its gates:
+
+```bash
+.venv/bin/python scripts/evaluate_exact_cycle_board.py \
+  --run-dir results/k1_feedback_exact/board_runs_rt_observed \
+  --original-workload data/toplevel/networks_k1_tri_exact_100ms.json \
+  --original-schedule schedules/scheduled_networks_k1_tri_exact_100ms_greedy_profiled.json \
+  --feedback-workload data/toplevel/networks_k1_tri_exact_100ms_feedback.json \
+  --feedback-schedule schedules/scheduled_networks_k1_tri_exact_100ms_feedback_greedy_profiled.json \
+  --critical-model mlp_control --critical-model fused_full \
+  --critical-model dronet --heavy-model ffn_block \
+  --fp16-model fused_full --minimum-runs-per-phase 10 \
+  --required-runner-policy SCHED_FIFO \
+  --out results/k1_feedback_exact/board_result.json
+```
+
+## 4b. Supplementary solver matrix
+
+The earlier fair comparison is a matrix, not “our scheduler versus their scheduler.”
+Greedy, CP-SAT, and MOSEK first see the **same original ModelBlaster output**.
+XPU-RT then requests a compiler-side design-space change, and every solver is
+given the same changed output. Models, instances, machines, seed, measured
+K1 measurement corpus, compaction, and periodic-expansion limit remain fixed;
+the exposed implementation surface is the one intentional change.
+
+This supplementary solver-complete workload has four models, 55 operations, and
+eight K1 harts. The original side exposes single-hart RVV plus the existing
+implementation alternatives. Its Greedy schedule emits 15 raw `prefer_finer`
+hints. DroNet and FFN are the hinted models for which measured multi-hart K1
+profiles already exist, so ModelBlaster exposes their measured 1/2/4/8-hart
+implementations; XPU-RT still chooses the width per dispatch. This is a real,
+tracked feedback action without changing the model mix or the amount of work.
+The benchmark verifies the
+[raw feedback artifact](../results/k1_feedback_story/data/original_xpurt_feedback.json),
+its source-schedule hash, and that each transformed model has a corresponding
+`prefer_finer` signal.
+
+![Original solver matrix versus XPU-RT feedback](../results/k1_feedback_story/feedback_vs_solvers.png)
+
+[Vector PDF](../results/k1_feedback_story/feedback_vs_solvers.pdf) ·
+[machine-readable verdict](../results/k1_feedback_story/result.json)
+
+| phase | solver | status | critical p99 | FFN max latency | makespan | wall |
+|---|---|---|---:|---:|---:|---:|
+| original | Greedy | validated | 8.00 ms | 16.55 ms | 20.08 ms | 1.3 s |
+| original | CP-SAT | validated | 10.83 ms | 17.32 ms | 20.09 ms | 159.5 s |
+| original | MOSEK | validated | 20.00 ms | 20.08 ms | 20.08 ms | 76.6 s |
+| feedback | Greedy | validated | **4.89 ms** | **11.56 ms** | 20.08 ms | 1.4 s |
+| feedback | CP-SAT | validated | 9.75 ms | 12.73 ms | 20.09 ms | 191.0 s |
+| feedback | MOSEK | validated | 20.00 ms | 20.08 ms | 20.08 ms | 1272.1 s |
+
+The feedback schedule is **ACCEPTED** against every validated original result:
+
+* versus original Greedy, term 4 decides: critical p99 falls
+  8.00 → 4.89 ms, **−38.9%**; FFN max latency also falls
+  16.55 → 11.56 ms, −30.2%;
+* versus original CP-SAT, term 4 decides: critical p99 is 4.89 rather than
+  10.83 ms, **−54.8%**;
+* versus original MOSEK, term 4 decides: critical p99 is 4.89 rather than
+  20.00 ms, **−75.6%**.
+
+All six cells ran without a wall-clock or solver time limit and pass the same
+independent overlap, dependency, target, and implementation checks. The result
+therefore supports the stronger claim the matrix was designed to test: changing
+the compiler-visible implementation space through feedback matters more here
+than replacing Greedy with CP-SAT or MOSEK on the original graph. The feedback
+also helps CP-SAT itself (10.83 → 9.75 ms critical p99); MOSEK finds the same
+objective terms on both inputs and takes 21.2 minutes on the expanded space.
+
+The CP-SAT rows use microsecond integer ticks, conservatively round measured
+durations upward, and optimize deadline misses, lateness, then
+makespan-plus-transfer in sequential phases. The external nine-term evaluator
+ranks its emitted schedule exactly like every other solver. The
+older millisecond grid could emit a nominal solution whose exact fractional
+durations overlapped. Those schedules are excluded and the precision failure is
+now covered by a regression test.
+
+### A real graph rewrite
+
+The matrix above isolates design-space feedback. The accepted YOLO case shows
+the other kind of loop action: XPU-RT identifies an expensive fused dispatch,
+ModelBlaster unfuses it, verifies the rewritten graph, profiles it on K1, and
+XPU-RT re-solves the three-model workload.
+
+![Accepted YOLO rewrite before and after feedback](../results/k1_feedback_story/feedback_rewrite_detail.png)
+
+[Vector PDF](../results/k1_feedback_story/feedback_rewrite_detail.pdf)
+
+The graph grows from 826 to 1282 scheduled dispatches, yet detector max latency
+falls 148.10 → 116.42 ms and the objective accepts on term 5. More dispatches
+are not intrinsically worse; the schedule-level outcome is authoritative.
+
+The overview is a **qualified repeat frame**, not an arbitrary crop. A
+postprocessor starts at a frame-grid boundary, includes a complete detector
+instance, rejects any boundary-crossing dispatch or dependency that points
+outside the frame, and checks that every periodic model has enough complete
+instances to meet its minimum average frequency indefinitely. It then writes a
+standalone schedule artifact with `mode: repeat_indefinitely`. The control needs
+150 ms (308 dispatches; 518 generated tail dispatches removed), while the
+accepted candidate closes after 120 ms (380 dispatches; 902 removed). Thus the
+figure no longer spends most of its width showing DroNet after the meaningful
+mixed workload is complete.
+
+[Repeat-window proof](../results/k1_feedback_story/feedback_rewrite_repeat_windows.json) ·
+[control frame](../results/k1_feedback_story/data/rewrite_control_repeat_frame.json) ·
+[feedback frame](../results/k1_feedback_story/data/rewrite_candidate_repeat_frame.json)
+
+The same postprocessor is available independently of the plotting bundle:
+
+```bash
+.venv/bin/python scripts/extract_repeat_window.py \
+  --schedule schedules/scheduled_networks_k1_mb_3model_4hz_yolo_unfused_greedy_profiled.json \
+  --workload data/toplevel/networks_k1_mb_3model_4hz_yolo_ctrl.json \
+  --anchor-model yolov8_nano --quantum-ms 10 --max-window-ms 250 \
+  --out repeatable_schedule.json
+```
+
+The frequency contract is deliberately *minimum service rate*, not exact phase
+preservation: a short frame may execute a slow model more often than requested,
+and the report exposes both required and achieved Hz.
+
+### Complex schedules and negative controls
+
+The rich capstone contains five networks and 217 operations. It exercises all
+eight physical harts, per-dispatch shard widths, and the K1 IME path. The
+transformer blocks are explicitly ViNT-class stand-ins; the figure does not
+present them as a completed flight model.
+
+![Rich five-network schedules](../results/k1_feedback_story/feedback_rich_capstone.png)
+
+[Vector PDF](../results/k1_feedback_story/feedback_rich_capstone.pdf)
+
+Both displayed schedules pass the independent feasibility gate. CP-SAT uses a
+corrected microsecond time grid, so its starts remain conservative against the
+fractional measured dispatch durations; the earlier millisecond rounding bug
+is covered by a regression test. Greedy and CP-SAT share one qualified 60 ms
+repeat frame containing complete instances of all five networks. Multi-hart
+work spans the physical lanes it holds—there is no invented
+`CPU#0+CPU#1` machine row—and genuine IME-capable dispatches are hatched.
+
+MOSEK is deliberately absent from this rich Gantt because it never produced a
+schedule to validate. Three runs had both outer and solver time limits disabled.
+The final feasibility-oriented run reached 89.1 GiB resident memory, filled the
+8 GiB swap, and left only 7.9 GiB host memory available before it was stopped to
+protect the machine. This is recorded as resource exhaustion, not timeout and
+not ranked as a solver result. The smaller four-model matrix above remains the
+controlled Greedy/CP-SAT/MOSEK comparison: all six of those cells completed and
+passed feasibility.
+
+[Rich repeat-window proof](../results/k1_feedback_story/feedback_rich_repeat_windows.json) ·
+[Greedy frame](../results/k1_feedback_story/data/rich_greedy_repeat_frame.json) ·
+[CP-SAT frame](../results/k1_feedback_story/data/rich_cpsat_repeat_frame.json) ·
+[MOSEK resource evidence](../results/k1_feedback_story/rich_mosek_resource_exhaustion.json)
+
+The loop also preserves unsuccessful feedback. DroNet split ×2 and ×4 are
+rejected because they worsen the co-running detector's max latency:
+
+![Rejected DroNet feedback candidates](../results/k1_feedback_story/feedback_rejections.png)
+
+[Vector PDF](../results/k1_feedback_story/feedback_rejections.pdf)
+
+These three panels share one independently checked 160 ms repeat frame. It
+contains five complete DroNet instances, sixteen MLP instances, and one complete
+detector instance in every schedule; trailing single-model work is excluded.
+The proof and materialized frames are stored in
+[`feedback_rejections_repeat_windows.json`](../results/k1_feedback_story/feedback_rejections_repeat_windows.json).
+
+Reproduce the solver matrix and the tracked PNG/PDF bundle with:
+
+```bash
+MOSEKLM_LICENSE_FILE=$PWD/mosek.lic XPURT_PERPAIR_BIGM=1 \
+  .venv/bin/python scripts/run_feedback_benchmark.py \
+    --manifest results/k1_feedback_story/experiment.json --solve \
+    --work-dir results/k1_feedback_story/solver_unbounded_matrix \
+    --snapshot-dir results/k1_feedback_story/data \
+    --out results/k1_feedback_story/result.json
+
+.venv/bin/python scripts/plot_feedback_story.py \
+  --story results/k1_feedback_story/story.json \
+  --out-dir results/k1_feedback_story --snapshot
+```
+
+Both `timeout_s` and `solver_time_limit_s` are `0` in the manifest. Zero means
+disabled, and `profile_schedulers.py` now uses that no-limit policy by default;
+slow exact cells are allowed to finish and their wall time is reported.
+
+`result.json` records graph and schedule hashes, the exact two-field workload
+diff, solver status, instance counts, all nine objective inputs, gates, and
+pairwise verdicts. The evaluator refuses any undeclared change to a model,
+period, machine, seed, or solver input. The resolved manifests and copied
+schedules make the published figures independent of ignored `schedules/` and
+`artifacts/` working trees.
+
+## 5. A worked round trip, with the real numbers
 
 DroNet's dispatch 0 (`conv2d_s8`, OC=32) split along OC, in a 3-model workload
 (mlp_control 100 Hz, dronet 30 Hz, yolov8_nano 4 Hz) on 8 harts.
@@ -238,7 +537,7 @@ term its verdict turned on. `diff_dispatch_graph` proves the *graph* changed;
 this shows whether the *schedule* did, which is a different question and the one
 that decides.
 
-## 4b. The other axis: which UNIT runs a dispatch
+## 5b. The other axis: which UNIT runs a dispatch
 
 Everything above rewrites the graph and re-schedules it. The second axis is
 leaving the graph alone and changing the implementation — the K1 has an int8
@@ -296,9 +595,9 @@ kernel; only `linear_s8` and `matmul_s8` there are genuine accelerator work.
 The figure distinguishes them, and conflating them would overstate how much of
 the schedule the NPU carries.
 
-## 4c. The third axis: how many HARTS run a dispatch
+## 5c. The third axis: how many HARTS run a dispatch
 
-Section 4 changes the graph, 4b changes which unit runs a dispatch. The third
+Section 5 changes the graph, 5b changes which unit runs a dispatch. The third
 lever leaves both alone and changes how WIDE a dispatch runs -- one hart, or a
 block of them sharing the work.
 
@@ -355,7 +654,7 @@ expresses it. `shard_conv_weights` gives each shard its own array. Bit-exactness
 is not a separate step -- `run_model_k1.sh` golden-compares in-binary every run,
 so a shard reading the wrong weights fails the run that would have timed it.
 
-## 4d. What the cost model knows beyond a solo profile
+## 5d. What the cost model knows beyond a solo profile
 
 Two questions, same shape, opposite answers. Both were measured on the
 ModelBlaster path because the earlier numbers for both came from
@@ -389,7 +688,7 @@ than on 4 (5.32 vs 5.25 ms) and yolo is not; dronet pays more to cross the
 edge; dronet's working set fits one L2 and so has more to lose. Looking for
 this effect with a co-runner sweep finds nothing, and is right to.
 
-## 5. Guard rails, and what each one caught
+## 6. Guard rails, and what each one caught
 
 Every one of these exists because it failed silently at least once.
 
@@ -398,7 +697,7 @@ Every one of these exists because it failed silently at least once.
   `vl` is wrong, so `check_rvv_vtype.py` -- which reads the disassembly for
   instructions the hardware refuses -- structurally cannot see it. Two
   committed kernels declaring `accuracy_class: bit_exact` were not
-  (`max_abs_err` 20 and 68); see section 6.
+  (`max_abs_err` 20 and 68); see section 7.
 * **`check_schedule_feasibility` refuses an implementation the core cannot
   execute.** Every other finding it reports is a slowdown -- a double-booked
   core serialises, an overrun still produces numbers. This one does not: an
@@ -461,7 +760,7 @@ Every one of these exists because it failed silently at least once.
   `--windows-from` and you score against the period, a more forgiving test than
   the workload declared.
 
-## 6. Three traps that cost a board slot each
+## 7. Three traps that cost a board slot each
 
 **Use GCC 14.3, not 13.2.** Get it with
 `eval "$(scripts/setup_spacemit_toolchain.sh)"`, which finds an existing
@@ -508,7 +807,7 @@ flag copies the graph, records source path and sha256 in `.staged_from`, and
 renames the IR's `name` field to the network name — every generated C symbol
 mangles from it.
 
-## 7. Where each concept lives
+## 8. Where each concept lives
 
 The modules are not all named after the concepts.
 
@@ -521,6 +820,8 @@ The modules are not all named after the concepts.
 | scoring a solved schedule (one scorer, three callers) | `xpu-rt/schedule_scoring.py` |
 | the acceptance rule | `xpu-rt/candidate_objective.py` |
 | the verdict CLI | `scripts/compare_candidates.py` |
+| original-vs-feedback experiment contract | `xpu-rt/feedback_benchmark.py`, `scripts/run_feedback_benchmark.py` |
+| physical-core comparison figures | `scripts/plot_feedback_story.py`, `scripts/plot_k1_evolution.py` |
 | workload-spec reading | `xpu-rt/workload_spec.py` |
 | job-name splitting | `xpu-rt/job_names.py` |
 | trace reading, both producers | `xpu-rt/k1_trace.py` |
@@ -544,7 +845,7 @@ The modules are not all named after the concepts.
 | recreating the environment | `docs/environment.md` |
 | running on the board | `docs/k1_board.md` |
 
-## 8. Examples
+## 9. Examples
 
 Every arrow above has a runnable version under `examples/`, and the test suite
 runs the subset that needs neither a board nor a licence — so an example

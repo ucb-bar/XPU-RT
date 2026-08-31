@@ -1,0 +1,1260 @@
+{
+  "schema_version": 1,
+  "experiment_id": "k1-tri-feedback-v1",
+  "description": "Four-model K1 solver matrix before and after XPU-RT feedback exposes measured ModelBlaster multi-hart implementations.",
+  "common": {
+    "solvers": [
+      "greedy",
+      "cpsat",
+      "mosek"
+    ],
+    "critical_models": [
+      "mlp_control",
+      "fused_full",
+      "dronet"
+    ],
+    "heavy_model": "ffn_block",
+    "require_distinct_pdb": true,
+    "timeout_s": 0,
+    "solver_time_limit_s": 0,
+    "max_periodic_iters": 1,
+    "window_ms": 45
+  },
+  "numbers_are": "predicted schedules using measured K1 dispatch profiles",
+  "objective": "xpu-rt/candidate_objective.py nine-term lexicographic order",
+  "instances": {
+    "dronet": 1,
+    "ffn_block": 1,
+    "fused_full": 1,
+    "mlp_control": 2
+  },
+  "workload_changes": [
+    {
+      "path": "hardware.profile.topo_tag_override",
+      "from": true,
+      "to": false
+    },
+    {
+      "path": "scheduler.machine_combination_mode",
+      "from": "singletons",
+      "to": "shard"
+    }
+  ],
+  "gates": [
+    {
+      "gate": "correctness",
+      "status": "pass",
+      "evidence": "Multi-hart candidates preserve the same dispatch graph; the split rewrite path is independently bit-exact in artifacts/k1_run/round_B3_dronet_split/host_verify_x2.json and host_verify_x4.json."
+    },
+    {
+      "gate": "hardware_legality",
+      "status": "pass",
+      "evidence": "Every stored schedule is checked by scripts/check_schedule_feasibility.py; multi-hart targets are same-cluster K1 combinations."
+    },
+    {
+      "gate": "profile_validity",
+      "status": "pass",
+      "evidence": "Tracked K1 measurements exist for DroNet and FFN at topo_0, topo_0_1, topo_0_1_2_3, and topo_0_1_2_3_4_5_6_7 under gen/profile_mb."
+    }
+  ],
+  "phases": {
+    "original": {
+      "networks_json": "results/k1_feedback_story/data/original_workload.json",
+      "networks_sha256": "73eaf9d1a85234f4baa6bdc23bd757fc02e217730146121259fdec0636efca35",
+      "transformation": null
+    },
+    "feedback": {
+      "networks_json": "results/k1_feedback_story/data/feedback_workload.json",
+      "networks_sha256": "12d060231da585ab1b30395b4065c5e42cd0085171c1f4917042672f7fe2b2aa",
+      "transformation": {
+        "kind": "expose_measured_shard_widths",
+        "targets": [
+          "dronet",
+          "ffn_block"
+        ],
+        "widths": [
+          1,
+          2,
+          4,
+          8
+        ],
+        "source": "XPU-RT prefer_finer hints from the original Greedy schedule",
+        "feedback_artifact": "results/k1_feedback_story/data/original_xpurt_feedback.json",
+        "source_schedule_sha256": "c2e69f8527b3cc60622fbde7c037dcbefa4fe29182abfedc24992a330c4d7cb4",
+        "selection_rule": "Expose wider implementations only for hinted models with existing measured K1 multi-hart profiles.",
+        "allowed_workload_changes": [
+          {
+            "path": "hardware.profile.topo_tag_override",
+            "from": true,
+            "to": false
+          },
+          {
+            "path": "scheduler.machine_combination_mode",
+            "from": "singletons",
+            "to": "shard"
+          }
+        ],
+        "feedback_sha256": "a6810d9815edd4061368e1483842353bc0c803e7c2627334539dd4a41f169e88",
+        "feedback_dispatches_with_hints": 15
+      }
+    }
+  },
+  "cells": [
+    {
+      "phase": "original",
+      "solver": "greedy",
+      "status": "validated",
+      "schedule": "results/k1_feedback_story/data/original_greedy_schedule.json",
+      "schedule_sha256": "c2e69f8527b3cc60622fbde7c037dcbefa4fe29182abfedc24992a330c4d7cb4",
+      "pdb_hash": "eb320b4246de7f38c1078f272da42789fe84c08a62edd2d46c18ae6a59b078c5",
+      "wall_s": 1.3,
+      "instances": {
+        "dronet": 1,
+        "ffn_block": 1,
+        "fused_full": 1,
+        "mlp_control": 2
+      },
+      "n_dispatches": 55,
+      "feasibility": {
+        "overlaps": 0,
+        "dependency_violations": 0,
+        "forward_edges": 0,
+        "out_of_range_targets": 0,
+        "illegal_implementations": 0
+      },
+      "summary": {
+        "n_dispatches": 55,
+        "service_us": 26720.3,
+        "queue_us": null,
+        "queue_share_pct": null,
+        "makespan_us": 20083.0,
+        "periodic_instances": 5,
+        "instance_deadline_misses": 0,
+        "per_model": {
+          "dronet": {
+            "period_ms": 33.3,
+            "deadline_ms": 33.3,
+            "instances": 1,
+            "instance_deadline_misses": 0,
+            "instance_deadline_miss_rate_pct": 0.0,
+            "worst_lateness_ms": 0.0,
+            "median_lateness_ms": 0.0,
+            "response_p50_ms": 8.0,
+            "response_p90_ms": 8.0,
+            "response_p99_ms": 8.0,
+            "achieved_frequency_hz": 124.98,
+            "required_frequency_hz": 30.03
+          },
+          "ffn_block": {
+            "period_ms": 100.0,
+            "deadline_ms": 100.0,
+            "instances": 1,
+            "instance_deadline_misses": 0,
+            "instance_deadline_miss_rate_pct": 0.0,
+            "worst_lateness_ms": 0.0,
+            "median_lateness_ms": 0.0,
+            "response_p50_ms": 16.55,
+            "response_p90_ms": 16.55,
+            "response_p99_ms": 16.55,
+            "achieved_frequency_hz": 60.41,
+            "required_frequency_hz": 10.0
+          },
+          "fused_full": {
+            "period_ms": 20.0,
+            "deadline_ms": 20.0,
+            "instances": 1,
+            "instance_deadline_misses": 0,
+            "instance_deadline_miss_rate_pct": 0.0,
+            "worst_lateness_ms": 0.0,
+            "median_lateness_ms": 0.0,
+            "response_p50_ms": 3.45,
+            "response_p90_ms": 3.45,
+            "response_p99_ms": 3.45,
+            "achieved_frequency_hz": 290.2,
+            "required_frequency_hz": 50.0
+          },
+          "mlp_control": {
+            "period_ms": 20.0,
+            "deadline_ms": 20.0,
+            "instances": 2,
+            "instance_deadline_misses": 0,
+            "instance_deadline_miss_rate_pct": 0.0,
+            "worst_lateness_ms": 0.0,
+            "median_lateness_ms": 0.0,
+            "response_p50_ms": 0.08,
+            "response_p90_ms": 0.08,
+            "response_p99_ms": 0.08,
+            "achieved_frequency_hz": 99.59,
+            "required_frequency_hz": 50.0
+          }
+        },
+        "per_core_utilization_pct": {
+          "CPU_E#0": 9.4,
+          "CPU_P#0": 68.5,
+          "CPU_P#1": 5.9,
+          "CPU_P#2": 39.8,
+          "CPU_P#3": 9.4
+        },
+        "per_cluster_utilization_pct": {
+          "CPU_E": 9.4,
+          "CPU_P": 30.9
+        },
+        "idle_intervals": {
+          "CPU_E#0": {
+            "n_gaps": 1,
+            "total_idle_us": 18204.5,
+            "longest_gap_us": 18204.5
+          },
+          "CPU_P#0": {
+            "n_gaps": 7,
+            "total_idle_us": 6328.7,
+            "longest_gap_us": 3447.2
+          },
+          "CPU_P#1": {
+            "n_gaps": 5,
+            "total_idle_us": 18890.5,
+            "longest_gap_us": 12081.9
+          },
+          "CPU_P#2": {
+            "n_gaps": 2,
+            "total_idle_us": 12085.6,
+            "longest_gap_us": 10243.0
+          },
+          "CPU_P#3": {
+            "n_gaps": 2,
+            "total_idle_us": 18185.4,
+            "longest_gap_us": 16293.0
+          }
+        }
+      },
+      "terms": {
+        "label": "original/greedy",
+        "per_model": {
+          "dronet": {
+            "instances": 1,
+            "deadline_misses": 0,
+            "worst_lateness_ms": 0.0,
+            "response_p99_ms": 8.0,
+            "achieved_hz": 124.98,
+            "required_hz": 30.03
+          },
+          "ffn_block": {
+            "instances": 1,
+            "deadline_misses": 0,
+            "worst_lateness_ms": 0.0,
+            "response_p99_ms": 16.55,
+            "achieved_hz": 60.41,
+            "required_hz": 10.0
+          },
+          "fused_full": {
+            "instances": 1,
+            "deadline_misses": 0,
+            "worst_lateness_ms": 0.0,
+            "response_p99_ms": 3.45,
+            "achieved_hz": 290.2,
+            "required_hz": 50.0
+          },
+          "mlp_control": {
+            "instances": 2,
+            "deadline_misses": 0,
+            "worst_lateness_ms": 0.0,
+            "response_p99_ms": 0.08,
+            "achieved_hz": 99.59,
+            "required_hz": 50.0
+          }
+        },
+        "makespan_ms": 20.083,
+        "critical_models": [
+          "mlp_control",
+          "fused_full",
+          "dronet"
+        ],
+        "heavy_model": "ffn_block",
+        "heavy_max_latency_ms": 16.55,
+        "heavy_throughput_hz": 60.41,
+        "utilization_pct": 20.15,
+        "standalone_cycles": 26720,
+        "ineligible": null,
+        "total_deadline_misses": 0,
+        "max_lateness_ms": 0.0,
+        "frequency_shortfall": 0.0,
+        "critical_p99_ms": 8.0
+      }
+    },
+    {
+      "phase": "original",
+      "solver": "cpsat",
+      "status": "validated",
+      "schedule": "results/k1_feedback_story/data/original_cpsat_schedule.json",
+      "schedule_sha256": "ba3c2ca251ed4215588af74c8cd43abfbaf2d8288b12944dd558601b97bb41e6",
+      "pdb_hash": "eb320b4246de7f38c1078f272da42789fe84c08a62edd2d46c18ae6a59b078c5",
+      "wall_s": 159.5,
+      "instances": {
+        "dronet": 1,
+        "ffn_block": 1,
+        "fused_full": 1,
+        "mlp_control": 2
+      },
+      "n_dispatches": 55,
+      "feasibility": {
+        "overlaps": 0,
+        "dependency_violations": 0,
+        "forward_edges": 0,
+        "out_of_range_targets": 0,
+        "illegal_implementations": 0
+      },
+      "summary": {
+        "n_dispatches": 55,
+        "service_us": 26722.0,
+        "queue_us": null,
+        "queue_share_pct": null,
+        "makespan_us": 20087.1,
+        "periodic_instances": 5,
+        "instance_deadline_misses": 0,
+        "per_model": {
+          "dronet": {
+            "period_ms": 33.3,
+            "deadline_ms": 33.3,
+            "instances": 1,
+            "instance_deadline_misses": 0,
+            "instance_deadline_miss_rate_pct": 0.0,
+            "worst_lateness_ms": 0.0,
+            "median_lateness_ms": 0.0,
+            "response_p50_ms": 8.01,
+            "response_p90_ms": 8.01,
+            "response_p99_ms": 8.01,
+            "achieved_frequency_hz": 124.88,
+            "required_frequency_hz": 30.03
+          },
+          "ffn_block": {
+            "period_ms": 100.0,
+            "deadline_ms": 100.0,
+            "instances": 1,
+            "instance_deadline_misses": 0,
+            "instance_deadline_miss_rate_pct": 0.0,
+            "worst_lateness_ms": 0.0,
+            "median_lateness_ms": 0.0,
+            "response_p50_ms": 17.32,
+            "response_p90_ms": 17.32,
+            "response_p99_ms": 17.32,
+            "achieved_frequency_hz": 57.75,
+            "required_frequency_hz": 10.0
+          },
+          "fused_full": {
+            "period_ms": 20.0,
+            "deadline_ms": 20.0,
+            "instances": 1,
+            "instance_deadline_misses": 0,
+            "instance_deadline_miss_rate_pct": 0.0,
+            "worst_lateness_ms": 0.0,
+            "median_lateness_ms": 0.0,
+            "response_p50_ms": 10.83,
+            "response_p90_ms": 10.83,
+            "response_p99_ms": 10.83,
+            "achieved_frequency_hz": 92.32,
+            "required_frequency_hz": 50.0
+          },
+          "mlp_control": {
+            "period_ms": 20.0,
+            "deadline_ms": 20.0,
+            "instances": 2,
+            "instance_deadline_misses": 0,
+            "instance_deadline_miss_rate_pct": 0.0,
+            "worst_lateness_ms": 0.0,
+            "median_lateness_ms": 0.0,
+            "response_p50_ms": 0.09,
+            "response_p90_ms": 0.09,
+            "response_p99_ms": 0.09,
+            "achieved_frequency_hz": 99.57,
+            "required_frequency_hz": 50.0
+          }
+        },
+        "per_core_utilization_pct": {
+          "CPU_E#0": 0.4,
+          "CPU_E#1": 3.6,
+          "CPU_P#0": 30.6,
+          "CPU_P#1": 44.2,
+          "CPU_P#2": 13.8,
+          "CPU_P#3": 40.3
+        },
+        "per_cluster_utilization_pct": {
+          "CPU_E": 2.0,
+          "CPU_P": 32.2
+        },
+        "idle_intervals": {
+          "CPU_E#0": {
+            "n_gaps": 7,
+            "total_idle_us": 20004.1,
+            "longest_gap_us": 20000.0
+          },
+          "CPU_E#1": {
+            "n_gaps": 1,
+            "total_idle_us": 19354.8,
+            "longest_gap_us": 19354.8
+          },
+          "CPU_P#0": {
+            "n_gaps": 16,
+            "total_idle_us": 13931.3,
+            "longest_gap_us": 13923.7
+          },
+          "CPU_P#1": {
+            "n_gaps": 12,
+            "total_idle_us": 11204.5,
+            "longest_gap_us": 2771.5
+          },
+          "CPU_P#2": {
+            "n_gaps": 9,
+            "total_idle_us": 17309.8,
+            "longest_gap_us": 12080.2
+          },
+          "CPU_P#3": {
+            "n_gaps": 9,
+            "total_idle_us": 11996.1,
+            "longest_gap_us": 9255.2
+          }
+        }
+      },
+      "terms": {
+        "label": "original/cpsat",
+        "per_model": {
+          "dronet": {
+            "instances": 1,
+            "deadline_misses": 0,
+            "worst_lateness_ms": 0.0,
+            "response_p99_ms": 8.01,
+            "achieved_hz": 124.88,
+            "required_hz": 30.03
+          },
+          "ffn_block": {
+            "instances": 1,
+            "deadline_misses": 0,
+            "worst_lateness_ms": 0.0,
+            "response_p99_ms": 17.32,
+            "achieved_hz": 57.75,
+            "required_hz": 10.0
+          },
+          "fused_full": {
+            "instances": 1,
+            "deadline_misses": 0,
+            "worst_lateness_ms": 0.0,
+            "response_p99_ms": 10.83,
+            "achieved_hz": 92.32,
+            "required_hz": 50.0
+          },
+          "mlp_control": {
+            "instances": 2,
+            "deadline_misses": 0,
+            "worst_lateness_ms": 0.0,
+            "response_p99_ms": 0.09,
+            "achieved_hz": 99.57,
+            "required_hz": 50.0
+          }
+        },
+        "makespan_ms": 20.0871,
+        "critical_models": [
+          "mlp_control",
+          "fused_full",
+          "dronet"
+        ],
+        "heavy_model": "ffn_block",
+        "heavy_max_latency_ms": 17.32,
+        "heavy_throughput_hz": 57.75,
+        "utilization_pct": 17.1,
+        "standalone_cycles": 26722,
+        "ineligible": null,
+        "total_deadline_misses": 0,
+        "max_lateness_ms": 0.0,
+        "frequency_shortfall": 0.0,
+        "critical_p99_ms": 10.83
+      }
+    },
+    {
+      "phase": "original",
+      "solver": "mosek",
+      "status": "validated",
+      "schedule": "results/k1_feedback_story/data/original_mosek_schedule.json",
+      "schedule_sha256": "6b3fcfc3c008915ac8a8a66d3f753087b89fcb284238d59907b7cccb57bf597d",
+      "pdb_hash": "eb320b4246de7f38c1078f272da42789fe84c08a62edd2d46c18ae6a59b078c5",
+      "wall_s": 76.6,
+      "instances": {
+        "dronet": 1,
+        "ffn_block": 1,
+        "fused_full": 1,
+        "mlp_control": 2
+      },
+      "n_dispatches": 55,
+      "feasibility": {
+        "overlaps": 0,
+        "dependency_violations": 0,
+        "forward_edges": 0,
+        "out_of_range_targets": 0,
+        "illegal_implementations": 0
+      },
+      "summary": {
+        "n_dispatches": 55,
+        "service_us": 31762.3,
+        "queue_us": null,
+        "queue_share_pct": null,
+        "makespan_us": 20083.0,
+        "periodic_instances": 5,
+        "instance_deadline_misses": 0,
+        "per_model": {
+          "ffn_block": {
+            "period_ms": 100.0,
+            "deadline_ms": 100.0,
+            "instances": 1,
+            "instance_deadline_misses": 0,
+            "instance_deadline_miss_rate_pct": 0.0,
+            "worst_lateness_ms": 0.0,
+            "median_lateness_ms": 0.0,
+            "response_p50_ms": 20.08,
+            "response_p90_ms": 20.08,
+            "response_p99_ms": 20.08,
+            "achieved_frequency_hz": 49.79,
+            "required_frequency_hz": 10.0
+          },
+          "fused_full": {
+            "period_ms": 20.0,
+            "deadline_ms": 20.0,
+            "instances": 1,
+            "instance_deadline_misses": 0,
+            "instance_deadline_miss_rate_pct": 0.0,
+            "worst_lateness_ms": 0.0,
+            "median_lateness_ms": 0.0,
+            "response_p50_ms": 19.92,
+            "response_p90_ms": 19.92,
+            "response_p99_ms": 19.92,
+            "achieved_frequency_hz": 50.21,
+            "required_frequency_hz": 50.0
+          },
+          "dronet": {
+            "period_ms": 33.3,
+            "deadline_ms": 33.3,
+            "instances": 1,
+            "instance_deadline_misses": 0,
+            "instance_deadline_miss_rate_pct": 0.0,
+            "worst_lateness_ms": 0.0,
+            "median_lateness_ms": 0.0,
+            "response_p50_ms": 20.0,
+            "response_p90_ms": 20.0,
+            "response_p99_ms": 20.0,
+            "achieved_frequency_hz": 50.0,
+            "required_frequency_hz": 30.03
+          },
+          "mlp_control": {
+            "period_ms": 20.0,
+            "deadline_ms": 20.0,
+            "instances": 2,
+            "instance_deadline_misses": 0,
+            "instance_deadline_miss_rate_pct": 0.0,
+            "worst_lateness_ms": 0.0,
+            "median_lateness_ms": 0.0,
+            "response_p50_ms": 0.08,
+            "response_p90_ms": 20.0,
+            "response_p99_ms": 20.0,
+            "achieved_frequency_hz": 99.59,
+            "required_frequency_hz": 50.0
+          }
+        },
+        "per_core_utilization_pct": {
+          "CPU_E#0": 0.4,
+          "CPU_P#0": 83.6,
+          "CPU_P#1": 56.1,
+          "CPU_P#2": 18.0
+        },
+        "per_cluster_utilization_pct": {
+          "CPU_E": 0.4,
+          "CPU_P": 52.6
+        },
+        "idle_intervals": {
+          "CPU_E#0": {
+            "n_gaps": 2,
+            "total_idle_us": 20000.2,
+            "longest_gap_us": 19916.1
+          },
+          "CPU_P#0": {
+            "n_gaps": 2,
+            "total_idle_us": 3299.3,
+            "longest_gap_us": 2857.3
+          },
+          "CPU_P#1": {
+            "n_gaps": 1,
+            "total_idle_us": 8808.1,
+            "longest_gap_us": 8808.1
+          },
+          "CPU_P#2": {
+            "n_gaps": 1,
+            "total_idle_us": 16462.0,
+            "longest_gap_us": 16462.0
+          }
+        }
+      },
+      "terms": {
+        "label": "original/mosek",
+        "per_model": {
+          "ffn_block": {
+            "instances": 1,
+            "deadline_misses": 0,
+            "worst_lateness_ms": 0.0,
+            "response_p99_ms": 20.08,
+            "achieved_hz": 49.79,
+            "required_hz": 10.0
+          },
+          "fused_full": {
+            "instances": 1,
+            "deadline_misses": 0,
+            "worst_lateness_ms": 0.0,
+            "response_p99_ms": 19.92,
+            "achieved_hz": 50.21,
+            "required_hz": 50.0
+          },
+          "dronet": {
+            "instances": 1,
+            "deadline_misses": 0,
+            "worst_lateness_ms": 0.0,
+            "response_p99_ms": 20.0,
+            "achieved_hz": 50.0,
+            "required_hz": 30.03
+          },
+          "mlp_control": {
+            "instances": 2,
+            "deadline_misses": 0,
+            "worst_lateness_ms": 0.0,
+            "response_p99_ms": 20.0,
+            "achieved_hz": 99.59,
+            "required_hz": 50.0
+          }
+        },
+        "makespan_ms": 20.083,
+        "critical_models": [
+          "mlp_control",
+          "fused_full",
+          "dronet"
+        ],
+        "heavy_model": "ffn_block",
+        "heavy_max_latency_ms": 20.08,
+        "heavy_throughput_hz": 49.79,
+        "utilization_pct": 26.5,
+        "standalone_cycles": 31762,
+        "ineligible": null,
+        "total_deadline_misses": 0,
+        "max_lateness_ms": 0.0,
+        "frequency_shortfall": 0.0,
+        "critical_p99_ms": 20.0
+      }
+    },
+    {
+      "phase": "feedback",
+      "solver": "greedy",
+      "status": "validated",
+      "schedule": "results/k1_feedback_story/data/feedback_greedy_schedule.json",
+      "schedule_sha256": "c36c8b395cba344f0e52bcf1ec95a47d92e5995e66ebe29db6b2fe16d2d5d54d",
+      "pdb_hash": "d1719c860f667ee9e4e38b7031a91b5fa082a0e047febb2e782d350af8eac9c5",
+      "wall_s": 1.4,
+      "instances": {
+        "dronet": 1,
+        "ffn_block": 1,
+        "fused_full": 1,
+        "mlp_control": 2
+      },
+      "n_dispatches": 55,
+      "feasibility": {
+        "overlaps": 0,
+        "dependency_violations": 0,
+        "forward_edges": 0,
+        "out_of_range_targets": 0,
+        "illegal_implementations": 0
+      },
+      "summary": {
+        "n_dispatches": 55,
+        "service_us": 16826.1,
+        "queue_us": null,
+        "queue_share_pct": null,
+        "makespan_us": 20083.0,
+        "periodic_instances": 5,
+        "instance_deadline_misses": 0,
+        "per_model": {
+          "dronet": {
+            "period_ms": 33.3,
+            "deadline_ms": 33.3,
+            "instances": 1,
+            "instance_deadline_misses": 0,
+            "instance_deadline_miss_rate_pct": 0.0,
+            "worst_lateness_ms": 0.0,
+            "median_lateness_ms": 0.0,
+            "response_p50_ms": 4.89,
+            "response_p90_ms": 4.89,
+            "response_p99_ms": 4.89,
+            "achieved_frequency_hz": 204.48,
+            "required_frequency_hz": 30.03
+          },
+          "ffn_block": {
+            "period_ms": 100.0,
+            "deadline_ms": 100.0,
+            "instances": 1,
+            "instance_deadline_misses": 0,
+            "instance_deadline_miss_rate_pct": 0.0,
+            "worst_lateness_ms": 0.0,
+            "median_lateness_ms": 0.0,
+            "response_p50_ms": 11.56,
+            "response_p90_ms": 11.56,
+            "response_p99_ms": 11.56,
+            "achieved_frequency_hz": 86.52,
+            "required_frequency_hz": 10.0
+          },
+          "fused_full": {
+            "period_ms": 20.0,
+            "deadline_ms": 20.0,
+            "instances": 1,
+            "instance_deadline_misses": 0,
+            "instance_deadline_miss_rate_pct": 0.0,
+            "worst_lateness_ms": 0.0,
+            "median_lateness_ms": 0.0,
+            "response_p50_ms": 3.45,
+            "response_p90_ms": 3.45,
+            "response_p99_ms": 3.45,
+            "achieved_frequency_hz": 290.2,
+            "required_frequency_hz": 50.0
+          },
+          "mlp_control": {
+            "period_ms": 20.0,
+            "deadline_ms": 20.0,
+            "instances": 2,
+            "instance_deadline_misses": 0,
+            "instance_deadline_miss_rate_pct": 0.0,
+            "worst_lateness_ms": 0.0,
+            "median_lateness_ms": 0.0,
+            "response_p50_ms": 0.08,
+            "response_p90_ms": 0.08,
+            "response_p99_ms": 0.08,
+            "achieved_frequency_hz": 99.59,
+            "required_frequency_hz": 50.0
+          }
+        },
+        "per_core_utilization_pct": {
+          "CPU_E#0": 33.5,
+          "CPU_E#1": 33.5,
+          "CPU_E#2": 33.5,
+          "CPU_E#3": 33.5,
+          "CPU_P#0": 36.9,
+          "CPU_P#1": 24.1,
+          "CPU_P#2": 23.1,
+          "CPU_P#3": 25.6
+        },
+        "per_cluster_utilization_pct": {
+          "CPU_E": 33.5,
+          "CPU_P": 27.4
+        },
+        "idle_intervals": {
+          "CPU_E#0": {
+            "n_gaps": 4,
+            "total_idle_us": 13359.3,
+            "longest_gap_us": 11998.0
+          },
+          "CPU_E#1": {
+            "n_gaps": 4,
+            "total_idle_us": 13359.3,
+            "longest_gap_us": 11998.0
+          },
+          "CPU_E#2": {
+            "n_gaps": 4,
+            "total_idle_us": 13359.3,
+            "longest_gap_us": 11998.0
+          },
+          "CPU_E#3": {
+            "n_gaps": 4,
+            "total_idle_us": 13359.3,
+            "longest_gap_us": 11998.0
+          },
+          "CPU_P#0": {
+            "n_gaps": 7,
+            "total_idle_us": 12666.9,
+            "longest_gap_us": 8441.4
+          },
+          "CPU_P#1": {
+            "n_gaps": 7,
+            "total_idle_us": 15234.0,
+            "longest_gap_us": 8694.1
+          },
+          "CPU_P#2": {
+            "n_gaps": 6,
+            "total_idle_us": 15438.0,
+            "longest_gap_us": 8694.1
+          },
+          "CPU_P#3": {
+            "n_gaps": 6,
+            "total_idle_us": 14951.1,
+            "longest_gap_us": 8694.1
+          }
+        }
+      },
+      "terms": {
+        "label": "feedback/greedy",
+        "per_model": {
+          "dronet": {
+            "instances": 1,
+            "deadline_misses": 0,
+            "worst_lateness_ms": 0.0,
+            "response_p99_ms": 4.89,
+            "achieved_hz": 204.48,
+            "required_hz": 30.03
+          },
+          "ffn_block": {
+            "instances": 1,
+            "deadline_misses": 0,
+            "worst_lateness_ms": 0.0,
+            "response_p99_ms": 11.56,
+            "achieved_hz": 86.52,
+            "required_hz": 10.0
+          },
+          "fused_full": {
+            "instances": 1,
+            "deadline_misses": 0,
+            "worst_lateness_ms": 0.0,
+            "response_p99_ms": 3.45,
+            "achieved_hz": 290.2,
+            "required_hz": 50.0
+          },
+          "mlp_control": {
+            "instances": 2,
+            "deadline_misses": 0,
+            "worst_lateness_ms": 0.0,
+            "response_p99_ms": 0.08,
+            "achieved_hz": 99.59,
+            "required_hz": 50.0
+          }
+        },
+        "makespan_ms": 20.083,
+        "critical_models": [
+          "mlp_control",
+          "fused_full",
+          "dronet"
+        ],
+        "heavy_model": "ffn_block",
+        "heavy_max_latency_ms": 11.56,
+        "heavy_throughput_hz": 86.52,
+        "utilization_pct": 30.45,
+        "standalone_cycles": 16826,
+        "ineligible": null,
+        "total_deadline_misses": 0,
+        "max_lateness_ms": 0.0,
+        "frequency_shortfall": 0.0,
+        "critical_p99_ms": 4.89
+      }
+    },
+    {
+      "phase": "feedback",
+      "solver": "cpsat",
+      "status": "validated",
+      "schedule": "results/k1_feedback_story/data/feedback_cpsat_schedule.json",
+      "schedule_sha256": "414dc2440cf5f1cc326a889d473f7adcbc0d9e2fad032563024cc502b621e485",
+      "pdb_hash": "d1719c860f667ee9e4e38b7031a91b5fa082a0e047febb2e782d350af8eac9c5",
+      "wall_s": 191.0,
+      "instances": {
+        "dronet": 1,
+        "ffn_block": 1,
+        "fused_full": 1,
+        "mlp_control": 2
+      },
+      "n_dispatches": 55,
+      "feasibility": {
+        "overlaps": 0,
+        "dependency_violations": 0,
+        "forward_edges": 0,
+        "out_of_range_targets": 0,
+        "illegal_implementations": 0
+      },
+      "summary": {
+        "n_dispatches": 55,
+        "service_us": 16848.0,
+        "queue_us": null,
+        "queue_share_pct": null,
+        "makespan_us": 20087.1,
+        "periodic_instances": 5,
+        "instance_deadline_misses": 0,
+        "per_model": {
+          "dronet": {
+            "period_ms": 33.3,
+            "deadline_ms": 33.3,
+            "instances": 1,
+            "instance_deadline_misses": 0,
+            "instance_deadline_miss_rate_pct": 0.0,
+            "worst_lateness_ms": 0.0,
+            "median_lateness_ms": 0.0,
+            "response_p50_ms": 9.75,
+            "response_p90_ms": 9.75,
+            "response_p99_ms": 9.75,
+            "achieved_frequency_hz": 102.56,
+            "required_frequency_hz": 30.03
+          },
+          "fused_full": {
+            "period_ms": 20.0,
+            "deadline_ms": 20.0,
+            "instances": 1,
+            "instance_deadline_misses": 0,
+            "instance_deadline_miss_rate_pct": 0.0,
+            "worst_lateness_ms": 0.0,
+            "median_lateness_ms": 0.0,
+            "response_p50_ms": 4.88,
+            "response_p90_ms": 4.88,
+            "response_p99_ms": 4.88,
+            "achieved_frequency_hz": 205.01,
+            "required_frequency_hz": 50.0
+          },
+          "mlp_control": {
+            "period_ms": 20.0,
+            "deadline_ms": 20.0,
+            "instances": 2,
+            "instance_deadline_misses": 0,
+            "instance_deadline_miss_rate_pct": 0.0,
+            "worst_lateness_ms": 0.0,
+            "median_lateness_ms": 0.0,
+            "response_p50_ms": 0.09,
+            "response_p90_ms": 4.88,
+            "response_p99_ms": 4.88,
+            "achieved_frequency_hz": 99.57,
+            "required_frequency_hz": 50.0
+          },
+          "ffn_block": {
+            "period_ms": 100.0,
+            "deadline_ms": 100.0,
+            "instances": 1,
+            "instance_deadline_misses": 0,
+            "instance_deadline_miss_rate_pct": 0.0,
+            "worst_lateness_ms": 0.0,
+            "median_lateness_ms": 0.0,
+            "response_p50_ms": 12.73,
+            "response_p90_ms": 12.73,
+            "response_p99_ms": 12.73,
+            "achieved_frequency_hz": 78.56,
+            "required_frequency_hz": 10.0
+          }
+        },
+        "per_core_utilization_pct": {
+          "CPU_E#0": 56.2,
+          "CPU_E#1": 52.6,
+          "CPU_E#2": 52.6,
+          "CPU_E#3": 52.6,
+          "CPU_P#0": 13.6,
+          "CPU_P#1": 3.2,
+          "CPU_P#2": 9.3,
+          "CPU_P#3": 2.7
+        },
+        "per_cluster_utilization_pct": {
+          "CPU_E": 53.5,
+          "CPU_P": 7.2
+        },
+        "idle_intervals": {
+          "CPU_E#0": {
+            "n_gaps": 9,
+            "total_idle_us": 8798.3,
+            "longest_gap_us": 7528.5
+          },
+          "CPU_E#1": {
+            "n_gaps": 9,
+            "total_idle_us": 9529.5,
+            "longest_gap_us": 7528.5
+          },
+          "CPU_E#2": {
+            "n_gaps": 9,
+            "total_idle_us": 9529.8,
+            "longest_gap_us": 7528.5
+          },
+          "CPU_E#3": {
+            "n_gaps": 8,
+            "total_idle_us": 9530.7,
+            "longest_gap_us": 7528.5
+          },
+          "CPU_P#0": {
+            "n_gaps": 11,
+            "total_idle_us": 17362.5,
+            "longest_gap_us": 16327.7
+          },
+          "CPU_P#1": {
+            "n_gaps": 10,
+            "total_idle_us": 19454.1,
+            "longest_gap_us": 10343.4
+          },
+          "CPU_P#2": {
+            "n_gaps": 14,
+            "total_idle_us": 18227.0,
+            "longest_gap_us": 7358.2
+          },
+          "CPU_P#3": {
+            "n_gaps": 17,
+            "total_idle_us": 19549.8,
+            "longest_gap_us": 10337.0
+          }
+        }
+      },
+      "terms": {
+        "label": "feedback/cpsat",
+        "per_model": {
+          "dronet": {
+            "instances": 1,
+            "deadline_misses": 0,
+            "worst_lateness_ms": 0.0,
+            "response_p99_ms": 9.75,
+            "achieved_hz": 102.56,
+            "required_hz": 30.03
+          },
+          "fused_full": {
+            "instances": 1,
+            "deadline_misses": 0,
+            "worst_lateness_ms": 0.0,
+            "response_p99_ms": 4.88,
+            "achieved_hz": 205.01,
+            "required_hz": 50.0
+          },
+          "mlp_control": {
+            "instances": 2,
+            "deadline_misses": 0,
+            "worst_lateness_ms": 0.0,
+            "response_p99_ms": 4.88,
+            "achieved_hz": 99.57,
+            "required_hz": 50.0
+          },
+          "ffn_block": {
+            "instances": 1,
+            "deadline_misses": 0,
+            "worst_lateness_ms": 0.0,
+            "response_p99_ms": 12.73,
+            "achieved_hz": 78.56,
+            "required_hz": 10.0
+          }
+        },
+        "makespan_ms": 20.0871,
+        "critical_models": [
+          "mlp_control",
+          "fused_full",
+          "dronet"
+        ],
+        "heavy_model": "ffn_block",
+        "heavy_max_latency_ms": 12.73,
+        "heavy_throughput_hz": 78.56,
+        "utilization_pct": 30.35,
+        "standalone_cycles": 16848,
+        "ineligible": null,
+        "total_deadline_misses": 0,
+        "max_lateness_ms": 0.0,
+        "frequency_shortfall": 0.0,
+        "critical_p99_ms": 9.75
+      }
+    },
+    {
+      "phase": "feedback",
+      "solver": "mosek",
+      "status": "validated",
+      "schedule": "results/k1_feedback_story/data/feedback_mosek_schedule.json",
+      "schedule_sha256": "a4aea436907c5eb4f7ae81ccfb28e02a169a2488cc159af33d763b379f6adebb",
+      "pdb_hash": "d1719c860f667ee9e4e38b7031a91b5fa082a0e047febb2e782d350af8eac9c5",
+      "wall_s": 1272.1,
+      "instances": {
+        "dronet": 1,
+        "ffn_block": 1,
+        "fused_full": 1,
+        "mlp_control": 2
+      },
+      "n_dispatches": 55,
+      "feasibility": {
+        "overlaps": 0,
+        "dependency_violations": 0,
+        "forward_edges": 0,
+        "out_of_range_targets": 0,
+        "illegal_implementations": 0
+      },
+      "summary": {
+        "n_dispatches": 55,
+        "service_us": 26722.0,
+        "queue_us": null,
+        "queue_share_pct": null,
+        "makespan_us": 20083.0,
+        "periodic_instances": 5,
+        "instance_deadline_misses": 0,
+        "per_model": {
+          "dronet": {
+            "period_ms": 33.3,
+            "deadline_ms": 33.3,
+            "instances": 1,
+            "instance_deadline_misses": 0,
+            "instance_deadline_miss_rate_pct": 0.0,
+            "worst_lateness_ms": 0.0,
+            "median_lateness_ms": 0.0,
+            "response_p50_ms": 13.85,
+            "response_p90_ms": 13.85,
+            "response_p99_ms": 13.85,
+            "achieved_frequency_hz": 72.18,
+            "required_frequency_hz": 30.03
+          },
+          "ffn_block": {
+            "period_ms": 100.0,
+            "deadline_ms": 100.0,
+            "instances": 1,
+            "instance_deadline_misses": 0,
+            "instance_deadline_miss_rate_pct": 0.0,
+            "worst_lateness_ms": 0.0,
+            "median_lateness_ms": 0.0,
+            "response_p50_ms": 20.08,
+            "response_p90_ms": 20.08,
+            "response_p99_ms": 20.08,
+            "achieved_frequency_hz": 49.79,
+            "required_frequency_hz": 10.0
+          },
+          "fused_full": {
+            "period_ms": 20.0,
+            "deadline_ms": 20.0,
+            "instances": 1,
+            "instance_deadline_misses": 0,
+            "instance_deadline_miss_rate_pct": 0.0,
+            "worst_lateness_ms": 0.0,
+            "median_lateness_ms": 0.0,
+            "response_p50_ms": 20.0,
+            "response_p90_ms": 20.0,
+            "response_p99_ms": 20.0,
+            "achieved_frequency_hz": 50.0,
+            "required_frequency_hz": 50.0
+          },
+          "mlp_control": {
+            "period_ms": 20.0,
+            "deadline_ms": 20.0,
+            "instances": 2,
+            "instance_deadline_misses": 0,
+            "instance_deadline_miss_rate_pct": 0.0,
+            "worst_lateness_ms": 0.0,
+            "median_lateness_ms": 0.0,
+            "response_p50_ms": 0.08,
+            "response_p90_ms": 20.0,
+            "response_p99_ms": 20.0,
+            "achieved_frequency_hz": 99.59,
+            "required_frequency_hz": 50.0
+          }
+        },
+        "per_core_utilization_pct": {
+          "CPU_E#0": 43.0,
+          "CPU_E#1": 14.0,
+          "CPU_E#3": 0.8,
+          "CPU_P#0": 70.3,
+          "CPU_P#1": 2.6,
+          "CPU_P#2": 2.4
+        },
+        "per_cluster_utilization_pct": {
+          "CPU_E": 19.3,
+          "CPU_P": 25.1
+        },
+        "idle_intervals": {
+          "CPU_E#0": {
+            "n_gaps": 5,
+            "total_idle_us": 11442.7,
+            "longest_gap_us": 5843.2
+          },
+          "CPU_E#1": {
+            "n_gaps": 4,
+            "total_idle_us": 17276.2,
+            "longest_gap_us": 11168.2
+          },
+          "CPU_E#3": {
+            "n_gaps": 2,
+            "total_idle_us": 19923.2,
+            "longest_gap_us": 19917.0
+          },
+          "CPU_P#0": {
+            "n_gaps": 1,
+            "total_idle_us": 5960.6,
+            "longest_gap_us": 5960.6
+          },
+          "CPU_P#1": {
+            "n_gaps": 1,
+            "total_idle_us": 19570.2,
+            "longest_gap_us": 19570.2
+          },
+          "CPU_P#2": {
+            "n_gaps": 2,
+            "total_idle_us": 19603.0,
+            "longest_gap_us": 13370.1
+          }
+        }
+      },
+      "terms": {
+        "label": "feedback/mosek",
+        "per_model": {
+          "dronet": {
+            "instances": 1,
+            "deadline_misses": 0,
+            "worst_lateness_ms": 0.0,
+            "response_p99_ms": 13.85,
+            "achieved_hz": 72.18,
+            "required_hz": 30.03
+          },
+          "ffn_block": {
+            "instances": 1,
+            "deadline_misses": 0,
+            "worst_lateness_ms": 0.0,
+            "response_p99_ms": 20.08,
+            "achieved_hz": 49.79,
+            "required_hz": 10.0
+          },
+          "fused_full": {
+            "instances": 1,
+            "deadline_misses": 0,
+            "worst_lateness_ms": 0.0,
+            "response_p99_ms": 20.0,
+            "achieved_hz": 50.0,
+            "required_hz": 50.0
+          },
+          "mlp_control": {
+            "instances": 2,
+            "deadline_misses": 0,
+            "worst_lateness_ms": 0.0,
+            "response_p99_ms": 20.0,
+            "achieved_hz": 99.59,
+            "required_hz": 50.0
+          }
+        },
+        "makespan_ms": 20.083,
+        "critical_models": [
+          "mlp_control",
+          "fused_full",
+          "dronet"
+        ],
+        "heavy_model": "ffn_block",
+        "heavy_max_latency_ms": 20.08,
+        "heavy_throughput_hz": 49.79,
+        "utilization_pct": 22.200000000000003,
+        "standalone_cycles": 26722,
+        "ineligible": null,
+        "total_deadline_misses": 0,
+        "max_lateness_ms": 0.0,
+        "frequency_shortfall": 0.0,
+        "critical_p99_ms": 20.0
+      }
+    }
+  ],
+  "original_best": "greedy",
+  "original_co_best": [
+    "greedy"
+  ],
+  "feedback_best": "greedy",
+  "feedback_co_best": [
+    "greedy"
+  ],
+  "comparisons": [
+    {
+      "baseline_solver": "greedy",
+      "accepted": true,
+      "why": "accepted -- p99 response of critical tasks: feedback/greedy=4.89 beats original/greedy=8 (tolerance 0.5)"
+    },
+    {
+      "baseline_solver": "cpsat",
+      "accepted": true,
+      "why": "accepted -- p99 response of critical tasks: feedback/greedy=4.89 beats original/cpsat=10.83 (tolerance 0.5)"
+    },
+    {
+      "baseline_solver": "mosek",
+      "accepted": true,
+      "why": "accepted -- p99 response of critical tasks: feedback/greedy=4.89 beats original/mosek=20 (tolerance 0.5)"
+    }
+  ],
+  "accepted": true,
+  "verdict": "ACCEPT",
+  "why": "feedback candidate beats every validated original solver"
+}

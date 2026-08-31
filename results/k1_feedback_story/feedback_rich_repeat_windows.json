@@ -1,0 +1,118 @@
+{
+  "schema_version": 1,
+  "interpretation": "Each frame is dependency-closed, clear at its wrap boundary, contains a complete anchor-model instance, and supplies every declared periodic model at or above its minimum average rate.",
+  "frames": [
+    {
+      "solver": "greedy",
+      "label": "greedy",
+      "status": "pass",
+      "window_ms": 60.0,
+      "semantics": "minimum average frequency; completed frame repeats from t=0",
+      "anchor_model": "yolov8_nano_64x96",
+      "source_schedule_sha256": "f8fddacb7135e067631a941d1bae29a627c8b115b568ac9ece265db4745cbc40",
+      "anchor_complete": true,
+      "boundary_clear": true,
+      "dependency_closed": true,
+      "crossing_jobs": [],
+      "missing_dependencies": [],
+      "models": {
+        "attn_block": {
+          "complete_instances": 1,
+          "required_instances": 1,
+          "achieved_hz": 16.667,
+          "required_hz": 10.0,
+          "pass": true
+        },
+        "ffn_block": {
+          "complete_instances": 1,
+          "required_instances": 1,
+          "achieved_hz": 16.667,
+          "required_hz": 10.0,
+          "pass": true
+        },
+        "fused_full": {
+          "complete_instances": 3,
+          "required_instances": 3,
+          "achieved_hz": 50.0,
+          "required_hz": 50.0,
+          "pass": true
+        },
+        "mlp_control": {
+          "complete_instances": 3,
+          "required_instances": 3,
+          "achieved_hz": 50.0,
+          "required_hz": 50.0,
+          "pass": true
+        },
+        "yolov8_nano_64x96": {
+          "complete_instances": 1,
+          "required_instances": 1,
+          "achieved_hz": 16.667,
+          "required_hz": 4.167,
+          "pass": true
+        }
+      },
+      "dispatches_shown": 183,
+      "dispatches_excluded": 34,
+      "quantum_ms": 20.0,
+      "common_anchor_completion_ms": 30.505375,
+      "schedule_artifact": "results/k1_feedback_story/data/rich_greedy_repeat_frame.json"
+    },
+    {
+      "solver": "cpsat",
+      "label": "CP-SAT (corrected microsecond grid)",
+      "status": "pass",
+      "window_ms": 60.0,
+      "semantics": "minimum average frequency; completed frame repeats from t=0",
+      "anchor_model": "yolov8_nano_64x96",
+      "source_schedule_sha256": "85f85cb1aaeff4542b005e577c033ecfbd250e8259389a1616e0a9ae4c375cf3",
+      "anchor_complete": true,
+      "boundary_clear": true,
+      "dependency_closed": true,
+      "crossing_jobs": [],
+      "missing_dependencies": [],
+      "models": {
+        "attn_block": {
+          "complete_instances": 1,
+          "required_instances": 1,
+          "achieved_hz": 16.667,
+          "required_hz": 10.0,
+          "pass": true
+        },
+        "ffn_block": {
+          "complete_instances": 1,
+          "required_instances": 1,
+          "achieved_hz": 16.667,
+          "required_hz": 10.0,
+          "pass": true
+        },
+        "fused_full": {
+          "complete_instances": 3,
+          "required_instances": 3,
+          "achieved_hz": 50.0,
+          "required_hz": 50.0,
+          "pass": true
+        },
+        "mlp_control": {
+          "complete_instances": 3,
+          "required_instances": 3,
+          "achieved_hz": 50.0,
+          "required_hz": 50.0,
+          "pass": true
+        },
+        "yolov8_nano_64x96": {
+          "complete_instances": 1,
+          "required_instances": 1,
+          "achieved_hz": 16.667,
+          "required_hz": 4.167,
+          "pass": true
+        }
+      },
+      "dispatches_shown": 183,
+      "dispatches_excluded": 34,
+      "quantum_ms": 20.0,
+      "common_anchor_completion_ms": 30.505375,
+      "schedule_artifact": "results/k1_feedback_story/data/rich_cpsat_repeat_frame.json"
+    }
+  ]
+}

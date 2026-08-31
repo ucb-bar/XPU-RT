@@ -1,8 +1,8 @@
 """The K1 (`spacemit_x60`) profile parsers, against a committed real profile.
 
 WHY THIS FILE EXISTS. Every K1 measurement in this tree lives under
-`gen/profile_mb/`, which is UNTRACKED -- so a fresh checkout has none of it and
-a test cannot read it. (It is reachable at runtime: `profile_loader` hardcodes
+`gen/profile_mb/`, which is committed so a fresh checkout can reproduce the
+cost database. (It is reachable at runtime: `profile_loader` hardcodes
 the directory name `profile`, so a tracked symlink `gen_mb/profile ->
 ../gen/profile_mb` plus `"gen_root": "gen_mb"` addresses it, documented in
 `docs/k1_modelblaster_xpurt_closed_loop.md` §"`PROFILE_OUT_ROOT` must end in
@@ -54,7 +54,11 @@ sys.path.insert(0, _REPO)
 sys.path.insert(0, _XPURT)
 
 import compile_advice  # noqa: E402
-from profile_loader import find_profile_csv, load_profiled_times  # noqa: E402
+from profile_loader import (  # noqa: E402
+    compute_pdb_hash,
+    find_profile_csv,
+    load_profiled_times,
+)
 
 FIXTURE = os.path.join(_HERE, "fixtures", "k1_profile")
 LOOKUP = dict(model="dronet", target="spacemit_x60", basename="dronet.int8",
@@ -87,6 +91,22 @@ class TheFixtureIsFindable(unittest.TestCase):
         self.assertNotEqual(rvv, scalar)
         self.assertIn(os.sep + "rvv_x60" + os.sep, rvv)
         self.assertIn(os.sep + "scalar" + os.sep, scalar)
+
+    def test_relative_profile_fingerprint_is_checkout_location_independent(self):
+        relative = os.path.relpath(
+            find_profile_csv(FIXTURE, hw="rvv_x60", **LOOKUP), _REPO)
+        first, used = compute_pdb_hash([relative], base_dir=_REPO)
+        with tempfile.TemporaryDirectory() as directory:
+            relocated = os.path.join(directory, relative)
+            os.makedirs(os.path.dirname(relocated), exist_ok=True)
+            with open(os.path.join(_REPO, relative), "rb") as src, \
+                    open(relocated, "wb") as dst:
+                dst.write(src.read())
+            second, relocated_used = compute_pdb_hash(
+                [relative], base_dir=directory)
+        self.assertEqual(first, second)
+        self.assertEqual(used, [relative])
+        self.assertEqual(relocated_used, [relative])
 
     def test_a_wrong_hw_returns_none_rather_than_the_other_build(self):
         """Falling back to a neighbouring implementation is the worst outcome.

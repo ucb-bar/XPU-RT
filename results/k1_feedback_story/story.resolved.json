@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "title": "ModelBlaster \u2194 XPU-RT feedback changes the schedule, not only the solver",
+  "solver_result": "results/k1_feedback_story/result.resolved.json",
+  "rewrite": {
+    "title": "Accepted ModelBlaster rewrite: unfuse the measured YOLO conv+BN+SiLU kernel",
+    "workload": "results/k1_feedback_story/data/rewrite_workload.json",
+    "baseline_schedule": "results/k1_feedback_story/data/rewrite_baseline_schedule.json",
+    "candidate_schedule": "results/k1_feedback_story/data/rewrite_candidate_schedule.json",
+    "verdict": "results/k1_feedback_story/data/rewrite_verdict.json",
+    "baseline_label": "control rebuild: fused kernel",
+    "candidate_label": "feedback candidate: unfused kernel",
+    "window_ms": 250,
+    "zoom_ms": 45,
+    "repeat_window": {
+      "anchor_model": "yolov8_nano",
+      "quantum_ms": 10,
+      "semantics": "minimum_average_frequency"
+    },
+    "critical_models": [
+      "mlp_control",
+      "dronet"
+    ],
+    "heavy_model": "yolov8_nano"
+  },
+  "rich": {
+    "title": "Rich capstone: five networks, 217 operations, sharding and IME",
+    "workload": "results/k1_feedback_story/data/rich_workload.json",
+    "window_ms": 120,
+    "repeat_window": {
+      "anchor_model": "yolov8_nano_64x96",
+      "quantum_ms": 20,
+      "semantics": "minimum_average_frequency"
+    },
+    "cells": [
+      {
+        "solver": "greedy",
+        "status": "validated",
+        "schedule": "results/k1_feedback_story/data/rich_greedy.json"
+      },
+      {
+        "solver": "cpsat",
+        "label": "CP-SAT (corrected microsecond grid)",
+        "status": "validated",
+        "schedule": "results/k1_feedback_story/data/rich_cpsat.json"
+      }
+    ],
+    "excluded_solves": [
+      {
+        "solver": "mosek",
+        "status": "resource_exhausted",
+        "detail": "Three no-time-limit attempts produced no incumbent before exhausting host memory; the largest reached 89.1 GiB RSS with swap full. It is evidence, not a Gantt or ranked result.",
+        "evidence": "results/k1_feedback_story/rich_mosek_resource_exhaustion.json"
+      }
+    ]
+  },
+  "rejections": {
+    "title": "Feedback is a measured decision: slower interference candidates are rejected",
+    "workload": "results/k1_feedback_story/data/reject_workload.json",
+    "window_ms": 250,
+    "repeat_window": {
+      "anchor_model": "yolov8_nano",
+      "quantum_ms": 10,
+      "semantics": "minimum_average_frequency"
+    },
+    "cells": [
+      {
+        "label": "baseline",
+        "schedule": "results/k1_feedback_story/data/reject_0_schedule.json"
+      },
+      {
+        "label": "split DroNet \u00d72 \u2014 REJECT",
+        "schedule": "results/k1_feedback_story/data/reject_1_schedule.json",
+        "verdict": "results/k1_feedback_story/data/reject_1_verdict.json"
+      },
+      {
+        "label": "split DroNet \u00d74 \u2014 REJECT",
+        "schedule": "results/k1_feedback_story/data/reject_2_schedule.json",
+        "verdict": "results/k1_feedback_story/data/reject_2_verdict.json"
+      }
+    ]
+  }
+}

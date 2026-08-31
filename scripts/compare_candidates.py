@@ -91,10 +91,11 @@ def main() -> int:
     ap.add_argument("--json", default=None)
     a = ap.parse_args()
 
-    windows, known = ({}, None)
+    windows, known, declared_periods = ({}, None, None)
     if a.windows_from:
-        windows, known = workload_spec.windows_and_names(
-            json.load(open(a.windows_from)))
+        workload = json.load(open(a.windows_from))
+        windows, known = workload_spec.windows_and_names(workload)
+        declared_periods = workload_spec.periods_ms(workload)
     critical = tuple(m.strip() for m in a.critical_models.split(",") if m.strip())
 
     base_s = json.load(open(a.baseline_schedule))
@@ -125,9 +126,9 @@ def main() -> int:
         print(f"WARNING: {msg}", file=sys.stderr)
 
     _, base, _ = score(a.baseline_label, base_s, windows, critical,
-                       a.heavy_model, known)
+                       a.heavy_model, known, declared_periods)
     _, cand, _ = score(a.candidate_label, cand_s, windows, critical,
-                       a.heavy_model, known)
+                       a.heavy_model, known, declared_periods)
 
     ok, why = objective.accept(cand, base)
     order, _ = objective.compare(cand, base)
