@@ -99,15 +99,25 @@
    "class": "runtime",
    "what": "execute the composed DSP context",
    "impact": "critical",
-   "feasibility": "blocked",
-   "evidence": "Loading the 158 MB context wedged the board (unreachable, recovered via /opt/relay.sh, ~60 s). Board has 7.6 GB RAM. Composition is proven; execution is not. Next: shard the trunk into 2-4 tiles to shrink per-context footprint."
+   "feasibility": "done",
+   "evidence": "EXECUTED on a freshly booted board. status ok, graph 'trunk', 3 iters: init 1032.4 ms, median execute 1384.5 ms (min 1383.3, max 1384.6, std 0.6 ms -- very stable). The earlier wedge was memory pressure from a prior run, not a hard limit."
+  },
+  {
+   "id": "A1",
+   "class": "backend",
+   "what": "compose the trunk on HTA instead of DSP",
+   "impact": "high",
+   "feasibility": "failed",
+   "evidence": "ComposeGraphs Failed with error = 1. HTA is far more restricted than DSP and the trunk is MatMul/FullyConnected-heavy rather than convolutional. DSP is the only accelerator that takes this graph."
   }
  ],
  "verdict": {
   "op_support": "SOLVED -- 0 of 1197 ops lack DSP/HTA support after R1-R4",
   "composition": "SOLVED for the 1108-op trunk (S2); blocked only by one un-implementable fused RmsNorm at the tail",
-  "execution": "BLOCKED -- 158 MB context wedges the board",
+  "execution": "DONE -- 1384.5 ms median on DSP, init 1032.4 ms",
   "tiles_required": "2 (DSP trunk + CPU RmsNorm tail), far inside the ~56 ceiling",
-  "performance": "NOT MEASURED -- no speedup is claimed"
+  "performance": "NEGATIVE. DSP 1384.5 ms vs CPU 583.8 ms = 2.37x SLOWER. The full rewrite chain successfully maps the expert prefill onto the DSP, and the mapping is not worth taking. Consistent with the vision result, where DSP was slowest on every one of 49 segments (3609.6 ms serial vs CPU 3172.2). Hexagon v66 is not competitive with the Kryo 585 for transformer-shaped work on this board.",
+  "backends_tried": "CPU (baseline, fastest), DSP (composes+executes, 2.37x slower), HTA (does not compose)",
+  "exhausted": "YES. Rewrites R1-R5, dtype D1-D3, calibration C1, slicing S1-S2, runtime X1 and backend A1 all carry evidence-backed verdicts. The expert prefill IS mappable to the DSP; the mapping is measurably not worth taking."
  }
 }
