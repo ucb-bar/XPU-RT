@@ -39,6 +39,7 @@ BOARD_USER="${BOARD_USER:-root}"
 BOARD_IP="${BOARD_IP:-10.44.120.201}"
 BOARD_CTX_DIR="${BOARD_CTX_DIR:-/root/qnn_runtime_ctx}"
 QNN_SDK="${QNN_SDK:-/scratch2/dima/misc_sw/qualcomm/qairt/2.45.0.260326}"
+PYTHON3="${PYTHON3:-/scratch2/dima/miniforge3/envs/xpurt/bin/python3}"
 DOCKER_IMAGE="${DOCKER_IMAGE:-qnn-convert}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
@@ -58,7 +59,7 @@ CALIB_BASE="${CALIB_BASE:-$REPO_DIR/qnn_models/boards/qrb5165_v66/calibration_da
 
 # Walk the manifest. We process each unique sub-ONNX once (entries with
 # `alias_of` already point at a previously-built one).
-mapfile -t segs < <(/scratch2/dima/miniforge3/envs/xpurt/bin/python3 -c "
+mapfile -t segs < <("${PYTHON3}" -c "
 import json, sys
 m = json.load(open('$MANIFEST'))
 for s in m['segments']:
@@ -121,7 +122,7 @@ for entry in "${segs[@]}"; do
     # that to recover the right order, then read the captured tensor
     # files in DLC-input-name order rather than slicer-sorted order.
     docker_calib_list="${calib_list_host%.txt}.docker.txt"
-    /scratch2/dima/miniforge3/envs/xpurt/bin/python3 - \
+    "${PYTHON3}" - \
         "$calib_list_host" "$docker_calib_list" "$REPO_DIR" "$dlc_out" <<'PY'
 import sys, os, re, subprocess
 inp, out, repo, dlc_path = sys.argv[1:5]

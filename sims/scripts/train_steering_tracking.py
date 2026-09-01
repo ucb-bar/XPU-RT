@@ -17,10 +17,9 @@ import os
 freshscheduler_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 sys.path.insert(0, freshscheduler_root)
 # Add IsaacLab to path
-sys.path.insert(0, "/scratch2/dima/IsaacLab/source/isaaclab")
-sys.path.insert(0, "/scratch2/dima/IsaacLab/source/isaaclab_assets")
-sys.path.insert(0, "/scratch2/dima/IsaacLab/source/isaaclab_rl")
-sys.path.insert(0, "/scratch2/dima/IsaacLab/source/isaaclab_contrib")
+_isaaclab_root = os.environ.get("ISAACLAB_ROOT", "/scratch2/dima/IsaacLab")
+for _pkg in ("isaaclab", "isaaclab_assets", "isaaclab_rl", "isaaclab_contrib"):
+    sys.path.insert(0, os.path.join(_isaaclab_root, "source", _pkg))
 
 from isaaclab.app import AppLauncher
 

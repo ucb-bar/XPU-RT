@@ -304,7 +304,8 @@ def main() -> int:
     ap = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    ap.add_argument("--modelblaster-root", default="/scratch2/agustin/ModelBlaster")
+    ap.add_argument("--modelblaster-root",
+                    default=os.environ.get("MODELBLASTER_ROOT", "/scratch2/agustin/ModelBlaster"))
     ap.add_argument(
         "--models", default="dronet,mlp_control,yolov8_nano_64",
         help="comma-separated model names",

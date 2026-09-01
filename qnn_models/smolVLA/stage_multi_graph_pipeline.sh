@@ -14,7 +14,7 @@
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-PYTHON="/scratch2/dima/miniforge3/envs/xpurt/bin/python"
+PYTHON="${PYTHON:-/scratch2/dima/miniforge3/envs/xpurt/bin/python}"
 BOARD="${QNN_BOARD_HOST:-root@10.44.120.201}"
 BUDGET="${BUDGET:-}"   # empty = unconstrained (all 23 segs DSP-tramp)
 OUT_DIR="$REPO_ROOT/qnn_models/runtime/gen/qrb5165_smolvla_v3_bundles_mg"

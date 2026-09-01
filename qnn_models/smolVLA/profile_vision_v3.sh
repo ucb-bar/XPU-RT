@@ -24,8 +24,8 @@ SLICES_DIR="$HERE/vision_slices_v3"
 HTA_CONVS_DIR="$SLICES_DIR/hta_convs/dlc"
 DLC_DIR="$SLICES_DIR/dlc"
 BOARD="${QNN_BOARD_HOST:-root@10.44.120.201}"
-QNN_SDK="/scratch2/dima/misc_sw/qualcomm/qairt/2.45.0.260326"
-PYTHON="/scratch2/dima/miniforge3/envs/xpurt/bin/python"
+QNN_SDK="${QNN_SDK:-/scratch2/dima/misc_sw/qualcomm/qairt/2.45.0.260326}"
+PYTHON="${PYTHON:-/scratch2/dima/miniforge3/envs/xpurt/bin/python}"
 N_ITERS=10
 
 OUT_DIR="$REPO_ROOT/qnn_models/boards/qrb5165_v66/profiles/smolvlm_vision_v3"
