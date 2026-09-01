@@ -37,6 +37,12 @@ artifacts/repo_reconciliation/*.bundle
 /schedules/*
 !/schedules/scheduled_networks_k1_tri_exact_100ms_greedy_profiled.json
 !/schedules/scheduled_networks_k1_tri_exact_100ms_feedback_greedy_profiled.json
+# ...and the two that plot_v3_bundles_vs_baseline.py opens by exact path.
+# These cannot be regenerated on dev: gen/ was removed in 2717755e, so the
+# profiles the scheduler reads are no longer here. 68 KB so the figure
+# reproduces from a clean clone.
+!/schedules/scheduled_networks_smolvla_vision_v3_bundles_qrb5165_greedy_profiled.json
+!/schedules/scheduled_networks_smolvla_vision_v3_qrb5165_greedy_profiled.json
 
 # ---------------------------------------------------------------------------
 # Working output. None of this is outward-facing: it is generated, it is
