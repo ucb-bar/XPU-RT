@@ -1,6 +1,0 @@
-dispatch_id,module_name,vmfb_path,mlir_path,mean_time,mean_unit,mean_time_ns,returncode,log_path,source,op,shape,cycles,cycles_n,cycles_cv_pct,implementation
-0,ffn_block$dispatch_0_rvv_x60_layernorm_s8_M128xK256,,,2.579250,ms,2579250.000000,0,,k1,layernorm_s8,M=128;K=256,61902,6,1.5,reference
-1,ffn_block$dispatch_1_rvv_x60_linear_s8_M128xK256xN1024,,,3.644000,ms,3644000.000000,0,,k1,linear_s8,M=128;K=256;N=1024,87456,6,1.38,curated[rvv]/direct
-2,ffn_block$dispatch_2_rvv_x60_gelu_s8_n131072,,,0.493042,ms,493041.666667,0,,k1,gelu_s8,n=131072,11833,6,0.46,curated[rvv]/rvv_memo_lut_gather
-3,ffn_block$dispatch_3_rvv_x60_linear_s8_M128xK1024xN256,,,2.825625,ms,2825625.000000,0,,k1,linear_s8,M=128;K=1024;N=256,67815,6,3.89,curated[rvv]/direct
-4,ffn_block$dispatch_4_rvv_x60_add_s8_n32768,,,0.171125,ms,171125.000000,0,,k1,add_s8,n=32768,4107,6,18.51,curated[rvv]/rvv_frm_rmm

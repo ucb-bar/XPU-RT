@@ -1,4 +1,0 @@
-dispatch_id,module_name,vmfb_path,mlir_path,mean_time,mean_unit,mean_time_ns,returncode,log_path,source,op,shape,cycles,cycles_n,cycles_cv_pct,implementation
-0,lstm_tiny$dispatch_0_rvv_x60_lstm_s8_input_size32xhidden_size16,,,0.075542,ms,75541.666667,0,,k1,lstm_s8,input_size=32;hidden_size=16,1813,1,,curated[rvv]/rvv_gate_int_dot
-1,lstm_tiny$dispatch_1_rvv_x60_lstm_s8_input_size16xhidden_size16,,,0.017958,ms,17958.333333,0,,k1,lstm_s8,input_size=16;hidden_size=16,431,1,,curated[rvv]/rvv_gate_int_dot
-2,lstm_tiny$dispatch_2_rvv_x60_linear_s8_M1xK16xN4,,,0.001042,ms,1041.666667,0,,k1,linear_s8,M=1;K=16;N=4,25,1,,curated[rvv]/direct

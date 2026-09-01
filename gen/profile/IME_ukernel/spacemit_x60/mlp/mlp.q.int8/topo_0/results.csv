@@ -1,6 +1,0 @@
-dispatch_id,module_name,vmfb_path,mlir_path,mean_time,mean_unit,mean_time_ns,returncode,log_path,source,op,shape,cycles
-0,mlp$async_dispatch_0_embedded_elf_riscv_64_mlp$async_dispatch_0_elementwise_10_f32xi8,,,0.063600,ms,63600.000,0,,k1_measured,elementwise,10,101760
-1,mlp$async_dispatch_1_embedded_elf_riscv_64_mlp$async_dispatch_1_matmul_1x32x10_i8xi8xi32,,,0.070550,ms,70550.000,0,,k1_measured,matmul,1x32x10,112880
-2,mlp$async_dispatch_2_embedded_elf_riscv_64_mlp$async_dispatch_2_matmul_1x32x32_i8xi8xi32,,,0.072500,ms,72500.000,0,,k1_measured,matmul,1x32x32,116000
-3,mlp$async_dispatch_3_embedded_elf_riscv_64_mlp$async_dispatch_3_matmul_1x2x32_i8xi8xi32,,,0.065450,ms,65450.000,0,,k1_measured,matmul,1x2x32,104720
-4,mlp$async_dispatch_4_embedded_elf_riscv_64_mlp$async_dispatch_4_elementwise_2_i8xf32,,,0.077500,ms,77500.000,0,,k1_measured,elementwise,2,124000

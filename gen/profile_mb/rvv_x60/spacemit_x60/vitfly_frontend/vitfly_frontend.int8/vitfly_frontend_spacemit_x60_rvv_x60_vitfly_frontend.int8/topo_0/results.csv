@@ -1,9 +1,0 @@
-dispatch_id,module_name,vmfb_path,mlir_path,mean_time,mean_unit,mean_time_ns,returncode,log_path,source,op,shape,cycles,cycles_n,cycles_cv_pct,implementation
-0,vitfly_frontend$dispatch_0_rvv_x60_conv2d_s8_N1xIC1xIH60xIW90xOC4xOH20xOW30xKH5xKW5xSH3xSW3xPH1xPW1,,,0.220792,ms,220791.666667,0,,k1,conv2d_s8,N=1;IC=1;IH=60;IW=90;OC=4;OH=20;OW=30;KH=5;KW=5;SH=3;SW=3;PH=1;PW=1,5299,1,,curated[rvv]/rvv_vsmul_vnclip
-1,vitfly_frontend$dispatch_1_rvv_x60_batchnorm2d_s8_N1xC4xH20xW30,,,0.003417,ms,3416.666667,0,,k1,batchnorm2d_s8,N=1;C=4;H=20;W=30,82,1,,curated[rvv]/direct
-2,vitfly_frontend$dispatch_2_rvv_x60_maxpool2d_s8_N1xC4xIH20xIW30xOH18xOW28xKH3xKW3xSH1xSW1xPH0xPW0xDH1xDW1,,,0.020083,ms,20083.333333,0,,k1,maxpool2d_s8,N=1;C=4;IH=20;IW=30;OH=18;OW=28;KH=3;KW=3;SH=1;SW=1;PH=0;PW=0;DH=1;DW=1,482,1,,curated[rvv]/direct
-3,vitfly_frontend$dispatch_3_rvv_x60_conv2d_s8_N1xIC4xIH18xIW28xOC10xOH8xOW13xKH3xKW3xSH2xSW2xPH0xPW0,,,0.053375,ms,53375.000000,0,,k1,conv2d_s8,N=1;IC=4;IH=18;IW=28;OC=10;OH=8;OW=13;KH=3;KW=3;SH=2;SW=2;PH=0;PW=0,1281,1,,curated[rvv]/rvv_vsmul_vnclip
-4,vitfly_frontend$dispatch_4_rvv_x60_batchnorm2d_s8_N1xC10xH8xW13,,,0.002250,ms,2250.000000,0,,k1,batchnorm2d_s8,N=1;C=10;H=8;W=13,54,1,,curated[rvv]/direct
-5,vitfly_frontend$dispatch_5_rvv_x60_avgpool2d_s8_N1xC10xIH8xIW13xOH6xOW11xKH3xKW3xSH1xSW1xPH0xPW0xcount_include_pad1,,,0.012667,ms,12666.666667,0,,k1,avgpool2d_s8,N=1;C=10;IH=8;IW=13;OH=6;OW=11;KH=3;KW=3;SH=1;SW=1;PH=0;PW=0;count_include_pad=1,304,1,,curated[rvv]/rvv_ow_lanes
-6,vitfly_frontend$dispatch_6_rvv_x60_linear_s8_M1xK660xN64,,,0.016125,ms,16125.000000,0,,k1,linear_s8,M=1;K=660;N=64,387,1,,curated[rvv]/direct
-7,vitfly_frontend$dispatch_7_rvv_x60_leaky_relu_s8_n64,,,0.000458,ms,458.333333,0,,k1,leaky_relu_s8,n=64,11,1,,curated[rvv]/rvv_frm_rmm

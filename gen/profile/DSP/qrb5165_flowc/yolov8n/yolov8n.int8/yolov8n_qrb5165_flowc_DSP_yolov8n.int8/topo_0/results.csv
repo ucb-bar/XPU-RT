@@ -1,3 +1,0 @@
-dispatch_id,module_name,vmfb_path,mlir_path,mean_time,mean_unit,mean_time_ns,returncode,log_path,source,op,shape,cycles
-0,yolov8n$dispatch_0_DSP_qnn_graph_ir_ops103,,,13.267000,ms,13267000.000000,0,,qnn-mean@2026-08-28,qnn_graph,ir_ops=103,13267
-1,yolov8n$dispatch_1_DSP_qnn_graph_ir_ops146,,,15.377000,ms,15377000.000000,0,,qnn-mean@2026-08-28,qnn_graph,ir_ops=146,15377
