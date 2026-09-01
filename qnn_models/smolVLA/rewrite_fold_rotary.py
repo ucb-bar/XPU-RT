@@ -41,6 +41,9 @@ def main():
     ap.add_argument("--in", dest="src", required=True)
     ap.add_argument("--out", dest="dst", required=True)
     ap.add_argument("--seq", type=int, default=113)
+    ap.add_argument("--start", type=int, default=0,
+                    help="first position id. Prefill starts at 0; a decode whose\n"
+                         "tokens follow an N-token cache starts at N (SmolVLA decode: 113).")
     a = ap.parse_args()
 
     import onnxruntime as ort
@@ -67,7 +70,11 @@ def main():
             # sequence length comes from the model, not the flag -- prefill is
             # 113 and decode is 50, and folding at the wrong length is silent.
             n_pos = int(np.prod(sh))
-            feed[i.name] = np.arange(n_pos, dtype=np.int64).reshape(sh)
+            # Length is read from the model, but the OFFSET cannot be -- a decode
+            # step's tokens sit AFTER the cached prefix, so its positions are
+            # arange(start, start+n) and folding at arange(n) is silently wrong.
+            feed[i.name] = np.arange(a.start, a.start + n_pos,
+                                     dtype=np.int64).reshape(sh)
         elif "int" in i.type:
             feed[i.name] = np.zeros(sh, np.int64)
         else:
@@ -95,7 +102,8 @@ def main():
         alive = [n for n in g.node if id(n) not in ids]
         del g.node[:]; g.node.extend(alive)
 
-    m.doc_string = (f"rotary Sin/Cos constant-folded at position_ids=arange({a.seq}). "
+    m.doc_string = (f"rotary Sin/Cos constant-folded at "
+                    f"position_ids=arange({a.start}, {a.start}+n). "
                     "Valid ONLY for that position sequence.")
     onnx.checker.check_model(m, full_check=False)
     onnx.save(m, a.dst, save_as_external_data=True, all_tensors_to_one_file=True,

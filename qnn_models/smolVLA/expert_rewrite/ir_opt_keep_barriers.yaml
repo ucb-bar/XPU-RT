@@ -1,0 +1,14 @@
+# Minimal ir_optimizer_config for the RmsNorm anti-fusion barriers.
+#
+# rewrite_block_rmsnorm_fusion.py inserts a Mul-by-1.0 between ReduceMean and
+# Add in each RMSNorm chain, so the converter's matcher no longer sees the
+# Pow->ReduceMean->Add->Sqrt->Reciprocal->Mul->Mul pattern and does not emit
+# qti.aisw:RmsNorm -- which Hexagon v66 has no op package for.
+#
+# Two converter passes undo that barrier if left enabled, after which the
+# fusion fires again. Skipping only these two keeps every other optimization.
+common:
+  RemoveNoOps:
+    skip: true
+  SquashConstantInput:
+    skip: true

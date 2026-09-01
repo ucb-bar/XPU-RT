@@ -948,6 +948,14 @@ accelerator-eligible is the largest opportunity that is actually a mapping
 problem. It is also the hardest -- the 1024x1024 score matrix is 12.6M
 elements per head.
 
+**Answered in `ATTENTION_MAPPING.md`: no.** HTA has no dynamic-operand MatMul
+kernel at any rank (nor Transpose, nor a shape-changing Reshape), so no
+per-head or reshape rewrite makes these eligible; DSP and GPU compose them but
+run 5.5x and 5.6x slower than the CPU, and the int8 form they require emits
+exactly zero. Accelerator-recoverable: 0 ms. A CPU-side rewrite that replaces
+the head-merge Transpose with Split+Concat is bit-exact and does recover
+7.75 ms per block, 93 ms total (`rewrite_attention_tail.py`).
+
 ### 3. Vision Tanh trampolines -- cheapest test, best effort/reward
 
 12 segments containing **a single `Tanh` each**, 9.2 ms apiece, **110.0 ms**.
