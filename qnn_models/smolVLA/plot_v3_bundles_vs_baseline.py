@@ -40,6 +40,14 @@ def load_trace(path: Path):
 
 
 def load_predicted(sched_path: Path):
+    """Load a scheduler output. Returns (None, None) if it is not on disk.
+
+    schedules/ is gitignored derived output, so a given schedule may simply
+    not have been regenerated on this machine. Callers skip the panel rather
+    than failing the whole figure."""
+    if not Path(sched_path).exists():
+        print(f"  (skipping panel) no schedule at {sched_path}")
+        return None, None
     with open(sched_path) as f:
         sched = json.load(f)
     hw_map = sched["metadata"]["profile_hw"]
@@ -98,6 +106,15 @@ def draw_measured(ax, trace, *, title, y_label, max_t):
     for sp in ("top","right","left"): ax.spines[sp].set_visible(False)
 
 
+def _blank(ax, y_label, msg):
+    """Placeholder for a panel whose schedule is not on disk."""
+    ax.text(0.5, 0.5, msg, ha="center", va="center", fontsize=9,
+            style="italic", color="#888888", transform=ax.transAxes, wrap=True)
+    ax.set_ylabel(y_label, fontsize=10)
+    ax.set_xticks([]); ax.set_yticks([])
+    for sp in ax.spines.values(): sp.set_visible(False)
+
+
 def main():
     trace_cpu      = load_trace(_REPO / "runs/v3_bundles/trace.csv")
     trace_dsp9     = load_trace(_REPO / "runs/v3_bundles_dsp9/trace.csv")
@@ -105,8 +122,6 @@ def main():
     trace_dsp_reset = load_trace(_REPO / "runs/v3_bundles_dsp_all_reset/trace.csv")
     dsp9_pred,    dsp9_makespan    = load_predicted(
         _REPO / "schedules/scheduled_networks_smolvla_vision_v3_bundles_qrb5165_greedy_profiled.json")
-    dsp14_pred,   dsp14_makespan   = load_predicted(
-        _REPO / "schedules/scheduled_networks_smolvla_vision_v3_bundles_qrb5165_greedy_profiled_dsp14.json")
     dsp_all_pred, dsp_all_makespan = load_predicted(
         _REPO / "schedules/scheduled_networks_smolvla_vision_v3_bundles_qrb5165_greedy_profiled_dsp_all.json")
     optimistic_pred, optimistic_makespan = load_predicted(
@@ -117,16 +132,20 @@ def main():
     actual_dsp9      = max(r["actual_end"] for r in trace_dsp9)
     actual_dsp14_lz  = max(r["actual_end"] for r in trace_dsp14_lz)
     actual_reset    = max(r["actual_end"] for r in trace_dsp_reset)
-    max_t = max(cpu_mono_total, actual_cpu_tramp, actual_dsp14_lz,
-                 actual_reset, dsp_all_makespan, optimistic_makespan) * 1.02
+    max_t = max(v for v in (cpu_mono_total, actual_cpu_tramp, actual_dsp14_lz,
+                            actual_reset, dsp_all_makespan, optimistic_makespan)
+                if v is not None) * 1.02
 
     fig = plt.figure(figsize=(15, 16))
     gs = fig.add_gridspec(8, 1, height_ratios=[1, 1, 1, 1, 1, 1, 1, 1.8])
 
     ax0 = fig.add_subplot(gs[0])
-    draw_predicted(ax0, optimistic_pred, max_t=max_t,
-        title=f"v3 over-optimistic (conv-only HTA, no trampolines) — predicted {optimistic_makespan:.1f} ms (UNREALIZABLE)",
-        y_label="Optimistic\nprediction")
+    if optimistic_pred is not None:
+        draw_predicted(ax0, optimistic_pred, max_t=max_t,
+            title=f"v3 over-optimistic (conv-only HTA, no trampolines) — predicted {optimistic_makespan:.1f} ms (UNREALIZABLE)",
+            y_label="Optimistic\nprediction")
+    else:
+        _blank(ax0, "Optimistic\nprediction", "v3 over-optimistic — schedule not generated on this machine")
 
     ax1 = fig.add_subplot(gs[1], sharex=ax0)
     draw_predicted(ax1, cpu_mono, max_t=max_t,
@@ -140,9 +159,11 @@ def main():
         y_label="Measured\n(CPU tramp)")
 
     ax3 = fig.add_subplot(gs[3], sharex=ax0)
+    _err = (f"; error {(actual_dsp9 - dsp9_makespan)/dsp9_makespan*100:+.2f}%"
+            if dsp9_makespan else "")
     draw_measured(ax3, trace_dsp9, max_t=max_t,
         title=f"v3 HTA-bundle with DSP trampolines — MEASURED {actual_dsp9:.1f} ms "
-              f"(eager, budget=9 inner segs, fits in ~27 DSP ctxs; error {(actual_dsp9 - dsp9_makespan)/dsp9_makespan*100:+.2f}%)",
+              f"(eager, budget=9 inner segs, fits in ~27 DSP ctxs{_err})",
         y_label="Measured\n(DSP tramp\neager bud=9)")
 
     ax4 = fig.add_subplot(gs[4], sharex=ax0)
@@ -158,10 +179,15 @@ def main():
         y_label="Measured\n(reset)")
 
     ax6 = fig.add_subplot(gs[6], sharex=ax0)
-    draw_predicted(ax6, dsp_all_pred, max_t=max_t,
-        title=f"v3 HTA-bundle with DSP trampolines, ALL 23 inner segs — PREDICTED {dsp_all_makespan:.1f} ms "
-              f"(unblocked makespan target — needs DLC sharing to fit context budget cheaply)",
-        y_label="Predicted\n(unblocked)")
+    if dsp_all_pred is not None:
+        draw_predicted(ax6, dsp_all_pred, max_t=max_t,
+            title=f"v3 HTA-bundle with DSP trampolines, ALL 23 inner segs — PREDICTED {dsp_all_makespan:.1f} ms "
+                  f"(unblocked makespan target — needs DLC sharing to fit context budget cheaply)",
+            y_label="Predicted\n(unblocked)")
+    else:
+        _blank(ax6, "Predicted\n(unblocked)",
+               "v3 all-DSP-tramp PREDICTED — schedule not generated on this machine "
+               "(rebuild via build_v3_bundles.py --dsp-tramp-budget, then re-run the scheduler)")
     ax6.set_xlabel("Time (ms)", fontsize=10)
 
     ax7 = fig.add_subplot(gs[7])
@@ -173,6 +199,11 @@ def main():
               "v3 + DSP\ntramps all\n(predicted)"]
     vals = [cpu_mono_total, actual_cpu_tramp, actual_dsp9, actual_dsp14_lz, actual_reset, dsp_all_makespan]
     colors = ["#1f77b4", "#9467bd", "#2ca02c", "#ff7f0e", "#d62728", "#cccccc"]
+    # drop any bar whose schedule was unavailable
+    _keep = [i for i, v in enumerate(vals) if v is not None]
+    labels = [labels[i] for i in _keep]
+    vals   = [vals[i]   for i in _keep]
+    colors = [colors[i] for i in _keep]
     ax7 = ax7
     ax7.bar(range(len(labels)), vals, color=colors, edgecolor="black", linewidth=0.5)
     for i, v in enumerate(vals):
@@ -207,13 +238,20 @@ def main():
 
     print()
     print("=== Makespan summary ===")
-    print(f'  Over-optimistic prediction (v3, conv-only HTA): {optimistic_makespan:>8.1f} ms (unrealizable)')
+    if optimistic_makespan is not None:
+        print(f'  Over-optimistic prediction (v3, conv-only HTA): {optimistic_makespan:>8.1f} ms (unrealizable)')
+    else:
+        print( '  Over-optimistic prediction (v3, conv-only HTA):   (schedule not on disk)')
     print(f'  CPU-monolithic baseline (no HTA):               {cpu_mono_total:>8.1f} ms')
     print(f'  v3 + CPU trampolines (MEASURED):                {actual_cpu_tramp:>8.1f} ms  ({cpu_mono_total/actual_cpu_tramp:.2f}× speedup)')
     print(f'  v3 + DSP trampolines eager bud=9 (MEASURED):    {actual_dsp9:>8.1f} ms  ({cpu_mono_total/actual_dsp9:.2f}× speedup)')
     print(f'  v3 + DSP trampolines lazy bud=14 (MEASURED):    {actual_dsp14_lz:>8.1f} ms  ({cpu_mono_total/actual_dsp14_lz:.2f}× speedup)')
     print(f'  v3 ALL DSP-tramp w/ reset (MEASURED):           {actual_reset:>8.1f} ms  ({cpu_mono_total/actual_reset:.2f}× speedup)')
-    print(f'  v3 + DSP trampolines all (PREDICTED):           {dsp_all_makespan:>8.1f} ms  ({cpu_mono_total/dsp_all_makespan:.2f}× speedup)')
+    if dsp_all_makespan is not None:
+        print(f'  v3 + DSP trampolines all (PREDICTED):           {dsp_all_makespan:>8.1f} ms  ({cpu_mono_total/dsp_all_makespan:.2f}× speedup)')
+    else:
+        print( '  v3 + DSP trampolines all (PREDICTED):             (schedule not on disk -- rebuild')
+        print( '                                                     via build_v3_bundles.py --dsp-tramp-budget)')
 
 
 if __name__ == "__main__":
