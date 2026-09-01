@@ -824,6 +824,18 @@ this silicon -- is answered yes, and took five rewrites, a calibration fix and
 one slice. The product question -- *should* they be -- is answered no. Both
 answers are measured, and the second only became knowable by doing the first.
 
+### One gap, stated plainly
+
+Everything above is **prefill**. `expert_decode` has the identical rewrite
+chain applied and verified bit-exact (ScatterND 48->0, Where 16->0, bool input
+retyped, 4 Sin/Cos folded, 101 -> 7 tiles) but was **not** converted, quantized,
+composed or measured. It was not taken further because the DSP verdict is
+architectural rather than model-specific -- v66 measured slower than the CPU on
+all 49 vision segments and on prefill -- and decode is the smaller prize at
+149.6 ms. That is an inference, not a measurement, and it is the one claim here
+that rests on argument rather than evidence. The artifacts
+(`smolvlm_expert_decode_nofuse.onnx`) are on disk if someone wants to close it.
+
 Also note R3's caveat: the rotary fold is exact only while `position_ids`
 equals the sequence it was folded at. For this fixed-shape export that holds;
 for variable positions the sin/cos must be lifted to graph inputs instead.
