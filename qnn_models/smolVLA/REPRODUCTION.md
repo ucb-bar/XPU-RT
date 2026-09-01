@@ -253,3 +253,62 @@ is wrong is the **lane attribution**: the partition is 23 HTA / 26 CPU, not
     sentinel for DSP and HTA, not the CPU value. Then the scheduler places them
     on CPU_X where they belong, and the reported lane split becomes truthful.
     The makespan should not change, since the durations are already the CPU ones.
+
+---
+
+## 8. Port to Flow C: HTA is unreachable at the published granularity
+
+Building the Flow C binding manifest from the **context binaries that actually
+exist on the board** (`flow_c/gen_smolvla_binding.py`, which reads the ctx
+inventory rather than the profile CSVs) resolves §7 completely.
+
+    ctx_cpu_seg_00..23__*        Cpu only          (24)  Tanh/GELU trampolines
+    ctx_dsp_seg_00..24__*        Cpu, Dsp          (25)  whole segments -- NO Hta
+    ctx_dsp_seg_NN_*_conv1x1__*  Hta only          (50)  extracted Conv1x1 kernels
+    ctx_dsp_seg_NN_tramp_p*__*   Cpu, Dsp          (74)  trampoline sub-parts
+
+    generated manifest, segment granularity:  49 tiles, 0 reach HTA
+    generated manifest, bundle  granularity: 173 tiles, 50 reach HTA
+
+**There is no `ctx_dsp_seg_NN__Hta.bin`.** HTA never runs a whole segment and
+never runs a trampoline; it runs only the extracted Conv1x1 kernels. The HTA
+column in `gen/profile/HTA/.../smolvlm_vision_v3` is therefore synthesized from
+those sub-model timings and attributed to whole segments that cannot execute
+there.
+
+### What is actually achievable
+
+    all-CPU baseline                                 3172.2 ms
+    49 segments, best(CPU,DSP) -- real contexts      2997.5 ms   1.06x
+    173 tiles, convs on HTA (the bundles cut)        2272.3 ms   1.40x   <- measured
+    published figure, synthesized HTA column         1083.6 ms   2.9x    <- not realizable
+
+The published 2.9x assumes 25 whole segments run on HTA at the price of their
+extracted convs. The best physically-supported result is the 141/173-tile
+decomposition at **2272.3 ms, 1.40x** -- which is exactly the "bundles" variant
+§6 recorded as a 2.1x regression *against the unrealizable number*. Measured
+against reality it is the best configuration on the board.
+
+### Consequence for the port
+
+This is the case for the port rather than against it. Flow C's binding manifest
+is capability-typed: backends are declared per tile and checked against the
+registry and the staged contexts. The manifest generated here **cannot express
+the claim that broke** -- at segment granularity it emits zero HTA backends,
+because zero HTA contexts exist. The greedy path had no such gate, which is how
+a synthesized column became a headline.
+
+### Next step
+
+Target **2272.3 ms**, not 1083.6. Drive `--granularity bundle` (173 tiles)
+through `flow_c.py artifacts -> schedule -> runtime -> stage -> run`. Open
+questions to settle in that run:
+
+  * 173 tiles x eager context load is a large bringup; Flow C loads eagerly and
+    context init was measured at 42-256 ms elsewhere. Lazy or budgeted loading
+    may be required.
+  * The 50 HTA tiles are HTA-*only*, with no CPU fallback, so a capability
+    failure is fatal rather than degrading -- the opposite of the usual Flow C
+    tile, which has 2-3 viable backends.
+  * The chain is still strictly sequential, so the lane runtime buys backend
+    selection only. The 1.40x is real but it is not concurrency.
