@@ -649,3 +649,68 @@ The remaining step is calibration + `qairt-quantizer`, then re-run the same
 context build. Until that runs, "the experts now compose on DSP" is **not**
 established -- only that the blockers that previously made it impossible are
 gone and the graph converts.
+
+---
+
+## 14. Experts: op support confirmed on DSP and HTA; quantization still blocked
+
+### The confirmation that matters
+
+The rewritten prefill was converted and its per-op runtime support read straight
+out of the DLC (`snpe-dlc-info`, `Runtimes` column):
+
+    ops in DLC                    1197
+    ops WITHOUT DSP support          0
+    ops WITHOUT HTA/AIP support      0
+
+    op types: Eltwise_Binary 403, Reshape 227, Transpose 226,
+              FullyConnected 112, Eltwise_Unary 34, Reduce 32,
+              Split 32, Concat 32, Resize 32, MatMul 32
+
+**Every op in the rewritten expert composes on both DSP and HTA.** The 32
+`Concat` are exactly the ones the ScatterND rewrite created. This is the
+converter's own static analysis, and it is the answer to the question the
+rewrites were for: the experts are no longer CPU-bound by op support.
+
+`SMOLVLA_DSP_SLICING_PLAN.md` put the experts out of scope over ScatterND and
+Where. Both are gone, bit-exactly, and nothing else in the graph blocks.
+
+### What is still blocked: calibration plumbing, not op support
+
+Quantization is required before a context binary will build -- the fp32 DLC is
+rejected at `Input[0] has incorrect Datatype 0x508` (float32) before op
+composition is reached. `qairt-quantizer` will not accept the calibration set:
+
+    batch-1 raws  -> "batch size = 1 does not match with expected ... batch size = 4"
+    batch-4 raws  -> "file size 1735680 ... the file size should match the
+                      tensor extent: 433920 bytes"
+
+The two messages contradict each other: 433920 bytes IS the batch-1 extent, and
+all three inputs were verified against the DLC's declared dims and dtypes --
+
+    vlm_embeds      Float_32  [1,960,113]   433920 B   (note: converter applies
+                                                        axes-to-spatial-first-order,
+                                                        so NOT the ONNX [1,113,960])
+    attention_mask  Bool_8    [1,113,113]    12769 B
+    position_ids    Int_32    [1,113]          452 B   (ONNX int64; converter
+                                                        runs keep_int64_inputs=False)
+
+Both layout traps were found and fixed and the sizes match exactly, so this is
+a batch-inference quirk inside the quantizer's netrun rather than malformed
+calibration data. Next things to try: `--batch 1` explicitly on the converter,
+converting with a fixed batch in the ONNX, or `--float_bitwidth 16` to sidestep
+int8 calibration entirely and test composition at fp16.
+
+### Honest status
+
+    ScatterND rewrite         done, bit-exact
+    Where rewrite             done, bit-exact
+    tile count                115 -> 4 (prefill), 101 -> 7 (decode)
+    ONNX -> DLC               converts cleanly
+    op support on DSP/HTA     CONFIRMED, 0 of 1197 ops unsupported
+    int8 quantization         BLOCKED on a quantizer batch-inference quirk
+    context build / timing    not reached
+
+No performance number for the experts is claimed. What is established is that
+the blockers which made them CPU-only are gone and the graph is accelerator-
+eligible end to end.
