@@ -85,3 +85,15 @@ def windows_and_names(spec: Dict[str, Any]) -> tuple[Dict[str, float], set]:
         if w is not None:
             windows[str(key)] = w
     return windows, set(nets)
+
+
+def periods_ms(spec: Dict[str, Any]) -> Dict[str, float]:
+    """Every period declared by the workload, including one-shot instances.
+
+    Historical schedule metadata contains only networks expanded into repeated
+    instances. A periodic model with ``num_instances: 1`` still has a release
+    and deadline, so scoring restores it from the authoritative workload.
+    """
+    return {str(key): float(info["period"])
+            for key, info in (spec.get("networks") or {}).items()
+            if info.get("period") is not None}

@@ -213,10 +213,39 @@ class TestHeavyModelWithoutAPeriod(unittest.TestCase):
         self.assertAlmostEqual(latency, 30.0, places=3)
         self.assertAlmostEqual(hz, 1 / 0.080, places=3)
 
+    def test_declared_period_restores_a_one_instance_deadline(self):
+        """Historical metadata omits periodic models expanded only once."""
+        import schedule_scoring
+        s = _schedule()
+        s["metadata"]["periodic_networks"] = {}
+        s["dispatches"] = {
+            "dronet": {"id": 0, "dependencies": [],
+                        "hardware_target": "CPU_P#0", "start_time": 0.0,
+                        "duration": 40.0, "job_name": "dronet0"}}
+        _, out, _ = schedule_scoring.score(
+            "one-shot", s, {"dronet": 33.3}, ("dronet",), None,
+            {"dronet"}, {"dronet": 33.3})
+        self.assertEqual(out.per_model["dronet"].instances, 1)
+        self.assertEqual(out.total_misses(), 1)
+
     def test_absent_model_is_zero_not_an_exception(self):
         import profile_schedulers as ps
         rows = schedule_trace.trace_rows_from_schedule(_schedule())
         self.assertEqual(ps.heavy_stats(rows, "not_a_model"), (0.0, 0.0))
+
+    def test_digit_suffixed_heavy_model_uses_known_names(self):
+        """The instance suffix begins immediately after a model-ending digit."""
+        import schedule_scoring
+        s = _schedule()
+        s["dispatches"]["detector"] = {
+            "id": 0, "dependencies": [], "hardware_target": "CPU_P#0",
+            "start_time": 50.0, "duration": 30.0,
+            "job_name": "yolov8_nano_64x960"}
+        rows = schedule_trace.trace_rows_from_schedule(s)
+        latency, hz = schedule_scoring.heavy_stats(
+            rows, "yolov8_nano_64x96", {"yolov8_nano_64x96"})
+        self.assertAlmostEqual(latency, 30.0, places=3)
+        self.assertAlmostEqual(hz, 1 / 0.080, places=3)
 
 
 class TestGanttRenderer(unittest.TestCase):
@@ -234,6 +263,14 @@ class TestGanttRenderer(unittest.TestCase):
                  "b": {"hardware_target": "CPU_P#2"}}
         self.assertEqual(pk.cores_from_schedule(sched),
                          ["CPU_P#2", "CPU_P#10"])
+
+    def test_sharded_dispatch_spans_physical_lanes(self):
+        import plot_k1_evolution as pk
+        cores = ["CPU_P#0", "CPU_P#1", "CPU_P#2", "CPU_P#3"]
+        self.assertEqual(
+            pk.held_lane_span("CPU_P#0+CPU_P#1+CPU_P#2+CPU_P#3", cores),
+            (0, 3))
+        self.assertIsNone(pk.held_lane_span("CPU_E#0", cores))
 
     def test_published_figure_colours_are_unchanged(self):
         import plot_k1_evolution as pk

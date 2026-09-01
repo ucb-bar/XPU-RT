@@ -53,7 +53,8 @@ def instances_per_model(schedule: dict, known=None) -> Dict[str, int]:
     return {m: len(v) for m, v in sorted(seen.items())}
 
 
-def heavy_stats(rows: Sequence[dict], model: str) -> Tuple[float, float]:
+def heavy_stats(rows: Sequence[dict], model: str,
+                known: Optional[Sequence[str]] = None) -> Tuple[float, float]:
     """`(max instance latency ms, completion rate Hz)` for an aperiodic model.
 
     `trace_metrics` reports only models it was given a period for, which is
@@ -64,7 +65,7 @@ def heavy_stats(rows: Sequence[dict], model: str) -> Tuple[float, float]:
     """
     spans: Dict[str, List[float]] = defaultdict(lambda: [1e18, -1e18])
     for r in rows:
-        if trace_metrics.model_of(r["job_name"]) != model:
+        if job_names.model_of(r["job_name"], known) != model:
             continue
         j = r["job_name"]
         spans[j][0] = min(spans[j][0], float(r["start_us"]) / 1000.0)
@@ -82,6 +83,7 @@ def score(name: str, schedule: dict,
           critical: Sequence[str] = (),
           heavy: Optional[str] = None,
           known: Optional[Sequence[str]] = None,
+          declared_periods: Optional[Dict[str, float]] = None,
           ) -> Tuple[dict, objective.CandidateOutcome, List[dict]]:
     """`(summary, outcome, rows)` for one solved schedule.
 
@@ -98,6 +100,10 @@ def score(name: str, schedule: dict,
     windows_ms = windows_ms or {}
     rows = schedule_trace.trace_rows_from_schedule(schedule)
     periods = schedule_trace.periods_ms(schedule, known)
+    # The workload is authoritative. Historical schedules record only models
+    # expanded into repeated instances, silently dropping one-shot periodic
+    # models from deadline terms 1--4 without this restoration.
+    periods.update(declared_periods or {})
     summary = trace_metrics.summarise_trace(
         rows, periods, {k: v for k, v in windows_ms.items() if k in periods})
     out = objective.from_trace_summary(
@@ -105,5 +111,6 @@ def score(name: str, schedule: dict,
         standalone_cycles=int(round(
             schedule_trace.standalone_service_us(schedule))))
     if heavy and heavy not in out.per_model:
-        out.heavy_max_latency_ms, out.heavy_throughput_hz = heavy_stats(rows, heavy)
+        out.heavy_max_latency_ms, out.heavy_throughput_hz = heavy_stats(
+            rows, heavy, known)
     return summary, out, rows

@@ -64,6 +64,28 @@ class RegistryTests(unittest.TestCase):
         self.assertEqual(out[1], {"foo": 1})
 
 
+class MosekParameterTests(unittest.TestCase):
+
+    def test_generic_parameter_parser_preserves_mosek_types(self):
+        from scheduler import _parse_mosek_params
+
+        parsed = _parse_mosek_params(
+            "MSK_IPAR_MIO_MAX_NUM_SOLUTIONS=1;"
+            "MSK_IPAR_MIO_MEMORY_EMPHASIS_LEVEL=1;"
+            "MSK_IPAR_MIO_NODE_SELECTION=MSK_MIO_NODE_SELECTION_FIRST;"
+            "MSK_DPAR_MIO_TOL_REL_GAP=0.05;"
+            "MSK_SPAR_WRITE_DATA_PARAM=ignored")
+        self.assertEqual(parsed["MSK_IPAR_MIO_MAX_NUM_SOLUTIONS"], 1)
+        self.assertIsInstance(parsed["MSK_IPAR_MIO_MAX_NUM_SOLUTIONS"], int)
+        self.assertEqual(parsed["MSK_IPAR_MIO_MEMORY_EMPHASIS_LEVEL"], 1)
+        self.assertEqual(
+            parsed["MSK_IPAR_MIO_NODE_SELECTION"],
+            "MSK_MIO_NODE_SELECTION_FIRST")
+        self.assertEqual(parsed["MSK_DPAR_MIO_TOL_REL_GAP"], 0.05)
+        self.assertIsInstance(parsed["MSK_DPAR_MIO_TOL_REL_GAP"], float)
+        self.assertEqual(parsed["MSK_SPAR_WRITE_DATA_PARAM"], "ignored")
+
+
 class MosekIndirectionTests(unittest.TestCase):
     """Confirm `get_scheduler('mosek')` matches `scheduler.schedule` byte-for-byte."""
 
@@ -138,6 +160,107 @@ class MetricsShapeTests(unittest.TestCase):
         alpha = np.array([[1.0, 0.0], [0.0, 1.0]])
         m = compute_metrics(wl, t, alpha, scheduler_name="test")
         self.assertEqual(m["cross_device_transitions"], 1)
+
+
+class CpSatPrecisionTests(unittest.TestCase):
+    """Fractional profile durations must survive CP-SAT's integer clock."""
+
+    @classmethod
+    def setUpClass(cls):
+        try:
+            import ortools  # noqa: F401
+        except ImportError as exc:
+            raise unittest.SkipTest(f"OR-Tools not available: {exc}")
+
+    def test_fractional_predecessor_cannot_overlap_successor(self):
+        first = Operation([1.292625], operation_name="first")
+        second = Operation([0.711583], predecessors=[first],
+                           operation_name="second")
+        workload = Workload(
+            [first, second], ["CPU_P#0"], np.zeros((1, 1), dtype=float))
+
+        starts, alpha, _, _ = get_scheduler("cpsat")(
+            workload, time_limit=10, solver_verbosity=0)
+
+        self.assertEqual(int(np.argmax(alpha[0])), 0)
+        self.assertEqual(int(np.argmax(alpha[1])), 0)
+        self.assertGreaterEqual(starts[1], starts[0] + 1.292625)
+
+
+class CpSatExactCycleObjectiveTests(unittest.TestCase):
+    """The certificate must optimize the same per-instance quantities we report."""
+
+    @classmethod
+    def setUpClass(cls):
+        try:
+            import ortools  # noqa: F401
+        except ImportError as exc:
+            raise unittest.SkipTest(f"OR-Tools not available: {exc}")
+
+    def test_sequential_certificate_is_per_instance_and_optimal(self):
+        first = Operation(
+            [6.0], operation_name="critical0_a", job_id=0,
+            min_start_t=0.0, max_end_t=10.0)
+        second = Operation(
+            [6.0], predecessors=[first], operation_name="critical0_b",
+            job_id=0, min_start_t=0.0, max_end_t=10.0)
+        workload = Workload(
+            [first, second], ["CPU_P#0"], np.zeros((1, 1)),
+            job_names=["critical0"])
+
+        starts, alpha, _, _ = get_scheduler("cpsat")(
+            workload,
+            time_limit=10,
+            objective_mode="exact_cycle_worst_response",
+            critical_models=["critical"],
+            objective_stop_after="worst_critical_response",
+        )
+
+        self.assertIsNotNone(starts)
+        self.assertEqual(int(np.argmax(alpha[0])), 0)
+        cert = workload.solver_certificate
+        self.assertTrue(cert["certified"])
+        self.assertEqual(cert["jobs_modeled"], 1)
+        self.assertEqual(
+            [(p["name"], p["objective"], p["best_bound"])
+             for p in cert["phases"]],
+            [
+                ("job_deadline_misses", 1.0, 1.0),
+                ("max_job_lateness", 2000.0, 2000.0),
+                ("worst_critical_response", 12000.0, 12000.0),
+            ],
+        )
+
+    def test_critical_response_precedes_heavy_response(self):
+        critical = Operation(
+            [7.0], operation_name="critical0_a", job_id=0,
+            min_start_t=0.0, max_end_t=20.0)
+        heavy = Operation(
+            [4.0], operation_name="heavy0_a", job_id=1,
+            min_start_t=0.0, max_end_t=20.0)
+        workload = Workload(
+            [critical, heavy], ["CPU_P#0"], np.zeros((1, 1)),
+            job_names=["critical0", "heavy0"])
+
+        starts, _, _, _ = get_scheduler("cpsat")(
+            workload,
+            time_limit=10,
+            objective_mode="exact_cycle_worst_response",
+            critical_models=["critical"],
+            heavy_model="heavy",
+            objective_stop_after="heavy_max_response",
+        )
+
+        self.assertEqual(starts.tolist(), [0.0, 7.0])
+        cert = workload.solver_certificate
+        self.assertTrue(cert["certified"])
+        self.assertEqual(
+            [p["name"] for p in cert["phases"]],
+            ["job_deadline_misses", "max_job_lateness",
+             "worst_critical_response", "heavy_max_response"],
+        )
+        self.assertEqual(cert["phases"][2]["objective"], 7000.0)
+        self.assertEqual(cert["phases"][3]["objective"], 11000.0)
 
 
 if __name__ == "__main__":

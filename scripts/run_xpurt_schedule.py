@@ -53,6 +53,21 @@ CPU_P = "CPU_P"
 CPU_E = "CPU_E"
 
 
+def _portable_repo_paths(paths: list[str]) -> list[str]:
+    """Use repository-relative provenance paths whenever they live in-tree."""
+    root = os.path.realpath(_REPO_ROOT)
+    portable = []
+    for path in paths:
+        source = path if os.path.isabs(path) else os.path.join(_REPO_ROOT, path)
+        absolute = os.path.realpath(source)
+        try:
+            in_repo = os.path.commonpath((root, absolute)) == root
+        except ValueError:  # Different Windows drives, if run there.
+            in_repo = False
+        portable.append(os.path.relpath(source, _REPO_ROOT) if in_repo else path)
+    return portable
+
+
 def load_networks_config(json_path: str) -> tuple[dict, dict]:
     """
     Load a network dependencies JSON file and extract hardware/scheduler config.
@@ -126,6 +141,10 @@ def load_networks_config(json_path: str) -> tuple[dict, dict]:
         "restrict_makespan_to_nonperiodic": bool(sched.get("restrict_makespan_to_nonperiodic", True)),
         "machine_combination_mode": str(sched.get("machine_combination_mode", "singletons")),
         "enforce_same_processor_combinations": bool(sched.get("enforce_same_processor_combinations", True)),
+        "objective_mode": str(sched.get("objective_mode", "legacy")),
+        "critical_models": list(sched.get("critical_models") or []),
+        "heavy_model": sched.get("heavy_model"),
+        "objective_stop_after": sched.get("objective_stop_after"),
         "machine_core_counts": machine_core_counts,
     }
 
@@ -469,6 +488,15 @@ def schedule_iree_networks(
             fresh_kwargs = {"freshness_weight": freshness_weight,
                             "freshness_producer_op_indices": producer_idx}
 
+        objective_kwargs = {}
+        if scheduler.startswith("cpsat"):
+            objective_kwargs = {
+                "objective_mode": cfg["objective_mode"],
+                "critical_models": cfg["critical_models"],
+                "heavy_model": cfg["heavy_model"],
+                "objective_stop_after": cfg["objective_stop_after"],
+            }
+
         solver_t0 = time.perf_counter()
         result = scheduler_fn(
             combined_workload,
@@ -477,6 +505,7 @@ def schedule_iree_networks(
             restrict_makespan_to_nonperiodic=effective_restrict_makespan_to_nonperiodic,
             prune_cross_period_constraints=effective_prune_periodic,
             **fresh_kwargs,
+            **objective_kwargs,
         )
         solver_wall_time_s = time.perf_counter() - solver_t0
         t, alpha, _, _ = result
@@ -659,6 +688,19 @@ def schedule_iree_networks(
     # Name of the algorithm actually run (for metrics / report labeling): the
     # registry scheduler on the MILP path, else the greedy-family solver.
     algo_name = scheduler if solver == "milp" else solver
+
+    # Exact-cycle experiments carry a solver-independent analytic floor. It is
+    # computed from the live workload and the measured implementation choices,
+    # then serialized with the schedule below. This lets a downstream result
+    # prove a separation from the original graph without trusting a solver label.
+    if cfg.get("objective_mode") == "exact_cycle_worst_response":
+        from exact_cycle import workload_lower_bounds
+        combined_workload.analytic_response_lower_bounds = workload_lower_bounds(
+            combined_workload,
+            networks_data,
+            cfg["critical_models"],
+            cfg["heavy_model"],
+        )
     # Calculate makespan (non-periodic operations only, matching the solver objective)
     machine_combinations = combined_workload.get_machine_combinations()
     completion_times = []
@@ -823,7 +865,9 @@ def schedule_iree_networks(
     # detect when the PDB-on-disk has drifted from the PDB the solve
     # was performed against — the trap that produced v8's 9x
     # predicted/measured gap.
-    _pdb_hash, _pdb_files = compute_pdb_hash(list(_LAST_LOAD_CSV_PATHS))
+    _pdb_declared_files = _portable_repo_paths(list(_LAST_LOAD_CSV_PATHS))
+    _pdb_hash, _pdb_files = compute_pdb_hash(
+        _pdb_declared_files, base_dir=_REPO_ROOT)
     print(f"  pdb_hash = sha256:{_pdb_hash[:16]}... over "
           f"{len(_pdb_files)} CSV(s)")
     output_scheduled_json(
@@ -914,13 +958,18 @@ def schedule_iree_networks(
     # consume real runs. Additive and best-effort.
     try:
         from profiling import SchedulerReport
+        solver_state = getattr(combined_workload, "solver_state", {}) or {}
+        certificate = getattr(combined_workload, "solver_certificate", None)
         report = SchedulerReport.from_solver_state(
             combined_workload,
             t,
             alpha,
             solver_name=algo_name,
             solve_wall_s=solver_wall_time_s,
-            solver_status="feasible",
+            solver_status=(
+                "optimal" if certificate and certificate.get("certified")
+                else str(solver_state.get("problem_status", "feasible"))
+            ),
         )
         report_path = json_output_path.replace(".json", "_report.json")
         report.write_json(report_path)
@@ -972,8 +1021,9 @@ if __name__ == "__main__":
     parser.add_argument(
         "--time-limit",
         type=float,
-        default=20,
-        help="(milp only) Maximum optimization time in seconds (override).",
+        default=None,
+        help="(milp only) Maximum optimization time in seconds. Omitted uses "
+             "scheduler.time_limit from the workload; zero disables the limit.",
     )
     parser.add_argument(
         "--profiled",

@@ -1,0 +1,88 @@
+{
+  "schema_version": 1,
+  "interpretation": "Each frame is dependency-closed, clear at its wrap boundary, contains a complete anchor-model instance, and supplies every declared periodic model at or above its minimum average rate.",
+  "frames": [
+    {
+      "label": "control rebuild: fused kernel",
+      "status": "pass",
+      "window_ms": 150.0,
+      "semantics": "minimum average frequency; completed frame repeats from t=0",
+      "anchor_model": "yolov8_nano",
+      "source_schedule_sha256": "7fb95e0c8bf77769edb46903c3661d5e2ae5432f099cd7b087fae1105d5d80c9",
+      "anchor_complete": true,
+      "boundary_clear": true,
+      "dependency_closed": true,
+      "crossing_jobs": [],
+      "missing_dependencies": [],
+      "models": {
+        "dronet": {
+          "complete_instances": 5,
+          "required_instances": 5,
+          "achieved_hz": 33.333,
+          "required_hz": 30.03,
+          "pass": true
+        },
+        "mlp_control": {
+          "complete_instances": 15,
+          "required_instances": 15,
+          "achieved_hz": 100.0,
+          "required_hz": 100.0,
+          "pass": true
+        },
+        "yolov8_nano": {
+          "complete_instances": 1,
+          "required_instances": 1,
+          "achieved_hz": 6.667,
+          "required_hz": 4.0,
+          "pass": true
+        }
+      },
+      "dispatches_shown": 308,
+      "dispatches_excluded": 518,
+      "quantum_ms": 10.0,
+      "anchor_completion_ms": 148.097457,
+      "schedule_artifact": "results/k1_feedback_story/data/rewrite_control_repeat_frame.json"
+    },
+    {
+      "label": "feedback candidate: unfused kernel",
+      "status": "pass",
+      "window_ms": 120.0,
+      "semantics": "minimum average frequency; completed frame repeats from t=0",
+      "anchor_model": "yolov8_nano",
+      "source_schedule_sha256": "e4e1174c4ed6637033dab47aa0cee217c37e69c77b200e46cd9b6bda24e945e5",
+      "anchor_complete": true,
+      "boundary_clear": true,
+      "dependency_closed": true,
+      "crossing_jobs": [],
+      "missing_dependencies": [],
+      "models": {
+        "dronet": {
+          "complete_instances": 4,
+          "required_instances": 4,
+          "achieved_hz": 33.333,
+          "required_hz": 30.03,
+          "pass": true
+        },
+        "mlp_control": {
+          "complete_instances": 12,
+          "required_instances": 12,
+          "achieved_hz": 100.0,
+          "required_hz": 100.0,
+          "pass": true
+        },
+        "yolov8_nano": {
+          "complete_instances": 1,
+          "required_instances": 1,
+          "achieved_hz": 8.333,
+          "required_hz": 4.0,
+          "pass": true
+        }
+      },
+      "dispatches_shown": 380,
+      "dispatches_excluded": 902,
+      "quantum_ms": 10.0,
+      "anchor_completion_ms": 116.42108300000001,
+      "schedule_artifact": "results/k1_feedback_story/data/rewrite_candidate_repeat_frame.json"
+    }
+  ]
+}

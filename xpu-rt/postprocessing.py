@@ -376,6 +376,18 @@ def output_scheduled_json(
             # PDB; the runtime ran bit-exact kernels against it).
             **({"pdb_hash": pdb_hash} if pdb_hash else {}),
             **({"pdb_files": pdb_files} if pdb_files else {}),
+            # Exact CP-SAT runs attach their sequential optimality proof to the
+            # workload. Persist it with the schedule so a figure cannot claim
+            # "best baseline" without carrying the certificate that supports
+            # the statement.
+            **({"solver_certificate": combined_workload.solver_certificate}
+               if getattr(combined_workload, "solver_certificate", None)
+               else {}),
+            **({"analytic_response_lower_bounds":
+                combined_workload.analytic_response_lower_bounds}
+               if getattr(combined_workload,
+                          "analytic_response_lower_bounds", None)
+               else {}),
         }
     }
 
@@ -561,8 +573,6 @@ def count_overlaps(workload: Workload, t: np.ndarray, alpha: np.ndarray):
                 if t[j] + workload.operations[j].get_durations()[np.argmax(alpha[j])] + transfer_time > t[i]:
                     count += 1
     return count
-
-
 
 
 

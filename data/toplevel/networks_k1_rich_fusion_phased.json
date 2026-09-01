@@ -1,0 +1,119 @@
+{
+  "_comment": "RICH FUSED-PERCEPTION, PHASED: same 6-net sensor-fusion stack but with realistic per-sensor phase offsets (start_time) + multi-instance perception so work fills the whole 120ms window instead of bunching at t=0. Real sensors do NOT all sample at t=0. This gives the dense interleaved schedule with 3 sharded nets + IME running throughout.",
+  "hardware": {
+    "machines": {
+      "cpu_p": 4,
+      "cpu_e": 4
+    },
+    "profile_hw": {
+      "cpu_p": "rvv_x60",
+      "cpu_e": "rvv_x60"
+    },
+    "profile": {
+      "target": "spacemit_x60",
+      "topo_tag_override": false,
+      "gen_root": "gen_mb"
+    },
+    "p_core_speedup": 1.0
+  },
+  "scheduler": {
+    "random_seed": 42,
+    "solver_verbosity": 1,
+    "time_limit": 200,
+    "use_profiled": true,
+    "prune_periodic": true,
+    "restrict_makespan_to_nonperiodic": false,
+    "machine_combination_mode": "shard",
+    "enable_impls": true
+  },
+  "networks": {
+    "mlp_control": {
+      "id": 0,
+      "identifier": "mlp_control",
+      "dispatch_deps_path": "gen_mb/vmfb/mlp_control/spacemit_x60/rvv_x60/mlp_control.int8/mlp_control.int8_dispatch_graph.json",
+      "period": 20.0,
+      "window_duration": 120.0,
+      "num_instances": 6,
+      "start_time": 0.0
+    },
+    "fused_full": {
+      "id": 1,
+      "identifier": "fused_full",
+      "dispatch_deps_path": "gen_mb/vmfb/fused_full/spacemit_x60/rvv_x60/fused_full.int8/fused_full.int8_dispatch_graph.json",
+      "period": 20.0,
+      "window_duration": 120.0,
+      "num_instances": 6,
+      "stateful": true,
+      "start_time": 0.0
+    },
+    "yolov8_nano_64x96": {
+      "id": 2,
+      "identifier": "yolov8_nano_64x96",
+      "dispatch_deps_path": "gen_mb/vmfb/yolov8_nano_64x96/spacemit_x60/rvv_x60/yolov8_nano_64x96.int8/yolov8_nano_64x96.int8_dispatch_graph.json",
+      "period": 60.0,
+      "window_duration": 120.0,
+      "num_instances": 2,
+      "start_time": 0.0
+    },
+    "attn_block": {
+      "id": 3,
+      "identifier": "attn_block",
+      "dispatch_deps_path": "gen_mb/vmfb/attn_block/spacemit_x60/rvv_x60/attn_block.int8/attn_block.int8_dispatch_graph.json",
+      "period": 60.0,
+      "window_duration": 120.0,
+      "num_instances": 2,
+      "start_time": 15.0
+    },
+    "ffn_block": {
+      "id": 4,
+      "identifier": "ffn_block",
+      "dispatch_deps_path": "gen_mb/vmfb/ffn_block/spacemit_x60/rvv_x60/ffn_block.int8/ffn_block.int8_dispatch_graph.json",
+      "period": 60.0,
+      "window_duration": 120.0,
+      "num_instances": 2,
+      "start_time": 15.0
+    },
+    "dronet": {
+      "id": 5,
+      "identifier": "dronet",
+      "dispatch_deps_path": "gen_mb/vmfb/dronet/spacemit_x60/rvv_x60/dronet.int8/dronet.int8_dispatch_graph.json",
+      "period": 40.0,
+      "window_duration": 120.0,
+      "num_instances": 3,
+      "start_time": 30.0
+    }
+  },
+  "edges": [
+    {
+      "src": "attn_block",
+      "dst": "ffn_block",
+      "comment": "transformer head: attention -> FFN within one perception layer"
+    }
+  ],
+  "freshness_edges": [
+    {
+      "producer_task": "fused_full",
+      "consumer_task": "mlp_control",
+      "freshness_window": 40.0,
+      "sample_time_semantics": "producer_release",
+      "consumption_policy": "latest_completed",
+      "criticality": "hard"
+    },
+    {
+      "producer_task": "yolov8_nano_64x96",
+      "consumer_task": "fused_full",
+      "freshness_window": 120.0,
+      "sample_time_semantics": "producer_release",
+      "consumption_policy": "latest_completed",
+      "criticality": "soft"
+    },
+    {
+      "producer_task": "ffn_block",
+      "consumer_task": "fused_full",
+      "freshness_window": 120.0,
+      "sample_time_semantics": "producer_release",
+      "consumption_policy": "latest_completed",
+      "criticality": "soft"
+    }
+  ]
+}

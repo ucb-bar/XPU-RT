@@ -43,6 +43,7 @@ C_DRONET = figstyle.model_color("dronet")
 C_MLP = figstyle.model_color("mlp_control")
 C_DEADLINE = figstyle.C_DEADLINE
 C_MUTED = "#999999"
+C_DARK = "#333333"
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PERIODS = {"mlp": 10.0, "dronet": 33.3}
@@ -59,12 +60,14 @@ CORES = [f"CPU_P#{i}" for i in range(4)] + [f"CPU_E#{i}" for i in range(4)]
 #: `mlp_control$dispatch_0_rvv_x60_linear_s8_M1xK16xN256` and whose traces
 #: carry `worker_hart` / `actual_start_cycles` instead.
 #:
-#: The figure this file produced was captioned "B4 + sharding, after the
-#: scheduler fed evidence back" and drawn from IREE measurements. On the
-#: ModelBlaster path sharding has never run at all -- `parallel_conv2d_s8`
-#: sliced IHWOC-packed weights with an OIHW offset formula until it was
-#: disabled. So the figure and the code told different stories, and the figure
-#: was the one that looked authoritative.
+#: The historical figure this file produced was captioned "B4 + sharding,
+#: after the scheduler fed evidence back" and drawn from IREE measurements.
+#: At that time ModelBlaster's `parallel_conv2d_s8` sliced IHWOC-packed weights
+#: with an OIHW offset formula, so the claimed ModelBlaster sharding path had
+#: not actually run. ModelBlaster now repacks conv weights for the exact width
+#: selected by the schedule, and the exact-cycle experiment exercises that path
+#: on K1. Keep the historical provenance warning: the old IREE trace still
+#: cannot be relabelled as ModelBlaster evidence.
 #:
 #: Detecting provenance and stamping it on the output is the cheap half of the
 #: fix. The other half -- a ModelBlaster rung ladder -- needs a schema adapter,
@@ -191,12 +194,82 @@ def cores_from_schedule(sched):
     return sorted(seen, key=key)
 
 
+def held_lane_span(hardware_target, cores):
+    """Return the inclusive physical-lane span held by one dispatch.
+
+    Scheduler combinations are contiguous and within one cluster, so a single
+    rectangle across this span faithfully represents the runtime core lock.
+    """
+    lanes = [cores.index(c) for c in str(hardware_target).split("+")
+             if c in cores]
+    return (min(lanes), max(lanes)) if lanes else None
+
+
+def draw_gantt_axis(ax, rows, sched, *, cores, window_ms, colours,
+                    periods=None, deadline_model=None, known=None,
+                    impl_hatch=False, cluster_boundary=True,
+                    repeat_frame=False):
+    """Draw one schedule on an existing axis using physical K1 core lanes."""
+    periods = periods or {}
+    seen_models = set()
+    for r in rows:
+        ent = sched.get(r["dispatch_key"])
+        if ent is None:
+            continue
+        start = float(r["start_us"]) / 1000.0
+        dur = float(r["run_us"]) / 1000.0
+        if start >= window_ms:
+            continue
+        span = held_lane_span(ent.get("hardware_target", ""), cores)
+        if span is None:
+            continue
+        m = model_of(r["job_name"], known)
+        seen_models.add(m)
+        lo, hi = span
+        is_ime = ent.get("impl") == "ime" and any(
+            op in (ent.get("module_name") or "")
+            for op in ("linear_s8", "matmul_s8"))
+        ax.broken_barh(
+            [(start, max(dur, 0.15))], (lo - 0.42, (hi - lo) + 0.84),
+            facecolors=colours.get(m, C_MUTED),
+            edgecolors=("black" if is_ime and impl_hatch else "white"),
+            linewidth=(0.35 if is_ime and impl_hatch else 0.15),
+            hatch=("///" if is_ime and impl_hatch else None))
+    if deadline_model and periods.get(deadline_model):
+        period = periods[deadline_model]
+        k = 0
+        while k * period <= window_ms:
+            ax.axvline(k * period, color=C_DEADLINE, lw=0.4,
+                       ls=(0, (2, 2)), zorder=0)
+            k += 1
+    ax.set_yticks(range(len(cores)))
+    ax.set_yticklabels(cores, fontsize=4.2)
+    ax.set_ylim(-0.7, len(cores) - 0.3)
+    ax.invert_yaxis()
+    ax.set_xlim(0, window_ms)
+    if repeat_frame:
+        ax.axvline(window_ms, color=C_DARK, lw=0.9, ls=(0, (3, 2)),
+                   zorder=8, clip_on=False)
+        ax.text(0.995, 0.97, f"\u21bb repeat every {window_ms:g} ms",
+                transform=ax.transAxes, ha="right", va="top", fontsize=4.6,
+                color=C_DARK,
+                bbox={"facecolor": "white", "edgecolor": "none",
+                      "alpha": 0.82, "pad": 1.0})
+    ax.spines[["top", "right"]].set_visible(False)
+    if cluster_boundary:
+        for i in range(1, len(cores)):
+            if cores[i].split("#")[0] != cores[i - 1].split("#")[0]:
+                ax.axhline(i - 0.5, color="0.75", lw=0.4)
+    return seen_models
+
+
 def render_gantt_panels(panels, out, *, periods, cores=None, window_ms=140.0,
                         deadline_model=None, colours=None,
                         xlabel="Time on the K1 (ms)", width=DOUBLE_COL,
                         model_labels=None,
                         panel_height_mm=26.0, panel_labels=True,
-                        cluster_boundary=True, legend=True):
+                        cluster_boundary=True, legend=True,
+                        repeat_frame=False):
     """Gantt with physical cores as lanes, one panel per entry in `panels`.
 
     `panels` is a sequence of dicts with keys ``title``, ``rows`` (trace rows,
@@ -228,45 +301,13 @@ def render_gantt_panels(panels, out, *, periods, cores=None, window_ms=140.0,
     seen_models = set()
     for idx, (ax, panel) in enumerate(zip(axes, panels)):
         sched = panel["sched"]
-        for r in panel["rows"]:
-            ent = sched.get(r["dispatch_key"])
-            if ent is None:
-                continue
-            start = float(r["start_us"]) / 1000.0
-            dur = float(r["run_us"]) / 1000.0
-            if start > window_ms:
-                continue
-            lanes = [cores.index(c) for c in str(ent["hardware_target"]).split("+")
-                     if c in cores]
-            if not lanes:
-                continue
-            m = model_of(r["job_name"])
-            seen_models.add(m)
-            lo, hi = min(lanes), max(lanes)
-            ax.broken_barh([(start, max(dur, 0.15))],
-                           (lo - 0.42, (hi - lo) + 0.84),
-                           facecolors=colours.get(m, C_MUTED),
-                           edgecolors="white", linewidth=0.15)
-        if deadline_model and periods.get(deadline_model):
-            T = periods[deadline_model]
-            k = 0
-            while k * T <= window_ms:
-                ax.axvline(k * T, color=C_DEADLINE, lw=0.4, ls=(0, (2, 2)),
-                           zorder=0)
-                k += 1
-        ax.set_yticks(range(len(cores)))
-        ax.set_yticklabels(cores, fontsize=4.2)
-        ax.set_ylim(-0.7, len(cores) - 0.3)
-        ax.invert_yaxis()
-        ax.set_xlim(0, window_ms)
+        seen_models.update(draw_gantt_axis(
+            ax, panel["rows"], sched, cores=cores, window_ms=window_ms,
+            colours=colours, periods=periods,
+            deadline_model=deadline_model,
+            cluster_boundary=cluster_boundary,
+            repeat_frame=repeat_frame))
         ax.set_title(panel["title"], loc="left", pad=2)
-        ax.spines[["top", "right"]].set_visible(False)
-        if cluster_boundary:
-            # Where the cluster label changes: on the K1 that is cores 0-3
-            # carrying IME and 4-7 not, which is a hardware fact worth a line.
-            for i in range(1, len(cores)):
-                if cores[i].split("#")[0] != cores[i - 1].split("#")[0]:
-                    ax.axhline(i - 0.5, color="0.75", lw=0.4)
         if panel_labels:
             lab = chr(ord("a") + idx) if isinstance(panel_labels, bool) \
                 else panel_labels[idx]
