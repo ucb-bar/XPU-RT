@@ -380,3 +380,59 @@ bringup was designed for. The port is what surfaced it.
     context per lane is live at a time — a budget of a few per backend would
     suffice, and the trace already records per-entry timing to measure the
     reload cost against the 2196.8 ms target.
+
+---
+
+## 10. Lazy context loading, and what it revealed
+
+`flowc/emit_runtime.py` now supports lazy context loading with a per-backend
+LRU budget, enabled by `FLOWC_CTX_BUDGET`. Default 0 = eager, byte-identical to
+the previous behaviour, so every runtime that already fits is unchanged.
+
+    contexts are created on first use, not at bringup
+    the LRU victim on the same backend is freed when the budget is reached
+    a context in use by a lane is never evicted (refcount)
+    reports: ctx loads=N evictions=M load_time=T ms
+
+### It unblocks execution
+
+    before:  QNN error 0x4 at contextCreateFromBinary, 56 of 141 loaded
+    after:   [main] lazy contexts: budget 8 per backend, 141 registered
+             [summary] 141/141 entries executed
+
+### And it exposes the real cost
+
+    config                            predicted   actual   ratio   notes
+    141-tile hybrid (lazy, budget 8)     2196.8  12876.3   5.86x   8699.3 ms in ctx load
+                                                                   141 loads, 117 evictions
+    49-tile segments (eager, resident)   2875.0   3577.5   1.24x   49 contexts, 0 loads
+
+**Context loading is 68% of the 141-tile wall time.** Each tile is visited once
+in a sequential chain, so an LRU cache gets no reuse -- the budget prevents the
+crash but every tile still pays a create. 141 creates cost 8.7 s against 2.2 s
+of predicted compute.
+
+The 49-tile cut fits under the ~56-context ceiling, so its contexts stay
+resident and it pays nothing per tile. It is **3.6x faster end to end**
+(3577.5 vs 12876.3 ms) despite a *worse* predicted makespan (2875.0 vs 2196.8).
+
+### The conclusion the port produces
+
+Scheduling gain and context residency pull in opposite directions, and on this
+board residency wins decisively:
+
+  * finer tiling buys backend choice -- the 141-tile hybrid reaches HTA and
+    predicts 2196.8 ms against the 49-tile cut's 2875.0 ms;
+  * but it costs 141 context creates, and the board can only hold ~56 resident.
+
+So the best *measured* configuration is the coarse one, and the published
+1083.6 ms is doubly unreachable: it credits whole segments with HTA times
+measured on extracted convs, and the decomposition that would actually reach
+HTA cannot stay resident.
+
+**Where this leaves the port:** Flow C now runs smolVLA end to end at either
+granularity, its capability model refuses the placement that produced the
+original headline, and the measured best is 3577.5 ms at 49 tiles. Closing the
+gap to the 2196.8 ms schedule needs contexts that survive across dispatches --
+either a larger context budget than this silicon allows, or fewer/larger tiles
+that still reach HTA.
