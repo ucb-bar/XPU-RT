@@ -45,6 +45,11 @@ def instances_per_model(schedule: dict, known=None) -> Dict[str, int]:
     dispatches an instance is made of, and must not change how many instances
     there are. So unequal counts mean the solver flags differed, not the graph.
     """
+    # Without `known`, split_job_name strips trailing digits and mangles any
+    # network whose name ends in one. Recover the names from the schedule
+    # rather than taking that fallback.
+    if not known:
+        known = job_names.known_from_schedule(schedule)
     seen: Dict[str, set] = {}
     for d in (schedule.get("dispatches") or {}).values():
         j = d.get("job_name") or ""

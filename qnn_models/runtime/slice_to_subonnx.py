@@ -167,8 +167,14 @@ def _resolve_dispatch_id_to_onnx_nodes(
 
     out: dict[int, list[str]] = {}
     for k, v in sched["dispatches"].items():
-        net = v["job_name"].rstrip("0123456789")
-        if net != network:
+        # `job_name` is "<network>" for an aperiodic net and "<network><i>"
+        # for a periodic instance. Test that shape against the network we want
+        # rather than rstrip-ing digits: rstrip turns "vision_v3" into
+        # "vision_v" and silently drops every dispatch of any model whose name
+        # ends in a digit.
+        job = v["job_name"]
+        if not (job == network
+                or (job.startswith(network) and job[len(network):].isdigit())):
             continue
         did = v["id"]
         mname = v["module_name"]

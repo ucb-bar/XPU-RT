@@ -598,7 +598,9 @@ def find_artifact(directory: str, prefix: str, stem: str, solver: str,
     return None
 
 
-RE_INSTANCE = re.compile(r"^(?P<net>.+?)(?P<instance>\d*)_dispatch_\d+$")
+
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "xpu-rt"))
+from freshness import split_instance_name  # noqa: E402
 
 
 def read_schedule_metadata(path: str) -> Dict[str, object]:
@@ -620,12 +622,25 @@ def read_schedule_metadata(path: str) -> Dict[str, object]:
     # somewhere between the workload JSON and the emitted schedule, which
     # is exactly what the instance-count clobber and the periodic trim used
     # to do.
+    # Split `<network><instance>` by longest-prefix against the networks this
+    # schedule actually declares -- NOT by a trailing-digit regex. The regex
+    # that used to live here read "vision_v3_dispatch_6" as instance 3 of a
+    # network "vision_v", i.e. it corrupted every model whose own name ends in
+    # a digit. `job_name` is used directly so the "_dispatch_N" suffix never
+    # has to be parsed at all.
+    known = sorted((meta.get("periodic_networks") or {}))
     landed: Dict[str, set] = {}
-    for name in (sched.get("dispatches") or {}):
-        m = RE_INSTANCE.match(name)
-        if not m:
+    for d in (sched.get("dispatches") or {}).values():
+        job = d.get("job_name")
+        if not job:
             continue
-        landed.setdefault(m.group("net"), set()).add(m.group("instance"))
+        try:
+            net, inst = split_instance_name(job, known)
+        except ValueError:
+            # Aperiodic networks are absent from `periodic_networks` and keep
+            # their bare identifier, which is instance 0 by definition.
+            net, inst = job, 0
+        landed.setdefault(net, set()).add(inst)
     if landed:
         out["scheduled_instances"] = " ".join(
             f"{net}={len(seen)}" for net, seen in sorted(landed.items()))

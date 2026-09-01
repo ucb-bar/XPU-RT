@@ -129,6 +129,9 @@ def _module_name(model, did, op):
     return f"{model}$dispatch_{did}_{IMPL}_{op}_n256"
 
 
+from freshness import split_instance_name
+
+
 class Bench:
     """A self-contained K1-shaped tree in a temp directory."""
 
@@ -371,7 +374,11 @@ class TheLoopRuns(unittest.TestCase):
         `mlp_control` dispatch a `dronet` module name.
         """
         for key, d in self.sched["dispatches"].items():
-            model = key.split("_dispatch_")[0].rstrip("0123456789")
+            known = sorted(self.sched["metadata"].get("periodic_networks") or {})
+            try:
+                model, _ = split_instance_name(d["job_name"], known)
+            except ValueError:
+                model = d["job_name"]
             self.assertIn("module_name", d, key)
             self.assertTrue(d["module_name"].startswith(model + "$"),
                             f"{key} -> {d['module_name']}")

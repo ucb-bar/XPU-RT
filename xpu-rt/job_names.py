@@ -70,3 +70,36 @@ def model_of(job: str, known: Optional[Iterable[str]] = None) -> str:
 
 def instance_index(job: str, known: Optional[Iterable[str]] = None) -> int:
     return split_job_name(job, known)[1]
+
+
+def known_from_schedule(schedule: dict) -> list:
+    """Recover the network names a solved schedule was built from.
+
+    `split_job_name` is only correct when it is told the names; without them it
+    falls back to stripping trailing digits, which turns "smolvlm_vision_v3"
+    into "smolvlm_vision_v". Callers that have no workload spec to hand (no
+    `--windows-from`) used to take that fallback silently.
+
+    Two sources, unioned:
+      * `metadata.periodic_networks` -- the periodic bases. Their instances
+        appear as "<base><i>" and the bare base never appears as a job_name,
+        so they cannot be recovered from the job names alone.
+      * any job_name that is not an instance of one of those bases. An
+        aperiodic network keeps its bare identifier, so the job_name IS the
+        network name -- including when it ends in a digit.
+    """
+    periodic = sorted((schedule.get("metadata") or {}).get("periodic_networks") or {})
+    jobs = {d.get("job_name") for d in (schedule.get("dispatches") or {}).values()}
+    jobs.discard(None)
+    jobs.discard("")
+
+    def _is_instance_of_periodic(job: str) -> bool:
+        for base in periodic:
+            if job == base:
+                return True
+            if job.startswith(base) and job[len(base):].isdigit():
+                return True
+        return False
+
+    aperiodic = sorted(j for j in jobs if not _is_instance_of_periodic(j))
+    return sorted(set(periodic) | set(aperiodic))
