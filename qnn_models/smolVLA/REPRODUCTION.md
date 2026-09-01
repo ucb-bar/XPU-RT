@@ -130,7 +130,7 @@ sentinel, meaning the segment cannot compile/run there.
 
 | # | component | segments | CPU | DSP | HTA | partitioned? |
 |---|---|---|---|---|---|---|
-| 1 | `smolvlm_vision_v3` | **49** | 3172.2 | 3609.6 | **1367.6** | **YES** |
+| 1 | `smolvlm_vision_v3` | **49** | 3172.2 | 3609.6* | 1367.6* | **YES** (see §7) |
 | 2 | `smolvlm_vision_v3_bundles` | 141 | 26 run / 115 excl | 69 / 72 | 46 / 95 | yes, but a regression |
 | 3 | `smolvlm_vision_coarse` | 1 | EXCL | EXCL | EXCL | no -- runs nowhere |
 | 4 | `smolvlm_expert_prefill_coarse` | 1 | 583.8 | EXCL | EXCL | no |
@@ -143,6 +143,9 @@ sentinel, meaning the segment cannot compile/run there.
 | 11 | `time_out_projector_coarse` | 1 | **5.4** | 33.7 | 6.6 | no |
 
 All times ms, serial sum over the component's segments. Bold = fastest backend.
+`*` The DSP and HTA columns for `smolvlm_vision_v3` are **already hybrid**, not
+single-backend alternatives -- see §7. Only the CPU column is a true
+one-backend number.
 
 **One of nine distinct components has been successfully partitioned.** Vision
 is the whole story; everything else is a single monolithic `*_coarse` graph.
@@ -192,3 +195,61 @@ already fastest on CPU -- partitioning them is not worth the dispatch overhead.
 **`expert_prefill` is the only component where partitioning work would still
 pay**, and it is gated on the ScatterND/Where op support rather than on slicing
 mechanics.
+
+
+---
+
+## 7. Correction: vision is NOT 47/49 on HTA
+
+The `README.md` headline, which §1 reproduced arithmetically, says 47 of 49
+segments run on HTA. **Physically, 23 do.** The claim survives only because the
+profile data misrepresents what HTA can run.
+
+### The two segment families
+
+The 49 segments are not homogeneous. They are:
+
+    25 x dsp_seg_*   heavy compute (MatMul/Conv), accelerator-eligible
+    24 x cpu_seg_*   the Tanh/GELU trampolines carved out by the slicing plan,
+                     CPU-only *by construction* -- they exist precisely because
+                     HTA and DSP cannot run Tanh
+
+### The data defect
+
+For all 24 `cpu_seg_*` rows, the DSP and HTA columns carry the **CPU value,
+copied verbatim** (24/24 identical in both columns), rather than the 1e9 us
+sentinel that marks "cannot run here". So the scheduler sees a trampoline as
+runnable on HTA at exactly the CPU price, and — with nothing to distinguish
+them — assigns all 24 to the HTA lane:
+
+    schedule: 47 dispatches on CPU_P#0 (HTA lane), 2 on CPU_X#0
+    of those 47, 24 are cpu_seg_* trampolines
+    board contexts for cpu_seg_*: 24 x __Cpu.bin, 0 x __Hta.bin
+
+That placement cannot execute. No HTA context exists for a trampoline, and none
+can be built.
+
+### What the numbers really are
+
+    "HTA serial" 1367.6 ms = 822.9 ms  (25 dsp_seg_* on HTA)
+                           + 544.7 ms  (24 cpu_seg_* on CPU, copied in)
+
+    makespan     1083.6 ms =  392.6 ms  on HTA   (23 segments)
+                           +  691.0 ms  on CPU   (26 segments)
+
+The makespan *arithmetic* is correct -- the durations summed are the real CPU
+durations for the trampolines -- so 1083.6 ms and the 2.9x speedup stand. What
+is wrong is the **lane attribution**: the partition is 23 HTA / 26 CPU, not
+47/3. HTA carries 36% of the work, not 86%.
+
+### Why it matters
+
+  * A runtime generated from this schedule would dispatch 24 entries to a
+    backend that cannot run them. Flow C's capability check would reject it;
+    the greedy path did not.
+  * It inflates the apparent HTA benefit. The honest framing is that slicing
+    moved 36% of the vision encoder onto HTA, and that alone is worth 2.9x.
+  * The fix is in the emit step: `cpu_seg_*` rows should carry the exclusion
+    sentinel for DSP and HTA, not the CPU value. Then the scheduler places them
+    on CPU_X where they belong, and the reported lane split becomes truthful.
+    The makespan should not change, since the durations are already the CPU ones.
