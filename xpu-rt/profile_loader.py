@@ -159,6 +159,68 @@ def _resolve_topo_for(
     )
 
 
+def _load_id_remap(dispatch_deps_path: str) -> dict:
+    """`{old_dispatch_id: [new_dispatch_id, ...]}` for an IR-split model.
+
+    `pipeline/apply_split_hint.py` turns one dispatch into N tiles and
+    RENUMBERS every dispatch after it, emitting the mapping as `id_remap`.
+    Profiles are keyed by dispatch_id and were measured on the UNSPLIT
+    graph, so indexing them with split ids silently hands every dispatch
+    after the split point its neighbour's cost. Observed on a 2-way split
+    of dronet conv2d_s8[0] (FPGA job 374): conv_modules.0.tile_1 was
+    scheduled with maxpool's 0.218024 ms, maxpool1 with batchnorm's
+    0.031082 ms, and so on down the graph. The model still computed the
+    right answer -- data deps come from the model graph, not the schedule
+    -- but every placement and duration after the split was wrong, so the
+    two tiles serialised instead of running concurrently.
+
+    Returns {} when the graph carries no remap, i.e. every unsplit model,
+    so this is a no-op on the existing flow.
+    """
+    try:
+        with open(dispatch_deps_path) as f:
+            g = json.load(f)
+    except (OSError, ValueError):
+        return {}
+    raw = g.get("id_remap") or {}
+    out = {}
+    for old, new in raw.items():
+        try:
+            out[int(old)] = [int(n) for n in new]
+        except (TypeError, ValueError):
+            continue
+    return out
+
+
+def _apply_id_remap(prof: dict, remap: dict) -> dict:
+    """Re-key a profile measured on the unsplit graph onto split ids.
+
+    A dispatch split N ways along OC computes 1/N of the output channels,
+    and conv/linear cost is linear in OC, so the parent's measured cost is
+    divided evenly across its tiles. That is a first-order ESTIMATE, not a
+    measurement: the tiles were never profiled individually, and a small-OC
+    tile loses accelerator efficiency (on FPGA a 16-of-32 OC gemmini tile
+    measured ~2x the FULL 32-OC conv, not half). Re-profile the split graph
+    when tile costs matter. What this fixes is the SHAPE of the schedule,
+    so the scheduler can place tiles concurrently at all.
+    """
+    if not remap:
+        return prof
+    out = {}
+    for old, entry in prof.items():
+        tiles = remap.get(old)
+        if not tiles:
+            continue
+        n = len(tiles)
+        for k, new_id in enumerate(tiles):
+            e = dict(entry)
+            e["time_ms"] = entry.get("time_ms", 0.0) / n
+            if n > 1:
+                e["module_name"] = f"{entry.get('module_name', '')}.tile_{k}"
+            out[new_id] = e
+    return out
+
+
 def _load_all_topo_profiles(
     net_id: str,
     net_info: dict,
@@ -205,6 +267,8 @@ def _load_all_topo_profiles(
             )
             if csv_path:
                 prof = load_profiled_times(csv_path)
+                prof = _apply_id_remap(
+                    prof, _load_id_remap(dispatch_deps_path))
                 if prof:
                     profiles[(hw, topo)] = prof
                     if model_candidate != net_id:
