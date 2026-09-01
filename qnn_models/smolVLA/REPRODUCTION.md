@@ -509,3 +509,67 @@ If ScatterND and Where both fall, prefill's tile count drops to roughly 20 --
 inside the residency ceiling -- and it becomes a candidate for the same
 treatment vision received. Until then, partitioning it is measurably the wrong
 move.
+
+---
+
+## 12. Graph rewrite: ScatterND eliminated, both experts now fit
+
+§11 concluded the experts need graph rewriting rather than finer slicing. Done:
+`rewrite_scatternd_to_concat.py`.
+
+### What the ScatterNDs actually were
+
+Not general scatters, and not in-place KV-cache updates either. Every one of
+the 64 in prefill falls into one of two classes, verified across all of them:
+
+    32x  data = an ALL-ZERO initializer, indices = constant arange(32)     -> [0..31]
+    32x  data = the previous ScatterND's output, indices = arange(32)+32   -> [32..63]
+
+So each consecutive pair is
+
+    tmp = ScatterND(zeros(64,...), [0..31],  A)     # tmp[0:32]=A, tmp[32:64]=0
+    out = ScatterND(tmp,           [32..63], B)     # out[0:32]=A, out[32:64]=B
+
+which is exactly `Concat([A, B], axis=0)` — the graph was assembling the
+`present_key_N` / `present_value_N` cache from two halves. The rewrite is
+value-identical by construction: the base is all zeros, the two index blocks
+are contiguous, disjoint, in order, and together cover the whole axis. The
+rewriter checks all four conditions per pair and skips anything that fails.
+
+### Verified numerically, not just structurally
+
+    prefill: 64 ScatterND -> 0   (32 pairs -> Concat)
+    decode:  48 ScatterND -> 0   (24 pairs -> Concat)
+
+onnxruntime, same random inputs, graph optimisation disabled, all 33 outputs:
+
+    vlm_output_embeds        max|diff| 0.000e+00
+    present_key_0..15        max|diff| 0.000e+00
+    present_value_0..15      max|diff| 0.000e+00
+
+**Bit-exact**, not merely within tolerance.
+
+### It brings both experts inside the residency ceiling
+
+    component                ops   blockers                          tiles   vs ~56 ceiling
+    prefill BEFORE          1166   82  (ScatterND 64, Where 16, ...)    115   OVER
+    prefill AFTER           1134   18  (Where 16, Sin 1, Cos 1)          36   UNDER
+    decode  BEFORE          1096   68  (ScatterND 48, Where 16, ...)    101   OVER
+    decode  AFTER           1072   20  (Where 16, Sin 2, Cos 2)          39   UNDER
+
+That is the unblock §11 identified: prefill drops from 115 tiles to **36**,
+decode from 101 to **39**. Both now fit resident, so neither would pay the
+context-churn penalty that made the 141-tile vision hybrid 3.6x slower than the
+49-tile cut.
+
+### What remains
+
+`Where` x16 is the surviving blocker in both, and is next: attention masking is
+usually expressible as a Mul by a precomputed 0/1 mask, which composes.
+Removing it would take prefill to ~19 tiles. `Sin`/`Cos` (1-2 each) are rotary
+embeddings and can be folded to constants when positions are static.
+
+The rewritten models are `smolvlm_expert_{prefill,decode}_concat.onnx`
+(untracked, like every other model blob under smolVLA/). Next step is to push
+them through convert -> quantize -> context-build and confirm the tiles compose
+on DSP/HTA, which is what the tile counts above assume but do not yet prove.
