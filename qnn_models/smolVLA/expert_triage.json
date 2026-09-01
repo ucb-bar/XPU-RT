@@ -109,6 +109,14 @@
    "impact": "high",
    "feasibility": "failed",
    "evidence": "ComposeGraphs Failed with error = 1. HTA is far more restricted than DSP and the trunk is MatMul/FullyConnected-heavy rather than convolutional. DSP is the only accelerator that takes this graph."
+  },
+  {
+   "id": "A2",
+   "class": "backend",
+   "what": "Adreno 650 GPU (fp16) for any SmolVLA component",
+   "impact": "high",
+   "feasibility": "evaluated - no candidate",
+   "evidence": "GPU is 4-6x worse than CPU on the three dominant components (vision 4.06x, prefill 5.01x, decode 6.12x) and wins only on text (saves 0.30 ms) and state_projector (saves 0.70 ms) -- 1.00 ms total, 0.03% of a 3351.7 ms pipeline. Notable: GPU is the ONLY backend that runs the unsliced vision encoder (12869 ms) where CPU/DSP/HTA all exclude it, so it has the broadest op coverage and the worst throughput. Not a general GPU verdict: it was a real win for ViNT's decoder (16.4 vs 22.6 ms CPU)."
   }
  ],
  "verdict": {
@@ -117,7 +125,7 @@
   "execution": "DONE -- 1384.5 ms median on DSP, init 1032.4 ms",
   "tiles_required": "2 (DSP trunk + CPU RmsNorm tail), far inside the ~56 ceiling",
   "performance": "NEGATIVE. DSP 1384.5 ms vs CPU 583.8 ms = 2.37x SLOWER. The full rewrite chain successfully maps the expert prefill onto the DSP, and the mapping is not worth taking. Consistent with the vision result, where DSP was slowest on every one of 49 segments (3609.6 ms serial vs CPU 3172.2). Hexagon v66 is not competitive with the Kryo 585 for transformer-shaped work on this board.",
-  "backends_tried": "CPU (baseline, fastest), DSP (composes+executes, 2.37x slower), HTA (does not compose)",
+  "backends_tried": "CPU (baseline, fastest for every SmolVLA component), DSP (composes+executes, 2.37x slower on prefill), HTA (will not compose the experts; wins only on sliced vision convs), GPU (broadest op coverage, 4-6x slower on everything that matters)",
   "exhausted": "YES. Rewrites R1-R5, dtype D1-D3, calibration C1, slicing S1-S2, runtime X1 and backend A1 all carry evidence-backed verdicts. The expert prefill IS mappable to the DSP; the mapping is measurably not worth taking."
  }
 }

@@ -839,3 +839,62 @@ that rests on argument rather than evidence. The artifacts
 Also note R3's caveat: the rotary fold is exact only while `position_ids`
 equals the sequence it was folded at. For this fixed-shape export that holds;
 for variable positions the sin/cos must be lifted to graph inputs instead.
+
+---
+
+## 16. GPU candidates: none worth taking
+
+The triage in section 15 covered CPU, DSP and HTA. The Adreno 650 is the fourth
+lane and was omitted; this closes it. GPU numbers come from the
+`qnn-profile-viewer` dumps already in
+`boards/qrb5165_v66/profiles/*__GPU_fp16.csv` (the `NETRUN/ROOT` EXECUTE row).
+
+    component      CPU ms   GPU fp16   GPU/CPU   best other      verdict
+    vision         3172.2    12869.0     4.06x   HTA-sliced 1367.6   much worse
+    prefill         583.8     2922.7     5.01x   DSP        1384.5   much worse
+    decode          149.6      915.6     6.12x   --                  much worse
+    text              6.4        6.1     0.95x   DSP          37.8   GPU wins
+    state_proj        1.3        0.6     0.46x   HTA           2.6   GPU wins
+    action_in         4.7        7.5     1.60x   HTA           6.7   much worse
+    action_out        2.1        5.3     2.52x   HTA           3.4   much worse
+    time_in           5.8       13.5     2.33x   HTA           6.7   much worse
+    time_out          5.4        9.6     1.78x   HTA           6.6   much worse
+
+**GPU is 4-6x worse on the three components that dominate the pipeline** and
+wins on exactly two, both trivial:
+
+    text          6.4 -> 6.1 ms   saves 0.30 ms
+    state_proj    1.3 -> 0.6 ms   saves 0.70 ms
+    total                         saves 1.00 ms
+
+Against a ~3351.7 ms single-inference path that is **0.03%**. Two extra context
+bringups and a third lane in the schedule to buy one millisecond: not worth it.
+
+### The one genuinely interesting GPU property
+
+**GPU is the only backend that runs the UNSLICED vision encoder.**
+`smolvlm_vision_coarse` is excluded on CPU, DSP and HTA alike -- that exclusion
+is what motivated the whole 49-segment slicing effort -- yet the GPU executes
+the whole graph in 12869 ms. So the Adreno has by far the broadest op coverage
+of the four backends and by far the worst throughput on this workload.
+
+That is worth remembering for a model that *cannot* be sliced: the GPU is the
+fallback that will at least run. It is not worth remembering for SmolVLA, which
+slices fine.
+
+### Not a general verdict on the GPU
+
+Earlier in this work the GPU was a real win for ViNT -- decoder 16.4 ms fp16
+against 22.6 ms on CPU, with measured concurrency of 1.85x against an ideal
+1.94x alongside the DSP. The Adreno is not a weak lane in general; it is a poor
+match for SmolVLA's shapes specifically.
+
+### Caveat on comparability
+
+The GPU figures are `qnn-net-run` profile dumps of the `_patched`/`_fp16` graph
+variants from an earlier sweep, not the `profile_seg` wallclock used for the
+CPU/DSP/HTA cells, and they are whole-graph rather than summed segments. The
+two harnesses are not strictly interchangeable. The direction is not in doubt --
+a 4-6x gap is far outside any methodology difference -- but the two "GPU wins"
+are 0.3 ms and 0.7 ms, well inside it, so even those should be treated as
+"roughly a wash" rather than established wins.
