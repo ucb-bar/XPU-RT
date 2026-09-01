@@ -436,3 +436,76 @@ original headline, and the measured best is 3577.5 ms at 49 tiles. Closing the
 gap to the 2196.8 ms schedule needs contexts that survive across dispatches --
 either a larger context budget than this silicon allows, or fewer/larger tiles
 that still reach HTA.
+
+---
+
+## 11. The remaining components: why the experts cannot be partitioned here
+
+`expert_prefill` (583.8 ms) and `expert_decode` (149.6 ms) are the only
+components where partitioning could still pay -- the four projectors plus text
+and state_proj total ~25 ms and are already fastest on CPU. Analysed both
+against the residency ceiling §10 measured.
+
+### The blockers are interleaved, not clustered
+
+    smolvlm_expert_prefill.onnx   1166 ops   82 blockers   144 heavy (MatMul/Gemm/Conv)
+    smolvlm_expert_decode.onnx    1096 ops   68 blockers   144 heavy
+
+    prefill blockers: ScatterND x64, Where x16, Sin x1, Cos x1
+    decode  blockers: ScatterND x48, Where x16, Sin x2, Cos x2
+
+The `_patched` variants on disk do **not** remove them -- they add 16-18 ops and
+leave every ScatterND, Where, Sin and Cos in place.
+
+64 ScatterND in a 32-layer transformer prefill is one per layer per K/V: these
+are KV-cache writes, structurally one per layer, not an artefact that better
+slicing can avoid. Their spacing confirms it:
+
+    gap between consecutive blockers: min 1, median 7, max 41
+    first at op 17, last at op 1137 of 1166
+    largest blocker-free span anywhere: 40 ops (8 heavy)
+
+### That forces a tile count the board cannot hold
+
+    component   blocker-free runs with heavy ops   trampolines   tiles needed
+    prefill                    33                      82            115
+    decode                     33                      68            101
+
+Against a **measured residency ceiling of ~56 contexts**. Both are ~2x over,
+and §10 measured exactly what exceeding it costs: the 141-tile vision hybrid
+spent 8699 ms creating contexts -- 68% of its wall -- and came out **3.6x
+slower** than the 49-tile cut that stays resident.
+
+Applying that to prefill: ~115 context creates at the ~62 ms each observed for
+vision is roughly **7 s of context churn against 583.8 ms of compute**. The
+partitioning would cost an order of magnitude more than the work it accelerates.
+
+Coarse partitioning does not rescue it either. The largest blocker-free span in
+the whole graph is 40 ops holding 8 heavy ops, and the median accelerator run
+holds 3 -- there is no large contiguous region to hand to DSP or HTA.
+
+### Conclusion, and the direction that would work
+
+**The experts are not partitionable on this board by slicing.** This is not the
+same conclusion as `SMOLVLA_DSP_SLICING_PLAN.md` reached -- it deferred them as
+"more invasive surgery" -- it is stronger and now quantified: even if every
+blocker were successfully carved into a trampoline, the resulting tile count
+exceeds what the silicon can hold resident, and the context churn dominates.
+
+The productive direction is **graph rewriting, not finer slicing** -- the same
+move that made vision work, where MatMul was rewritten to Conv1x1 so it would
+compose on HTA. Concretely:
+
+  * **ScatterND (64/48).** If these are KV-cache writes, a static cache layout
+    lets them become Concat or a fixed slice assignment, both of which the
+    accelerators support. This is the highest-value single change: it removes
+    78% of prefill's blockers and would collapse ~82 trampolines toward ~18.
+  * **Where (16).** Attention masking. Often expressible as Mul by a precomputed
+    0/1 mask, which composes.
+  * **Sin/Cos (1-2).** Rotary embeddings; can be precomputed to constants when
+    positions are static.
+
+If ScatterND and Where both fall, prefill's tile count drops to roughly 20 --
+inside the residency ceiling -- and it becomes a candidate for the same
+treatment vision received. Until then, partitioning it is measurably the wrong
+move.
