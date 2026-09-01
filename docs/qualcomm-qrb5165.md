@@ -1,9 +1,9 @@
 # SmolVLA vision encoder — reproduction on QRB5165 v66
 
-Re-run 2026-08-31. Data log: `reproduction_data_log.json` (99 cells).
+Re-run 2026-08-31. Data log: `../qnn_models/smolVLA/reproduction_data_log.json` (99 cells).
 Re-measure command:
 
-    bash profile_vision_v3_correct.sh --iters 20 --skip-build
+    cd qnn_models/smolVLA && bash profile_vision_v3_correct.sh --iters 20 --skip-build
 
 All 8 cores on `performance` during measurement, behind `/tmp/qnn_board.lock`,
 governor restored to `schedutil` afterwards. 99 measurements, 0 failures.
@@ -114,7 +114,7 @@ artifacts -- that is a property of this board, not of the repo.
 
     M  qnn_models/boards/qrb5165_v66/profiles/smolvlm_vision_v3/segment_perf.json
     ?? qnn_models/boards/qrb5165_v66/profiles/smolvlm_vision_v3/*.csv   (per-call traces)
-    +  qnn_models/smolVLA/REPRODUCTION.md, reproduction_data_log.json
+    +  docs/qualcomm-qrb5165.md, reproduction_data_log.json
 
 Not touched: the pre-existing dirty artifacts under
 `gen/*/qrb5165_v66/smolvlm_vision_v3_bundles/`, which are a different variant
