@@ -119,3 +119,76 @@ artifacts -- that is a property of this board, not of the repo.
 Not touched: the pre-existing dirty artifacts under
 `gen/*/qrb5165_v66/smolvlm_vision_v3_bundles/`, which are a different variant
 and were already modified before this work.
+
+---
+
+## 6. Partitioning checklist — which components are actually partitioned
+
+Derived from `gen/profile/{CPU,DSP,HTA}/qrb5165_v66/<component>/**/results.csv`.
+A backend is EXCLUDED for a segment when the profile sweep wrote the 1e9 us
+sentinel, meaning the segment cannot compile/run there.
+
+| # | component | segments | CPU | DSP | HTA | partitioned? |
+|---|---|---|---|---|---|---|
+| 1 | `smolvlm_vision_v3` | **49** | 3172.2 | 3609.6 | **1367.6** | **YES** |
+| 2 | `smolvlm_vision_v3_bundles` | 141 | 26 run / 115 excl | 69 / 72 | 46 / 95 | yes, but a regression |
+| 3 | `smolvlm_vision_coarse` | 1 | EXCL | EXCL | EXCL | no -- runs nowhere |
+| 4 | `smolvlm_expert_prefill_coarse` | 1 | 583.8 | EXCL | EXCL | no |
+| 5 | `smolvlm_expert_decode_coarse` | 1 | 149.6 | EXCL | EXCL | no |
+| 6 | `smolvlm_text_coarse` | 1 | **6.4** | 37.8 | EXCL | no |
+| 7 | `state_projector_coarse` | 1 | **1.3** | 29.0 | 2.6 | no |
+| 8 | `action_in_projector_coarse` | 1 | **4.7** | 58.8 | 6.7 | no |
+| 9 | `action_out_projector_coarse` | 1 | **2.1** | 31.4 | 3.4 | no |
+| 10 | `time_in_projector_coarse` | 1 | **5.8** | 35.9 | 6.7 | no |
+| 11 | `time_out_projector_coarse` | 1 | **5.4** | 33.7 | 6.6 | no |
+
+All times ms, serial sum over the component's segments. Bold = fastest backend.
+
+**One of nine distinct components has been successfully partitioned.** Vision
+is the whole story; everything else is a single monolithic `*_coarse` graph.
+
+### Vision, the success
+
+`smolvlm_vision_coarse` is excluded on all three backends -- the unsliced graph
+runs *nowhere*, which is what motivated slicing. Cutting it into 49 segments
+(`v3`) makes every segment runnable on all three and yields best-of-3 =
+**1083.6 ms** against 3172.2 CPU-only. That is a genuine win.
+
+### The bundles variant is a regression, and worth knowing why
+
+`v3_bundles` slices further, to 141 segments. Measured:
+
+    total segments          141
+    runnable somewhere      141
+    runnable on >1 backend    0     <- zero scheduling freedom
+    runnable nowhere          0
+    forced serial total   2272.3 ms  (vs 1083.6 for v3)
+
+It is a **perfect hard partition**: every segment runs on exactly one backend,
+none on two. So the scheduler has no choice to make -- the assignment is forced
+by capability, and the result is **2.1x worse** than the coarser 49-segment cut
+that leaves all three backends viable. Finer slicing bought capability
+fragmentation, not speed. This is the same lesson the dronet binding records
+(7 residual blocks: 3.49 ms summed vs 0.92 ms whole).
+
+### The experts are blocked, not merely unpartitioned
+
+`expert_prefill` (583.8 ms) and `expert_decode` (149.6 ms) are CPU-only --
+excluded on both DSP and HTA. `SMOLVLA_DSP_SLICING_PLAN.md` names the cause:
+`ScatterND` (48-64x) and `Where` (16x) on top of the Sin/Tanh issue. They were
+explicitly declared out of scope for the vision iteration and remain so.
+
+### Where the remaining opportunity is
+
+By cost, on the single-inference path:
+
+    vision           1083.6 ms   partitioned, HTA-resident      <- done
+    expert_prefill    583.8 ms   CPU-only, ScatterND/Where       <- biggest remaining prize
+    expert_decode     149.6 ms   CPU-only, same blockers          (and x10 when unrolled)
+    everything else   ~25   ms   CPU-best already, not worth it
+
+The four projectors plus text and state_proj total roughly 25 ms and are
+already fastest on CPU -- partitioning them is not worth the dispatch overhead.
+**`expert_prefill` is the only component where partitioning work would still
+pay**, and it is gated on the ScatterND/Where op support rather than on slicing
+mechanics.
