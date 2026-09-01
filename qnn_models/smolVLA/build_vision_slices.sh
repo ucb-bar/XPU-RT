@@ -26,9 +26,9 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SLICES_DIR="$SCRIPT_DIR/vision_slices"
 DLC_DIR="$SLICES_DIR/dlc"
 CALIB_DIR="$SLICES_DIR/calibration"
-QNN_SDK="/scratch2/dima/misc_sw/qualcomm/qairt/2.45.0.260326"
+QNN_SDK="${QNN_SDK:-/scratch2/dima/misc_sw/qualcomm/qairt/2.45.0.260326}"
 DOCKER_IMAGE="qnn-convert"
-PYTHON="/scratch2/dima/miniforge3/envs/xpurt/bin/python"
+PYTHON="${PYTHON:-/scratch2/dima/miniforge3/envs/xpurt/bin/python}"
 NUM_CALIB=10
 
 # Parse args

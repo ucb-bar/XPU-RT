@@ -29,7 +29,7 @@ WORK="$GEN_DIR/validate"
 mkdir -p "$WORK"
 
 echo "==> 1. preparing QNN-layout quantized input"
-PY=/scratch2/dima/miniforge3/envs/xpurt/bin/python
+PY="${PY:-/scratch2/dima/miniforge3/envs/xpurt/bin/python}"
 "$PY" - "$SAMPLE" "$INPUT_SHAPE" "$INPUT_QUANT_SCALE" "$INPUT_QUANT_OFFSET" \
                   "$WORK/input_quant_nhwc.raw" <<'PY'
 import sys, numpy as np
