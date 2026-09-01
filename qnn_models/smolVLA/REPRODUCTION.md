@@ -714,3 +714,84 @@ int8 calibration entirely and test composition at fp16.
 No performance number for the experts is claimed. What is established is that
 the blockers which made them CPU-only are gone and the graph is accelerator-
 eligible end to end.
+
+---
+
+## 15. Full triage of the experts: the prefill now composes on DSP
+
+Every accelerator-mapping avenue worked through to a verdict. Machine-readable:
+`expert_triage.json`.
+
+### The headline
+
+**The SmolVLA expert prefill now produces a working DSP context binary** --
+`ctx_trunk_dsp.bin`, 158,467,168 bytes, 1108 ops. That is the first time any
+expert has composed on an accelerator. `SMOLVLA_DSP_SLICING_PLAN.md` declared
+them out of scope; they are not.
+
+Getting there needed five rewrites, a calibration fix and one slice, each of
+which surfaced only after the previous one was cleared -- the toolchain reports
+exactly one blocker at a time.
+
+### The chain, in the order it had to be solved
+
+| # | avenue | verdict | what it actually was |
+|---|---|---|---|
+| R1 | ScatterND -> Concat | **done** | 64/48 scatters were a two-half cache assembly; bit-exact |
+| R2 | Where -> mask arithmetic | **done** | additive attention mask; bit-exact |
+| C1 | float32 calibration raws | **done** | SNPE lists take float32 *regardless of network dtype*; a uint8 mask was 1/4 the extent and surfaced as a phantom "batch size 4" |
+| D1 | int8 quantization | **done** | fp32 DLC is rejected at `Datatype 0x508` before op validation |
+| R4 | bool input -> float32 | **done** | 0x508 = `QNN_DATATYPE_BOOL_8`; DSP rejects a **bool graph input**, which no op-level fix can address |
+| R3 | Sin/Cos -> constants | **done** | `Param[0]=14` is the Sin opcode; DSP's ElementWiseUnary has no Sin. Rotary depends only on `position_ids`, so it folds |
+| R5 | block RmsNorm fusion | **failed** | see below |
+| S1 | whole-graph single tile | **blocked** | by that one RmsNorm |
+| S2 | slice before the RmsNorm | **SUCCEEDED** | 1108-op trunk composes |
+| X1 | execute the context | **blocked** | 158 MB context wedges the board |
+
+Two traps cost real time and are worth recording: the converter applies
+`axes-to-spatial-first-order` (so `vlm_embeds` is `[1,960,113]`, not the ONNX
+`[1,113,960]`) and `keep_int64_inputs=False` (so `position_ids` is `Int_32`).
+A wrong-width raw is reported as a *batch* mismatch, never as a dtype error.
+
+### Why RmsNorm could not be rewritten away
+
+The ONNX contains **no norm op** -- 33 decomposed `Pow -> ReduceMean -> Add ->
+Sqrt -> Reciprocal -> Mul` chains. The converter pattern-matches the last of
+them into a single `qti.aisw:RmsNorm`, and v66 has no implementation:
+
+    QNN_BACKEND_ERROR_OP_PACKAGE_NOT_FOUND
+
+Three exits were tried and all are closed:
+
+  * **Config** -- no RmsNorm pass appears in
+    `--dump_ir_optimizer_config_template` (32 passes listed, none of them it).
+  * **Barrier** -- inserting `Mul` by 1.0 after all 33 `ReduceMean` did not
+    defeat the matcher; RmsNorm was still emitted.
+  * **Op package** -- `libQnnDspV66Skel.so` has no RmsNorm and the SDK ships no
+    registerable op-package `.so`. Since the fusion happens at *convert* time,
+    HTA would inherit the same node.
+
+So RmsNorm is a genuine v66 gap, not a configuration mistake. It is also the
+best possible place for one: op **1189 of 1190**, the final op producing
+`vlm_output_embeds`, operating on `[1,113,960]`.
+
+### What that buys
+
+    prefill: 1108-op trunk on DSP  +  1 RmsNorm on CPU  =  2 tiles
+
+Two tiles, against a ~56-context ceiling. Compare the pre-rewrite estimate of
+115 tiles, which was itself the reason section 11 called the experts
+infeasible. That conclusion is now superseded by measurement.
+
+### What is still not established
+
+**No performance number is claimed.** Composition is proven; execution is not.
+Loading the 158 MB context made the board unreachable (recovered with
+`/opt/relay.sh`, ~60 s) -- the same class of limit section 10 found for the
+141-tile vision runtime, now hit by a single large context rather than many
+small ones. The next step is to shard the trunk into 2-4 tiles to shrink the
+per-context footprint, then measure against the 583.8 ms CPU baseline.
+
+Also note R3's caveat: the rotary fold is exact only while `position_ids`
+equals the sequence it was folded at. For this fixed-shape export that holds;
+for variable positions the sin/cos must be lifted to graph inputs instead.
