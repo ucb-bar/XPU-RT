@@ -783,14 +783,46 @@ Two tiles, against a ~56-context ceiling. Compare the pre-rewrite estimate of
 115 tiles, which was itself the reason section 11 called the experts
 infeasible. That conclusion is now superseded by measurement.
 
-### What is still not established
+### It executes -- and the answer is that the mapping is not worth taking
 
-**No performance number is claimed.** Composition is proven; execution is not.
-Loading the 158 MB context made the board unreachable (recovered with
-`/opt/relay.sh`, ~60 s) -- the same class of limit section 10 found for the
-141-tile vision runtime, now hit by a single large context rather than many
-small ones. The next step is to shard the trunk into 2-4 tiles to shrink the
-per-context footprint, then measure against the 583.8 ms CPU baseline.
+The first execution attempt wedged the board (recovered with `/opt/relay.sh`,
+~60 s). That was memory pressure from a preceding run, not a hard limit: on a
+freshly booted board it runs clean.
+
+    status ok, graph "trunk", 3 iters
+    context init      1032.4 ms
+    execute median    1384.5 ms   (min 1383.3, max 1384.6, std 0.6 -- very stable)
+
+    CPU baseline       583.8 ms
+    DSP                1384.5 ms   ->  2.37x SLOWER
+
+**The full rewrite chain successfully maps the expert prefill onto the DSP, and
+the result is 2.4x worse than leaving it on the CPU.** Plus a full second of
+context init.
+
+HTA was tried as the alternative and does not compose at all
+(`ComposeGraphs Failed with error = 1`) -- it is far more restricted than the
+DSP and the trunk is MatMul/FullyConnected-heavy rather than convolutional.
+
+This is consistent rather than surprising. The vision encoder measured DSP as
+the *slowest* backend on every one of its 49 segments (3609.6 ms serial against
+CPU's 3172.2), and section 6 recorded DSP as 5-20x worse on every small
+component. **The Hexagon v66 DSP is simply not competitive with the Kryo 585
+for transformer-shaped work on this board.** HTA is competitive, but only for
+convolution, which is why vision benefits and the experts cannot.
+
+### Verdict
+
+    op support     SOLVED    0 of 1197 ops unsupported after R1-R4
+    composition    SOLVED    1108-op trunk builds a 158 MB DSP context
+    tiles          2         DSP trunk + CPU RmsNorm tail, vs 115 pre-rewrite
+    execution      DONE      1384.5 ms median, stable
+    performance    NEGATIVE  2.37x slower than CPU; HTA will not take the graph
+
+The engineering question -- *can* the experts be mapped to an accelerator on
+this silicon -- is answered yes, and took five rewrites, a calibration fix and
+one slice. The product question -- *should* they be -- is answered no. Both
+answers are measured, and the second only became knowable by doing the first.
 
 Also note R3's caveat: the rotary fold is exact only while `position_ids`
 equals the sequence it was folded at. For this fixed-shape export that holds;
