@@ -133,6 +133,18 @@ data/toplevel/_probe_*.json
 /gen/vmfb/mlp/
 /gen/vmfb/yolov8_nano/
 
+# gen25/ and gen_mb/ are generated artifact trees, removed in 2717755e:
+# gen25/ is the OPU profile sweep, gen_mb/ is ModelBlaster's emitted vmfb and
+# dispatch graphs. Both are reproduced by the compile/profile flows.
+#
+# These are safe to blanket-ignore ONLY while they hold no tracked file --
+# which is the reasoning the /gen/profile_mb/ note above calls circular, so
+# check before trusting it. In particular gen_mb/profile was a SYMLINK to
+# gen/profile_mb; the cost database itself lives under gen/ and stays tracked.
+# If gen/ is ever restored, re-check that these two rules shadow nothing.
+/gen25/
+/gen_mb/
+
 # Figures are build products: a committed script plus measured data in the
 # repo reproduces every one of them. `scripts/figstyle.py` fixes the style.
 out/figures/
