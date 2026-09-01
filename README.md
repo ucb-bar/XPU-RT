@@ -42,6 +42,22 @@ same reason a road can keep a Roman route: every reader already speaks it.
 * **[`examples/`](examples/)** — runnable, one per topic:
   `.venv/bin/python examples/run_all.py`
 
+### Headline feedback-loop result
+
+On the same exactly repeating 100 ms K1 workload, XPU-RT feedback asks
+ModelBlaster to expose measured multi-hart implementations and reduces the
+**globally optimal worst critical-model response from 8.001335 ms to
+4.890542 ms (38.88%)**. This is an implementation-space improvement, not a
+solver-only comparison: independently validated feasible schedules attain an
+analytic lower bound before and after feedback, so MOSEK, CP-SAT, Greedy, or
+any other scheduler restricted to the original graph cannot close the gap.
+
+Ten complete real-time K1 runs per phase corroborate the result: median worst
+critical response falls from 10.491000 ms to 7.208521 ms (31.29%), with zero
+deadline misses. See [`docs/the_loop.md`](docs/the_loop.md#4-the-strongest-result-a-solver-independent-separation)
+for the interpretation and [`results/k1_feedback_exact/README.md`](results/k1_feedback_exact/README.md)
+for the certificate, checked-in evidence, and exact reproduction command.
+
 ### Documentation
 
 * [`docs/end_to_end_xpurt_firesim.md`](docs/end_to_end_xpurt_firesim.md)
