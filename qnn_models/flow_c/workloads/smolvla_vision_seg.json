@@ -1,0 +1,20 @@
+{
+  "name": "smolvla_vision_seg",
+  "_comment": "49-tile whole-segment cut. No tile reaches HTA (no Hta.bin exists for a whole segment), so this is CPU/DSP only -- but 49 contexts fit under the ~56 the board tolerates, so they stay resident and pay no per-tile load. The A/B against the 141-tile hybrid is scheduling gain vs context-bringup cost.",
+  "target": "qrb5165_smolvla",
+  "board": "qrb5165_v66",
+  "registry": "cores/qrb5165_qnn.json",
+  "measurements": "measurements/qrb5165_v66_smolvla.json",
+  "slots": {
+    "CPU_P": "hta",
+    "CPU_E": "dsp",
+    "CPU_X": "cpu"
+  },
+  "ctx_dir": "/root/models/smolvlm_vision_v3/ctx",
+  "networks": [
+    {
+      "name": "smolvlm_vision",
+      "bindings": "bindings/smolvlm_vision.json"
+    }
+  ]
+}
