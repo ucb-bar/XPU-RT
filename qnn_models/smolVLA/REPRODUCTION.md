@@ -898,3 +898,74 @@ two harnesses are not strictly interchangeable. The direction is not in doubt --
 a 4-6x gap is far outside any methodology difference -- but the two "GPU wins"
 are 0.3 ms and 0.7 ms, well inside it, so even those should be treated as
 "roughly a wash" rather than established wins.
+
+---
+
+## 17. Where the remaining opportunity is
+
+Ranked by impact on the ~3330 ms single-inference path.
+
+    block                     ms     share   status
+    expert_decode x10     1496.0     44.9%   backends exhausted; lever is step count
+    vision (scheduled)    1083.6     32.5%   61% of it is CPU trampolines
+      - attention x12      434.7     13.1%   batched MatMul, the hard case
+      - Tanh x12           110.0      3.3%   registry says DSP/HTA SUPPORT tanh
+      - accelerator x25    352.6     10.6%   already on HTA
+    expert_prefill         583.8     17.5%   fully triaged, low headroom
+    projectors x10         159.0      4.8%   already CPU-optimal
+    text + state_proj        7.7      0.2%   negligible
+
+### 1. expert_decode -- biggest impact, but not a mapping problem
+
+45% of the pipeline, and the backends are already answered: GPU is 6.1x worse
+(915.6 vs 149.6 ms), and prefill's DSP result (2.37x worse) transfers by
+architecture. No mapping strategy recovers this.
+
+The structure says where the win is. Decode takes the prefill's 113-token KV
+cache **as an input** and emits **no updated cache** (1 output, not 33), while
+processing 50 action tokens. So the 10 steps are flow-matching denoising over a
+frozen cache -- 10 refinements of the same action chunk, identical in shape and
+cost.
+
+**The lever is the step count, not the backend.** Dropping 10 -> 5 saves
+~750 ms, 22% of the whole pipeline -- more than every accelerator result in this
+document combined. That is a model change, not a mapping change, and it is the
+single highest-value thing on this list.
+
+A mapping-flavoured variant worth one profiling run: since the cache is
+identical across all 10 steps, any cache-side work inside decode is repeated
+10x and could be hoisted.
+
+### 2. Vision attention trampolines -- biggest genuine mapping prize
+
+12 blocks of `Softmax + batched MatMul + Transpose + Reshape` on
+`[1,12,1024,1024]`, 36.2 ms each, **434.7 ms total = 13.1% of the pipeline**.
+
+They are on the CPU because batched attention is not a simple linear.
+`rewrite_matmul_to_conv1x1.py` says so in its own docstring: *"attn_qk:
+batched, skip (not simple linear)"*. Making batched attention
+accelerator-eligible is the largest opportunity that is actually a mapping
+problem. It is also the hardest -- the 1024x1024 score matrix is 12.6M
+elements per head.
+
+### 3. Vision Tanh trampolines -- cheapest test, best effort/reward
+
+12 segments containing **a single `Tanh` each**, 9.2 ms apiece, **110.0 ms**.
+
+`cores/qrb5165_qnn.json` marks `tanh` **and** `tanh_s8` as supported on both
+`hta0` and `dsp0`. Yet these 12 were carved onto the CPU. Either the registry is
+optimistic or the carve-out is stale -- and `SMOLVLA_DSP_SLICING_PLAN.md`
+describes a *per-Tanh trampoline* design, so this may be inherited from the
+earlier plan rather than measured on the v3 slicing.
+
+**This is one experiment**: convert a lone Tanh at `[1,12,1024,1024]` and try to
+compose it on DSP. `expert_rewrite/tanh_probe.onnx` is already built for it. If
+it composes, that is 110 ms recovered for zero model change and no new kernel.
+
+### Correction to earlier sections
+
+Sections 6 and 15 describe the vision trampolines as the Tanh/GELU clusters,
+following `SMOLVLA_DSP_SLICING_PLAN.md`. That is only half true for the v3
+slicing actually shipped: of the 24, **12 are lone Tanh and 12 are attention
+blocks**, and the attention half carries 80% of the cost (434.7 of 544.7 ms).
+The distinction matters because the two halves need completely different fixes.
