@@ -573,3 +573,79 @@ The rewritten models are `smolvlm_expert_{prefill,decode}_concat.onnx`
 (untracked, like every other model blob under smolVLA/). Next step is to push
 them through convert -> quantize -> context-build and confirm the tiles compose
 on DSP/HTA, which is what the tile counts above assume but do not yet prove.
+
+---
+
+## 13. Where rewrite, and how far the confirmation got
+
+### The Where rewrite
+
+`rewrite_where_to_mask_arith.py`. All 16 `Where` in each expert have the same
+shape -- `Where(cond, scores, -3.4028235e+38)` -- standard additive attention
+masking. Rewritten to the exactly-equivalent arithmetic form:
+
+    mask_f = Cast(cond, float32)          # 1.0 keep, 0.0 mask
+    neg    = (1 - mask_f) * -FLT_MAX      # 0.0 keep, -FLT_MAX mask
+    out    = scores * mask_f + neg
+
+    cond true  -> scores*1 + 0        = scores
+    cond false -> scores*0 + -FLT_MAX = -FLT_MAX
+
+This is stronger than the usual `scores + bias` trick, which is only bit-exact
+because the ulp at -FLT_MAX is huge; multiplying the masked lane to exactly
+zero first removes that dependence.
+
+prefill shares one mask, **decode has two** (self- and cross-attention). The
+first version asserted a single shared mask and correctly *refused* on decode
+rather than building wrong setup; it now emits one setup chain per mask.
+
+### Both experts, both rewrites, verified bit-exact
+
+    prefill  33 outputs, 33 bit-exact, max|diff| 0.000e+00
+    decode    1 output,   1 bit-exact, max|diff| 0.000e+00
+
+against the *original* graphs, onnxruntime, graph optimisation disabled.
+
+### Effect on tile count -- far better than projected
+
+    prefill ORIGINAL   1166 ops, 82 blockers -> 115 tiles   OVER the ~56 ceiling
+    prefill REWRITTEN  1153 ops,  2 blockers ->   4 tiles   UNDER
+    decode  ORIGINAL   1096 ops, 68 blockers -> 101 tiles   OVER
+    decode  REWRITTEN  1094 ops,  4 blockers ->   7 tiles   UNDER
+
+Only `Sin`/`Cos` remain (rotary embeddings, 1-2 each). §11 projected ~19 tiles
+for prefill; the measured result is **4**.
+
+### The confirmation: converted, did NOT compose, and the reason matters
+
+    snpe-onnx-to-dlc  ->  INFO_CONVERSION_SUCCESS, 601 MB prefill_nomask.dlc
+    qnn-context-binary-generator --backend libQnnDsp.so  ->  GENERATOR_RC=14
+
+        QnnDsp <E> Input[0] has incorrect Datatype 0x508.
+        Validate OpConfig failed: QNN_OP_PACKAGE_ERROR_VALIDATION_FAILURE
+        Failed to successfully compose graph
+
+**This is a precision failure, not an op-support failure.** 0x508 is float32:
+the DLC was converted fp32 and never quantized, and the DSP backend rejects
+float32 inputs at datatype validation -- before op composition is reached. So
+the test neither confirms nor refutes that the rewritten graph composes; it
+failed at an earlier gate.
+
+The vision pipeline quantizes to int8 before building contexts
+(`qairt-quantizer --act_bitwidth 8 --weights_bitwidth 8` against a calibration
+list). Doing the same for the experts needs calibration inputs for
+`vlm_embeds` (float), `attention_mask` (**bool**) and `position_ids` (int64) --
+the bool input is the awkward one, and no expert calibration set exists yet.
+
+### State
+
+    ScatterND rewrite    done, bit-exact, 64->0 prefill / 48->0 decode
+    Where rewrite        done, bit-exact, 16->0 both
+    tile count           115->4 (prefill), 101->7 (decode); both under ceiling
+    ONNX -> DLC          confirmed, converts cleanly
+    DLC -> DSP context   BLOCKED on quantization, not on op support
+
+The remaining step is calibration + `qairt-quantizer`, then re-run the same
+context build. Until that runs, "the experts now compose on DSP" is **not**
+established -- only that the blockers that previously made it impossible are
+gone and the graph converts.
