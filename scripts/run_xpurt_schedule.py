@@ -162,6 +162,8 @@ def schedule_iree_networks(
     restrict_makespan_to_nonperiodic: bool | None = None,
     scheduler: str = "mosek",
     max_periodic_iters: int = 4,
+    emit_feedback: bool = False,
+    feedback_run_id: str | None = None,
     freshness_weight: float = 0.0,
     contention_model=None,
 ) -> tuple[Workload, np.ndarray, np.ndarray]:
@@ -892,13 +894,15 @@ def schedule_iree_networks(
     # whose label is ambiguous silently becomes a hint about the wrong
     # combination.
     #
-    # This is the channel merlin consumed through merlin_adapter, which is
-    # retired. Nothing else called `feedback.py`.
-    if getattr(args, "emit_feedback", False):
+    # Driven by the --emit-feedback / --feedback-run-id CLI flags, which main()
+    # forwards as arguments. They used to be read off a module-global `args`,
+    # which does not exist here -- `args` is a local of main() -- so ANY call
+    # to this function raised NameError before reaching the write.
+    if emit_feedback:
         import feedback as _feedback
         _payload = _feedback.derive_dispatch_hints(
             combined_workload, t, alpha,
-            run_id=args.feedback_run_id,
+            run_id=feedback_run_id,
             source_schedule=os.path.basename(json_output_path),
         )
         _fb_path = os.path.join(os.path.dirname(json_output_path) or ".",
@@ -1173,6 +1177,8 @@ if __name__ == "__main__":
         restrict_makespan_to_nonperiodic=args.restrict_makespan_to_nonperiodic,
         scheduler=args.scheduler,
         max_periodic_iters=args.max_periodic_iters,
+        emit_feedback=args.emit_feedback,
+        feedback_run_id=args.feedback_run_id,
         freshness_weight=args.freshness_weight,
         contention_model=_model,
     )
