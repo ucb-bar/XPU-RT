@@ -1,0 +1,604 @@
+{
+ "_comment": "Reproduction data log for the SmolVLA vision-encoder flow on QRB5165 v66. recorded_us is the committed gen/profile/<HW>/qrb5165_v66/smolvlm_vision_v3 value; new_* are re-measured 2026-08-31 via profile_vision_v3_correct.sh --iters 20 --skip-build, all 8 cores on the performance governor, behind /tmp/qnn_board.lock, governor restored to schedutil afterwards. gap_median_us is the idle-gap phase added to profile_segments.cpp this session; absent for HTA, which takes a different measurement path.",
+ "measured_on": "2026-08-31",
+ "target": "qrb5165_v66",
+ "iters": 20,
+ "board": "root@10.44.120.201",
+ "governor": "performance during measurement",
+ "cells": {
+  "dsp_seg_00|DSP": {
+   "recorded_us": 159942.55,
+   "new_mean_us": 125697.57,
+   "new_median_us": 126002.05,
+   "gap_median_us": 125212.48
+  },
+  "dsp_seg_00|CPU": {
+   "recorded_us": 68492.1,
+   "new_mean_us": 71939.24,
+   "new_median_us": 71717.85,
+   "gap_median_us": 71700.52
+  },
+  "dsp_seg_00|HTA": {
+   "recorded_us": 295459.02,
+   "new_mean_us": 299920.01,
+   "new_median_us": 0,
+   "gap_median_us": null
+  },
+  "dsp_seg_01|DSP": {
+   "recorded_us": 88194.95,
+   "new_mean_us": 74493.08,
+   "new_median_us": 74634.64,
+   "gap_median_us": 74428.18
+  },
+  "dsp_seg_01|CPU": {
+   "recorded_us": 97275.63,
+   "new_mean_us": 103155.88,
+   "new_median_us": 103117.62,
+   "gap_median_us": 102558.22
+  },
+  "dsp_seg_01|HTA": {
+   "recorded_us": 12398.95,
+   "new_mean_us": 12392.27,
+   "new_median_us": 0,
+   "gap_median_us": null
+  },
+  "dsp_seg_02|DSP": {
+   "recorded_us": 156081.2,
+   "new_mean_us": 129689.38,
+   "new_median_us": 129781.39,
+   "gap_median_us": 129880.8
+  },
+  "dsp_seg_02|CPU": {
+   "recorded_us": 115520.05,
+   "new_mean_us": 114523.5,
+   "new_median_us": 113786.48,
+   "gap_median_us": 113834.78
+  },
+  "dsp_seg_02|HTA": {
+   "recorded_us": 22154.56,
+   "new_mean_us": 18861.68,
+   "new_median_us": 0,
+   "gap_median_us": null
+  },
+  "dsp_seg_03|DSP": {
+   "recorded_us": 87990.53,
+   "new_mean_us": 74189.16,
+   "new_median_us": 74339.26,
+   "gap_median_us": 74383.55
+  },
+  "dsp_seg_03|CPU": {
+   "recorded_us": 104281.87,
+   "new_mean_us": 101922.3,
+   "new_median_us": 101983.58,
+   "gap_median_us": 102393.42
+  },
+  "dsp_seg_03|HTA": {
+   "recorded_us": 12727.44,
+   "new_mean_us": 12491.98,
+   "new_median_us": 0,
+   "gap_median_us": null
+  },
+  "dsp_seg_04|DSP": {
+   "recorded_us": 155654.31,
+   "new_mean_us": 129942.45,
+   "new_median_us": 130043.53,
+   "gap_median_us": 130067.04
+  },
+  "dsp_seg_04|CPU": {
+   "recorded_us": 111473.83,
+   "new_mean_us": 117482.78,
+   "new_median_us": 119696.97,
+   "gap_median_us": 112884.07
+  },
+  "dsp_seg_04|HTA": {
+   "recorded_us": 22397.72,
+   "new_mean_us": 19043.32,
+   "new_median_us": 0,
+   "gap_median_us": null
+  },
+  "dsp_seg_05|DSP": {
+   "recorded_us": 88325.93,
+   "new_mean_us": 74341.85,
+   "new_median_us": 74457.27,
+   "gap_median_us": 74511.95
+  },
+  "dsp_seg_05|CPU": {
+   "recorded_us": 103600.64,
+   "new_mean_us": 100341.52,
+   "new_median_us": 101078.79,
+   "gap_median_us": 103258.35
+  },
+  "dsp_seg_05|HTA": {
+   "recorded_us": 12639.22,
+   "new_mean_us": 12189.19,
+   "new_median_us": 0,
+   "gap_median_us": null
+  },
+  "dsp_seg_06|DSP": {
+   "recorded_us": 155809.3,
+   "new_mean_us": 129699.52,
+   "new_median_us": 129833.89,
+   "gap_median_us": 129906.23
+  },
+  "dsp_seg_06|CPU": {
+   "recorded_us": 115144.52,
+   "new_mean_us": 115033.71,
+   "new_median_us": 109527.24,
+   "gap_median_us": 109400.89
+  },
+  "dsp_seg_06|HTA": {
+   "recorded_us": 21522.44,
+   "new_mean_us": 18502.93,
+   "new_median_us": 0,
+   "gap_median_us": null
+  },
+  "dsp_seg_07|DSP": {
+   "recorded_us": 87588.82,
+   "new_mean_us": 74263.29,
+   "new_median_us": 74388.48,
+   "gap_median_us": 74362.05
+  },
+  "dsp_seg_07|CPU": {
+   "recorded_us": 100564.35,
+   "new_mean_us": 103133.47,
+   "new_median_us": 103051.65,
+   "gap_median_us": 103221.79
+  },
+  "dsp_seg_07|HTA": {
+   "recorded_us": 12382.6,
+   "new_mean_us": 12488.6,
+   "new_median_us": 0,
+   "gap_median_us": null
+  },
+  "dsp_seg_08|DSP": {
+   "recorded_us": 155796.36,
+   "new_mean_us": 129722.15,
+   "new_median_us": 129889.94,
+   "gap_median_us": 129888.33
+  },
+  "dsp_seg_08|CPU": {
+   "recorded_us": 115731.44,
+   "new_mean_us": 116623.29,
+   "new_median_us": 114910.09,
+   "gap_median_us": 114078.13
+  },
+  "dsp_seg_08|HTA": {
+   "recorded_us": 21735.24,
+   "new_mean_us": 18812.72,
+   "new_median_us": 0,
+   "gap_median_us": null
+  },
+  "dsp_seg_09|DSP": {
+   "recorded_us": 87780.68,
+   "new_mean_us": 74599.96,
+   "new_median_us": 74693.32,
+   "gap_median_us": 74470.48
+  },
+  "dsp_seg_09|CPU": {
+   "recorded_us": 103182.26,
+   "new_mean_us": 103786.58,
+   "new_median_us": 103537.79,
+   "gap_median_us": 103129.76
+  },
+  "dsp_seg_09|HTA": {
+   "recorded_us": 12561.31,
+   "new_mean_us": 12469.74,
+   "new_median_us": 0,
+   "gap_median_us": null
+  },
+  "dsp_seg_10|DSP": {
+   "recorded_us": 156031.0,
+   "new_mean_us": 129762.36,
+   "new_median_us": 129897.43,
+   "gap_median_us": 129966.7
+  },
+  "dsp_seg_10|CPU": {
+   "recorded_us": 113218.3,
+   "new_mean_us": 117737.11,
+   "new_median_us": 122414.72,
+   "gap_median_us": 123178.4
+  },
+  "dsp_seg_10|HTA": {
+   "recorded_us": 22015.04,
+   "new_mean_us": 18481.48,
+   "new_median_us": 0,
+   "gap_median_us": null
+  },
+  "dsp_seg_11|DSP": {
+   "recorded_us": 87708.65,
+   "new_mean_us": 74542.14,
+   "new_median_us": 74637.72,
+   "gap_median_us": 74645.57
+  },
+  "dsp_seg_11|CPU": {
+   "recorded_us": 103836.83,
+   "new_mean_us": 102350.35,
+   "new_median_us": 102276.37,
+   "gap_median_us": 102510.15
+  },
+  "dsp_seg_11|HTA": {
+   "recorded_us": 12415.83,
+   "new_mean_us": 12754.21,
+   "new_median_us": 0,
+   "gap_median_us": null
+  },
+  "dsp_seg_12|DSP": {
+   "recorded_us": 156405.96,
+   "new_mean_us": 130040.31,
+   "new_median_us": 130143.53,
+   "gap_median_us": 130122.38
+  },
+  "dsp_seg_12|CPU": {
+   "recorded_us": 112283.76,
+   "new_mean_us": 113562.87,
+   "new_median_us": 107231.9,
+   "gap_median_us": 107355.51
+  },
+  "dsp_seg_12|HTA": {
+   "recorded_us": 22278.69,
+   "new_mean_us": 19016.72,
+   "new_median_us": 0,
+   "gap_median_us": null
+  },
+  "dsp_seg_13|DSP": {
+   "recorded_us": 88390.04,
+   "new_mean_us": 74731.34,
+   "new_median_us": 74897.29,
+   "gap_median_us": 74514.7
+  },
+  "dsp_seg_13|CPU": {
+   "recorded_us": 103395.31,
+   "new_mean_us": 102218.33,
+   "new_median_us": 102640.78,
+   "gap_median_us": 102850.02
+  },
+  "dsp_seg_13|HTA": {
+   "recorded_us": 12457.25,
+   "new_mean_us": 12387.55,
+   "new_median_us": 0,
+   "gap_median_us": null
+  },
+  "dsp_seg_14|DSP": {
+   "recorded_us": 155742.79,
+   "new_mean_us": 129878.5,
+   "new_median_us": 130064.62,
+   "gap_median_us": 130071.82
+  },
+  "dsp_seg_14|CPU": {
+   "recorded_us": 111635.33,
+   "new_mean_us": 125043.99,
+   "new_median_us": 127216.32,
+   "gap_median_us": 111577.47
+  },
+  "dsp_seg_14|HTA": {
+   "recorded_us": 22172.25,
+   "new_mean_us": 18895.71,
+   "new_median_us": 0,
+   "gap_median_us": null
+  },
+  "dsp_seg_15|DSP": {
+   "recorded_us": 87864.14,
+   "new_mean_us": 74208.48,
+   "new_median_us": 74345.53,
+   "gap_median_us": 74507.81
+  },
+  "dsp_seg_15|CPU": {
+   "recorded_us": 102641.79,
+   "new_mean_us": 100007.88,
+   "new_median_us": 100275.47,
+   "gap_median_us": 103483.7
+  },
+  "dsp_seg_15|HTA": {
+   "recorded_us": 12442.51,
+   "new_mean_us": 12711.07,
+   "new_median_us": 0,
+   "gap_median_us": null
+  },
+  "dsp_seg_16|DSP": {
+   "recorded_us": 155474.91,
+   "new_mean_us": 129766.49,
+   "new_median_us": 129945.13,
+   "gap_median_us": 129999.08
+  },
+  "dsp_seg_16|CPU": {
+   "recorded_us": 116359.91,
+   "new_mean_us": 115863.01,
+   "new_median_us": 114438.37,
+   "gap_median_us": 107670.91
+  },
+  "dsp_seg_16|HTA": {
+   "recorded_us": 22007.07,
+   "new_mean_us": 18429.97,
+   "new_median_us": 0,
+   "gap_median_us": null
+  },
+  "dsp_seg_17|DSP": {
+   "recorded_us": 87886.38,
+   "new_mean_us": 74308.52,
+   "new_median_us": 74501.05,
+   "gap_median_us": 74411.67
+  },
+  "dsp_seg_17|CPU": {
+   "recorded_us": 102739.59,
+   "new_mean_us": 102686.74,
+   "new_median_us": 102792.38,
+   "gap_median_us": 103184.72
+  },
+  "dsp_seg_17|HTA": {
+   "recorded_us": 12494.32,
+   "new_mean_us": 12414.15,
+   "new_median_us": 0,
+   "gap_median_us": null
+  },
+  "dsp_seg_18|DSP": {
+   "recorded_us": 155583.82,
+   "new_mean_us": 129736.27,
+   "new_median_us": 129942.87,
+   "gap_median_us": 129690.54
+  },
+  "dsp_seg_18|CPU": {
+   "recorded_us": 111114.95,
+   "new_mean_us": 117337.06,
+   "new_median_us": 117881.4,
+   "gap_median_us": 108767.72
+  },
+  "dsp_seg_18|HTA": {
+   "recorded_us": 21754.03,
+   "new_mean_us": 19081.38,
+   "new_median_us": 0,
+   "gap_median_us": null
+  },
+  "dsp_seg_19|DSP": {
+   "recorded_us": 88117.15,
+   "new_mean_us": 74709.08,
+   "new_median_us": 74693.84,
+   "gap_median_us": 74611.54
+  },
+  "dsp_seg_19|CPU": {
+   "recorded_us": 100667.59,
+   "new_mean_us": 101915.9,
+   "new_median_us": 102365.79,
+   "gap_median_us": 102791.95
+  },
+  "dsp_seg_19|HTA": {
+   "recorded_us": 12583.38,
+   "new_mean_us": 12340.79,
+   "new_median_us": 0,
+   "gap_median_us": null
+  },
+  "dsp_seg_20|DSP": {
+   "recorded_us": 155334.14,
+   "new_mean_us": 129833.72,
+   "new_median_us": 129927.46,
+   "gap_median_us": 129852.35
+  },
+  "dsp_seg_20|CPU": {
+   "recorded_us": 115919.34,
+   "new_mean_us": 114074.87,
+   "new_median_us": 114131.4,
+   "gap_median_us": 113228.73
+  },
+  "dsp_seg_20|HTA": {
+   "recorded_us": 22083.22,
+   "new_mean_us": 19162.49,
+   "new_median_us": 0,
+   "gap_median_us": null
+  },
+  "dsp_seg_21|DSP": {
+   "recorded_us": 87783.44,
+   "new_mean_us": 74268.5,
+   "new_median_us": 74375.49,
+   "gap_median_us": 74486.91
+  },
+  "dsp_seg_21|CPU": {
+   "recorded_us": 103613.35,
+   "new_mean_us": 104358.61,
+   "new_median_us": 103945.71,
+   "gap_median_us": 103596.48
+  },
+  "dsp_seg_21|HTA": {
+   "recorded_us": 12516.9,
+   "new_mean_us": 12599.74,
+   "new_median_us": 0,
+   "gap_median_us": null
+  },
+  "dsp_seg_22|DSP": {
+   "recorded_us": 155399.79,
+   "new_mean_us": 129645.95,
+   "new_median_us": 129815.29,
+   "gap_median_us": 130028.69
+  },
+  "dsp_seg_22|CPU": {
+   "recorded_us": 112958.16,
+   "new_mean_us": 117975.97,
+   "new_median_us": 119095.93,
+   "gap_median_us": 112086.27
+  },
+  "dsp_seg_22|HTA": {
+   "recorded_us": 22271.92,
+   "new_mean_us": 19023.3,
+   "new_median_us": 0,
+   "gap_median_us": null
+  },
+  "dsp_seg_23|DSP": {
+   "recorded_us": 87495.88,
+   "new_mean_us": 74452.52,
+   "new_median_us": 74698.67,
+   "gap_median_us": 74451.65
+  },
+  "dsp_seg_23|CPU": {
+   "recorded_us": 103985.64,
+   "new_mean_us": 100989.01,
+   "new_median_us": 101614.92,
+   "gap_median_us": 102348.5
+  },
+  "dsp_seg_23|HTA": {
+   "recorded_us": 12558.03,
+   "new_mean_us": 12619.31,
+   "new_median_us": 0,
+   "gap_median_us": null
+  },
+  "dsp_seg_24|DSP": {
+   "recorded_us": 136482.19,
+   "new_mean_us": 114452.22,
+   "new_median_us": 114538.83,
+   "gap_median_us": 114519.02
+  },
+  "dsp_seg_24|CPU": {
+   "recorded_us": 77804.31,
+   "new_mean_us": 77879.89,
+   "new_median_us": 79085.71,
+   "gap_median_us": 79303.32
+  },
+  "dsp_seg_24|HTA": {
+   "recorded_us": 134847.75,
+   "new_mean_us": 83280.73,
+   "new_median_us": 0,
+   "gap_median_us": null
+  },
+  "cpu_seg_00|CPU": {
+   "recorded_us": 36071.3,
+   "new_mean_us": 36379.46,
+   "new_median_us": 36009.65,
+   "gap_median_us": 36025.49
+  },
+  "cpu_seg_01|CPU": {
+   "recorded_us": 9168.93,
+   "new_mean_us": 9138.18,
+   "new_median_us": 9147.98,
+   "gap_median_us": 9148.96
+  },
+  "cpu_seg_02|CPU": {
+   "recorded_us": 36099.18,
+   "new_mean_us": 36206.67,
+   "new_median_us": 35989.88,
+   "gap_median_us": 35976.65
+  },
+  "cpu_seg_03|CPU": {
+   "recorded_us": 9165.52,
+   "new_mean_us": 9144.76,
+   "new_median_us": 9130.78,
+   "gap_median_us": 9134.43
+  },
+  "cpu_seg_04|CPU": {
+   "recorded_us": 36043.57,
+   "new_mean_us": 36889.48,
+   "new_median_us": 35381.97,
+   "gap_median_us": 36533.7
+  },
+  "cpu_seg_05|CPU": {
+   "recorded_us": 9144.22,
+   "new_mean_us": 9141.72,
+   "new_median_us": 9135.09,
+   "gap_median_us": 9140.3
+  },
+  "cpu_seg_06|CPU": {
+   "recorded_us": 36445.42,
+   "new_mean_us": 36174.83,
+   "new_median_us": 35973.01,
+   "gap_median_us": 35970.98
+  },
+  "cpu_seg_07|CPU": {
+   "recorded_us": 9164.65,
+   "new_mean_us": 9153.59,
+   "new_median_us": 9143.15,
+   "gap_median_us": 9145.44
+  },
+  "cpu_seg_08|CPU": {
+   "recorded_us": 36044.95,
+   "new_mean_us": 36168.75,
+   "new_median_us": 35984.77,
+   "gap_median_us": 35893.74
+  },
+  "cpu_seg_09|CPU": {
+   "recorded_us": 9186.87,
+   "new_mean_us": 9151.23,
+   "new_median_us": 9138.29,
+   "gap_median_us": 9137.98
+  },
+  "cpu_seg_10|CPU": {
+   "recorded_us": 36167.32,
+   "new_mean_us": 36479.22,
+   "new_median_us": 35974.66,
+   "gap_median_us": 35909.04
+  },
+  "cpu_seg_11|CPU": {
+   "recorded_us": 9161.89,
+   "new_mean_us": 9156.7,
+   "new_median_us": 9160.3,
+   "gap_median_us": 9155.51
+  },
+  "cpu_seg_12|CPU": {
+   "recorded_us": 36085.75,
+   "new_mean_us": 35366.94,
+   "new_median_us": 34650.61,
+   "gap_median_us": 36001.45
+  },
+  "cpu_seg_13|CPU": {
+   "recorded_us": 9160.78,
+   "new_mean_us": 9152.72,
+   "new_median_us": 9144.82,
+   "gap_median_us": 9129.45
+  },
+  "cpu_seg_14|CPU": {
+   "recorded_us": 36838.11,
+   "new_mean_us": 36218.77,
+   "new_median_us": 35979.51,
+   "gap_median_us": 36067.88
+  },
+  "cpu_seg_15|CPU": {
+   "recorded_us": 9165.56,
+   "new_mean_us": 9164.09,
+   "new_median_us": 9158.7,
+   "gap_median_us": 9153.08
+  },
+  "cpu_seg_16|CPU": {
+   "recorded_us": 36225.83,
+   "new_mean_us": 37059.65,
+   "new_median_us": 36618.86,
+   "gap_median_us": 36227.0
+  },
+  "cpu_seg_17|CPU": {
+   "recorded_us": 9169.41,
+   "new_mean_us": 9161.12,
+   "new_median_us": 9161.6,
+   "gap_median_us": 9150.82
+  },
+  "cpu_seg_18|CPU": {
+   "recorded_us": 36328.44,
+   "new_mean_us": 36803.45,
+   "new_median_us": 36273.17,
+   "gap_median_us": 36241.92
+  },
+  "cpu_seg_19|CPU": {
+   "recorded_us": 9172.72,
+   "new_mean_us": 9164.64,
+   "new_median_us": 9145.38,
+   "gap_median_us": 9151.94
+  },
+  "cpu_seg_20|CPU": {
+   "recorded_us": 36510.08,
+   "new_mean_us": 36466.04,
+   "new_median_us": 36125.11,
+   "gap_median_us": 36153.48
+  },
+  "cpu_seg_21|CPU": {
+   "recorded_us": 9164.55,
+   "new_mean_us": 9155.41,
+   "new_median_us": 9141.76,
+   "gap_median_us": 9155.98
+  },
+  "cpu_seg_22|CPU": {
+   "recorded_us": 35888.02,
+   "new_mean_us": 36317.14,
+   "new_median_us": 36280.78,
+   "gap_median_us": 36405.76
+  },
+  "cpu_seg_23|CPU": {
+   "recorded_us": 9163.09,
+   "new_mean_us": 9171.97,
+   "new_median_us": 9149.7,
+   "gap_median_us": 9152.57
+  }
+ }
+}
