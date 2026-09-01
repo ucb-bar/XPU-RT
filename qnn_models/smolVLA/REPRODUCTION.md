@@ -312,3 +312,71 @@ questions to settle in that run:
     tile, which has 2-3 viable backends.
   * The chain is still strictly sequential, so the lane runtime buys backend
     selection only. The 1.40x is real but it is not concurrency.
+
+---
+
+## 9. Flow C port: result, and the limit it hit
+
+Ported at hybrid granularity and driven through `artifacts -> schedule ->
+runtime -> run`. All 272 (context, backend) pairs on the board were re-measured
+for this (10 iters, gap phase, performance governor, board lock) into a
+separate `measurements/qrb5165_v66_smolvla.json` so the port cannot perturb the
+sweep's cost model.
+
+### The port finds a better configuration than the original
+
+Per `dsp_seg_NN` there is a choice the original flow never made explicit: run
+the **whole** segment (cpu/dsp) or its **decomposition** (conv1x1 kernels on
+HTA + trampoline parts on cpu/dsp). Measured, it goes both ways —
+
+    dsp_seg_00   whole  68.2 ms   decomposed 349.9 ms   -> keep whole
+    dsp_seg_01   whole  74.2 ms   decomposed  45.5 ms   -> decompose
+
+23 of 25 segments are better decomposed, 2 are not. Taking the per-segment
+best gives a 141-tile hybrid:
+
+    all-CPU baseline                              3172.2 ms
+    all-whole      (best of cpu/dsp)              2875.0 ms
+    all-decomposed (the bundles cut)              2509.0 ms
+    original's realizable best (bundles, measured) 2272.3 ms
+    FLOW C PORT, hybrid                           2196.8 ms   1.44x
+    published figure (not realizable)             1083.6 ms
+
+**The scheduler produced 2196.8 ms against a predicted 2196.9 ms** — the
+best-of-cells bound, matched to 0.1 ms. And unlike the original schedule, which
+left `CPU_E#0` completely idle, all three lanes carry work:
+
+    CPU_E#0 (DSP)  69 tiles  1155.0 ms  52.6%
+    CPU_X#0 (CPU)  26 tiles   689.3 ms  31.4%
+    CPU_P#0 (HTA)  46 tiles   352.6 ms  16.0%
+
+Concurrency is still 1.00x with zero overlapping dispatches — the chain is
+sequential, so the lane runtime buys backend selection, not parallelism. That
+was expected and is unchanged by the port.
+
+### It does not run: Flow C loads contexts eagerly
+
+    [bringup] ... 56 contexts loaded (18 HTA, 27 DSP, 11 CPU)
+    QNN error 0x4 at runtime_main.cpp:205
+        iface.contextCreateFromBinary(...)
+
+**Flow C's emitted runtime loads every context at bringup and the board
+exhausts resources at 56 of 141.** There is no lazy or budgeted loading in
+`flowc/emit_runtime.py` — the `XPURT_*_CTX_BUDGET` knobs belong to the older
+`deploy_and_run.sh` runtime, not this one.
+
+This is a Flow C capability gap, not a defect in the port. Every Flow C network
+to date has had 1-3 tiles; 141 is two orders of magnitude past what the eager
+bringup was designed for. The port is what surfaced it.
+
+### Where this leaves things
+
+  * **Schedule: reproduced and improved.** 2196.8 ms, 1.44x over CPU, beating
+    the original's best realizable configuration (2272.3 ms) and using all
+    three lanes instead of two.
+  * **Execution: blocked** on eager context bringup at ~56 contexts.
+  * **Fix:** lazy context load with an LRU budget per backend in
+    `emit_runtime.py`. The schedule is strictly sequential, so at most one
+    context per lane is live at a time — a budget of a few per backend would
+    suffice, and the trace already records per-entry timing to measure the
+    reload cost against the 2196.8 ms target.
