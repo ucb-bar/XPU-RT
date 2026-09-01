@@ -1,0 +1,113 @@
+{
+ "_comment": "Triage of every accelerator-mapping avenue for the SmolVLA experts, by impact and feasibility. Status is evidence-backed: 'done' requires a measurement or a tool output, not an argument.",
+ "baseline": {
+  "prefill_cpu_ms": 583.8,
+  "decode_cpu_ms": 149.6,
+  "note": "measured CPU cells; DSP and HTA excluded pre-rewrite"
+ },
+ "avenues": [
+  {
+   "id": "R1",
+   "class": "rewrite",
+   "what": "ScatterND -> Concat",
+   "impact": "high",
+   "feasibility": "done",
+   "evidence": "64->0 prefill, 48->0 decode; bit-exact on all 33/1 outputs; tiles 115->36 / 101->39"
+  },
+  {
+   "id": "R2",
+   "class": "rewrite",
+   "what": "Where -> mask arithmetic",
+   "impact": "high",
+   "feasibility": "done",
+   "evidence": "16->0 both; bit-exact; tiles 36->4 / 39->7"
+  },
+  {
+   "id": "R3",
+   "class": "rewrite",
+   "what": "Sin/Cos (rotary) -> constants",
+   "impact": "low",
+   "feasibility": "done",
+   "evidence": "Sin/Cos constant-folded (rotary depends only on position_ids). prefill 2->0, decode 4->0; bit-exact at the folded position sequence. Found empirically: DSP ElementWiseUnary rejects Param[0]=14 (Sin opcode) -- no slicing could fix it."
+  },
+  {
+   "id": "D1",
+   "class": "dtype",
+   "what": "int8 quantization for DSP/HTA",
+   "impact": "critical",
+   "feasibility": "done",
+   "evidence": "SOLVED. SNPE input lists take FLOAT32 raws regardless of the network's internal dtype. attention_mask written as uint8 (12769 B) was exactly 1/4 the expected float32 extent (51076 B), which the tool reported as 'batch size 4' rather than a dtype error. With float32 raws: 'Quantization completed successfully', prefill_nomask_q.dlc 157.9 MB (from 629.7 MB fp32)."
+  },
+  {
+   "id": "D2",
+   "class": "dtype",
+   "what": "fp16 (--float_bitwidth 16) to skip int8 calibration",
+   "impact": "high",
+   "feasibility": "superseded",
+   "evidence": "int8 path works; fp16 not needed"
+  },
+  {
+   "id": "D3",
+   "class": "dtype",
+   "what": "explicit --batch 1 / fixed-batch re-convert",
+   "impact": "medium",
+   "feasibility": "superseded",
+   "evidence": "ONNX already static [1,...]; the phantom batch was a float32-raw convention issue, not a batch issue"
+  },
+  {
+   "id": "S1",
+   "class": "slicing",
+   "what": "whole-graph single tile",
+   "impact": "high",
+   "feasibility": "blocked",
+   "evidence": "Whole-graph single tile is impossible: exactly ONE fused RmsNorm (op 1189 of 1190, producing vlm_output_embeds) has no DSP implementation."
+  },
+  {
+   "id": "S2",
+   "class": "slicing",
+   "what": "4-tile cut at Sin/Cos",
+   "impact": "medium",
+   "feasibility": "SUCCEEDED",
+   "evidence": "Cut before the final RmsNorm. The 1108-op trunk CONVERTS, QUANTIZES and COMPOSES on DSP: ctx_trunk_dsp.bin, 158,467,168 bytes. This is the first time any SmolVLA expert has produced a working accelerator context."
+  },
+  {
+   "id": "R4",
+   "class": "rewrite",
+   "what": "bool attention_mask input -> float32",
+   "impact": "critical",
+   "feasibility": "done",
+   "evidence": "DSP rejects a BOOL_8 graph input (0x508 = QNN_DATATYPE_BOOL_8, Input[0]). Retyped; bit-exact. No op-level fix could address this -- the rejection is on the input tensor."
+  },
+  {
+   "id": "R5",
+   "class": "rewrite",
+   "what": "prevent RmsNorm fusion (op package missing on v66 DSP)",
+   "impact": "critical",
+   "feasibility": "failed",
+   "evidence": "Mul-by-1.0 barriers after all 33 ReduceMean did NOT defeat the converter's matcher -- RmsNorm still emitted. No RmsNorm pass exists in --dump_ir_optimizer_config_template, so it cannot be disabled by config. No op package ships for it: libQnnDspV66Skel.so has no RmsNorm, and there are no registerable oppackage .so files in the SDK or on the board. Fusion happens at CONVERT time so switching to HTA would not help."
+  },
+  {
+   "id": "C1",
+   "class": "calibration",
+   "what": "float32 raws for all inputs regardless of network dtype",
+   "impact": "critical",
+   "feasibility": "done",
+   "evidence": "SNPE input lists take float32 raws. attention_mask as uint8 was exactly 1/4 the float32 extent, reported as a phantom 'batch size 4'. Also: vlm_embeds is [1,960,113] (axes-to-spatial-first-order) and position_ids is Int_32 (keep_int64_inputs=False)."
+  },
+  {
+   "id": "X1",
+   "class": "runtime",
+   "what": "execute the composed DSP context",
+   "impact": "critical",
+   "feasibility": "blocked",
+   "evidence": "Loading the 158 MB context wedged the board (unreachable, recovered via /opt/relay.sh, ~60 s). Board has 7.6 GB RAM. Composition is proven; execution is not. Next: shard the trunk into 2-4 tiles to shrink per-context footprint."
+  }
+ ],
+ "verdict": {
+  "op_support": "SOLVED -- 0 of 1197 ops lack DSP/HTA support after R1-R4",
+  "composition": "SOLVED for the 1108-op trunk (S2); blocked only by one un-implementable fused RmsNorm at the tail",
+  "execution": "BLOCKED -- 158 MB context wedges the board",
+  "tiles_required": "2 (DSP trunk + CPU RmsNorm tail), far inside the ~56 ceiling",
+  "performance": "NOT MEASURED -- no speedup is claimed"
+ }
+}
