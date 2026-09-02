@@ -113,7 +113,7 @@ of `FATAL`/`FAIL`, matching requested and in-process-observed real-time policy,
 embedded golden outputs, and deadline results. It also requires ten matched
 runs per phase and reports the exact one-sided rank-sum test. Rebuild and run
 commands are recorded in
-[`docs/the_loop.md`](../../docs/the_loop.md).
+[`docs/Feature/the_loop.md`](../../docs/Feature/the_loop.md).
 
 The scheduled Linux harness captures each model's first *complete* periodic
 instance only after every DAG leaf has finished, then compares it in-process

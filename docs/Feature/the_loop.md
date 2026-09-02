@@ -111,11 +111,11 @@ The exact-cycle experiment is the result to lead with. It compares the same
 100 ms of work before and after XPU-RT asks ModelBlaster to expose measured
 multi-hart implementations:
 
-![Exact-cycle feedback proof and K1 corroboration](../results/k1_feedback_exact/exact_cycle_feedback.png)
+![Exact-cycle feedback proof and K1 corroboration](../../results/k1_feedback_exact/exact_cycle_feedback.png)
 
-[Vector PDF](../results/k1_feedback_exact/exact_cycle_feedback.pdf) ·
-[machine-readable proof](../results/k1_feedback_exact/result.json) ·
-[full explanation and reproduction commands](../results/k1_feedback_exact/README.md)
+[Vector PDF](../../results/k1_feedback_exact/exact_cycle_feedback.pdf) ·
+[machine-readable proof](../../results/k1_feedback_exact/result.json) ·
+[full explanation and reproduction commands](../../results/k1_feedback_exact/README.md)
 
 | | original graph | after feedback | improvement |
 |---|---:|---:|---:|
@@ -242,14 +242,14 @@ profiles already exist, so ModelBlaster exposes their measured 1/2/4/8-hart
 implementations; XPU-RT still chooses the width per dispatch. This is a real,
 tracked feedback action without changing the model mix or the amount of work.
 The benchmark verifies the
-[raw feedback artifact](../results/k1_feedback_story/data/original_xpurt_feedback.json),
+[raw feedback artifact](../../results/k1_feedback_story/data/original_xpurt_feedback.json),
 its source-schedule hash, and that each transformed model has a corresponding
 `prefer_finer` signal.
 
-![Original solver matrix versus XPU-RT feedback](../results/k1_feedback_story/feedback_vs_solvers.png)
+![Original solver matrix versus XPU-RT feedback](../../results/k1_feedback_story/feedback_vs_solvers.png)
 
-[Vector PDF](../results/k1_feedback_story/feedback_vs_solvers.pdf) ·
-[machine-readable verdict](../results/k1_feedback_story/result.json)
+[Vector PDF](../../results/k1_feedback_story/feedback_vs_solvers.pdf) ·
+[machine-readable verdict](../../results/k1_feedback_story/result.json)
 
 | phase | solver | status | critical p99 | FFN max latency | makespan | wall |
 |---|---|---|---:|---:|---:|---:|
@@ -293,9 +293,9 @@ the other kind of loop action: XPU-RT identifies an expensive fused dispatch,
 ModelBlaster unfuses it, verifies the rewritten graph, profiles it on K1, and
 XPU-RT re-solves the three-model workload.
 
-![Accepted YOLO rewrite before and after feedback](../results/k1_feedback_story/feedback_rewrite_detail.png)
+![Accepted YOLO rewrite before and after feedback](../../results/k1_feedback_story/feedback_rewrite_detail.png)
 
-[Vector PDF](../results/k1_feedback_story/feedback_rewrite_detail.pdf)
+[Vector PDF](../../results/k1_feedback_story/feedback_rewrite_detail.pdf)
 
 The graph grows from 826 to 1282 scheduled dispatches, yet detector max latency
 falls 148.10 → 116.42 ms and the objective accepts on term 5. More dispatches
@@ -312,9 +312,9 @@ accepted candidate closes after 120 ms (380 dispatches; 902 removed). Thus the
 figure no longer spends most of its width showing DroNet after the meaningful
 mixed workload is complete.
 
-[Repeat-window proof](../results/k1_feedback_story/feedback_rewrite_repeat_windows.json) ·
-[control frame](../results/k1_feedback_story/data/rewrite_control_repeat_frame.json) ·
-[feedback frame](../results/k1_feedback_story/data/rewrite_candidate_repeat_frame.json)
+[Repeat-window proof](../../results/k1_feedback_story/feedback_rewrite_repeat_windows.json) ·
+[control frame](../../results/k1_feedback_story/data/rewrite_control_repeat_frame.json) ·
+[feedback frame](../../results/k1_feedback_story/data/rewrite_candidate_repeat_frame.json)
 
 The same postprocessor is available independently of the plotting bundle:
 
@@ -337,9 +337,9 @@ eight physical harts, per-dispatch shard widths, and the K1 IME path. The
 transformer blocks are explicitly ViNT-class stand-ins; the figure does not
 present them as a completed flight model.
 
-![Rich five-network schedules](../results/k1_feedback_story/feedback_rich_capstone.png)
+![Rich five-network schedules](../../results/k1_feedback_story/feedback_rich_capstone.png)
 
-[Vector PDF](../results/k1_feedback_story/feedback_rich_capstone.pdf)
+[Vector PDF](../../results/k1_feedback_story/feedback_rich_capstone.pdf)
 
 Both displayed schedules pass the independent feasibility gate. CP-SAT uses a
 corrected microsecond time grid, so its starts remain conservative against the
@@ -358,23 +358,23 @@ not ranked as a solver result. The smaller four-model matrix above remains the
 controlled Greedy/CP-SAT/MOSEK comparison: all six of those cells completed and
 passed feasibility.
 
-[Rich repeat-window proof](../results/k1_feedback_story/feedback_rich_repeat_windows.json) ·
-[Greedy frame](../results/k1_feedback_story/data/rich_greedy_repeat_frame.json) ·
-[CP-SAT frame](../results/k1_feedback_story/data/rich_cpsat_repeat_frame.json) ·
-[MOSEK resource evidence](../results/k1_feedback_story/rich_mosek_resource_exhaustion.json)
+[Rich repeat-window proof](../../results/k1_feedback_story/feedback_rich_repeat_windows.json) ·
+[Greedy frame](../../results/k1_feedback_story/data/rich_greedy_repeat_frame.json) ·
+[CP-SAT frame](../../results/k1_feedback_story/data/rich_cpsat_repeat_frame.json) ·
+[MOSEK resource evidence](../../results/k1_feedback_story/rich_mosek_resource_exhaustion.json)
 
 The loop also preserves unsuccessful feedback. DroNet split ×2 and ×4 are
 rejected because they worsen the co-running detector's max latency:
 
-![Rejected DroNet feedback candidates](../results/k1_feedback_story/feedback_rejections.png)
+![Rejected DroNet feedback candidates](../../results/k1_feedback_story/feedback_rejections.png)
 
-[Vector PDF](../results/k1_feedback_story/feedback_rejections.pdf)
+[Vector PDF](../../results/k1_feedback_story/feedback_rejections.pdf)
 
 These three panels share one independently checked 160 ms repeat frame. It
 contains five complete DroNet instances, sixteen MLP instances, and one complete
 detector instance in every schedule; trailing single-model work is excluded.
 The proof and materialized frames are stored in
-[`feedback_rejections_repeat_windows.json`](../results/k1_feedback_story/feedback_rejections_repeat_windows.json).
+[`feedback_rejections_repeat_windows.json`](../../results/k1_feedback_story/feedback_rejections_repeat_windows.json).
 
 Reproduce the solver matrix and the tracked PNG/PDF bundle with:
 
@@ -669,7 +669,7 @@ else runs at the same time on another hart? Not measurably, up to four
 co-runners -- the same-cluster and cross-cluster distributions straddle 1.0 and
 overlap completely, and the arms are not monotonic in co-runner count. The
 IREE-path figures (1.043x same-cluster, 1.185x cross-cluster) do not reproduce.
-Install no contention model. `docs/k1_contention.md`.
+Install no contention model. `docs/K1/k1_contention.md`.
 
 **Producer-consumer edge cost: REAL, and network-dependent.** What does it cost
 a dispatch to read what the previous one wrote, from another hart? All arms
@@ -682,7 +682,7 @@ disjoint, twice, on two networks:
 
 Roughly 6% to leave the hart that produced your input, 10% to leave the
 cluster -- and yolo pays ~4pp less than dronet in both classes, so the map is
-keyed per network rather than being a global constant. `docs/k1_cost_by_pred.md`.
+keyed per network rather than being a global constant. `docs/K1/k1_cost_by_pred.md`.
 
 **The two are different mechanisms and only one is visible here.** On this
 board the cross-cluster cost appears when a dispatch is placed away from its
@@ -832,8 +832,8 @@ The modules are not all named after the concepts.
 | board measurement of a candidate | `ModelBlaster/scripts/measure_candidate.sh --runner k1` |
 | multi-core board runs (pool + topo tag) | `ModelBlaster/scripts/run_model_k1.sh` via `MB_CORES` |
 | per-shard conv weight re-packing | `ModelBlaster/pipeline/generate_skeleton.py::shard_conv_weights` |
-| co-runner contention (a null result) | `runtime/scripts/k1_contention_mb.py`, `docs/k1_contention.md` |
-| producer-consumer edge cost | `runtime/scripts/k1_cost_by_pred.py`, `docs/k1_cost_by_pred.md` |
+| co-runner contention (a null result) | `runtime/scripts/k1_contention_mb.py`, `docs/K1/k1_contention.md` |
+| producer-consumer edge cost | `runtime/scripts/k1_cost_by_pred.py`, `docs/K1/k1_cost_by_pred.md` |
 | which implementations a core can run | `xpu-rt/capabilities.py` |
 | the chained-AVL kernel lint | `ModelBlaster/scripts/check_rvv_avl.py` |
 | shard: advice -> hint | `scripts/advice_to_shard_hint.py` |
@@ -842,12 +842,12 @@ The modules are not all named after the concepts.
 | runtime feedback, batch | `scripts/run_xpurt_schedule.py --emit-feedback` |
 | runtime feedback, streaming | `xpu-rt/streaming_feedback.py`, `MB_XPURT_STREAM=1` |
 | measured run -> back onto the advice | `xpu-rt/feedback_join.py`, `emit_compile_advice.py --feedback` |
-| both feedback channels, explained | `docs/modelblaster_integration.md` |
-| the solver registry | `docs/solvers.md`, `xpu-rt/schedulers.py` |
-| what a spec's fields mean | `docs/workload_specs.md` |
+| both feedback channels, explained | `docs/Feature/modelblaster_integration.md` |
+| the solver registry | `docs/Feature/solvers.md`, `xpu-rt/schedulers.py` |
+| what a spec's fields mean | `docs/Demo/workload_specs.md` |
 | runnable walkthroughs | `examples/` |
 | recreating the environment | `docs/environment.md` |
-| running on the board | `docs/k1_board.md` |
+| running on the board | `docs/K1/k1_board.md` |
 
 ## 9. Examples
 

@@ -56,7 +56,7 @@ what to run and the script does that:
 
 | spec field | drives |
 | --- | --- |
-| `hardware.profile.target` | `spike` → this doc's no-RTL flow; anything else (`firesim_rocket_saturn`, …) → `RUNNER=firesim`, i.e. `docs/end_to_end_xpurt_firesim.md` |
+| `hardware.profile.target` | `spike` → this doc's no-RTL flow; anything else (`firesim_rocket_saturn`, …) → `RUNNER=firesim`, i.e. `docs/Firesim/end_to_end_xpurt_firesim.md` |
 | `hardware.profile.topo_tag` | `PROFILE_CORES` for the capture (`topo_0` → `0`, `topo_0_1` → `0,1`) |
 | `hardware.profile_hw` | which HW backends get profiled, get dispatch graphs, and are linked into the binary. Each value is both the on-disk profile dir and (mapped: `RVV`/`<cfg>_rvv` → `rvv`, plus `scalar`, `gemmini`, `gemmini_q31`) a modelblaster `TARGET=`. `cpu_p`/`cpu_e` also pick `CPU_P_KIND`/`CPU_E_KIND` |
 | `networks[*].identifier` | which models get profiled and built (deduped, in spec order) |

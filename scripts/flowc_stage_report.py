@@ -50,7 +50,7 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--networks", default="vint,yolov8n,fused_full,dronet,mlp_control")
-    ap.add_argument("--out", default="results/flowc_stages")
+    ap.add_argument("--out", default="docs/Qualcomm/experiments/stages")
     a = ap.parse_args()
     os.makedirs(a.out, exist_ok=True)
 

@@ -3,8 +3,8 @@
 Every command here was run on 2026-08-29 against the board. Timings are from
 that session, so they tell you what "normal" looks like.
 
-Setup lives in [`environment.md`](environment.md); this is the operational
-page. [`the_loop.md`](the_loop.md) is the index for what the pieces mean.
+Setup lives in [`environment.md`](../environment.md); this is the operational
+page. [`the_loop.md`](../Feature/the_loop.md) is the index for what the pieces mean.
 
 ## The board
 

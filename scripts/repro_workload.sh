@@ -9,9 +9,9 @@
 #
 # The spec drives every stage:
 #   hardware.profile.target     spike -> the no-RTL flow documented in
-#                               docs/mlp_dronet_yolo_spike_reproduction.md;
+#                               docs/Demo/mlp_dronet_yolo_spike_reproduction.md;
 #                               anything else is treated as a FireSim
-#                               target (docs/end_to_end_xpurt_firesim.md)
+#                               target (docs/Firesim/end_to_end_xpurt_firesim.md)
 #                               and profiled/run under RUNNER=firesim.
 #   hardware.profile.topo_tag   topo_0 -> PROFILE_CORES=0, topo_0_1 -> 0,1
 #   hardware.profile_hw         the HW backends to profile, emit dispatch

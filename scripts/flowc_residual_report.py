@@ -33,7 +33,7 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--traces", default="runs/*/trace.csv")
-    ap.add_argument("--out", default="results/flowc_residual")
+    ap.add_argument("--out", default="docs/Qualcomm/experiments/residual")
     a = ap.parse_args()
     os.makedirs(a.out, exist_ok=True)
 
@@ -67,11 +67,11 @@ def main() -> int:
         for b, c in sorted(glob_m["backends"].items())) + ".\n",
         "HTA is under-estimated in every trace and DSP over-estimated in every "
         "trace it appears in. The DSP direction independently corroborates "
-        "`docs/qualcomm-qrb5165.md` §2, which measured the recorded DSP column "
+        "`docs/Qualcomm/qualcomm-qrb5165.md` §2, which measured the recorded DSP column "
         "~16% pessimistic and suspected a slower host clock at capture time.\n",
         "**There is no contention to learn from.** The `co-runners` column is "
         "zero everywhere: these workloads are serial chains, exactly as "
-        "`docs/qualcomm-qrb5165.md` §3 reports. So the residual measured here is "
+        "`docs/Qualcomm/qualcomm-qrb5165.md` §3 reports. So the residual measured here is "
         "*calibration bias*, not co-runner interference — a distinction that "
         "matters, because only the latter would depend on what else is "
         "scheduled.\n"]

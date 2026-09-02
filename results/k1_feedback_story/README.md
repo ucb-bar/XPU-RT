@@ -1,7 +1,7 @@
 # K1 feedback story
 
 This bundle is the reproducible evidence for the ModelBlaster ↔ XPU-RT
-feedback section in `docs/the_loop.md`.
+feedback section in `docs/Feature/the_loop.md`.
 
 ## Headline result
 
@@ -46,6 +46,6 @@ using CP-SAT or MOSEK alone on the unchanged ModelBlaster graph.
 - `feedback_rejections.*`: DroNet split negative controls.
 
 All placements are predicted schedules using measured K1 dispatch profiles;
-they are not presented as observed board traces. See `docs/the_loop.md` for the
+they are not presented as observed board traces. See `docs/Feature/the_loop.md` for the
 interpretation, limitations, and the reusable `scripts/extract_repeat_window.py`
 postprocessor.

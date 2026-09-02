@@ -129,7 +129,7 @@ The curated flow above is what's *necessary* for the demo. The live `xpurt`
 env also has ~350 other pip packages from unrelated work (this conda env is
 shared across projects, not demo-dedicated) — freezing all of them isn't a
 clean recipe, but it is available as a fallback if the curated flow above
-drifts or someone wants a byte-for-byte match: `docs/xpurt_pip_freeze_2026-07-08.txt`
+drifts or someone wants a byte-for-byte match: `pip_freeze.txt`
 (`pip freeze --exclude-editable`, captured 2026-07-08). This is a point-in-time
 snapshot, not maintained — prefer the curated flow above and only reach for
 this if something in it fails to resolve.
@@ -140,7 +140,7 @@ Executed 2026-07-08: fresh `git clone` into `/tmp`, brand-new `xpurt_dryrun`
 conda env, this flow run verbatim (including hitting and fixing the three
 issues folded into steps 3/5/6 above), then the reference pilot command run
 with a small `--num_periods` and a tracked substitute schedule file (see
-`docs/replicate_forest_trail_demo.md` §5, "Get a schedule JSON"). Result: DroNet/MLP/YOLO all
+`docs/Demo/replicate_forest_trail_demo.md` §5, "Get a schedule JSON"). Result: DroNet/MLP/YOLO all
 executed, three video chunks produced and verified with `ffprobe`
 (valid H.264, real frames), and shutdown exited cleanly with no hang.
 

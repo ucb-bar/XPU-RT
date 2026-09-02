@@ -9,7 +9,7 @@
 # Run this AFTER activating the `zephyr` conda env produced by
 # zephyr-chipyard-sw's own standalone setup (see
 # zephyr-chipyard-sw/README.md's "Standalone Installation" section, or
-# docs/mlp_dronet_yolo_spike_reproduction.md's Prerequisites section) --
+# docs/Demo/mlp_dronet_yolo_spike_reproduction.md's Prerequisites section) --
 # everything below installs into that SAME env, so one conda env covers
 # both `west build` and the scheduling/reproduction flow.
 #
@@ -95,7 +95,7 @@ pip install -e "${MB_ROOT}"
 # 3) The one pinned wheel with no other home -- spike itself. Despite the
 #    custom-looking version string, this is a normal public PyPI package
 #    (github.com/liuyu81/pyspike). Gemmini/Saturn RoCC support does NOT
-#    come from this wheel -- see docs/mlp_dronet_yolo_spike_reproduction.md.
+#    come from this wheel -- see docs/Demo/mlp_dronet_yolo_spike_reproduction.md.
 log "installing spike"
 pip install spike==0.0.5.dev20
 

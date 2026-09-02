@@ -5,7 +5,7 @@ WHY THIS FILE EXISTS. Every K1 measurement in this tree lives under
 cost database. (It is reachable at runtime: `profile_loader` hardcodes
 the directory name `profile`, so a tracked symlink `gen_mb/profile ->
 ../gen/profile_mb` plus `"gen_root": "gen_mb"` addresses it, documented in
-`docs/k1_modelblaster_xpurt_closed_loop.md` §"`PROFILE_OUT_ROOT` must end in
+`docs/K1/k1_modelblaster_xpurt_closed_loop.md` §"`PROFILE_OUT_ROOT` must end in
 `profile`". Reachability was never the problem; committed test data was.) The
 consequence was that the ModelBlaster/K1 side of the profile parsers -- a
 different directory depth, a different module-name convention, and a 14th

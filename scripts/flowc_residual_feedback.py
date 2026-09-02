@@ -15,7 +15,7 @@ Measured over the four committed board traces (400 dispatches):
     DSP   actual/predicted median 0.89 - 0.98   (solo cell OVER-estimates)
     CPU   actual/predicted median 0.98 - 1.15   (depends on co-residents)
 
-The DSP direction corroborates `docs/qualcomm-qrb5165.md` §2, which found the
+The DSP direction corroborates `docs/Qualcomm/qualcomm-qrb5165.md` §2, which found the
 recorded DSP column ~16% pessimistic and suspected it was captured under a
 slower host clock.
 

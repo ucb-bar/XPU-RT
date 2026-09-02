@@ -103,5 +103,5 @@ on for one arm and off for another is comparing two different things.
 ## Related
 
 * [`the_loop.md`](the_loop.md) — where scheduling sits in the cycle
-* [`workload_specs.md`](workload_specs.md) — what the solver is given
+* [`workload_specs.md`](../Demo/workload_specs.md) — what the solver is given
 * `examples/solvers/compare_solvers.py` — runnable

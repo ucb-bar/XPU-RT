@@ -13,9 +13,9 @@
 
 Pooled: **CPU 0.999** (n=180, p10 0.89–p90 1.26), **DSP 0.907** (n=138, p10 0.81–p90 1.47), **HTA 1.082** (n=122, p10 0.94–p90 1.37).
 
-HTA is under-estimated in every trace and DSP over-estimated in every trace it appears in. The DSP direction independently corroborates `docs/qualcomm-qrb5165.md` §2, which measured the recorded DSP column ~16% pessimistic and suspected a slower host clock at capture time.
+HTA is under-estimated in every trace and DSP over-estimated in every trace it appears in. The DSP direction independently corroborates `docs/Qualcomm/qualcomm-qrb5165.md` §2, which measured the recorded DSP column ~16% pessimistic and suspected a slower host clock at capture time.
 
-**There is no contention to learn from.** The `co-runners` column is zero everywhere: these workloads are serial chains, exactly as `docs/qualcomm-qrb5165.md` §3 reports. So the residual measured here is *calibration bias*, not co-runner interference — a distinction that matters, because only the latter would depend on what else is scheduled.
+**There is no contention to learn from.** The `co-runners` column is zero everywhere: these workloads are serial chains, exactly as `docs/Qualcomm/qualcomm-qrb5165.md` §3 reports. So the residual measured here is *calibration bias*, not co-runner interference — a distinction that matters, because only the latter would depend on what else is scheduled.
 
 ## 2. Feeding the error back works — within one configuration
 

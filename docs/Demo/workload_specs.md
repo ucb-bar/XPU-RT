@@ -95,7 +95,7 @@ wide-OC conv down to 0.83× on a 1×1 — so one width per model is wrong for
 nearly every dispatch in it.
 
 The selected composite target is consumed end to end by ModelBlaster; see
-[`ModelBlaster/docs/xpurt_schedule_sharding.md`](../ModelBlaster/docs/xpurt_schedule_sharding.md)
+[`ModelBlaster/docs/xpurt_schedule_sharding.md`](../../ModelBlaster/docs/xpurt_schedule_sharding.md)
 for codegen, weight packing, exact-hart pools, locking, and refusal rules.
 
 Those tags are produced by `MB_CORES` in `run_model_k1.sh`, which derives the
@@ -135,6 +135,6 @@ figure whose spec does not reproduce it is a figure nobody can check.
 
 ## Related
 
-* [`solvers.md`](solvers.md) — what consumes this
-* [`the_loop.md`](the_loop.md) — where it sits in the cycle
+* [`solvers.md`](../Feature/solvers.md) — what consumes this
+* [`the_loop.md`](../Feature/the_loop.md) — where it sits in the cycle
 * `data/toplevel/networks_k1_multicore_shard.json` — a worked shard-mode spec

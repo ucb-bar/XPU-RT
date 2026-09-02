@@ -28,7 +28,7 @@ not touch. 16 of DroNet's 21 dispatches show the full ordering individually.
 
 ## Why this and not the contention sweep
 
-`docs/k1_contention.md` asked whether two dispatches running *at the same time*
+`docs/K1/k1_contention.md` asked whether two dispatches running *at the same time*
 on different harts slow each other down, and measured a null: the same-cluster
 and cross-cluster distributions overlapped completely, and the arms were not
 monotonic in co-runner count.

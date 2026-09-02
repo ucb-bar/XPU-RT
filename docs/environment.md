@@ -4,7 +4,7 @@ Two flows, two environments, and they are not the same one.
 
 | flow | environment | doc |
 |---|---|---|
-| **A — chipyard** (spike / FireSim, Zephyr) | conda, from zephyr-chipyard-sw's own installer | [`mlp_dronet_yolo_spike_reproduction.md`](mlp_dronet_yolo_spike_reproduction.md) §0 |
+| **A — chipyard** (spike / FireSim, Zephyr) | conda, from zephyr-chipyard-sw's own installer | [`mlp_dronet_yolo_spike_reproduction.md`](Demo/mlp_dronet_yolo_spike_reproduction.md) §0 |
 | **B — SpaceMiT K1** (Linux/riscv64, on-device) | a plain venv, below | this page |
 | Isaac Sim / forest-trail demo | the `xpurt` conda env | [`xpurt_env_setup.md`](xpurt_env_setup.md) |
 
@@ -76,7 +76,7 @@ first use. `ffn_block`, `attn_block`, `norm_block`, `lstm_tiny`,
 `dronet` and `mlp_control` have vendored checkpoints.
 
 **Needs a board:** anything that profiles or runs. See
-[`k1_board.md`](k1_board.md).
+[`k1_board.md`](K1/k1_board.md).
 
 **Not in the repo at all:** the ViNT calibration data (`datasets/idsia/samples/sc`
 and the IsaacLab forest renders). Its two kernels are verified standalone on the
@@ -103,7 +103,7 @@ Installing `cvxpy` clears two of them even without a MOSEK licence:
 
 Only `--solver milp --scheduler mosek` needs it. `greedy`, `greedy_periodic`
 and every list scheduler in the registry run without a licence, and
-`docs/solvers.md` says which is which. Two tests fail without it and say so
+`docs/Feature/solvers.md` says which is which. Two tests fail without it and say so
 in the failure text rather than skipping, which is deliberate: a silently
 skipped MILP test is how a broken MILP path stays broken.
 

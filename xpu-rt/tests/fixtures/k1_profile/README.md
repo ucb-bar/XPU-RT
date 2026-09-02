@@ -4,7 +4,7 @@ A committed, board-free copy of a **real** SpaceMiT K1 profile, so the K1 side o
 the profile parser has test coverage without a checkout needing the untracked
 `gen/profile_mb/` tree (which no `gen_root` can even address — its parent
 directory is not named `profile`; see
-`docs/k1_modelblaster_xpurt_closed_loop.md` §"`PROFILE_OUT_ROOT` must end in
+`docs/K1/k1_modelblaster_xpurt_closed_loop.md` §"`PROFILE_OUT_ROOT` must end in
 `profile`").
 
 ## Layout

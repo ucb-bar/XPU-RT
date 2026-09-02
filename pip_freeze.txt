@@ -1,3 +1,87 @@
+# XPU-RT dependencies
+#
+# Replaces the former docs/xpurt_pip_freeze_2026-07-08.txt, which recorded only the
+# `xpurt` conda environment and was stale by two months.
+#
+# This repo uses TWO interpreters and they are not interchangeable:
+#
+#   .venv/bin/python          the scheduling/analysis environment. This is the
+#                             interpreter results/k1_feedback_exact/README.md
+#                             prescribes, and the one the flow_c feedback tools
+#                             and run_exact_cycle_feedback.py are run with. It
+#                             lives in the repo, so it is the reproducible one.
+#                             MISSING ortools, so --solver cpsat will not run.
+#
+#   <conda>/envs/xpurt/bin/python
+#                             the model-export / QNN toolchain: torch,
+#                             onnx2tf, ultralytics, the QAIRT bindings. Needed
+#                             for the slice/build/quantize stages, not for
+#                             scheduling. NOTE this env has historically lived
+#                             under a teammate's home directory, which is why
+#                             scripts now take it from $PYTHON rather than a
+#                             hardcoded path (see 284c7844).
+#
+# Regenerate:
+#   .venv/bin/python -m pip freeze
+#   <conda>/envs/xpurt/bin/python -m pip freeze
+
+# ============================================================
+# .venv  —  scheduling and analysis  (captured 2026-09-01)
+# python 3.12.3
+# ============================================================
+annotated-doc==0.0.4
+anyio==4.13.0
+certifi==2026.2.25
+cffi==2.0.0
+clarabel==0.11.1
+click==8.3.2
+contourpy==1.3.3
+cvxpy==1.8.2
+cycler==0.12.1
+filelock==3.25.2
+fonttools==4.62.1
+fsspec==2026.3.0
+h11==0.16.0
+hf-xet==1.4.3
+highspy==1.13.1
+httpcore==1.0.9
+httpx==0.28.1
+huggingface_hub==1.10.1
+idna==3.11
+Jinja2==3.1.6
+joblib==1.5.3
+kiwisolver==1.5.0
+markdown-it-py==4.0.0
+MarkupSafe==3.0.3
+matplotlib==3.10.8
+mdurl==0.1.2
+Mosek==11.1.10
+netron==9.0.0
+numpy==2.4.4
+osqp==1.1.1
+packaging==26.0
+pandas==3.0.2
+pillow==12.1.1
+pycparser==3.0
+Pygments==2.20.0
+pyparsing==3.3.2
+python-dateutil==2.9.0.post0
+PyYAML==6.0.3
+rich==14.3.3
+scipy==1.17.1
+scs==3.2.11
+setuptools==82.0.1
+shellingham==1.5.4
+six==1.17.0
+tqdm==4.67.3
+typer==0.24.1
+typing_extensions==4.15.0
+-e git+ssh://git@github.com/ucb-bar/XPU-RT.git@e9a00e45eb165e72d83bb02bad093f7af82fe0cf#egg=xpu_rt
+
+# ============================================================
+# xpurt conda env  —  model export / QNN toolchain  (captured 2026-09-01)
+# python 3.11.15
+# ============================================================
 absl-py==2.4.0
 accelerate==1.13.0
 ai-edge-litert==2.1.0
@@ -108,6 +192,20 @@ inquirerpy==0.3.4
 ipython==9.10.1
 ipython_pygments_lexers==1.1.1
 ipywidgets==8.1.5
+# Editable install with no version control (isaaclab==0.54.3)
+-e /scratch2/dima/misc_sw/FreshScheduler/sims/IsaacLab/source/isaaclab
+# Editable Git install with no remote (isaaclab_arena==1.0.0)
+-e /scratch2/dima/misc_sw/FreshScheduler/sims/smolvla_demo/IsaacLab-Arena
+# Editable install with no version control (isaaclab_assets==0.2.4)
+-e /scratch2/dima/misc_sw/FreshScheduler/sims/IsaacLab/source/isaaclab_assets
+# Editable install with no version control (isaaclab_contrib==0.0.2)
+-e /scratch2/dima/misc_sw/FreshScheduler/sims/IsaacLab/source/isaaclab_contrib
+# Editable install with no version control (isaaclab_mimic==1.0.16)
+-e /scratch2/dima/misc_sw/FreshScheduler/sims/IsaacLab/source/isaaclab_mimic
+# Editable install with no version control (isaaclab_rl==0.5.0)
+-e /scratch2/dima/misc_sw/FreshScheduler/sims/IsaacLab/source/isaaclab_rl
+# Editable install with no version control (isaaclab_tasks==0.11.14)
+-e /scratch2/dima/misc_sw/FreshScheduler/sims/IsaacLab/source/isaaclab_tasks
 isaacsim==5.1.0.0
 isaacsim-app==5.1.0.0
 isaacsim-asset==5.1.0.0
@@ -146,6 +244,8 @@ junitparser==5.0.0
 jupyterlab_widgets==3.0.16
 keras==3.14.0
 kiwisolver==1.4.4
+# Editable Git install with no remote (lerobot==0.4.4)
+-e /scratch2/dima/misc_sw/FreshScheduler/sims/smolvla_demo/lerobot
 libclang==18.1.1
 lightwheel_sdk==1.0.1
 llvmlite==0.42.0
@@ -351,7 +451,8 @@ websockets==12.0
 Werkzeug==3.1.8
 widgetsnbextension==4.0.15
 wrapt==1.16.0
+# Editable Git install with no remote (xpu-rt==0.1.0)
+-e /scratch2/dima/misc_sw/FreshScheduler
 xxhash==3.7.0
 yarl==1.18.3
 zipp==3.23.0
-

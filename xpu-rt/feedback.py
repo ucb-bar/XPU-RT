@@ -10,7 +10,7 @@ Hint vocabulary (closed set, target-agnostic):
   pin_target=<name>       — this op runs much faster on a specific combination
   consider_split_backend  — current target is the slow side; revisit elsewhere
 
-The output JSON schema is documented in docs/modelblaster_integration.md.
+The output JSON schema is documented in docs/Feature/modelblaster_integration.md.
 """
 
 from __future__ import annotations
@@ -149,7 +149,7 @@ def derive_dispatch_hints(workload,
       source_schedule: optional path string for cross-referencing.
 
     Returns:
-      A dict matching the schema in docs/modelblaster_integration.md.
+      A dict matching the schema in docs/Feature/modelblaster_integration.md.
     """
     if t is None or alpha is None:
         return {

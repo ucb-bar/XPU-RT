@@ -34,12 +34,12 @@ Two things survived the move rather than being deleted:
 | `scripts/k1_cost_by_pred.py` | what it costs to read what the previous dispatch wrote, from elsewhere |
 
 The last two are measurements with their own write-ups —
-`docs/k1_contention.md` and `docs/k1_cost_by_pred.md` — and both are worth
+`docs/K1/k1_contention.md` and `docs/K1/k1_cost_by_pred.md` — and both are worth
 reading before quoting either number, because one of them is a **null result**
 and the other is a model fitted to three measured classes rather than 64
 independent measurements.
 
-Operationally, [`docs/k1_board.md`](../docs/k1_board.md) is the runbook --
+Operationally, [`docs/K1/k1_board.md`](../docs/K1/k1_board.md) is the runbook --
 commands, timings, and the failure table. This page is what lives here.
 
 ## Before any of them
@@ -62,5 +62,5 @@ element count to every width, and run
 
 Building, profiling and scheduling live outside this directory:
 `ModelBlaster/scripts/run_model_k1.sh` (with `PROFILE_OUT_ROOT` to emit a
-profile), `scripts/run_xpurt_schedule.py`, and `docs/the_loop.md` for how they
+profile), `scripts/run_xpurt_schedule.py`, and `docs/Feature/the_loop.md` for how they
 fit together.

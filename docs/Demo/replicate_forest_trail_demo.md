@@ -70,7 +70,7 @@ git submodule update --init sims/IsaacLab
 
 ## 2. Build the `xpurt` conda environment
 
-Follow **[`docs/xpurt_env_setup.md`](xpurt_env_setup.md)** end to end. It
+Follow **[`docs/xpurt_env_setup.md`](../xpurt_env_setup.md)** end to end. It
 covers installing Isaac Sim, running IsaacLab's installer against the
 vendored submodule, and the project-specific extras (ultralytics, imageio,
 matplotlib) — including version pins and an EULA-acceptance step that are
@@ -112,7 +112,7 @@ generate your own from a workload spec:
 python scripts/run_xpurt_schedule.py --profiled data/toplevel/networks_<name>.json
 ```
 
-See `docs/end_to_end_xpurt_firesim.md` for the full workload-spec → schedule
+See `docs/Firesim/end_to_end_xpurt_firesim.md` for the full workload-spec → schedule
 pipeline. If you just want something that runs, several pre-generated
 schedules are already checked into `schedules/` — any file containing
 `dronet*`/`yolov8_nano` dispatch keys works with this pilot script (it falls

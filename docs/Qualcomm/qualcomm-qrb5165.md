@@ -114,7 +114,7 @@ artifacts -- that is a property of this board, not of the repo.
 
     M  qnn_models/boards/qrb5165_v66/profiles/smolvlm_vision_v3/segment_perf.json
     ?? qnn_models/boards/qrb5165_v66/profiles/smolvlm_vision_v3/*.csv   (per-call traces)
-    +  docs/qualcomm-qrb5165.md, reproduction_data_log.json
+    +  docs/Qualcomm/qualcomm-qrb5165.md, reproduction_data_log.json
 
 Not touched: the pre-existing dirty artifacts under
 `gen/*/qrb5165_v66/smolvlm_vision_v3_bundles/`, which are a different variant

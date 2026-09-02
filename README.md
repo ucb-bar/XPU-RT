@@ -16,8 +16,8 @@ per-op kernels according to the schedule's core assignment can sit on the
 
 | flow | compiler / codegen | target | profiling | docs |
 |---|---|---|---|---|
-| **A — chipyard** | PyTorch → quantized Zephyr/RISC-V; curated + LLM-agentic kernel-gen | chipyard (Saturn/Gemmini, RISC-V) | spike / FireSim | [Flow A section below](#flow-a-modelblaster-as-the-compiler-backend), [`zephyr-chipyard-sw/modelblaster/README.md`](zephyr-chipyard-sw/modelblaster/README.md) ("Workflow: integrating with XPURT"), [`docs/end_to_end_xpurt_firesim.md`](docs/end_to_end_xpurt_firesim.md) |
-| **B — SpaceMiT K1** | the same ModelBlaster codegen, cross-compiled for Linux/riscv64 | SpaceMiT K1 (BananaPi), 8 harts + IME | on-device, over ssh | [Flow B section below](#flow-b-modelblaster-on-the-spacemit-k1-board), [`docs/the_loop.md`](docs/the_loop.md) |
+| **A — chipyard** | PyTorch → quantized Zephyr/RISC-V; curated + LLM-agentic kernel-gen | chipyard (Saturn/Gemmini, RISC-V) | spike / FireSim | [Flow A section below](#flow-a-modelblaster-as-the-compiler-backend), [`zephyr-chipyard-sw/modelblaster/README.md`](zephyr-chipyard-sw/modelblaster/README.md) ("Workflow: integrating with XPURT"), [`docs/Firesim/end_to_end_xpurt_firesim.md`](docs/Firesim/end_to_end_xpurt_firesim.md) |
+| **B — SpaceMiT K1** | the same ModelBlaster codegen, cross-compiled for Linux/riscv64 | SpaceMiT K1 (BananaPi), 8 harts + IME | on-device, over ssh | [Flow B section below](#flow-b-modelblaster-on-the-spacemit-k1-board), [`docs/Feature/the_loop.md`](docs/Feature/the_loop.md) |
 
 Both flows feed the same `xpu-rt/scheduler.py` and read/write the same
 `gen/profile/.../results.csv` + `schedules/*.json` shapes — the target hardware
@@ -31,12 +31,12 @@ same reason a road can keep a Roman route: every reader already speaks it.
 
 ### Start here
 
-* **[`docs/the_loop.md`](docs/the_loop.md)** — the index: every arrow of the
+* **[`docs/Feature/the_loop.md`](docs/Feature/the_loop.md)** — the index: every arrow of the
   compiler↔scheduler cycle and which script owns it. If you have been away,
   read this one.
 * **[`docs/environment.md`](docs/environment.md)** — recreating the
   environment. Two flows, two environments, and neither is merlin's `.venv`.
-* **[`docs/k1_board.md`](docs/k1_board.md)** — running on the K1: the
+* **[`docs/K1/k1_board.md`](docs/K1/k1_board.md)** — running on the K1: the
   commands, the timings, the two compiler traps, and what to do when it
   breaks.
 * **[`examples/`](examples/)** — runnable, one per topic:
@@ -54,24 +54,24 @@ any other scheduler restricted to the original graph cannot close the gap.
 
 Ten complete real-time K1 runs per phase corroborate the result: median worst
 critical response falls from 10.491000 ms to 7.208521 ms (31.29%), with zero
-deadline misses. See [`docs/the_loop.md`](docs/the_loop.md#4-the-strongest-result-a-solver-independent-separation)
+deadline misses. See [`docs/Feature/the_loop.md`](docs/Feature/the_loop.md#4-the-strongest-result-a-solver-independent-separation)
 for the interpretation and [`results/k1_feedback_exact/README.md`](results/k1_feedback_exact/README.md)
 for the certificate, checked-in evidence, and exact reproduction command.
 
 ### Documentation
 
-* [`docs/end_to_end_xpurt_firesim.md`](docs/end_to_end_xpurt_firesim.md)
+* [`docs/Firesim/end_to_end_xpurt_firesim.md`](docs/Firesim/end_to_end_xpurt_firesim.md)
   — full walkthrough from a multi-network workload spec to a FireSim
   run with trace plots (scheduler → codegen → build → run → analyze),
   on the Saturn-Gemmini-Q31 path (Flow A).
-* [`docs/mlp_dronet_yolo_spike_reproduction.md`](docs/mlp_dronet_yolo_spike_reproduction.md)
+* [`docs/Demo/mlp_dronet_yolo_spike_reproduction.md`](docs/Demo/mlp_dronet_yolo_spike_reproduction.md)
   — a simpler, no-FireSim variant of Flow A: same ModelBlaster codegen and
   checkout (`zephyr-chipyard-sw/modelblaster/`), profiled entirely on
   spike with the `greedy`/`greedy_periodic` solver (no MOSEK license
   needed). Driven by the same one-command script as Flow A,
   `scripts/repro_workload.sh <spec.json>`, which installs everything it
   needs via `scripts/install_xpurt_deps.sh` — see that doc's §0.
-* [`docs/mlp_dronet_yolo_qnn_reproduction.md`](docs/mlp_dronet_yolo_qnn_reproduction.md)
+* [`docs/Qualcomm/mlp_dronet_yolo_qnn_reproduction.md`](docs/Qualcomm/mlp_dronet_yolo_qnn_reproduction.md)
   — the same three networks on a physical QRB5165 through QNN (Flow C):
   modelblaster's `extract_graph`/registry/emitters/schedule-ingest reused as
   a library, a QNN lane runtime instead of its codegen, and
@@ -81,7 +81,7 @@ for the certificate, checked-in evidence, and exact reproduction command.
 * [`zephyr-chipyard-sw/modelblaster/examples/microros_demo/ROS_FLOW.md`](zephyr-chipyard-sw/modelblaster/examples/microros_demo/ROS_FLOW.md)
   — micro-ROS fixed-pinning baseline flow (the reference against which
   the scheduler is benchmarked).
-* [`docs/the_loop.md`](docs/the_loop.md)
+* [`docs/Feature/the_loop.md`](docs/Feature/the_loop.md)
   — the K1 board loop end to end (Flow B), and which script owns each arrow.
 
 ## Flow B: ModelBlaster on the SpaceMiT K1 board
@@ -155,17 +155,17 @@ accept/reject verdict with the term that decided it.
 
 ### Two board measurements worth reading before quoting
 
-* [`docs/k1_contention.md`](docs/k1_contention.md) -- do concurrent dispatches
+* [`docs/K1/k1_contention.md`](docs/K1/k1_contention.md) -- do concurrent dispatches
   slow each other down? Measured **null**: the distributions overlap and the
   arms are not monotonic in co-runner count.
-* [`docs/k1_cost_by_pred.md`](docs/k1_cost_by_pred.md) -- what it costs to read
+* [`docs/K1/k1_cost_by_pred.md`](docs/K1/k1_cost_by_pred.md) -- what it costs to read
   what the previous dispatch wrote, from elsewhere. About 6% off-hart, 10%
   cross-cluster, and it is a model fitted to three measured classes rather than
   64 independent measurements.
 
 ### The whole loop
 
-[`docs/the_loop.md`](docs/the_loop.md) is the index: profile -> schedule ->
+[`docs/Feature/the_loop.md`](docs/Feature/the_loop.md) is the index: profile -> schedule ->
 advice -> hint -> rewrite -> verify -> reprofile -> verdict, and which script
 owns each arrow.
 
@@ -363,7 +363,7 @@ XPU-RT/
    baseline — nine lexicographic terms, hard deadline misses first, standalone
    kernel cycles last.
 
-`docs/the_loop.md` is the index for all of it.
+`docs/Feature/the_loop.md` is the index for all of it.
 
 ### Data/Artifact Flow Between This Repo and `ModelBlaster` (Flow A)
 

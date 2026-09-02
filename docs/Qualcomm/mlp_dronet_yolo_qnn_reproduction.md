@@ -1,7 +1,7 @@
 # Reproducing the mlp_control + dronet + yolov8n XPU-RT schedule on QRB5165 (QNN)
 
 Board reproduction of the same three-network schedule the spike flow runs
-(`docs/mlp_dronet_yolo_spike_reproduction.md`), targeting a physical
+(`docs/Demo/mlp_dronet_yolo_spike_reproduction.md`), targeting a physical
 QRB5165 through Qualcomm's QNN runtime instead of spike/RISC-V: ingest the
 PyTorch models with modelblaster's `extract_graph`, emit the XPU-RT
 contract artifacts with modelblaster's own emitters, solve, ingest the

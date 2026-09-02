@@ -1031,7 +1031,7 @@ the dispatch runs.
   each redoing its own setup. Intra-op sharding — one dispatch, several harts,
   per-shard re-packed weights — measures **3.87× and 3.93× on four harts** for
   ffn_block's two linears. Do not transfer the split cap to sharding; see
-  `docs/the_loop.md` §4c.
+  `docs/Feature/the_loop.md` §4c.
 
 The explicit advice bridge also exists:
 `advice_to_shard_hint.py` emits `modelblaster.shard_hints/v1`, and

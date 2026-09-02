@@ -27,7 +27,7 @@ def main() -> int:
     ap.add_argument("--networks", default="vint,yolov8n,fused_full,dronet,mlp_control")
     ap.add_argument("--call-ms", default="0,0.1,0.2,0.37,0.54,1,2,4,8,16,32")
     ap.add_argument("--ns-per-byte", default="0,5.4,20")
-    ap.add_argument("--out", default="results/flowc_overhead")
+    ap.add_argument("--out", default="docs/Qualcomm/experiments/overhead")
     a = ap.parse_args()
     os.makedirs(a.out, exist_ok=True)
 

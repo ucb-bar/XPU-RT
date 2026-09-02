@@ -7,7 +7,7 @@ WHY THIS AND NOT A CO-RUNNER SWEEP
 `k1_contention_mb.py` asked whether two dispatches running AT THE SAME TIME on
 different harts slow each other down. On this board, at up to four co-runners,
 the answer measured as a null -- the same-cluster and cross-cluster
-distributions overlap completely (docs/k1_contention.md).
+distributions overlap completely (docs/K1/k1_contention.md).
 
 That is not the only cross-cluster cost, and it is not the one the rest of the
 data points at. The multi-core sweep found DroNet SLOWER on eight harts than on

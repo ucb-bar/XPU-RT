@@ -77,7 +77,7 @@ execution contract—not merely a Gantt label:
 `hardware_target` chooses where and how wide; `impl` independently chooses the
 kernel implementation. The complete contract, supported operations, failure
 conditions, and run command are in
-[`ModelBlaster/docs/xpurt_schedule_sharding.md`](../ModelBlaster/docs/xpurt_schedule_sharding.md).
+[`ModelBlaster/docs/xpurt_schedule_sharding.md`](../../ModelBlaster/docs/xpurt_schedule_sharding.md).
 
 ## Channel 2 — runtime feedback (place and size)
 
@@ -229,7 +229,7 @@ conclusions.
 ## Related
 
 * [`the_loop.md`](the_loop.md) — the whole cycle and which script owns each arrow
-* [`k1_cost_by_pred.md`](k1_cost_by_pred.md) — what `consider_fuse_with_pred` is
+* [`k1_cost_by_pred.md`](../K1/k1_cost_by_pred.md) — what `consider_fuse_with_pred` is
   reasoning about, measured
-* [`k1_contention.md`](k1_contention.md) — the null result, and why co-runner
+* [`k1_contention.md`](../K1/k1_contention.md) — the null result, and why co-runner
   placement is not the mechanism

@@ -27,7 +27,7 @@ models/<id>.py ──► extract_graph ──► graph.json IR ──┐   (mode
 ```
 
 Step-by-step reproduction, the diff against the standard modelblaster flow,
-and a file map: [`docs/mlp_dronet_yolo_qnn_reproduction.md`](../../docs/mlp_dronet_yolo_qnn_reproduction.md).
+and a file map: [`docs/Qualcomm/mlp_dronet_yolo_qnn_reproduction.md`](../../docs/Qualcomm/mlp_dronet_yolo_qnn_reproduction.md).
 
 ## Run it
 
