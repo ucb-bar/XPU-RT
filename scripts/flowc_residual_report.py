@@ -155,64 +155,138 @@ def main() -> int:
         print(f"  (no matplotlib: {exc})")
         return 0
 
-    # fig 1: ratio distribution per backend
-    fig, ax = plt.subplots(figsize=(7.2, 3.6))
-    cols = {"HTA": "#d62728", "DSP": "#1f77b4", "CPU": "#2ca02c"}
+    # Same house style as the stage/overhead figures: validated categorical
+    # slots 1-3 (CVD dE 9.2 deutan, normal-vision 27.6), text in ink tokens
+    # rather than series colour, recessive grid, every mark direct-labelled --
+    # which is also what the validator's contrast WARN on the aqua step
+    # requires.
+    BLUE, ORANGE, AQUA = "#2a78d6", "#eb6834", "#1baf7a"
+    INK, MUTED, GRID = "#1a1a19", "#5c5c5a", "#d8d8d5"
+    SURF = "#fcfcfb"
+    BE = {"HTA": ORANGE, "DSP": BLUE, "CPU": AQUA}
+
+    def _clean(ax, left=True):
+        for sp in ("top", "right"):
+            ax.spines[sp].set_visible(False)
+        for sp in (("left", "bottom") if left else ("bottom",)):
+            ax.spines[sp].set_color(GRID)
+        if not left:
+            ax.spines["left"].set_visible(False)
+        ax.tick_params(colors=MUTED, length=0)
+        ax.set_axisbelow(True)
+
+    # ---- fig 1: per-backend bias ----
+    fig, ax = plt.subplots(figsize=(8.6, 4.0))
+    import random
+    random.seed(0)
     for i, b in enumerate(["HTA", "DSP", "CPU"]):
         v = [r["ratio"] for r in allrows if r["backend"] == b and r["usable"]]
         if not v:
             continue
-        ax.scatter([i + (hash(str(x)) % 100 - 50) / 320 for x in v], v, s=7,
-                   alpha=0.35, color=cols[b], edgecolors="none")
-        ax.hlines(st.median(v), i - 0.28, i + 0.28, color="black", lw=2, zorder=4)
-        ax.annotate(f"{st.median(v):.3f}", (i, st.median(v)), xytext=(0, 9),
-                    textcoords="offset points", ha="center", fontsize=9, weight="bold")
-    ax.axhline(1.0, color="black", ls="--", lw=0.9)
-    ax.set_xticks(range(3)); ax.set_xticklabels(["HTA", "DSP", "CPU"])
-    ax.set_ylabel("actual / predicted")
-    ax.set_ylim(0.4, 2.0)
-    ax.set_title("Solo-profile bias by backend — 1.0 = the profile was right\n"
-                 "HTA under-estimates, DSP over-estimates", fontsize=10, loc="left")
-    for sp in ("top", "right"):
-        ax.spines[sp].set_visible(False)
-    fig.tight_layout(); fig.savefig(os.path.join(a.out, "residual_bias.png"), dpi=150)
+        ax.scatter([i + random.uniform(-0.17, 0.17) for _ in v], v, s=13,
+                   alpha=0.32, color=BE[b], edgecolors="none", zorder=2)
+        m = st.median(v)
+        ax.hlines(m, i - 0.30, i + 0.30, color=INK, lw=2.4, zorder=4)
+        ax.annotate(f"{m:.3f}", (i, m), xytext=(0, 10),
+                    textcoords="offset points", ha="center",
+                    fontsize=10.5, color=INK, weight="bold")
+        ax.annotate(f"n={len(v)}", (i, 0.46), ha="center",
+                    fontsize=8, color=MUTED)
+        verdict = "profile UNDER-estimates" if m > 1.02 else (
+                  "profile OVER-estimates" if m < 0.98 else "about right")
+        ax.annotate(verdict, (i, 1.92), ha="center", fontsize=8.4, color=MUTED)
+    ax.axhline(1.0, color=INK, lw=1.0, ls="--", zorder=3)
+    # left edge: CPU's median is 0.998 and its bold label sat right on top of
+    # this caption at the right edge
+    ax.annotate("1.0 = the solo profile was right", (-0.50, 1.0),
+                xytext=(2, 6), textcoords="offset points", ha="left",
+                fontsize=8.4, color=MUTED)
+    ax.set_xticks(range(3)); ax.set_xticklabels(["HTA", "DSP", "CPU"],
+                                                fontsize=10.5, color=INK)
+    ax.set_ylabel("actual / predicted", fontsize=9, color=MUTED)
+    ax.set_ylim(0.42, 2.05); ax.set_xlim(-0.55, 2.55)
+    ax.grid(axis="y", color=GRID, lw=0.7, alpha=0.7)
+    _clean(ax)
+    ax.set_title("QRB5165: the solo profile is biased, and per backend in "
+                 "opposite directions\n440 dispatches from four board traces",
+                 fontsize=11.5, loc="left", color=INK, pad=14)
+    fig.tight_layout()
+    fig.savefig(os.path.join(a.out, "residual_bias.png"), dpi=160, facecolor=SURF)
     print(f"  wrote {a.out}/residual_bias.png")
 
-    # fig 2: within-config improvement + convergence
-    fig2, ax = plt.subplots(figsize=(7.6, 3.8))
-    names = [c[0] for c in conv]
-    x = range(len(names))
-    ax.plot(x, [c[1] for c in conv], "o-", label="no feedback", color="#999999")
-    ax.plot(x, [c[2] for c in conv], "o-", label="after 1 round", color="#d62728")
-    ax.plot(x, [c[3] for c in conv], "s--", label="after 2 rounds (fixpoint)",
-            color="#1f77b4", ms=5)
-    ax.set_xticks(list(x))
-    ax.set_xticklabels([n.replace("v3_bundles", "v3") for n in names], fontsize=8)
-    ax.set_ylabel("median |ln(actual/predicted)|")
-    ax.set_title("Within-configuration feedback: one round captures it",
-                 fontsize=10, loc="left")
-    ax.legend(fontsize=8, frameon=False)
-    for sp in ("top", "right"):
-        ax.spines[sp].set_visible(False)
-    fig2.tight_layout(); fig2.savefig(os.path.join(a.out, "residual_convergence.png"), dpi=150)
+    # ---- fig 2: within-config feedback, as a dumbbell like the stage figure ----
+    fig2, ax2 = plt.subplots(figsize=(9.0, 3.9))
+    ys = list(range(len(conv)))[::-1]
+    for y, (name, before, after1, after2) in zip(ys, conv):
+        ax2.plot([before, after1], [y, y], color=GRID, lw=3,
+                 solid_capstyle="round", zorder=1)
+        ax2.scatter([before], [y], s=70, color=MUTED, zorder=3,
+                    edgecolors="white", lw=1.3)
+        ax2.scatter([after1], [y], s=94, color=BLUE, zorder=4,
+                    edgecolors="white", lw=1.3)
+        ax2.scatter([after2], [y], s=150, facecolors="none", zorder=5,
+                    marker="D", edgecolors=ORANGE, lw=1.6)
+        ax2.annotate(f"{before:.4f}", (before, y), xytext=(0, 11),
+                     textcoords="offset points", ha="center",
+                     fontsize=8.4, color=MUTED)
+        dy = 15 if y == 0 else -19       # bottom row: label above the axis
+        ax2.annotate(f"{after1:.4f}", (after1, y), xytext=(0, dy),
+                     textcoords="offset points", ha="center",
+                     fontsize=9, color=INK, weight="bold")
+        chg = (1 - after1 / before) * 100
+        ax2.annotate(f"{chg:+.0f}%", (max(before, after1), y), xytext=(13, 0),
+                     textcoords="offset points", va="center",
+                     fontsize=9, color=INK if chg > 0 else ORANGE)
+    ax2.set_yticks(ys)
+    ax2.set_yticklabels([c[0].replace("v3_bundles", "v3") for c in conv],
+                        fontsize=9.5, color=INK)
+    ax2.set_xlabel("median |ln(actual / predicted)| — lower is a better estimate",
+                   fontsize=9, color=MUTED)
+    ax2.set_xlim(0, 0.155)
+    ax2.grid(axis="x", color=GRID, lw=0.7, alpha=0.7)
+    _clean(ax2, left=False)
+    ax2.scatter([], [], s=70, color=MUTED, label="no feedback")
+    ax2.scatter([], [], s=94, color=BLUE, label="after 1 round")
+    ax2.scatter([], [], s=90, facecolors="none", edgecolors=ORANGE, lw=1.6,
+                marker="D", label="after 2 rounds (lands on the first)")
+    ax2.legend(fontsize=8.4, frameon=False, ncol=3, loc="lower center",
+               bbox_to_anchor=(0.5, 1.0))
+    ax2.set_title("Feeding the observed error back, within one configuration\n"
+                  "the second round lands on the first: one pass reaches the fixpoint",
+                  fontsize=11.5, loc="left", color=INK, pad=30)
+    fig2.tight_layout()
+    fig2.savefig(os.path.join(a.out, "residual_convergence.png"), dpi=160,
+                 facecolor=SURF)
     print(f"  wrote {a.out}/residual_convergence.png")
 
-    # fig 3: stalls
-    fig3, ax = plt.subplots(figsize=(7.2, 3.4))
-    for i, (name, rows) in enumerate(per.items()):
-        s = sorted((r["stall_ms"] for r in rows), reverse=True)
-        ax.semilogy([x for x in range(len(s)) if s[x] > 0],
-                    [v for v in s if v > 0], lw=1.4,
-                    label=f"{name.replace('v3_bundles','v3')} "
-                          f"({sum(v for v in s if v > 1):.0f} ms lost)")
-    ax.axhline(1.0, color="black", ls="--", lw=0.8)
-    ax.set_xlabel("dispatch (sorted by stall)"); ax.set_ylabel("stall before start (ms, log)")
-    ax.set_title("Context-residency stalls — the dynamic term no kernel cost model carries",
-                 fontsize=10, loc="left")
-    ax.legend(fontsize=8, frameon=False)
-    for sp in ("top", "right"):
-        ax.spines[sp].set_visible(False)
-    fig3.tight_layout(); fig3.savefig(os.path.join(a.out, "residual_stalls.png"), dpi=150)
+    # ---- fig 3: stalls ----
+    fig3, ax3 = plt.subplots(figsize=(8.8, 3.9))
+    names, totals, counts = [], [], []
+    for name, rows in per.items():
+        big = [r["stall_ms"] for r in rows if r["stall_ms"] > 1.0]
+        names.append(name.replace("v3_bundles", "v3"))
+        totals.append(sum(big)); counts.append(len(big))
+    xs = range(len(names))
+    ax3.bar(xs, totals, 0.55, color=[ORANGE if t else GRID for t in totals],
+            edgecolor=SURF, lw=1.4, zorder=3)
+    for x, t, c in zip(xs, totals, counts):
+        ax3.annotate(f"{t:.0f} ms" if t else "none", (x, t), xytext=(0, 6),
+                     textcoords="offset points", ha="center",
+                     fontsize=10, color=INK, weight="bold" if t else "normal")
+        if c:
+            ax3.annotate(f"{c} stalls", (x, t), xytext=(0, -16),
+                         textcoords="offset points", ha="center",
+                         fontsize=8.2, color="white" if t > 300 else MUTED)
+    ax3.set_xticks(list(xs)); ax3.set_xticklabels(names, fontsize=9.5, color=INK)
+    ax3.set_ylabel("time lost to context stalls >1 ms", fontsize=9, color=MUTED)
+    ax3.set_ylim(0, max(totals) * 1.25 if max(totals) else 1)
+    ax3.grid(axis="y", color=GRID, lw=0.7, alpha=0.7)
+    _clean(ax3)
+    ax3.set_title("Context residency, not kernel cost, is the largest dynamic term\n"
+                  "and it belongs to the runtime configuration, not the silicon",
+                  fontsize=11.5, loc="left", color=INK, pad=14)
+    fig3.tight_layout()
+    fig3.savefig(os.path.join(a.out, "residual_stalls.png"), dpi=160, facecolor=SURF)
     print(f"  wrote {a.out}/residual_stalls.png")
     return 0
 
