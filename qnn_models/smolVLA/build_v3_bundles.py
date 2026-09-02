@@ -15,12 +15,18 @@ For each `dsp_seg_XX`, four variants are evaluated:
 
 The variant with minimum serial cost wins. We then build an expanded
 dispatch graph where HTA-bundle segments contribute 5 dispatches and mono
-segments contribute 1 (cpu_seg_XX always contributes 1, CPU-only).
+segments contribute 1 (cpu_seg_XX contributes 1).
 
-Per-backend results.csv files are emitted so each dispatch has its real
-runtime on its intended backend and a prohibitive cost (1e9 us) on the
-others — the scheduler then naturally picks the right HW per dispatch and
-the makespan reflects the chosen placement variant.
+Per-backend results.csv files are emitted so each dispatch carries its real
+runtime on every backend it has been MEASURED on, and a prohibitive cost
+(1e9 us) only where no measurement exists. The scheduler then picks the HW
+per dispatch instead of inheriting a placement this script assumed.
+
+The cpu_seg_XX trampolines used to be pinned to CPU here regardless of what
+was known about them. TANH_PROBE.md measured the 12 lone-Tanh trampolines on
+every backend (CPU int8 2.408 ms, DSP 5.086, HTA 5.286 against 9.171 fp32),
+so those numbers are now offered to the scheduler via TRAMPOLINE_ALT_COSTS_US
+rather than hidden behind a sentinel.
 
 Outputs:
   gen/qnn_vmfb/smolvlm_vision_v3_bundles/qrb5165_v66/<HW>/
@@ -42,6 +48,24 @@ _HERE = Path(__file__).parent
 _REPO = _HERE.parent.parent
 _PROFILE_DIR = _REPO / "qnn_models/boards/qrb5165_v66/profiles/smolvlm_vision_v3"
 _INFEASIBLE_US = 1_000_000_000.0   # 1000 seconds; effectively "do not place here"
+
+# Measured per-backend costs for the odd (lone-Tanh) cpu_seg trampolines, from
+# the int8 DLCs quantize_tanh_trampolines.py actually produces (cpu_seg_01 and
+# cpu_seg_11, 50 iters, performance governor, gap-phase median, mean of the two):
+#
+#     CPU 2389.7 / 2494.5    DSP 3806.1 / 3732.0    HTA 5067.8 / 4890.2 us
+#
+# against the shipped fp32 dispatch at 9171 us -- a 3.75x recovery on CPU, 80.7 ms
+# over the 12. TANH_PROBE.md independently measured 2408 us on CPU, so the CPU
+# figure reproduces; its DSP number (5086) was pessimistic relative to these
+# builds, most likely because it quantized from the unrepresentative
+# profile_inputs raws.
+#
+# DSP and HTA both compose the block -- the historical rejection was the FUSED
+# GELU (ElementWiseNeuron op 1); a lone Tanh is op 8 and is supported -- but
+# neither beats CPU int8, so this only ever changes the schedule if the CPU lane
+# is contended.
+TRAMPOLINE_ALT_COSTS_US = {"CPU": 2442.1, "DSP": 3769.0, "HTA": 4979.0}
 MODEL_NAME = "smolvlm_vision_v3_bundles"
 
 
@@ -178,9 +202,15 @@ def emit_dispatch_graph(plan: list[dict]):
     prev_did = None
     out_metadata = []   # per-dispatch source info (for results.csv emission)
 
-    def add(name: str, hw: str, cost_us: float, kind: str, dlc: str, src_seg: str):
+    def add(name: str, hw: str, cost_us: float, kind: str, dlc: str, src_seg: str,
+            alt_costs_us: dict | None = None):
         """kind: 'tramp_p0' | 'tramp_p1' | 'tramp_p2' | 'conv1' | 'conv2'
-                 | 'dsp_mono' | 'cpu_mono' | 'cpu_seg'."""
+                 | 'dsp_mono' | 'cpu_mono' | 'cpu_seg'.
+
+        `alt_costs_us` maps additional backends to their MEASURED cost, for
+        dispatches that genuinely can run in more than one place. Anything not
+        named there still gets the infeasible sentinel, so a backend is only
+        ever offered when we have a real number for it."""
         nonlocal did, prev_did
         key = f"dispatch_{did}"
         deps = [f"dispatch_{prev_did}"] if prev_did is not None else []
@@ -195,11 +225,14 @@ def emit_dispatch_graph(plan: list[dict]):
             "source_segment": src_seg,
             "preferred_hw": hw,
         }
+        costs = {hw: cost_us}
+        costs.update(alt_costs_us or {})
         out_metadata.append({
             "dispatch_id": did,
             "module_name": name,
             "preferred_hw": hw,
             "cost_us": cost_us,
+            "costs_by_hw": costs,
         })
         prev_did = did
         did += 1
@@ -235,7 +268,14 @@ def emit_dispatch_graph(plan: list[dict]):
             cseg = f"cpu_seg_{i:02d}"
             cpu_seg_perf = json.load(open(_PROFILE_DIR / "segment_perf.json"))[cseg]
             cpu_cost = cpu_seg_perf.get("Cpu", {}).get("mean_us")
-            add(cseg, "CPU", cpu_cost, "cpu_seg", f"{cseg}.dlc", cseg)
+            # The odd cpu_seg are the lone-Tanh trampolines and have been
+            # measured on all three backends; offer those real numbers. The
+            # even ones are attention tails, where the parallel study measured
+            # 0 ms accelerator-recoverable (HTA has no dynamic MatMul at any
+            # rank, DSP is 5.5x worse), so they stay CPU-only on purpose.
+            alt = dict(TRAMPOLINE_ALT_COSTS_US) if i % 2 == 1 else None
+            add(cseg, "CPU", cpu_cost, "cpu_seg", f"{cseg}.dlc", cseg,
+                alt_costs_us=alt)
 
     graph = {
         "dot_file": "",
@@ -276,7 +316,14 @@ def emit_results_csvs(metadata: list[dict]):
                                                 "mean_time", "mean_unit"])
             w.writeheader()
             for m in metadata:
-                cost = m["cost_us"] if m["preferred_hw"] == csv_hw else _INFEASIBLE_US
+                # A dispatch is offered on every backend we have a measured
+                # cost for, not just its preferred one. Previously every
+                # non-preferred backend got the sentinel, which made the
+                # placement a hardcoded assumption the scheduler could not
+                # revisit -- in particular it pinned all 24 cpu_seg
+                # trampolines to CPU even after DSP/HTA numbers existed.
+                by_hw = m.get("costs_by_hw") or {m["preferred_hw"]: m["cost_us"]}
+                cost = by_hw.get(csv_hw, _INFEASIBLE_US)
                 w.writerow({
                     "dispatch_id": m["dispatch_id"],
                     "module_name": m["module_name"],
