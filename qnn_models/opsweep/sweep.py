@@ -99,7 +99,14 @@ def stage_gen(pts):
              f"-v {shlex.quote(WORK)}:/workspace {DOCKER_IMG} bash -c {shlex.quote(script)}",
              timeout=3600)
     sh(f"sudo chown -R {os.getuid()}:{os.getgid()} {shlex.quote(WORK)}")
-    made = next((l.split()[1] for l in out.splitlines() if l.startswith("GENERATED")), "?")
+    made = next((l.split()[1] for l in out.splitlines() if l.startswith("GENERATED")), None)
+    if made is None:
+        # Do not carry on with a partial plan: genmodels.py builds in plan
+        # order, so a crash silently drops every op after it and the sweep
+        # looks like it finished with whole operators missing.
+        raise RuntimeError(
+            "model generation failed; no GENERATED line. Container output:\n"
+            + "\n".join(out.splitlines()[-15:]))
     print(f"[gen]   {made} new models, {len(pts)} total", flush=True)
 
 
