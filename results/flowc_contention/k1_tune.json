@@ -1,0 +1,21 @@
+{
+ "runs": 20,
+ "dispatches": 3560,
+ "concurrent_fraction": 0.6177,
+ "bucket_counts": {
+  "3+": 629,
+  "1-2": 1570,
+  "solo": 1361
+ },
+ "bucket_medians": {
+  "solo": 1.0854017322745446,
+  "1-2": 1.234097958458985,
+  "3+": 1.2192461892041422
+ },
+ "leave_one_run_out_logerr": {
+  "none": 0.151,
+  "kind": 0.0968,
+  "kind+co": 0.0806
+ },
+ "verdict": "co-runner conditioning HELPS"
+}

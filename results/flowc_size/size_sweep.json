@@ -79,5 +79,83 @@
   },
   "best_backend": "dsp@int8",
   "best_ms": 5.3422
+ },
+ {
+  "axis": "k1_size_variants",
+  "target": "spacemit_x60",
+  "variant": "yolov8_nano_64x96.int8",
+  "ms": 47.7286,
+  "rel": 1.0
+ },
+ {
+  "axis": "k1_size_variants",
+  "target": "spacemit_x60",
+  "variant": "yolov8_nano_128x192.int8",
+  "ms": 193.9176,
+  "rel": 4.063
+ },
+ {
+  "axis": "k1_size_variants",
+  "target": "spacemit_x60",
+  "variant": "yolov8_nano.int8",
+  "ms": 226.8646,
+  "rel": 4.753
+ },
+ {
+  "axis": "k1_size_variants",
+  "target": "spacemit_x60",
+  "variant": "dronet.int8",
+  "ms": 8.3335,
+  "rel": 1.0
+ },
+ {
+  "axis": "k1_size_variants",
+  "target": "spacemit_x60",
+  "variant": "dronet.split_x2.int8",
+  "ms": 9.7691,
+  "rel": 1.172
+ },
+ {
+  "axis": "k1_size_variants",
+  "target": "spacemit_x60",
+  "variant": "dronet.split_x4.int8",
+  "ms": 12.4028,
+  "rel": 1.488
+ },
+ {
+  "axis": "k1_hart_scaling",
+  "variant": "dronet.int8",
+  "ms_by_harts": {
+   "1": 8.3335,
+   "2": 6.0528,
+   "4": 5.2467,
+   "8": 5.3201
+  },
+  "best_speedup": 1.588,
+  "knee_harts": 4
+ },
+ {
+  "axis": "k1_hart_scaling",
+  "variant": "ffn_block.int8",
+  "ms_by_harts": {
+   "1": 26.6108,
+   "2": 15.6476,
+   "4": 9.713,
+   "8": 7.715
+  },
+  "best_speedup": 3.449,
+  "knee_harts": 8
+ },
+ {
+  "axis": "k1_hart_scaling",
+  "variant": "yolov8_nano_64x96.int8",
+  "ms_by_harts": {
+   "1": 47.7286,
+   "2": 29.5616,
+   "4": 24.3534,
+   "8": 23.948
+  },
+  "best_speedup": 1.993,
+  "knee_harts": 8
  }
 ]
