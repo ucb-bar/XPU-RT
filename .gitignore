@@ -1,5 +1,8 @@
 __pycache__/
 */plots/
+# (flow-c's cd5c5721 added plots/smolvla_expert_gantt.png and
+#  plots/smolvla_decode_gantt.png explicitly; both are already covered by
+#  the rule above, so they are not repeated here.)
 
 # Runtime build output and local test data
 runtime/build/
