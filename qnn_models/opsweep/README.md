@@ -87,6 +87,42 @@ be interrupted at any point and resumed.
   up to 262144 elements and fails at 1048576 with `Fail to prepare graph m in
   HTA backend`. Ops it nominally supports still fall off the map at size.
 
+## What the full sweep found
+
+1267 distinct lanes, 1021 measured, 246 refused by a backend.
+
+**The dispatch floor is the whole story.** Median fitted intercept per lane:
+
+    cpu/fp32       2.0 us warm      144.6 us cold   (72x)
+    cpu/int8      23.4 us warm      192.8 us cold   (8.3x)
+    dsp/int8     425.3 us warm      625.8 us cold   (1.5x)
+    hta/int8    1345.1 us warm     2127.0 us cold   (1.6x)
+    gpu/fp16    2307.9 us warm     2801.9 us cold   (1.2x)
+
+An accelerator has to find ~400 us (DSP) or ~1.3 ms (HTA) of arithmetic before
+it breaks even, and almost nothing in these models is that big per op. **24 of
+659 accelerator lanes beat the CPU at all**, and every one of the top eight is
+`conv2d`; the best is 4.69x (conv2d, 1024 channels, HTA: 38.6 ms -> 8.2 ms).
+The aggregate placement map has no green cell, because a median over sizes
+averages the large-size wins away — read the crossover map for placement.
+
+**Conv1x1 vs FullyConnected, at matched arithmetic.** This is the single
+mapping choice worth making, and the sweep puts numbers on it per backend:
+
+    hta/int8   linear is 45.3x the time of conv1x1 (median), up to 127.8x
+    dsp/int8   linear is  1.3x            (median), up to  13.5x
+    gpu/fp16   linear is  1.2x
+    cpu/int8   linear is  0.8x  -- on the CPU the mapping is a slight LOSS
+
+So it is an accelerator-side rewrite, not a universal one, and it matters far
+more on HTA than the earlier single-shape measurement suggested. Rewriting a
+FullyConnected as a 1x1 convolution on the CPU makes things marginally worse.
+
+**Precision.** int8 is the only precision the DSP and HTA accept at all; the GPU
+is the reverse, taking fp16/fp32 and rejecting int8 outright. On the CPU, int8
+beats fp32 for the heavy ops (conv2d, linear, matmul_dyn, conv1x1) and *loses*
+for the cheap elementwise ones, where the quantize/dequantize is the work.
+
 ## Compose failures are results
 
 A backend that refuses an op is recorded with its verbatim validator message,
