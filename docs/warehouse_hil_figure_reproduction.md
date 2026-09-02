@@ -28,13 +28,35 @@ Paths below are absolute so the runbook is copy-pasteable. The sim scripts live 
 
 ---
 
-## 0. One-time: what you need on disk
+## 0. Prerequisites & assets (from scratch on a new machine)
 
-- The trained MLP flight controller checkpoint:
-  `/scratch/agustin/projects/DIMA/logs/rsl_rl/crazyflie_steering_tracking/2026-08-29_19-27-23_larger_ctrl_512_512_256_128/model_3250.pt`
-- The YOLOv8n gate/person model: `XPU-RT/sims/models/warehouse/yolov8n_gate_person_128x192.pt`
-- A measured K1 profile checked into the scheduler (`--profiled` reads it); no board needed to
-  reproduce the figure, only to re-measure the profile.
+**Environment.** Two conda/venv environments (see `docs/xpurt_env_setup.md` + `docs/environment.md`):
+- **Isaac Lab** (the `env_isaaclab` / `xpurt` conda env with Isaac Sim + IsaacLab + rsl_rl) — runs
+  the flight render. This is the heavy one; follow Isaac Sim's install then `xpurt_env_setup.md`.
+- **XPU-RT venv** (`.venv`, has ortools) — runs the scheduler + Gantt.
+
+**In the repo (committed — you get these on clone):**
+- `sims/isaaclab_tasks/warehouse_nav/` — the warehouse env (scene, MDP, gates, obstacles, sensors).
+- `sims/scripts/record_sensor_demo.py`, `sims/scripts/compose_mega_figure.py` — render + compose.
+- `sims/models/warehouse/yolov8n_gate_person_128x192.pt` — the YOLOv8n gate/person model.
+- `data/toplevel/networks_k1_flight_deployed.json`, `scripts/ros_pinning_periodic.py`,
+  `scripts/plot_solver_gantt_annotated.py` — the schedule spec, ROS baseline, and Gantt.
+- `gen_mb/` — the K1 dispatch graphs (`vmfb/`) **and the measured spacemit_x60 profiles** for all
+  three deployed nets (`--profiled` is genuinely measured; no board needed to reproduce the figure,
+  only to re-measure). Previously only `fused_full` was here — mlp_control/yolov8 are now included.
+
+**NOT in the repo (obtain separately — the one gap):**
+- **The trained MLP flight controller checkpoint** `model_3250.pt`. It lives under `logs/` (training
+  output, not committed — ~10 MB per checkpoint, hundreds of them). Two ways to get it:
+  1. Copy the exact checkpoint used for the figure from the shared host:
+     `/scratch/agustin/projects/DIMA/logs/rsl_rl/crazyflie_steering_tracking/2026-08-29_19-27-23_larger_ctrl_512_512_256_128/model_3250.pt`
+     (host-local path; on this machine the mount is occasionally flaky — retry if a read fails).
+  2. **Re-train it** with the committed PPO config
+     `sims/isaaclab_tasks/warehouse_nav/config/crazyflie/agents/rsl_rl_ppo_cfg.py` (rsl_rl PPO on the
+     warehouse steering-tracking task) and use a late checkpoint. Flight quality varies by seed;
+     confirm 4/4 gates before composing.
+  If your team wants true one-clone reproduction, publish this one checkpoint as a release asset (or
+  git-LFS it) and point `--rl_ckpt` at it.
 
 The warehouse env is `warehouse_nav` (the `WithSensors` variant). The aisle runs along +Y at
 x≈−8, cruise z≈2; the four gates are at world y≈9, 13, 17, 21 (also stored as `gates_world` in
