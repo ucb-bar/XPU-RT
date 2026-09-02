@@ -1,0 +1,67 @@
+{
+  "_comment": "DEPLOYED-RATE clone of allneural for the paper Gantt: CTRL(mlp_control)@100Hz(10ms), NAV(fused_full)@50Hz(20ms), YOLO spanning. Real solver schedule over an 80ms window so the nested ctrl-in-nav period windows are visible. Solved with the actual XPU-RT greedy scheduler.",
+  "hardware": {
+    "machines": {
+      "cpu_p": 4,
+      "cpu_e": 4
+    },
+    "profile_hw": {
+      "cpu_p": "rvv_x60",
+      "cpu_e": "rvv_x60"
+    },
+    "profile": {
+      "target": "spacemit_x60",
+      "topo_tag_override": false,
+      "gen_root": "gen_mb"
+    },
+    "p_core_speedup": 1.0
+  },
+  "scheduler": {
+    "random_seed": 42,
+    "solver_verbosity": 1,
+    "time_limit": 200,
+    "use_profiled": true,
+    "prune_periodic": true,
+    "restrict_makespan_to_nonperiodic": false,
+    "machine_combination_mode": "shard",
+    "enable_impls": false
+  },
+  "networks": {
+    "mlp_control": {
+      "id": 0,
+      "identifier": "mlp_control",
+      "dispatch_deps_path": "gen_mb/vmfb/mlp_control/spacemit_x60/rvv_x60/mlp_control.int8/mlp_control.int8_dispatch_graph.json",
+      "period": 10.0,
+      "window_duration": 10.0,
+      "num_instances": 12
+    },
+    "fused_full": {
+      "id": 1,
+      "identifier": "fused_full",
+      "dispatch_deps_path": "gen_mb/vmfb/fused_full/spacemit_x60/rvv_x60/fused_full.int8/fused_full.int8_dispatch_graph.json",
+      "period": 20.0,
+      "window_duration": 20.0,
+      "num_instances": 6,
+      "stateful": true
+    },
+    "yolov8_nano_64x96": {
+      "id": 2,
+      "identifier": "yolov8_nano_64x96",
+      "dispatch_deps_path": "gen_mb/vmfb/yolov8_nano_64x96/spacemit_x60/rvv_x60/yolov8_nano_64x96.int8/yolov8_nano_64x96.int8_dispatch_graph.json",
+      "period": 22.0,
+      "window_duration": 22.0,
+      "num_instances": 5
+    }
+  },
+  "edges": [],
+  "freshness_edges": [
+    {
+      "producer_task": "fused_full",
+      "consumer_task": "mlp_control",
+      "freshness_window": 20.0,
+      "sample_time_semantics": "producer_release",
+      "consumption_policy": "latest_completed",
+      "criticality": "hard"
+    }
+  ]
+}
