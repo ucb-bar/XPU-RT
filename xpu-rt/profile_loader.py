@@ -205,7 +205,9 @@ def _load_tile_widths(dispatch_deps_path: str) -> dict:
     """`{new_dispatch_id: tile_width}` for a split graph, else `{}`.
 
     The width is the tile's own extent along the split axis (`tile_oc` for a
-    conv OC split, `tile_n` for a linear N split), recorded by
+    conv OC split, `tile_n` for a linear N split or a pointwise E split,
+    `tile_oh` for a conv row split, `tile_c` for a pool channel split),
+    recorded by
     `apply_split_hint`.  It is NOT recoverable as parent/N: `tile_sizes`
     partitions an axis into tiles that need not be equal, and an uneven
     partition is the interesting case precisely because the two backends do
@@ -222,7 +224,8 @@ def _load_tile_widths(dispatch_deps_path: str) -> dict:
         did = op.get("dispatch_id")
         if not sf or did is None:
             continue
-        w = sf.get("tile_oc", sf.get("tile_n", sf.get("tile_oh")))
+        w = next((sf[k] for k in ("tile_oc", "tile_n", "tile_oh", "tile_c")
+                  if isinstance(sf.get(k), int)), None)
         if isinstance(w, int) and w > 0:
             out[int(did)] = w
     return out
@@ -450,6 +453,17 @@ def _apply_id_remap(prof: dict, remap: dict, widths: dict | None = None,
                     # for the gather/scatter the NCHW layout forces.
                     e["time_ms"] = parent_ms * (wr / pih) * _oh_copy_tax(
                         hw, has_halo=halo)
+                elif axis in ("E", "C") and total_w and all(tile_w):
+                    # Pointwise element range, or a pool's channel range.
+                    # LINEAR in the tile's width, with no slab quantum: neither
+                    # kind blocks its inner loop on an output-channel tile the
+                    # way a conv does, so `ceil(w/q)/ceil(W/q)` would be
+                    # answering a question about hardware that is not in the
+                    # loop. It is not a harmless approximation either -- for
+                    # DroNet's maxpool2d_s8, C=32 is exactly the rvv quantum,
+                    # so the slab model prices both halves of a 2-way split at
+                    # a full slab and reports a 2x split as worth 1.0x.
+                    e["time_ms"] = parent_ms * (tile_w[k] / total_w)
                 elif q and total_w and all(tile_w):
                     # Slab model -- validated on rvv to 0.008 median error.
                     # A tile costs ceil(w/q) slabs; the parent costs
