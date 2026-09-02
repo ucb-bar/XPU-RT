@@ -38,8 +38,8 @@ instead of merlin/IREE.
 * [`docs/mlp_dronet_yolo_spike_reproduction.md`](docs/mlp_dronet_yolo_spike_reproduction.md)
   — a simpler, no-FireSim variant of Flow A: same ModelBlaster codegen and
   checkout (`zephyr-chipyard-sw/modelblaster/`), profiled entirely on
-  spike with the `greedy`/`greedy_periodic` solver (no MOSEK license
-  needed). Fresh clone to `OVERALL: PASS (3 models)` in six commands
+  spike with the `greedy`/`greedy_periodic`/`greedy_reserved`/`auto`
+  solvers (no MOSEK license needed). Fresh clone to `OVERALL: PASS (3 models)` in six commands
   (see that doc for the full step-by-step + troubleshooting):
   ```bash
   git clone git@github.com:ucb-bar/XPU-RT.git && cd XPU-RT
@@ -181,14 +181,166 @@ python scripts/run_xpurt_schedule.py --profiled
 ```
 The optimal schedule of your workloads on your target will be found in `schedules/scheduled_networks_periodic_profiled.json` with visualization in 'plots/iree_combined_schedule_period.png' after it finishes.
 
+#### Choosing a solver (`--solver`)
 
-### [Optional] Run Baseline greedy Scheduler
+| solver | what it does | when to use |
+| --- | --- | --- |
+| `milp` (default) | global cvxpy/MOSEK optimum | rarely usable — of the eleven spike/FireSim workloads only the 212-op `yolov8_only_spike` solves at all; see the scaling note below |
+| `greedy` | list scheduling, earliest completion for every op | baseline heuristic |
+| `greedy_periodic` | same, but non-periodic ops get picked first | non-periodic critical path you don't want fragmented |
+| `greedy_reserved` | `greedy_periodic` ordering + periodic ops take the *least contended* lane that still meets their deadline instead of the fastest one | heterogeneous multi-lane targets where a periodic job would otherwise squat on the accelerator the makespan-critical job needs |
+| `heft` | HEFT: order by upward rank (longest path to a sink) rather than earliest completion, place by earliest finish with gap insertion | best makespan on several workloads — but it is deadline-blind, so check the window misses before trusting it |
+| `heft_edf` | HEFT's rank ordering for non-periodic ops, earliest-deadline-first for periodic ops, periodic banded above non-periodic | the strongest single picker by validity (8/11 RISC-V, 23/30 generated) |
+| `pso`, `sa` | particle swarm / simulated annealing over a random-key encoding, seeded from every heuristic | research use — they match the best heuristic and have not beaten it; `--search-budget` sets the per-pass wall clock |
+| `cpsat` | OR-Tools CP-SAT: interval variables + one `AddNoOverlap` per machine | the exact method that actually scales — beats MOSEK at every size measured (212, 242 and 271 ops) and still solves at 677 where the MILP cannot finish building. Needs `XPURT_CPSAT_PYTHON` pointing at an interpreter with `ortools` |
+| `auto` | runs all six constructive pickers and ranks them on (missed periodic windows, whether the refinement loop converged, makespan, total schedule length) | **recommended** — a few seconds even on the largest workloads here. It optimises for a *valid* schedule, so it will give up a little makespan to stop missing deadlines: 10/11 valid against 3-8 for any single picker, and it warns when no candidate is valid |
 
-Run greedy scheduler variant:
+#### What the MILP already prunes, and where it still runs out
 
-```bash
-python scripts/run_greedy_schedule.py --use-grouped
-```
+`xpu-rt/scheduler.py` is a big-M disjunctive formulation, and it carries
+several model-reduction passes:
+
+| pass | what it removes | default | reachable from the CLI / spec? |
+| --- | --- | --- | --- |
+| `prune_cross_period_constraints` | (3) precedence between ops whose windows are provably disjoint, and the whole (4)(5) non-overlap pair when two ops' windows cannot overlap | on | yes — `scheduler.prune_periodic`, `--prune-periods` / `--no-prune-periods` |
+| `prune_overlap_constraints_for_dependency_chain` | (4)(5) for pairs the precedence DAG already orders transitively (bitset reachability over the topological order) | on | no — the default is the only way to get it |
+| combination-overlap test | (4)(5) for `(k1, k2)` combination pairs that share no machine | always | n/a |
+| `restrict_makespan_to_nonperiodic` | (6) `C_max` rows for periodic ops | on | yes — `scheduler.restrict_makespan_to_nonperiodic`, `--include-periodic-in-makespan` |
+| `_compute_big_m` | nothing, but tightens `H` to `(Σ max durations + transfers) x 2`, floored at 5000, instead of a loose constant | always | no |
+| `fusion_threshold` | operations themselves — fuses everything under a duration threshold before building the model | off | no — `schedule()` argument only |
+| `schedule_window` + `packing.py` | solves per time-window and recombines | unused | no |
+
+They work, and one of them is load-bearing. On
+`networks_3way_dronet5ms_mlp2ms_yolov8_qrb5165` (191 operations, 3 lanes) a
+naive model would emit all 18,145 operation pairs; pruning leaves 540, and
+the whole model is 4,003 constraints built in 0.6 s. On the one RISC-V
+workload the MILP can solve at all (`yolov8_only_spike`, 212 ops),
+switching **`prune_overlap_constraints_for_dependency_chain` off is the
+difference between a 615.01 ms answer in 620 s and no answer in 900 s** —
+and it is the one pass reachable from neither the CLI nor the spec, working
+purely by being default-on. `prune_cross_period_constraints` and
+`restrict_makespan_to_nonperiodic`, by contrast, change nothing there,
+because that workload has no periodic networks for them to act on — and
+every RISC-V workload that does have periodic networks is too large for the
+MILP to finish, so on this family that pass has never been exercised on a
+model that completes. Fusion cuts both ways: on that same
+workload it costs makespan at a fixed time limit (616.20 ms at
+`fusion=0.5`, 617.55 at `2.0`, against 615.01 unfused), but on FireSim
+dronet+yolov8 it is the difference between a solve and a timeout — 725 s at
+`fusion=0.5` where both time-limit settings ran out at 900 s. Reach for it
+when the model won't build, not to improve one that already solves.
+
+What none of them touched was the **variable** count: `beta`, the pairwise
+ordering matrix, was allocated dense as `operations x operations` before
+any pruning ran, so MOSEK presolved an ordering bit for every pruned pair
+too. It is now allocated per surviving pair instead. Identical model,
+identical optimum, measured:
+
+| workload | ops | constraints | variables (dense → sparse) | MOSEK solve (dense → sparse) |
+| --- | --- | --- | --- | --- |
+| flowc 4-way | 58 | 1,479 (unchanged) | 3,597 → 441 | 1.66 s → 1.18 s |
+| 3-way dronet5ms+mlp2ms+yolov8n | 191 | 4,003 (unchanged) | 37,246 → 1,305 | 9.42 s → 3.60 s |
+| 2x resnet50+dronet+mlp | 372 | 16,541 (unchanged) | 139,873 → 3,998 | 130.06 s → 20.87 s |
+
+**Where it still runs out.** Almost everywhere on this family. The MILP is
+also the only solver that doesn't reseed periodic networks to one instance
+before its first pass, so it faces the workload_factory's full
+horizon-derived counts: the spike repro workload is **7784 operations** for
+it (against 705 for the greedy path), FireSim dronet@10 ms is 4112,
+mlp10+dronet20 is 3072, dronet@20 ms is 2162. Of the six RISC-V workloads
+small enough to be worth trying (212-803 ops), only the 212-op one finished
+inside 900 s.
+
+The mechanism: `_periods_overlap` can only prune a pair when
+*both* ops carry `min_start_t`/`max_end_t`; a non-periodic op has neither,
+so every (periodic, non-periodic) and (non-periodic, non-periodic) pair
+survives by construction. On `networks_periodic_dronet5ms_yolov8_qrb5165`
+— 1751 operations, because the MILP is also the only solver that doesn't
+reseed periodic networks to one instance before its first pass, so it
+faces the workload_factory's full horizon-derived counts — 364,293 of the
+1,532,125 pairs survive, giving 1,465,895 constraints that take ~330 s
+just to *build* in Python. Sparse `beta` cuts the ordering variables there
+from 3,066,001 to 364,293 (whole model 3,070,255 → 369,547) but leaves the
+constraint count untouched, and it still does not solve: a 900 s run peaked
+at 41.9 GB and was killed inside cvxpy's own compilation, before MOSEK ever
+saw the problem. Bounding non-periodic ops with ASAP/ALAP windows so those
+pairs become window-prunable too is the obvious next lever; until then,
+use `auto` on workloads of that size.
+
+Where the MILP does finish it is worth having. On QRB5165 it proves `auto`
+optimal three times over (33.57, 28.64 and 21.81 ms, matched exactly in
+about a second). On `yolov8_only_spike` it beats every heuristic —
+615.01 ms against 628.94 — but takes 620 s to do it, 440x the heuristic's
+1.4 s, for 2.2%.
+
+No single heuristic wins everywhere — hence `auto`. Measured over the
+eleven spike/FireSim (Flow A / RISC-V) workloads, reporting the objective
+makespan in ms and whether the schedule is *valid*: misses no periodic
+window, and holds enough periodic instances to cover its own makespan.
+`!` = missed a window, `u` = under-covers.
+
+| workload | `greedy` | `greedy_periodic` | `greedy_reserved` | `decomposed` | `heft` | `heft_edf` | `auto` |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| spike: mlp+dronet+yolov8 | 2512.41 u | 665.47 | **628.94** | 2600.83 u | 630.91 ! | 2511.61 u | **628.94** |
+| spike: + gemmini_q31 | 126.60 | 106.62 ! | 105.14 ! | 119.86 | **103.02** | 110.88 | **103.02** |
+| spike: yolov8 only | 628.94 | 628.94 | 628.94 | 628.94 | **628.14** | **628.14** | **628.14** |
+| fsim: dronet+yolov8 | 115.86 | 110.68 | 110.68 | 116.91 | **98.41** | 104.58 | **98.41** |
+| fsim: dronet50+yolov8 | 127.71 | 123.52 ! | 122.95 ! | 127.07 | **98.41** | 115.10 | **98.41** |
+| fsim: dronet20+yolov8 | 158.59 ! | 168.04 ! | 185.51 ! | 173.47 | 114.57 ! | **148.79** | **148.79** |
+| fsim: dronet10+yolov8 | 358.55 ! | 272.95 ! | 244.86 ! | 358.61 u | 132.39 ! | 316.28 u | 316.28 u |
+| fsim: mlp10+dronet20+yolov8 | 174.67 ! | 114.11 ! | 113.17 ! | 173.99 u | 115.26 ! | **158.19** | **158.19** |
+| fsim: mlp+dronet+yolov8 static | 175.55 ! | 177.54 ! | 328.07 ! | 175.13 | 150.53 ! | **158.19** | **158.19** |
+| fsim: dronet50+yolov8 static | 158.16 | 158.16 ! | 158.16 ! | 158.22 | **158.14** | 158.16 | **158.14** |
+| fsim: mlp+dronet het | 1163.46 u | 1163.46 u | **293.23** | 1163.46 u | 284.53 ! | 1125.11 u | **293.23** |
+| **valid schedules** | 5/11 | 3/11 | 4/11 | 7/11 | 5/11 | 8/11 | **10/11** |
+
+Every picker is the best on some workload and among the worst on another.
+`greedy_reserved` is worth 4x on the FireSim heterogeneous workload and is the
+worst of the seven on the static mlp+dronet+yolov8. `heft` gives the shortest
+makespan on five workloads and misses deadlines on five. `heft_edf` is the
+strongest *single* method by validity, and is 4x off on the spike 3-model
+workload. Only `auto` is near the top everywhere.
+
+Adding `heft`/`heft_edf` to `auto`'s candidate set improved eight of the
+eleven: FireSim dronet50+yolov8 by 22.6% (127.07 -> 98.41 ms), dronet20 by
+14.2%, gemmini_q31 by 14.0%, dronet+yolov8 by 11.1%, and it turned the
+previously-invalid mlp10+dronet20+yolov8 into a valid 158.19 ms schedule.
+One workload — FireSim dronet@10 ms + yolov8 — still has no valid answer from
+any method; `auto` says so rather than returning its pick silently.
+
+Beyond the constructive pickers, `--solver pso`, `sa` and `cpsat` exist and
+are documented in
+[`docs/scheduler_solver_study.md`](docs/scheduler_solver_study.md), along with
+the cvxpy backend comparison (`--cvxpy-solver`) and a 30-workload generated
+corpus. Short version: on a fixed 677-op instance the metaheuristics match the
+best heuristic and never beat it; CP-SAT gets within 2.3% in 180 s, on an
+instance whose MILP model cvxpy is still *compiling* after 22 minutes; and
+MOSEK is 2.8x better than HiGHS at equal time budget.
+
+### Tuning knobs, measured
+
+- **`--max-periodic-iters` is a divergence multiplier, not a quality knob.**
+  The refinement loop grows periodic instance counts from the makespan those
+  same instances inflated. Where it does not converge, every extra pass makes
+  the answer worse and less covered: `greedy` on the spike 3-network workload
+  runs 657 -> 1272 -> 2512 -> 4992 -> 9952 ms as the cap goes 1 -> 2 -> 4 ->
+  8 -> 16. The default of 4 is fine; raising it never helped on any of the 19
+  workloads swept. A non-converged run now says so explicitly.
+- **`prune_periodic` changed nothing** — identical results in all 44
+  (workload x solver) cells on this family, on and off.
+- **`restrict_makespan_to_nonperiodic` must stay on.** Turning it off skips
+  the "seed each periodic network at one instance" step and hands the solver
+  the workload_factory's full horizon-derived counts: the spike 3-network
+  workload goes 2512 -> 12912 ms (`greedy`) and 665 -> 10430 ms
+  (`greedy_periodic`).
+- **`--reserved-max-slowdown`** (`scheduler.reserved_max_slowdown`) caps how
+  much slower than its own fastest lane a periodic op may run to stay off a
+  lane the non-periodic jobs need. Swept over {1, 2, 4, 8, unbounded}: **2.0**
+  is best-or-tied on ten of the eleven RISC-V workloads and is the default.
+  It is the smallest cap that still reaches the valid 293.23 ms schedule on
+  the FireSim heterogeneous workload (1.0 collapses to 1163.46 ms). QRB5165
+  workloads want a larger value — 2x-resnet50 needs 8.0 to find its 21.81 ms
+  schedule — which is why this is a knob and not a constant.
 
 ## Flow A: ModelBlaster as the compiler backend
 
@@ -257,12 +409,32 @@ everything else in this repo, from the top-level XPU-RT checkout:
 pip install -e ".[milp]"   # adds cvxpy (the modeling layer) to the zephyr env
 ```
 
-This is enough to exercise the scheduler bridge end to end against cvxpy's
-free solvers (`--solver CLARABEL`, `SCS`, `HIGHS`, `OSQP`, `SCIPY`). **MOSEK
-itself** — the solver these scripts default to (`--solver MOSEK`) — is a
+**MOSEK** — the solver these scripts default to (`--solver MOSEK`) — is a
 separate, license-gated product: `pip install mosek` adds the Python
 package (no license needed just to install it), but actually solving
 requires a license file (`MOSEKLM_LICENSE_FILE`) from mosek.com.
+
+**These bridge scripts' `--solver` flag does not work today**, for either
+value. `scripts/run_xpurt_scheduler.py:328` calls
+`schedule(workload, cvxpy_solver=args.solver, ...)`, but
+`xpu-rt/scheduler.py`'s `schedule()` has no `cvxpy_solver` parameter and no
+`**kwargs`, so the call raises `TypeError` before any solve;
+`scripts/run_xpurt_scheduler_multi.py:362` does
+`from schedulers import get_scheduler`, and no `schedulers` module exists
+under `xpu-rt/`. `xpu-rt/scheduler.py` hardcodes `solver=cp.MOSEK` at four
+call sites (lines 289, 641, 643, 872), so MOSEK is the only backend the
+MILP path can currently use.
+
+For the record, of the solvers cvxpy has installed in the `xpurt` env —
+`CLARABEL`, `DAQP`, `HIGHS`, `MOSEK`, `OSQP`, `SCIPY`, `SCS` — only
+**HIGHS, MOSEK and SCIPY** can solve this model at all: the rest are
+continuous-only and reject the boolean variables outright (verified by
+handing each a 3-boolean toy MIP). HiGHS is free, open source, already
+installed, and cvxpy-drivable, so it is the obvious first alternative to
+benchmark once a `--cvxpy-solver` knob exists. OR-Tools CP-SAT is the
+interesting non-cvxpy candidate — this is a disjunctive no-overlap
+scheduling model, which is what its interval variables are built for — but
+it is not installed and would be a reformulation, not a solver swap.
 
 (modelblaster's own `pyproject.toml` also declares a `scheduler` extra meant
 for `uv sync --extra scheduler` + `uv run` — currently broken for this

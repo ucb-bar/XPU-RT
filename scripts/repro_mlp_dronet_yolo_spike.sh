@@ -200,6 +200,8 @@ done
 case "${SOLVER}" in
     greedy)          solver_tag="_greedy" ;;
     greedy_periodic) solver_tag="_greedy_periodic" ;;
+    greedy_reserved) solver_tag="_greedy_reserved" ;;
+    auto)            solver_tag="_auto" ;;
     decomposed)      solver_tag="_decomposed" ;;
     *)               solver_tag="" ;;
 esac

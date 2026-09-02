@@ -1,0 +1,26 @@
+{
+  "_comment": [
+    "Hardware bank for scripts/gen_random_workload.py.",
+    "spike_rv is the Flow A / RISC-V target this repo's spike reproduction",
+    "runs on: one RVV hart (CPU_P) and one scalar hart (CPU_E). The",
+    "machines/profile_hw/profile block is field-for-field the one in",
+    "data/toplevel/networks_mlp_dronet_yolo_spike.json, which is the workload",
+    "scripts/repro_mlp_dronet_yolo_spike.sh builds and runs end to end, so",
+    "anything generated against this config resolves the same profile CSVs."
+  ],
+  "default": "spike_rv",
+  "configs": {
+    "spike_rv": {
+      "description": "spike RISC-V through ModelBlaster: RVV hart (CPU_P) + scalar hart (CPU_E), one lane each. Profiles are the results.csv files modelblaster writes under gen/profile/{RVV,scalar}/spike.",
+      "available": true,
+      "machines": { "cpu_p": 1, "cpu_e": 1 },
+      "profile_hw": { "cpu_p": "RVV", "cpu_e": "scalar" },
+      "profile": {
+        "gen_root": "zephyr-chipyard-sw/modelblaster/gen",
+        "target": "spike",
+        "topo_tag": "topo_0",
+        "topo_tag_override": true
+      }
+    }
+  }
+}
