@@ -10,3 +10,7 @@ runtime/dispatch_from_schedule_async/
 
 # Session/audit notes for docs -- process commentary, not user-facing docs
 docs/*_status.md
+
+# generated plots — regenerate with qnn_models/smolVLA/plot_expert_gantt.py
+plots/smolvla_expert_gantt.png
+plots/smolvla_decode_gantt.png
