@@ -72,10 +72,23 @@ $PY -c "import sys; sys.path.insert(0,'scripts/solver_study'); import make_plots
 | `greedy*`, `decomposed`, `heft`, `heft_edf` | **yes** | deterministic construction, no RNG |
 | `pso`, `sa` | **yes, given the seed** | seeded `np.random.default_rng(seed)`; `pareto_fill.py` fixes `seed=0` |
 | `milp:*` | close | MOSEK/HiGHS are deterministic given the model, but a *time limit* truncates the search at a wall-clock point, so a loaded machine can change which incumbent is returned |
-| **`cpsat`** | **no** | see below |
+| `cpsat` **setup** (model, hint, budgets) | **yes, exactly** | seeded build, committed profile data, no RNG in the model path — verified by hashing |
+| `cpsat` **result** | **no** | 8 search workers; see below |
 
-**CP-SAT is not reproducible as run here.** It defaults to 8 search workers,
-and the answer depends on how those threads interleave. Repeated runs of an
+**The CP-SAT *experiment* is reproducible; its *result* is not.** Those are
+different claims and only the second one fails.
+
+Everything that goes into the solver is deterministic and verifiable: the
+workload build is seeded, the profiled durations come from committed CSVs, the
+model serialised to the solver process (`n`, durations, predecessors,
+`min_start`, `max_end`, periodic flags) hashes identically across runs, and the
+warm-start hint is derived from `heft`, which has no RNG. Rebuilding it twice
+gives the same SHA-256 and the same 46.9124 ms seed. So the setup re-runs
+exactly: same instance, same model, same hint, same budgets — anyone following
+the commands above is running the identical experiment.
+
+What varies is the search. CP-SAT defaults to 8 workers, and the answer depends
+on how those threads interleave. Repeated runs of an
 identical configuration on the 242-op instance returned 45.33, 45.40, 46.91
 and 46.95 ms — a spread of about ±1.5 ms on a 46 ms schedule. Two consequences
 for reading the chart:
