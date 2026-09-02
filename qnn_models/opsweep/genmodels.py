@@ -6,6 +6,7 @@ no ML packages on the host.  Reads a plan produced by sweep.py stage_gen.
 
   python3.10 genmodels.py /workspace/_plan.json /workspace
 """
+import glob
 import json
 import os
 import sys
@@ -23,7 +24,11 @@ def main(plan_path, work):
     made = 0
     for op, params, axis, val, t in plan:
         d = os.path.join(work, t)
-        if os.path.exists(os.path.join(d, "m.onnx")):
+        # sweep.py deletes the raws once the int8 DLC exists, so "m.onnx is
+        # here" is not enough to skip -- the raws have to be here too, or a
+        # rebuild would find an empty input list.
+        if (os.path.exists(os.path.join(d, "m.onnx"))
+                and glob.glob(os.path.join(d, "*.raw"))):
             continue
         os.makedirs(d, exist_ok=True)
         model, shapes, macs = BUILDERS[op](*params)
