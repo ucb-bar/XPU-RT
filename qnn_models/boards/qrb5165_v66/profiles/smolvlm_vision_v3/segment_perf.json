@@ -1,199 +1,2103 @@
 {
-  "dsp_seg_00": {
-    "Dsp": {"dlc":"ctx_dsp_seg_00__Dsp.bin","backend":"/root/qairt/lib/target/libQnnDsp.so","status":"ok","graph":"dsp_seg_00","iters":20,"init_us":115950.2,"mean_us":125697.57,"median_us":126002.05,"min_us":122751.77,"max_us":128104.34,"std_us":1479.04,"p99_us":128104.34,"gap_us_setting":3000,"gap_mean_us":125415.57,"gap_median_us":125212.48,"gap_min_us":123324.52,"gap_max_us":127171.35,"gap_std_us":970.26,"gap_p99_us":127171.35,"gap_minus_loop_us":-789.57},
-    "Cpu": {"dlc":"ctx_dsp_seg_00__Cpu.bin","backend":"/root/qairt/lib/target/libQnnCpu.so","status":"ok","graph":"dsp_seg_00","iters":20,"init_us":15583.6,"mean_us":71939.24,"median_us":71717.85,"min_us":67483.14,"max_us":78787.58,"std_us":2134.09,"p99_us":78787.58,"gap_us_setting":3000,"gap_mean_us":71404.39,"gap_median_us":71700.52,"gap_min_us":68530.15,"gap_max_us":73656.83,"gap_std_us":1284.00,"gap_p99_us":73656.83,"gap_minus_loop_us":-17.34},
-    "Hta": {"status":"ok","mean_us":299920.01,"note":"sum of 2 conv ops"}
+ "dsp_seg_00": {
+  "Dsp": {
+   "dlc": "ctx_dsp_seg_00__Dsp.bin",
+   "backend": "/root/qairt/lib/target/libQnnDsp.so",
+   "status": "ok",
+   "graph": "dsp_seg_00",
+   "iters": 20,
+   "init_us": 115950.2,
+   "mean_us": 125697.57,
+   "median_us": 126002.05,
+   "min_us": 122751.77,
+   "max_us": 128104.34,
+   "std_us": 1479.04,
+   "p99_us": 128104.34,
+   "gap_us_setting": 3000,
+   "gap_mean_us": 125415.57,
+   "gap_median_us": 125212.48,
+   "gap_min_us": 123324.52,
+   "gap_max_us": 127171.35,
+   "gap_std_us": 970.26,
+   "gap_p99_us": 127171.35,
+   "gap_minus_loop_us": -789.57
   },
-  "dsp_seg_01": {
-    "Dsp": {"dlc":"ctx_dsp_seg_01__Dsp.bin","backend":"/root/qairt/lib/target/libQnnDsp.so","status":"ok","graph":"dsp_seg_01","iters":20,"init_us":97191.4,"mean_us":74493.08,"median_us":74634.64,"min_us":73345.92,"max_us":75298.68,"std_us":421.32,"p99_us":75298.68,"gap_us_setting":3000,"gap_mean_us":74211.62,"gap_median_us":74428.18,"gap_min_us":73014.39,"gap_max_us":75050.77,"gap_std_us":591.94,"gap_p99_us":75050.77,"gap_minus_loop_us":-206.46},
-    "Cpu": {"dlc":"ctx_dsp_seg_01__Cpu.bin","backend":"/root/qairt/lib/target/libQnnCpu.so","status":"ok","graph":"dsp_seg_01","iters":20,"init_us":23869.7,"mean_us":103155.88,"median_us":103117.62,"min_us":100222.50,"max_us":106602.98,"std_us":1616.40,"p99_us":106602.98,"gap_us_setting":3000,"gap_mean_us":102643.22,"gap_median_us":102558.22,"gap_min_us":101081.81,"gap_max_us":104641.97,"gap_std_us":974.02,"gap_p99_us":104641.97,"gap_minus_loop_us":-559.40},
-    "Hta": {"status":"ok","mean_us":12392.27,"note":"sum of 2 conv ops"}
+  "Cpu": {
+   "dlc": "ctx_dsp_seg_00__Cpu.bin",
+   "backend": "/root/qairt/lib/target/libQnnCpu.so",
+   "status": "ok",
+   "graph": "dsp_seg_00",
+   "iters": 20,
+   "init_us": 15583.6,
+   "mean_us": 71939.24,
+   "median_us": 71717.85,
+   "min_us": 67483.14,
+   "max_us": 78787.58,
+   "std_us": 2134.09,
+   "p99_us": 78787.58,
+   "gap_us_setting": 3000,
+   "gap_mean_us": 71404.39,
+   "gap_median_us": 71700.52,
+   "gap_min_us": 68530.15,
+   "gap_max_us": 73656.83,
+   "gap_std_us": 1284.0,
+   "gap_p99_us": 73656.83,
+   "gap_minus_loop_us": -17.34
   },
-  "dsp_seg_02": {
-    "Dsp": {"dlc":"ctx_dsp_seg_02__Dsp.bin","backend":"/root/qairt/lib/target/libQnnDsp.so","status":"ok","graph":"dsp_seg_02","iters":20,"init_us":94818.4,"mean_us":129689.38,"median_us":129781.39,"min_us":128730.04,"max_us":130263.66,"std_us":386.99,"p99_us":130263.66,"gap_us_setting":3000,"gap_mean_us":129742.02,"gap_median_us":129880.80,"gap_min_us":128728.72,"gap_max_us":130158.07,"gap_std_us":378.84,"gap_p99_us":130158.07,"gap_minus_loop_us":99.41},
-    "Cpu": {"dlc":"ctx_dsp_seg_02__Cpu.bin","backend":"/root/qairt/lib/target/libQnnCpu.so","status":"ok","graph":"dsp_seg_02","iters":20,"init_us":37707.4,"mean_us":114523.50,"median_us":113786.48,"min_us":110359.35,"max_us":122705.57,"std_us":2950.57,"p99_us":122705.57,"gap_us_setting":3000,"gap_mean_us":113461.85,"gap_median_us":113834.78,"gap_min_us":107186.69,"gap_max_us":116853.58,"gap_std_us":2740.93,"gap_p99_us":116853.58,"gap_minus_loop_us":48.30},
-    "Hta": {"status":"ok","mean_us":18861.68,"note":"sum of 2 conv ops"}
-  },
-  "dsp_seg_03": {
-    "Dsp": {"dlc":"ctx_dsp_seg_03__Dsp.bin","backend":"/root/qairt/lib/target/libQnnDsp.so","status":"ok","graph":"dsp_seg_03","iters":20,"init_us":72624.7,"mean_us":74189.16,"median_us":74339.26,"min_us":73007.63,"max_us":74798.38,"std_us":452.23,"p99_us":74798.38,"gap_us_setting":3000,"gap_mean_us":74258.51,"gap_median_us":74383.55,"gap_min_us":72961.38,"gap_max_us":74775.83,"gap_std_us":386.25,"gap_p99_us":74775.83,"gap_minus_loop_us":44.29},
-    "Cpu": {"dlc":"ctx_dsp_seg_03__Cpu.bin","backend":"/root/qairt/lib/target/libQnnCpu.so","status":"ok","graph":"dsp_seg_03","iters":20,"init_us":36673.0,"mean_us":101922.30,"median_us":101983.58,"min_us":99956.44,"max_us":105326.67,"std_us":1457.46,"p99_us":105326.67,"gap_us_setting":3000,"gap_mean_us":102174.25,"gap_median_us":102393.42,"gap_min_us":99033.19,"gap_max_us":105892.18,"gap_std_us":1417.30,"gap_p99_us":105892.18,"gap_minus_loop_us":409.85},
-    "Hta": {"status":"ok","mean_us":12491.98,"note":"sum of 2 conv ops"}
-  },
-  "dsp_seg_04": {
-    "Dsp": {"dlc":"ctx_dsp_seg_04__Dsp.bin","backend":"/root/qairt/lib/target/libQnnDsp.so","status":"ok","graph":"dsp_seg_04","iters":20,"init_us":96600.5,"mean_us":129942.45,"median_us":130043.53,"min_us":128799.34,"max_us":130461.63,"std_us":407.52,"p99_us":130461.63,"gap_us_setting":3000,"gap_mean_us":129911.15,"gap_median_us":130067.04,"gap_min_us":128721.59,"gap_max_us":130458.77,"gap_std_us":450.47,"gap_p99_us":130458.77,"gap_minus_loop_us":23.51},
-    "Cpu": {"dlc":"ctx_dsp_seg_04__Cpu.bin","backend":"/root/qairt/lib/target/libQnnCpu.so","status":"ok","graph":"dsp_seg_04","iters":20,"init_us":38304.1,"mean_us":117482.78,"median_us":119696.97,"min_us":105684.22,"max_us":130497.29,"std_us":10067.94,"p99_us":130497.29,"gap_us_setting":3000,"gap_mean_us":112668.29,"gap_median_us":112884.07,"gap_min_us":105320.73,"gap_max_us":126930.33,"gap_std_us":6057.30,"gap_p99_us":126930.33,"gap_minus_loop_us":-6812.90},
-    "Hta": {"status":"ok","mean_us":19043.32,"note":"sum of 2 conv ops"}
-  },
-  "dsp_seg_05": {
-    "Dsp": {"dlc":"ctx_dsp_seg_05__Dsp.bin","backend":"/root/qairt/lib/target/libQnnDsp.so","status":"ok","graph":"dsp_seg_05","iters":20,"init_us":82411.8,"mean_us":74341.85,"median_us":74457.27,"min_us":73191.75,"max_us":75020.40,"std_us":490.18,"p99_us":75020.40,"gap_us_setting":3000,"gap_mean_us":74396.89,"gap_median_us":74511.95,"gap_min_us":73388.19,"gap_max_us":74888.16,"gap_std_us":379.47,"gap_p99_us":74888.16,"gap_minus_loop_us":54.68},
-    "Cpu": {"dlc":"ctx_dsp_seg_05__Cpu.bin","backend":"/root/qairt/lib/target/libQnnCpu.so","status":"ok","graph":"dsp_seg_05","iters":20,"init_us":36085.2,"mean_us":100341.52,"median_us":101078.79,"min_us":95852.73,"max_us":104369.22,"std_us":2448.87,"p99_us":104369.22,"gap_us_setting":3000,"gap_mean_us":103599.39,"gap_median_us":103258.35,"gap_min_us":101490.98,"gap_max_us":108985.49,"gap_std_us":1833.08,"gap_p99_us":108985.49,"gap_minus_loop_us":2179.55},
-    "Hta": {"status":"ok","mean_us":12189.19,"note":"sum of 2 conv ops"}
-  },
-  "dsp_seg_06": {
-    "Dsp": {"dlc":"ctx_dsp_seg_06__Dsp.bin","backend":"/root/qairt/lib/target/libQnnDsp.so","status":"ok","graph":"dsp_seg_06","iters":20,"init_us":83644.6,"mean_us":129699.52,"median_us":129833.89,"min_us":128762.23,"max_us":130329.60,"std_us":419.62,"p99_us":130329.60,"gap_us_setting":3000,"gap_mean_us":129898.43,"gap_median_us":129906.23,"gap_min_us":129427.25,"gap_max_us":130251.60,"gap_std_us":191.05,"gap_p99_us":130251.60,"gap_minus_loop_us":72.33},
-    "Cpu": {"dlc":"ctx_dsp_seg_06__Cpu.bin","backend":"/root/qairt/lib/target/libQnnCpu.so","status":"ok","graph":"dsp_seg_06","iters":20,"init_us":38537.3,"mean_us":115033.71,"median_us":109527.24,"min_us":106228.37,"max_us":128544.00,"std_us":9263.91,"p99_us":128544.00,"gap_us_setting":3000,"gap_mean_us":113925.77,"gap_median_us":109400.89,"gap_min_us":106206.53,"gap_max_us":127367.38,"gap_std_us":8147.03,"gap_p99_us":127367.38,"gap_minus_loop_us":-126.35},
-    "Hta": {"status":"ok","mean_us":18502.93,"note":"sum of 2 conv ops"}
-  },
-  "dsp_seg_07": {
-    "Dsp": {"dlc":"ctx_dsp_seg_07__Dsp.bin","backend":"/root/qairt/lib/target/libQnnDsp.so","status":"ok","graph":"dsp_seg_07","iters":20,"init_us":86983.5,"mean_us":74263.29,"median_us":74388.48,"min_us":72876.62,"max_us":74941.15,"std_us":487.28,"p99_us":74941.15,"gap_us_setting":3000,"gap_mean_us":74401.24,"gap_median_us":74362.05,"gap_min_us":73204.89,"gap_max_us":75158.39,"gap_std_us":375.85,"gap_p99_us":75158.39,"gap_minus_loop_us":-26.43},
-    "Cpu": {"dlc":"ctx_dsp_seg_07__Cpu.bin","backend":"/root/qairt/lib/target/libQnnCpu.so","status":"ok","graph":"dsp_seg_07","iters":20,"init_us":34264.2,"mean_us":103133.47,"median_us":103051.65,"min_us":100923.17,"max_us":104919.96,"std_us":840.30,"p99_us":104919.96,"gap_us_setting":3000,"gap_mean_us":103308.07,"gap_median_us":103221.79,"gap_min_us":100639.73,"gap_max_us":106636.68,"gap_std_us":1239.93,"gap_p99_us":106636.68,"gap_minus_loop_us":170.14},
-    "Hta": {"status":"ok","mean_us":12488.60,"note":"sum of 2 conv ops"}
-  },
-  "dsp_seg_08": {
-    "Dsp": {"dlc":"ctx_dsp_seg_08__Dsp.bin","backend":"/root/qairt/lib/target/libQnnDsp.so","status":"ok","graph":"dsp_seg_08","iters":20,"init_us":97656.3,"mean_us":129722.15,"median_us":129889.94,"min_us":128825.35,"max_us":130298.02,"std_us":424.58,"p99_us":130298.02,"gap_us_setting":3000,"gap_mean_us":129826.90,"gap_median_us":129888.33,"gap_min_us":129045.68,"gap_max_us":130258.41,"gap_std_us":272.16,"gap_p99_us":130258.41,"gap_minus_loop_us":-1.61},
-    "Cpu": {"dlc":"ctx_dsp_seg_08__Cpu.bin","backend":"/root/qairt/lib/target/libQnnCpu.so","status":"ok","graph":"dsp_seg_08","iters":20,"init_us":34347.5,"mean_us":116623.29,"median_us":114910.09,"min_us":112666.45,"max_us":130153.64,"std_us":5151.60,"p99_us":130153.64,"gap_us_setting":3000,"gap_mean_us":114168.16,"gap_median_us":114078.13,"gap_min_us":112836.87,"gap_max_us":116583.89,"gap_std_us":1003.32,"gap_p99_us":116583.89,"gap_minus_loop_us":-831.96},
-    "Hta": {"status":"ok","mean_us":18812.72,"note":"sum of 2 conv ops"}
-  },
-  "dsp_seg_09": {
-    "Dsp": {"dlc":"ctx_dsp_seg_09__Dsp.bin","backend":"/root/qairt/lib/target/libQnnDsp.so","status":"ok","graph":"dsp_seg_09","iters":20,"init_us":83632.1,"mean_us":74599.96,"median_us":74693.32,"min_us":73730.24,"max_us":75090.41,"std_us":339.04,"p99_us":75090.41,"gap_us_setting":3000,"gap_mean_us":74370.60,"gap_median_us":74470.48,"gap_min_us":73413.70,"gap_max_us":75077.38,"gap_std_us":503.27,"gap_p99_us":75077.38,"gap_minus_loop_us":-222.83},
-    "Cpu": {"dlc":"ctx_dsp_seg_09__Cpu.bin","backend":"/root/qairt/lib/target/libQnnCpu.so","status":"ok","graph":"dsp_seg_09","iters":20,"init_us":35423.8,"mean_us":103786.58,"median_us":103537.79,"min_us":100489.05,"max_us":109649.23,"std_us":1779.68,"p99_us":109649.23,"gap_us_setting":3000,"gap_mean_us":102613.27,"gap_median_us":103129.76,"gap_min_us":98257.60,"gap_max_us":106184.44,"gap_std_us":2364.53,"gap_p99_us":106184.44,"gap_minus_loop_us":-408.03},
-    "Hta": {"status":"ok","mean_us":12469.74,"note":"sum of 2 conv ops"}
-  },
-  "dsp_seg_10": {
-    "Dsp": {"dlc":"ctx_dsp_seg_10__Dsp.bin","backend":"/root/qairt/lib/target/libQnnDsp.so","status":"ok","graph":"dsp_seg_10","iters":20,"init_us":83740.1,"mean_us":129762.36,"median_us":129897.43,"min_us":128909.33,"max_us":130305.69,"std_us":367.44,"p99_us":130305.69,"gap_us_setting":3000,"gap_mean_us":129826.53,"gap_median_us":129966.70,"gap_min_us":128934.46,"gap_max_us":130168.30,"gap_std_us":347.43,"gap_p99_us":130168.30,"gap_minus_loop_us":69.27},
-    "Cpu": {"dlc":"ctx_dsp_seg_10__Cpu.bin","backend":"/root/qairt/lib/target/libQnnCpu.so","status":"ok","graph":"dsp_seg_10","iters":20,"init_us":41553.2,"mean_us":117737.11,"median_us":122414.72,"min_us":106576.73,"max_us":132780.16,"std_us":9452.67,"p99_us":132780.16,"gap_us_setting":3000,"gap_mean_us":120554.42,"gap_median_us":123178.40,"gap_min_us":106271.04,"gap_max_us":132393.91,"gap_std_us":8437.35,"gap_p99_us":132393.91,"gap_minus_loop_us":763.68},
-    "Hta": {"status":"ok","mean_us":18481.48,"note":"sum of 2 conv ops"}
-  },
-  "dsp_seg_11": {
-    "Dsp": {"dlc":"ctx_dsp_seg_11__Dsp.bin","backend":"/root/qairt/lib/target/libQnnDsp.so","status":"ok","graph":"dsp_seg_11","iters":20,"init_us":71909.7,"mean_us":74542.14,"median_us":74637.72,"min_us":73246.06,"max_us":75217.79,"std_us":486.54,"p99_us":75217.79,"gap_us_setting":3000,"gap_mean_us":74277.58,"gap_median_us":74645.57,"gap_min_us":73204.31,"gap_max_us":75108.42,"gap_std_us":642.70,"gap_p99_us":75108.42,"gap_minus_loop_us":7.85},
-    "Cpu": {"dlc":"ctx_dsp_seg_11__Cpu.bin","backend":"/root/qairt/lib/target/libQnnCpu.so","status":"ok","graph":"dsp_seg_11","iters":20,"init_us":35142.8,"mean_us":102350.35,"median_us":102276.37,"min_us":100108.00,"max_us":105511.78,"std_us":1535.49,"p99_us":105511.78,"gap_us_setting":3000,"gap_mean_us":102558.57,"gap_median_us":102510.15,"gap_min_us":100911.68,"gap_max_us":104950.21,"gap_std_us":1005.77,"gap_p99_us":104950.21,"gap_minus_loop_us":233.78},
-    "Hta": {"status":"ok","mean_us":12754.21,"note":"sum of 2 conv ops"}
-  },
-  "dsp_seg_12": {
-    "Dsp": {"dlc":"ctx_dsp_seg_12__Dsp.bin","backend":"/root/qairt/lib/target/libQnnDsp.so","status":"ok","graph":"dsp_seg_12","iters":20,"init_us":104665.0,"mean_us":130040.31,"median_us":130143.53,"min_us":129413.74,"max_us":130434.26,"std_us":287.09,"p99_us":130434.26,"gap_us_setting":3000,"gap_mean_us":130060.38,"gap_median_us":130122.38,"gap_min_us":128706.79,"gap_max_us":132557.50,"gap_std_us":720.21,"gap_p99_us":132557.50,"gap_minus_loop_us":-21.14},
-    "Cpu": {"dlc":"ctx_dsp_seg_12__Cpu.bin","backend":"/root/qairt/lib/target/libQnnCpu.so","status":"ok","graph":"dsp_seg_12","iters":20,"init_us":39281.4,"mean_us":113562.87,"median_us":107231.90,"min_us":106248.19,"max_us":131307.93,"std_us":9520.51,"p99_us":131307.93,"gap_us_setting":3000,"gap_mean_us":111966.50,"gap_median_us":107355.51,"gap_min_us":105810.75,"gap_max_us":128355.51,"gap_std_us":7616.02,"gap_p99_us":128355.51,"gap_minus_loop_us":123.60},
-    "Hta": {"status":"ok","mean_us":19016.72,"note":"sum of 2 conv ops"}
-  },
-  "dsp_seg_13": {
-    "Dsp": {"dlc":"ctx_dsp_seg_13__Dsp.bin","backend":"/root/qairt/lib/target/libQnnDsp.so","status":"ok","graph":"dsp_seg_13","iters":20,"init_us":89038.7,"mean_us":74731.34,"median_us":74897.29,"min_us":74048.87,"max_us":75178.07,"std_us":319.97,"p99_us":75178.07,"gap_us_setting":3000,"gap_mean_us":74435.28,"gap_median_us":74514.70,"gap_min_us":73072.07,"gap_max_us":74757.82,"gap_std_us":375.61,"gap_p99_us":74757.82,"gap_minus_loop_us":-382.58},
-    "Cpu": {"dlc":"ctx_dsp_seg_13__Cpu.bin","backend":"/root/qairt/lib/target/libQnnCpu.so","status":"ok","graph":"dsp_seg_13","iters":20,"init_us":39915.2,"mean_us":102218.33,"median_us":102640.78,"min_us":100069.74,"max_us":103782.99,"std_us":1075.85,"p99_us":103782.99,"gap_us_setting":3000,"gap_mean_us":102125.00,"gap_median_us":102850.02,"gap_min_us":97841.36,"gap_max_us":107214.61,"gap_std_us":2269.90,"gap_p99_us":107214.61,"gap_minus_loop_us":209.24},
-    "Hta": {"status":"ok","mean_us":12387.55,"note":"sum of 2 conv ops"}
-  },
-  "dsp_seg_14": {
-    "Dsp": {"dlc":"ctx_dsp_seg_14__Dsp.bin","backend":"/root/qairt/lib/target/libQnnDsp.so","status":"ok","graph":"dsp_seg_14","iters":20,"init_us":106229.5,"mean_us":129878.50,"median_us":130064.62,"min_us":128855.99,"max_us":130502.61,"std_us":430.98,"p99_us":130502.61,"gap_us_setting":3000,"gap_mean_us":130211.63,"gap_median_us":130071.82,"gap_min_us":129123.55,"gap_max_us":132319.97,"gap_std_us":594.17,"gap_p99_us":132319.97,"gap_minus_loop_us":7.20},
-    "Cpu": {"dlc":"ctx_dsp_seg_14__Cpu.bin","backend":"/root/qairt/lib/target/libQnnCpu.so","status":"ok","graph":"dsp_seg_14","iters":20,"init_us":38189.7,"mean_us":125043.99,"median_us":127216.32,"min_us":106749.88,"max_us":129906.74,"std_us":6280.40,"p99_us":129906.74,"gap_us_setting":3000,"gap_mean_us":112489.35,"gap_median_us":111577.47,"gap_min_us":106892.64,"gap_max_us":127050.50,"gap_std_us":5777.80,"gap_p99_us":127050.50,"gap_minus_loop_us":-15638.84},
-    "Hta": {"status":"ok","mean_us":18895.71,"note":"sum of 2 conv ops"}
-  },
-  "dsp_seg_15": {
-    "Dsp": {"dlc":"ctx_dsp_seg_15__Dsp.bin","backend":"/root/qairt/lib/target/libQnnDsp.so","status":"ok","graph":"dsp_seg_15","iters":20,"init_us":81891.3,"mean_us":74208.48,"median_us":74345.53,"min_us":73269.79,"max_us":74910.23,"std_us":437.37,"p99_us":74910.23,"gap_us_setting":3000,"gap_mean_us":74414.08,"gap_median_us":74507.81,"gap_min_us":73312.73,"gap_max_us":74844.16,"gap_std_us":404.72,"gap_p99_us":74844.16,"gap_minus_loop_us":162.27},
-    "Cpu": {"dlc":"ctx_dsp_seg_15__Cpu.bin","backend":"/root/qairt/lib/target/libQnnCpu.so","status":"ok","graph":"dsp_seg_15","iters":20,"init_us":29657.3,"mean_us":100007.88,"median_us":100275.47,"min_us":96394.82,"max_us":104223.84,"std_us":2205.45,"p99_us":104223.84,"gap_us_setting":3000,"gap_mean_us":103200.39,"gap_median_us":103483.70,"gap_min_us":101015.05,"gap_max_us":107514.00,"gap_std_us":1375.64,"gap_p99_us":107514.00,"gap_minus_loop_us":3208.24},
-    "Hta": {"status":"ok","mean_us":12711.07,"note":"sum of 2 conv ops"}
-  },
-  "dsp_seg_16": {
-    "Dsp": {"dlc":"ctx_dsp_seg_16__Dsp.bin","backend":"/root/qairt/lib/target/libQnnDsp.so","status":"ok","graph":"dsp_seg_16","iters":20,"init_us":114311.7,"mean_us":129766.49,"median_us":129945.13,"min_us":128807.15,"max_us":130533.47,"std_us":440.44,"p99_us":130533.47,"gap_us_setting":3000,"gap_mean_us":129885.13,"gap_median_us":129999.08,"gap_min_us":128731.55,"gap_max_us":130350.87,"gap_std_us":470.55,"gap_p99_us":130350.87,"gap_minus_loop_us":53.96},
-    "Cpu": {"dlc":"ctx_dsp_seg_16__Cpu.bin","backend":"/root/qairt/lib/target/libQnnCpu.so","status":"ok","graph":"dsp_seg_16","iters":20,"init_us":55876.2,"mean_us":115863.01,"median_us":114438.37,"min_us":111648.31,"max_us":134039.47,"std_us":4807.68,"p99_us":134039.47,"gap_us_setting":3000,"gap_mean_us":109114.67,"gap_median_us":107670.91,"gap_min_us":106458.66,"gap_max_us":122525.86,"gap_std_us":4143.68,"gap_p99_us":122525.86,"gap_minus_loop_us":-6767.46},
-    "Hta": {"status":"ok","mean_us":18429.97,"note":"sum of 2 conv ops"}
-  },
-  "dsp_seg_17": {
-    "Dsp": {"dlc":"ctx_dsp_seg_17__Dsp.bin","backend":"/root/qairt/lib/target/libQnnDsp.so","status":"ok","graph":"dsp_seg_17","iters":20,"init_us":81830.2,"mean_us":74308.52,"median_us":74501.05,"min_us":73391.76,"max_us":74771.04,"std_us":447.48,"p99_us":74771.04,"gap_us_setting":3000,"gap_mean_us":74321.64,"gap_median_us":74411.67,"gap_min_us":73695.41,"gap_max_us":74899.20,"gap_std_us":336.92,"gap_p99_us":74899.20,"gap_minus_loop_us":-89.38},
-    "Cpu": {"dlc":"ctx_dsp_seg_17__Cpu.bin","backend":"/root/qairt/lib/target/libQnnCpu.so","status":"ok","graph":"dsp_seg_17","iters":20,"init_us":35193.2,"mean_us":102686.74,"median_us":102792.38,"min_us":100588.84,"max_us":105480.45,"std_us":1336.85,"p99_us":105480.45,"gap_us_setting":3000,"gap_mean_us":103084.92,"gap_median_us":103184.72,"gap_min_us":100858.14,"gap_max_us":106357.84,"gap_std_us":1217.77,"gap_p99_us":106357.84,"gap_minus_loop_us":392.34},
-    "Hta": {"status":"ok","mean_us":12414.15,"note":"sum of 2 conv ops"}
-  },
-  "dsp_seg_18": {
-    "Dsp": {"dlc":"ctx_dsp_seg_18__Dsp.bin","backend":"/root/qairt/lib/target/libQnnDsp.so","status":"ok","graph":"dsp_seg_18","iters":20,"init_us":125809.6,"mean_us":129736.27,"median_us":129942.87,"min_us":128662.20,"max_us":130411.04,"std_us":461.50,"p99_us":130411.04,"gap_us_setting":3000,"gap_mean_us":129653.26,"gap_median_us":129690.54,"gap_min_us":128843.10,"gap_max_us":130413.17,"gap_std_us":375.14,"gap_p99_us":130413.17,"gap_minus_loop_us":-252.34},
-    "Cpu": {"dlc":"ctx_dsp_seg_18__Cpu.bin","backend":"/root/qairt/lib/target/libQnnCpu.so","status":"ok","graph":"dsp_seg_18","iters":20,"init_us":49284.2,"mean_us":117337.06,"median_us":117881.40,"min_us":111149.12,"max_us":122657.23,"std_us":3164.33,"p99_us":122657.23,"gap_us_setting":3000,"gap_mean_us":112717.25,"gap_median_us":108767.72,"gap_min_us":106935.38,"gap_max_us":128369.39,"gap_std_us":6951.49,"gap_p99_us":128369.39,"gap_minus_loop_us":-9113.67},
-    "Hta": {"status":"ok","mean_us":19081.38,"note":"sum of 2 conv ops"}
-  },
-  "dsp_seg_19": {
-    "Dsp": {"dlc":"ctx_dsp_seg_19__Dsp.bin","backend":"/root/qairt/lib/target/libQnnDsp.so","status":"ok","graph":"dsp_seg_19","iters":20,"init_us":103767.8,"mean_us":74709.08,"median_us":74693.84,"min_us":73521.20,"max_us":75236.91,"std_us":349.61,"p99_us":75236.91,"gap_us_setting":3000,"gap_mean_us":74392.26,"gap_median_us":74611.54,"gap_min_us":73355.56,"gap_max_us":75250.33,"gap_std_us":584.96,"gap_p99_us":75250.33,"gap_minus_loop_us":-82.30},
-    "Cpu": {"dlc":"ctx_dsp_seg_19__Cpu.bin","backend":"/root/qairt/lib/target/libQnnCpu.so","status":"ok","graph":"dsp_seg_19","iters":20,"init_us":39345.5,"mean_us":101915.90,"median_us":102365.79,"min_us":96100.46,"max_us":104775.54,"std_us":1972.11,"p99_us":104775.54,"gap_us_setting":3000,"gap_mean_us":102065.62,"gap_median_us":102791.95,"gap_min_us":96963.04,"gap_max_us":106283.56,"gap_std_us":2411.46,"gap_p99_us":106283.56,"gap_minus_loop_us":426.16},
-    "Hta": {"status":"ok","mean_us":12340.79,"note":"sum of 2 conv ops"}
-  },
-  "dsp_seg_20": {
-    "Dsp": {"dlc":"ctx_dsp_seg_20__Dsp.bin","backend":"/root/qairt/lib/target/libQnnDsp.so","status":"ok","graph":"dsp_seg_20","iters":20,"init_us":93126.5,"mean_us":129833.72,"median_us":129927.46,"min_us":128822.56,"max_us":130362.41,"std_us":367.17,"p99_us":130362.41,"gap_us_setting":3000,"gap_mean_us":129820.75,"gap_median_us":129852.35,"gap_min_us":129253.07,"gap_max_us":130127.99,"gap_std_us":212.97,"gap_p99_us":130127.99,"gap_minus_loop_us":-75.11},
-    "Cpu": {"dlc":"ctx_dsp_seg_20__Cpu.bin","backend":"/root/qairt/lib/target/libQnnCpu.so","status":"ok","graph":"dsp_seg_20","iters":20,"init_us":56562.1,"mean_us":114074.87,"median_us":114131.40,"min_us":110693.61,"max_us":116997.65,"std_us":1522.39,"p99_us":116997.65,"gap_us_setting":3000,"gap_mean_us":112333.29,"gap_median_us":113228.73,"gap_min_us":106828.40,"gap_max_us":127783.38,"gap_std_us":5303.48,"gap_p99_us":127783.38,"gap_minus_loop_us":-902.66},
-    "Hta": {"status":"ok","mean_us":19162.49,"note":"sum of 2 conv ops"}
-  },
-  "dsp_seg_21": {
-    "Dsp": {"dlc":"ctx_dsp_seg_21__Dsp.bin","backend":"/root/qairt/lib/target/libQnnDsp.so","status":"ok","graph":"dsp_seg_21","iters":20,"init_us":86154.5,"mean_us":74268.50,"median_us":74375.49,"min_us":73116.89,"max_us":74548.99,"std_us":350.72,"p99_us":74548.99,"gap_us_setting":3000,"gap_mean_us":74327.28,"gap_median_us":74486.91,"gap_min_us":73517.24,"gap_max_us":74905.01,"gap_std_us":375.39,"gap_p99_us":74905.01,"gap_minus_loop_us":111.42},
-    "Cpu": {"dlc":"ctx_dsp_seg_21__Cpu.bin","backend":"/root/qairt/lib/target/libQnnCpu.so","status":"ok","graph":"dsp_seg_21","iters":20,"init_us":31002.8,"mean_us":104358.61,"median_us":103945.71,"min_us":101428.67,"max_us":109513.60,"std_us":2061.97,"p99_us":109513.60,"gap_us_setting":3000,"gap_mean_us":103695.06,"gap_median_us":103596.48,"gap_min_us":101900.16,"gap_max_us":107582.84,"gap_std_us":1366.09,"gap_p99_us":107582.84,"gap_minus_loop_us":-349.23},
-    "Hta": {"status":"ok","mean_us":12599.74,"note":"sum of 2 conv ops"}
-  },
-  "dsp_seg_22": {
-    "Dsp": {"dlc":"ctx_dsp_seg_22__Dsp.bin","backend":"/root/qairt/lib/target/libQnnDsp.so","status":"ok","graph":"dsp_seg_22","iters":20,"init_us":83463.4,"mean_us":129645.95,"median_us":129815.29,"min_us":128671.71,"max_us":130248.12,"std_us":493.46,"p99_us":130248.12,"gap_us_setting":3000,"gap_mean_us":129910.77,"gap_median_us":130028.69,"gap_min_us":128920.52,"gap_max_us":130421.75,"gap_std_us":397.34,"gap_p99_us":130421.75,"gap_minus_loop_us":213.39},
-    "Cpu": {"dlc":"ctx_dsp_seg_22__Cpu.bin","backend":"/root/qairt/lib/target/libQnnCpu.so","status":"ok","graph":"dsp_seg_22","iters":20,"init_us":48864.2,"mean_us":117975.97,"median_us":119095.93,"min_us":112114.56,"max_us":122231.46,"std_us":2995.60,"p99_us":122231.46,"gap_us_setting":3000,"gap_mean_us":112512.19,"gap_median_us":112086.27,"gap_min_us":106170.34,"gap_max_us":127614.79,"gap_std_us":6799.12,"gap_p99_us":127614.79,"gap_minus_loop_us":-7009.67},
-    "Hta": {"status":"ok","mean_us":19023.30,"note":"sum of 2 conv ops"}
-  },
-  "dsp_seg_23": {
-    "Dsp": {"dlc":"ctx_dsp_seg_23__Dsp.bin","backend":"/root/qairt/lib/target/libQnnDsp.so","status":"ok","graph":"dsp_seg_23","iters":20,"init_us":90847.2,"mean_us":74452.52,"median_us":74698.67,"min_us":73046.26,"max_us":75204.50,"std_us":639.14,"p99_us":75204.50,"gap_us_setting":3000,"gap_mean_us":74339.09,"gap_median_us":74451.65,"gap_min_us":73242.48,"gap_max_us":74806.87,"gap_std_us":441.53,"gap_p99_us":74806.87,"gap_minus_loop_us":-247.02},
-    "Cpu": {"dlc":"ctx_dsp_seg_23__Cpu.bin","backend":"/root/qairt/lib/target/libQnnCpu.so","status":"ok","graph":"dsp_seg_23","iters":20,"init_us":35272.4,"mean_us":100989.01,"median_us":101614.92,"min_us":97468.36,"max_us":105004.51,"std_us":2135.15,"p99_us":105004.51,"gap_us_setting":3000,"gap_mean_us":102341.45,"gap_median_us":102348.50,"gap_min_us":98948.18,"gap_max_us":105165.41,"gap_std_us":1355.78,"gap_p99_us":105165.41,"gap_minus_loop_us":733.58},
-    "Hta": {"status":"ok","mean_us":12619.31,"note":"sum of 2 conv ops"}
-  },
-  "dsp_seg_24": {
-    "Dsp": {"dlc":"ctx_dsp_seg_24__Dsp.bin","backend":"/root/qairt/lib/target/libQnnDsp.so","status":"ok","graph":"dsp_seg_24","iters":20,"init_us":182458.5,"mean_us":114452.22,"median_us":114538.83,"min_us":113026.74,"max_us":115145.79,"std_us":527.46,"p99_us":115145.79,"gap_us_setting":3000,"gap_mean_us":114296.23,"gap_median_us":114519.02,"gap_min_us":113390.89,"gap_max_us":115309.24,"gap_std_us":570.83,"gap_p99_us":115309.24,"gap_minus_loop_us":-19.82},
-    "Cpu": {"dlc":"ctx_dsp_seg_24__Cpu.bin","backend":"/root/qairt/lib/target/libQnnCpu.so","status":"ok","graph":"dsp_seg_24","iters":20,"init_us":115819.8,"mean_us":77879.89,"median_us":79085.71,"min_us":70673.97,"max_us":84062.24,"std_us":3451.62,"p99_us":84062.24,"gap_us_setting":3000,"gap_mean_us":79165.26,"gap_median_us":79303.32,"gap_min_us":72776.61,"gap_max_us":85961.23,"gap_std_us":3096.83,"gap_p99_us":85961.23,"gap_minus_loop_us":217.61},
-    "Hta": {"status":"ok","mean_us":83280.73,"note":"sum of 2 conv ops"}
-  },
-  "cpu_seg_00": {
-    "Cpu": {"dlc":"ctx_cpu_seg_00__Cpu.bin","backend":"/root/qairt/lib/target/libQnnCpu.so","status":"ok","graph":"cpu_seg_00","iters":20,"init_us":2063.4,"mean_us":36379.46,"median_us":36009.65,"min_us":35613.65,"max_us":40949.87,"std_us":1233.29,"p99_us":40949.87,"gap_us_setting":3000,"gap_mean_us":36782.43,"gap_median_us":36025.49,"gap_min_us":34292.73,"gap_max_us":41965.26,"gap_std_us":2137.40,"gap_p99_us":41965.26,"gap_minus_loop_us":15.84}
-  },
-  "cpu_seg_01": {
-    "Cpu": {"dlc":"ctx_cpu_seg_01__Cpu.bin","backend":"/root/qairt/lib/target/libQnnCpu.so","status":"ok","graph":"cpu_seg_01","iters":20,"init_us":2936.7,"mean_us":9138.18,"median_us":9147.98,"min_us":9078.14,"max_us":9202.03,"std_us":33.29,"p99_us":9202.03,"gap_us_setting":3000,"gap_mean_us":9164.67,"gap_median_us":9148.96,"gap_min_us":9087.36,"gap_max_us":9348.69,"gap_std_us":66.48,"gap_p99_us":9348.69,"gap_minus_loop_us":0.99}
-  },
-  "cpu_seg_02": {
-    "Cpu": {"dlc":"ctx_cpu_seg_02__Cpu.bin","backend":"/root/qairt/lib/target/libQnnCpu.so","status":"ok","graph":"cpu_seg_02","iters":20,"init_us":1968.2,"mean_us":36206.67,"median_us":35989.88,"min_us":35656.80,"max_us":38535.64,"std_us":747.02,"p99_us":38535.64,"gap_us_setting":3000,"gap_mean_us":36610.98,"gap_median_us":35976.65,"gap_min_us":34252.12,"gap_max_us":43283.78,"gap_std_us":2192.55,"gap_p99_us":43283.78,"gap_minus_loop_us":-13.23}
-  },
-  "cpu_seg_03": {
-    "Cpu": {"dlc":"ctx_cpu_seg_03__Cpu.bin","backend":"/root/qairt/lib/target/libQnnCpu.so","status":"ok","graph":"cpu_seg_03","iters":20,"init_us":1469.2,"mean_us":9144.76,"median_us":9130.78,"min_us":9071.41,"max_us":9295.82,"std_us":54.18,"p99_us":9295.82,"gap_us_setting":3000,"gap_mean_us":9136.90,"gap_median_us":9134.43,"gap_min_us":9074.69,"gap_max_us":9303.89,"gap_std_us":52.21,"gap_p99_us":9303.89,"gap_minus_loop_us":3.65}
-  },
-  "cpu_seg_04": {
-    "Cpu": {"dlc":"ctx_cpu_seg_04__Cpu.bin","backend":"/root/qairt/lib/target/libQnnCpu.so","status":"ok","graph":"cpu_seg_04","iters":20,"init_us":2106.6,"mean_us":36889.48,"median_us":35381.97,"min_us":34313.93,"max_us":44964.13,"std_us":3286.46,"p99_us":44964.13,"gap_us_setting":3000,"gap_mean_us":36682.94,"gap_median_us":36533.70,"gap_min_us":36073.37,"gap_max_us":39091.35,"gap_std_us":643.14,"gap_p99_us":39091.35,"gap_minus_loop_us":1151.73}
-  },
-  "cpu_seg_05": {
-    "Cpu": {"dlc":"ctx_cpu_seg_05__Cpu.bin","backend":"/root/qairt/lib/target/libQnnCpu.so","status":"ok","graph":"cpu_seg_05","iters":20,"init_us":1653.3,"mean_us":9141.72,"median_us":9135.09,"min_us":9069.47,"max_us":9245.65,"std_us":42.58,"p99_us":9245.65,"gap_us_setting":3000,"gap_mean_us":9144.92,"gap_median_us":9140.30,"gap_min_us":9071.92,"gap_max_us":9276.69,"gap_std_us":40.49,"gap_p99_us":9276.69,"gap_minus_loop_us":5.21}
-  },
-  "cpu_seg_06": {
-    "Cpu": {"dlc":"ctx_cpu_seg_06__Cpu.bin","backend":"/root/qairt/lib/target/libQnnCpu.so","status":"ok","graph":"cpu_seg_06","iters":20,"init_us":1914.7,"mean_us":36174.83,"median_us":35973.01,"min_us":35856.56,"max_us":38980.12,"std_us":663.30,"p99_us":38980.12,"gap_us_setting":3000,"gap_mean_us":36084.82,"gap_median_us":35970.98,"gap_min_us":35749.28,"gap_max_us":37020.06,"gap_std_us":327.59,"gap_p99_us":37020.06,"gap_minus_loop_us":-2.03}
-  },
-  "cpu_seg_07": {
-    "Cpu": {"dlc":"ctx_cpu_seg_07__Cpu.bin","backend":"/root/qairt/lib/target/libQnnCpu.so","status":"ok","graph":"cpu_seg_07","iters":20,"init_us":1672.3,"mean_us":9153.59,"median_us":9143.15,"min_us":9076.28,"max_us":9236.58,"std_us":43.33,"p99_us":9236.58,"gap_us_setting":3000,"gap_mean_us":9160.17,"gap_median_us":9145.44,"gap_min_us":9097.63,"gap_max_us":9422.61,"gap_std_us":65.40,"gap_p99_us":9422.61,"gap_minus_loop_us":2.29}
-  },
-  "cpu_seg_08": {
-    "Cpu": {"dlc":"ctx_cpu_seg_08__Cpu.bin","backend":"/root/qairt/lib/target/libQnnCpu.so","status":"ok","graph":"cpu_seg_08","iters":20,"init_us":673.6,"mean_us":36168.75,"median_us":35984.77,"min_us":34436.98,"max_us":42824.36,"std_us":1681.33,"p99_us":42824.36,"gap_us_setting":3000,"gap_mean_us":35961.14,"gap_median_us":35893.74,"gap_min_us":35686.88,"gap_max_us":36636.29,"gap_std_us":255.80,"gap_p99_us":36636.29,"gap_minus_loop_us":-91.04}
-  },
-  "cpu_seg_09": {
-    "Cpu": {"dlc":"ctx_cpu_seg_09__Cpu.bin","backend":"/root/qairt/lib/target/libQnnCpu.so","status":"ok","graph":"cpu_seg_09","iters":20,"init_us":1632.7,"mean_us":9151.23,"median_us":9138.29,"min_us":9072.41,"max_us":9268.59,"std_us":56.84,"p99_us":9268.59,"gap_us_setting":3000,"gap_mean_us":9143.31,"gap_median_us":9137.98,"gap_min_us":9105.12,"gap_max_us":9219.48,"gap_std_us":26.46,"gap_p99_us":9219.48,"gap_minus_loop_us":-0.31}
-  },
-  "cpu_seg_10": {
-    "Cpu": {"dlc":"ctx_cpu_seg_10__Cpu.bin","backend":"/root/qairt/lib/target/libQnnCpu.so","status":"ok","graph":"cpu_seg_10","iters":20,"init_us":1858.8,"mean_us":36479.22,"median_us":35974.66,"min_us":35600.62,"max_us":40670.05,"std_us":1281.87,"p99_us":40670.05,"gap_us_setting":3000,"gap_mean_us":36904.01,"gap_median_us":35909.04,"gap_min_us":34405.70,"gap_max_us":41800.54,"gap_std_us":2258.02,"gap_p99_us":41800.54,"gap_minus_loop_us":-65.62}
-  },
-  "cpu_seg_11": {
-    "Cpu": {"dlc":"ctx_cpu_seg_11__Cpu.bin","backend":"/root/qairt/lib/target/libQnnCpu.so","status":"ok","graph":"cpu_seg_11","iters":20,"init_us":563.5,"mean_us":9156.70,"median_us":9160.30,"min_us":9094.21,"max_us":9287.53,"std_us":44.07,"p99_us":9287.53,"gap_us_setting":3000,"gap_mean_us":9160.38,"gap_median_us":9155.51,"gap_min_us":9093.07,"gap_max_us":9240.92,"gap_std_us":37.55,"gap_p99_us":9240.92,"gap_minus_loop_us":-4.79}
-  },
-  "cpu_seg_12": {
-    "Cpu": {"dlc":"ctx_cpu_seg_12__Cpu.bin","backend":"/root/qairt/lib/target/libQnnCpu.so","status":"ok","graph":"cpu_seg_12","iters":20,"init_us":673.1,"mean_us":35366.94,"median_us":34650.61,"min_us":33828.53,"max_us":44515.93,"std_us":2243.39,"p99_us":44515.93,"gap_us_setting":3000,"gap_mean_us":36314.81,"gap_median_us":36001.45,"gap_min_us":35528.10,"gap_max_us":42021.62,"gap_std_us":1338.12,"gap_p99_us":42021.62,"gap_minus_loop_us":1350.84}
-  },
-  "cpu_seg_13": {
-    "Cpu": {"dlc":"ctx_cpu_seg_13__Cpu.bin","backend":"/root/qairt/lib/target/libQnnCpu.so","status":"ok","graph":"cpu_seg_13","iters":20,"init_us":1858.2,"mean_us":9152.72,"median_us":9144.82,"min_us":9075.13,"max_us":9283.92,"std_us":55.70,"p99_us":9283.92,"gap_us_setting":3000,"gap_mean_us":9147.97,"gap_median_us":9129.45,"gap_min_us":9099.04,"gap_max_us":9338.24,"gap_std_us":54.25,"gap_p99_us":9338.24,"gap_minus_loop_us":-15.36}
-  },
-  "cpu_seg_14": {
-    "Cpu": {"dlc":"ctx_cpu_seg_14__Cpu.bin","backend":"/root/qairt/lib/target/libQnnCpu.so","status":"ok","graph":"cpu_seg_14","iters":20,"init_us":719.8,"mean_us":36218.77,"median_us":35979.51,"min_us":34370.13,"max_us":39589.85,"std_us":1270.62,"p99_us":39589.85,"gap_us_setting":3000,"gap_mean_us":36746.89,"gap_median_us":36067.88,"gap_min_us":34533.02,"gap_max_us":41542.27,"gap_std_us":1856.49,"gap_p99_us":41542.27,"gap_minus_loop_us":88.37}
-  },
-  "cpu_seg_15": {
-    "Cpu": {"dlc":"ctx_cpu_seg_15__Cpu.bin","backend":"/root/qairt/lib/target/libQnnCpu.so","status":"ok","graph":"cpu_seg_15","iters":20,"init_us":1624.8,"mean_us":9164.09,"median_us":9158.70,"min_us":9076.89,"max_us":9292.23,"std_us":56.46,"p99_us":9292.23,"gap_us_setting":3000,"gap_mean_us":9162.13,"gap_median_us":9153.08,"gap_min_us":9099.75,"gap_max_us":9265.31,"gap_std_us":42.48,"gap_p99_us":9265.31,"gap_minus_loop_us":-5.62}
-  },
-  "cpu_seg_16": {
-    "Cpu": {"dlc":"ctx_cpu_seg_16__Cpu.bin","backend":"/root/qairt/lib/target/libQnnCpu.so","status":"ok","graph":"cpu_seg_16","iters":20,"init_us":700.2,"mean_us":37059.65,"median_us":36618.86,"min_us":35736.36,"max_us":40910.79,"std_us":1340.68,"p99_us":40910.79,"gap_us_setting":3000,"gap_mean_us":36226.40,"gap_median_us":36227.00,"gap_min_us":35824.52,"gap_max_us":36876.66,"gap_std_us":233.79,"gap_p99_us":36876.66,"gap_minus_loop_us":-391.86}
-  },
-  "cpu_seg_17": {
-    "Cpu": {"dlc":"ctx_cpu_seg_17__Cpu.bin","backend":"/root/qairt/lib/target/libQnnCpu.so","status":"ok","graph":"cpu_seg_17","iters":20,"init_us":1557.0,"mean_us":9161.12,"median_us":9161.60,"min_us":9090.46,"max_us":9266.54,"std_us":43.50,"p99_us":9266.54,"gap_us_setting":3000,"gap_mean_us":9167.51,"gap_median_us":9150.82,"gap_min_us":9105.66,"gap_max_us":9422.36,"gap_std_us":64.58,"gap_p99_us":9422.36,"gap_minus_loop_us":-10.78}
-  },
-  "cpu_seg_18": {
-    "Cpu": {"dlc":"ctx_cpu_seg_18__Cpu.bin","backend":"/root/qairt/lib/target/libQnnCpu.so","status":"ok","graph":"cpu_seg_18","iters":20,"init_us":1824.1,"mean_us":36803.45,"median_us":36273.17,"min_us":35128.96,"max_us":44817.26,"std_us":1980.86,"p99_us":44817.26,"gap_us_setting":3000,"gap_mean_us":36295.80,"gap_median_us":36241.92,"gap_min_us":35569.24,"gap_max_us":37903.32,"gap_std_us":497.11,"gap_p99_us":37903.32,"gap_minus_loop_us":-31.25}
-  },
-  "cpu_seg_19": {
-    "Cpu": {"dlc":"ctx_cpu_seg_19__Cpu.bin","backend":"/root/qairt/lib/target/libQnnCpu.so","status":"ok","graph":"cpu_seg_19","iters":20,"init_us":1529.0,"mean_us":9164.64,"median_us":9145.38,"min_us":9090.43,"max_us":9341.98,"std_us":61.78,"p99_us":9341.98,"gap_us_setting":3000,"gap_mean_us":9165.12,"gap_median_us":9151.94,"gap_min_us":9114.70,"gap_max_us":9291.31,"gap_std_us":44.04,"gap_p99_us":9291.31,"gap_minus_loop_us":6.56}
-  },
-  "cpu_seg_20": {
-    "Cpu": {"dlc":"ctx_cpu_seg_20__Cpu.bin","backend":"/root/qairt/lib/target/libQnnCpu.so","status":"ok","graph":"cpu_seg_20","iters":20,"init_us":1719.4,"mean_us":36466.04,"median_us":36125.11,"min_us":35751.90,"max_us":41162.18,"std_us":1227.52,"p99_us":41162.18,"gap_us_setting":3000,"gap_mean_us":36195.82,"gap_median_us":36153.48,"gap_min_us":35844.07,"gap_max_us":37311.18,"gap_std_us":300.93,"gap_p99_us":37311.18,"gap_minus_loop_us":28.37}
-  },
-  "cpu_seg_21": {
-    "Cpu": {"dlc":"ctx_cpu_seg_21__Cpu.bin","backend":"/root/qairt/lib/target/libQnnCpu.so","status":"ok","graph":"cpu_seg_21","iters":20,"init_us":1601.2,"mean_us":9155.41,"median_us":9141.76,"min_us":9084.52,"max_us":9334.87,"std_us":57.96,"p99_us":9334.87,"gap_us_setting":3000,"gap_mean_us":9167.19,"gap_median_us":9155.98,"gap_min_us":9096.29,"gap_max_us":9278.78,"gap_std_us":44.47,"gap_p99_us":9278.78,"gap_minus_loop_us":14.22}
-  },
-  "cpu_seg_22": {
-    "Cpu": {"dlc":"ctx_cpu_seg_22__Cpu.bin","backend":"/root/qairt/lib/target/libQnnCpu.so","status":"ok","graph":"cpu_seg_22","iters":20,"init_us":745.8,"mean_us":36317.14,"median_us":36280.78,"min_us":34081.78,"max_us":38638.53,"std_us":783.11,"p99_us":38638.53,"gap_us_setting":3000,"gap_mean_us":37312.96,"gap_median_us":36405.76,"gap_min_us":35078.85,"gap_max_us":43209.58,"gap_std_us":2270.91,"gap_p99_us":43209.58,"gap_minus_loop_us":124.98}
-  },
-  "cpu_seg_23": {
-    "Cpu": {"dlc":"ctx_cpu_seg_23__Cpu.bin","backend":"/root/qairt/lib/target/libQnnCpu.so","status":"ok","graph":"cpu_seg_23","iters":20,"init_us":564.0,"mean_us":9171.97,"median_us":9149.70,"min_us":9097.15,"max_us":9292.66,"std_us":57.21,"p99_us":9292.66,"gap_us_setting":3000,"gap_mean_us":9156.97,"gap_median_us":9152.57,"gap_min_us":9120.07,"gap_max_us":9205.74,"gap_std_us":23.63,"gap_p99_us":9205.74,"gap_minus_loop_us":2.86}
+  "Hta": {
+   "status": "ok",
+   "mean_us": 299920.01,
+   "note": "sum of 2 conv ops",
+   "convs": [
+    {
+     "name": "dsp_seg_00_node_Conv_2118",
+     "mean_us": 289327.41
+    },
+    {
+     "name": "dsp_seg_00_sng_MatMul_0_conv1x1",
+     "mean_us": 6131.61
+    }
+   ]
   }
+ },
+ "dsp_seg_01": {
+  "Dsp": {
+   "dlc": "ctx_dsp_seg_01__Dsp.bin",
+   "backend": "/root/qairt/lib/target/libQnnDsp.so",
+   "status": "ok",
+   "graph": "dsp_seg_01",
+   "iters": 20,
+   "init_us": 97191.4,
+   "mean_us": 74493.08,
+   "median_us": 74634.64,
+   "min_us": 73345.92,
+   "max_us": 75298.68,
+   "std_us": 421.32,
+   "p99_us": 75298.68,
+   "gap_us_setting": 3000,
+   "gap_mean_us": 74211.62,
+   "gap_median_us": 74428.18,
+   "gap_min_us": 73014.39,
+   "gap_max_us": 75050.77,
+   "gap_std_us": 591.94,
+   "gap_p99_us": 75050.77,
+   "gap_minus_loop_us": -206.46
+  },
+  "Cpu": {
+   "dlc": "ctx_dsp_seg_01__Cpu.bin",
+   "backend": "/root/qairt/lib/target/libQnnCpu.so",
+   "status": "ok",
+   "graph": "dsp_seg_01",
+   "iters": 20,
+   "init_us": 23869.7,
+   "mean_us": 103155.88,
+   "median_us": 103117.62,
+   "min_us": 100222.5,
+   "max_us": 106602.98,
+   "std_us": 1616.4,
+   "p99_us": 106602.98,
+   "gap_us_setting": 3000,
+   "gap_mean_us": 102643.22,
+   "gap_median_us": 102558.22,
+   "gap_min_us": 101081.81,
+   "gap_max_us": 104641.97,
+   "gap_std_us": 974.02,
+   "gap_p99_us": 104641.97,
+   "gap_minus_loop_us": -559.4
+  },
+  "Hta": {
+   "status": "ok",
+   "mean_us": 12392.27,
+   "note": "sum of 2 conv ops",
+   "convs": [
+    {
+     "name": "dsp_seg_01_node_MatMul_549_conv1x1",
+     "mean_us": 3100.52
+    },
+    {
+     "name": "dsp_seg_01_node_MatMul_554_conv1x1",
+     "mean_us": 9298.43
+    }
+   ]
+  }
+ },
+ "dsp_seg_02": {
+  "Dsp": {
+   "dlc": "ctx_dsp_seg_02__Dsp.bin",
+   "backend": "/root/qairt/lib/target/libQnnDsp.so",
+   "status": "ok",
+   "graph": "dsp_seg_02",
+   "iters": 20,
+   "init_us": 94818.4,
+   "mean_us": 129689.38,
+   "median_us": 129781.39,
+   "min_us": 128730.04,
+   "max_us": 130263.66,
+   "std_us": 386.99,
+   "p99_us": 130263.66,
+   "gap_us_setting": 3000,
+   "gap_mean_us": 129742.02,
+   "gap_median_us": 129880.8,
+   "gap_min_us": 128728.72,
+   "gap_max_us": 130158.07,
+   "gap_std_us": 378.84,
+   "gap_p99_us": 130158.07,
+   "gap_minus_loop_us": 99.41
+  },
+  "Cpu": {
+   "dlc": "ctx_dsp_seg_02__Cpu.bin",
+   "backend": "/root/qairt/lib/target/libQnnCpu.so",
+   "status": "ok",
+   "graph": "dsp_seg_02",
+   "iters": 20,
+   "init_us": 37707.4,
+   "mean_us": 114523.5,
+   "median_us": 113786.48,
+   "min_us": 110359.35,
+   "max_us": 122705.57,
+   "std_us": 2950.57,
+   "p99_us": 122705.57,
+   "gap_us_setting": 3000,
+   "gap_mean_us": 113461.85,
+   "gap_median_us": 113834.78,
+   "gap_min_us": 107186.69,
+   "gap_max_us": 116853.58,
+   "gap_std_us": 2740.93,
+   "gap_p99_us": 116853.58,
+   "gap_minus_loop_us": 48.3
+  },
+  "Hta": {
+   "status": "ok",
+   "mean_us": 18861.68,
+   "note": "sum of 2 conv ops",
+   "convs": [
+    {
+     "name": "dsp_seg_02_node_MatMul_570_conv1x1",
+     "mean_us": 15922.31
+    },
+    {
+     "name": "dsp_seg_02_sng_MatMul_2_conv1x1",
+     "mean_us": 6232.25
+    }
+   ]
+  }
+ },
+ "dsp_seg_03": {
+  "Dsp": {
+   "dlc": "ctx_dsp_seg_03__Dsp.bin",
+   "backend": "/root/qairt/lib/target/libQnnDsp.so",
+   "status": "ok",
+   "graph": "dsp_seg_03",
+   "iters": 20,
+   "init_us": 72624.7,
+   "mean_us": 74189.16,
+   "median_us": 74339.26,
+   "min_us": 73007.63,
+   "max_us": 74798.38,
+   "std_us": 452.23,
+   "p99_us": 74798.38,
+   "gap_us_setting": 3000,
+   "gap_mean_us": 74258.51,
+   "gap_median_us": 74383.55,
+   "gap_min_us": 72961.38,
+   "gap_max_us": 74775.83,
+   "gap_std_us": 386.25,
+   "gap_p99_us": 74775.83,
+   "gap_minus_loop_us": 44.29
+  },
+  "Cpu": {
+   "dlc": "ctx_dsp_seg_03__Cpu.bin",
+   "backend": "/root/qairt/lib/target/libQnnCpu.so",
+   "status": "ok",
+   "graph": "dsp_seg_03",
+   "iters": 20,
+   "init_us": 36673.0,
+   "mean_us": 101922.3,
+   "median_us": 101983.58,
+   "min_us": 99956.44,
+   "max_us": 105326.67,
+   "std_us": 1457.46,
+   "p99_us": 105326.67,
+   "gap_us_setting": 3000,
+   "gap_mean_us": 102174.25,
+   "gap_median_us": 102393.42,
+   "gap_min_us": 99033.19,
+   "gap_max_us": 105892.18,
+   "gap_std_us": 1417.3,
+   "gap_p99_us": 105892.18,
+   "gap_minus_loop_us": 409.85
+  },
+  "Hta": {
+   "status": "ok",
+   "mean_us": 12491.98,
+   "note": "sum of 2 conv ops",
+   "convs": [
+    {
+     "name": "dsp_seg_03_node_MatMul_669_conv1x1",
+     "mean_us": 3270.29
+    },
+    {
+     "name": "dsp_seg_03_node_MatMul_674_conv1x1",
+     "mean_us": 9457.15
+    }
+   ]
+  }
+ },
+ "dsp_seg_04": {
+  "Dsp": {
+   "dlc": "ctx_dsp_seg_04__Dsp.bin",
+   "backend": "/root/qairt/lib/target/libQnnDsp.so",
+   "status": "ok",
+   "graph": "dsp_seg_04",
+   "iters": 20,
+   "init_us": 96600.5,
+   "mean_us": 129942.45,
+   "median_us": 130043.53,
+   "min_us": 128799.34,
+   "max_us": 130461.63,
+   "std_us": 407.52,
+   "p99_us": 130461.63,
+   "gap_us_setting": 3000,
+   "gap_mean_us": 129911.15,
+   "gap_median_us": 130067.04,
+   "gap_min_us": 128721.59,
+   "gap_max_us": 130458.77,
+   "gap_std_us": 450.47,
+   "gap_p99_us": 130458.77,
+   "gap_minus_loop_us": 23.51
+  },
+  "Cpu": {
+   "dlc": "ctx_dsp_seg_04__Cpu.bin",
+   "backend": "/root/qairt/lib/target/libQnnCpu.so",
+   "status": "ok",
+   "graph": "dsp_seg_04",
+   "iters": 20,
+   "init_us": 38304.1,
+   "mean_us": 117482.78,
+   "median_us": 119696.97,
+   "min_us": 105684.22,
+   "max_us": 130497.29,
+   "std_us": 10067.94,
+   "p99_us": 130497.29,
+   "gap_us_setting": 3000,
+   "gap_mean_us": 112668.29,
+   "gap_median_us": 112884.07,
+   "gap_min_us": 105320.73,
+   "gap_max_us": 126930.33,
+   "gap_std_us": 6057.3,
+   "gap_p99_us": 126930.33,
+   "gap_minus_loop_us": -6812.9
+  },
+  "Hta": {
+   "status": "ok",
+   "mean_us": 19043.32,
+   "note": "sum of 2 conv ops",
+   "convs": [
+    {
+     "name": "dsp_seg_04_node_MatMul_690_conv1x1",
+     "mean_us": 16190.84
+    },
+    {
+     "name": "dsp_seg_04_sng_MatMul_4_conv1x1",
+     "mean_us": 6206.88
+    }
+   ]
+  }
+ },
+ "dsp_seg_05": {
+  "Dsp": {
+   "dlc": "ctx_dsp_seg_05__Dsp.bin",
+   "backend": "/root/qairt/lib/target/libQnnDsp.so",
+   "status": "ok",
+   "graph": "dsp_seg_05",
+   "iters": 20,
+   "init_us": 82411.8,
+   "mean_us": 74341.85,
+   "median_us": 74457.27,
+   "min_us": 73191.75,
+   "max_us": 75020.4,
+   "std_us": 490.18,
+   "p99_us": 75020.4,
+   "gap_us_setting": 3000,
+   "gap_mean_us": 74396.89,
+   "gap_median_us": 74511.95,
+   "gap_min_us": 73388.19,
+   "gap_max_us": 74888.16,
+   "gap_std_us": 379.47,
+   "gap_p99_us": 74888.16,
+   "gap_minus_loop_us": 54.68
+  },
+  "Cpu": {
+   "dlc": "ctx_dsp_seg_05__Cpu.bin",
+   "backend": "/root/qairt/lib/target/libQnnCpu.so",
+   "status": "ok",
+   "graph": "dsp_seg_05",
+   "iters": 20,
+   "init_us": 36085.2,
+   "mean_us": 100341.52,
+   "median_us": 101078.79,
+   "min_us": 95852.73,
+   "max_us": 104369.22,
+   "std_us": 2448.87,
+   "p99_us": 104369.22,
+   "gap_us_setting": 3000,
+   "gap_mean_us": 103599.39,
+   "gap_median_us": 103258.35,
+   "gap_min_us": 101490.98,
+   "gap_max_us": 108985.49,
+   "gap_std_us": 1833.08,
+   "gap_p99_us": 108985.49,
+   "gap_minus_loop_us": 2179.55
+  },
+  "Hta": {
+   "status": "ok",
+   "mean_us": 12189.19,
+   "note": "sum of 2 conv ops",
+   "convs": [
+    {
+     "name": "dsp_seg_05_node_MatMul_789_conv1x1",
+     "mean_us": 3298.69
+    },
+    {
+     "name": "dsp_seg_05_node_MatMul_794_conv1x1",
+     "mean_us": 9340.53
+    }
+   ]
+  }
+ },
+ "dsp_seg_06": {
+  "Dsp": {
+   "dlc": "ctx_dsp_seg_06__Dsp.bin",
+   "backend": "/root/qairt/lib/target/libQnnDsp.so",
+   "status": "ok",
+   "graph": "dsp_seg_06",
+   "iters": 20,
+   "init_us": 83644.6,
+   "mean_us": 129699.52,
+   "median_us": 129833.89,
+   "min_us": 128762.23,
+   "max_us": 130329.6,
+   "std_us": 419.62,
+   "p99_us": 130329.6,
+   "gap_us_setting": 3000,
+   "gap_mean_us": 129898.43,
+   "gap_median_us": 129906.23,
+   "gap_min_us": 129427.25,
+   "gap_max_us": 130251.6,
+   "gap_std_us": 191.05,
+   "gap_p99_us": 130251.6,
+   "gap_minus_loop_us": 72.33
+  },
+  "Cpu": {
+   "dlc": "ctx_dsp_seg_06__Cpu.bin",
+   "backend": "/root/qairt/lib/target/libQnnCpu.so",
+   "status": "ok",
+   "graph": "dsp_seg_06",
+   "iters": 20,
+   "init_us": 38537.3,
+   "mean_us": 115033.71,
+   "median_us": 109527.24,
+   "min_us": 106228.37,
+   "max_us": 128544.0,
+   "std_us": 9263.91,
+   "p99_us": 128544.0,
+   "gap_us_setting": 3000,
+   "gap_mean_us": 113925.77,
+   "gap_median_us": 109400.89,
+   "gap_min_us": 106206.53,
+   "gap_max_us": 127367.38,
+   "gap_std_us": 8147.03,
+   "gap_p99_us": 127367.38,
+   "gap_minus_loop_us": -126.35
+  },
+  "Hta": {
+   "status": "ok",
+   "mean_us": 18502.93,
+   "note": "sum of 2 conv ops",
+   "convs": [
+    {
+     "name": "dsp_seg_06_node_MatMul_810_conv1x1",
+     "mean_us": 15339.57
+    },
+    {
+     "name": "dsp_seg_06_sng_MatMul_6_conv1x1",
+     "mean_us": 6182.87
+    }
+   ]
+  }
+ },
+ "dsp_seg_07": {
+  "Dsp": {
+   "dlc": "ctx_dsp_seg_07__Dsp.bin",
+   "backend": "/root/qairt/lib/target/libQnnDsp.so",
+   "status": "ok",
+   "graph": "dsp_seg_07",
+   "iters": 20,
+   "init_us": 86983.5,
+   "mean_us": 74263.29,
+   "median_us": 74388.48,
+   "min_us": 72876.62,
+   "max_us": 74941.15,
+   "std_us": 487.28,
+   "p99_us": 74941.15,
+   "gap_us_setting": 3000,
+   "gap_mean_us": 74401.24,
+   "gap_median_us": 74362.05,
+   "gap_min_us": 73204.89,
+   "gap_max_us": 75158.39,
+   "gap_std_us": 375.85,
+   "gap_p99_us": 75158.39,
+   "gap_minus_loop_us": -26.43
+  },
+  "Cpu": {
+   "dlc": "ctx_dsp_seg_07__Cpu.bin",
+   "backend": "/root/qairt/lib/target/libQnnCpu.so",
+   "status": "ok",
+   "graph": "dsp_seg_07",
+   "iters": 20,
+   "init_us": 34264.2,
+   "mean_us": 103133.47,
+   "median_us": 103051.65,
+   "min_us": 100923.17,
+   "max_us": 104919.96,
+   "std_us": 840.3,
+   "p99_us": 104919.96,
+   "gap_us_setting": 3000,
+   "gap_mean_us": 103308.07,
+   "gap_median_us": 103221.79,
+   "gap_min_us": 100639.73,
+   "gap_max_us": 106636.68,
+   "gap_std_us": 1239.93,
+   "gap_p99_us": 106636.68,
+   "gap_minus_loop_us": 170.14
+  },
+  "Hta": {
+   "status": "ok",
+   "mean_us": 12488.6,
+   "note": "sum of 2 conv ops",
+   "convs": [
+    {
+     "name": "dsp_seg_07_node_MatMul_909_conv1x1",
+     "mean_us": 3072.4
+    },
+    {
+     "name": "dsp_seg_07_node_MatMul_914_conv1x1",
+     "mean_us": 9310.2
+    }
+   ]
+  }
+ },
+ "dsp_seg_08": {
+  "Dsp": {
+   "dlc": "ctx_dsp_seg_08__Dsp.bin",
+   "backend": "/root/qairt/lib/target/libQnnDsp.so",
+   "status": "ok",
+   "graph": "dsp_seg_08",
+   "iters": 20,
+   "init_us": 97656.3,
+   "mean_us": 129722.15,
+   "median_us": 129889.94,
+   "min_us": 128825.35,
+   "max_us": 130298.02,
+   "std_us": 424.58,
+   "p99_us": 130298.02,
+   "gap_us_setting": 3000,
+   "gap_mean_us": 129826.9,
+   "gap_median_us": 129888.33,
+   "gap_min_us": 129045.68,
+   "gap_max_us": 130258.41,
+   "gap_std_us": 272.16,
+   "gap_p99_us": 130258.41,
+   "gap_minus_loop_us": -1.61
+  },
+  "Cpu": {
+   "dlc": "ctx_dsp_seg_08__Cpu.bin",
+   "backend": "/root/qairt/lib/target/libQnnCpu.so",
+   "status": "ok",
+   "graph": "dsp_seg_08",
+   "iters": 20,
+   "init_us": 34347.5,
+   "mean_us": 116623.29,
+   "median_us": 114910.09,
+   "min_us": 112666.45,
+   "max_us": 130153.64,
+   "std_us": 5151.6,
+   "p99_us": 130153.64,
+   "gap_us_setting": 3000,
+   "gap_mean_us": 114168.16,
+   "gap_median_us": 114078.13,
+   "gap_min_us": 112836.87,
+   "gap_max_us": 116583.89,
+   "gap_std_us": 1003.32,
+   "gap_p99_us": 116583.89,
+   "gap_minus_loop_us": -831.96
+  },
+  "Hta": {
+   "status": "ok",
+   "mean_us": 18812.72,
+   "note": "sum of 2 conv ops",
+   "convs": [
+    {
+     "name": "dsp_seg_08_node_MatMul_930_conv1x1",
+     "mean_us": 15533.07
+    },
+    {
+     "name": "dsp_seg_08_sng_MatMul_8_conv1x1",
+     "mean_us": 6202.17
+    }
+   ]
+  }
+ },
+ "dsp_seg_09": {
+  "Dsp": {
+   "dlc": "ctx_dsp_seg_09__Dsp.bin",
+   "backend": "/root/qairt/lib/target/libQnnDsp.so",
+   "status": "ok",
+   "graph": "dsp_seg_09",
+   "iters": 20,
+   "init_us": 83632.1,
+   "mean_us": 74599.96,
+   "median_us": 74693.32,
+   "min_us": 73730.24,
+   "max_us": 75090.41,
+   "std_us": 339.04,
+   "p99_us": 75090.41,
+   "gap_us_setting": 3000,
+   "gap_mean_us": 74370.6,
+   "gap_median_us": 74470.48,
+   "gap_min_us": 73413.7,
+   "gap_max_us": 75077.38,
+   "gap_std_us": 503.27,
+   "gap_p99_us": 75077.38,
+   "gap_minus_loop_us": -222.83
+  },
+  "Cpu": {
+   "dlc": "ctx_dsp_seg_09__Cpu.bin",
+   "backend": "/root/qairt/lib/target/libQnnCpu.so",
+   "status": "ok",
+   "graph": "dsp_seg_09",
+   "iters": 20,
+   "init_us": 35423.8,
+   "mean_us": 103786.58,
+   "median_us": 103537.79,
+   "min_us": 100489.05,
+   "max_us": 109649.23,
+   "std_us": 1779.68,
+   "p99_us": 109649.23,
+   "gap_us_setting": 3000,
+   "gap_mean_us": 102613.27,
+   "gap_median_us": 103129.76,
+   "gap_min_us": 98257.6,
+   "gap_max_us": 106184.44,
+   "gap_std_us": 2364.53,
+   "gap_p99_us": 106184.44,
+   "gap_minus_loop_us": -408.03
+  },
+  "Hta": {
+   "status": "ok",
+   "mean_us": 12469.74,
+   "note": "sum of 2 conv ops",
+   "convs": [
+    {
+     "name": "dsp_seg_09_node_MatMul_1029_conv1x1",
+     "mean_us": 3174.89
+    },
+    {
+     "name": "dsp_seg_09_node_MatMul_1034_conv1x1",
+     "mean_us": 9386.42
+    }
+   ]
+  }
+ },
+ "dsp_seg_10": {
+  "Dsp": {
+   "dlc": "ctx_dsp_seg_10__Dsp.bin",
+   "backend": "/root/qairt/lib/target/libQnnDsp.so",
+   "status": "ok",
+   "graph": "dsp_seg_10",
+   "iters": 20,
+   "init_us": 83740.1,
+   "mean_us": 129762.36,
+   "median_us": 129897.43,
+   "min_us": 128909.33,
+   "max_us": 130305.69,
+   "std_us": 367.44,
+   "p99_us": 130305.69,
+   "gap_us_setting": 3000,
+   "gap_mean_us": 129826.53,
+   "gap_median_us": 129966.7,
+   "gap_min_us": 128934.46,
+   "gap_max_us": 130168.3,
+   "gap_std_us": 347.43,
+   "gap_p99_us": 130168.3,
+   "gap_minus_loop_us": 69.27
+  },
+  "Cpu": {
+   "dlc": "ctx_dsp_seg_10__Cpu.bin",
+   "backend": "/root/qairt/lib/target/libQnnCpu.so",
+   "status": "ok",
+   "graph": "dsp_seg_10",
+   "iters": 20,
+   "init_us": 41553.2,
+   "mean_us": 117737.11,
+   "median_us": 122414.72,
+   "min_us": 106576.73,
+   "max_us": 132780.16,
+   "std_us": 9452.67,
+   "p99_us": 132780.16,
+   "gap_us_setting": 3000,
+   "gap_mean_us": 120554.42,
+   "gap_median_us": 123178.4,
+   "gap_min_us": 106271.04,
+   "gap_max_us": 132393.91,
+   "gap_std_us": 8437.35,
+   "gap_p99_us": 132393.91,
+   "gap_minus_loop_us": 763.68
+  },
+  "Hta": {
+   "status": "ok",
+   "mean_us": 18481.48,
+   "note": "sum of 2 conv ops",
+   "convs": [
+    {
+     "name": "dsp_seg_10_node_MatMul_1050_conv1x1",
+     "mean_us": 15768.07
+    },
+    {
+     "name": "dsp_seg_10_sng_MatMul_10_conv1x1",
+     "mean_us": 6246.97
+    }
+   ]
+  }
+ },
+ "dsp_seg_11": {
+  "Dsp": {
+   "dlc": "ctx_dsp_seg_11__Dsp.bin",
+   "backend": "/root/qairt/lib/target/libQnnDsp.so",
+   "status": "ok",
+   "graph": "dsp_seg_11",
+   "iters": 20,
+   "init_us": 71909.7,
+   "mean_us": 74542.14,
+   "median_us": 74637.72,
+   "min_us": 73246.06,
+   "max_us": 75217.79,
+   "std_us": 486.54,
+   "p99_us": 75217.79,
+   "gap_us_setting": 3000,
+   "gap_mean_us": 74277.58,
+   "gap_median_us": 74645.57,
+   "gap_min_us": 73204.31,
+   "gap_max_us": 75108.42,
+   "gap_std_us": 642.7,
+   "gap_p99_us": 75108.42,
+   "gap_minus_loop_us": 7.85
+  },
+  "Cpu": {
+   "dlc": "ctx_dsp_seg_11__Cpu.bin",
+   "backend": "/root/qairt/lib/target/libQnnCpu.so",
+   "status": "ok",
+   "graph": "dsp_seg_11",
+   "iters": 20,
+   "init_us": 35142.8,
+   "mean_us": 102350.35,
+   "median_us": 102276.37,
+   "min_us": 100108.0,
+   "max_us": 105511.78,
+   "std_us": 1535.49,
+   "p99_us": 105511.78,
+   "gap_us_setting": 3000,
+   "gap_mean_us": 102558.57,
+   "gap_median_us": 102510.15,
+   "gap_min_us": 100911.68,
+   "gap_max_us": 104950.21,
+   "gap_std_us": 1005.77,
+   "gap_p99_us": 104950.21,
+   "gap_minus_loop_us": 233.78
+  },
+  "Hta": {
+   "status": "ok",
+   "mean_us": 12754.21,
+   "note": "sum of 2 conv ops",
+   "convs": [
+    {
+     "name": "dsp_seg_11_node_MatMul_1149_conv1x1",
+     "mean_us": 3161.23
+    },
+    {
+     "name": "dsp_seg_11_node_MatMul_1154_conv1x1",
+     "mean_us": 9254.6
+    }
+   ]
+  }
+ },
+ "dsp_seg_12": {
+  "Dsp": {
+   "dlc": "ctx_dsp_seg_12__Dsp.bin",
+   "backend": "/root/qairt/lib/target/libQnnDsp.so",
+   "status": "ok",
+   "graph": "dsp_seg_12",
+   "iters": 20,
+   "init_us": 104665.0,
+   "mean_us": 130040.31,
+   "median_us": 130143.53,
+   "min_us": 129413.74,
+   "max_us": 130434.26,
+   "std_us": 287.09,
+   "p99_us": 130434.26,
+   "gap_us_setting": 3000,
+   "gap_mean_us": 130060.38,
+   "gap_median_us": 130122.38,
+   "gap_min_us": 128706.79,
+   "gap_max_us": 132557.5,
+   "gap_std_us": 720.21,
+   "gap_p99_us": 132557.5,
+   "gap_minus_loop_us": -21.14
+  },
+  "Cpu": {
+   "dlc": "ctx_dsp_seg_12__Cpu.bin",
+   "backend": "/root/qairt/lib/target/libQnnCpu.so",
+   "status": "ok",
+   "graph": "dsp_seg_12",
+   "iters": 20,
+   "init_us": 39281.4,
+   "mean_us": 113562.87,
+   "median_us": 107231.9,
+   "min_us": 106248.19,
+   "max_us": 131307.93,
+   "std_us": 9520.51,
+   "p99_us": 131307.93,
+   "gap_us_setting": 3000,
+   "gap_mean_us": 111966.5,
+   "gap_median_us": 107355.51,
+   "gap_min_us": 105810.75,
+   "gap_max_us": 128355.51,
+   "gap_std_us": 7616.02,
+   "gap_p99_us": 128355.51,
+   "gap_minus_loop_us": 123.6
+  },
+  "Hta": {
+   "status": "ok",
+   "mean_us": 19016.72,
+   "note": "sum of 2 conv ops",
+   "convs": [
+    {
+     "name": "dsp_seg_12_node_MatMul_1170_conv1x1",
+     "mean_us": 16027.06
+    },
+    {
+     "name": "dsp_seg_12_sng_MatMul_12_conv1x1",
+     "mean_us": 6251.63
+    }
+   ]
+  }
+ },
+ "dsp_seg_13": {
+  "Dsp": {
+   "dlc": "ctx_dsp_seg_13__Dsp.bin",
+   "backend": "/root/qairt/lib/target/libQnnDsp.so",
+   "status": "ok",
+   "graph": "dsp_seg_13",
+   "iters": 20,
+   "init_us": 89038.7,
+   "mean_us": 74731.34,
+   "median_us": 74897.29,
+   "min_us": 74048.87,
+   "max_us": 75178.07,
+   "std_us": 319.97,
+   "p99_us": 75178.07,
+   "gap_us_setting": 3000,
+   "gap_mean_us": 74435.28,
+   "gap_median_us": 74514.7,
+   "gap_min_us": 73072.07,
+   "gap_max_us": 74757.82,
+   "gap_std_us": 375.61,
+   "gap_p99_us": 74757.82,
+   "gap_minus_loop_us": -382.58
+  },
+  "Cpu": {
+   "dlc": "ctx_dsp_seg_13__Cpu.bin",
+   "backend": "/root/qairt/lib/target/libQnnCpu.so",
+   "status": "ok",
+   "graph": "dsp_seg_13",
+   "iters": 20,
+   "init_us": 39915.2,
+   "mean_us": 102218.33,
+   "median_us": 102640.78,
+   "min_us": 100069.74,
+   "max_us": 103782.99,
+   "std_us": 1075.85,
+   "p99_us": 103782.99,
+   "gap_us_setting": 3000,
+   "gap_mean_us": 102125.0,
+   "gap_median_us": 102850.02,
+   "gap_min_us": 97841.36,
+   "gap_max_us": 107214.61,
+   "gap_std_us": 2269.9,
+   "gap_p99_us": 107214.61,
+   "gap_minus_loop_us": 209.24
+  },
+  "Hta": {
+   "status": "ok",
+   "mean_us": 12387.55,
+   "note": "sum of 2 conv ops",
+   "convs": [
+    {
+     "name": "dsp_seg_13_node_MatMul_1269_conv1x1",
+     "mean_us": 3145.23
+    },
+    {
+     "name": "dsp_seg_13_node_MatMul_1274_conv1x1",
+     "mean_us": 9312.02
+    }
+   ]
+  }
+ },
+ "dsp_seg_14": {
+  "Dsp": {
+   "dlc": "ctx_dsp_seg_14__Dsp.bin",
+   "backend": "/root/qairt/lib/target/libQnnDsp.so",
+   "status": "ok",
+   "graph": "dsp_seg_14",
+   "iters": 20,
+   "init_us": 106229.5,
+   "mean_us": 129878.5,
+   "median_us": 130064.62,
+   "min_us": 128855.99,
+   "max_us": 130502.61,
+   "std_us": 430.98,
+   "p99_us": 130502.61,
+   "gap_us_setting": 3000,
+   "gap_mean_us": 130211.63,
+   "gap_median_us": 130071.82,
+   "gap_min_us": 129123.55,
+   "gap_max_us": 132319.97,
+   "gap_std_us": 594.17,
+   "gap_p99_us": 132319.97,
+   "gap_minus_loop_us": 7.2
+  },
+  "Cpu": {
+   "dlc": "ctx_dsp_seg_14__Cpu.bin",
+   "backend": "/root/qairt/lib/target/libQnnCpu.so",
+   "status": "ok",
+   "graph": "dsp_seg_14",
+   "iters": 20,
+   "init_us": 38189.7,
+   "mean_us": 125043.99,
+   "median_us": 127216.32,
+   "min_us": 106749.88,
+   "max_us": 129906.74,
+   "std_us": 6280.4,
+   "p99_us": 129906.74,
+   "gap_us_setting": 3000,
+   "gap_mean_us": 112489.35,
+   "gap_median_us": 111577.47,
+   "gap_min_us": 106892.64,
+   "gap_max_us": 127050.5,
+   "gap_std_us": 5777.8,
+   "gap_p99_us": 127050.5,
+   "gap_minus_loop_us": -15638.84
+  },
+  "Hta": {
+   "status": "ok",
+   "mean_us": 18895.71,
+   "note": "sum of 2 conv ops",
+   "convs": [
+    {
+     "name": "dsp_seg_14_node_MatMul_1290_conv1x1",
+     "mean_us": 15941.87
+    },
+    {
+     "name": "dsp_seg_14_sng_MatMul_14_conv1x1",
+     "mean_us": 6230.38
+    }
+   ]
+  }
+ },
+ "dsp_seg_15": {
+  "Dsp": {
+   "dlc": "ctx_dsp_seg_15__Dsp.bin",
+   "backend": "/root/qairt/lib/target/libQnnDsp.so",
+   "status": "ok",
+   "graph": "dsp_seg_15",
+   "iters": 20,
+   "init_us": 81891.3,
+   "mean_us": 74208.48,
+   "median_us": 74345.53,
+   "min_us": 73269.79,
+   "max_us": 74910.23,
+   "std_us": 437.37,
+   "p99_us": 74910.23,
+   "gap_us_setting": 3000,
+   "gap_mean_us": 74414.08,
+   "gap_median_us": 74507.81,
+   "gap_min_us": 73312.73,
+   "gap_max_us": 74844.16,
+   "gap_std_us": 404.72,
+   "gap_p99_us": 74844.16,
+   "gap_minus_loop_us": 162.27
+  },
+  "Cpu": {
+   "dlc": "ctx_dsp_seg_15__Cpu.bin",
+   "backend": "/root/qairt/lib/target/libQnnCpu.so",
+   "status": "ok",
+   "graph": "dsp_seg_15",
+   "iters": 20,
+   "init_us": 29657.3,
+   "mean_us": 100007.88,
+   "median_us": 100275.47,
+   "min_us": 96394.82,
+   "max_us": 104223.84,
+   "std_us": 2205.45,
+   "p99_us": 104223.84,
+   "gap_us_setting": 3000,
+   "gap_mean_us": 103200.39,
+   "gap_median_us": 103483.7,
+   "gap_min_us": 101015.05,
+   "gap_max_us": 107514.0,
+   "gap_std_us": 1375.64,
+   "gap_p99_us": 107514.0,
+   "gap_minus_loop_us": 3208.24
+  },
+  "Hta": {
+   "status": "ok",
+   "mean_us": 12711.07,
+   "note": "sum of 2 conv ops",
+   "convs": [
+    {
+     "name": "dsp_seg_15_node_MatMul_1389_conv1x1",
+     "mean_us": 3121.52
+    },
+    {
+     "name": "dsp_seg_15_node_MatMul_1394_conv1x1",
+     "mean_us": 9320.99
+    }
+   ]
+  }
+ },
+ "dsp_seg_16": {
+  "Dsp": {
+   "dlc": "ctx_dsp_seg_16__Dsp.bin",
+   "backend": "/root/qairt/lib/target/libQnnDsp.so",
+   "status": "ok",
+   "graph": "dsp_seg_16",
+   "iters": 20,
+   "init_us": 114311.7,
+   "mean_us": 129766.49,
+   "median_us": 129945.13,
+   "min_us": 128807.15,
+   "max_us": 130533.47,
+   "std_us": 440.44,
+   "p99_us": 130533.47,
+   "gap_us_setting": 3000,
+   "gap_mean_us": 129885.13,
+   "gap_median_us": 129999.08,
+   "gap_min_us": 128731.55,
+   "gap_max_us": 130350.87,
+   "gap_std_us": 470.55,
+   "gap_p99_us": 130350.87,
+   "gap_minus_loop_us": 53.96
+  },
+  "Cpu": {
+   "dlc": "ctx_dsp_seg_16__Cpu.bin",
+   "backend": "/root/qairt/lib/target/libQnnCpu.so",
+   "status": "ok",
+   "graph": "dsp_seg_16",
+   "iters": 20,
+   "init_us": 55876.2,
+   "mean_us": 115863.01,
+   "median_us": 114438.37,
+   "min_us": 111648.31,
+   "max_us": 134039.47,
+   "std_us": 4807.68,
+   "p99_us": 134039.47,
+   "gap_us_setting": 3000,
+   "gap_mean_us": 109114.67,
+   "gap_median_us": 107670.91,
+   "gap_min_us": 106458.66,
+   "gap_max_us": 122525.86,
+   "gap_std_us": 4143.68,
+   "gap_p99_us": 122525.86,
+   "gap_minus_loop_us": -6767.46
+  },
+  "Hta": {
+   "status": "ok",
+   "mean_us": 18429.97,
+   "note": "sum of 2 conv ops",
+   "convs": [
+    {
+     "name": "dsp_seg_16_node_MatMul_1410_conv1x1",
+     "mean_us": 15815.56
+    },
+    {
+     "name": "dsp_seg_16_sng_MatMul_16_conv1x1",
+     "mean_us": 6191.51
+    }
+   ]
+  }
+ },
+ "dsp_seg_17": {
+  "Dsp": {
+   "dlc": "ctx_dsp_seg_17__Dsp.bin",
+   "backend": "/root/qairt/lib/target/libQnnDsp.so",
+   "status": "ok",
+   "graph": "dsp_seg_17",
+   "iters": 20,
+   "init_us": 81830.2,
+   "mean_us": 74308.52,
+   "median_us": 74501.05,
+   "min_us": 73391.76,
+   "max_us": 74771.04,
+   "std_us": 447.48,
+   "p99_us": 74771.04,
+   "gap_us_setting": 3000,
+   "gap_mean_us": 74321.64,
+   "gap_median_us": 74411.67,
+   "gap_min_us": 73695.41,
+   "gap_max_us": 74899.2,
+   "gap_std_us": 336.92,
+   "gap_p99_us": 74899.2,
+   "gap_minus_loop_us": -89.38
+  },
+  "Cpu": {
+   "dlc": "ctx_dsp_seg_17__Cpu.bin",
+   "backend": "/root/qairt/lib/target/libQnnCpu.so",
+   "status": "ok",
+   "graph": "dsp_seg_17",
+   "iters": 20,
+   "init_us": 35193.2,
+   "mean_us": 102686.74,
+   "median_us": 102792.38,
+   "min_us": 100588.84,
+   "max_us": 105480.45,
+   "std_us": 1336.85,
+   "p99_us": 105480.45,
+   "gap_us_setting": 3000,
+   "gap_mean_us": 103084.92,
+   "gap_median_us": 103184.72,
+   "gap_min_us": 100858.14,
+   "gap_max_us": 106357.84,
+   "gap_std_us": 1217.77,
+   "gap_p99_us": 106357.84,
+   "gap_minus_loop_us": 392.34
+  },
+  "Hta": {
+   "status": "ok",
+   "mean_us": 12414.15,
+   "note": "sum of 2 conv ops",
+   "convs": [
+    {
+     "name": "dsp_seg_17_node_MatMul_1509_conv1x1",
+     "mean_us": 3217.11
+    },
+    {
+     "name": "dsp_seg_17_node_MatMul_1514_conv1x1",
+     "mean_us": 9277.21
+    }
+   ]
+  }
+ },
+ "dsp_seg_18": {
+  "Dsp": {
+   "dlc": "ctx_dsp_seg_18__Dsp.bin",
+   "backend": "/root/qairt/lib/target/libQnnDsp.so",
+   "status": "ok",
+   "graph": "dsp_seg_18",
+   "iters": 20,
+   "init_us": 125809.6,
+   "mean_us": 129736.27,
+   "median_us": 129942.87,
+   "min_us": 128662.2,
+   "max_us": 130411.04,
+   "std_us": 461.5,
+   "p99_us": 130411.04,
+   "gap_us_setting": 3000,
+   "gap_mean_us": 129653.26,
+   "gap_median_us": 129690.54,
+   "gap_min_us": 128843.1,
+   "gap_max_us": 130413.17,
+   "gap_std_us": 375.14,
+   "gap_p99_us": 130413.17,
+   "gap_minus_loop_us": -252.34
+  },
+  "Cpu": {
+   "dlc": "ctx_dsp_seg_18__Cpu.bin",
+   "backend": "/root/qairt/lib/target/libQnnCpu.so",
+   "status": "ok",
+   "graph": "dsp_seg_18",
+   "iters": 20,
+   "init_us": 49284.2,
+   "mean_us": 117337.06,
+   "median_us": 117881.4,
+   "min_us": 111149.12,
+   "max_us": 122657.23,
+   "std_us": 3164.33,
+   "p99_us": 122657.23,
+   "gap_us_setting": 3000,
+   "gap_mean_us": 112717.25,
+   "gap_median_us": 108767.72,
+   "gap_min_us": 106935.38,
+   "gap_max_us": 128369.39,
+   "gap_std_us": 6951.49,
+   "gap_p99_us": 128369.39,
+   "gap_minus_loop_us": -9113.67
+  },
+  "Hta": {
+   "status": "ok",
+   "mean_us": 19081.38,
+   "note": "sum of 2 conv ops",
+   "convs": [
+    {
+     "name": "dsp_seg_18_node_MatMul_1530_conv1x1",
+     "mean_us": 15534.55
+    },
+    {
+     "name": "dsp_seg_18_sng_MatMul_18_conv1x1",
+     "mean_us": 6219.48
+    }
+   ]
+  }
+ },
+ "dsp_seg_19": {
+  "Dsp": {
+   "dlc": "ctx_dsp_seg_19__Dsp.bin",
+   "backend": "/root/qairt/lib/target/libQnnDsp.so",
+   "status": "ok",
+   "graph": "dsp_seg_19",
+   "iters": 20,
+   "init_us": 103767.8,
+   "mean_us": 74709.08,
+   "median_us": 74693.84,
+   "min_us": 73521.2,
+   "max_us": 75236.91,
+   "std_us": 349.61,
+   "p99_us": 75236.91,
+   "gap_us_setting": 3000,
+   "gap_mean_us": 74392.26,
+   "gap_median_us": 74611.54,
+   "gap_min_us": 73355.56,
+   "gap_max_us": 75250.33,
+   "gap_std_us": 584.96,
+   "gap_p99_us": 75250.33,
+   "gap_minus_loop_us": -82.3
+  },
+  "Cpu": {
+   "dlc": "ctx_dsp_seg_19__Cpu.bin",
+   "backend": "/root/qairt/lib/target/libQnnCpu.so",
+   "status": "ok",
+   "graph": "dsp_seg_19",
+   "iters": 20,
+   "init_us": 39345.5,
+   "mean_us": 101915.9,
+   "median_us": 102365.79,
+   "min_us": 96100.46,
+   "max_us": 104775.54,
+   "std_us": 1972.11,
+   "p99_us": 104775.54,
+   "gap_us_setting": 3000,
+   "gap_mean_us": 102065.62,
+   "gap_median_us": 102791.95,
+   "gap_min_us": 96963.04,
+   "gap_max_us": 106283.56,
+   "gap_std_us": 2411.46,
+   "gap_p99_us": 106283.56,
+   "gap_minus_loop_us": 426.16
+  },
+  "Hta": {
+   "status": "ok",
+   "mean_us": 12340.79,
+   "note": "sum of 2 conv ops",
+   "convs": [
+    {
+     "name": "dsp_seg_19_node_MatMul_1629_conv1x1",
+     "mean_us": 3200.22
+    },
+    {
+     "name": "dsp_seg_19_node_MatMul_1634_conv1x1",
+     "mean_us": 9383.16
+    }
+   ]
+  }
+ },
+ "dsp_seg_20": {
+  "Dsp": {
+   "dlc": "ctx_dsp_seg_20__Dsp.bin",
+   "backend": "/root/qairt/lib/target/libQnnDsp.so",
+   "status": "ok",
+   "graph": "dsp_seg_20",
+   "iters": 20,
+   "init_us": 93126.5,
+   "mean_us": 129833.72,
+   "median_us": 129927.46,
+   "min_us": 128822.56,
+   "max_us": 130362.41,
+   "std_us": 367.17,
+   "p99_us": 130362.41,
+   "gap_us_setting": 3000,
+   "gap_mean_us": 129820.75,
+   "gap_median_us": 129852.35,
+   "gap_min_us": 129253.07,
+   "gap_max_us": 130127.99,
+   "gap_std_us": 212.97,
+   "gap_p99_us": 130127.99,
+   "gap_minus_loop_us": -75.11
+  },
+  "Cpu": {
+   "dlc": "ctx_dsp_seg_20__Cpu.bin",
+   "backend": "/root/qairt/lib/target/libQnnCpu.so",
+   "status": "ok",
+   "graph": "dsp_seg_20",
+   "iters": 20,
+   "init_us": 56562.1,
+   "mean_us": 114074.87,
+   "median_us": 114131.4,
+   "min_us": 110693.61,
+   "max_us": 116997.65,
+   "std_us": 1522.39,
+   "p99_us": 116997.65,
+   "gap_us_setting": 3000,
+   "gap_mean_us": 112333.29,
+   "gap_median_us": 113228.73,
+   "gap_min_us": 106828.4,
+   "gap_max_us": 127783.38,
+   "gap_std_us": 5303.48,
+   "gap_p99_us": 127783.38,
+   "gap_minus_loop_us": -902.66
+  },
+  "Hta": {
+   "status": "ok",
+   "mean_us": 19162.49,
+   "note": "sum of 2 conv ops",
+   "convs": [
+    {
+     "name": "dsp_seg_20_node_MatMul_1650_conv1x1",
+     "mean_us": 15897.77
+    },
+    {
+     "name": "dsp_seg_20_sng_MatMul_20_conv1x1",
+     "mean_us": 6185.45
+    }
+   ]
+  }
+ },
+ "dsp_seg_21": {
+  "Dsp": {
+   "dlc": "ctx_dsp_seg_21__Dsp.bin",
+   "backend": "/root/qairt/lib/target/libQnnDsp.so",
+   "status": "ok",
+   "graph": "dsp_seg_21",
+   "iters": 20,
+   "init_us": 86154.5,
+   "mean_us": 74268.5,
+   "median_us": 74375.49,
+   "min_us": 73116.89,
+   "max_us": 74548.99,
+   "std_us": 350.72,
+   "p99_us": 74548.99,
+   "gap_us_setting": 3000,
+   "gap_mean_us": 74327.28,
+   "gap_median_us": 74486.91,
+   "gap_min_us": 73517.24,
+   "gap_max_us": 74905.01,
+   "gap_std_us": 375.39,
+   "gap_p99_us": 74905.01,
+   "gap_minus_loop_us": 111.42
+  },
+  "Cpu": {
+   "dlc": "ctx_dsp_seg_21__Cpu.bin",
+   "backend": "/root/qairt/lib/target/libQnnCpu.so",
+   "status": "ok",
+   "graph": "dsp_seg_21",
+   "iters": 20,
+   "init_us": 31002.8,
+   "mean_us": 104358.61,
+   "median_us": 103945.71,
+   "min_us": 101428.67,
+   "max_us": 109513.6,
+   "std_us": 2061.97,
+   "p99_us": 109513.6,
+   "gap_us_setting": 3000,
+   "gap_mean_us": 103695.06,
+   "gap_median_us": 103596.48,
+   "gap_min_us": 101900.16,
+   "gap_max_us": 107582.84,
+   "gap_std_us": 1366.09,
+   "gap_p99_us": 107582.84,
+   "gap_minus_loop_us": -349.23
+  },
+  "Hta": {
+   "status": "ok",
+   "mean_us": 12599.74,
+   "note": "sum of 2 conv ops",
+   "convs": [
+    {
+     "name": "dsp_seg_21_node_MatMul_1749_conv1x1",
+     "mean_us": 3195.52
+    },
+    {
+     "name": "dsp_seg_21_node_MatMul_1754_conv1x1",
+     "mean_us": 9321.38
+    }
+   ]
+  }
+ },
+ "dsp_seg_22": {
+  "Dsp": {
+   "dlc": "ctx_dsp_seg_22__Dsp.bin",
+   "backend": "/root/qairt/lib/target/libQnnDsp.so",
+   "status": "ok",
+   "graph": "dsp_seg_22",
+   "iters": 20,
+   "init_us": 83463.4,
+   "mean_us": 129645.95,
+   "median_us": 129815.29,
+   "min_us": 128671.71,
+   "max_us": 130248.12,
+   "std_us": 493.46,
+   "p99_us": 130248.12,
+   "gap_us_setting": 3000,
+   "gap_mean_us": 129910.77,
+   "gap_median_us": 130028.69,
+   "gap_min_us": 128920.52,
+   "gap_max_us": 130421.75,
+   "gap_std_us": 397.34,
+   "gap_p99_us": 130421.75,
+   "gap_minus_loop_us": 213.39
+  },
+  "Cpu": {
+   "dlc": "ctx_dsp_seg_22__Cpu.bin",
+   "backend": "/root/qairt/lib/target/libQnnCpu.so",
+   "status": "ok",
+   "graph": "dsp_seg_22",
+   "iters": 20,
+   "init_us": 48864.2,
+   "mean_us": 117975.97,
+   "median_us": 119095.93,
+   "min_us": 112114.56,
+   "max_us": 122231.46,
+   "std_us": 2995.6,
+   "p99_us": 122231.46,
+   "gap_us_setting": 3000,
+   "gap_mean_us": 112512.19,
+   "gap_median_us": 112086.27,
+   "gap_min_us": 106170.34,
+   "gap_max_us": 127614.79,
+   "gap_std_us": 6799.12,
+   "gap_p99_us": 127614.79,
+   "gap_minus_loop_us": -7009.67
+  },
+  "Hta": {
+   "status": "ok",
+   "mean_us": 19023.3,
+   "note": "sum of 2 conv ops",
+   "convs": [
+    {
+     "name": "dsp_seg_22_node_MatMul_1770_conv1x1",
+     "mean_us": 16053.99
+    },
+    {
+     "name": "dsp_seg_22_sng_MatMul_22_conv1x1",
+     "mean_us": 6217.93
+    }
+   ]
+  }
+ },
+ "dsp_seg_23": {
+  "Dsp": {
+   "dlc": "ctx_dsp_seg_23__Dsp.bin",
+   "backend": "/root/qairt/lib/target/libQnnDsp.so",
+   "status": "ok",
+   "graph": "dsp_seg_23",
+   "iters": 20,
+   "init_us": 90847.2,
+   "mean_us": 74452.52,
+   "median_us": 74698.67,
+   "min_us": 73046.26,
+   "max_us": 75204.5,
+   "std_us": 639.14,
+   "p99_us": 75204.5,
+   "gap_us_setting": 3000,
+   "gap_mean_us": 74339.09,
+   "gap_median_us": 74451.65,
+   "gap_min_us": 73242.48,
+   "gap_max_us": 74806.87,
+   "gap_std_us": 441.53,
+   "gap_p99_us": 74806.87,
+   "gap_minus_loop_us": -247.02
+  },
+  "Cpu": {
+   "dlc": "ctx_dsp_seg_23__Cpu.bin",
+   "backend": "/root/qairt/lib/target/libQnnCpu.so",
+   "status": "ok",
+   "graph": "dsp_seg_23",
+   "iters": 20,
+   "init_us": 35272.4,
+   "mean_us": 100989.01,
+   "median_us": 101614.92,
+   "min_us": 97468.36,
+   "max_us": 105004.51,
+   "std_us": 2135.15,
+   "p99_us": 105004.51,
+   "gap_us_setting": 3000,
+   "gap_mean_us": 102341.45,
+   "gap_median_us": 102348.5,
+   "gap_min_us": 98948.18,
+   "gap_max_us": 105165.41,
+   "gap_std_us": 1355.78,
+   "gap_p99_us": 105165.41,
+   "gap_minus_loop_us": 733.58
+  },
+  "Hta": {
+   "status": "ok",
+   "mean_us": 12619.31,
+   "note": "sum of 2 conv ops",
+   "convs": [
+    {
+     "name": "dsp_seg_23_node_MatMul_1869_conv1x1",
+     "mean_us": 3289.74
+    },
+    {
+     "name": "dsp_seg_23_node_MatMul_1874_conv1x1",
+     "mean_us": 9268.29
+    }
+   ]
+  }
+ },
+ "dsp_seg_24": {
+  "Dsp": {
+   "dlc": "ctx_dsp_seg_24__Dsp.bin",
+   "backend": "/root/qairt/lib/target/libQnnDsp.so",
+   "status": "ok",
+   "graph": "dsp_seg_24",
+   "iters": 20,
+   "init_us": 182458.5,
+   "mean_us": 114452.22,
+   "median_us": 114538.83,
+   "min_us": 113026.74,
+   "max_us": 115145.79,
+   "std_us": 527.46,
+   "p99_us": 115145.79,
+   "gap_us_setting": 3000,
+   "gap_mean_us": 114296.23,
+   "gap_median_us": 114519.02,
+   "gap_min_us": 113390.89,
+   "gap_max_us": 115309.24,
+   "gap_std_us": 570.83,
+   "gap_p99_us": 115309.24,
+   "gap_minus_loop_us": -19.82
+  },
+  "Cpu": {
+   "dlc": "ctx_dsp_seg_24__Cpu.bin",
+   "backend": "/root/qairt/lib/target/libQnnCpu.so",
+   "status": "ok",
+   "graph": "dsp_seg_24",
+   "iters": 20,
+   "init_us": 115819.8,
+   "mean_us": 77879.89,
+   "median_us": 79085.71,
+   "min_us": 70673.97,
+   "max_us": 84062.24,
+   "std_us": 3451.62,
+   "p99_us": 84062.24,
+   "gap_us_setting": 3000,
+   "gap_mean_us": 79165.26,
+   "gap_median_us": 79303.32,
+   "gap_min_us": 72776.61,
+   "gap_max_us": 85961.23,
+   "gap_std_us": 3096.83,
+   "gap_p99_us": 85961.23,
+   "gap_minus_loop_us": 217.61
+  },
+  "Hta": {
+   "status": "ok",
+   "mean_us": 83280.73,
+   "note": "sum of 2 conv ops",
+   "convs": [
+    {
+     "name": "dsp_seg_24_node_MatMul_1890_conv1x1",
+     "mean_us": 15940.41
+    },
+    {
+     "name": "dsp_seg_24_node_MatMul_1926_conv1x1",
+     "mean_us": 118907.34
+    }
+   ]
+  }
+ },
+ "cpu_seg_00": {
+  "Cpu": {
+   "dlc": "ctx_cpu_seg_00__Cpu.bin",
+   "backend": "/root/qairt/lib/target/libQnnCpu.so",
+   "status": "ok",
+   "graph": "cpu_seg_00",
+   "iters": 20,
+   "init_us": 2063.4,
+   "mean_us": 36379.46,
+   "median_us": 36009.65,
+   "min_us": 35613.65,
+   "max_us": 40949.87,
+   "std_us": 1233.29,
+   "p99_us": 40949.87,
+   "gap_us_setting": 3000,
+   "gap_mean_us": 36782.43,
+   "gap_median_us": 36025.49,
+   "gap_min_us": 34292.73,
+   "gap_max_us": 41965.26,
+   "gap_std_us": 2137.4,
+   "gap_p99_us": 41965.26,
+   "gap_minus_loop_us": 15.84
+  }
+ },
+ "cpu_seg_01": {
+  "Cpu": {
+   "dlc": "ctx_cpu_seg_01__Cpu.bin",
+   "backend": "/root/qairt/lib/target/libQnnCpu.so",
+   "status": "ok",
+   "graph": "cpu_seg_01",
+   "iters": 20,
+   "init_us": 2936.7,
+   "mean_us": 9138.18,
+   "median_us": 9147.98,
+   "min_us": 9078.14,
+   "max_us": 9202.03,
+   "std_us": 33.29,
+   "p99_us": 9202.03,
+   "gap_us_setting": 3000,
+   "gap_mean_us": 9164.67,
+   "gap_median_us": 9148.96,
+   "gap_min_us": 9087.36,
+   "gap_max_us": 9348.69,
+   "gap_std_us": 66.48,
+   "gap_p99_us": 9348.69,
+   "gap_minus_loop_us": 0.99
+  }
+ },
+ "cpu_seg_02": {
+  "Cpu": {
+   "dlc": "ctx_cpu_seg_02__Cpu.bin",
+   "backend": "/root/qairt/lib/target/libQnnCpu.so",
+   "status": "ok",
+   "graph": "cpu_seg_02",
+   "iters": 20,
+   "init_us": 1968.2,
+   "mean_us": 36206.67,
+   "median_us": 35989.88,
+   "min_us": 35656.8,
+   "max_us": 38535.64,
+   "std_us": 747.02,
+   "p99_us": 38535.64,
+   "gap_us_setting": 3000,
+   "gap_mean_us": 36610.98,
+   "gap_median_us": 35976.65,
+   "gap_min_us": 34252.12,
+   "gap_max_us": 43283.78,
+   "gap_std_us": 2192.55,
+   "gap_p99_us": 43283.78,
+   "gap_minus_loop_us": -13.23
+  }
+ },
+ "cpu_seg_03": {
+  "Cpu": {
+   "dlc": "ctx_cpu_seg_03__Cpu.bin",
+   "backend": "/root/qairt/lib/target/libQnnCpu.so",
+   "status": "ok",
+   "graph": "cpu_seg_03",
+   "iters": 20,
+   "init_us": 1469.2,
+   "mean_us": 9144.76,
+   "median_us": 9130.78,
+   "min_us": 9071.41,
+   "max_us": 9295.82,
+   "std_us": 54.18,
+   "p99_us": 9295.82,
+   "gap_us_setting": 3000,
+   "gap_mean_us": 9136.9,
+   "gap_median_us": 9134.43,
+   "gap_min_us": 9074.69,
+   "gap_max_us": 9303.89,
+   "gap_std_us": 52.21,
+   "gap_p99_us": 9303.89,
+   "gap_minus_loop_us": 3.65
+  }
+ },
+ "cpu_seg_04": {
+  "Cpu": {
+   "dlc": "ctx_cpu_seg_04__Cpu.bin",
+   "backend": "/root/qairt/lib/target/libQnnCpu.so",
+   "status": "ok",
+   "graph": "cpu_seg_04",
+   "iters": 20,
+   "init_us": 2106.6,
+   "mean_us": 36889.48,
+   "median_us": 35381.97,
+   "min_us": 34313.93,
+   "max_us": 44964.13,
+   "std_us": 3286.46,
+   "p99_us": 44964.13,
+   "gap_us_setting": 3000,
+   "gap_mean_us": 36682.94,
+   "gap_median_us": 36533.7,
+   "gap_min_us": 36073.37,
+   "gap_max_us": 39091.35,
+   "gap_std_us": 643.14,
+   "gap_p99_us": 39091.35,
+   "gap_minus_loop_us": 1151.73
+  }
+ },
+ "cpu_seg_05": {
+  "Cpu": {
+   "dlc": "ctx_cpu_seg_05__Cpu.bin",
+   "backend": "/root/qairt/lib/target/libQnnCpu.so",
+   "status": "ok",
+   "graph": "cpu_seg_05",
+   "iters": 20,
+   "init_us": 1653.3,
+   "mean_us": 9141.72,
+   "median_us": 9135.09,
+   "min_us": 9069.47,
+   "max_us": 9245.65,
+   "std_us": 42.58,
+   "p99_us": 9245.65,
+   "gap_us_setting": 3000,
+   "gap_mean_us": 9144.92,
+   "gap_median_us": 9140.3,
+   "gap_min_us": 9071.92,
+   "gap_max_us": 9276.69,
+   "gap_std_us": 40.49,
+   "gap_p99_us": 9276.69,
+   "gap_minus_loop_us": 5.21
+  }
+ },
+ "cpu_seg_06": {
+  "Cpu": {
+   "dlc": "ctx_cpu_seg_06__Cpu.bin",
+   "backend": "/root/qairt/lib/target/libQnnCpu.so",
+   "status": "ok",
+   "graph": "cpu_seg_06",
+   "iters": 20,
+   "init_us": 1914.7,
+   "mean_us": 36174.83,
+   "median_us": 35973.01,
+   "min_us": 35856.56,
+   "max_us": 38980.12,
+   "std_us": 663.3,
+   "p99_us": 38980.12,
+   "gap_us_setting": 3000,
+   "gap_mean_us": 36084.82,
+   "gap_median_us": 35970.98,
+   "gap_min_us": 35749.28,
+   "gap_max_us": 37020.06,
+   "gap_std_us": 327.59,
+   "gap_p99_us": 37020.06,
+   "gap_minus_loop_us": -2.03
+  }
+ },
+ "cpu_seg_07": {
+  "Cpu": {
+   "dlc": "ctx_cpu_seg_07__Cpu.bin",
+   "backend": "/root/qairt/lib/target/libQnnCpu.so",
+   "status": "ok",
+   "graph": "cpu_seg_07",
+   "iters": 20,
+   "init_us": 1672.3,
+   "mean_us": 9153.59,
+   "median_us": 9143.15,
+   "min_us": 9076.28,
+   "max_us": 9236.58,
+   "std_us": 43.33,
+   "p99_us": 9236.58,
+   "gap_us_setting": 3000,
+   "gap_mean_us": 9160.17,
+   "gap_median_us": 9145.44,
+   "gap_min_us": 9097.63,
+   "gap_max_us": 9422.61,
+   "gap_std_us": 65.4,
+   "gap_p99_us": 9422.61,
+   "gap_minus_loop_us": 2.29
+  }
+ },
+ "cpu_seg_08": {
+  "Cpu": {
+   "dlc": "ctx_cpu_seg_08__Cpu.bin",
+   "backend": "/root/qairt/lib/target/libQnnCpu.so",
+   "status": "ok",
+   "graph": "cpu_seg_08",
+   "iters": 20,
+   "init_us": 673.6,
+   "mean_us": 36168.75,
+   "median_us": 35984.77,
+   "min_us": 34436.98,
+   "max_us": 42824.36,
+   "std_us": 1681.33,
+   "p99_us": 42824.36,
+   "gap_us_setting": 3000,
+   "gap_mean_us": 35961.14,
+   "gap_median_us": 35893.74,
+   "gap_min_us": 35686.88,
+   "gap_max_us": 36636.29,
+   "gap_std_us": 255.8,
+   "gap_p99_us": 36636.29,
+   "gap_minus_loop_us": -91.04
+  }
+ },
+ "cpu_seg_09": {
+  "Cpu": {
+   "dlc": "ctx_cpu_seg_09__Cpu.bin",
+   "backend": "/root/qairt/lib/target/libQnnCpu.so",
+   "status": "ok",
+   "graph": "cpu_seg_09",
+   "iters": 20,
+   "init_us": 1632.7,
+   "mean_us": 9151.23,
+   "median_us": 9138.29,
+   "min_us": 9072.41,
+   "max_us": 9268.59,
+   "std_us": 56.84,
+   "p99_us": 9268.59,
+   "gap_us_setting": 3000,
+   "gap_mean_us": 9143.31,
+   "gap_median_us": 9137.98,
+   "gap_min_us": 9105.12,
+   "gap_max_us": 9219.48,
+   "gap_std_us": 26.46,
+   "gap_p99_us": 9219.48,
+   "gap_minus_loop_us": -0.31
+  }
+ },
+ "cpu_seg_10": {
+  "Cpu": {
+   "dlc": "ctx_cpu_seg_10__Cpu.bin",
+   "backend": "/root/qairt/lib/target/libQnnCpu.so",
+   "status": "ok",
+   "graph": "cpu_seg_10",
+   "iters": 20,
+   "init_us": 1858.8,
+   "mean_us": 36479.22,
+   "median_us": 35974.66,
+   "min_us": 35600.62,
+   "max_us": 40670.05,
+   "std_us": 1281.87,
+   "p99_us": 40670.05,
+   "gap_us_setting": 3000,
+   "gap_mean_us": 36904.01,
+   "gap_median_us": 35909.04,
+   "gap_min_us": 34405.7,
+   "gap_max_us": 41800.54,
+   "gap_std_us": 2258.02,
+   "gap_p99_us": 41800.54,
+   "gap_minus_loop_us": -65.62
+  }
+ },
+ "cpu_seg_11": {
+  "Cpu": {
+   "dlc": "ctx_cpu_seg_11__Cpu.bin",
+   "backend": "/root/qairt/lib/target/libQnnCpu.so",
+   "status": "ok",
+   "graph": "cpu_seg_11",
+   "iters": 20,
+   "init_us": 563.5,
+   "mean_us": 9156.7,
+   "median_us": 9160.3,
+   "min_us": 9094.21,
+   "max_us": 9287.53,
+   "std_us": 44.07,
+   "p99_us": 9287.53,
+   "gap_us_setting": 3000,
+   "gap_mean_us": 9160.38,
+   "gap_median_us": 9155.51,
+   "gap_min_us": 9093.07,
+   "gap_max_us": 9240.92,
+   "gap_std_us": 37.55,
+   "gap_p99_us": 9240.92,
+   "gap_minus_loop_us": -4.79
+  }
+ },
+ "cpu_seg_12": {
+  "Cpu": {
+   "dlc": "ctx_cpu_seg_12__Cpu.bin",
+   "backend": "/root/qairt/lib/target/libQnnCpu.so",
+   "status": "ok",
+   "graph": "cpu_seg_12",
+   "iters": 20,
+   "init_us": 673.1,
+   "mean_us": 35366.94,
+   "median_us": 34650.61,
+   "min_us": 33828.53,
+   "max_us": 44515.93,
+   "std_us": 2243.39,
+   "p99_us": 44515.93,
+   "gap_us_setting": 3000,
+   "gap_mean_us": 36314.81,
+   "gap_median_us": 36001.45,
+   "gap_min_us": 35528.1,
+   "gap_max_us": 42021.62,
+   "gap_std_us": 1338.12,
+   "gap_p99_us": 42021.62,
+   "gap_minus_loop_us": 1350.84
+  }
+ },
+ "cpu_seg_13": {
+  "Cpu": {
+   "dlc": "ctx_cpu_seg_13__Cpu.bin",
+   "backend": "/root/qairt/lib/target/libQnnCpu.so",
+   "status": "ok",
+   "graph": "cpu_seg_13",
+   "iters": 20,
+   "init_us": 1858.2,
+   "mean_us": 9152.72,
+   "median_us": 9144.82,
+   "min_us": 9075.13,
+   "max_us": 9283.92,
+   "std_us": 55.7,
+   "p99_us": 9283.92,
+   "gap_us_setting": 3000,
+   "gap_mean_us": 9147.97,
+   "gap_median_us": 9129.45,
+   "gap_min_us": 9099.04,
+   "gap_max_us": 9338.24,
+   "gap_std_us": 54.25,
+   "gap_p99_us": 9338.24,
+   "gap_minus_loop_us": -15.36
+  }
+ },
+ "cpu_seg_14": {
+  "Cpu": {
+   "dlc": "ctx_cpu_seg_14__Cpu.bin",
+   "backend": "/root/qairt/lib/target/libQnnCpu.so",
+   "status": "ok",
+   "graph": "cpu_seg_14",
+   "iters": 20,
+   "init_us": 719.8,
+   "mean_us": 36218.77,
+   "median_us": 35979.51,
+   "min_us": 34370.13,
+   "max_us": 39589.85,
+   "std_us": 1270.62,
+   "p99_us": 39589.85,
+   "gap_us_setting": 3000,
+   "gap_mean_us": 36746.89,
+   "gap_median_us": 36067.88,
+   "gap_min_us": 34533.02,
+   "gap_max_us": 41542.27,
+   "gap_std_us": 1856.49,
+   "gap_p99_us": 41542.27,
+   "gap_minus_loop_us": 88.37
+  }
+ },
+ "cpu_seg_15": {
+  "Cpu": {
+   "dlc": "ctx_cpu_seg_15__Cpu.bin",
+   "backend": "/root/qairt/lib/target/libQnnCpu.so",
+   "status": "ok",
+   "graph": "cpu_seg_15",
+   "iters": 20,
+   "init_us": 1624.8,
+   "mean_us": 9164.09,
+   "median_us": 9158.7,
+   "min_us": 9076.89,
+   "max_us": 9292.23,
+   "std_us": 56.46,
+   "p99_us": 9292.23,
+   "gap_us_setting": 3000,
+   "gap_mean_us": 9162.13,
+   "gap_median_us": 9153.08,
+   "gap_min_us": 9099.75,
+   "gap_max_us": 9265.31,
+   "gap_std_us": 42.48,
+   "gap_p99_us": 9265.31,
+   "gap_minus_loop_us": -5.62
+  }
+ },
+ "cpu_seg_16": {
+  "Cpu": {
+   "dlc": "ctx_cpu_seg_16__Cpu.bin",
+   "backend": "/root/qairt/lib/target/libQnnCpu.so",
+   "status": "ok",
+   "graph": "cpu_seg_16",
+   "iters": 20,
+   "init_us": 700.2,
+   "mean_us": 37059.65,
+   "median_us": 36618.86,
+   "min_us": 35736.36,
+   "max_us": 40910.79,
+   "std_us": 1340.68,
+   "p99_us": 40910.79,
+   "gap_us_setting": 3000,
+   "gap_mean_us": 36226.4,
+   "gap_median_us": 36227.0,
+   "gap_min_us": 35824.52,
+   "gap_max_us": 36876.66,
+   "gap_std_us": 233.79,
+   "gap_p99_us": 36876.66,
+   "gap_minus_loop_us": -391.86
+  }
+ },
+ "cpu_seg_17": {
+  "Cpu": {
+   "dlc": "ctx_cpu_seg_17__Cpu.bin",
+   "backend": "/root/qairt/lib/target/libQnnCpu.so",
+   "status": "ok",
+   "graph": "cpu_seg_17",
+   "iters": 20,
+   "init_us": 1557.0,
+   "mean_us": 9161.12,
+   "median_us": 9161.6,
+   "min_us": 9090.46,
+   "max_us": 9266.54,
+   "std_us": 43.5,
+   "p99_us": 9266.54,
+   "gap_us_setting": 3000,
+   "gap_mean_us": 9167.51,
+   "gap_median_us": 9150.82,
+   "gap_min_us": 9105.66,
+   "gap_max_us": 9422.36,
+   "gap_std_us": 64.58,
+   "gap_p99_us": 9422.36,
+   "gap_minus_loop_us": -10.78
+  }
+ },
+ "cpu_seg_18": {
+  "Cpu": {
+   "dlc": "ctx_cpu_seg_18__Cpu.bin",
+   "backend": "/root/qairt/lib/target/libQnnCpu.so",
+   "status": "ok",
+   "graph": "cpu_seg_18",
+   "iters": 20,
+   "init_us": 1824.1,
+   "mean_us": 36803.45,
+   "median_us": 36273.17,
+   "min_us": 35128.96,
+   "max_us": 44817.26,
+   "std_us": 1980.86,
+   "p99_us": 44817.26,
+   "gap_us_setting": 3000,
+   "gap_mean_us": 36295.8,
+   "gap_median_us": 36241.92,
+   "gap_min_us": 35569.24,
+   "gap_max_us": 37903.32,
+   "gap_std_us": 497.11,
+   "gap_p99_us": 37903.32,
+   "gap_minus_loop_us": -31.25
+  }
+ },
+ "cpu_seg_19": {
+  "Cpu": {
+   "dlc": "ctx_cpu_seg_19__Cpu.bin",
+   "backend": "/root/qairt/lib/target/libQnnCpu.so",
+   "status": "ok",
+   "graph": "cpu_seg_19",
+   "iters": 20,
+   "init_us": 1529.0,
+   "mean_us": 9164.64,
+   "median_us": 9145.38,
+   "min_us": 9090.43,
+   "max_us": 9341.98,
+   "std_us": 61.78,
+   "p99_us": 9341.98,
+   "gap_us_setting": 3000,
+   "gap_mean_us": 9165.12,
+   "gap_median_us": 9151.94,
+   "gap_min_us": 9114.7,
+   "gap_max_us": 9291.31,
+   "gap_std_us": 44.04,
+   "gap_p99_us": 9291.31,
+   "gap_minus_loop_us": 6.56
+  }
+ },
+ "cpu_seg_20": {
+  "Cpu": {
+   "dlc": "ctx_cpu_seg_20__Cpu.bin",
+   "backend": "/root/qairt/lib/target/libQnnCpu.so",
+   "status": "ok",
+   "graph": "cpu_seg_20",
+   "iters": 20,
+   "init_us": 1719.4,
+   "mean_us": 36466.04,
+   "median_us": 36125.11,
+   "min_us": 35751.9,
+   "max_us": 41162.18,
+   "std_us": 1227.52,
+   "p99_us": 41162.18,
+   "gap_us_setting": 3000,
+   "gap_mean_us": 36195.82,
+   "gap_median_us": 36153.48,
+   "gap_min_us": 35844.07,
+   "gap_max_us": 37311.18,
+   "gap_std_us": 300.93,
+   "gap_p99_us": 37311.18,
+   "gap_minus_loop_us": 28.37
+  }
+ },
+ "cpu_seg_21": {
+  "Cpu": {
+   "dlc": "ctx_cpu_seg_21__Cpu.bin",
+   "backend": "/root/qairt/lib/target/libQnnCpu.so",
+   "status": "ok",
+   "graph": "cpu_seg_21",
+   "iters": 20,
+   "init_us": 1601.2,
+   "mean_us": 9155.41,
+   "median_us": 9141.76,
+   "min_us": 9084.52,
+   "max_us": 9334.87,
+   "std_us": 57.96,
+   "p99_us": 9334.87,
+   "gap_us_setting": 3000,
+   "gap_mean_us": 9167.19,
+   "gap_median_us": 9155.98,
+   "gap_min_us": 9096.29,
+   "gap_max_us": 9278.78,
+   "gap_std_us": 44.47,
+   "gap_p99_us": 9278.78,
+   "gap_minus_loop_us": 14.22
+  }
+ },
+ "cpu_seg_22": {
+  "Cpu": {
+   "dlc": "ctx_cpu_seg_22__Cpu.bin",
+   "backend": "/root/qairt/lib/target/libQnnCpu.so",
+   "status": "ok",
+   "graph": "cpu_seg_22",
+   "iters": 20,
+   "init_us": 745.8,
+   "mean_us": 36317.14,
+   "median_us": 36280.78,
+   "min_us": 34081.78,
+   "max_us": 38638.53,
+   "std_us": 783.11,
+   "p99_us": 38638.53,
+   "gap_us_setting": 3000,
+   "gap_mean_us": 37312.96,
+   "gap_median_us": 36405.76,
+   "gap_min_us": 35078.85,
+   "gap_max_us": 43209.58,
+   "gap_std_us": 2270.91,
+   "gap_p99_us": 43209.58,
+   "gap_minus_loop_us": 124.98
+  }
+ },
+ "cpu_seg_23": {
+  "Cpu": {
+   "dlc": "ctx_cpu_seg_23__Cpu.bin",
+   "backend": "/root/qairt/lib/target/libQnnCpu.so",
+   "status": "ok",
+   "graph": "cpu_seg_23",
+   "iters": 20,
+   "init_us": 564.0,
+   "mean_us": 9171.97,
+   "median_us": 9149.7,
+   "min_us": 9097.15,
+   "max_us": 9292.66,
+   "std_us": 57.21,
+   "p99_us": 9292.66,
+   "gap_us_setting": 3000,
+   "gap_mean_us": 9156.97,
+   "gap_median_us": 9152.57,
+   "gap_min_us": 9120.07,
+   "gap_max_us": 9205.74,
+   "gap_std_us": 23.63,
+   "gap_p99_us": 9205.74,
+   "gap_minus_loop_us": 2.86
+  }
+ }
 }
