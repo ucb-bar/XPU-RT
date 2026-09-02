@@ -277,8 +277,13 @@ conda run --no-capture-output -n xpurt \
 
 Checkpoints are saved to `logs/rsl_rl/crazyflie_steering_tracking/<timestamp>/`.
 
-For full details on the RL environment, reward terms, and observation space see
-[../README.md](../README.md) and [../STEERING_POLICY_USAGE.md](../STEERING_POLICY_USAGE.md).
+For full details on the RL environment, reward terms, and observation space
+see the task configuration itself — there is no separate write-up:
+[`sims/isaaclab_tasks/track_steering_vision/config/crazyflie/track_steering_env_cfg.py`](../isaaclab_tasks/track_steering_vision/config/crazyflie/track_steering_env_cfg.py)
+defines the observation and reward terms, and
+[`.../agents/rsl_rl_ppo_cfg.py`](../isaaclab_tasks/track_steering_vision/config/crazyflie/agents/rsl_rl_ppo_cfg.py)
+the PPO hyperparameters. A `_harsh` variant of the env config sits beside
+the first.
 
 ---
 

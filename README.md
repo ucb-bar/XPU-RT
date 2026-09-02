@@ -16,7 +16,7 @@ per-op kernels according to the schedule's core assignment can sit on the
 
 | flow | compiler / codegen | target | profiling | docs |
 |---|---|---|---|---|
-| **A — chipyard** | PyTorch → quantized Zephyr/RISC-V; curated + LLM-agentic kernel-gen | chipyard (Saturn/Gemmini, RISC-V) | spike / FireSim | [Flow A section below](#flow-a-modelblaster-as-the-compiler-backend), [`zephyr-chipyard-sw/modelblaster/README.md`](zephyr-chipyard-sw/modelblaster/README.md) ("Workflow: integrating with XPURT"), [`docs/Firesim/end_to_end_xpurt_firesim.md`](docs/Firesim/end_to_end_xpurt_firesim.md) |
+| **A — chipyard** | PyTorch → quantized Zephyr/RISC-V; curated + LLM-agentic kernel-gen | chipyard (Saturn/Gemmini, RISC-V) | spike / FireSim | [Flow A section below](#flow-a-modelblaster-as-the-compiler-backend), [`zephyr-chipyard-sw/modelblaster/README.md`](ModelBlaster/README.md) ("Workflow: integrating with XPURT"), [`docs/Firesim/end_to_end_xpurt_firesim.md`](docs/Firesim/end_to_end_xpurt_firesim.md) |
 | **B — SpaceMiT K1** | the same ModelBlaster codegen, cross-compiled for Linux/riscv64 | SpaceMiT K1 (BananaPi), 8 harts + IME | on-device, over ssh | [Flow B section below](#flow-b-modelblaster-on-the-spacemit-k1-board), [`docs/Feature/the_loop.md`](docs/Feature/the_loop.md) |
 
 Both flows feed the same `xpu-rt/scheduler.py` and read/write the same
@@ -78,7 +78,7 @@ for the certificate, checked-in evidence, and exact reproduction command.
   predicted-vs-actual gantts from `plot_xpurt_trace.py`. Includes a
   stage-by-stage diff against the standard modelblaster flow and a map to
   the key files.
-* [`zephyr-chipyard-sw/modelblaster/examples/microros_demo/ROS_FLOW.md`](zephyr-chipyard-sw/modelblaster/examples/microros_demo/ROS_FLOW.md)
+* [`zephyr-chipyard-sw/modelblaster/examples/microros_demo/ROS_FLOW.md`](ModelBlaster/examples/microros_demo/ROS_FLOW.md)
   — micro-ROS fixed-pinning baseline flow (the reference against which
   the scheduler is benchmarked).
 * [`docs/Feature/the_loop.md`](docs/Feature/the_loop.md)
@@ -311,7 +311,7 @@ semantics). Because it is nested, bumping it means updating
 
 For the full ModelBlaster-side workflow (profiling knobs, workload JSON
 schema, models in scope), see
-[`zephyr-chipyard-sw/modelblaster/README.md`](zephyr-chipyard-sw/modelblaster/README.md), section
+[`zephyr-chipyard-sw/modelblaster/README.md`](ModelBlaster/README.md), section
 "Workflow: integrating with XPURT."
 
 ## Repository Map
