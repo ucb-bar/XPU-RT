@@ -154,6 +154,117 @@ def finding4(out):
     print(f"  wrote {p}")
 
 
+def finding5(out):
+    """Whether the correction transfers -- and why finding 4's did.
+
+    Finding 5's own figures cover the bias, the within-configuration gain and
+    the stalls. What they do not show is its central negative claim: fitted on
+    one runtime configuration the correction does NOT carry to another. Shown
+    beside finding 4's leave-one-run-out result, which does carry, the pair
+    says what the correction has to be keyed on.
+    """
+    import statistics as st
+    import sys
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import flowc_residual_feedback as F
+
+    per = {}
+    for q in sorted(glob.glob(os.path.join(REPO, "runs/*/trace.csv"))):
+        rows = F.read_trace(q)
+        if rows:
+            per[rows[0]["trace"]] = rows
+
+    self_fit, held_out, names = [], [], []
+    for name, rows in per.items():
+        base = F.error(rows, None)["logerr_median"]
+        own = F.error(rows, F.fit(rows))["logerr_median"]
+        train = [r for k, v in per.items() if k != name for r in v]
+        out_of = F.error(rows, F.fit(train))["logerr_median"]
+        names.append(name.replace("v3_bundles", "v3"))
+        self_fit.append((base, own))
+        held_out.append((base, out_of))
+
+    fig, (axL, axR) = plt.subplots(1, 2, figsize=(11.2, 4.2),
+                                   gridspec_kw={"width_ratios": [1.25, 1]})
+    ys = list(range(len(names)))[::-1]
+    for y, n, (b, own), (_, out_of) in zip(ys, names, self_fit, held_out):
+        axL.plot([b, own], [y + 0.16, y + 0.16], color=GRID, lw=2.6,
+                 solid_capstyle="round", zorder=1)
+        axL.plot([b, out_of], [y - 0.16, y - 0.16], color=GRID, lw=2.6,
+                 solid_capstyle="round", zorder=1)
+        axL.scatter([b], [y + 0.16], s=52, color=MUTED, zorder=3,
+                    edgecolors="white", lw=1.1)
+        axL.scatter([own], [y + 0.16], s=72, color=AQUA, zorder=4,
+                    edgecolors="white", lw=1.1)
+        axL.scatter([b], [y - 0.16], s=52, color=MUTED, zorder=3,
+                    edgecolors="white", lw=1.1)
+        worse = out_of > b
+        axL.scatter([out_of], [y - 0.16], s=72,
+                    color=ORANGE if worse else BLUE, zorder=4,
+                    marker="X" if worse else "o", edgecolors="white", lw=1.1)
+        axL.annotate(f"{(1-own/b)*100:+.0f}%", (max(b, own), y + 0.16),
+                     xytext=(9, 0), textcoords="offset points", va="center",
+                     fontsize=8.4, color=INK)
+        axL.annotate(f"{(1-out_of/b)*100:+.0f}%", (max(b, out_of), y - 0.16),
+                     xytext=(9, 0), textcoords="offset points", va="center",
+                     fontsize=8.4, color=ORANGE if worse else INK,
+                     weight="bold" if worse else "normal")
+    axL.set_yticks(ys); axL.set_yticklabels(names, fontsize=9.5, color=INK)
+    axL.set_xlabel("median |ln(actual/predicted)| — lower is better",
+                   fontsize=9, color=MUTED)
+    axL.set_xlim(0, 0.20)
+    axL.grid(axis="x", color=GRID, lw=0.7, alpha=0.7)
+    _clean(axL, left=False)
+    axL.scatter([], [], s=52, color=MUTED, label="no correction")
+    axL.scatter([], [], s=72, color=AQUA, label="fitted on ITSELF")
+    axL.scatter([], [], s=72, color=BLUE, label="fitted ELSEWHERE, helps")
+    axL.scatter([], [], s=72, color=ORANGE, marker="X",
+                label="fitted ELSEWHERE, HURTS")
+    axL.legend(fontsize=8, frameon=False, ncol=2, loc="lower center",
+               bbox_to_anchor=(0.5, 1.0))
+    axL.set_title("QRB5165 — four traces, four runtime configurations",
+                  fontsize=10.5, loc="left", color=INK, pad=34)
+
+    # right: the contrast that explains it
+    k1 = json.load(open(os.path.join(REPO,
+                   "results/flowc_contention/k1_tune.json")))
+    e = k1["leave_one_run_out_logerr"]
+    qc_mean_self = st.mean([(1 - o / b) for b, o in self_fit]) * 100
+    qc_mean_out = st.mean([(1 - o / b) for b, o in held_out]) * 100
+    k1_out = (1 - e["kind+co"] / e["none"]) * 100
+    bars = [("QRB5165\nfitted on itself", qc_mean_self, AQUA),
+            ("QRB5165\nfitted elsewhere", qc_mean_out, ORANGE),
+            ("K1\nheld-out runs", k1_out, BLUE)]
+    xs = range(len(bars))
+    axR.bar(xs, [v for _, v, _ in bars], 0.56,
+            color=[c for _, _, c in bars], edgecolor=SURF, lw=1.4, zorder=3)
+    for x, (_, v, _) in zip(xs, bars):
+        # a negative bar's label was landing on its x tick label
+        axR.annotate(f"{v:+.1f}%", (x, v),
+                     xytext=(0, 6) if v >= 0 else (34, -4),
+                     textcoords="offset points",
+                     ha="center" if v >= 0 else "left",
+                     fontsize=10.5, color=INK if v >= 0 else ORANGE,
+                     weight="bold")
+    axR.axhline(0, color=INK, lw=1.0)
+    axR.set_xticks(list(xs))
+    axR.set_xticklabels([n for n, _, _ in bars], fontsize=9, color=INK)
+    axR.set_ylabel("mean error reduction (%)", fontsize=9, color=MUTED)
+    axR.grid(axis="y", color=GRID, lw=0.7, alpha=0.7)
+    _clean(axR)
+    axR.set_title("what the correction is keyed on decides it",
+                  fontsize=10.5, loc="left", color=INK, pad=34)
+
+    fig.suptitle("Finding 5 — the bias belongs to the RUN, not the silicon\n"
+                 "a correction fitted on one runtime configuration does not "
+                 "carry to another; one keyed on co-runners does",
+                 x=0.012, ha="left", fontsize=11.5, color=INK)
+    fig.tight_layout(rect=(0, 0, 1, 0.90))
+    p = os.path.join(out, "finding5_transfer.png")
+    fig.savefig(p, dpi=160, facecolor=SURF)
+    print(f"  wrote {p}")
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default="docs/Qualcomm/experiments")
@@ -162,6 +273,7 @@ def main() -> int:
     os.makedirs(out, exist_ok=True)
     finding1(out)
     finding4(out)
+    finding5(out)
     return 0
 
 
