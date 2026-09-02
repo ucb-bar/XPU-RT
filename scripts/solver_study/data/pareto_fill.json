@@ -1,0 +1,110 @@
+{
+ "spec": "networks_periodic_dronet50ms_yolov8_firesim_q31",
+ "ops": 242,
+ "rows": [
+  {
+   "solver": "greedy",
+   "family": "constructive",
+   "budget": 0,
+   "objective": 51.94,
+   "misses": 0,
+   "wall_s": 0.01
+  },
+  {
+   "solver": "greedy_periodic",
+   "family": "constructive",
+   "budget": 0,
+   "objective": 47.285,
+   "misses": 5,
+   "wall_s": 0.01
+  },
+  {
+   "solver": "decomposed",
+   "family": "constructive",
+   "budget": 0,
+   "objective": 52.009,
+   "misses": 0,
+   "wall_s": 0.01
+  },
+  {
+   "solver": "pso@15s",
+   "family": "metaheuristic",
+   "budget": 15,
+   "objective": 46.34,
+   "misses": 0,
+   "wall_s": 3.99
+  },
+  {
+   "solver": "sa@15s",
+   "family": "metaheuristic",
+   "budget": 15,
+   "objective": 46.508,
+   "misses": 0,
+   "wall_s": 11.68
+  },
+  {
+   "solver": "pso@60s",
+   "family": "metaheuristic",
+   "budget": 60,
+   "objective": 46.34,
+   "misses": 0,
+   "wall_s": 3.99
+  },
+  {
+   "solver": "sa@60s",
+   "family": "metaheuristic",
+   "budget": 60,
+   "objective": 46.508,
+   "misses": 0,
+   "wall_s": 12.07
+  },
+  {
+   "solver": "pso@120s",
+   "family": "metaheuristic",
+   "budget": 120,
+   "objective": 46.34,
+   "misses": 0,
+   "wall_s": 4.26
+  },
+  {
+   "solver": "sa@120s",
+   "family": "metaheuristic",
+   "budget": 120,
+   "objective": 46.508,
+   "misses": 0,
+   "wall_s": 11.88
+  },
+  {
+   "solver": "cpsat-warm@15s",
+   "family": "exact",
+   "budget": 15,
+   "objective": 45.575,
+   "misses": 0,
+   "wall_s": 15.48
+  },
+  {
+   "solver": "cpsat-warm@60s",
+   "family": "exact",
+   "budget": 60,
+   "objective": 44.998,
+   "misses": 0,
+   "wall_s": 60.5
+  },
+  {
+   "solver": "cpsat-warm@120s",
+   "family": "exact",
+   "budget": 120,
+   "objective": 45.319,
+   "misses": 0,
+   "wall_s": 120.41
+  },
+  {
+   "solver": "cpsat-warm@300s",
+   "family": "exact",
+   "budget": 300,
+   "objective": 44.985,
+   "misses": 0,
+   "wall_s": 300.4
+  }
+ ]
+}

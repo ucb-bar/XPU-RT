@@ -9,7 +9,7 @@ the earliest completion time, respecting:
   - machine-combination conflicts (combinations_overlap),
   - periodic / windowed time-bounds (op.min_start_t / op.max_end_t).
 
-Two flavors are exported:
+Three flavors are exported:
 
   - :func:`greedy_schedule` — vanilla list-scheduler. Picks the (op,
     combo) with the lowest completion time among ALL ready ops.
@@ -30,6 +30,12 @@ Two flavors are exported:
     dronet-instances to "fill the gaps" left by yolov8, shrinking
     yolov8's makespan at the cost of slightly higher dronet jitter.
 
+  - :func:`greedy_reserved_schedule` — same op ordering as
+    `greedy_periodic`, but a periodic op picks the *least contended*
+    combination that still meets its deadline instead of the one that
+    finishes it soonest. Keeps the lanes the non-periodic critical path
+    needs free; see that function's docstring for the 2.7x QRB5165 case.
+
 This module used to live inline in `scripts/run_greedy_schedule.py`.
 It moved here when run_greedy was folded into
 `run_xpurt_schedule.py --solver {greedy,greedy_periodic}`, so both
@@ -41,6 +47,53 @@ from __future__ import annotations
 import numpy as np
 
 from workload import Workload
+
+# Slack allowed when asking "does this placement still meet the deadline?".
+# Durations are in ms, so this is a nanosecond-scale guard against a
+# placement being rejected purely by floating-point round-off.
+_EPS = 1e-9
+
+# Default for how much slower than its own fastest combination a periodic op
+# may run in exchange for staying off a lane the non-periodic jobs need
+# (`greedy_reserved`). The premise of that trade — "finishing a periodic op
+# early buys nothing, it only has to fit its window" — stops holding once the
+# alternative lane is far slower: the op still fits, but it burns so much more
+# machine time that the schedule as a whole gets worse. Unbounded, the spike
+# mlp+dronet+yolov8 workload moves dronet from the RVV lane (28 ms) to the
+# scalar lane (346 ms, 12.3x) and stretches the schedule from 694 to 967 ms.
+#
+# Swept over {1, 2, 4, 8, unbounded} on eleven spike/FireSim workloads: 2.0 is
+# best-or-tied on ten of them (it is worth 30 ms on FireSim dronet@20ms+yolov8
+# and 8 ms on dronet50+yolov8 static against a 4x cap), and it is the smallest
+# cap that still reaches the valid 293.23 ms schedule on the FireSim
+# mlp_control+dronet heterogeneous workload, where a 1.0 cap collapses to
+# 1163.46 ms and doesn't even cover its own periodic demand.
+#
+# This is workload-family dependent, not universal: on the QRB5165
+# 2x-resnet50 workload nothing below 8 finds the 21.81 ms schedule. Hence the
+# per-run override (`scheduler.reserved_max_slowdown` in the workload spec, or
+# --reserved-max-slowdown) rather than a constant everyone has to live with.
+_RESERVED_MAX_SLOWDOWN = 2.0
+
+
+def _op_indices(workload) -> dict[int, int]:
+    """`id(op) -> position` map for ``workload.operations``, cached on the
+    workload.
+
+    ``workload.operations.index(pred)`` is a linear scan, and it sits in the
+    innermost loop of every scheduling pass here (once per predecessor, per
+    candidate op, per iteration). ``Operation`` defines no ``__eq__``, so
+    ``list.index`` compares by identity — an ``id()`` keyed dict is exactly
+    equivalent and O(1). On the 733-dispatch spike workload this is the
+    difference between a quadratic and a linear inner loop.
+    """
+    cache = getattr(workload, "_op_index_cache", None)
+    ops = workload.operations
+    if cache is not None and cache[0] is ops and cache[1] == len(ops):
+        return cache[2]
+    idx = {id(op): i for i, op in enumerate(ops)}
+    workload._op_index_cache = (ops, len(ops), idx)
+    return idx
 
 
 def _is_periodic_op(op) -> bool:
@@ -76,32 +129,20 @@ def _compute_alap_deadlines(workload, machine_combinations) -> dict:
     Returns: {op_idx: effective_max_end_t} for every periodic op.
     """
     n = len(workload.operations)
-    machines = workload.machines
     # Min duration of each op across combos — used as the propagated
     # subtractive cost. Faster combo = tighter (more pessimistic)
     # deadline propagation, but only by however much that combo would
     # actually run faster, which is the right thing.
-    min_dur = [0.0] * n
-    for i, op in enumerate(workload.operations):
-        durs = []
-        for c in range(len(machine_combinations)):
-            try:
-                d = op.get_duration_for_combination(c, machine_combinations, machines)
-                if d > 0:
-                    durs.append(float(d))
-            except Exception:
-                pass
-        min_dur[i] = min(durs) if durs else 0.0
+    min_dur = _min_durations(workload, machine_combinations)
 
     # Build successor index (op -> [op_idx of successors that depend on op])
+    op_idx_of = _op_indices(workload)
     succ = [[] for _ in range(n)]
     for i, op in enumerate(workload.operations):
         for pred in op.predecessors:
-            try:
-                pred_idx = workload.operations.index(pred)
+            pred_idx = op_idx_of.get(id(pred))
+            if pred_idx is not None:
                 succ[pred_idx].append(i)
-            except ValueError:
-                continue
 
     # Topological order via DFS. Then process in reverse for ALAP propagation.
     visited = [False] * n
@@ -138,6 +179,52 @@ def _compute_alap_deadlines(workload, machine_combinations) -> dict:
     return alap
 
 
+def _min_durations(workload, machine_combinations) -> list[float]:
+    """Per-op fastest duration across machine combinations (0 when the op
+    has no positive duration anywhere)."""
+    machines = workload.machines
+    out = [0.0] * len(workload.operations)
+    for i, op in enumerate(workload.operations):
+        best = None
+        for c in range(len(machine_combinations)):
+            try:
+                d = float(op.get_duration_for_combination(c, machine_combinations, machines))
+            except Exception:
+                continue
+            if d > 0 and (best is None or d < best):
+                best = d
+        out[i] = best if best is not None else 0.0
+    return out
+
+
+def _nonperiodic_lane_demand(workload, machine_combinations) -> list[float]:
+    """How much non-periodic work each machine combination would attract if
+    every non-periodic op were free to pick its own fastest combination.
+
+    This is the "comparative advantage" signal `greedy_reserved` places
+    periodic ops against: a combination with a large demand here is one the
+    makespan-critical (non-periodic) jobs genuinely need, so a periodic op
+    that has any deadline-feasible alternative should stay off it.
+    """
+    demand = [0.0] * len(machine_combinations)
+    machines = workload.machines
+    for op in workload.operations:
+        if _is_periodic_op(op):
+            continue
+        best_c, best_d = None, float("inf")
+        for c in range(len(machine_combinations)):
+            try:
+                d = float(op.get_duration_for_combination(
+                    c, machine_combinations, machines))
+            except Exception:
+                continue
+            if d > 0 and d < best_d:
+                best_c, best_d = c, d
+        if best_c is not None:
+            demand[best_c] += best_d
+    return demand
+
+
 def _earliest_start_for(
     workload, op_idx, combo_idx, t, alpha, scheduled,
     combination_available_time, machines, machine_combinations,
@@ -147,24 +234,19 @@ def _earliest_start_for(
     given the current schedule state. Returns (earliest_start, duration).
     Pure function — no side effects."""
     op = workload.operations[op_idx]
+    # `combination_available_time[c]` is already the max end time over every
+    # scheduled op sitting on a combination that overlaps `c` — the commit
+    # paths below fan each placement out to all overlapping combinations. The
+    # old code re-derived that same maximum by scanning every scheduled op on
+    # every (op, combo) probe, which made each probe O(len(operations)); the
+    # array lookup is equivalent and O(1).
     earliest_start = combination_available_time[combo_idx]
-
-    # Wait for any overlapping combinations that hold a currently-running op.
-    for j in range(len(workload.operations)):
-        if not scheduled[j]:
-            continue
-        other_combo_idx = int(np.argmax(alpha[j, :]))
-        if workload.combinations_overlap(combo_idx, other_combo_idx):
-            other_dur = workload.operations[j].get_duration_for_combination(
-                other_combo_idx, machine_combinations, machines
-            )
-            other_end = t[j] + other_dur
-            earliest_start = max(earliest_start, other_end)
 
     # Wait for predecessors + their transfer cost into this combination's
     # first machine.
+    op_idx_of = _op_indices(workload)
     for pred in op.predecessors:
-        pred_idx = workload.operations.index(pred)
+        pred_idx = op_idx_of[id(pred)]
         pred_combo_idx = int(np.argmax(alpha[pred_idx, :]))
         pred_dur = workload.operations[pred_idx].get_duration_for_combination(
             pred_combo_idx, machine_combinations, machines
@@ -188,21 +270,45 @@ def _earliest_start_for(
     return earliest_start, duration
 
 
-def _schedule_loop(workload, mode: str) -> tuple[np.ndarray, np.ndarray]:
+def _schedule_loop(workload, mode: str,
+                   max_slowdown: float | None = None) -> tuple[np.ndarray, np.ndarray]:
     """Shared scheduling loop. `mode` selects the priority discipline:
 
       - "greedy"          — earliest-completion across all ready ops.
       - "greedy_periodic" — earliest-completion among non-periodic ready
         ops; periodic only when no non-periodic is ready or when its
         max_end_t window is about to close.
+      - "greedy_reserved" — the "greedy_periodic" op ordering, plus a
+        different *combination* choice for periodic ops: instead of the
+        combination that finishes them soonest, the one that leaves the
+        makespan-critical lanes alone, among those that still meet the
+        op's chain-aware deadline. See `greedy_reserved_schedule`.
     """
-    assert mode in ("greedy", "greedy_periodic"), f"unknown mode {mode!r}"
+    assert mode in ("greedy", "greedy_periodic", "greedy_reserved"), (
+        f"unknown mode {mode!r}"
+    )
 
     num_operations = len(workload.operations)
     machines = workload.machines
     machine_combinations = workload.get_machine_combinations()
     num_combinations = len(machine_combinations)
     transfer_times = workload.get_transfer_times()
+    op_idx_of = _op_indices(workload)
+
+    # `greedy_reserved` needs, per periodic op, (a) how much the
+    # non-periodic jobs want each lane and (b) the chain-aware deadline
+    # that says which lanes are still fast enough. Both are static for the
+    # whole pass, so compute them once.
+    if mode == "greedy_reserved":
+        lane_demand = _nonperiodic_lane_demand(workload, machine_combinations)
+        alap = _compute_alap_deadlines(workload, machine_combinations)
+        min_dur = _min_durations(workload, machine_combinations)
+        if max_slowdown is None:
+            max_slowdown = _RESERVED_MAX_SLOWDOWN
+    else:
+        lane_demand = None
+        alap = None
+        min_dur = None
 
     t = np.zeros(num_operations)
     alpha = np.zeros((num_operations, num_combinations))
@@ -234,14 +340,22 @@ def _schedule_loop(workload, mode: str) -> tuple[np.ndarray, np.ndarray]:
             # Predecessors must all be scheduled.
             can_schedule = True
             for pred in op.predecessors:
-                pred_idx = workload.operations.index(pred)
-                if not scheduled[pred_idx]:
+                pred_idx = op_idx_of.get(id(pred))
+                if pred_idx is not None and not scheduled[pred_idx]:
                     can_schedule = False
                     break
             if not can_schedule:
                 continue
 
             is_periodic = (not treat_all_as_nonperiodic) and _is_periodic_op(op)
+
+            # Under greedy_reserved a periodic op picks its combination by
+            # "cheapest lane that still makes the deadline" rather than
+            # "soonest finish"; `op_best` collects that choice so the
+            # cross-op comparison below still ranks by completion time.
+            reserved = is_periodic and mode == "greedy_reserved"
+            op_best_key = None
+            op_best = None
 
             for combo_idx in range(num_combinations):
                 earliest_start, duration = _earliest_start_for(
@@ -250,6 +364,23 @@ def _schedule_loop(workload, mode: str) -> tuple[np.ndarray, np.ndarray]:
                     transfer_times,
                 )
                 completion_time = earliest_start + duration
+
+                if reserved:
+                    deadline = alap.get(i, float("inf"))
+                    # Bucket 0 = meets the chain-aware deadline *and* isn't
+                    # a runaway slowdown against this op's own fastest
+                    # combination; bucket 1 = neither, and only competes
+                    # when bucket 0 is empty. Within a bucket, give up the
+                    # lane the non-periodic jobs want most; break ties on
+                    # finish time.
+                    too_slow = duration > max_slowdown * min_dur[i]
+                    misses = completion_time > deadline + _EPS
+                    key = (1 if (misses or too_slow) else 0,
+                           lane_demand[combo_idx], completion_time)
+                    if op_best_key is None or key < op_best_key:
+                        op_best_key = key
+                        op_best = (completion_time, combo_idx, earliest_start)
+                    continue
 
                 # Window-miss candidates still compete by completion
                 # time — same as the original greedy behavior. A
@@ -270,6 +401,17 @@ def _schedule_loop(workload, mode: str) -> tuple[np.ndarray, np.ndarray]:
                         best_np_combo = combo_idx
                         best_np_start = earliest_start
 
+            if reserved and op_best is not None:
+                completion_time, combo_idx, earliest_start = op_best
+                if completion_time < best_p_completion:
+                    best_p_completion = completion_time
+                    best_p_op = i
+                    best_p_combo = combo_idx
+                    best_p_start = earliest_start
+                    best_p_max_end = (float(op.max_end_t)
+                                      if op.max_end_t is not None
+                                      else float("inf"))
+
         # Decide what to schedule this iteration.
         chosen_op = chosen_combo = None
         chosen_start = 0.0
@@ -279,7 +421,7 @@ def _schedule_loop(workload, mode: str) -> tuple[np.ndarray, np.ndarray]:
             chosen_op, chosen_combo, chosen_start = (
                 best_np_op, best_np_combo, best_np_start
             )
-        else:  # greedy_periodic
+        else:  # greedy_periodic / greedy_reserved
             np_ready = best_np_op is not None
             p_ready = best_p_op is not None
             if not np_ready and not p_ready:
@@ -374,6 +516,47 @@ def greedy_periodic_schedule(workload: Workload) -> tuple[np.ndarray, np.ndarray
     return _schedule_loop(workload, mode="greedy_periodic")
 
 
+def greedy_reserved_schedule(workload: Workload,
+                             max_slowdown: float | None = None,
+                             ) -> tuple[np.ndarray, np.ndarray]:
+    """Lane-reserving list scheduler: `greedy_periodic`'s op ordering with a
+    contention-aware *combination* choice for periodic ops.
+
+    The problem it fixes. `greedy`/`greedy_periodic`/`decomposed` all place
+    every op on the combination that finishes it soonest. For a periodic op
+    that is the wrong objective: finishing a 5 ms-period dronet instance in
+    0.92 ms instead of 2.65 ms buys nothing (either fits the window), but it
+    costs the DSP lane — which may be the only lane where the non-periodic
+    job that actually defines the makespan runs well. On the QRB5165 3-way
+    workload (dronet @5 ms + mlp_control @2 ms + non-periodic yolov8n) that
+    single decision is worth 2.7x: dronet takes DSP because it is fastest
+    there, so yolov8n is pushed off its own best lane and the makespan grows
+    from 33.57 ms to 90.13 ms. Here dronet runs happily on the otherwise
+    idle HTA lane at 2.65 ms — comfortably inside its 5 ms window — and
+    yolov8n keeps the DSP to itself.
+
+    The rule. A periodic op ranks its candidate combinations by
+
+        (misses its deadline, or is more than `max_slowdown` times
+         slower than this op's own fastest lane?,
+         how much the non-periodic jobs want this lane,
+         completion time)
+
+    so it takes the least contended lane that still meets its chain-aware
+    ALAP deadline without running absurdly slower there, and falls back to
+    the rejected lanes only when nothing else qualifies. Non-periodic ops
+    keep pure earliest-completion — their lanes are the objective. "How much
+    the non-periodic jobs want this lane" is `_nonperiodic_lane_demand`: the
+    total non-periodic work that would land there under free choice.
+
+    Cost: one extra pass over the ops for the demand vector, the ALAP map
+    and the per-op minimum durations, all O(ops x combinations). The
+    scheduling loop itself is unchanged.
+    """
+    return _schedule_loop(workload, mode="greedy_reserved",
+                          max_slowdown=max_slowdown)
+
+
 def _per_instance_independent_makespan(
     workload, machine_combinations, instance_op_idxs: list[int]
 ) -> float:
@@ -396,6 +579,7 @@ def _per_instance_independent_makespan(
     machines = workload.machines
     transfer_times = workload.get_transfer_times()
     num_combinations = len(machine_combinations)
+    op_idx_of = _op_indices(workload)
 
     # Local schedule state restricted to the instance's ops.
     local_t = {}
@@ -410,9 +594,8 @@ def _per_instance_independent_makespan(
             # Check predecessors: only those within the instance count.
             ok = True
             for pred in op.predecessors:
-                try:
-                    pred_idx = workload.operations.index(pred)
-                except ValueError:
+                pred_idx = op_idx_of.get(id(pred))
+                if pred_idx is None:
                     continue
                 if pred_idx in op_set and pred_idx not in local_t:
                     ok = False
@@ -424,11 +607,8 @@ def _per_instance_independent_makespan(
                 start = combo_avail[c]
                 # Predecessor-end constraints (within instance).
                 for pred in op.predecessors:
-                    try:
-                        pred_idx = workload.operations.index(pred)
-                    except ValueError:
-                        continue
-                    if pred_idx not in op_set:
+                    pred_idx = op_idx_of.get(id(pred))
+                    if pred_idx is None or pred_idx not in op_set:
                         continue
                     pred_dur = workload.operations[pred_idx].get_duration_for_combination(
                         local_combo[pred_idx], machine_combinations, machines)
@@ -509,30 +689,18 @@ def _compute_alap_deadlines_with_np(
     deadline so it doesn't starve forever in pathological cases.
     """
     n = len(workload.operations)
-    machines = workload.machines
 
     # Min duration across combos.
-    min_dur = [0.0] * n
-    for i, op in enumerate(workload.operations):
-        durs = []
-        for c in range(len(machine_combinations)):
-            try:
-                d = op.get_duration_for_combination(c, machine_combinations, machines)
-                if d > 0:
-                    durs.append(float(d))
-            except Exception:
-                pass
-        min_dur[i] = min(durs) if durs else 0.0
+    min_dur = _min_durations(workload, machine_combinations)
 
     # Successor index.
+    op_idx_of = _op_indices(workload)
     succ = [[] for _ in range(n)]
     for i, op in enumerate(workload.operations):
         for pred in op.predecessors:
-            try:
-                pred_idx = workload.operations.index(pred)
+            pred_idx = op_idx_of.get(id(pred))
+            if pred_idx is not None:
                 succ[pred_idx].append(i)
-            except ValueError:
-                continue
 
     # Reverse-topological order via iterative DFS (avoids recursion-depth
     # issues on large graphs).
@@ -613,6 +781,7 @@ def decomposed_schedule(workload: Workload) -> tuple[np.ndarray, np.ndarray]:
     machine_combinations = workload.get_machine_combinations()
     num_combinations = len(machine_combinations)
     transfer_times = workload.get_transfer_times()
+    op_idx_of = _op_indices(workload)
 
     # Per-job makespan (diagnostic) and ALAP-propagated deadlines.
     by_job = _ops_by_job(workload)
@@ -639,9 +808,8 @@ def decomposed_schedule(workload: Workload) -> tuple[np.ndarray, np.ndarray]:
         """All predecessors of op_idx already scheduled?"""
         op = workload.operations[op_idx]
         for pred in op.predecessors:
-            try:
-                pred_idx = workload.operations.index(pred)
-            except ValueError:
+            pred_idx = op_idx_of.get(id(pred))
+            if pred_idx is None:
                 continue
             if not scheduled[pred_idx]:
                 return False
@@ -728,9 +896,8 @@ def decomposed_schedule(workload: Workload) -> tuple[np.ndarray, np.ndarray]:
         # Predecessor end + transfer.
         pred_floor = 0.0
         for pred in op.predecessors:
-            try:
-                pred_idx = workload.operations.index(pred)
-            except ValueError:
+            pred_idx = op_idx_of.get(id(pred))
+            if pred_idx is None:
                 continue
             if not scheduled[pred_idx]:
                 return float("inf"), 0.0
