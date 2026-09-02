@@ -19,7 +19,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(_HERE), "xpu-rt"))
 from compile_advice import (  # noqa: E402
     blocking_advice, implementation_advice, load_profiles,
     load_profiles_by_cores, load_profiles_by_cores_csv, load_profiles_csv,
-    overhead_advice, shard_advice, write_advice,
+    overhead_advice, shard_advice, unfuse_advice, write_advice,
 )
 # The canonical granularity analysis. This file used to carry its own
 # `is_linear_chain` over a dispatch-graph FILE and its own notion of a free
@@ -30,23 +30,72 @@ from granularity_advisor import (  # noqa: E402
 )
 
 
+def _backend_family(impl: str) -> str:
+    """`rvv_x60` -> `rvv`: the curated kernel directory is per FAMILY.
+
+    `unfuse_advice` globs `<kernels_dir>/<backend>_<op>_*.c` and the files are
+    named `rvv_conv2d_s8_...`, not `rvv_x60_conv2d_s8_...` -- the same
+    family/variant relationship `generate_kernels` calls `curated_aliases`.
+    Passing the variant tag here matches nothing and the verb silently refuses,
+    which looks identical to "no unfuse was warranted".
+    """
+    return (impl or "").split("_")[0] or impl
+
+
+def _load_irs(specs) -> dict:
+    """`{network: {dispatch_id: op}}` from repeated `<network>:<graph.json>`."""
+    out = {}
+    for spec in specs:
+        if ":" not in spec:
+            raise SystemExit(f"--ir needs <network>:<graph.json>, got {spec!r}")
+        net, path = spec.split(":", 1)
+        with open(path) as fh:
+            graph = json.load(fh)
+        out[net] = {o["dispatch_id"]: o for o in graph.get("ops", [])
+                    if o.get("dispatch_id") is not None}
+    return out
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--trace", default=None,
                     help="measured trace CSV. Without it, "
                          "deadline_misses_attributed is 0 -- an unmeasured "
                          "miss count is not evidence.")
-    ap.add_argument("--gen-root", default="gen")
+    # Defaults describe the LIVE path (ModelBlaster/rvv_x60), not the retired
+    # IREE one. They used to be `gen` / `RVV,scalar,IME` / `RVV` / `jsonl`,
+    # which resolve nothing here: ModelBlaster writes `rvv_x60` and `scalar`
+    # under `gen_mb`. The old defaults did not error -- `scalar` alone
+    # resolved, so the "no profiles" warning never fired, `profs.get("RVV")`
+    # returned {}, and the run wrote an EMPTY advice file and exited 0.
+    # Measured: 118 advice items with the explicit flags, 0 with the defaults,
+    # and nothing said why. The retired tree stays reachable by passing them.
+    ap.add_argument("--ir", action="append", default=[],
+                    help="<network>:<graph.json>, repeatable. Required for "
+                         "`unfuse` advice: it is the one verb whose trigger is "
+                         "not in the profile alone, needing the op's `sub_ops` "
+                         "to know what unfusing would restore.")
+    ap.add_argument("--kernels-dir", default=None,
+                    help="curated kernel library, e.g. ModelBlaster/kernels/rvv. "
+                         "Without it `unfuse_advice` refuses rather than "
+                         "guessing a constituent has a kernel to land on.")
+    ap.add_argument("--gen-root", default="gen_mb")
     ap.add_argument("--target", default="spacemit_x60")
     ap.add_argument("--schedule", required=True)
     ap.add_argument("--out", default="artifacts/k1_run/compile_advice.json")
     ap.add_argument("--models", default="mlp:mlp.q.int8,dronet:dronet.q.int8")
-    ap.add_argument("--impls", default="RVV,scalar,IME")
-    ap.add_argument("--baseline-impl", default="RVV")
+    ap.add_argument("--impls", default="rvv_x60,scalar")
+    ap.add_argument("--baseline-impl", default="rvv_x60")
+    ap.add_argument("--feedback", default=None,
+                    help="xpurt_feedback.json from a MEASURED run "
+                         "(run_xpurt_schedule.py --emit-feedback, or "
+                         "streaming_feedback.py). Used to CORROBORATE or "
+                         "CONTRADICT the advice below -- never to invent it. "
+                         "Omit and nothing changes.")
     ap.add_argument("--profile-format", choices=("jsonl", "csv"),
-                    default="jsonl",
+                    default="csv",
                     help="which producer wrote the profiles. `jsonl` is "
-                         "runtime/scripts/profile_k1.py (samples, "
+                         "the retired IREE path (samples, "
                          "percentiles, cv). `csv` is ModelBlaster's "
                          "pipeline/profile_writer.py (IREE-shape results.csv, "
                          "one mean per dispatch, plus the `implementation` "
@@ -167,6 +216,7 @@ def main() -> int:
         print("  measured misses: " + ", ".join(
             f"{m}={n}" for m, n in sorted(measured_misses.items())))
 
+    irs_by_network = _load_irs(a.ir)
     advice, notes = [], {}
     for spec in a.models.split(","):
         model, basename = spec.split(":")
@@ -174,6 +224,17 @@ def main() -> int:
         if not profs:
             print(f"WARN no profiles for {model}", file=sys.stderr)
             continue
+        # An absent BASELINE is not "no advice", it is "I could not read the
+        # thing every comparison is made against". Silently yielding an empty
+        # advice document for this is how the old defaults hid themselves.
+        if a.baseline_impl not in profs:
+            raise SystemExit(
+                f"--baseline-impl {a.baseline_impl!r} has no profile for "
+                f"{model}. Resolved: {sorted(profs)}. Requested: {impls}. "
+                f"Looked under --gen-root {a.gen_root!r} with "
+                f"--profile-format {a.profile_format}. Every comparison is "
+                f"against the baseline, so continuing would write an empty "
+                f"advice document and exit 0.")
         base = profs.get(a.baseline_impl, {})
         # From the schedule's own records rather than a separate dispatch-graph
         # file, so the chain test and the cost data cannot disagree about which
@@ -204,6 +265,16 @@ def main() -> int:
         }
         advice += implementation_advice(model, profs, a.baseline_impl)
         advice += overhead_advice(model, base, chain)
+        # `unfuse` had a producer, a bridge and a rewriter but NO CALLER here,
+        # so the document could never contain it: the chain was complete
+        # everywhere except at its own first step. Found on the board, where
+        # the condition was reconstructed and the emitter still returned zero
+        # unfuse items.
+        ops_by_id = irs_by_network.get(model)
+        if ops_by_id:
+            advice += unfuse_advice(model, base, ops_by_id,
+                                    kernels_dir=a.kernels_dir,
+                                    backend=_backend_family(a.baseline_impl))
         # Only a model that cannot fit its own period is blocking anything.
         total = sum(r["median_ms"] for r in base.values())
         period = periods.get(model)
@@ -231,6 +302,37 @@ def main() -> int:
             # thresholds for the same dispatch, and only one of them could be
             # right.
             advice += shard_advice(model, by_cores, dispatch_budget(model, base))
+
+    # THE MEASURED RUN, if there is one. The static advice above comes from
+    # profiles and a solved schedule -- what the model PREDICTS. A feedback
+    # file comes from a run that actually happened. Joining them raises
+    # confidence where the two agree and demotes advice the run contradicts;
+    # it never manufactures advice, because turning "ran slower than
+    # predicted" into a split factor needs the periodic budget and the graph,
+    # and inventing either is what the loop exists to avoid.
+    fb_counts = {}
+    if a.feedback:
+        import feedback_join
+        doc = feedback_join.load(a.feedback)
+        if doc is None:
+            print(f"  feedback: {a.feedback} absent or unreadable -- "
+                  f"advice unchanged")
+        else:
+            known = {spec.split(":")[0] for spec in a.models.split(",")
+                     if ":" in spec}
+            total = {"corroborated": 0, "contradicted": 0,
+                     "not_applicable": 0, "silent": 0}
+            for model in sorted(known):
+                per_model = [x for x in advice if x.model == model]
+                _, c = feedback_join.join(per_model, doc, model, known)
+                for k in total:
+                    total[k] += c[k]
+            fb_counts = total
+            print(f"  feedback ({doc.get('run_id')}): "
+                  f"{total['corroborated']} corroborated, "
+                  f"{total['contradicted']} contradicted, "
+                  f"{total['not_applicable']} reported-on but unrelated, "
+                  f"{total['silent']} not reported on")
 
     # Highest-priority first; the consumer is expected to apply a bounded number.
     advice.sort(key=lambda x: (x.priority, -x.evidence.service_time_us))

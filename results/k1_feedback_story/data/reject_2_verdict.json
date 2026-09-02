@@ -1,0 +1,20 @@
+{
+ "baseline": "schedules/scheduled_networks_k1_mb_3model_4hz_greedy_profiled.json",
+ "candidate": "schedules/scheduled_networks_k1_mb_3model_4hz_split_x4_greedy_profiled.json",
+ "accepted": false,
+ "why": "rejected -- heavy-model max latency: baseline=152.65 beats split_x4=158.57 (tolerance 1)",
+ "baseline_pdb_hash": "9e9f8f8d385511c3444cb3f33371d4c7c53a6ebb2a568d422d51dbfbf9eac3e8",
+ "candidate_pdb_hash": "290b53b2a2b57c5715c7c603982b499d11e400a410b58aa259aa97ba5a4bccc3",
+ "baseline_instances": {
+  "dronet": 10,
+  "mlp_control": 32,
+  "yolov8_nano": 4
+ },
+ "candidate_instances": {
+  "dronet": 10,
+  "mlp_control": 32,
+  "yolov8_nano": 4
+ },
+ "baseline_terms": "CandidateOutcome(label='baseline', per_model={'dronet': ModelOutcome(instances=10, deadline_misses=0, worst_lateness_ms=0.0, response_p99_ms=8.23, achieved_hz=32.47, required_hz=30.03), 'mlp_control': ModelOutcome(instances=32, deadline_misses=0, worst_lateness_ms=0.0, response_p99_ms=0.08, achieved_hz=103.2, required_hz=100.0), 'yolov8_nano': ModelOutcome(instances=4, deadline_misses=0, worst_lateness_ms=0.0, response_p99_ms=152.65, achieved_hz=4.43, required_hz=4.0)}, makespan_ms=902.6521, critical_models=('mlp_control', 'dronet'), heavy_model='yolov8_nano', heavy_max_latency_ms=152.65, heavy_throughput_hz=4.43, utilization_pct=13.75, standalone_cycles=996014, ineligible=None)",
+ "candidate_terms": "CandidateOutcome(label='split_x4', per_model={'dronet': ModelOutcome(instances=10, deadline_misses=0, worst_lateness_ms=0.0, response_p99_ms=8.31, achieved_hz=32.47, required_hz=30.03), 'mlp_control': ModelOutcome(instances=32, deadline_misses=0, worst_lateness_ms=0.0, response_p99_ms=0.08, achieved_hz=103.2, required_hz=100.0), 'yolov8_nano': ModelOutcome(instances=4, deadline_misses=0, worst_lateness_ms=0.0, response_p99_ms=158.57, achieved_hz=4.43, required_hz=4.0)}, makespan_ms=902.6521, critical_models=('mlp_control', 'dronet'), heavy_model='yolov8_nano', heavy_max_latency_ms=158.57, heavy_throughput_hz=4.43, utilization_pct=14.299999999999999, standalone_cycles=1034142, ineligible=None)"
+}

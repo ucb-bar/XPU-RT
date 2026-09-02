@@ -2,7 +2,7 @@
 Profile data loading utilities for the XPU-RT scheduler.
 
 Handles discovering, parsing, and assembling profiled dispatch runtimes
-from CSV files produced by runtime/scripts/profile_remote.sh.
+from CSV files produced by ModelBlaster's run_model_k1.sh (PROFILE_OUT_ROOT).
 """
 
 from __future__ import annotations
@@ -13,6 +13,8 @@ import hashlib
 import json
 import os
 
+import workload_spec
+
 import numpy as np
 
 from compile_advice import n_cores_from_topo_tag
@@ -21,6 +23,24 @@ from workload_factory import (
     topo_tag_for_combination,
     machine_type_prefix,
 )
+
+
+# The profile sweeps write 1e9 us (= 1e6 ms) for a dispatch that cannot run on
+# that backend at all.  Those rows mark "unsupported", they are not timings,
+# and a sentinel that reaches the solver as a duration becomes fiction: one
+# unsupported dispatch adds 1e6 ms to the makespan, and run_xpurt_schedule.py
+# then sizes every periodic net against that (ceil(makespan / period)), which
+# is how a 3-network workload turned into 450k operations.  Sentinels never
+# become durations here -- see _penalise_unsupported below.
+SENTINEL_MS = 1e6
+
+# The "never pick this combination" idiom: 1000x the dispatch's own best real
+# cost, capped at 100 ms.  Big enough to dominate the optimizer (no solver
+# picks a penalised combo when a valid one exists), small enough not to blow
+# up the LP's numeric range or the horizon-estimate sums.  Used both for
+# unsupported-backend combos and for preferred_hw pinning.
+COMBO_PENALTY_MULT = 1000.0
+COMBO_PENALTY_CAP_MS = 100.0
 
 
 # Module-level record of which CSVs the most recent
@@ -33,31 +53,42 @@ from workload_factory import (
 _LAST_LOAD_CSV_PATHS: list[str] = []
 
 
-def compute_pdb_hash(csv_paths: list[str]) -> tuple[str, list[str]]:
+def compute_pdb_hash(
+    csv_paths: list[str], *, base_dir: str | None = None,
+) -> tuple[str, list[str]]:
     """Stable SHA256 over the content of the given profile CSVs.
 
     Returns (hex_digest, paths_actually_hashed). Paths are sorted
     before hashing so the digest is independent of discovery order.
     Missing files are skipped silently; the returned path list
-    reflects what was successfully read.
+    reflects what was successfully read. Relative paths are opened against
+    ``base_dir`` when supplied, but the declared relative spelling is hashed.
+    This lets a schedule carry a repository-relative, relocation-stable
+    provenance fingerprint instead of embedding its creator's checkout path.
     """
     h = hashlib.sha256()
     used: list[str] = []
     for p in sorted(set(csv_paths)):
         if not p:
             continue
+        declared = os.path.normpath(p)
+        disk_path = (
+            os.path.join(base_dir, declared)
+            if base_dir is not None and not os.path.isabs(declared)
+            else declared
+        )
         try:
-            with open(p, "rb") as f:
+            with open(disk_path, "rb") as f:
                 data = f.read()
         except OSError:
             continue
         # Include the path so two CSVs with identical content at
         # different paths still hash differently.
-        h.update(p.encode("utf-8"))
+        h.update(declared.encode("utf-8"))
         h.update(b"\0")
         h.update(len(data).to_bytes(8, "little"))
         h.update(data)
-        used.append(p)
+        used.append(declared)
     return h.hexdigest(), used
 
 
@@ -157,7 +188,7 @@ def find_profile_csv(
     gen_root: str = "gen",
 ) -> str | None:
     """
-    Find a profiling results.csv produced by runtime/scripts/profile_remote.sh.
+    Find a profiling results.csv produced by ModelBlaster's run_model_k1.sh.
 
     Expected layout:
       <gen_root>/profile/<hw>/<target>/<model>/<basename>/<input_tag>/<topo_tag>/results.csv
@@ -186,22 +217,6 @@ def find_profile_csv(
     if not matches:
         return None
     return max(matches, key=lambda p: os.path.getmtime(p))
-
-
-def _basename_from_dispatch_deps_path(path: str) -> str:
-    """Extract the parent directory name from a dispatch deps path."""
-    return os.path.basename(os.path.dirname(path)) if path else ""
-
-
-def _model_candidates(net_id: str, net_info: dict, dispatch_deps_path: str) -> list[str]:
-    """Return candidate model names to try when searching for profiling CSVs."""
-    basename = _basename_from_dispatch_deps_path(dispatch_deps_path) or f"{net_id}.q.int8"
-    basename_model = os.path.basename(basename).split(".")[0]
-    candidates = []
-    for c in (net_id, net_info.get("identifier"), basename_model):
-        if isinstance(c, str) and c and c not in candidates:
-            candidates.append(c)
-    return candidates or [net_id]
 
 
 def _resolve_topo_for(
@@ -254,8 +269,8 @@ def _load_all_topo_profiles(
     machine, four physical harts under the hood) read its multi-core
     profile data while a singleton cpu_p still reads topo_0.
     """
-    basename = _basename_from_dispatch_deps_path(dispatch_deps_path) or f"{net_id}.q.int8"
-    candidates = _model_candidates(net_id, net_info, dispatch_deps_path)
+    basename = workload_spec.basename_from_dispatch_deps_path(dispatch_deps_path) or f"{net_id}.q.int8"
+    candidates = workload_spec.model_candidates(net_id, net_info, dispatch_deps_path)
     profiles: dict[tuple[str, str], dict[int, dict]] = {}
 
     hw_types = set(combo_hw)
@@ -288,6 +303,39 @@ def _load_all_topo_profiles(
                         print(f"  (info) profile fallback: {net_id}/{hw}/{topo} -> model={model_candidate}")
                 break
     return profiles
+
+
+def _synthetic_time(rng: np.random.Generator, combo: list[str],
+                    p_core_speedup: float) -> float:
+    """A made-up per-dispatch cost, for `strict=False` callers only."""
+    p_ms_synth = float(rng.uniform(2.0, 10.0))
+    if machine_type_prefix(combo[0]) == "CPU_P":
+        return p_ms_synth
+    return p_ms_synth * p_core_speedup
+
+
+def _penalise_unsupported(combo_times: list) -> None:
+    """
+    Replace the `None` slots (unsupported sentinels) in `combo_times` with a
+    cost the solver will never choose, in place.
+
+    An operation has to be assigned *somewhere*, so an unsupported
+    combination needs a number. It must be clearly worse than every real
+    option and still bounded: the raw 1e6 ms sentinel is bounded too, but it
+    is large enough to dominate any real makespan, which is what produced
+    12-hour schedules out of sub-second networks. Scaling off the dispatch's
+    own best real cost keeps the penalty in the same numeric range as the
+    rest of the model.
+    """
+    real = [v for v in combo_times if v is not None]
+    if not real:
+        return
+    best_real = min(real)
+    penalty = best_real + min(COMBO_PENALTY_CAP_MS,
+                              COMBO_PENALTY_MULT * (best_real or 1.0))
+    for ci, v in enumerate(combo_times):
+        if v is None:
+            combo_times[ci] = penalty
 
 
 def load_profiled_processing_times(
@@ -347,6 +395,8 @@ def load_profiled_processing_times(
     # Aggregate missing-data findings before raising so the user sees
     # *every* gap at once, not just the first one — saves an iter cycle.
     missing: list[str] = []
+    # Dispatches no backend in this hardware config can run at all.
+    unrunnable: list[str] = []
 
     for net_id, net_info in networks.items():
         dispatch_deps_path = net_info.get("dispatch_deps_path", "")
@@ -372,6 +422,22 @@ def load_profiled_processing_times(
                 requested_pairs.add((hw, _resolve_topo_for(hw, combo, topo_tag_override)))
         for (hw, topo) in requested_pairs:
             if (hw, topo) not in all_profiles:
+                # IME is an OPTIONAL per-network capability: a network with no
+                # ime kernel (e.g. a conv/GEMV model, or a transformer op like
+                # gelu that has no ime kernel) legitimately has no ime_x60 CSV.
+                # That is not a data gap to fatal on — its ime cells are simply
+                # excluded (cost 1e8) per-dispatch below, so the solver never
+                # places it on the NPU. Only rvv/scalar misses are fatal.
+                if hw.lower().startswith("ime"):
+                    continue
+                # A net profiled on this hw at its base (single-core) width but
+                # missing a WIDER multi-hart shard topo simply cannot be sharded
+                # — its shard-block cells are excluded (INFEASIBLE 1e8) below, so
+                # the solver keeps it single-core, exactly as for a missing ime
+                # kernel. Only a net with NO profile at all on this hw is a real
+                # data gap that must stay fatal (the synthetic-random guard).
+                if any(h == hw for (h, _t) in all_profiles):
+                    continue
                 if strict:
                     missing.append(
                         f"  - {net_id} @ {hw}/{topo}: no profile CSV under "
@@ -400,16 +466,12 @@ def load_profiled_processing_times(
             # avoids that by penalising non-preferred-hw combos so the
             # solver never picks them.
             preferred_hw = net_info.get("preferred_hw")
-            # Scaled penalty: 1000x the dispatch's own preferred-hw cost,
-            # capped at 100 ms. Big enough to dominate the optimizer (no
-            # solver picks a wrong-kind combo when a valid one exists),
-            # small enough not to blow up the LP's numeric range or the
-            # horizon-estimate sums.
-            PIN_PENALTY_MULT = 1000.0
-            PIN_PENALTY_CAP_MS = 100.0
 
-            combo_times = []
-            preferred_t = None  # cache the preferred-hw time to scale the penalty
+            # `None` marks a combination whose profile row is an unsupported
+            # sentinel. Those slots are filled in below, once the dispatch's
+            # best *real* cost is known — a sentinel is not a timing, so it
+            # must never be summed into a duration.
+            combo_times: list[float | None] = []
             for ci, combo in enumerate(machine_combinations):
                 hw = combo_hw[ci]
                 topo = _resolve_topo_for(hw, combo, topo_tag_override)
@@ -418,6 +480,10 @@ def load_profiled_processing_times(
                 t_ms = None
                 if prof and isinstance(dispatch_id, int) and dispatch_id in prof:
                     t_ms = prof[dispatch_id]["time_ms"]
+
+                if t_ms is not None and float(t_ms) >= SENTINEL_MS:
+                    combo_times.append(None)
+                    continue
 
                 # ── Tile-dispatch fallback ────────────────────────────────
                 # When apply_split_hint rewrites the IR to split an op into
@@ -483,6 +549,21 @@ def load_profiled_processing_times(
 
                 if t_ms is not None:
                     base_t = float(t_ms)
+                elif hw.lower().startswith("ime"):
+                    # An ime combination with no measured cost for this dispatch
+                    # means the op has no ime kernel (only matmul_s8 does today).
+                    # Exclude the cell with the scheduler's INFEASIBLE_COST
+                    # sentinel (1e8) so the op is NEVER placed on the NPU — a
+                    # 0.0 here would make a non-ime op look free on cluster 0.
+                    base_t = 1e8
+                elif prof is None:
+                    # No profile CSV at all for this (hw, topo) — e.g. a
+                    # single-core-only net facing a multi-hart shard combo it
+                    # was never profiled on. It physically cannot run there, so
+                    # exclude the cell (INFEASIBLE 1e8) rather than count it as
+                    # free (0.0). A genuinely-unprofiled net is still caught by
+                    # the `missing` fatal above (it has no base-width profile).
+                    base_t = 1e8
                 else:
                     if strict:
                         # Per-dispatch misses are typically zero-cost
@@ -498,21 +579,33 @@ def load_profiled_processing_times(
                         # catch.
                         base_t = 0.0
                     else:
-                        p_ms_synth = float(rng.uniform(2.0, 10.0))
-                        core_type = machine_type_prefix(combo[0])
-                        if core_type == "CPU_P":
-                            base_t = p_ms_synth
-                        else:
-                            base_t = p_ms_synth * p_core_speedup
-                if preferred_hw is not None and hw == preferred_hw and preferred_t is None:
-                    preferred_t = base_t
+                        base_t = _synthetic_time(rng, combo, p_core_speedup)
                 combo_times.append(base_t)
+
+            if all(v is None for v in combo_times):
+                # No combination in this hardware config can run this
+                # dispatch. Any number we invent is fiction — the old code
+                # passed the 1e6 ms sentinel straight through and the
+                # schedule inherited it — so record it and fail below.
+                unrunnable.append(
+                    f"  - {net_id}/{dispatch_name} (dispatch_id={dispatch_id}): "
+                    f"unsupported on every profiled backend "
+                    f"({', '.join(sorted(set(combo_hw)))})"
+                )
+                if strict:
+                    continue
+                combo_times = [
+                    _synthetic_time(rng, combo, p_core_speedup)
+                    for combo in machine_combinations
+                ]
+            else:
+                _penalise_unsupported(combo_times)
 
             if preferred_hw is not None:
                 if preferred_hw not in combo_hw:
                     # Otherwise EVERY combination is "non-preferred" and gets
                     # the penalty, silently inflating this network's cost by
-                    # ~PIN_PENALTY_CAP_MS per dispatch. That produces a
+                    # ~COMBO_PENALTY_CAP_MS per dispatch. That produces a
                     # nonsense horizon and a nonsense schedule with no warning.
                     # The usual cause is naming the CLUSTER ("cpu_p") instead
                     # of the profile hw the cluster maps to ("gemmini").
@@ -523,8 +616,13 @@ def load_profiled_processing_times(
                         f"hw name (hardware.profile_hw values), not the cluster "
                         f"name (cpu_p / cpu_e)."
                     )
-                penalty = min(PIN_PENALTY_CAP_MS,
-                              PIN_PENALTY_MULT * (preferred_t or 1.0))
+                preferred_t = next(
+                    (combo_times[ci] for ci in range(len(machine_combinations))
+                     if combo_hw[ci] == preferred_hw),
+                    None,
+                )
+                penalty = min(COMBO_PENALTY_CAP_MS,
+                              COMBO_PENALTY_MULT * (preferred_t or 1.0))
                 for ci, combo in enumerate(machine_combinations):
                     if combo_hw[ci] != preferred_hw:
                         combo_times[ci] += penalty
@@ -546,7 +644,8 @@ def load_profiled_processing_times(
             "Schedules generated against synthetic random times produce "
             "fictional predicted timelines (this used to be silent — see "
             "the rng.uniform(2.0, 10.0) fallback). Either:\n"
-            "  1. Run the missing profile sweeps (runtime/scripts/profile_remote.sh\n"
+            "  1. Run the missing profile sweeps (ModelBlaster's\n"
+            "     scripts/run_model_k1.sh with PROFILE_OUT_ROOT set\n"
             "     or profile_dispatches.py — make sure the harness flags match\n"
             "     the consumer of the schedule, e.g. xpurt_demo's BACKENDS /\n"
             "     prj.conf overlay), OR\n"
@@ -554,5 +653,25 @@ def load_profiled_processing_times(
             "     into the synthetic fallback explicitly.\n"
             f"Missing entries ({len(missing)}):\n" + "\n".join(missing)
         )
+
+    if strict and unrunnable:
+        raise ValueError(
+            "profile_loader: some dispatches are unsupported on every backend "
+            "in this hardware config, so no schedule can run them. The profile "
+            "CSVs mark them with the 1e9 us sentinel; costing them as if they "
+            "were timings puts ~1e6 ms per dispatch into the makespan and "
+            "produces a fictional schedule. Either:\n"
+            "  1. Add a backend that supports them to the workload's\n"
+            "     hardware.profile_hw (e.g. CPU alongside HTA/DSP), OR\n"
+            "  2. Re-bundle or re-compile the network so every dispatch has a\n"
+            "     backend that can run it, OR\n"
+            "  3. Drop the network from this hardware config.\n"
+            f"Unrunnable dispatches ({len(unrunnable)}):\n" + "\n".join(unrunnable)
+        )
+    if unrunnable and not strict:
+        # Non-strict callers opted into synthetic timings, but say so —
+        # these dispatches have no measured cost on any backend here.
+        print(f"  (warning) {len(unrunnable)} dispatch(es) unsupported on every "
+              f"profiled backend; costed with synthetic times (strict=False)")
 
     return processing_times, combined_profiled_p, combined_profiled_e, profiled_by_network

@@ -1,0 +1,165 @@
+{
+  "dispatches": {
+    "dronet0_dispatch_1": {
+      "current_target": "CPU_P#1",
+      "deadline_slack_us": null,
+      "hints": [
+        "prefer_finer"
+      ],
+      "idle_fraction": 2.4291,
+      "rationale": "idle gap before op = 2.43\u00d7 duration",
+      "transfer_cost_ratio": 1.0
+    },
+    "dronet0_dispatch_10": {
+      "current_target": "CPU_P#1",
+      "deadline_slack_us": null,
+      "hints": [
+        "prefer_finer"
+      ],
+      "idle_fraction": 23.3835,
+      "rationale": "idle gap before op = 23.38\u00d7 duration",
+      "transfer_cost_ratio": 1.0
+    },
+    "dronet0_dispatch_15": {
+      "current_target": "CPU_P#1",
+      "deadline_slack_us": null,
+      "hints": [
+        "prefer_finer"
+      ],
+      "idle_fraction": 16.7605,
+      "rationale": "idle gap before op = 16.76\u00d7 duration",
+      "transfer_cost_ratio": 1.0
+    },
+    "dronet0_dispatch_18": {
+      "current_target": "CPU_P#1",
+      "deadline_slack_us": null,
+      "hints": [
+        "prefer_finer"
+      ],
+      "idle_fraction": 623.2816,
+      "rationale": "idle gap before op = 623.28\u00d7 duration",
+      "transfer_cost_ratio": 1.0
+    },
+    "dronet0_dispatch_2": {
+      "current_target": "CPU_P#0",
+      "deadline_slack_us": null,
+      "hints": [
+        "prefer_finer"
+      ],
+      "idle_fraction": 7.3851,
+      "rationale": "idle gap before op = 7.39\u00d7 duration",
+      "transfer_cost_ratio": 1.0
+    },
+    "dronet0_dispatch_3": {
+      "current_target": "CPU_P#3",
+      "deadline_slack_us": null,
+      "hints": [
+        "prefer_finer"
+      ],
+      "idle_fraction": 2.2476,
+      "rationale": "idle gap before op = 2.25\u00d7 duration",
+      "transfer_cost_ratio": 1.0
+    },
+    "dronet0_dispatch_4": {
+      "current_target": "CPU_P#0",
+      "deadline_slack_us": null,
+      "hints": [
+        "prefer_finer"
+      ],
+      "idle_fraction": 0.4969,
+      "rationale": "idle gap before op = 0.50\u00d7 duration",
+      "transfer_cost_ratio": 1.0
+    },
+    "ffn_block0_dispatch_1": {
+      "current_target": "CPU_P#2",
+      "deadline_slack_us": null,
+      "hints": [
+        "prefer_finer"
+      ],
+      "idle_fraction": 0.3752,
+      "rationale": "idle gap before op = 0.38\u00d7 duration",
+      "transfer_cost_ratio": 1.0
+    },
+    "ffn_block0_dispatch_2": {
+      "current_target": "CPU_P#0",
+      "deadline_slack_us": null,
+      "hints": [
+        "prefer_finer"
+      ],
+      "idle_fraction": 3.8445,
+      "rationale": "idle gap before op = 3.84\u00d7 duration",
+      "transfer_cost_ratio": 1.0
+    },
+    "ffn_block0_dispatch_3": {
+      "current_target": "CPU_P#0",
+      "deadline_slack_us": null,
+      "hints": [
+        "prefer_finer"
+      ],
+      "idle_fraction": 1.7013,
+      "rationale": "idle gap before op = 1.70\u00d7 duration",
+      "transfer_cost_ratio": 1.0
+    },
+    "fused_full0_dispatch_1": {
+      "current_target": "CPU_P#0",
+      "deadline_slack_us": null,
+      "hints": [
+        "prefer_finer"
+      ],
+      "idle_fraction": 0.5084,
+      "rationale": "idle gap before op = 0.51\u00d7 duration",
+      "transfer_cost_ratio": 1.0
+    },
+    "fused_full0_dispatch_10": {
+      "current_target": "CPU_P#0",
+      "deadline_slack_us": null,
+      "hints": [
+        "prefer_finer"
+      ],
+      "idle_fraction": 33.5739,
+      "rationale": "idle gap before op = 33.57\u00d7 duration",
+      "transfer_cost_ratio": 1.0
+    },
+    "fused_full0_dispatch_5": {
+      "current_target": "CPU_P#2",
+      "deadline_slack_us": null,
+      "hints": [
+        "prefer_finer"
+      ],
+      "idle_fraction": 5.5977,
+      "rationale": "idle gap before op = 5.60\u00d7 duration",
+      "transfer_cost_ratio": 1.0
+    },
+    "fused_full0_dispatch_8": {
+      "current_target": "CPU_P#0",
+      "deadline_slack_us": null,
+      "hints": [
+        "prefer_finer"
+      ],
+      "idle_fraction": 70.6554,
+      "rationale": "idle gap before op = 70.66\u00d7 duration",
+      "transfer_cost_ratio": 1.0
+    },
+    "mlp_control1_dispatch_0": {
+      "current_target": "CPU_P#0",
+      "deadline_slack_us": null,
+      "hints": [
+        "prefer_finer"
+      ],
+      "idle_fraction": 337.733,
+      "rationale": "idle gap before op = 337.73\u00d7 duration",
+      "transfer_cost_ratio": 1.0
+    }
+  },
+  "model_signals": {
+    "deadline_met": true,
+    "fusion_applied": false,
+    "makespan": 20.083,
+    "makespan_efficiency": 0.11087441700277183,
+    "problem_status": null,
+    "skip_triggered": []
+  },
+  "run_id": "k1-tri-feedback-v1-original",
+  "schema_version": 1,
+  "source_schedule": "scheduled_networks_k1_tri_small_greedy_profiled.json"
+}

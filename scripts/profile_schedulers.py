@@ -82,7 +82,9 @@ sys.path.insert(0, os.path.join(REPO, "scripts"))
 
 import candidate_objective as objective  # noqa: E402
 import schedule_trace  # noqa: E402
-import trace_metrics  # noqa: E402
+import trace_metrics
+import workload_spec
+from schedule_scoring import heavy_stats, score  # noqa: F401  # noqa: E402
 
 
 # --------------------------------------------------------------- solver table
@@ -213,7 +215,8 @@ def build_effective_config(path: str, out_dir: str, *, gen_root: Optional[str],
 
 # ------------------------------------------------------------------- one cell
 
-def run_cell(networks_json: str, name: str, *, timeout: int, profiled: bool,
+def run_cell(networks_json: str, name: str, *, timeout: Optional[float],
+             profiled: bool,
              max_periodic_iters: int, time_limit: Optional[float],
              log_dir: str, extra: List[str]) -> dict:
     cmd = [sys.executable, os.path.join(REPO, "scripts", "run_xpurt_schedule.py"),
@@ -229,14 +232,16 @@ def run_cell(networks_json: str, name: str, *, timeout: int, profiled: bool,
     os.makedirs(log_dir, exist_ok=True)
     log_path = os.path.join(log_dir, f"{name}.log")
     t0 = time.time()
+    outer_timeout = timeout if timeout is not None and timeout > 0 else None
     try:
         proc = subprocess.run(cmd, cwd=REPO, capture_output=True, text=True,
-                              timeout=timeout)
+                              timeout=outer_timeout)
     except subprocess.TimeoutExpired as exc:
         with open(log_path, "w") as f:
             f.write((exc.stdout or "") + "\n" + (exc.stderr or ""))
         return {"solver": name, "status": "timeout",
-                "detail": f"exceeded {timeout}s", "wall_s": float(timeout),
+                "detail": f"exceeded {outer_timeout}s",
+                "wall_s": float(outer_timeout),
                 "log": log_path, "cmd": " ".join(cmd)}
     wall = time.time() - t0
     with open(log_path, "w") as f:
@@ -274,29 +279,6 @@ def run_cell(networks_json: str, name: str, *, timeout: int, profiled: bool,
 
 # -------------------------------------------------------------------- scoring
 
-def heavy_stats(rows, model: str) -> Tuple[float, float]:
-    """(max instance latency ms, completion rate Hz) for a model with no period.
-
-    `trace_metrics` only reports models it was given a period for, which is the
-    right behaviour -- but the objective's heavy-model terms also apply to a
-    non-periodic background net (a one-shot YOLO pass). Latency is then the
-    instance's own span, not a response from a release that does not exist.
-    """
-    spans: Dict[str, List[float]] = defaultdict(lambda: [1e18, -1e18])
-    for r in rows:
-        if trace_metrics.model_of(r["job_name"]) != model:
-            continue
-        j = r["job_name"]
-        spans[j][0] = min(spans[j][0], float(r["start_us"]) / 1000.0)
-        spans[j][1] = max(spans[j][1], float(r["end_us"]) / 1000.0)
-    if not spans:
-        return 0.0, 0.0
-    latencies = [en - st for st, en in spans.values()]
-    last_end = max(en for _, en in spans.values())
-    hz = (len(spans) / (last_end / 1000.0)) if last_end > 0 else 0.0
-    return max(latencies), hz
-
-
 def advise(schedule_path: str) -> dict:
     """The deadline-aware advisor's read on one cell.
 
@@ -322,23 +304,6 @@ def advise(schedule_path: str) -> dict:
     except Exception as exc:  # noqa: BLE001 - advice must never break a cell
         return {"top_recommendation": f"advisor failed: {exc}"}
 
-
-def score(name: str, schedule: dict, windows_ms: Dict[str, float],
-          critical: Tuple[str, ...], heavy: Optional[str]
-          ) -> Tuple[dict, objective.CandidateOutcome, list]:
-    rows = schedule_trace.trace_rows_from_schedule(schedule)
-    periods = schedule_trace.periods_ms(schedule)
-    summary = trace_metrics.summarise_trace(
-        rows, periods, {k: v for k, v in windows_ms.items() if k in periods})
-    out = objective.from_trace_summary(
-        name, summary, critical_models=critical, heavy_model=heavy,
-        standalone_cycles=int(round(schedule_trace.standalone_service_us(schedule))))
-    if heavy and heavy not in out.per_model:
-        out.heavy_max_latency_ms, out.heavy_throughput_hz = heavy_stats(rows, heavy)
-    return summary, out, rows
-
-
-# --------------------------------------------------------------------- output
 
 def write_csv(path: str, cells: List[dict], models: List[str]) -> str:
     base = ["rank", "solver", "status", "detail", "solver_s", "wall_s",
@@ -445,9 +410,10 @@ def main() -> int:
     ap.add_argument("--heavy-model", default=None,
                     help="the heavy/background model (default: the one with "
                          "the most service time)")
-    ap.add_argument("--timeout", type=int, default=1800)
-    ap.add_argument("--time-limit", type=float, default=None,
-                    help="MILP-path solver time limit in seconds")
+    ap.add_argument("--timeout", type=float, default=0,
+                    help="outer per-process timeout in seconds (default: 0, disabled)")
+    ap.add_argument("--time-limit", type=float, default=0,
+                    help="solver time limit in seconds (default: 0, disabled)")
     ap.add_argument("--max-periodic-iters", type=int, default=1,
                     help="greedy-family refinement passes; 1 keeps the op set "
                          "identical to the MILP path (default 1, not 4)")
@@ -477,6 +443,7 @@ def main() -> int:
     periodic = {k for k, v in nets.items() if v.get("period") is not None}
     windows_ms = {k: float(v.get("window_duration") or v.get("period"))
                   for k, v in nets.items() if v.get("period") is not None}
+    declared_periods = workload_spec.periods_ms(eff_cfg)
     critical = tuple(s.strip() for s in args.critical_models.split(",") if s.strip()) \
         if args.critical_models else ()
 
@@ -530,7 +497,9 @@ def main() -> int:
     trace_dir = os.path.join(out_dir, "traces")
     for n, res in results.items():
         sched = json.load(open(res["schedule"]))
-        summary, outcome, rows = score(n, sched, windows_ms, critical, heavy)
+        summary, outcome, rows = score(
+            n, sched, windows_ms, critical, heavy, set(nets),
+            declared_periods)
         trace_path = schedule_trace.write_trace_csv(
             rows, os.path.join(trace_dir, f"{n}.csv"))
         outcomes.append(outcome)
@@ -661,6 +630,18 @@ def main() -> int:
         "overrides": applied,
         "solvers_requested": names,
         "availability": {k: (v or "available") for k, v in availability.items()},
+        "outer_timeout_s": args.timeout,
+        "solver_time_limit_s": args.time_limit,
+        "solver_environment": {
+            key: os.environ[key]
+            for key in (
+                "XPURT_PERPAIR_BIGM",
+                "XPURT_MOSEK_MIO_GAP",
+                "XPURT_MOSEK_PARAMS",
+                "XPURT_CPSAT_WORKERS",
+            )
+            if key in os.environ
+        },
         "critical_models": list(critical) or sorted(periodic),
         "heavy_model": heavy,
         "comparability": comparability,

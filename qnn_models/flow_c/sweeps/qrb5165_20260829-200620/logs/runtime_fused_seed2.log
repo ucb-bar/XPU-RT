@@ -1,0 +1,26 @@
++ /usr/bin/python3 flow_c.py runtime --workload /scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c/sweeps/qrb5165_20260829-200620/workloads/fused_seed2.flowc.json --tag fused_seed2 --lane-mode kind-network --schedule /scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c/sweeps/qrb5165_20260829-200620/schedules/scheduled_fused_seed2_profiled.json --out-dir /scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c/sweeps/qrb5165_20260829-200620/runtimes/fused_seed2
+(cwd=/scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c)
+
+
+=== runtime =====================================================
+32 entries  predicted makespan 73.343 ms
+  per network: {'fused_split': 9, 'yolov8n_d': 2, 'mlp_control': 15, 'yolov8n_b': 2, 'yolov8n_a': 2, 'yolov8n_c': 2}
+  per lane:    {'dsp(DSP)': 9, 'cpu(CPU)': 17, 'hta(HTA)': 6}
+  contexts:    12
+    CPU  ctx_fused_depth_conv__Cpu.bin  ::fused_depth_conv
+    HTA  ctx_fused_depth_conv__Hta.bin  ::fused_depth_conv
+    DSP  ctx_fused_tail_from_conv__Dsp.bin  ::fused_tail_from_conv
+    CPU  ctx_fused_tail_from_conv_fp32__Cpu.bin  ::fused_tail_from_conv
+    DSP  ctx_fused_vision_conv__Dsp.bin  ::fused_vision_conv
+    HTA  ctx_fused_vision_conv__Hta.bin  ::fused_vision_conv
+    DSP  ctx_mlp_control__Dsp.bin  ::mlp_control
+    CPU  ctx_mlp_control_fp32__Cpu.bin  ::mlp_control_fp32
+    DSP  ctx_yolov8n_backbone__Dsp.bin  ::yolov8n_HTA_split_seg100
+    HTA  ctx_yolov8n_backbone__Hta.bin  ::yolov8n_HTA_split_seg100
+    CPU  ctx_yolov8n_head__Cpu.bin  ::yolov8n_HTA_split_seg101
+    DSP  ctx_yolov8n_head__Dsp.bin  ::yolov8n_HTA_split_seg101
+
+emitted /scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c/sweeps/qrb5165_20260829-200620/runtimes/fused_seed2/dispatch_table.h + runtime_main.cpp
+  lane mode kind-network: dsp|fused_split, cpu|fused_split, hta|yolov8n_d, cpu|mlp_control, dsp|yolov8n_b, hta|fused_split, hta|yolov8n_a, dsp|yolov8n_d, cpu|yolov8n_b, dsp|mlp_control, dsp|yolov8n_a, hta|yolov8n_c, dsp|yolov8n_c
+
+--- stderr ---

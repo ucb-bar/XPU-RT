@@ -21,10 +21,16 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from collections import defaultdict
 
-CONTRACT = "modelblaster.fusion_hints/v1"
+sys.path.insert(0, os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "xpu-rt"))
+
+import bundle  # noqa: E402
+
+CONTRACT = bundle.FUSION_CONTRACT
 
 
 def linear_chains(ops, only_ops=None):
@@ -92,19 +98,18 @@ def main() -> int:
         print("IR has no linear chain to fuse", file=sys.stderr)
         return 1
 
-    hint = {
-        "contract": CONTRACT,
-        "networks": [{
-            "network": a.model,
-            "fuse_groups": chains,
-            "n_tiny": sum(len(c) for c in chains),
-        }],
-        "_provenance": {
+    # The schema lives in `bundle`, not here: three call sites build this
+    # contract from three different analyses, and they must not drift on the
+    # wire format.
+    hint = bundle.fusion_hint(
+        {a.model: chains},
+        reason=f"overhead-bound: {len(chains)} linear chain(s) from "
+               f"{advice.get('schedule_id')}",
+        provenance={
             "from_advice": advice.get("schedule_id"),
             "recommendations": [x["recommendation"] for x in wants_fusion],
             "evidence": [x["evidence"] for x in wants_fusion],
-        },
-    }
+        })
     json.dump(hint, open(a.out, "w"), indent=1)
     print(f"wrote {a.out}")
     print(f"  {len(chains)} fuse group(s): {chains}")

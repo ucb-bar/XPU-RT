@@ -8,8 +8,8 @@
 set -uo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PYTHON="/scratch2/dima/miniforge3/envs/xpurt/bin/python"
-QNN_SDK="/scratch2/dima/misc_sw/qualcomm/qairt/2.45.0.260326"
+PYTHON="${PYTHON:-/scratch2/dima/miniforge3/envs/xpurt/bin/python}"
+QNN_SDK="${QNN_SDK:-/scratch2/dima/misc_sw/qualcomm/qairt/2.45.0.260326}"
 DOCKER_IMAGE="qnn-convert"
 BOARD="${QNN_BOARD_HOST:-root@10.44.120.201}"
 REMOTE_BASE="/root/weight_rebind_test"

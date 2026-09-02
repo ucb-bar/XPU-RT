@@ -8,7 +8,8 @@ time from the nominal release k*T, achieved frequency, per-core utilization. It
 reads a merlin dispatch-scheduler trace CSV.
 
 A host-side policy sweep has no board and therefore no trace. The previous
-answer to that was `scripts/k1_baselines.predicted()`, which re-derived a
+answer to that was `k1_baselines.predicted()` (retired with the merlin
+flow), which re-derived a
 *fourth* mini-version of the instance collapse (end > i*T + T, counted per
 instance, no rate, no response time, no utilization). So predicted schedules and
 measured runs were scored by two different definitions and the numbers were
@@ -129,15 +130,37 @@ def trace_rows_from_schedule(schedule: dict) -> List[dict]:
     return rows
 
 
-def periods_ms(schedule: dict) -> Dict[str, float]:
+def periods_ms(schedule: dict, known=None) -> Dict[str, float]:
     """`metadata.periodic_networks`, the schedule's own record of its periods.
 
     Taken from the schedule rather than hardcoded so a third model cannot be
     silently dropped from the scoring -- the same reason `trace_metrics` asks
     for the map instead of owning one.
+
+    `known` REPAIRS a schedule written before network names stopped being
+    trailing-digit-stripped. Such a schedule records `yolov8_nano_64x` for
+    `yolov8_nano_64x96`, and that truncated key then propagates into the
+    deadline scorer, where instance 0 is read as instance 960 and the model
+    becomes structurally incapable of missing a deadline. Passing the real
+    names (they are in the workload spec) maps each stored key back onto the
+    network it meant. A key that is already correct is left alone, and a key
+    matching no known name is kept as-is rather than guessed at.
     """
     md = schedule.get("metadata") or {}
-    return {str(k): float(v) for k, v in (md.get("periodic_networks") or {}).items()}
+    raw = {str(k): float(v) for k, v in (md.get("periodic_networks") or {}).items()}
+    if not known:
+        return raw
+    known = set(known)
+    out: Dict[str, float] = {}
+    for key, period in raw.items():
+        if key in known:
+            out[key] = period
+            continue
+        # Longest match first: the stored key is a PREFIX of the real name.
+        hits = sorted((n for n in known if n.startswith(key)),
+                      key=len, reverse=True)
+        out[hits[0] if hits else key] = period
+    return out
 
 
 def machines(schedule: dict) -> List[str]:

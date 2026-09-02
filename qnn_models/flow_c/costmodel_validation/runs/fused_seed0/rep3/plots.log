@@ -1,0 +1,16 @@
++ /usr/bin/python3 flow_c.py plots --workload /scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c/costmodel_validation/workloads/fused_seed0.flowc.json --tag fused_seed0 --log-dir /scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c/costmodel_validation/runs/fused_seed0/rep3
+(cwd=/scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c)
+
+
+=== plots =======================================================
+entries: 23
+  predicted makespan: 73.231 ms
+  actual    makespan: 82.759 ms (1.13x predicted)
+  mean per-entry: predicted=7.446 ms, actual=7.933 ms
+  entries finishing later than predicted: 18/23
+
+predicted vs actual : plots/fused_seed0_fused_seed0_predicted_vs_actual.png
+  zoom (first 21 ms): plots/fused_seed0_fused_seed0_predicted_vs_actual_zoom.png
+  flat trace CSV     : qnn_models/flow_c/costmodel_validation/runs/fused_seed0/rep3/trace.csv
+
+--- stderr ---

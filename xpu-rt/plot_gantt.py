@@ -26,6 +26,8 @@ from __future__ import annotations
 import argparse
 import csv
 import os
+
+import job_names
 import statistics
 import sys
 from collections import defaultdict
@@ -99,14 +101,18 @@ def _instance_shade(base_hex: str, inst: int, n_inst_for_network: int = 4) -> st
     return f"#{rr:02x}{gg:02x}{bb:02x}"
 
 
-def _network_root(name: str) -> str:
-    """Strip any trailing instance index from a network name.
-    'yolov8_nano_64' stays as-is (longest-prefix wins for known names).
-    """
-    for prefix in ("yolov8_nano_64", "yolov8_nano", "yolov8", "dronet", "mlp_control"):
-        if name.startswith(prefix):
-            return prefix
-    return name
+#: Names this renderer can recognise without being told. A hardcoded list is a
+#: guess: it mapped `yolov8_nano_64x96` (a real network) onto `yolov8_nano_64`,
+#: because that entry happened to come first. Callers that know the real names
+#: should pass them; `job_names` does the longest match.
+_FALLBACK_NETWORKS = ("yolov8_nano_64x96", "yolov8_nano_128x192",
+                      "yolov8_nano_64", "yolov8_nano", "dronet",
+                      "mlp_control", "fused_full")
+
+
+def _network_root(name: str, known=None) -> str:
+    """Strip the trailing instance index from a job name."""
+    return job_names.model_of(name, known or _FALLBACK_NETWORKS)
 
 
 def render_gantt(trace_csv: str, out_path: str,
@@ -138,7 +144,20 @@ def render_gantt(trace_csv: str, out_path: str,
     # is 30× the predicted, the chart should show it. That's the whole point.
     raw_max_pred = max(r["predicted_start"] + r["predicted_duration"] for r in rows)
     PRED_PER_MS = 1_000_000.0 if raw_max_pred > 10_000 else 1.0
-    ACTUAL_PER_MS = 1_000.0  # mtime @ 1 MHz on this bitstream
+    # Ticks per millisecond in the ACTUAL column. Overridable because this
+    # renderer is used on more than one target.
+    #
+    # It was hardcoded to 1_000.0 ("mtime @ 1 MHz on this bitstream"), which is
+    # the FireSim bitstream's clock. On the SpaceMiT K1 `rdtime` runs at a
+    # fixed 24 MHz (ModelBlaster/cores/spacemit_k1.json, notes.clock; rdcycle
+    # SIGILLs from userspace there, so rdtime is the only counter available).
+    # Every "actual" bar drawn from a K1 trace was therefore 24x too long,
+    # against a "predicted" panel that was correct -- which reads as a
+    # catastrophic misprediction and is a unit bug.
+    #
+    # scripts/plot_k1_trace_gantt.py:68 has the same constant spelled
+    # K1_RDTIME_HZ and got it right; this is the copy that did not.
+    ACTUAL_PER_MS = float(os.environ.get("XPURT_TICKS_PER_MS", 24_000.0))
     # Keep `scale` as the dispatch-shape ratio for the printed summary.
     scale = (max(r["actual_end"] for r in rows) / raw_max_pred) if raw_max_pred > 0 else 1.0
 

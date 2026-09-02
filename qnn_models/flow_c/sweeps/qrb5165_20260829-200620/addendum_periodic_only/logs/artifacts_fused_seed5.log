@@ -1,0 +1,13 @@
++ /usr/bin/python3 flow_c.py artifacts --workload /scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c/sweeps/qrb5165_20260829-200620/addendum_periodic_only/workloads/fused_seed5.flowc.json
+(cwd=/scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c)
+
+
+=== artifacts ===================================================
+mlp_control: 3 dispatch graph(s), 3 profile CSV(s)
+fused_split: 3 dispatch graph(s), 3 profile CSV(s)
+  excluded: mlp_control/mlp_control_full on hta: excluded (registry says hta cannot run ['elu_s8']); cost set to 58900 us
+  excluded: fused_split/fused_tail on hta: excluded (registry says hta cannot run ['cast_i8_to_f16', 'cat3_c1_f16', 'linear_f16', 'lstm_f16']); cost set to 430350 us
+measured horizon (non-periodic worst case): 0.00 ms -> 
+workload spec: data/toplevel/networks_fused_seed5.json
+
+--- stderr ---

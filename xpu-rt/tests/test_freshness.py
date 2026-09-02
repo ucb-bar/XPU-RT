@@ -583,3 +583,50 @@ class AnalyticCrossCheck(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
+
+
+class TestDigitSuffixNetworksAreNotMisSplit(unittest.TestCase):
+    """A network whose own name ends in a digit must survive the split.
+
+    The regression this guards: several call sites split
+    `<network><instance>` with a trailing-digit rule -- a `\\d*` regex group or
+    `.rstrip("0123456789")`. Both read "vision_v3" as instance 3 of a network
+    "vision_v", so every hint, per-model row and candidate comparison for a
+    `*_v3` model was addressed to a network that does not exist.
+    """
+
+    TASKS = ("vision_v3", "smolvlm_vision_v3", "dronet", "mlp_control",
+             "yolov8_nano", "yolov8_nano_64")
+
+    def test_bare_digit_suffix_name_is_instance_zero(self):
+        self.assertEqual(split_instance_name("vision_v3", self.TASKS),
+                         ("vision_v3", 0))
+        self.assertEqual(split_instance_name("smolvlm_vision_v3", self.TASKS),
+                         ("smolvlm_vision_v3", 0))
+
+    def test_instances_of_a_digit_suffix_name_still_split(self):
+        self.assertEqual(split_instance_name("vision_v3" + "7", self.TASKS),
+                         ("vision_v3", 7))
+
+    def test_ordinary_instances_are_unaffected(self):
+        self.assertEqual(split_instance_name("dronet0", self.TASKS),
+                         ("dronet", 0))
+        self.assertEqual(split_instance_name("mlp_control29", self.TASKS),
+                         ("mlp_control", 29))
+
+    def test_longest_prefix_beats_the_shorter_registered_name(self):
+        # Both "yolov8_nano" and "yolov8_nano_64" are registered; the more
+        # specific one wins, so this is instance 0 of the _64 variant and not
+        # instance 64 of the base.
+        self.assertEqual(split_instance_name("yolov8_nano_64", self.TASKS),
+                         ("yolov8_nano_64", 0))
+
+    def test_the_old_trailing_digit_rule_would_have_failed_these(self):
+        import re
+        bad = re.compile(r"^(?P<net>.+?)(?P<instance>\d*)_dispatch_\d+$")
+        self.assertEqual(bad.match("vision_v3_dispatch_6").group("net"),
+                         "vision_v")   # the bug, pinned
+        self.assertEqual("vision_v3".rstrip("0123456789"), "vision_v")
+        # and what the shared splitter does instead
+        self.assertEqual(split_instance_name("vision_v3", self.TASKS)[0],
+                         "vision_v3")

@@ -1,0 +1,28 @@
+{
+  "network": "fused_full",
+  "ir": {
+    "source": "pytorch:fused_full",
+    "quant": "int8"
+  },
+  "_comment": "FusedSensorNet (modelblaster's fused_full): vision CNN + ToF depth conv + 3-layer LSTM + head, three inputs (front_grey 1x1x60x90, tof_cross 1x4x8x8, lowdim 1x21). One coarse tile \u2014 at ~3-5 ms whole-network there is nothing to gain from splitting, and the LSTM tail is sequential anyway. Precision differs per backend by necessity, not preference: the DSP is int8-only and composed the quantized graph; the CPU op package rejects that graph's Reshape config at int8 but takes the fp32 build. HTA rejects on Transpose. Converted by flow_c from modelblaster's own module and calibrated with its get_calibration_samples().",
+  "bindings": [
+    {
+      "id": 0,
+      "name": "fused_full_net",
+      "ops": "all",
+      "source_onnx": "flow_c/gen/onnx/fused_full.onnx",
+      "backends": {
+        "dsp": {
+          "ctx": "ctx_fused_full__Dsp.bin",
+          "graph": "fused_full",
+          "precision": "int8"
+        },
+        "cpu": {
+          "ctx": "ctx_fused_full_fp32__Cpu.bin",
+          "graph": "fused_full",
+          "precision": "fp32"
+        }
+      }
+    }
+  ]
+}

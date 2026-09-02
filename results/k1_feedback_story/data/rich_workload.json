@@ -1,0 +1,80 @@
+{
+ "_comment": "Sensor-aware, sharded, windowed multi-workload for the K1 demo Gantt. Every net is tied to a real sensor path in the flying drone demo, and its PERIOD is its real sampling/firing rate (record_sensor_demo.py fires: CTRL 50Hz, NAV 50Hz, YOLO ~4.17Hz, camera 10Hz). YOLOv8n is the DOMINATING network: 98 dispatches, ~184ms single-core, so the scheduler must SPLIT (shard) it across harts to meet its detection deadline -- machine_combination_mode=shard + topo_tag_override=false lets the solver pick a per-dispatch core width from the measured 1/2/4/8-hart profiles. enable_impls additionally lets the transformer vision-head (ffn/attn) linears (M=128, above the M=10.1 IME/RVV crossover) run on the cluster-0 IME MAC unit. num_instances are RT-driven (floor(window/period)) not arbitrary. ffn_block/attn_block are a ViNT-class vision-transformer STAND-IN over the FPV camera until FusedSensorViT/ViNT/DepthAnythingV3-small are compiled (requests_to_a/009,010).",
+ "_shard_comment": "Only yolov8_nano_64x96, dronet, ffn_block have multi-hart profiles, so only they can shard; mlp_control/fused_full/attn_block have no multi-hart CSV, so their multi-hart combos are excluded and they stay single-core automatically. topo_tag_override=false is required so each shard block is costed from its own N-hart profile (topo_0_1_2_3 etc.), not the single-core one.",
+ "hardware": {
+  "machines": { "cpu_p": 4, "cpu_e": 4 },
+  "profile_hw": { "cpu_p": "rvv_x60", "cpu_e": "rvv_x60" },
+  "profile": {
+   "target": "spacemit_x60",
+   "topo_tag_override": false,
+   "gen_root": "gen_mb"
+  },
+  "p_core_speedup": 1.0
+ },
+ "scheduler": {
+  "random_seed": 42,
+  "solver_verbosity": 1,
+  "time_limit": 300,
+  "use_profiled": true,
+  "prune_periodic": true,
+  "restrict_makespan_to_nonperiodic": false,
+  "machine_combination_mode": "shard",
+  "enable_impls": true
+ },
+ "networks": {
+  "mlp_control": {
+   "id": 0,
+   "identifier": "mlp_control",
+   "dispatch_deps_path": "gen_mb/vmfb/mlp_control/spacemit_x60/rvv_x60/mlp_control.int8/mlp_control.int8_dispatch_graph.json",
+   "period": 20.0,
+   "window_duration": 20.0,
+   "num_instances": 5
+  },
+  "fused_full": {
+   "id": 1,
+   "identifier": "fused_full",
+   "dispatch_deps_path": "gen_mb/vmfb/fused_full/spacemit_x60/rvv_x60/fused_full.int8/fused_full.int8_dispatch_graph.json",
+   "period": 20.0,
+   "window_duration": 20.0,
+   "num_instances": 4,
+   "stateful": true
+  },
+  "yolov8_nano_64x96": {
+   "id": 2,
+   "identifier": "yolov8_nano_64x96",
+   "dispatch_deps_path": "gen_mb/vmfb/yolov8_nano_64x96/spacemit_x60/rvv_x60/yolov8_nano_64x96.int8/yolov8_nano_64x96.int8_dispatch_graph.json",
+   "period": 240.0,
+   "window_duration": 240.0,
+   "num_instances": 1
+  },
+  "ffn_block": {
+   "id": 3,
+   "identifier": "ffn_block",
+   "dispatch_deps_path": "gen_mb/vmfb/ffn_block/spacemit_x60/rvv_x60/ffn_block.int8/ffn_block.int8_dispatch_graph.json",
+   "period": 100.0,
+   "window_duration": 100.0,
+   "num_instances": 2
+  },
+  "attn_block": {
+   "id": 4,
+   "identifier": "attn_block",
+   "dispatch_deps_path": "gen_mb/vmfb/attn_block/spacemit_x60/rvv_x60/attn_block.int8/attn_block.int8_dispatch_graph.json",
+   "period": 100.0,
+   "window_duration": 100.0,
+   "num_instances": 1
+  }
+ },
+ "edges": [],
+ "_edges_comment": "MUST stay empty for the fused_full->mlp_control relationship: a precedence edge would force control to WAIT for nav, deleting the staleness phenomenon. The sensor/perception freshness relationship lives in freshness_edges and is evaluated post-hoc.",
+ "freshness_edges": [
+  {
+   "producer_task": "fused_full",
+   "consumer_task": "mlp_control",
+   "freshness_window": 40.0,
+   "sample_time_semantics": "producer_release",
+   "consumption_policy": "latest_completed",
+   "criticality": "hard",
+   "_comment": "Control consumes the nav steer command; if nav is stale the controller acts on old guidance. Window = 2x nav period (20ms) as the age ceiling."
+  }
+ ]
+}

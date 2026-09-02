@@ -1,0 +1,129 @@
++ /tmp/claude-1172/-scratch2-dima-misc-sw-XPU-RT/3882980f-b60e-47b9-be3f-7fe85ec2bebb/scratchpad/milpenv/bin/python /scratch2/dima/misc_sw/XPU-RT/scripts/run_xpurt_schedule.py --networks-json /scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c/sweeps/qrb5165_20260829-200620/workloads/baseline_seed6.json --solver milp --time-limit 300 --profiled
+(cwd=/scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c/sweeps/qrb5165_20260829-200620)
+
+============================================================
+Loading network hierarchy from JSON...
+============================================================
+
+Loading networks from: /scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c/sweeps/qrb5165_20260829-200620/workloads/baseline_seed6.json
+
+Found 7 networks:
+  - mlp_control (id: 0, identifier: mlp_control)
+  - dronet (id: 1, identifier: dronet)
+  - yolov8n_a (id: 2, identifier: yolov8n_a)
+  - yolov8n_b (id: 3, identifier: yolov8n_b)
+  - yolov8n_c (id: 4, identifier: yolov8n_c)
+  - yolov8n_d (id: 5, identifier: yolov8n_d)
+  - yolov8n_e (id: 6, identifier: yolov8n_e)
+
+Found 0 network-level dependencies:
+
+Resolved runtime configuration:
+  Machine core counts: {'CPU_P': 1, 'CPU_E': 1, 'CPU_X': 1}
+  Profile HW mapping: CPU_P->HTA, CPU_E->DSP
+  Profile target/topology: target=qrb5165_flowc, topo_tag=topo_0
+  p_core_speedup: 1.5
+  random_seed: 6
+  solver_verbosity: 0
+  time_limit: 300.0
+  use_profiled: True
+  prune_periodic: True
+  restrict_makespan_to_nonperiodic: True
+  machine_combination_mode: singletons
+  enforce_same_processor_combinations: True
+
+Using profiled runtimes where available...
+  (info) profile fallback: yolov8n_a/CPU/topo_0 -> model=yolov8n
+  (info) profile fallback: yolov8n_a/DSP/topo_0 -> model=yolov8n
+  (info) profile fallback: yolov8n_a/HTA/topo_0 -> model=yolov8n
+  (info) profile fallback: yolov8n_b/CPU/topo_0 -> model=yolov8n
+  (info) profile fallback: yolov8n_b/DSP/topo_0 -> model=yolov8n
+  (info) profile fallback: yolov8n_b/HTA/topo_0 -> model=yolov8n
+  (info) profile fallback: yolov8n_c/CPU/topo_0 -> model=yolov8n
+  (info) profile fallback: yolov8n_c/DSP/topo_0 -> model=yolov8n
+  (info) profile fallback: yolov8n_c/HTA/topo_0 -> model=yolov8n
+  (info) profile fallback: yolov8n_d/CPU/topo_0 -> model=yolov8n
+  (info) profile fallback: yolov8n_d/DSP/topo_0 -> model=yolov8n
+  (info) profile fallback: yolov8n_d/HTA/topo_0 -> model=yolov8n
+  (info) profile fallback: yolov8n_e/CPU/topo_0 -> model=yolov8n
+  (info) profile fallback: yolov8n_e/DSP/topo_0 -> model=yolov8n
+  (info) profile fallback: yolov8n_e/HTA/topo_0 -> model=yolov8n
+
+Creating workload from network hierarchy...
+
+Workload created successfully!
+  Total operations: 30
+  Scheduler machines (3 cores): ['CPU_P#0', 'CPU_E#0', 'CPU_X#0']
+  Machine combination options: 3 (mode=singletons)
+  Job names: ['mlp_control0', 'dronet0', 'yolov8n_a', 'yolov8n_b', 'yolov8n_c', 'yolov8n_d', 'yolov8n_e', 'mlp_control1', 'mlp_control2', 'mlp_control3', 'mlp_control4', 'mlp_control5', 'mlp_control6', 'mlp_control7', 'mlp_control8', 'mlp_control9', 'dronet1', 'dronet2', 'dronet3', 'dronet4', 'dronet5', 'dronet6', 'dronet7', 'dronet8', 'dronet9']
+  Operations with multiple predecessors: 0
+  Independent jobs (can run in parallel): 25
+
+============================================================
+Scheduling combined workload (MILP)...
+============================================================
+Status:  optimal_inaccurate
+Optimal value:  91.69299999999313
+Validation: All 30 operations have been scheduled.
+
+Scheduling completed!
+Makespan (non-periodic): 91.69 ms
+
+Combination assignments:
+  1xCPU_P: 10 operations
+  1xCPU_E: 9 operations
+  1xCPU_X: 11 operations
+
+Per-network combination assignments:
+  Mlp_control0: 1xCPU_X=1
+  Dronet0: 1xCPU_P=1
+  Yolov8n_a: 1xCPU_E=2
+  Yolov8n_b: 1xCPU_P=1, 1xCPU_X=1
+  Yolov8n_c: 1xCPU_P=1, 1xCPU_E=1
+  Yolov8n_d: 1xCPU_E=2
+  Yolov8n_e: 1xCPU_P=1, 1xCPU_E=1
+  Mlp_control1: 1xCPU_X=1
+  Mlp_control2: 1xCPU_X=1
+  Mlp_control3: 1xCPU_X=1
+  Mlp_control4: 1xCPU_X=1
+  Mlp_control5: 1xCPU_X=1
+  Mlp_control6: 1xCPU_X=1
+  Mlp_control7: 1xCPU_X=1
+  Mlp_control8: 1xCPU_X=1
+  Mlp_control9: 1xCPU_X=1
+  Dronet1: 1xCPU_P=1
+  Dronet2: 1xCPU_E=1
+  Dronet3: 1xCPU_E=1
+  Dronet4: 1xCPU_P=1
+  Dronet5: 1xCPU_P=1
+  Dronet6: 1xCPU_E=1
+  Dronet7: 1xCPU_P=1
+  Dronet8: 1xCPU_P=1
+  Dronet9: 1xCPU_P=1
+Job 'mlp_control0' (job_id=0, color_index=0) -> color RGB=[0.59607843 0.8345098  0.57882353]
+Job 'dronet0' (job_id=1, color_index=1) -> color RGB=[0.57960784 0.77019608 0.87372549]
+Job 'yolov8n_a' (job_id=2, color_index=2) -> color RGB=[0.44884275 0.38396002 0.67387928]
+Job 'yolov8n_b' (job_id=3, color_index=3) -> color RGB=[0.85033449 0.14686659 0.13633218]
+Job 'yolov8n_c' (job_id=4, color_index=4) -> color RGB=[0.8482276  0.35229527 0.03497116]
+Saving plot to plots/baseline_seed6_profiled.png...
+
+Plot saved to plots/baseline_seed6_profiled.png
+
+Outputting scheduled JSON...
+
+Scheduled JSON saved to: schedules/scheduled_baseline_seed6_profiled.json
+WARN: granularity advisor -- the desired granularity for yolov8n_a's dispatches should be finer: its largest dispatch (15.38 ms) exceeds dronet's available free slot (2.97 ms) (period 5.00 ms, free slot 2.97 ms after dronet's own utilization) -- it would overrun dronet's cadence if they shared a core
+WARN: granularity advisor -- the desired granularity for yolov8n_b's dispatches should be finer: its largest dispatch (39.46 ms) exceeds dronet's available free slot (2.97 ms) (period 5.00 ms, free slot 2.97 ms after dronet's own utilization) -- it would overrun dronet's cadence if they shared a core
+WARN: granularity advisor -- the desired granularity for yolov8n_c's dispatches should be finer: its largest dispatch (15.38 ms) exceeds dronet's available free slot (2.97 ms) (period 5.00 ms, free slot 2.97 ms after dronet's own utilization) -- it would overrun dronet's cadence if they shared a core
+WARN: granularity advisor -- the desired granularity for yolov8n_d's dispatches should be finer: its largest dispatch (15.38 ms) exceeds dronet's available free slot (2.97 ms) (period 5.00 ms, free slot 2.97 ms after dronet's own utilization) -- it would overrun dronet's cadence if they shared a core
+WARN: granularity advisor -- the desired granularity for yolov8n_e's dispatches should be finer: its largest dispatch (15.38 ms) exceeds dronet's available free slot (2.97 ms) (period 5.00 ms, free slot 2.97 ms after dronet's own utilization) -- it would overrun dronet's cadence if they shared a core
+
+--- stderr ---
+/tmp/claude-1172/-scratch2-dima-misc-sw-XPU-RT/3882980f-b60e-47b9-be3f-7fe85ec2bebb/scratchpad/milpenv/lib/python3.12/site-packages/mosek/__init__.py:11539: UserWarning: Argument subi in putaijlist64: Incorrect array format causing data to be copied
+  warnings.warn("Argument subi in putaijlist64: Incorrect array format causing data to be copied");
+/tmp/claude-1172/-scratch2-dima-misc-sw-XPU-RT/3882980f-b60e-47b9-be3f-7fe85ec2bebb/scratchpad/milpenv/lib/python3.12/site-packages/mosek/__init__.py:11568: UserWarning: Argument subj in putaijlist64: Incorrect array format causing data to be copied
+  warnings.warn("Argument subj in putaijlist64: Incorrect array format causing data to be copied");
+/scratch2/dima/misc_sw/XPU-RT/xpu-rt/scheduler.py:606: UserWarning: Optimization terminated by time limit; solution may be imprecise or absent.
+  problem.solve(solver=cp.MOSEK, verbose=mosek_verbose, mosek_params=mosek_params)
+/scratch2/dima/misc_sw/XPU-RT/xpu-rt/scheduler.py:606: UserWarning: Solution may be inaccurate. Try another solver, adjusting the solver settings, or solve with verbose=True for more information.
+  problem.solve(solver=cp.MOSEK, verbose=mosek_verbose, mosek_params=mosek_params)

@@ -1,0 +1,17 @@
++ /usr/bin/python3 flow_c.py artifacts --workload /scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c/costmodel_validation/workloads/baseline_seed3.flowc.json
+(cwd=/scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c)
+
+
+=== artifacts ===================================================
+mlp_control: 3 dispatch graph(s), 3 profile CSV(s)
+dronet_a: 3 dispatch graph(s), 3 profile CSV(s)
+dronet_b: 3 dispatch graph(s), 3 profile CSV(s)
+yolov8n_a: 3 dispatch graph(s), 3 profile CSV(s)
+yolov8n_b: 3 dispatch graph(s), 3 profile CSV(s)
+  excluded: mlp_control/mlp_control_full on hta: excluded (registry says hta cannot run ['elu_s8']); cost set to 66850 us
+  excluded: yolov8n/yolov8n_head on hta: excluded (registry says hta cannot run ['reshape', 'slice', 'softmax', 'transpose']); cost set to 5216650 us
+  excluded: yolov8n/yolov8n_head on hta: excluded (registry says hta cannot run ['reshape', 'slice', 'softmax', 'transpose']); cost set to 5216650 us
+measured horizon (non-periodic worst case): 0.00 ms -> 
+workload spec: data/toplevel/networks_baseline_seed3.json
+
+--- stderr ---

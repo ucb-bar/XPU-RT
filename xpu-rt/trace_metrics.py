@@ -4,11 +4,11 @@ Why this module exists
 ----------------------
 Three copies of "collapse trace rows into periodic instances" had grown up
 independently -- in `xpu-rt/metrics.py` (predicted only), in
-`scripts/k1_baselines.py` (measured, per instance, no rate), and in
+the retired `k1_baselines.py` (measured, per instance, no rate), and in
 `scripts/plot_k1_evolution.py` (measured, the only one that computed response
 time from the nominal release k*T). They disagreed, and the disagreement was
 invisible: `metrics.py` reported 160 deadline misses for the same run that
-`k1_baselines.py` reported 10, because one counts dispatches and the other
+it reported 10, because one counts dispatches and the other
 counts job instances. Both numbers are defensible; publishing them under the
 same name is not.
 
@@ -43,19 +43,24 @@ from __future__ import annotations
 
 import csv
 from collections import defaultdict
+
+import job_names
+import k1_trace
 from typing import Dict, Iterable, List, Optional, Sequence
 
 
-def model_of(job_name: str) -> str:
-    """'dronet3' -> 'dronet'. The instance index is the numeric suffix."""
-    base = job_name.rstrip("0123456789")
-    return base or job_name
+def model_of(job_name: str, known=None) -> str:
+    """'dronet3' -> 'dronet'. The instance index is the numeric suffix.
+
+    `known` is the set of real network names. Pass it whenever it is available:
+    without it a network whose own name ends in a digit is split in the wrong
+    place, and the consequence here is not cosmetic -- see `job_names`.
+    """
+    return job_names.model_of(job_name, known)
 
 
-def instance_index(job_name: str) -> int:
-    base = model_of(job_name)
-    suffix = job_name[len(base):]
-    return int(suffix) if suffix else 0
+def instance_index(job_name: str, known=None) -> int:
+    return job_names.instance_index(job_name, known)
 
 
 def pct(xs: Sequence[float], p: float) -> float:
@@ -76,39 +81,20 @@ K1_RDTIME_HZ = 24_000_000.0
 def normalise_modelblaster(rows: List[dict]) -> List[dict]:
     """Map ModelBlaster's `harness_xpurt` trace onto this module's columns.
 
-    Two producers emit measured K1 traces and they disagree on spelling, not on
-    meaning: merlin's runner writes `start_us`/`end_us`/`run_us`/
-    `queue_delay_us`/`job_name`/`cores`; ModelBlaster's writes
-    `actual_start_cycles`/`actual_end_cycles` plus `network`+`instance`. Doing
-    the mapping here rather than in each caller is the whole reason this module
-    exists -- `metrics.py` and `k1_baselines.py` disagreeing about what a miss
-    is, in different files, is what it was written to end.
+    Delegates to `k1_trace.normalise`, which owns the mapping for the whole
+    repo -- it had three implementations and they disagreed about whether the
+    trace's `dispatch_id` is a record slot or an IR id.
 
-    Cycles are rdtime ticks, and the run is stamped from the first tick observed
-    rather than from 0, so t=0 is the run's own start.
-
-    `queue_delay_us` has no counterpart in this producer, so it is left ABSENT
-    rather than filled with 0 -- `summarise_trace` then reports `queue_us: None`
-    instead of a zero that would read as "no queueing was measured".
+    `fill_queue_delay=False` is the one thing this caller needs differently:
+    that producer measures no queueing, and inventing a 0 here would make
+    `summarise_trace` report "no queueing" for a run where it was simply never
+    measured. Absent stays absent, and `queue_us` comes out None.
     """
-    if not rows or "actual_start_cycles" not in rows[0]:
-        return rows
-    t0 = min(int(r["actual_start_cycles"]) for r in rows)
-    out = []
-    for r in rows:
-        s, e = int(r["actual_start_cycles"]), int(r["actual_end_cycles"])
-        d = dict(r)
-        d["start_us"] = (s - t0) / K1_RDTIME_HZ * 1e6
-        d["end_us"] = (e - t0) / K1_RDTIME_HZ * 1e6
-        d["run_us"] = max(e - s, 0) / K1_RDTIME_HZ * 1e6
-        d["job_name"] = f'{r.get("network", "")}{r.get("instance", "")}'
-        out.append(d)
-    return out
+    return k1_trace.normalise(rows, fill_queue_delay=False)
 
 
 def read_trace(path: str) -> List[dict]:
-    with open(path, newline="") as f:
-        return normalise_modelblaster(list(csv.DictReader(f)))
+    return k1_trace.read(path, fill_queue_delay=False)
 
 
 def _held_cores(row: dict) -> List[str]:
@@ -156,6 +142,13 @@ def summarise_trace(rows: Sequence[dict],
     if not rows:
         return {}
     windows_ms = windows_ms or {}
+    # The period map's keys ARE the network names, so the split below needs no
+    # extra argument -- provided the schedule that produced them was itself
+    # written with un-stripped names (see `postprocessing.output_scheduled_json`).
+    # For a schedule written before that fix the keys are already stripped, and
+    # `job_names.split_job_name` then falls through to the same stripping, so
+    # old artifacts keep scoring exactly as they did.
+    known = set(periods_ms) | set(windows_ms)
 
     service_us = sum(float(r["run_us"]) for r in rows)
     # Not every producer measures queueing separately (ModelBlaster's harness
@@ -177,12 +170,12 @@ def summarise_trace(rows: Sequence[dict],
 
     per_model: Dict[str, dict] = {}
     for job, (st, en) in spans.items():
-        m = model_of(job)
+        m = model_of(job, known)
         T = periods_ms.get(m)
         if T is None:
             continue
         D = windows_ms.get(m, T)
-        k = instance_index(job)
+        k = instance_index(job, known)
         d = per_model.setdefault(m, {
             "period_ms": T, "deadline_ms": D, "instances": 0,
             "misses": 0, "lateness_ms": [], "response_ms": [],

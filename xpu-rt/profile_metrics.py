@@ -11,6 +11,8 @@ import csv
 import glob
 import json
 import os
+
+import workload_spec
 from collections import defaultdict
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -59,21 +61,6 @@ def parse_profile_hardware(networks_data: dict) -> Optional[Tuple[str, str, str,
     return gen_root, target, topo, hw_p, hw_e
 
 
-def _basename_from_dispatch_deps_path(path: str) -> str:
-    if not path:
-        return ""
-    return os.path.basename(os.path.dirname(path))
-
-
-def _model_candidates(net_key: str, net_info: dict, basename: str) -> List[str]:
-    out: List[str] = []
-    bm = os.path.basename(basename).split(".")[0] if basename else ""
-    for c in (net_key, net_info.get("identifier"), bm):
-        if isinstance(c, str) and c and c not in out:
-            out.append(c)
-    return out or [net_key]
-
-
 def _find_profile_csv(
     repo_base: str,
     *,
@@ -109,9 +96,9 @@ def _pick_csv_pair_for_network(
     net_key: str,
     net_info: dict,
     dispatch_rel: str,
-) -> Tuple[Optional[str], Optional[str]]:
-    basename = _basename_from_dispatch_deps_path(dispatch_rel)
-    for model in _model_candidates(net_key, net_info, basename):
+) -> Tuple[Optional[str], Optional[str], str]:
+    basename = workload_spec.basename_from_dispatch_deps_path(dispatch_rel)
+    for model in workload_spec.model_candidates(net_key, net_info, basename):
         csv_p = _find_profile_csv(
             repo_base,
             gen_root=gen_root,
@@ -131,8 +118,8 @@ def _pick_csv_pair_for_network(
             topo_tag=topo,
         )
         if csv_p or csv_e:
-            return csv_p, csv_e
-    return None, None
+            return csv_p, csv_e, model
+    return None, None, workload_spec.model_candidates(net_key, net_info, basename)[0]
 
 
 def load_times_ms_by_dispatch_id(csv_path: Optional[str]) -> Dict[int, float]:
@@ -162,19 +149,6 @@ def load_times_ms_by_dispatch_id(csv_path: Optional[str]) -> Dict[int, float]:
                 mean_ms = mean
             out[did] = mean_ms
     return out
-
-
-def _is_automatic_periodic(net_info: dict) -> bool:
-    return net_info.get("period") is not None and net_info.get(
-        "window_duration"
-    ) is not None
-
-
-def _is_windowed_slice(net_info: dict) -> bool:
-    return (
-        net_info.get("min_start_t") is not None
-        and net_info.get("max_end_t") is not None
-    )
 
 
 def worst_case_layer_sum_ms_for_network(
@@ -211,7 +185,7 @@ def worst_case_layer_sum_ms_for_network(
     if not full or not os.path.exists(full):
         return None
 
-    csv_p, csv_e = _pick_csv_pair_for_network(
+    csv_p, csv_e, _model_used = _pick_csv_pair_for_network(
         repo_base_path,
         gen_root,
         target,
@@ -288,7 +262,7 @@ def max_periodic_window_fraction(
     for net_key, net_info in networks.items():
         if not isinstance(net_info, dict):
             continue
-        if not _is_automatic_periodic(net_info):
+        if not workload_spec.is_automatic_periodic(net_info):
             continue
         # Prefer period T; fall back to window_duration if T is absent.
         try:
@@ -320,7 +294,7 @@ def max_periodic_window_fraction(
     for net_key, net_info in networks.items():
         if not isinstance(net_info, dict):
             continue
-        if not _is_windowed_slice(net_info):
+        if not workload_spec.is_windowed_slice(net_info):
             continue
         ident = str(net_info.get("identifier") or "")
         dpath = str(net_info.get("dispatch_deps_path") or "")
@@ -384,9 +358,9 @@ def nonperiodic_worst_case_layer_sum_ms(
     for net_key, net_info in networks.items():
         if not isinstance(net_info, dict):
             continue
-        if _is_automatic_periodic(net_info):
+        if workload_spec.is_automatic_periodic(net_info):
             continue
-        if _is_windowed_slice(net_info):
+        if workload_spec.is_windowed_slice(net_info):
             continue
         s = worst_case_layer_sum_ms_for_network(
             repo_base_path,

@@ -1,0 +1,4682 @@
+{
+  "schema_version": 2,
+  "experiment_id": "k1-exact-cycle-feedback-board-v1",
+  "board": "SpaceMiT K1",
+  "timer_ticks_per_ms": 24000.0,
+  "runs_per_phase": 10,
+  "execution_protocol": {
+    "minimum_runs_per_phase": 10,
+    "required_runner_policy": "SCHED_FIFO"
+  },
+  "critical_models": [
+    "dronet",
+    "fused_full",
+    "mlp_control"
+  ],
+  "heavy_model": "ffn_block",
+  "fp16_models": [
+    "fused_full"
+  ],
+  "original": {
+    "aggregate": {
+      "runs": 10,
+      "expected_trace_rows": 178,
+      "all_complete": true,
+      "all_release_gates_honored": true,
+      "all_cycle_boundaries_clear": true,
+      "total_deadline_misses": 0,
+      "critical_response_ms": {
+        "samples": [
+          10.269541666666667,
+          10.593583333333333,
+          10.48875,
+          10.492125,
+          10.551333333333334,
+          10.489875,
+          10.536416666666666,
+          10.519458333333333,
+          10.394125,
+          10.351791666666667
+        ],
+        "min": 10.269541666666667,
+        "median": 10.491,
+        "max": 10.593583333333333
+      },
+      "heavy_response_ms": {
+        "samples": [
+          18.883791666666667,
+          19.11625,
+          19.118833333333335,
+          19.040916666666668,
+          19.00425,
+          18.897291666666668,
+          19.136166666666668,
+          18.999166666666667,
+          19.096041666666668,
+          18.845791666666667
+        ],
+        "min": 18.845791666666667,
+        "median": 19.022583333333333,
+        "max": 19.136166666666668
+      }
+    },
+    "runs": [
+      {
+        "path": "results/k1_feedback_exact/board_runs_rt_observed/original_0_trace.csv",
+        "sha256": "d4177c778a9d74c77bdcb2656b825f579a391ee8c256c0ac4e5f2ab68e3d6c80",
+        "trace_rows": 178,
+        "jobs": [
+          {
+            "model": "dronet",
+            "instance": 0,
+            "dispatches": 21,
+            "release_ms": 0.0,
+            "actual_start_ms": 0.8810416666666666,
+            "actual_end_ms": 10.269541666666667,
+            "response_ms": 10.269541666666667,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "dronet",
+            "instance": 1,
+            "dispatches": 21,
+            "release_ms": 33.333333333333336,
+            "actual_start_ms": 33.336666666666666,
+            "actual_end_ms": 42.007416666666664,
+            "response_ms": 8.674083333333328,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "dronet",
+            "instance": 2,
+            "dispatches": 21,
+            "release_ms": 66.66666666666667,
+            "actual_start_ms": 66.66870833333333,
+            "actual_end_ms": 75.28754166666667,
+            "response_ms": 8.620874999999998,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "ffn_block",
+            "instance": 0,
+            "dispatches": 5,
+            "release_ms": 0.0,
+            "actual_start_ms": 0.2537916666666667,
+            "actual_end_ms": 18.883791666666667,
+            "response_ms": 18.883791666666667,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 0,
+            "dispatches": 15,
+            "release_ms": 0.0,
+            "actual_start_ms": 0.327875,
+            "actual_end_ms": 5.404083333333333,
+            "response_ms": 5.404083333333333,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 1,
+            "dispatches": 15,
+            "release_ms": 20.0,
+            "actual_start_ms": 20.002125,
+            "actual_end_ms": 24.013708333333334,
+            "response_ms": 4.013708333333334,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 2,
+            "dispatches": 15,
+            "release_ms": 40.0,
+            "actual_start_ms": 40.00225,
+            "actual_end_ms": 44.03475,
+            "response_ms": 4.0347500000000025,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 3,
+            "dispatches": 15,
+            "release_ms": 60.0,
+            "actual_start_ms": 60.00204166666666,
+            "actual_end_ms": 63.957541666666664,
+            "response_ms": 3.957541666666664,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 4,
+            "dispatches": 15,
+            "release_ms": 80.0,
+            "actual_start_ms": 80.00075,
+            "actual_end_ms": 84.05975,
+            "response_ms": 4.059749999999994,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 0,
+            "dispatches": 7,
+            "release_ms": 0.0,
+            "actual_start_ms": 0.76875,
+            "actual_end_ms": 0.8646666666666667,
+            "response_ms": 0.8646666666666667,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 1,
+            "dispatches": 7,
+            "release_ms": 20.0,
+            "actual_start_ms": 20.001791666666666,
+            "actual_end_ms": 20.091416666666667,
+            "response_ms": 0.09141666666666737,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 2,
+            "dispatches": 7,
+            "release_ms": 40.0,
+            "actual_start_ms": 40.001625,
+            "actual_end_ms": 40.09258333333333,
+            "response_ms": 0.09258333333333013,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 3,
+            "dispatches": 7,
+            "release_ms": 60.0,
+            "actual_start_ms": 60.00225,
+            "actual_end_ms": 60.09020833333334,
+            "response_ms": 0.09020833333333655,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 4,
+            "dispatches": 7,
+            "release_ms": 80.0,
+            "actual_start_ms": 80.00158333333333,
+            "actual_end_ms": 80.09125,
+            "response_ms": 0.09125000000000227,
+            "lateness_ms": 0.0
+          }
+        ],
+        "job_count": 14,
+        "schedule_identity_match": true,
+        "early_start_count": 0,
+        "max_actual_end_ms": 84.05975,
+        "cycle_boundary_clear": true,
+        "deadline_misses": 0,
+        "max_lateness_ms": 0.0,
+        "worst_critical_response_ms": 10.269541666666667,
+        "heavy_response_ms": 18.883791666666667
+      },
+      {
+        "path": "results/k1_feedback_exact/board_runs_rt_observed/original_1_trace.csv",
+        "sha256": "02161a8849cd7bc938570e61e7ac341f53cfd4ac7f934ac48ce0223c900eea91",
+        "trace_rows": 178,
+        "jobs": [
+          {
+            "model": "dronet",
+            "instance": 0,
+            "dispatches": 21,
+            "release_ms": 0.0,
+            "actual_start_ms": 1.17475,
+            "actual_end_ms": 10.593583333333333,
+            "response_ms": 10.593583333333333,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "dronet",
+            "instance": 1,
+            "dispatches": 21,
+            "release_ms": 33.333333333333336,
+            "actual_start_ms": 33.337583333333335,
+            "actual_end_ms": 42.127833333333335,
+            "response_ms": 8.7945,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "dronet",
+            "instance": 2,
+            "dispatches": 21,
+            "release_ms": 66.66666666666667,
+            "actual_start_ms": 66.669,
+            "actual_end_ms": 75.308875,
+            "response_ms": 8.642208333333329,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "ffn_block",
+            "instance": 0,
+            "dispatches": 5,
+            "release_ms": 0.0,
+            "actual_start_ms": 0.3147083333333333,
+            "actual_end_ms": 19.11625,
+            "response_ms": 19.11625,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 0,
+            "dispatches": 15,
+            "release_ms": 0.0,
+            "actual_start_ms": 0.5887916666666667,
+            "actual_end_ms": 5.6513333333333335,
+            "response_ms": 5.6513333333333335,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 1,
+            "dispatches": 15,
+            "release_ms": 20.0,
+            "actual_start_ms": 20.002,
+            "actual_end_ms": 23.982,
+            "response_ms": 3.9819999999999993,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 2,
+            "dispatches": 15,
+            "release_ms": 40.0,
+            "actual_start_ms": 40.00333333333333,
+            "actual_end_ms": 43.995625,
+            "response_ms": 3.995624999999997,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 3,
+            "dispatches": 15,
+            "release_ms": 60.0,
+            "actual_start_ms": 60.00266666666667,
+            "actual_end_ms": 63.910666666666664,
+            "response_ms": 3.910666666666664,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 4,
+            "dispatches": 15,
+            "release_ms": 80.0,
+            "actual_start_ms": 80.00120833333334,
+            "actual_end_ms": 83.937375,
+            "response_ms": 3.937375000000003,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 0,
+            "dispatches": 7,
+            "release_ms": 0.0,
+            "actual_start_ms": 1.0065,
+            "actual_end_ms": 1.10325,
+            "response_ms": 1.10325,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 1,
+            "dispatches": 7,
+            "release_ms": 20.0,
+            "actual_start_ms": 20.002458333333333,
+            "actual_end_ms": 20.090375,
+            "response_ms": 0.09037500000000165,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 2,
+            "dispatches": 7,
+            "release_ms": 40.0,
+            "actual_start_ms": 40.002916666666664,
+            "actual_end_ms": 40.0965,
+            "response_ms": 0.09649999999999892,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 3,
+            "dispatches": 7,
+            "release_ms": 60.0,
+            "actual_start_ms": 60.002125,
+            "actual_end_ms": 60.090125,
+            "response_ms": 0.09012500000000045,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 4,
+            "dispatches": 7,
+            "release_ms": 80.0,
+            "actual_start_ms": 80.00170833333334,
+            "actual_end_ms": 80.0925,
+            "response_ms": 0.09250000000000114,
+            "lateness_ms": 0.0
+          }
+        ],
+        "job_count": 14,
+        "schedule_identity_match": true,
+        "early_start_count": 0,
+        "max_actual_end_ms": 83.937375,
+        "cycle_boundary_clear": true,
+        "deadline_misses": 0,
+        "max_lateness_ms": 0.0,
+        "worst_critical_response_ms": 10.593583333333333,
+        "heavy_response_ms": 19.11625
+      },
+      {
+        "path": "results/k1_feedback_exact/board_runs_rt_observed/original_2_trace.csv",
+        "sha256": "88e4a8b8142c87d8899950a079b9fd61be05ef5c6ba9975b8070cbd027c9b5b5",
+        "trace_rows": 178,
+        "jobs": [
+          {
+            "model": "dronet",
+            "instance": 0,
+            "dispatches": 21,
+            "release_ms": 0.0,
+            "actual_start_ms": 1.1357916666666668,
+            "actual_end_ms": 10.48875,
+            "response_ms": 10.48875,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "dronet",
+            "instance": 1,
+            "dispatches": 21,
+            "release_ms": 33.333333333333336,
+            "actual_start_ms": 33.33741666666667,
+            "actual_end_ms": 42.024458333333335,
+            "response_ms": 8.691125,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "dronet",
+            "instance": 2,
+            "dispatches": 21,
+            "release_ms": 66.66666666666667,
+            "actual_start_ms": 66.66866666666667,
+            "actual_end_ms": 75.2975,
+            "response_ms": 8.630833333333328,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "ffn_block",
+            "instance": 0,
+            "dispatches": 5,
+            "release_ms": 0.0,
+            "actual_start_ms": 0.33429166666666665,
+            "actual_end_ms": 19.118833333333335,
+            "response_ms": 19.118833333333335,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 0,
+            "dispatches": 15,
+            "release_ms": 0.0,
+            "actual_start_ms": 0.5258333333333334,
+            "actual_end_ms": 5.561833333333333,
+            "response_ms": 5.561833333333333,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 1,
+            "dispatches": 15,
+            "release_ms": 20.0,
+            "actual_start_ms": 20.00125,
+            "actual_end_ms": 23.961833333333335,
+            "response_ms": 3.9618333333333347,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 2,
+            "dispatches": 15,
+            "release_ms": 40.0,
+            "actual_start_ms": 40.00233333333333,
+            "actual_end_ms": 44.016041666666666,
+            "response_ms": 4.016041666666666,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 3,
+            "dispatches": 15,
+            "release_ms": 60.0,
+            "actual_start_ms": 60.00279166666667,
+            "actual_end_ms": 63.922625,
+            "response_ms": 3.9226249999999965,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 4,
+            "dispatches": 15,
+            "release_ms": 80.0,
+            "actual_start_ms": 80.00145833333333,
+            "actual_end_ms": 83.99645833333334,
+            "response_ms": 3.9964583333333366,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 0,
+            "dispatches": 7,
+            "release_ms": 0.0,
+            "actual_start_ms": 0.9574583333333333,
+            "actual_end_ms": 1.0552083333333333,
+            "response_ms": 1.0552083333333333,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 1,
+            "dispatches": 7,
+            "release_ms": 20.0,
+            "actual_start_ms": 20.002041666666667,
+            "actual_end_ms": 20.091958333333334,
+            "response_ms": 0.09195833333333425,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 2,
+            "dispatches": 7,
+            "release_ms": 40.0,
+            "actual_start_ms": 40.00170833333333,
+            "actual_end_ms": 40.092083333333335,
+            "response_ms": 0.09208333333333485,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 3,
+            "dispatches": 7,
+            "release_ms": 60.0,
+            "actual_start_ms": 60.0025,
+            "actual_end_ms": 60.0925,
+            "response_ms": 0.09250000000000114,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 4,
+            "dispatches": 7,
+            "release_ms": 80.0,
+            "actual_start_ms": 80.00191666666667,
+            "actual_end_ms": 80.09104166666667,
+            "response_ms": 0.09104166666666913,
+            "lateness_ms": 0.0
+          }
+        ],
+        "job_count": 14,
+        "schedule_identity_match": true,
+        "early_start_count": 0,
+        "max_actual_end_ms": 83.99645833333334,
+        "cycle_boundary_clear": true,
+        "deadline_misses": 0,
+        "max_lateness_ms": 0.0,
+        "worst_critical_response_ms": 10.48875,
+        "heavy_response_ms": 19.118833333333335
+      },
+      {
+        "path": "results/k1_feedback_exact/board_runs_rt_observed/original_3_trace.csv",
+        "sha256": "edc2cad6f25021d7c9ac8b53617e6f2932910997098b03831acb0110ee679d9c",
+        "trace_rows": 178,
+        "jobs": [
+          {
+            "model": "dronet",
+            "instance": 0,
+            "dispatches": 21,
+            "release_ms": 0.0,
+            "actual_start_ms": 1.097125,
+            "actual_end_ms": 10.492125,
+            "response_ms": 10.492125,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "dronet",
+            "instance": 1,
+            "dispatches": 21,
+            "release_ms": 33.333333333333336,
+            "actual_start_ms": 33.33683333333333,
+            "actual_end_ms": 41.98608333333333,
+            "response_ms": 8.652749999999997,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "dronet",
+            "instance": 2,
+            "dispatches": 21,
+            "release_ms": 66.66666666666667,
+            "actual_start_ms": 66.66916666666667,
+            "actual_end_ms": 75.3345,
+            "response_ms": 8.667833333333334,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "ffn_block",
+            "instance": 0,
+            "dispatches": 5,
+            "release_ms": 0.0,
+            "actual_start_ms": 0.2764583333333333,
+            "actual_end_ms": 19.040916666666668,
+            "response_ms": 19.040916666666668,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 0,
+            "dispatches": 15,
+            "release_ms": 0.0,
+            "actual_start_ms": 0.527625,
+            "actual_end_ms": 5.541,
+            "response_ms": 5.541,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 1,
+            "dispatches": 15,
+            "release_ms": 20.0,
+            "actual_start_ms": 20.001666666666665,
+            "actual_end_ms": 23.980041666666665,
+            "response_ms": 3.980041666666665,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 2,
+            "dispatches": 15,
+            "release_ms": 40.0,
+            "actual_start_ms": 40.001416666666664,
+            "actual_end_ms": 44.05275,
+            "response_ms": 4.052750000000003,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 3,
+            "dispatches": 15,
+            "release_ms": 60.0,
+            "actual_start_ms": 60.001916666666666,
+            "actual_end_ms": 63.946,
+            "response_ms": 3.945999999999998,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 4,
+            "dispatches": 15,
+            "release_ms": 80.0,
+            "actual_start_ms": 80.0015,
+            "actual_end_ms": 83.991,
+            "response_ms": 3.9909999999999997,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 0,
+            "dispatches": 7,
+            "release_ms": 0.0,
+            "actual_start_ms": 0.8695,
+            "actual_end_ms": 0.9649166666666666,
+            "response_ms": 0.9649166666666666,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 1,
+            "dispatches": 7,
+            "release_ms": 20.0,
+            "actual_start_ms": 20.002333333333333,
+            "actual_end_ms": 20.092833333333335,
+            "response_ms": 0.09283333333333488,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 2,
+            "dispatches": 7,
+            "release_ms": 40.0,
+            "actual_start_ms": 40.00175,
+            "actual_end_ms": 40.09283333333333,
+            "response_ms": 0.09283333333333132,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 3,
+            "dispatches": 7,
+            "release_ms": 60.0,
+            "actual_start_ms": 60.00175,
+            "actual_end_ms": 60.09125,
+            "response_ms": 0.09125000000000227,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 4,
+            "dispatches": 7,
+            "release_ms": 80.0,
+            "actual_start_ms": 80.0015,
+            "actual_end_ms": 80.08954166666666,
+            "response_ms": 0.08954166666666197,
+            "lateness_ms": 0.0
+          }
+        ],
+        "job_count": 14,
+        "schedule_identity_match": true,
+        "early_start_count": 0,
+        "max_actual_end_ms": 83.991,
+        "cycle_boundary_clear": true,
+        "deadline_misses": 0,
+        "max_lateness_ms": 0.0,
+        "worst_critical_response_ms": 10.492125,
+        "heavy_response_ms": 19.040916666666668
+      },
+      {
+        "path": "results/k1_feedback_exact/board_runs_rt_observed/original_4_trace.csv",
+        "sha256": "690e299eb66da9e7de6d53f27691f16c0de018a2b11dcbb790f6205fe9a5f765",
+        "trace_rows": 178,
+        "jobs": [
+          {
+            "model": "dronet",
+            "instance": 0,
+            "dispatches": 21,
+            "release_ms": 0.0,
+            "actual_start_ms": 1.1884166666666667,
+            "actual_end_ms": 10.551333333333334,
+            "response_ms": 10.551333333333334,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "dronet",
+            "instance": 1,
+            "dispatches": 21,
+            "release_ms": 33.333333333333336,
+            "actual_start_ms": 33.33770833333333,
+            "actual_end_ms": 42.04895833333333,
+            "response_ms": 8.715624999999996,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "dronet",
+            "instance": 2,
+            "dispatches": 21,
+            "release_ms": 66.66666666666667,
+            "actual_start_ms": 66.66933333333333,
+            "actual_end_ms": 75.35483333333333,
+            "response_ms": 8.68816666666666,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "ffn_block",
+            "instance": 0,
+            "dispatches": 5,
+            "release_ms": 0.0,
+            "actual_start_ms": 0.24929166666666666,
+            "actual_end_ms": 19.00425,
+            "response_ms": 19.00425,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 0,
+            "dispatches": 15,
+            "release_ms": 0.0,
+            "actual_start_ms": 0.46291666666666664,
+            "actual_end_ms": 5.644083333333334,
+            "response_ms": 5.644083333333334,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 1,
+            "dispatches": 15,
+            "release_ms": 20.0,
+            "actual_start_ms": 20.001916666666666,
+            "actual_end_ms": 23.954125,
+            "response_ms": 3.9541250000000012,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 2,
+            "dispatches": 15,
+            "release_ms": 40.0,
+            "actual_start_ms": 40.00183333333333,
+            "actual_end_ms": 44.03191666666667,
+            "response_ms": 4.0319166666666675,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 3,
+            "dispatches": 15,
+            "release_ms": 60.0,
+            "actual_start_ms": 60.00275,
+            "actual_end_ms": 63.915,
+            "response_ms": 3.914999999999999,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 4,
+            "dispatches": 15,
+            "release_ms": 80.0,
+            "actual_start_ms": 80.00125,
+            "actual_end_ms": 83.94733333333333,
+            "response_ms": 3.947333333333333,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 0,
+            "dispatches": 7,
+            "release_ms": 0.0,
+            "actual_start_ms": 0.9559583333333334,
+            "actual_end_ms": 1.0540833333333333,
+            "response_ms": 1.0540833333333333,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 1,
+            "dispatches": 7,
+            "release_ms": 20.0,
+            "actual_start_ms": 20.002166666666668,
+            "actual_end_ms": 20.093625,
+            "response_ms": 0.0936249999999994,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 2,
+            "dispatches": 7,
+            "release_ms": 40.0,
+            "actual_start_ms": 40.00179166666667,
+            "actual_end_ms": 40.09408333333333,
+            "response_ms": 0.09408333333333019,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 3,
+            "dispatches": 7,
+            "release_ms": 60.0,
+            "actual_start_ms": 60.00270833333333,
+            "actual_end_ms": 60.089708333333334,
+            "response_ms": 0.08970833333333417,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 4,
+            "dispatches": 7,
+            "release_ms": 80.0,
+            "actual_start_ms": 80.00220833333333,
+            "actual_end_ms": 80.092125,
+            "response_ms": 0.0921249999999958,
+            "lateness_ms": 0.0
+          }
+        ],
+        "job_count": 14,
+        "schedule_identity_match": true,
+        "early_start_count": 0,
+        "max_actual_end_ms": 83.94733333333333,
+        "cycle_boundary_clear": true,
+        "deadline_misses": 0,
+        "max_lateness_ms": 0.0,
+        "worst_critical_response_ms": 10.551333333333334,
+        "heavy_response_ms": 19.00425
+      },
+      {
+        "path": "results/k1_feedback_exact/board_runs_rt_observed/original_5_trace.csv",
+        "sha256": "ed0458d7ca2a8c93f1db0e9bc35850537679afa94af84c12c4fa290100040d95",
+        "trace_rows": 178,
+        "jobs": [
+          {
+            "model": "dronet",
+            "instance": 0,
+            "dispatches": 21,
+            "release_ms": 0.0,
+            "actual_start_ms": 1.159625,
+            "actual_end_ms": 10.489875,
+            "response_ms": 10.489875,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "dronet",
+            "instance": 1,
+            "dispatches": 21,
+            "release_ms": 33.333333333333336,
+            "actual_start_ms": 33.336875,
+            "actual_end_ms": 42.04508333333333,
+            "response_ms": 8.711749999999995,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "dronet",
+            "instance": 2,
+            "dispatches": 21,
+            "release_ms": 66.66666666666667,
+            "actual_start_ms": 66.66841666666667,
+            "actual_end_ms": 75.29858333333334,
+            "response_ms": 8.631916666666669,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "ffn_block",
+            "instance": 0,
+            "dispatches": 5,
+            "release_ms": 0.0,
+            "actual_start_ms": 0.30595833333333333,
+            "actual_end_ms": 18.897291666666668,
+            "response_ms": 18.897291666666668,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 0,
+            "dispatches": 15,
+            "release_ms": 0.0,
+            "actual_start_ms": 0.41683333333333333,
+            "actual_end_ms": 5.5049166666666665,
+            "response_ms": 5.5049166666666665,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 1,
+            "dispatches": 15,
+            "release_ms": 20.0,
+            "actual_start_ms": 20.002208333333332,
+            "actual_end_ms": 24.10925,
+            "response_ms": 4.109249999999999,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 2,
+            "dispatches": 15,
+            "release_ms": 40.0,
+            "actual_start_ms": 40.003,
+            "actual_end_ms": 44.05954166666667,
+            "response_ms": 4.059541666666668,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 3,
+            "dispatches": 15,
+            "release_ms": 60.0,
+            "actual_start_ms": 60.00241666666667,
+            "actual_end_ms": 63.95916666666667,
+            "response_ms": 3.9591666666666683,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 4,
+            "dispatches": 15,
+            "release_ms": 80.0,
+            "actual_start_ms": 80.00133333333333,
+            "actual_end_ms": 83.97354166666666,
+            "response_ms": 3.9735416666666623,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 0,
+            "dispatches": 7,
+            "release_ms": 0.0,
+            "actual_start_ms": 0.8287916666666667,
+            "actual_end_ms": 0.919875,
+            "response_ms": 0.919875,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 1,
+            "dispatches": 7,
+            "release_ms": 20.0,
+            "actual_start_ms": 20.001625,
+            "actual_end_ms": 20.09325,
+            "response_ms": 0.09325000000000117,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 2,
+            "dispatches": 7,
+            "release_ms": 40.0,
+            "actual_start_ms": 40.001916666666666,
+            "actual_end_ms": 40.09341666666667,
+            "response_ms": 0.09341666666666981,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 3,
+            "dispatches": 7,
+            "release_ms": 60.0,
+            "actual_start_ms": 60.002208333333336,
+            "actual_end_ms": 60.09670833333333,
+            "response_ms": 0.09670833333333206,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 4,
+            "dispatches": 7,
+            "release_ms": 80.0,
+            "actual_start_ms": 80.00158333333333,
+            "actual_end_ms": 80.089875,
+            "response_ms": 0.08987500000000637,
+            "lateness_ms": 0.0
+          }
+        ],
+        "job_count": 14,
+        "schedule_identity_match": true,
+        "early_start_count": 0,
+        "max_actual_end_ms": 83.97354166666666,
+        "cycle_boundary_clear": true,
+        "deadline_misses": 0,
+        "max_lateness_ms": 0.0,
+        "worst_critical_response_ms": 10.489875,
+        "heavy_response_ms": 18.897291666666668
+      },
+      {
+        "path": "results/k1_feedback_exact/board_runs_rt_observed/original_6_trace.csv",
+        "sha256": "04f6be37be62638978ab517ccd3ece0377711fd25eb65edd20fa6d494c314199",
+        "trace_rows": 178,
+        "jobs": [
+          {
+            "model": "dronet",
+            "instance": 0,
+            "dispatches": 21,
+            "release_ms": 0.0,
+            "actual_start_ms": 1.0794166666666667,
+            "actual_end_ms": 10.536416666666666,
+            "response_ms": 10.536416666666666,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "dronet",
+            "instance": 1,
+            "dispatches": 21,
+            "release_ms": 33.333333333333336,
+            "actual_start_ms": 33.33770833333333,
+            "actual_end_ms": 42.12825,
+            "response_ms": 8.794916666666666,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "dronet",
+            "instance": 2,
+            "dispatches": 21,
+            "release_ms": 66.66666666666667,
+            "actual_start_ms": 66.66920833333333,
+            "actual_end_ms": 75.292625,
+            "response_ms": 8.62595833333333,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "ffn_block",
+            "instance": 0,
+            "dispatches": 5,
+            "release_ms": 0.0,
+            "actual_start_ms": 0.33208333333333334,
+            "actual_end_ms": 19.136166666666668,
+            "response_ms": 19.136166666666668,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 0,
+            "dispatches": 15,
+            "release_ms": 0.0,
+            "actual_start_ms": 0.5084583333333333,
+            "actual_end_ms": 5.596541666666667,
+            "response_ms": 5.596541666666667,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 1,
+            "dispatches": 15,
+            "release_ms": 20.0,
+            "actual_start_ms": 20.00125,
+            "actual_end_ms": 23.99225,
+            "response_ms": 3.9922499999999985,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 2,
+            "dispatches": 15,
+            "release_ms": 40.0,
+            "actual_start_ms": 40.00470833333333,
+            "actual_end_ms": 44.035291666666666,
+            "response_ms": 4.035291666666666,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 3,
+            "dispatches": 15,
+            "release_ms": 60.0,
+            "actual_start_ms": 60.00375,
+            "actual_end_ms": 63.922041666666665,
+            "response_ms": 3.922041666666665,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 4,
+            "dispatches": 15,
+            "release_ms": 80.0,
+            "actual_start_ms": 80.00091666666667,
+            "actual_end_ms": 83.96541666666667,
+            "response_ms": 3.9654166666666697,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 0,
+            "dispatches": 7,
+            "release_ms": 0.0,
+            "actual_start_ms": 0.9050416666666666,
+            "actual_end_ms": 1.0037083333333334,
+            "response_ms": 1.0037083333333334,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 1,
+            "dispatches": 7,
+            "release_ms": 20.0,
+            "actual_start_ms": 20.002,
+            "actual_end_ms": 20.091333333333335,
+            "response_ms": 0.09133333333333482,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 2,
+            "dispatches": 7,
+            "release_ms": 40.0,
+            "actual_start_ms": 40.00245833333334,
+            "actual_end_ms": 40.09620833333334,
+            "response_ms": 0.09620833333333678,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 3,
+            "dispatches": 7,
+            "release_ms": 60.0,
+            "actual_start_ms": 60.003708333333336,
+            "actual_end_ms": 60.093625,
+            "response_ms": 0.09362500000000296,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 4,
+            "dispatches": 7,
+            "release_ms": 80.0,
+            "actual_start_ms": 80.002125,
+            "actual_end_ms": 80.09129166666666,
+            "response_ms": 0.09129166666666322,
+            "lateness_ms": 0.0
+          }
+        ],
+        "job_count": 14,
+        "schedule_identity_match": true,
+        "early_start_count": 0,
+        "max_actual_end_ms": 83.96541666666667,
+        "cycle_boundary_clear": true,
+        "deadline_misses": 0,
+        "max_lateness_ms": 0.0,
+        "worst_critical_response_ms": 10.536416666666666,
+        "heavy_response_ms": 19.136166666666668
+      },
+      {
+        "path": "results/k1_feedback_exact/board_runs_rt_observed/original_7_trace.csv",
+        "sha256": "99714360fec14bf25215644146f2e00dfb9c22f6710144c6db8a6881bbac5314",
+        "trace_rows": 178,
+        "jobs": [
+          {
+            "model": "dronet",
+            "instance": 0,
+            "dispatches": 21,
+            "release_ms": 0.0,
+            "actual_start_ms": 1.121375,
+            "actual_end_ms": 10.519458333333333,
+            "response_ms": 10.519458333333333,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "dronet",
+            "instance": 1,
+            "dispatches": 21,
+            "release_ms": 33.333333333333336,
+            "actual_start_ms": 33.33658333333333,
+            "actual_end_ms": 42.040625,
+            "response_ms": 8.707291666666663,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "dronet",
+            "instance": 2,
+            "dispatches": 21,
+            "release_ms": 66.66666666666667,
+            "actual_start_ms": 66.66995833333333,
+            "actual_end_ms": 75.362375,
+            "response_ms": 8.695708333333329,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "ffn_block",
+            "instance": 0,
+            "dispatches": 5,
+            "release_ms": 0.0,
+            "actual_start_ms": 0.30266666666666664,
+            "actual_end_ms": 18.999166666666667,
+            "response_ms": 18.999166666666667,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 0,
+            "dispatches": 15,
+            "release_ms": 0.0,
+            "actual_start_ms": 0.4623333333333333,
+            "actual_end_ms": 5.521125,
+            "response_ms": 5.521125,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 1,
+            "dispatches": 15,
+            "release_ms": 20.0,
+            "actual_start_ms": 20.001916666666666,
+            "actual_end_ms": 24.054666666666666,
+            "response_ms": 4.054666666666666,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 2,
+            "dispatches": 15,
+            "release_ms": 40.0,
+            "actual_start_ms": 40.0015,
+            "actual_end_ms": 44.032041666666665,
+            "response_ms": 4.0320416666666645,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 3,
+            "dispatches": 15,
+            "release_ms": 60.0,
+            "actual_start_ms": 60.00279166666667,
+            "actual_end_ms": 63.965833333333336,
+            "response_ms": 3.965833333333336,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 4,
+            "dispatches": 15,
+            "release_ms": 80.0,
+            "actual_start_ms": 80.00179166666666,
+            "actual_end_ms": 83.98583333333333,
+            "response_ms": 3.985833333333332,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 0,
+            "dispatches": 7,
+            "release_ms": 0.0,
+            "actual_start_ms": 0.87825,
+            "actual_end_ms": 0.9700833333333333,
+            "response_ms": 0.9700833333333333,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 1,
+            "dispatches": 7,
+            "release_ms": 20.0,
+            "actual_start_ms": 20.001916666666666,
+            "actual_end_ms": 20.091125,
+            "response_ms": 0.09112500000000168,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 2,
+            "dispatches": 7,
+            "release_ms": 40.0,
+            "actual_start_ms": 40.001625,
+            "actual_end_ms": 40.09141666666667,
+            "response_ms": 0.09141666666666737,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 3,
+            "dispatches": 7,
+            "release_ms": 60.0,
+            "actual_start_ms": 60.00275,
+            "actual_end_ms": 60.09370833333333,
+            "response_ms": 0.09370833333333195,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 4,
+            "dispatches": 7,
+            "release_ms": 80.0,
+            "actual_start_ms": 80.00216666666667,
+            "actual_end_ms": 80.09375,
+            "response_ms": 0.09375,
+            "lateness_ms": 0.0
+          }
+        ],
+        "job_count": 14,
+        "schedule_identity_match": true,
+        "early_start_count": 0,
+        "max_actual_end_ms": 83.98583333333333,
+        "cycle_boundary_clear": true,
+        "deadline_misses": 0,
+        "max_lateness_ms": 0.0,
+        "worst_critical_response_ms": 10.519458333333333,
+        "heavy_response_ms": 18.999166666666667
+      },
+      {
+        "path": "results/k1_feedback_exact/board_runs_rt_observed/original_8_trace.csv",
+        "sha256": "901d2fe49f9de6ba104cd1733a3a6544e5e2120023ff8d4bf889b9113d0f0c1c",
+        "trace_rows": 178,
+        "jobs": [
+          {
+            "model": "dronet",
+            "instance": 0,
+            "dispatches": 21,
+            "release_ms": 0.0,
+            "actual_start_ms": 0.9605,
+            "actual_end_ms": 10.394125,
+            "response_ms": 10.394125,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "dronet",
+            "instance": 1,
+            "dispatches": 21,
+            "release_ms": 33.333333333333336,
+            "actual_start_ms": 33.33679166666667,
+            "actual_end_ms": 42.058375,
+            "response_ms": 8.725041666666662,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "dronet",
+            "instance": 2,
+            "dispatches": 21,
+            "release_ms": 66.66666666666667,
+            "actual_start_ms": 66.66891666666666,
+            "actual_end_ms": 75.27991666666667,
+            "response_ms": 8.613249999999994,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "ffn_block",
+            "instance": 0,
+            "dispatches": 5,
+            "release_ms": 0.0,
+            "actual_start_ms": 0.2665416666666667,
+            "actual_end_ms": 19.096041666666668,
+            "response_ms": 19.096041666666668,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 0,
+            "dispatches": 15,
+            "release_ms": 0.0,
+            "actual_start_ms": 0.44525,
+            "actual_end_ms": 5.507,
+            "response_ms": 5.507,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 1,
+            "dispatches": 15,
+            "release_ms": 20.0,
+            "actual_start_ms": 20.001958333333334,
+            "actual_end_ms": 24.052125,
+            "response_ms": 4.052125,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 2,
+            "dispatches": 15,
+            "release_ms": 40.0,
+            "actual_start_ms": 40.003125,
+            "actual_end_ms": 44.05108333333333,
+            "response_ms": 4.051083333333331,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 3,
+            "dispatches": 15,
+            "release_ms": 60.0,
+            "actual_start_ms": 60.002208333333336,
+            "actual_end_ms": 63.906083333333335,
+            "response_ms": 3.906083333333335,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 4,
+            "dispatches": 15,
+            "release_ms": 80.0,
+            "actual_start_ms": 80.00091666666667,
+            "actual_end_ms": 83.92379166666667,
+            "response_ms": 3.9237916666666734,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 0,
+            "dispatches": 7,
+            "release_ms": 0.0,
+            "actual_start_ms": 0.781625,
+            "actual_end_ms": 0.8825416666666667,
+            "response_ms": 0.8825416666666667,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 1,
+            "dispatches": 7,
+            "release_ms": 20.0,
+            "actual_start_ms": 20.001541666666668,
+            "actual_end_ms": 20.092125,
+            "response_ms": 0.09212499999999935,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 2,
+            "dispatches": 7,
+            "release_ms": 40.0,
+            "actual_start_ms": 40.0015,
+            "actual_end_ms": 40.09070833333333,
+            "response_ms": 0.09070833333333184,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 3,
+            "dispatches": 7,
+            "release_ms": 60.0,
+            "actual_start_ms": 60.00245833333334,
+            "actual_end_ms": 60.09129166666666,
+            "response_ms": 0.09129166666666322,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 4,
+            "dispatches": 7,
+            "release_ms": 80.0,
+            "actual_start_ms": 80.0015,
+            "actual_end_ms": 80.090375,
+            "response_ms": 0.09037499999999454,
+            "lateness_ms": 0.0
+          }
+        ],
+        "job_count": 14,
+        "schedule_identity_match": true,
+        "early_start_count": 0,
+        "max_actual_end_ms": 83.92379166666667,
+        "cycle_boundary_clear": true,
+        "deadline_misses": 0,
+        "max_lateness_ms": 0.0,
+        "worst_critical_response_ms": 10.394125,
+        "heavy_response_ms": 19.096041666666668
+      },
+      {
+        "path": "results/k1_feedback_exact/board_runs_rt_observed/original_9_trace.csv",
+        "sha256": "17dc330eac54e670b63893b4dcefd12e20bb0a63eb303764633687c31da73f7d",
+        "trace_rows": 178,
+        "jobs": [
+          {
+            "model": "dronet",
+            "instance": 0,
+            "dispatches": 21,
+            "release_ms": 0.0,
+            "actual_start_ms": 0.90575,
+            "actual_end_ms": 10.351791666666667,
+            "response_ms": 10.351791666666667,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "dronet",
+            "instance": 1,
+            "dispatches": 21,
+            "release_ms": 33.333333333333336,
+            "actual_start_ms": 33.3365,
+            "actual_end_ms": 42.054875,
+            "response_ms": 8.721541666666667,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "dronet",
+            "instance": 2,
+            "dispatches": 21,
+            "release_ms": 66.66666666666667,
+            "actual_start_ms": 66.67041666666667,
+            "actual_end_ms": 75.274625,
+            "response_ms": 8.607958333333329,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "ffn_block",
+            "instance": 0,
+            "dispatches": 5,
+            "release_ms": 0.0,
+            "actual_start_ms": 0.255375,
+            "actual_end_ms": 18.845791666666667,
+            "response_ms": 18.845791666666667,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 0,
+            "dispatches": 15,
+            "release_ms": 0.0,
+            "actual_start_ms": 0.32716666666666666,
+            "actual_end_ms": 5.338375,
+            "response_ms": 5.338375,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 1,
+            "dispatches": 15,
+            "release_ms": 20.0,
+            "actual_start_ms": 20.001791666666666,
+            "actual_end_ms": 23.982666666666667,
+            "response_ms": 3.982666666666667,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 2,
+            "dispatches": 15,
+            "release_ms": 40.0,
+            "actual_start_ms": 40.00208333333333,
+            "actual_end_ms": 44.00975,
+            "response_ms": 4.009749999999997,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 3,
+            "dispatches": 15,
+            "release_ms": 60.0,
+            "actual_start_ms": 60.00279166666667,
+            "actual_end_ms": 63.931875,
+            "response_ms": 3.931874999999998,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 4,
+            "dispatches": 15,
+            "release_ms": 80.0,
+            "actual_start_ms": 80.00166666666667,
+            "actual_end_ms": 83.954375,
+            "response_ms": 3.954374999999999,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 0,
+            "dispatches": 7,
+            "release_ms": 0.0,
+            "actual_start_ms": 0.7332083333333334,
+            "actual_end_ms": 0.832625,
+            "response_ms": 0.832625,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 1,
+            "dispatches": 7,
+            "release_ms": 20.0,
+            "actual_start_ms": 20.002083333333335,
+            "actual_end_ms": 20.092291666666668,
+            "response_ms": 0.09229166666666799,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 2,
+            "dispatches": 7,
+            "release_ms": 40.0,
+            "actual_start_ms": 40.002125,
+            "actual_end_ms": 40.093375,
+            "response_ms": 0.09337500000000176,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 3,
+            "dispatches": 7,
+            "release_ms": 60.0,
+            "actual_start_ms": 60.00245833333334,
+            "actual_end_ms": 60.09320833333334,
+            "response_ms": 0.09320833333333667,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 4,
+            "dispatches": 7,
+            "release_ms": 80.0,
+            "actual_start_ms": 80.00166666666667,
+            "actual_end_ms": 80.09004166666666,
+            "response_ms": 0.09004166666666436,
+            "lateness_ms": 0.0
+          }
+        ],
+        "job_count": 14,
+        "schedule_identity_match": true,
+        "early_start_count": 0,
+        "max_actual_end_ms": 83.954375,
+        "cycle_boundary_clear": true,
+        "deadline_misses": 0,
+        "max_lateness_ms": 0.0,
+        "worst_critical_response_ms": 10.351791666666667,
+        "heavy_response_ms": 18.845791666666667
+      }
+    ]
+  },
+  "feedback": {
+    "aggregate": {
+      "runs": 10,
+      "expected_trace_rows": 178,
+      "all_complete": true,
+      "all_release_gates_honored": true,
+      "all_cycle_boundaries_clear": true,
+      "total_deadline_misses": 0,
+      "critical_response_ms": {
+        "samples": [
+          7.178083333333333,
+          7.191,
+          7.277541666666667,
+          7.146708333333334,
+          7.242166666666667,
+          7.226041666666666,
+          7.370916666666667,
+          7.370541666666667,
+          7.115916666666666,
+          7.140458333333333
+        ],
+        "min": 7.115916666666666,
+        "median": 7.208520833333333,
+        "max": 7.370916666666667
+      },
+      "heavy_response_ms": {
+        "samples": [
+          14.231083333333334,
+          14.402375,
+          14.446041666666666,
+          14.198541666666667,
+          14.416833333333333,
+          14.496333333333334,
+          14.572291666666667,
+          14.587625,
+          14.230708333333334,
+          14.395083333333334
+        ],
+        "min": 14.198541666666667,
+        "median": 14.409604166666666,
+        "max": 14.587625
+      }
+    },
+    "runs": [
+      {
+        "path": "results/k1_feedback_exact/board_runs_rt_observed/feedback_0_trace.csv",
+        "sha256": "210ab787583d0dbdf0a2c6c9593f4e1d0d181a92f58f64e8f7ec71db5671508b",
+        "trace_rows": 178,
+        "jobs": [
+          {
+            "model": "dronet",
+            "instance": 0,
+            "dispatches": 21,
+            "release_ms": 0.0,
+            "actual_start_ms": 0.9581666666666667,
+            "actual_end_ms": 7.178083333333333,
+            "response_ms": 7.178083333333333,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "dronet",
+            "instance": 1,
+            "dispatches": 21,
+            "release_ms": 33.333333333333336,
+            "actual_start_ms": 33.338,
+            "actual_end_ms": 38.96383333333333,
+            "response_ms": 5.630499999999998,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "dronet",
+            "instance": 2,
+            "dispatches": 21,
+            "release_ms": 66.66666666666667,
+            "actual_start_ms": 66.67041666666667,
+            "actual_end_ms": 72.28091666666667,
+            "response_ms": 5.614249999999998,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "ffn_block",
+            "instance": 0,
+            "dispatches": 5,
+            "release_ms": 0.0,
+            "actual_start_ms": 0.14720833333333333,
+            "actual_end_ms": 14.231083333333334,
+            "response_ms": 14.231083333333334,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 0,
+            "dispatches": 15,
+            "release_ms": 0.0,
+            "actual_start_ms": 0.35504166666666664,
+            "actual_end_ms": 5.414583333333334,
+            "response_ms": 5.414583333333334,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 1,
+            "dispatches": 15,
+            "release_ms": 20.0,
+            "actual_start_ms": 20.002208333333332,
+            "actual_end_ms": 23.9215,
+            "response_ms": 3.9215000000000018,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 2,
+            "dispatches": 15,
+            "release_ms": 40.0,
+            "actual_start_ms": 40.00179166666667,
+            "actual_end_ms": 43.904375,
+            "response_ms": 3.9043750000000017,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 3,
+            "dispatches": 15,
+            "release_ms": 60.0,
+            "actual_start_ms": 60.002291666666665,
+            "actual_end_ms": 63.896541666666664,
+            "response_ms": 3.896541666666664,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 4,
+            "dispatches": 15,
+            "release_ms": 80.0,
+            "actual_start_ms": 80.00166666666667,
+            "actual_end_ms": 83.909375,
+            "response_ms": 3.909374999999997,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 0,
+            "dispatches": 7,
+            "release_ms": 0.0,
+            "actual_start_ms": 0.7282916666666667,
+            "actual_end_ms": 0.8136666666666666,
+            "response_ms": 0.8136666666666666,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 1,
+            "dispatches": 7,
+            "release_ms": 20.0,
+            "actual_start_ms": 20.002208333333332,
+            "actual_end_ms": 20.089875,
+            "response_ms": 0.08987499999999926,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 2,
+            "dispatches": 7,
+            "release_ms": 40.0,
+            "actual_start_ms": 40.00145833333333,
+            "actual_end_ms": 40.08716666666667,
+            "response_ms": 0.08716666666666839,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 3,
+            "dispatches": 7,
+            "release_ms": 60.0,
+            "actual_start_ms": 60.00204166666666,
+            "actual_end_ms": 60.092708333333334,
+            "response_ms": 0.09270833333333428,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 4,
+            "dispatches": 7,
+            "release_ms": 80.0,
+            "actual_start_ms": 80.00183333333334,
+            "actual_end_ms": 80.093125,
+            "response_ms": 0.09312500000000057,
+            "lateness_ms": 0.0
+          }
+        ],
+        "job_count": 14,
+        "schedule_identity_match": true,
+        "early_start_count": 0,
+        "max_actual_end_ms": 83.909375,
+        "cycle_boundary_clear": true,
+        "deadline_misses": 0,
+        "max_lateness_ms": 0.0,
+        "worst_critical_response_ms": 7.178083333333333,
+        "heavy_response_ms": 14.231083333333334
+      },
+      {
+        "path": "results/k1_feedback_exact/board_runs_rt_observed/feedback_1_trace.csv",
+        "sha256": "a080d2b35bdc7da25e2b6a9b1a1b3c123c45ac8baf87c4d08ca08bef747341d4",
+        "trace_rows": 178,
+        "jobs": [
+          {
+            "model": "dronet",
+            "instance": 0,
+            "dispatches": 21,
+            "release_ms": 0.0,
+            "actual_start_ms": 0.921875,
+            "actual_end_ms": 7.191,
+            "response_ms": 7.191,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "dronet",
+            "instance": 1,
+            "dispatches": 21,
+            "release_ms": 33.333333333333336,
+            "actual_start_ms": 33.338,
+            "actual_end_ms": 38.953541666666666,
+            "response_ms": 5.620208333333331,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "dronet",
+            "instance": 2,
+            "dispatches": 21,
+            "release_ms": 66.66666666666667,
+            "actual_start_ms": 66.67166666666667,
+            "actual_end_ms": 72.313875,
+            "response_ms": 5.6472083333333245,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "ffn_block",
+            "instance": 0,
+            "dispatches": 5,
+            "release_ms": 0.0,
+            "actual_start_ms": 0.20304166666666668,
+            "actual_end_ms": 14.402375,
+            "response_ms": 14.402375,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 0,
+            "dispatches": 15,
+            "release_ms": 0.0,
+            "actual_start_ms": 0.38825,
+            "actual_end_ms": 5.383958333333333,
+            "response_ms": 5.383958333333333,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 1,
+            "dispatches": 15,
+            "release_ms": 20.0,
+            "actual_start_ms": 20.002041666666667,
+            "actual_end_ms": 23.91475,
+            "response_ms": 3.9147500000000015,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 2,
+            "dispatches": 15,
+            "release_ms": 40.0,
+            "actual_start_ms": 40.00175,
+            "actual_end_ms": 43.899875,
+            "response_ms": 3.8998750000000015,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 3,
+            "dispatches": 15,
+            "release_ms": 60.0,
+            "actual_start_ms": 60.00245833333334,
+            "actual_end_ms": 63.88425,
+            "response_ms": 3.8842500000000015,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 4,
+            "dispatches": 15,
+            "release_ms": 80.0,
+            "actual_start_ms": 80.00191666666667,
+            "actual_end_ms": 83.894875,
+            "response_ms": 3.894874999999999,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 0,
+            "dispatches": 7,
+            "release_ms": 0.0,
+            "actual_start_ms": 0.747375,
+            "actual_end_ms": 0.8392083333333333,
+            "response_ms": 0.8392083333333333,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 1,
+            "dispatches": 7,
+            "release_ms": 20.0,
+            "actual_start_ms": 20.001791666666666,
+            "actual_end_ms": 20.0905,
+            "response_ms": 0.09049999999999869,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 2,
+            "dispatches": 7,
+            "release_ms": 40.0,
+            "actual_start_ms": 40.002208333333336,
+            "actual_end_ms": 40.08804166666667,
+            "response_ms": 0.08804166666666902,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 3,
+            "dispatches": 7,
+            "release_ms": 60.0,
+            "actual_start_ms": 60.002375,
+            "actual_end_ms": 60.091541666666664,
+            "response_ms": 0.09154166666666441,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 4,
+            "dispatches": 7,
+            "release_ms": 80.0,
+            "actual_start_ms": 80.00233333333334,
+            "actual_end_ms": 80.09054166666667,
+            "response_ms": 0.09054166666666674,
+            "lateness_ms": 0.0
+          }
+        ],
+        "job_count": 14,
+        "schedule_identity_match": true,
+        "early_start_count": 0,
+        "max_actual_end_ms": 83.894875,
+        "cycle_boundary_clear": true,
+        "deadline_misses": 0,
+        "max_lateness_ms": 0.0,
+        "worst_critical_response_ms": 7.191,
+        "heavy_response_ms": 14.402375
+      },
+      {
+        "path": "results/k1_feedback_exact/board_runs_rt_observed/feedback_2_trace.csv",
+        "sha256": "81125f0f0bcf33365dd3594d5739b1d79ce17c6370c6059a256b51a4ed228288",
+        "trace_rows": 178,
+        "jobs": [
+          {
+            "model": "dronet",
+            "instance": 0,
+            "dispatches": 21,
+            "release_ms": 0.0,
+            "actual_start_ms": 1.0219583333333333,
+            "actual_end_ms": 7.277541666666667,
+            "response_ms": 7.277541666666667,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "dronet",
+            "instance": 1,
+            "dispatches": 21,
+            "release_ms": 33.333333333333336,
+            "actual_start_ms": 33.338875,
+            "actual_end_ms": 39.15983333333333,
+            "response_ms": 5.826499999999996,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "dronet",
+            "instance": 2,
+            "dispatches": 21,
+            "release_ms": 66.66666666666667,
+            "actual_start_ms": 66.671875,
+            "actual_end_ms": 72.29595833333333,
+            "response_ms": 5.62929166666666,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "ffn_block",
+            "instance": 0,
+            "dispatches": 5,
+            "release_ms": 0.0,
+            "actual_start_ms": 0.20904166666666665,
+            "actual_end_ms": 14.446041666666666,
+            "response_ms": 14.446041666666666,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 0,
+            "dispatches": 15,
+            "release_ms": 0.0,
+            "actual_start_ms": 0.37445833333333334,
+            "actual_end_ms": 5.550333333333334,
+            "response_ms": 5.550333333333334,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 1,
+            "dispatches": 15,
+            "release_ms": 20.0,
+            "actual_start_ms": 20.00175,
+            "actual_end_ms": 23.922041666666665,
+            "response_ms": 3.922041666666665,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 2,
+            "dispatches": 15,
+            "release_ms": 40.0,
+            "actual_start_ms": 40.001041666666666,
+            "actual_end_ms": 43.904833333333336,
+            "response_ms": 3.904833333333336,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 3,
+            "dispatches": 15,
+            "release_ms": 60.0,
+            "actual_start_ms": 60.002208333333336,
+            "actual_end_ms": 63.90383333333333,
+            "response_ms": 3.9038333333333313,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 4,
+            "dispatches": 15,
+            "release_ms": 80.0,
+            "actual_start_ms": 80.00154166666667,
+            "actual_end_ms": 83.88779166666667,
+            "response_ms": 3.887791666666672,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 0,
+            "dispatches": 7,
+            "release_ms": 0.0,
+            "actual_start_ms": 0.7400833333333333,
+            "actual_end_ms": 0.8284583333333333,
+            "response_ms": 0.8284583333333333,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 1,
+            "dispatches": 7,
+            "release_ms": 20.0,
+            "actual_start_ms": 20.002083333333335,
+            "actual_end_ms": 20.089708333333334,
+            "response_ms": 0.08970833333333417,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 2,
+            "dispatches": 7,
+            "release_ms": 40.0,
+            "actual_start_ms": 40.0015,
+            "actual_end_ms": 40.08929166666667,
+            "response_ms": 0.08929166666666788,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 3,
+            "dispatches": 7,
+            "release_ms": 60.0,
+            "actual_start_ms": 60.002541666666666,
+            "actual_end_ms": 60.09204166666667,
+            "response_ms": 0.0920416666666668,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 4,
+            "dispatches": 7,
+            "release_ms": 80.0,
+            "actual_start_ms": 80.00258333333333,
+            "actual_end_ms": 80.09141666666666,
+            "response_ms": 0.09141666666666026,
+            "lateness_ms": 0.0
+          }
+        ],
+        "job_count": 14,
+        "schedule_identity_match": true,
+        "early_start_count": 0,
+        "max_actual_end_ms": 83.88779166666667,
+        "cycle_boundary_clear": true,
+        "deadline_misses": 0,
+        "max_lateness_ms": 0.0,
+        "worst_critical_response_ms": 7.277541666666667,
+        "heavy_response_ms": 14.446041666666666
+      },
+      {
+        "path": "results/k1_feedback_exact/board_runs_rt_observed/feedback_3_trace.csv",
+        "sha256": "a60a7324b7959b1442a8b50bb363c1bfab6ad9f6258ec3cd0c90a40e90cbbc4f",
+        "trace_rows": 178,
+        "jobs": [
+          {
+            "model": "dronet",
+            "instance": 0,
+            "dispatches": 21,
+            "release_ms": 0.0,
+            "actual_start_ms": 0.8592083333333334,
+            "actual_end_ms": 7.146708333333334,
+            "response_ms": 7.146708333333334,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "dronet",
+            "instance": 1,
+            "dispatches": 21,
+            "release_ms": 33.333333333333336,
+            "actual_start_ms": 33.33770833333333,
+            "actual_end_ms": 39.00983333333333,
+            "response_ms": 5.676499999999997,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "dronet",
+            "instance": 2,
+            "dispatches": 21,
+            "release_ms": 66.66666666666667,
+            "actual_start_ms": 66.67091666666667,
+            "actual_end_ms": 72.32783333333333,
+            "response_ms": 5.661166666666659,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "ffn_block",
+            "instance": 0,
+            "dispatches": 5,
+            "release_ms": 0.0,
+            "actual_start_ms": 0.20691666666666667,
+            "actual_end_ms": 14.198541666666667,
+            "response_ms": 14.198541666666667,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 0,
+            "dispatches": 15,
+            "release_ms": 0.0,
+            "actual_start_ms": 0.39608333333333334,
+            "actual_end_ms": 5.346958333333333,
+            "response_ms": 5.346958333333333,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 1,
+            "dispatches": 15,
+            "release_ms": 20.0,
+            "actual_start_ms": 20.002416666666665,
+            "actual_end_ms": 23.999583333333334,
+            "response_ms": 3.9995833333333337,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 2,
+            "dispatches": 15,
+            "release_ms": 40.0,
+            "actual_start_ms": 40.001083333333334,
+            "actual_end_ms": 43.901625,
+            "response_ms": 3.901625000000003,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 3,
+            "dispatches": 15,
+            "release_ms": 60.0,
+            "actual_start_ms": 60.0025,
+            "actual_end_ms": 64.01870833333334,
+            "response_ms": 4.018708333333336,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 4,
+            "dispatches": 15,
+            "release_ms": 80.0,
+            "actual_start_ms": 80.00220833333333,
+            "actual_end_ms": 83.9115,
+            "response_ms": 3.9115000000000038,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 0,
+            "dispatches": 7,
+            "release_ms": 0.0,
+            "actual_start_ms": 0.7374166666666667,
+            "actual_end_ms": 0.8252916666666666,
+            "response_ms": 0.8252916666666666,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 1,
+            "dispatches": 7,
+            "release_ms": 20.0,
+            "actual_start_ms": 20.002166666666668,
+            "actual_end_ms": 20.090666666666667,
+            "response_ms": 0.09066666666666734,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 2,
+            "dispatches": 7,
+            "release_ms": 40.0,
+            "actual_start_ms": 40.00183333333333,
+            "actual_end_ms": 40.08979166666666,
+            "response_ms": 0.08979166666666316,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 3,
+            "dispatches": 7,
+            "release_ms": 60.0,
+            "actual_start_ms": 60.00245833333334,
+            "actual_end_ms": 60.093625,
+            "response_ms": 0.09362500000000296,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 4,
+            "dispatches": 7,
+            "release_ms": 80.0,
+            "actual_start_ms": 80.002,
+            "actual_end_ms": 80.09204166666666,
+            "response_ms": 0.0920416666666597,
+            "lateness_ms": 0.0
+          }
+        ],
+        "job_count": 14,
+        "schedule_identity_match": true,
+        "early_start_count": 0,
+        "max_actual_end_ms": 83.9115,
+        "cycle_boundary_clear": true,
+        "deadline_misses": 0,
+        "max_lateness_ms": 0.0,
+        "worst_critical_response_ms": 7.146708333333334,
+        "heavy_response_ms": 14.198541666666667
+      },
+      {
+        "path": "results/k1_feedback_exact/board_runs_rt_observed/feedback_4_trace.csv",
+        "sha256": "801e50e31d1a88feb38705f41ef043d748a52da778d74ed6d83e5a708ee1d471",
+        "trace_rows": 178,
+        "jobs": [
+          {
+            "model": "dronet",
+            "instance": 0,
+            "dispatches": 21,
+            "release_ms": 0.0,
+            "actual_start_ms": 0.9570416666666667,
+            "actual_end_ms": 7.242166666666667,
+            "response_ms": 7.242166666666667,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "dronet",
+            "instance": 1,
+            "dispatches": 21,
+            "release_ms": 33.333333333333336,
+            "actual_start_ms": 33.33858333333333,
+            "actual_end_ms": 38.950291666666665,
+            "response_ms": 5.616958333333329,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "dronet",
+            "instance": 2,
+            "dispatches": 21,
+            "release_ms": 66.66666666666667,
+            "actual_start_ms": 66.67116666666666,
+            "actual_end_ms": 72.315125,
+            "response_ms": 5.648458333333323,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "ffn_block",
+            "instance": 0,
+            "dispatches": 5,
+            "release_ms": 0.0,
+            "actual_start_ms": 0.1995,
+            "actual_end_ms": 14.416833333333333,
+            "response_ms": 14.416833333333333,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 0,
+            "dispatches": 15,
+            "release_ms": 0.0,
+            "actual_start_ms": 0.376,
+            "actual_end_ms": 5.532,
+            "response_ms": 5.532,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 1,
+            "dispatches": 15,
+            "release_ms": 20.0,
+            "actual_start_ms": 20.003291666666666,
+            "actual_end_ms": 23.94325,
+            "response_ms": 3.943249999999999,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 2,
+            "dispatches": 15,
+            "release_ms": 40.0,
+            "actual_start_ms": 40.00129166666667,
+            "actual_end_ms": 43.920541666666665,
+            "response_ms": 3.920541666666665,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 3,
+            "dispatches": 15,
+            "release_ms": 60.0,
+            "actual_start_ms": 60.002541666666666,
+            "actual_end_ms": 63.932291666666664,
+            "response_ms": 3.9322916666666643,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 4,
+            "dispatches": 15,
+            "release_ms": 80.0,
+            "actual_start_ms": 80.001875,
+            "actual_end_ms": 83.920375,
+            "response_ms": 3.920375000000007,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 0,
+            "dispatches": 7,
+            "release_ms": 0.0,
+            "actual_start_ms": 0.756625,
+            "actual_end_ms": 0.8439583333333334,
+            "response_ms": 0.8439583333333334,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 1,
+            "dispatches": 7,
+            "release_ms": 20.0,
+            "actual_start_ms": 20.002666666666666,
+            "actual_end_ms": 20.0915,
+            "response_ms": 0.09149999999999991,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 2,
+            "dispatches": 7,
+            "release_ms": 40.0,
+            "actual_start_ms": 40.0015,
+            "actual_end_ms": 40.090583333333335,
+            "response_ms": 0.09058333333333479,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 3,
+            "dispatches": 7,
+            "release_ms": 60.0,
+            "actual_start_ms": 60.002291666666665,
+            "actual_end_ms": 60.09,
+            "response_ms": 0.09000000000000341,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 4,
+            "dispatches": 7,
+            "release_ms": 80.0,
+            "actual_start_ms": 80.002125,
+            "actual_end_ms": 80.09054166666667,
+            "response_ms": 0.09054166666666674,
+            "lateness_ms": 0.0
+          }
+        ],
+        "job_count": 14,
+        "schedule_identity_match": true,
+        "early_start_count": 0,
+        "max_actual_end_ms": 83.920375,
+        "cycle_boundary_clear": true,
+        "deadline_misses": 0,
+        "max_lateness_ms": 0.0,
+        "worst_critical_response_ms": 7.242166666666667,
+        "heavy_response_ms": 14.416833333333333
+      },
+      {
+        "path": "results/k1_feedback_exact/board_runs_rt_observed/feedback_5_trace.csv",
+        "sha256": "d9a63676f2c4dc39e557bdb4ee7cdc4faf0e190694fd9bb4d3f73f62acd7479e",
+        "trace_rows": 178,
+        "jobs": [
+          {
+            "model": "dronet",
+            "instance": 0,
+            "dispatches": 21,
+            "release_ms": 0.0,
+            "actual_start_ms": 0.9907916666666666,
+            "actual_end_ms": 7.226041666666666,
+            "response_ms": 7.226041666666666,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "dronet",
+            "instance": 1,
+            "dispatches": 21,
+            "release_ms": 33.333333333333336,
+            "actual_start_ms": 33.337583333333335,
+            "actual_end_ms": 38.940875,
+            "response_ms": 5.607541666666663,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "dronet",
+            "instance": 2,
+            "dispatches": 21,
+            "release_ms": 66.66666666666667,
+            "actual_start_ms": 66.67141666666667,
+            "actual_end_ms": 72.27020833333333,
+            "response_ms": 5.603541666666658,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "ffn_block",
+            "instance": 0,
+            "dispatches": 5,
+            "release_ms": 0.0,
+            "actual_start_ms": 0.14104166666666668,
+            "actual_end_ms": 14.496333333333334,
+            "response_ms": 14.496333333333334,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 0,
+            "dispatches": 15,
+            "release_ms": 0.0,
+            "actual_start_ms": 0.34020833333333333,
+            "actual_end_ms": 5.531083333333333,
+            "response_ms": 5.531083333333333,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 1,
+            "dispatches": 15,
+            "release_ms": 20.0,
+            "actual_start_ms": 20.002666666666666,
+            "actual_end_ms": 23.886833333333332,
+            "response_ms": 3.886833333333332,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 2,
+            "dispatches": 15,
+            "release_ms": 40.0,
+            "actual_start_ms": 40.00170833333333,
+            "actual_end_ms": 43.877625,
+            "response_ms": 3.877625000000002,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 3,
+            "dispatches": 15,
+            "release_ms": 60.0,
+            "actual_start_ms": 60.002833333333335,
+            "actual_end_ms": 63.85820833333333,
+            "response_ms": 3.85820833333333,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 4,
+            "dispatches": 15,
+            "release_ms": 80.0,
+            "actual_start_ms": 80.00183333333334,
+            "actual_end_ms": 83.935875,
+            "response_ms": 3.935874999999996,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 0,
+            "dispatches": 7,
+            "release_ms": 0.0,
+            "actual_start_ms": 0.7887916666666667,
+            "actual_end_ms": 0.8726666666666667,
+            "response_ms": 0.8726666666666667,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 1,
+            "dispatches": 7,
+            "release_ms": 20.0,
+            "actual_start_ms": 20.002458333333333,
+            "actual_end_ms": 20.089416666666665,
+            "response_ms": 0.08941666666666492,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 2,
+            "dispatches": 7,
+            "release_ms": 40.0,
+            "actual_start_ms": 40.002,
+            "actual_end_ms": 40.091625,
+            "response_ms": 0.09162500000000051,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 3,
+            "dispatches": 7,
+            "release_ms": 60.0,
+            "actual_start_ms": 60.002916666666664,
+            "actual_end_ms": 60.09133333333333,
+            "response_ms": 0.09133333333333127,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 4,
+            "dispatches": 7,
+            "release_ms": 80.0,
+            "actual_start_ms": 80.00145833333333,
+            "actual_end_ms": 80.09029166666667,
+            "response_ms": 0.09029166666667265,
+            "lateness_ms": 0.0
+          }
+        ],
+        "job_count": 14,
+        "schedule_identity_match": true,
+        "early_start_count": 0,
+        "max_actual_end_ms": 83.935875,
+        "cycle_boundary_clear": true,
+        "deadline_misses": 0,
+        "max_lateness_ms": 0.0,
+        "worst_critical_response_ms": 7.226041666666666,
+        "heavy_response_ms": 14.496333333333334
+      },
+      {
+        "path": "results/k1_feedback_exact/board_runs_rt_observed/feedback_6_trace.csv",
+        "sha256": "a42865a8b813db68defed7d6fe7621224bf0dd1381dca47ac6c19239008a1a02",
+        "trace_rows": 178,
+        "jobs": [
+          {
+            "model": "dronet",
+            "instance": 0,
+            "dispatches": 21,
+            "release_ms": 0.0,
+            "actual_start_ms": 1.1180416666666666,
+            "actual_end_ms": 7.370916666666667,
+            "response_ms": 7.370916666666667,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "dronet",
+            "instance": 1,
+            "dispatches": 21,
+            "release_ms": 33.333333333333336,
+            "actual_start_ms": 33.338541666666664,
+            "actual_end_ms": 38.95425,
+            "response_ms": 5.620916666666666,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "dronet",
+            "instance": 2,
+            "dispatches": 21,
+            "release_ms": 66.66666666666667,
+            "actual_start_ms": 66.671375,
+            "actual_end_ms": 72.24966666666667,
+            "response_ms": 5.582999999999998,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "ffn_block",
+            "instance": 0,
+            "dispatches": 5,
+            "release_ms": 0.0,
+            "actual_start_ms": 0.23354166666666668,
+            "actual_end_ms": 14.572291666666667,
+            "response_ms": 14.572291666666667,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 0,
+            "dispatches": 15,
+            "release_ms": 0.0,
+            "actual_start_ms": 0.41,
+            "actual_end_ms": 5.648625,
+            "response_ms": 5.648625,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 1,
+            "dispatches": 15,
+            "release_ms": 20.0,
+            "actual_start_ms": 20.002125,
+            "actual_end_ms": 24.075083333333332,
+            "response_ms": 4.075083333333332,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 2,
+            "dispatches": 15,
+            "release_ms": 40.0,
+            "actual_start_ms": 40.00204166666666,
+            "actual_end_ms": 43.95141666666667,
+            "response_ms": 3.951416666666667,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 3,
+            "dispatches": 15,
+            "release_ms": 60.0,
+            "actual_start_ms": 60.00270833333333,
+            "actual_end_ms": 63.887791666666665,
+            "response_ms": 3.887791666666665,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 4,
+            "dispatches": 15,
+            "release_ms": 80.0,
+            "actual_start_ms": 80.00154166666667,
+            "actual_end_ms": 83.91204166666667,
+            "response_ms": 3.912041666666667,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 0,
+            "dispatches": 7,
+            "release_ms": 0.0,
+            "actual_start_ms": 0.78075,
+            "actual_end_ms": 0.8645416666666667,
+            "response_ms": 0.8645416666666667,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 1,
+            "dispatches": 7,
+            "release_ms": 20.0,
+            "actual_start_ms": 20.001875,
+            "actual_end_ms": 20.086125,
+            "response_ms": 0.08612499999999912,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 2,
+            "dispatches": 7,
+            "release_ms": 40.0,
+            "actual_start_ms": 40.002125,
+            "actual_end_ms": 40.089708333333334,
+            "response_ms": 0.08970833333333417,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 3,
+            "dispatches": 7,
+            "release_ms": 60.0,
+            "actual_start_ms": 60.0025,
+            "actual_end_ms": 60.09254166666667,
+            "response_ms": 0.09254166666666919,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 4,
+            "dispatches": 7,
+            "release_ms": 80.0,
+            "actual_start_ms": 80.0015,
+            "actual_end_ms": 80.09020833333334,
+            "response_ms": 0.09020833333333655,
+            "lateness_ms": 0.0
+          }
+        ],
+        "job_count": 14,
+        "schedule_identity_match": true,
+        "early_start_count": 0,
+        "max_actual_end_ms": 83.91204166666667,
+        "cycle_boundary_clear": true,
+        "deadline_misses": 0,
+        "max_lateness_ms": 0.0,
+        "worst_critical_response_ms": 7.370916666666667,
+        "heavy_response_ms": 14.572291666666667
+      },
+      {
+        "path": "results/k1_feedback_exact/board_runs_rt_observed/feedback_7_trace.csv",
+        "sha256": "cf70e9872cb05c3dede697ab208e6f69956cc3ac80580861fdc28664fc6a6359",
+        "trace_rows": 178,
+        "jobs": [
+          {
+            "model": "dronet",
+            "instance": 0,
+            "dispatches": 21,
+            "release_ms": 0.0,
+            "actual_start_ms": 1.170375,
+            "actual_end_ms": 7.370541666666667,
+            "response_ms": 7.370541666666667,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "dronet",
+            "instance": 1,
+            "dispatches": 21,
+            "release_ms": 33.333333333333336,
+            "actual_start_ms": 33.33866666666667,
+            "actual_end_ms": 38.994083333333336,
+            "response_ms": 5.66075,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "dronet",
+            "instance": 2,
+            "dispatches": 21,
+            "release_ms": 66.66666666666667,
+            "actual_start_ms": 66.671625,
+            "actual_end_ms": 72.28770833333333,
+            "response_ms": 5.621041666666656,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "ffn_block",
+            "instance": 0,
+            "dispatches": 5,
+            "release_ms": 0.0,
+            "actual_start_ms": 0.19070833333333334,
+            "actual_end_ms": 14.587625,
+            "response_ms": 14.587625,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 0,
+            "dispatches": 15,
+            "release_ms": 0.0,
+            "actual_start_ms": 0.4741666666666667,
+            "actual_end_ms": 5.707958333333333,
+            "response_ms": 5.707958333333333,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 1,
+            "dispatches": 15,
+            "release_ms": 20.0,
+            "actual_start_ms": 20.003041666666668,
+            "actual_end_ms": 23.909083333333335,
+            "response_ms": 3.909083333333335,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 2,
+            "dispatches": 15,
+            "release_ms": 40.0,
+            "actual_start_ms": 40.00120833333333,
+            "actual_end_ms": 43.905625,
+            "response_ms": 3.9056250000000006,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 3,
+            "dispatches": 15,
+            "release_ms": 60.0,
+            "actual_start_ms": 60.0025,
+            "actual_end_ms": 64.07170833333333,
+            "response_ms": 4.0717083333333335,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 4,
+            "dispatches": 15,
+            "release_ms": 80.0,
+            "actual_start_ms": 80.00195833333333,
+            "actual_end_ms": 83.88108333333334,
+            "response_ms": 3.8810833333333363,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 0,
+            "dispatches": 7,
+            "release_ms": 0.0,
+            "actual_start_ms": 0.9424583333333333,
+            "actual_end_ms": 1.0277916666666667,
+            "response_ms": 1.0277916666666667,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 1,
+            "dispatches": 7,
+            "release_ms": 20.0,
+            "actual_start_ms": 20.002375,
+            "actual_end_ms": 20.0905,
+            "response_ms": 0.09049999999999869,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 2,
+            "dispatches": 7,
+            "release_ms": 40.0,
+            "actual_start_ms": 40.002208333333336,
+            "actual_end_ms": 40.09041666666667,
+            "response_ms": 0.0904166666666697,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 3,
+            "dispatches": 7,
+            "release_ms": 60.0,
+            "actual_start_ms": 60.00241666666667,
+            "actual_end_ms": 60.09133333333333,
+            "response_ms": 0.09133333333333127,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 4,
+            "dispatches": 7,
+            "release_ms": 80.0,
+            "actual_start_ms": 80.00216666666667,
+            "actual_end_ms": 80.0925,
+            "response_ms": 0.09250000000000114,
+            "lateness_ms": 0.0
+          }
+        ],
+        "job_count": 14,
+        "schedule_identity_match": true,
+        "early_start_count": 0,
+        "max_actual_end_ms": 83.88108333333334,
+        "cycle_boundary_clear": true,
+        "deadline_misses": 0,
+        "max_lateness_ms": 0.0,
+        "worst_critical_response_ms": 7.370541666666667,
+        "heavy_response_ms": 14.587625
+      },
+      {
+        "path": "results/k1_feedback_exact/board_runs_rt_observed/feedback_8_trace.csv",
+        "sha256": "db14e9c5b0df3f8d21d19852db893d41ca877ce66e8c51134e13f06d01892d50",
+        "trace_rows": 178,
+        "jobs": [
+          {
+            "model": "dronet",
+            "instance": 0,
+            "dispatches": 21,
+            "release_ms": 0.0,
+            "actual_start_ms": 0.8532083333333333,
+            "actual_end_ms": 7.115916666666666,
+            "response_ms": 7.115916666666666,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "dronet",
+            "instance": 1,
+            "dispatches": 21,
+            "release_ms": 33.333333333333336,
+            "actual_start_ms": 33.338125,
+            "actual_end_ms": 38.940041666666666,
+            "response_ms": 5.60670833333333,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "dronet",
+            "instance": 2,
+            "dispatches": 21,
+            "release_ms": 66.66666666666667,
+            "actual_start_ms": 66.671125,
+            "actual_end_ms": 72.27208333333333,
+            "response_ms": 5.605416666666656,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "ffn_block",
+            "instance": 0,
+            "dispatches": 5,
+            "release_ms": 0.0,
+            "actual_start_ms": 0.1375,
+            "actual_end_ms": 14.230708333333334,
+            "response_ms": 14.230708333333334,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 0,
+            "dispatches": 15,
+            "release_ms": 0.0,
+            "actual_start_ms": 0.3348333333333333,
+            "actual_end_ms": 5.373291666666667,
+            "response_ms": 5.373291666666667,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 1,
+            "dispatches": 15,
+            "release_ms": 20.0,
+            "actual_start_ms": 20.00275,
+            "actual_end_ms": 24.005083333333335,
+            "response_ms": 4.005083333333335,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 2,
+            "dispatches": 15,
+            "release_ms": 40.0,
+            "actual_start_ms": 40.001875,
+            "actual_end_ms": 43.90741666666667,
+            "response_ms": 3.90741666666667,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 3,
+            "dispatches": 15,
+            "release_ms": 60.0,
+            "actual_start_ms": 60.002625,
+            "actual_end_ms": 63.902541666666664,
+            "response_ms": 3.9025416666666644,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 4,
+            "dispatches": 15,
+            "release_ms": 80.0,
+            "actual_start_ms": 80.00179166666666,
+            "actual_end_ms": 83.89645833333333,
+            "response_ms": 3.896458333333328,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 0,
+            "dispatches": 7,
+            "release_ms": 0.0,
+            "actual_start_ms": 0.6961666666666667,
+            "actual_end_ms": 0.786125,
+            "response_ms": 0.786125,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 1,
+            "dispatches": 7,
+            "release_ms": 20.0,
+            "actual_start_ms": 20.00225,
+            "actual_end_ms": 20.089708333333334,
+            "response_ms": 0.08970833333333417,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 2,
+            "dispatches": 7,
+            "release_ms": 40.0,
+            "actual_start_ms": 40.00145833333333,
+            "actual_end_ms": 40.092166666666664,
+            "response_ms": 0.09216666666666384,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 3,
+            "dispatches": 7,
+            "release_ms": 60.0,
+            "actual_start_ms": 60.0025,
+            "actual_end_ms": 60.092125,
+            "response_ms": 0.0921250000000029,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 4,
+            "dispatches": 7,
+            "release_ms": 80.0,
+            "actual_start_ms": 80.00166666666667,
+            "actual_end_ms": 80.08825,
+            "response_ms": 0.08825000000000216,
+            "lateness_ms": 0.0
+          }
+        ],
+        "job_count": 14,
+        "schedule_identity_match": true,
+        "early_start_count": 0,
+        "max_actual_end_ms": 83.89645833333333,
+        "cycle_boundary_clear": true,
+        "deadline_misses": 0,
+        "max_lateness_ms": 0.0,
+        "worst_critical_response_ms": 7.115916666666666,
+        "heavy_response_ms": 14.230708333333334
+      },
+      {
+        "path": "results/k1_feedback_exact/board_runs_rt_observed/feedback_9_trace.csv",
+        "sha256": "8abaa208230a3ba0ca076f1f3bcee285c3852777a3f155b48710b35559fb9419",
+        "trace_rows": 178,
+        "jobs": [
+          {
+            "model": "dronet",
+            "instance": 0,
+            "dispatches": 21,
+            "release_ms": 0.0,
+            "actual_start_ms": 0.956125,
+            "actual_end_ms": 7.140458333333333,
+            "response_ms": 7.140458333333333,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "dronet",
+            "instance": 1,
+            "dispatches": 21,
+            "release_ms": 33.333333333333336,
+            "actual_start_ms": 33.33770833333333,
+            "actual_end_ms": 38.9275,
+            "response_ms": 5.594166666666666,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "dronet",
+            "instance": 2,
+            "dispatches": 21,
+            "release_ms": 66.66666666666667,
+            "actual_start_ms": 66.670125,
+            "actual_end_ms": 72.29779166666667,
+            "response_ms": 5.631124999999997,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "ffn_block",
+            "instance": 0,
+            "dispatches": 5,
+            "release_ms": 0.0,
+            "actual_start_ms": 0.153875,
+            "actual_end_ms": 14.395083333333334,
+            "response_ms": 14.395083333333334,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 0,
+            "dispatches": 15,
+            "release_ms": 0.0,
+            "actual_start_ms": 0.3474583333333333,
+            "actual_end_ms": 5.433625,
+            "response_ms": 5.433625,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 1,
+            "dispatches": 15,
+            "release_ms": 20.0,
+            "actual_start_ms": 20.002541666666666,
+            "actual_end_ms": 23.948166666666665,
+            "response_ms": 3.9481666666666655,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 2,
+            "dispatches": 15,
+            "release_ms": 40.0,
+            "actual_start_ms": 40.00129166666667,
+            "actual_end_ms": 43.97225,
+            "response_ms": 3.9722500000000025,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 3,
+            "dispatches": 15,
+            "release_ms": 60.0,
+            "actual_start_ms": 60.0025,
+            "actual_end_ms": 63.93029166666667,
+            "response_ms": 3.930291666666669,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "fused_full",
+            "instance": 4,
+            "dispatches": 15,
+            "release_ms": 80.0,
+            "actual_start_ms": 80.002,
+            "actual_end_ms": 83.94704166666666,
+            "response_ms": 3.9470416666666637,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 0,
+            "dispatches": 7,
+            "release_ms": 0.0,
+            "actual_start_ms": 0.712,
+            "actual_end_ms": 0.8015833333333333,
+            "response_ms": 0.8015833333333333,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 1,
+            "dispatches": 7,
+            "release_ms": 20.0,
+            "actual_start_ms": 20.002041666666667,
+            "actual_end_ms": 20.091125,
+            "response_ms": 0.09112500000000168,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 2,
+            "dispatches": 7,
+            "release_ms": 40.0,
+            "actual_start_ms": 40.00120833333333,
+            "actual_end_ms": 40.0895,
+            "response_ms": 0.08950000000000102,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 3,
+            "dispatches": 7,
+            "release_ms": 60.0,
+            "actual_start_ms": 60.00208333333333,
+            "actual_end_ms": 60.091875,
+            "response_ms": 0.0918750000000017,
+            "lateness_ms": 0.0
+          },
+          {
+            "model": "mlp_control",
+            "instance": 4,
+            "dispatches": 7,
+            "release_ms": 80.0,
+            "actual_start_ms": 80.001375,
+            "actual_end_ms": 80.092625,
+            "response_ms": 0.09262499999999818,
+            "lateness_ms": 0.0
+          }
+        ],
+        "job_count": 14,
+        "schedule_identity_match": true,
+        "early_start_count": 0,
+        "max_actual_end_ms": 83.94704166666666,
+        "cycle_boundary_clear": true,
+        "deadline_misses": 0,
+        "max_lateness_ms": 0.0,
+        "worst_critical_response_ms": 7.140458333333333,
+        "heavy_response_ms": 14.395083333333334
+      }
+    ]
+  },
+  "stdout_audits": {
+    "original": [
+      {
+        "path": "results/k1_feedback_exact/board_runs_rt_observed/original_0_stdout.txt",
+        "sha256": "338a9d74eea129133f9716adc925ca8c876af381b2ef4279e70d513401b4618c",
+        "forbidden_lines": [],
+        "worker_count": 5,
+        "worker_entries_done": 178,
+        "all_workers_pinned_as_requested": true,
+        "composite_pools": [],
+        "golden_checks": {
+          "mlp_control": {
+            "max_abs_err": 0.0,
+            "max_rel_err": 0.0,
+            "elements": 4,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.0,
+            "rtol": 0.0,
+            "pass": true
+          },
+          "fused_full": {
+            "max_abs_err": 0.000183105469,
+            "max_rel_err": 0.00162337662,
+            "elements": 2,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.01,
+            "rtol": 0.01,
+            "pass": true
+          },
+          "dronet": {
+            "max_abs_err": 0.0,
+            "max_rel_err": 0.0,
+            "elements": 2,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.0,
+            "rtol": 0.0,
+            "pass": true
+          },
+          "ffn_block": {
+            "max_abs_err": 0.0,
+            "max_rel_err": 0.0,
+            "elements": 32768,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.0,
+            "rtol": 0.0,
+            "pass": true
+          }
+        },
+        "all_golden_outputs_valid": true,
+        "runner_policy": {
+          "policy": "SCHED_FIFO",
+          "priority": 80
+        },
+        "observed_runner_policy": {
+          "policy": "SCHED_FIFO",
+          "priority": 80
+        },
+        "required_runner_policy": "SCHED_FIFO",
+        "runner_policy_valid": true,
+        "pass": true
+      },
+      {
+        "path": "results/k1_feedback_exact/board_runs_rt_observed/original_1_stdout.txt",
+        "sha256": "460c48767a5f8647bbd5a6650d9f650d3ac03db610705b505da67cf26e01c4a3",
+        "forbidden_lines": [],
+        "worker_count": 5,
+        "worker_entries_done": 178,
+        "all_workers_pinned_as_requested": true,
+        "composite_pools": [],
+        "golden_checks": {
+          "mlp_control": {
+            "max_abs_err": 0.0,
+            "max_rel_err": 0.0,
+            "elements": 4,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.0,
+            "rtol": 0.0,
+            "pass": true
+          },
+          "fused_full": {
+            "max_abs_err": 0.000183105469,
+            "max_rel_err": 0.00162337662,
+            "elements": 2,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.01,
+            "rtol": 0.01,
+            "pass": true
+          },
+          "dronet": {
+            "max_abs_err": 0.0,
+            "max_rel_err": 0.0,
+            "elements": 2,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.0,
+            "rtol": 0.0,
+            "pass": true
+          },
+          "ffn_block": {
+            "max_abs_err": 0.0,
+            "max_rel_err": 0.0,
+            "elements": 32768,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.0,
+            "rtol": 0.0,
+            "pass": true
+          }
+        },
+        "all_golden_outputs_valid": true,
+        "runner_policy": {
+          "policy": "SCHED_FIFO",
+          "priority": 80
+        },
+        "observed_runner_policy": {
+          "policy": "SCHED_FIFO",
+          "priority": 80
+        },
+        "required_runner_policy": "SCHED_FIFO",
+        "runner_policy_valid": true,
+        "pass": true
+      },
+      {
+        "path": "results/k1_feedback_exact/board_runs_rt_observed/original_2_stdout.txt",
+        "sha256": "73174d5abbe9c230340b106c9469710d6eb8f8b41f58fbc2a2171bf6f606190c",
+        "forbidden_lines": [],
+        "worker_count": 5,
+        "worker_entries_done": 178,
+        "all_workers_pinned_as_requested": true,
+        "composite_pools": [],
+        "golden_checks": {
+          "mlp_control": {
+            "max_abs_err": 0.0,
+            "max_rel_err": 0.0,
+            "elements": 4,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.0,
+            "rtol": 0.0,
+            "pass": true
+          },
+          "fused_full": {
+            "max_abs_err": 0.000183105469,
+            "max_rel_err": 0.00162337662,
+            "elements": 2,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.01,
+            "rtol": 0.01,
+            "pass": true
+          },
+          "dronet": {
+            "max_abs_err": 0.0,
+            "max_rel_err": 0.0,
+            "elements": 2,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.0,
+            "rtol": 0.0,
+            "pass": true
+          },
+          "ffn_block": {
+            "max_abs_err": 0.0,
+            "max_rel_err": 0.0,
+            "elements": 32768,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.0,
+            "rtol": 0.0,
+            "pass": true
+          }
+        },
+        "all_golden_outputs_valid": true,
+        "runner_policy": {
+          "policy": "SCHED_FIFO",
+          "priority": 80
+        },
+        "observed_runner_policy": {
+          "policy": "SCHED_FIFO",
+          "priority": 80
+        },
+        "required_runner_policy": "SCHED_FIFO",
+        "runner_policy_valid": true,
+        "pass": true
+      },
+      {
+        "path": "results/k1_feedback_exact/board_runs_rt_observed/original_3_stdout.txt",
+        "sha256": "66e62226c9493328a48d2e66d4716523d907fd0db7e8ab09416a57285dc3b0f4",
+        "forbidden_lines": [],
+        "worker_count": 5,
+        "worker_entries_done": 178,
+        "all_workers_pinned_as_requested": true,
+        "composite_pools": [],
+        "golden_checks": {
+          "mlp_control": {
+            "max_abs_err": 0.0,
+            "max_rel_err": 0.0,
+            "elements": 4,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.0,
+            "rtol": 0.0,
+            "pass": true
+          },
+          "fused_full": {
+            "max_abs_err": 0.000183105469,
+            "max_rel_err": 0.00162337662,
+            "elements": 2,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.01,
+            "rtol": 0.01,
+            "pass": true
+          },
+          "dronet": {
+            "max_abs_err": 0.0,
+            "max_rel_err": 0.0,
+            "elements": 2,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.0,
+            "rtol": 0.0,
+            "pass": true
+          },
+          "ffn_block": {
+            "max_abs_err": 0.0,
+            "max_rel_err": 0.0,
+            "elements": 32768,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.0,
+            "rtol": 0.0,
+            "pass": true
+          }
+        },
+        "all_golden_outputs_valid": true,
+        "runner_policy": {
+          "policy": "SCHED_FIFO",
+          "priority": 80
+        },
+        "observed_runner_policy": {
+          "policy": "SCHED_FIFO",
+          "priority": 80
+        },
+        "required_runner_policy": "SCHED_FIFO",
+        "runner_policy_valid": true,
+        "pass": true
+      },
+      {
+        "path": "results/k1_feedback_exact/board_runs_rt_observed/original_4_stdout.txt",
+        "sha256": "360e9dcadd714b0972589244452c51b4ec67ea48148cb4bb421cc511a2c8f6a6",
+        "forbidden_lines": [],
+        "worker_count": 5,
+        "worker_entries_done": 178,
+        "all_workers_pinned_as_requested": true,
+        "composite_pools": [],
+        "golden_checks": {
+          "mlp_control": {
+            "max_abs_err": 0.0,
+            "max_rel_err": 0.0,
+            "elements": 4,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.0,
+            "rtol": 0.0,
+            "pass": true
+          },
+          "fused_full": {
+            "max_abs_err": 0.000183105469,
+            "max_rel_err": 0.00162337662,
+            "elements": 2,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.01,
+            "rtol": 0.01,
+            "pass": true
+          },
+          "dronet": {
+            "max_abs_err": 0.0,
+            "max_rel_err": 0.0,
+            "elements": 2,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.0,
+            "rtol": 0.0,
+            "pass": true
+          },
+          "ffn_block": {
+            "max_abs_err": 0.0,
+            "max_rel_err": 0.0,
+            "elements": 32768,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.0,
+            "rtol": 0.0,
+            "pass": true
+          }
+        },
+        "all_golden_outputs_valid": true,
+        "runner_policy": {
+          "policy": "SCHED_FIFO",
+          "priority": 80
+        },
+        "observed_runner_policy": {
+          "policy": "SCHED_FIFO",
+          "priority": 80
+        },
+        "required_runner_policy": "SCHED_FIFO",
+        "runner_policy_valid": true,
+        "pass": true
+      },
+      {
+        "path": "results/k1_feedback_exact/board_runs_rt_observed/original_5_stdout.txt",
+        "sha256": "7b4b9d51233f156b0cedd9b168c246d10b6262453fe8d3c790b0f524dedf1a0b",
+        "forbidden_lines": [],
+        "worker_count": 5,
+        "worker_entries_done": 178,
+        "all_workers_pinned_as_requested": true,
+        "composite_pools": [],
+        "golden_checks": {
+          "mlp_control": {
+            "max_abs_err": 0.0,
+            "max_rel_err": 0.0,
+            "elements": 4,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.0,
+            "rtol": 0.0,
+            "pass": true
+          },
+          "fused_full": {
+            "max_abs_err": 0.000183105469,
+            "max_rel_err": 0.00162337662,
+            "elements": 2,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.01,
+            "rtol": 0.01,
+            "pass": true
+          },
+          "dronet": {
+            "max_abs_err": 0.0,
+            "max_rel_err": 0.0,
+            "elements": 2,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.0,
+            "rtol": 0.0,
+            "pass": true
+          },
+          "ffn_block": {
+            "max_abs_err": 0.0,
+            "max_rel_err": 0.0,
+            "elements": 32768,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.0,
+            "rtol": 0.0,
+            "pass": true
+          }
+        },
+        "all_golden_outputs_valid": true,
+        "runner_policy": {
+          "policy": "SCHED_FIFO",
+          "priority": 80
+        },
+        "observed_runner_policy": {
+          "policy": "SCHED_FIFO",
+          "priority": 80
+        },
+        "required_runner_policy": "SCHED_FIFO",
+        "runner_policy_valid": true,
+        "pass": true
+      },
+      {
+        "path": "results/k1_feedback_exact/board_runs_rt_observed/original_6_stdout.txt",
+        "sha256": "b95547f335960426982b3ba1e9b87c166d943d4063e97d307c1c08855494c45a",
+        "forbidden_lines": [],
+        "worker_count": 5,
+        "worker_entries_done": 178,
+        "all_workers_pinned_as_requested": true,
+        "composite_pools": [],
+        "golden_checks": {
+          "mlp_control": {
+            "max_abs_err": 0.0,
+            "max_rel_err": 0.0,
+            "elements": 4,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.0,
+            "rtol": 0.0,
+            "pass": true
+          },
+          "fused_full": {
+            "max_abs_err": 0.000183105469,
+            "max_rel_err": 0.00162337662,
+            "elements": 2,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.01,
+            "rtol": 0.01,
+            "pass": true
+          },
+          "dronet": {
+            "max_abs_err": 0.0,
+            "max_rel_err": 0.0,
+            "elements": 2,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.0,
+            "rtol": 0.0,
+            "pass": true
+          },
+          "ffn_block": {
+            "max_abs_err": 0.0,
+            "max_rel_err": 0.0,
+            "elements": 32768,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.0,
+            "rtol": 0.0,
+            "pass": true
+          }
+        },
+        "all_golden_outputs_valid": true,
+        "runner_policy": {
+          "policy": "SCHED_FIFO",
+          "priority": 80
+        },
+        "observed_runner_policy": {
+          "policy": "SCHED_FIFO",
+          "priority": 80
+        },
+        "required_runner_policy": "SCHED_FIFO",
+        "runner_policy_valid": true,
+        "pass": true
+      },
+      {
+        "path": "results/k1_feedback_exact/board_runs_rt_observed/original_7_stdout.txt",
+        "sha256": "ca2b6796ba6bd6af746cfdc2f9c44f3b9ff4aa82751f275e2bb5219ee8eb0571",
+        "forbidden_lines": [],
+        "worker_count": 5,
+        "worker_entries_done": 178,
+        "all_workers_pinned_as_requested": true,
+        "composite_pools": [],
+        "golden_checks": {
+          "mlp_control": {
+            "max_abs_err": 0.0,
+            "max_rel_err": 0.0,
+            "elements": 4,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.0,
+            "rtol": 0.0,
+            "pass": true
+          },
+          "fused_full": {
+            "max_abs_err": 0.000183105469,
+            "max_rel_err": 0.00162337662,
+            "elements": 2,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.01,
+            "rtol": 0.01,
+            "pass": true
+          },
+          "dronet": {
+            "max_abs_err": 0.0,
+            "max_rel_err": 0.0,
+            "elements": 2,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.0,
+            "rtol": 0.0,
+            "pass": true
+          },
+          "ffn_block": {
+            "max_abs_err": 0.0,
+            "max_rel_err": 0.0,
+            "elements": 32768,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.0,
+            "rtol": 0.0,
+            "pass": true
+          }
+        },
+        "all_golden_outputs_valid": true,
+        "runner_policy": {
+          "policy": "SCHED_FIFO",
+          "priority": 80
+        },
+        "observed_runner_policy": {
+          "policy": "SCHED_FIFO",
+          "priority": 80
+        },
+        "required_runner_policy": "SCHED_FIFO",
+        "runner_policy_valid": true,
+        "pass": true
+      },
+      {
+        "path": "results/k1_feedback_exact/board_runs_rt_observed/original_8_stdout.txt",
+        "sha256": "5059d81b1cc1ab0f2b7a5e9a6eddfa01c696f6d41b88ff4a1b5b3890a0d58201",
+        "forbidden_lines": [],
+        "worker_count": 5,
+        "worker_entries_done": 178,
+        "all_workers_pinned_as_requested": true,
+        "composite_pools": [],
+        "golden_checks": {
+          "mlp_control": {
+            "max_abs_err": 0.0,
+            "max_rel_err": 0.0,
+            "elements": 4,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.0,
+            "rtol": 0.0,
+            "pass": true
+          },
+          "fused_full": {
+            "max_abs_err": 0.000183105469,
+            "max_rel_err": 0.00162337662,
+            "elements": 2,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.01,
+            "rtol": 0.01,
+            "pass": true
+          },
+          "dronet": {
+            "max_abs_err": 0.0,
+            "max_rel_err": 0.0,
+            "elements": 2,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.0,
+            "rtol": 0.0,
+            "pass": true
+          },
+          "ffn_block": {
+            "max_abs_err": 0.0,
+            "max_rel_err": 0.0,
+            "elements": 32768,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.0,
+            "rtol": 0.0,
+            "pass": true
+          }
+        },
+        "all_golden_outputs_valid": true,
+        "runner_policy": {
+          "policy": "SCHED_FIFO",
+          "priority": 80
+        },
+        "observed_runner_policy": {
+          "policy": "SCHED_FIFO",
+          "priority": 80
+        },
+        "required_runner_policy": "SCHED_FIFO",
+        "runner_policy_valid": true,
+        "pass": true
+      },
+      {
+        "path": "results/k1_feedback_exact/board_runs_rt_observed/original_9_stdout.txt",
+        "sha256": "12d7c12f2f6ec0fccb19d5295a377d1c175e83d995b592c3003576b146785a82",
+        "forbidden_lines": [],
+        "worker_count": 5,
+        "worker_entries_done": 178,
+        "all_workers_pinned_as_requested": true,
+        "composite_pools": [],
+        "golden_checks": {
+          "mlp_control": {
+            "max_abs_err": 0.0,
+            "max_rel_err": 0.0,
+            "elements": 4,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.0,
+            "rtol": 0.0,
+            "pass": true
+          },
+          "fused_full": {
+            "max_abs_err": 0.000183105469,
+            "max_rel_err": 0.00162337662,
+            "elements": 2,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.01,
+            "rtol": 0.01,
+            "pass": true
+          },
+          "dronet": {
+            "max_abs_err": 0.0,
+            "max_rel_err": 0.0,
+            "elements": 2,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.0,
+            "rtol": 0.0,
+            "pass": true
+          },
+          "ffn_block": {
+            "max_abs_err": 0.0,
+            "max_rel_err": 0.0,
+            "elements": 32768,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.0,
+            "rtol": 0.0,
+            "pass": true
+          }
+        },
+        "all_golden_outputs_valid": true,
+        "runner_policy": {
+          "policy": "SCHED_FIFO",
+          "priority": 80
+        },
+        "observed_runner_policy": {
+          "policy": "SCHED_FIFO",
+          "priority": 80
+        },
+        "required_runner_policy": "SCHED_FIFO",
+        "runner_policy_valid": true,
+        "pass": true
+      }
+    ],
+    "feedback": [
+      {
+        "path": "results/k1_feedback_exact/board_runs_rt_observed/feedback_0_stdout.txt",
+        "sha256": "6cbff74aa7747d288fbc91bf36596bb1f0dd8eddc9c497aa896e78862b46bac2",
+        "forbidden_lines": [],
+        "worker_count": 5,
+        "worker_entries_done": 178,
+        "all_workers_pinned_as_requested": true,
+        "composite_pools": [
+          {
+            "width": 4,
+            "harts": "4+5+6+7"
+          },
+          {
+            "width": 2,
+            "harts": "0+1"
+          },
+          {
+            "width": 4,
+            "harts": "0+1+2+3"
+          },
+          {
+            "width": 2,
+            "harts": "2+3"
+          }
+        ],
+        "golden_checks": {
+          "mlp_control": {
+            "max_abs_err": 0.0,
+            "max_rel_err": 0.0,
+            "elements": 4,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.0,
+            "rtol": 0.0,
+            "pass": true
+          },
+          "fused_full": {
+            "max_abs_err": 0.000183105469,
+            "max_rel_err": 0.00162337662,
+            "elements": 2,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.01,
+            "rtol": 0.01,
+            "pass": true
+          },
+          "dronet": {
+            "max_abs_err": 0.0,
+            "max_rel_err": 0.0,
+            "elements": 2,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.0,
+            "rtol": 0.0,
+            "pass": true
+          },
+          "ffn_block": {
+            "max_abs_err": 0.0,
+            "max_rel_err": 0.0,
+            "elements": 32768,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.0,
+            "rtol": 0.0,
+            "pass": true
+          }
+        },
+        "all_golden_outputs_valid": true,
+        "runner_policy": {
+          "policy": "SCHED_FIFO",
+          "priority": 80
+        },
+        "observed_runner_policy": {
+          "policy": "SCHED_FIFO",
+          "priority": 80
+        },
+        "required_runner_policy": "SCHED_FIFO",
+        "runner_policy_valid": true,
+        "pass": true
+      },
+      {
+        "path": "results/k1_feedback_exact/board_runs_rt_observed/feedback_1_stdout.txt",
+        "sha256": "2272c53ae3b9802130afa798e5a28fabff25a62f6f2e4febdec9686ca5cea3db",
+        "forbidden_lines": [],
+        "worker_count": 5,
+        "worker_entries_done": 178,
+        "all_workers_pinned_as_requested": true,
+        "composite_pools": [
+          {
+            "width": 4,
+            "harts": "4+5+6+7"
+          },
+          {
+            "width": 2,
+            "harts": "0+1"
+          },
+          {
+            "width": 4,
+            "harts": "0+1+2+3"
+          },
+          {
+            "width": 2,
+            "harts": "2+3"
+          }
+        ],
+        "golden_checks": {
+          "mlp_control": {
+            "max_abs_err": 0.0,
+            "max_rel_err": 0.0,
+            "elements": 4,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.0,
+            "rtol": 0.0,
+            "pass": true
+          },
+          "fused_full": {
+            "max_abs_err": 0.000183105469,
+            "max_rel_err": 0.00162337662,
+            "elements": 2,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.01,
+            "rtol": 0.01,
+            "pass": true
+          },
+          "dronet": {
+            "max_abs_err": 0.0,
+            "max_rel_err": 0.0,
+            "elements": 2,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.0,
+            "rtol": 0.0,
+            "pass": true
+          },
+          "ffn_block": {
+            "max_abs_err": 0.0,
+            "max_rel_err": 0.0,
+            "elements": 32768,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.0,
+            "rtol": 0.0,
+            "pass": true
+          }
+        },
+        "all_golden_outputs_valid": true,
+        "runner_policy": {
+          "policy": "SCHED_FIFO",
+          "priority": 80
+        },
+        "observed_runner_policy": {
+          "policy": "SCHED_FIFO",
+          "priority": 80
+        },
+        "required_runner_policy": "SCHED_FIFO",
+        "runner_policy_valid": true,
+        "pass": true
+      },
+      {
+        "path": "results/k1_feedback_exact/board_runs_rt_observed/feedback_2_stdout.txt",
+        "sha256": "ff725c5cf644dcb0ec43a8d1ee3e2c6db74e2a95d522b9d23d2fddae98373bcb",
+        "forbidden_lines": [],
+        "worker_count": 5,
+        "worker_entries_done": 178,
+        "all_workers_pinned_as_requested": true,
+        "composite_pools": [
+          {
+            "width": 4,
+            "harts": "4+5+6+7"
+          },
+          {
+            "width": 2,
+            "harts": "0+1"
+          },
+          {
+            "width": 4,
+            "harts": "0+1+2+3"
+          },
+          {
+            "width": 2,
+            "harts": "2+3"
+          }
+        ],
+        "golden_checks": {
+          "mlp_control": {
+            "max_abs_err": 0.0,
+            "max_rel_err": 0.0,
+            "elements": 4,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.0,
+            "rtol": 0.0,
+            "pass": true
+          },
+          "fused_full": {
+            "max_abs_err": 0.000183105469,
+            "max_rel_err": 0.00162337662,
+            "elements": 2,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.01,
+            "rtol": 0.01,
+            "pass": true
+          },
+          "dronet": {
+            "max_abs_err": 0.0,
+            "max_rel_err": 0.0,
+            "elements": 2,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.0,
+            "rtol": 0.0,
+            "pass": true
+          },
+          "ffn_block": {
+            "max_abs_err": 0.0,
+            "max_rel_err": 0.0,
+            "elements": 32768,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.0,
+            "rtol": 0.0,
+            "pass": true
+          }
+        },
+        "all_golden_outputs_valid": true,
+        "runner_policy": {
+          "policy": "SCHED_FIFO",
+          "priority": 80
+        },
+        "observed_runner_policy": {
+          "policy": "SCHED_FIFO",
+          "priority": 80
+        },
+        "required_runner_policy": "SCHED_FIFO",
+        "runner_policy_valid": true,
+        "pass": true
+      },
+      {
+        "path": "results/k1_feedback_exact/board_runs_rt_observed/feedback_3_stdout.txt",
+        "sha256": "ffbb180131a45aaea0f2a6978aebc0b992f8766aaf031f8925847c2cc4e340fb",
+        "forbidden_lines": [],
+        "worker_count": 5,
+        "worker_entries_done": 178,
+        "all_workers_pinned_as_requested": true,
+        "composite_pools": [
+          {
+            "width": 4,
+            "harts": "4+5+6+7"
+          },
+          {
+            "width": 2,
+            "harts": "0+1"
+          },
+          {
+            "width": 4,
+            "harts": "0+1+2+3"
+          },
+          {
+            "width": 2,
+            "harts": "2+3"
+          }
+        ],
+        "golden_checks": {
+          "mlp_control": {
+            "max_abs_err": 0.0,
+            "max_rel_err": 0.0,
+            "elements": 4,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.0,
+            "rtol": 0.0,
+            "pass": true
+          },
+          "fused_full": {
+            "max_abs_err": 0.000183105469,
+            "max_rel_err": 0.00162337662,
+            "elements": 2,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.01,
+            "rtol": 0.01,
+            "pass": true
+          },
+          "dronet": {
+            "max_abs_err": 0.0,
+            "max_rel_err": 0.0,
+            "elements": 2,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.0,
+            "rtol": 0.0,
+            "pass": true
+          },
+          "ffn_block": {
+            "max_abs_err": 0.0,
+            "max_rel_err": 0.0,
+            "elements": 32768,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.0,
+            "rtol": 0.0,
+            "pass": true
+          }
+        },
+        "all_golden_outputs_valid": true,
+        "runner_policy": {
+          "policy": "SCHED_FIFO",
+          "priority": 80
+        },
+        "observed_runner_policy": {
+          "policy": "SCHED_FIFO",
+          "priority": 80
+        },
+        "required_runner_policy": "SCHED_FIFO",
+        "runner_policy_valid": true,
+        "pass": true
+      },
+      {
+        "path": "results/k1_feedback_exact/board_runs_rt_observed/feedback_4_stdout.txt",
+        "sha256": "545b69a72b95a12e3d726f8842393aeade2e6c1be637ab24f1ce8a8f8cab1bf3",
+        "forbidden_lines": [],
+        "worker_count": 5,
+        "worker_entries_done": 178,
+        "all_workers_pinned_as_requested": true,
+        "composite_pools": [
+          {
+            "width": 4,
+            "harts": "4+5+6+7"
+          },
+          {
+            "width": 2,
+            "harts": "0+1"
+          },
+          {
+            "width": 4,
+            "harts": "0+1+2+3"
+          },
+          {
+            "width": 2,
+            "harts": "2+3"
+          }
+        ],
+        "golden_checks": {
+          "mlp_control": {
+            "max_abs_err": 0.0,
+            "max_rel_err": 0.0,
+            "elements": 4,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.0,
+            "rtol": 0.0,
+            "pass": true
+          },
+          "fused_full": {
+            "max_abs_err": 0.000183105469,
+            "max_rel_err": 0.00162337662,
+            "elements": 2,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.01,
+            "rtol": 0.01,
+            "pass": true
+          },
+          "dronet": {
+            "max_abs_err": 0.0,
+            "max_rel_err": 0.0,
+            "elements": 2,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.0,
+            "rtol": 0.0,
+            "pass": true
+          },
+          "ffn_block": {
+            "max_abs_err": 0.0,
+            "max_rel_err": 0.0,
+            "elements": 32768,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.0,
+            "rtol": 0.0,
+            "pass": true
+          }
+        },
+        "all_golden_outputs_valid": true,
+        "runner_policy": {
+          "policy": "SCHED_FIFO",
+          "priority": 80
+        },
+        "observed_runner_policy": {
+          "policy": "SCHED_FIFO",
+          "priority": 80
+        },
+        "required_runner_policy": "SCHED_FIFO",
+        "runner_policy_valid": true,
+        "pass": true
+      },
+      {
+        "path": "results/k1_feedback_exact/board_runs_rt_observed/feedback_5_stdout.txt",
+        "sha256": "bc127da3ce05cec2c83595c44590f721baa8a10f40b6274c6bf490193ac1344c",
+        "forbidden_lines": [],
+        "worker_count": 5,
+        "worker_entries_done": 178,
+        "all_workers_pinned_as_requested": true,
+        "composite_pools": [
+          {
+            "width": 4,
+            "harts": "4+5+6+7"
+          },
+          {
+            "width": 2,
+            "harts": "0+1"
+          },
+          {
+            "width": 4,
+            "harts": "0+1+2+3"
+          },
+          {
+            "width": 2,
+            "harts": "2+3"
+          }
+        ],
+        "golden_checks": {
+          "mlp_control": {
+            "max_abs_err": 0.0,
+            "max_rel_err": 0.0,
+            "elements": 4,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.0,
+            "rtol": 0.0,
+            "pass": true
+          },
+          "fused_full": {
+            "max_abs_err": 0.000183105469,
+            "max_rel_err": 0.00162337662,
+            "elements": 2,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.01,
+            "rtol": 0.01,
+            "pass": true
+          },
+          "dronet": {
+            "max_abs_err": 0.0,
+            "max_rel_err": 0.0,
+            "elements": 2,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.0,
+            "rtol": 0.0,
+            "pass": true
+          },
+          "ffn_block": {
+            "max_abs_err": 0.0,
+            "max_rel_err": 0.0,
+            "elements": 32768,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.0,
+            "rtol": 0.0,
+            "pass": true
+          }
+        },
+        "all_golden_outputs_valid": true,
+        "runner_policy": {
+          "policy": "SCHED_FIFO",
+          "priority": 80
+        },
+        "observed_runner_policy": {
+          "policy": "SCHED_FIFO",
+          "priority": 80
+        },
+        "required_runner_policy": "SCHED_FIFO",
+        "runner_policy_valid": true,
+        "pass": true
+      },
+      {
+        "path": "results/k1_feedback_exact/board_runs_rt_observed/feedback_6_stdout.txt",
+        "sha256": "9388bba5254aa7a818f880392c5bc3f9c5ad34a8e6eeb4acfb9215ec70864c98",
+        "forbidden_lines": [],
+        "worker_count": 5,
+        "worker_entries_done": 178,
+        "all_workers_pinned_as_requested": true,
+        "composite_pools": [
+          {
+            "width": 4,
+            "harts": "4+5+6+7"
+          },
+          {
+            "width": 2,
+            "harts": "0+1"
+          },
+          {
+            "width": 4,
+            "harts": "0+1+2+3"
+          },
+          {
+            "width": 2,
+            "harts": "2+3"
+          }
+        ],
+        "golden_checks": {
+          "mlp_control": {
+            "max_abs_err": 0.0,
+            "max_rel_err": 0.0,
+            "elements": 4,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.0,
+            "rtol": 0.0,
+            "pass": true
+          },
+          "fused_full": {
+            "max_abs_err": 0.000183105469,
+            "max_rel_err": 0.00162337662,
+            "elements": 2,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.01,
+            "rtol": 0.01,
+            "pass": true
+          },
+          "dronet": {
+            "max_abs_err": 0.0,
+            "max_rel_err": 0.0,
+            "elements": 2,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.0,
+            "rtol": 0.0,
+            "pass": true
+          },
+          "ffn_block": {
+            "max_abs_err": 0.0,
+            "max_rel_err": 0.0,
+            "elements": 32768,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.0,
+            "rtol": 0.0,
+            "pass": true
+          }
+        },
+        "all_golden_outputs_valid": true,
+        "runner_policy": {
+          "policy": "SCHED_FIFO",
+          "priority": 80
+        },
+        "observed_runner_policy": {
+          "policy": "SCHED_FIFO",
+          "priority": 80
+        },
+        "required_runner_policy": "SCHED_FIFO",
+        "runner_policy_valid": true,
+        "pass": true
+      },
+      {
+        "path": "results/k1_feedback_exact/board_runs_rt_observed/feedback_7_stdout.txt",
+        "sha256": "5123377909436f9e6cf0fc3df96ca3e4808c4b50129e04bf510df54dcf4a718e",
+        "forbidden_lines": [],
+        "worker_count": 5,
+        "worker_entries_done": 178,
+        "all_workers_pinned_as_requested": true,
+        "composite_pools": [
+          {
+            "width": 4,
+            "harts": "4+5+6+7"
+          },
+          {
+            "width": 2,
+            "harts": "0+1"
+          },
+          {
+            "width": 4,
+            "harts": "0+1+2+3"
+          },
+          {
+            "width": 2,
+            "harts": "2+3"
+          }
+        ],
+        "golden_checks": {
+          "mlp_control": {
+            "max_abs_err": 0.0,
+            "max_rel_err": 0.0,
+            "elements": 4,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.0,
+            "rtol": 0.0,
+            "pass": true
+          },
+          "fused_full": {
+            "max_abs_err": 0.000183105469,
+            "max_rel_err": 0.00162337662,
+            "elements": 2,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.01,
+            "rtol": 0.01,
+            "pass": true
+          },
+          "dronet": {
+            "max_abs_err": 0.0,
+            "max_rel_err": 0.0,
+            "elements": 2,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.0,
+            "rtol": 0.0,
+            "pass": true
+          },
+          "ffn_block": {
+            "max_abs_err": 0.0,
+            "max_rel_err": 0.0,
+            "elements": 32768,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.0,
+            "rtol": 0.0,
+            "pass": true
+          }
+        },
+        "all_golden_outputs_valid": true,
+        "runner_policy": {
+          "policy": "SCHED_FIFO",
+          "priority": 80
+        },
+        "observed_runner_policy": {
+          "policy": "SCHED_FIFO",
+          "priority": 80
+        },
+        "required_runner_policy": "SCHED_FIFO",
+        "runner_policy_valid": true,
+        "pass": true
+      },
+      {
+        "path": "results/k1_feedback_exact/board_runs_rt_observed/feedback_8_stdout.txt",
+        "sha256": "c8abdaebfdca62b5f0092b95290f66c261656e3f0d99f6c2971c43aa454204f3",
+        "forbidden_lines": [],
+        "worker_count": 5,
+        "worker_entries_done": 178,
+        "all_workers_pinned_as_requested": true,
+        "composite_pools": [
+          {
+            "width": 4,
+            "harts": "4+5+6+7"
+          },
+          {
+            "width": 2,
+            "harts": "0+1"
+          },
+          {
+            "width": 4,
+            "harts": "0+1+2+3"
+          },
+          {
+            "width": 2,
+            "harts": "2+3"
+          }
+        ],
+        "golden_checks": {
+          "mlp_control": {
+            "max_abs_err": 0.0,
+            "max_rel_err": 0.0,
+            "elements": 4,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.0,
+            "rtol": 0.0,
+            "pass": true
+          },
+          "fused_full": {
+            "max_abs_err": 0.000183105469,
+            "max_rel_err": 0.00162337662,
+            "elements": 2,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.01,
+            "rtol": 0.01,
+            "pass": true
+          },
+          "dronet": {
+            "max_abs_err": 0.0,
+            "max_rel_err": 0.0,
+            "elements": 2,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.0,
+            "rtol": 0.0,
+            "pass": true
+          },
+          "ffn_block": {
+            "max_abs_err": 0.0,
+            "max_rel_err": 0.0,
+            "elements": 32768,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.0,
+            "rtol": 0.0,
+            "pass": true
+          }
+        },
+        "all_golden_outputs_valid": true,
+        "runner_policy": {
+          "policy": "SCHED_FIFO",
+          "priority": 80
+        },
+        "observed_runner_policy": {
+          "policy": "SCHED_FIFO",
+          "priority": 80
+        },
+        "required_runner_policy": "SCHED_FIFO",
+        "runner_policy_valid": true,
+        "pass": true
+      },
+      {
+        "path": "results/k1_feedback_exact/board_runs_rt_observed/feedback_9_stdout.txt",
+        "sha256": "c970e58839adadbe6effb63959ab157e2841b3dd57aaca7fe5844670508ccdb1",
+        "forbidden_lines": [],
+        "worker_count": 5,
+        "worker_entries_done": 178,
+        "all_workers_pinned_as_requested": true,
+        "composite_pools": [
+          {
+            "width": 4,
+            "harts": "4+5+6+7"
+          },
+          {
+            "width": 2,
+            "harts": "0+1"
+          },
+          {
+            "width": 4,
+            "harts": "0+1+2+3"
+          },
+          {
+            "width": 2,
+            "harts": "2+3"
+          }
+        ],
+        "golden_checks": {
+          "mlp_control": {
+            "max_abs_err": 0.0,
+            "max_rel_err": 0.0,
+            "elements": 4,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.0,
+            "rtol": 0.0,
+            "pass": true
+          },
+          "fused_full": {
+            "max_abs_err": 0.000183105469,
+            "max_rel_err": 0.00162337662,
+            "elements": 2,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.01,
+            "rtol": 0.01,
+            "pass": true
+          },
+          "dronet": {
+            "max_abs_err": 0.0,
+            "max_rel_err": 0.0,
+            "elements": 2,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.0,
+            "rtol": 0.0,
+            "pass": true
+          },
+          "ffn_block": {
+            "max_abs_err": 0.0,
+            "max_rel_err": 0.0,
+            "elements": 32768,
+            "instance": 0,
+            "ready": true,
+            "atol": 0.0,
+            "rtol": 0.0,
+            "pass": true
+          }
+        },
+        "all_golden_outputs_valid": true,
+        "runner_policy": {
+          "policy": "SCHED_FIFO",
+          "priority": 80
+        },
+        "observed_runner_policy": {
+          "policy": "SCHED_FIFO",
+          "priority": 80
+        },
+        "required_runner_policy": "SCHED_FIFO",
+        "runner_policy_valid": true,
+        "pass": true
+      }
+    ]
+  },
+  "comparison": {
+    "original_median_critical_response_ms": 10.491,
+    "feedback_median_critical_response_ms": 7.208520833333333,
+    "original_median_heavy_response_ms": 19.022583333333333,
+    "feedback_median_heavy_response_ms": 14.409604166666666,
+    "median_critical_improvement_pct": 31.288525084993484,
+    "median_heavy_improvement_pct": 24.25001423746337,
+    "feedback_max_below_original_min": true,
+    "feedback_runs_below_original_min": 10,
+    "feedback_runs_below_original_median": 10,
+    "pairwise_feedback_superiority_pct": 100.0,
+    "exact_mann_whitney_less_p": 5.412544112234515e-06
+  },
+  "verdict": "CORROBORATED"
+}

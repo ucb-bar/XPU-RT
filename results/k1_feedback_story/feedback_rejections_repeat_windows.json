@@ -1,0 +1,129 @@
+{
+  "schema_version": 1,
+  "interpretation": "Each frame is dependency-closed, clear at its wrap boundary, contains a complete anchor-model instance, and supplies every declared periodic model at or above its minimum average rate.",
+  "frames": [
+    {
+      "label": "baseline",
+      "status": "pass",
+      "window_ms": 160.0,
+      "semantics": "minimum average frequency; completed frame repeats from t=0",
+      "anchor_model": "yolov8_nano",
+      "source_schedule_sha256": "659ae4eeb73be906043eecd96f90f26ada21511514f090367fe447df318ebf38",
+      "anchor_complete": true,
+      "boundary_clear": true,
+      "dependency_closed": true,
+      "crossing_jobs": [],
+      "missing_dependencies": [],
+      "models": {
+        "dronet": {
+          "complete_instances": 5,
+          "required_instances": 5,
+          "achieved_hz": 31.25,
+          "required_hz": 30.03,
+          "pass": true
+        },
+        "mlp_control": {
+          "complete_instances": 16,
+          "required_instances": 16,
+          "achieved_hz": 100.0,
+          "required_hz": 100.0,
+          "pass": true
+        },
+        "yolov8_nano": {
+          "complete_instances": 1,
+          "required_instances": 1,
+          "achieved_hz": 6.25,
+          "required_hz": 4.0,
+          "pass": true
+        }
+      },
+      "dispatches_shown": 315,
+      "dispatches_excluded": 511,
+      "quantum_ms": 10.0,
+      "common_anchor_completion_ms": 158.56870600000005,
+      "schedule_artifact": "results/k1_feedback_story/data/rejection_0_repeat_frame.json"
+    },
+    {
+      "label": "split DroNet \u00d72 \u2014 REJECT",
+      "status": "pass",
+      "window_ms": 160.0,
+      "semantics": "minimum average frequency; completed frame repeats from t=0",
+      "anchor_model": "yolov8_nano",
+      "source_schedule_sha256": "e28001afb31c45c963a419be85d630e4cf69e6fb42d8ff72d9042f3fdca9302b",
+      "anchor_complete": true,
+      "boundary_clear": true,
+      "dependency_closed": true,
+      "crossing_jobs": [],
+      "missing_dependencies": [],
+      "models": {
+        "dronet": {
+          "complete_instances": 5,
+          "required_instances": 5,
+          "achieved_hz": 31.25,
+          "required_hz": 30.03,
+          "pass": true
+        },
+        "mlp_control": {
+          "complete_instances": 16,
+          "required_instances": 16,
+          "achieved_hz": 100.0,
+          "required_hz": 100.0,
+          "pass": true
+        },
+        "yolov8_nano": {
+          "complete_instances": 1,
+          "required_instances": 1,
+          "achieved_hz": 6.25,
+          "required_hz": 4.0,
+          "pass": true
+        }
+      },
+      "dispatches_shown": 320,
+      "dispatches_excluded": 516,
+      "quantum_ms": 10.0,
+      "common_anchor_completion_ms": 158.56870600000005,
+      "schedule_artifact": "results/k1_feedback_story/data/rejection_1_repeat_frame.json"
+    },
+    {
+      "label": "split DroNet \u00d74 \u2014 REJECT",
+      "status": "pass",
+      "window_ms": 160.0,
+      "semantics": "minimum average frequency; completed frame repeats from t=0",
+      "anchor_model": "yolov8_nano",
+      "source_schedule_sha256": "c69e7b558525aff87749b0247f461966c9ad8f1ddde64a7301260dc28a2d8d32",
+      "anchor_complete": true,
+      "boundary_clear": true,
+      "dependency_closed": true,
+      "crossing_jobs": [],
+      "missing_dependencies": [],
+      "models": {
+        "dronet": {
+          "complete_instances": 5,
+          "required_instances": 5,
+          "achieved_hz": 31.25,
+          "required_hz": 30.03,
+          "pass": true
+        },
+        "mlp_control": {
+          "complete_instances": 16,
+          "required_instances": 16,
+          "achieved_hz": 100.0,
+          "required_hz": 100.0,
+          "pass": true
+        },
+        "yolov8_nano": {
+          "complete_instances": 1,
+          "required_instances": 1,
+          "achieved_hz": 6.25,
+          "required_hz": 4.0,
+          "pass": true
+        }
+      },
+      "dispatches_shown": 330,
+      "dispatches_excluded": 526,
+      "quantum_ms": 10.0,
+      "common_anchor_completion_ms": 158.56870600000005,
+      "schedule_artifact": "results/k1_feedback_story/data/rejection_2_repeat_frame.json"
+    }
+  ]
+}

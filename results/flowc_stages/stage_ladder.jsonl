@@ -1,0 +1,22 @@
+{"network": "vint", "stage": "S0", "knob": "monolith (cpu int8)", "ms": 59.7749, "detail": "cpu@int8", "label": "vint_k1_whole", "tiles": 1}
+{"network": "vint", "stage": "S1", "knob": "+backend", "ms": 59.7749, "detail": "cpu@int8", "label": "vint_k1_whole", "tiles": 1}
+{"network": "vint", "stage": "S2", "knob": "+precision", "ms": 59.7749, "detail": "cpu@int8", "label": "vint_k1_whole", "tiles": 1}
+{"network": "vint", "stage": "S3", "knob": "+slice (contiguous)", "ms": 29.37882, "detail": "t0:dsp@int8 t1:cpu@fp32", "label": "vint_k2_prod", "tiles": 2}
+{"network": "vint", "stage": "S4", "knob": "+branch (1 lane/kind)", "ms": 23.20066, "detail": "t0:cpu@int8 t1:dsp@int8 t2:cpu@fp32", "label": "vint_par_enc", "tiles": 3, "serial_ms": 28.75825}
+{"network": "yolov8n", "stage": "S0", "knob": "monolith (cpu int8)", "ms": 72.72161, "detail": "cpu@int8", "label": "yolo_k1_whole", "tiles": 1}
+{"network": "yolov8n", "stage": "S1", "knob": "+backend", "ms": 25.2316, "detail": "dsp@int8", "label": "yolo_k1_whole", "tiles": 1}
+{"network": "yolov8n", "stage": "S2", "knob": "+precision", "ms": 25.2316, "detail": "dsp@int8", "label": "yolo_k1_whole", "tiles": 1}
+{"network": "yolov8n", "stage": "S3", "knob": "+slice (contiguous)", "ms": 28.46236, "detail": "t0:dsp@int8 t1:dsp@int8", "label": "yolo_k2_prod", "tiles": 2}
+{"network": "fused_full", "stage": "S0", "knob": "monolith (cpu int8)", "ms": null, "detail": "no cpu int8 cell", "label": "fused_k1_whole", "tiles": 1}
+{"network": "fused_full", "stage": "S1", "knob": "+backend", "ms": 3.4338699999999998, "detail": "dsp@int8", "label": "fused_k1_whole", "tiles": 1}
+{"network": "fused_full", "stage": "S2", "knob": "+precision", "ms": 0.89593, "detail": "cpu@fp32", "label": "fused_k1_whole", "tiles": 1}
+{"network": "fused_full", "stage": "S3", "knob": "+slice (contiguous)", "ms": 0.45242999999999994, "detail": "t0:cpu@int8 t1:cpu@int8 t2:cpu@fp32", "label": "fused_k3_convs", "tiles": 3}
+{"network": "fused_full", "stage": "S4", "knob": "+branch (1 lane/kind)", "ms": 0.50278, "detail": "t0:cpu@int8 t1:cpu@fp32 t2:cpu@fp32", "label": "fused_par_fc", "tiles": 3, "serial_ms": 0.50278}
+{"network": "dronet", "stage": "S0", "knob": "monolith (cpu int8)", "ms": 7.465529999999999, "detail": "cpu@int8", "label": "dronet_k1_whole", "tiles": 1}
+{"network": "dronet", "stage": "S1", "knob": "+backend", "ms": 0.65854, "detail": "dsp@int8", "label": "dronet_k1_whole", "tiles": 1}
+{"network": "dronet", "stage": "S2", "knob": "+precision", "ms": 0.65854, "detail": "dsp@int8", "label": "dronet_k1_whole", "tiles": 1}
+{"network": "dronet", "stage": "S3", "knob": "+slice (contiguous)", "ms": 0.6509199999999999, "detail": "t0:dsp@int8 t1:cpu@int8", "label": "dronet_k2_head", "tiles": 2}
+{"network": "mlp_control", "stage": "S0", "knob": "monolith (cpu int8)", "ms": 0.02952, "detail": "cpu@int8", "label": "mlp_k1_whole", "tiles": 1}
+{"network": "mlp_control", "stage": "S1", "knob": "+backend", "ms": 0.02952, "detail": "cpu@int8", "label": "mlp_k1_whole", "tiles": 1}
+{"network": "mlp_control", "stage": "S2", "knob": "+precision", "ms": 0.02952, "detail": "cpu@int8", "label": "mlp_k1_whole", "tiles": 1}
+{"network": "mlp_control", "stage": "S3", "knob": "+slice (contiguous)", "ms": 0.02553, "detail": "t0:cpu@fp32 t1:cpu@int8 t2:cpu@fp32 t3:cpu@int8", "label": "mlp_k4", "tiles": 4}

@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import sys
 import os
+import pathlib
 import json
 import argparse
 import numpy as np
@@ -50,6 +51,21 @@ import plot
 # Hardware constants — SpacemiT x60
 CPU_P = "CPU_P"
 CPU_E = "CPU_E"
+
+
+def _portable_repo_paths(paths: list[str]) -> list[str]:
+    """Use repository-relative provenance paths whenever they live in-tree."""
+    root = os.path.realpath(_REPO_ROOT)
+    portable = []
+    for path in paths:
+        source = path if os.path.isabs(path) else os.path.join(_REPO_ROOT, path)
+        absolute = os.path.realpath(source)
+        try:
+            in_repo = os.path.commonpath((root, absolute)) == root
+        except ValueError:  # Different Windows drives, if run there.
+            in_repo = False
+        portable.append(os.path.relpath(source, _REPO_ROOT) if in_repo else path)
+    return portable
 
 
 def load_networks_config(json_path: str) -> tuple[dict, dict]:
@@ -125,6 +141,10 @@ def load_networks_config(json_path: str) -> tuple[dict, dict]:
         "restrict_makespan_to_nonperiodic": bool(sched.get("restrict_makespan_to_nonperiodic", True)),
         "machine_combination_mode": str(sched.get("machine_combination_mode", "singletons")),
         "enforce_same_processor_combinations": bool(sched.get("enforce_same_processor_combinations", True)),
+        "objective_mode": str(sched.get("objective_mode", "legacy")),
+        "critical_models": list(sched.get("critical_models") or []),
+        "heavy_model": sched.get("heavy_model"),
+        "objective_stop_after": sched.get("objective_stop_after"),
         "machine_core_counts": machine_core_counts,
     }
 
@@ -142,6 +162,10 @@ def schedule_iree_networks(
     restrict_makespan_to_nonperiodic: bool | None = None,
     scheduler: str = "mosek",
     max_periodic_iters: int = 4,
+    emit_feedback: bool = False,
+    feedback_run_id: str | None = None,
+    freshness_weight: float = 0.0,
+    contention_model=None,
 ) -> tuple[Workload, np.ndarray, np.ndarray]:
     """
     Main function to schedule networks from a hierarchical network dependencies JSON file.
@@ -270,8 +294,35 @@ def schedule_iree_networks(
     except ImportError:
         pass  # capabilities.py is K1-specific; other targets need not have it
 
-    machines, machine_combinations = build_machine_combinations(
-        machine_core_counts, mode=machine_combination_mode)
+    # Optional per-dispatch implementation axis (rvv vs ime/NPU). Off by default
+    # (spec `scheduler.enable_impls: true` turns it on). When on, each core-group
+    # combination is emitted once per legal implementation, so a dispatch that is
+    # cheaper on the IME (measured: transformer MLP M>=16 wins 1.3-2.4x over RVV,
+    # crossover M~10) can be placed there while attention/GEMV (M<=8) stays on RVV.
+    # IME is CLUSTER-0-ONLY and that is enforced structurally: K1_CAPABILITIES
+    # gives CPU_E no `ime`, so build_machine_combinations_with_impls emits zero
+    # ime combinations on cluster 1 (harts 4-7 SIGILL on smt.vmadot). A combo's
+    # ime cost comes from its ime_x60 profile; absent that CSV the cell is excluded
+    # (INFEASIBLE_COST) and the solver simply never places there — no free NPU.
+    combo_impls = None
+    enable_impls = bool(networks_data.get("scheduler", {}).get("enable_impls", False))
+    if enable_impls:
+        from capabilities import build_machine_combinations_with_impls, K1_CAPABILITIES
+        # Expose only rvv+ime as placement choices (scalar is a correctness
+        # fallback, never a preferred placement); intersect with each kind's caps.
+        machine_impls = {
+            k: [i for i in ("rvv", "ime") if i in K1_CAPABILITIES.get(k, frozenset())]
+            for k in machine_core_counts
+        }
+        _gran = "per_core" if machine_combination_mode == "singletons" else machine_combination_mode
+        machines, machine_combinations, combo_impls = build_machine_combinations_with_impls(
+            machine_core_counts, machine_impls, K1_CAPABILITIES, granularity=_gran)
+        n_ime = sum(1 for x in combo_impls if x == "ime")
+        print(f"  Impl-aware combinations: {len(machine_combinations)} total, "
+              f"{n_ime} ime (cluster-0 only), rest rvv")
+    else:
+        machines, machine_combinations = build_machine_combinations(
+            machine_core_counts, mode=machine_combination_mode)
     n_cores = len(machines)
     transfer_times = np.zeros((n_cores, n_cores))
 
@@ -281,12 +332,19 @@ def schedule_iree_networks(
     # CPU/GPU/HTP) work the same way as the legacy CPU_P/CPU_E split.
     profile_hw_map = cfg["profile_hw_map"]
     combo_hw = []
-    for combo in machine_combinations:
+    for ci, combo in enumerate(machine_combinations):
         core_type = machine_type_prefix(combo[0])
         hw = profile_hw_map.get(core_type.lower())
         if hw is None:
             # Fall back to the legacy two-machine convention.
             hw = cpu_p_profile_hw if core_type == CPU_P else cpu_e_profile_hw
+        # For an ime-impl combination, read the IME profile instead of the RVV
+        # one: swap the leading rvv->ime in the hw label (rvv_x60 -> ime_x60),
+        # which is where the curated IME profiles land. combo_hw drives the CSV
+        # lookup in load_profiled_processing_times, so this is the whole plumbing.
+        if combo_impls is not None and combo_impls[ci] == "ime" and hw \
+                and hw.lower().startswith("rvv"):
+            hw = "ime" + hw[3:]  # rvv_x60 -> ime_x60, RVV -> ime
         combo_hw.append(hw)
 
     # Optional: build profiled processing times if requested
@@ -318,6 +376,25 @@ def schedule_iree_networks(
             gen_root=gen_root,
         )
 
+    # "Periodic" means the op belongs to a network the workload declared
+    # with a `period`.  Not "the op has a time window": a sporadic network
+    # carries min_start_t/max_end_t too, so the window test folds yolov8
+    # into the periodic set and reports a workload built around it as
+    # having no non-periodic work at all.
+    periodic_net_ids = {nid for nid, info in networks.items()
+                        if info.get("period") is not None}
+
+    def _is_periodic_op(workload, op) -> bool:
+        # job_names is indexed by JOB id, not by operation index.
+        job_id = getattr(op, "job_id", None)
+        if job_id is None or job_id >= len(workload.job_names):
+            return False
+        jn = workload.job_names[job_id]
+        if not isinstance(jn, str):
+            return False
+        return any(jn.startswith(nid) and jn[len(nid):].isdigit() and jn != nid
+                   for nid in periodic_net_ids)
+
     def _build_workload():
         return create_workload_from_network_hierarchy(
             networks_data=networks_data,
@@ -335,6 +412,34 @@ def schedule_iree_networks(
         # scheduler (default "mosek" == the CVXPY/MOSEK MILP), post-process trim.
         print(f"\nCreating workload from network hierarchy...")
         combined_workload = _build_workload()
+
+        # MILP contention term: the MOSEK/MILP path (unlike greedy) has no notion
+        # of co-runner slowdown. Mirror greedy's `base * contention_factor(op,
+        # placement)` by folding the measured per-placement multiplier into each
+        # (op, combination) processing time BEFORE the solve, so MOSEK optimizes
+        # against contention-scaled costs (e.g. cross-cluster placements, measured
+        # 1.185x, become genuinely more expensive). Non-circular: the factor keys
+        # off the COMBINATION's placement (same/other cluster), not on which ops
+        # actually co-run — identical modeling choice to greedy_scheduler._duration.
+        # Off unless a contention model is passed (--contention). Never raises.
+        if contention_model is not None:
+            combos = combined_workload.get_machine_combinations()
+            n_scaled = 0
+            for op in combined_workload.operations:
+                pt = op.processing_times
+                for k, combo in enumerate(combos):
+                    if k >= len(pt):
+                        continue
+                    try:
+                        placement = contention_model.placement_for_combination(combo)
+                        factor = float(contention_model.contention_factor(op, placement))
+                    except Exception:
+                        factor = 1.0
+                    if factor > 0 and factor != 1.0:
+                        pt[k] = pt[k] * factor
+                        n_scaled += 1
+            print(f"  MILP contention: folded measured co-runner factors into "
+                  f"{n_scaled} (op,combination) costs")
 
         print(f"\nWorkload created successfully!")
         print(f"  Total operations: {len(combined_workload.operations)}")
@@ -360,6 +465,40 @@ def schedule_iree_networks(
         # (heft/peft/edf/cpsat/milp_*/...). get_scheduler("mosek") is the
         # CVXPY/MOSEK MILP, so the default behaviour is unchanged.
         scheduler_fn = get_scheduler(scheduler)
+
+        # Freshness-aware objective (opt-in): identify the operations that belong to
+        # a producer network named in a freshness_edge, so the MILP can pull their
+        # start times early (fresh output for consumers) instead of only minimizing
+        # makespan (which delays producers and makes consumers read stale inputs).
+        fresh_kwargs = {}
+        if freshness_weight and freshness_weight > 0.0:
+            producer_tasks = {
+                str(e.get("producer_task", "")).lower()
+                for e in networks_data.get("freshness_edges", [])
+                if e.get("producer_task")
+            }
+            producer_idx = []
+            jn = combined_workload.job_names
+            for i, op in enumerate(combined_workload.operations):
+                name = ""
+                if op.job_id is not None and 0 <= op.job_id < len(jn):
+                    name = str(jn[op.job_id]).lower()
+                if any(name.startswith(pt) for pt in producer_tasks):
+                    producer_idx.append(i)
+            print(f"  Freshness-aware: weight={freshness_weight}, producers={sorted(producer_tasks)}, "
+                  f"{len(producer_idx)} producer ops pulled early")
+            fresh_kwargs = {"freshness_weight": freshness_weight,
+                            "freshness_producer_op_indices": producer_idx}
+
+        objective_kwargs = {}
+        if scheduler.startswith("cpsat"):
+            objective_kwargs = {
+                "objective_mode": cfg["objective_mode"],
+                "critical_models": cfg["critical_models"],
+                "heavy_model": cfg["heavy_model"],
+                "objective_stop_after": cfg["objective_stop_after"],
+            }
+
         solver_t0 = time.perf_counter()
         result = scheduler_fn(
             combined_workload,
@@ -367,20 +506,25 @@ def schedule_iree_networks(
             time_limit=effective_time_limit,
             restrict_makespan_to_nonperiodic=effective_restrict_makespan_to_nonperiodic,
             prune_cross_period_constraints=effective_prune_periodic,
+            **fresh_kwargs,
+            **objective_kwargs,
         )
         solver_wall_time_s = time.perf_counter() - solver_t0
         t, alpha, _, _ = result
 
         if effective_prune_periodic:
             combined_workload, t, alpha = trim_periodic_after_nonperiodic_makespan(
-                combined_workload, t, alpha
+                combined_workload, t, alpha,
+                horizon_ms=networks_data.get("horizon_ms"),
             )
     else:
         # solver == "greedy" or "greedy_periodic": iterative periodic-
         # instance refinement. See greedy_scheduler for the per-pass
         # algorithm; only the picker discipline differs between the two.
         # Loop strategy:
-        #   - low-seed: force num_instances=1 per periodic network when
+        #   - low-seed: force num_instances=1 per periodic network that
+        #     does not ask for a count itself (one that does is pinned to
+        #     what it asked for and skips the loop), when
         #     restrict_makespan_to_nonperiodic is set (otherwise the
         #     workload_factory horizon S_np/(1-F_p) inflates the seed
         #     and the joint schedule converges to a bad equilibrium —
@@ -388,14 +532,50 @@ def schedule_iree_networks(
         #     periodic, justifying the over-allocation).
         #   - per pass: build workload, run greedy, measure makespan
         #     over non-periodic ops only (when the flag is set), grow
-        #     periodic counts to ceil(makespan/period) for any short
-        #     network; iterate until counts are stable or
-        #     `max_periodic_iters` is hit.
+        #     periodic counts to ceil(max(makespan, horizon)/period) for
+        #     any short network; iterate until counts are stable or
+        #     `max_periodic_iters` is hit.  "Non-periodic" here means a
+        #     network the workload did not declare with a `period` -- a
+        #     sporadic one with a window still counts -- see
+        #     `_is_periodic_op`.
+        #
+        # A workload that declares `num_instances` (gen_random_workload
+        # emits one per periodic network, sized from the horizon it laid
+        # the sporadic tasks into) gets exactly that count: the refinement
+        # loop below sizes counts for workloads that DON'T say, and a
+        # document that does say has already decided.  Two things went
+        # wrong when it did not:
+        #   - overwriting the count with 1 and then growing from the
+        #     *non-periodic* makespan meant a workload of nothing but
+        #     periodic tasks measured a makespan of 0 and converged at one
+        #     instance of each network — mlp_control ran once, at t=0, and
+        #     never again;
+        #   - growing past a declared count undoes the generator's
+        #     --cap-instances and --max-ops budgets at schedule time, which
+        #     is where the operation count actually costs something.
         solver_t0 = time.perf_counter()
-        if effective_restrict_makespan_to_nonperiodic:
-            for net_id, net_info in networks.items():
-                if net_info.get("period") is not None:
-                    networks_data["networks"][net_id]["num_instances"] = 1
+        declared_instances: dict[str, int] = {}
+        for net_id, net_info in networks.items():
+            if net_info.get("period") is None:
+                continue
+            declared = net_info.get("num_instances")
+            if isinstance(declared, int) and not isinstance(declared, bool) and declared > 0:
+                declared_instances[net_id] = declared
+            elif effective_restrict_makespan_to_nonperiodic:
+                networks_data["networks"][net_id]["num_instances"] = 1
+
+        # The workload's own span, when it states one: periodic instances
+        # cover at least this much even if the non-periodic work finishes
+        # earlier (or there is none at all).
+        try:
+            declared_horizon = max(0.0, float(networks_data.get("horizon_ms") or 0.0))
+        except (TypeError, ValueError):
+            declared_horizon = 0.0
+        if declared_instances or declared_horizon:
+            print(f"  Workload declares horizon {declared_horizon:.0f} ms and "
+                  f"{len(declared_instances)} explicit periodic instance "
+                  f"counts; those counts are used as given. Networks without "
+                  f"one are still sized by the refinement loop below.")
 
         # Pick the per-pass picker function.
         if solver == "greedy_periodic":
@@ -421,19 +601,6 @@ def schedule_iree_networks(
             # (matches the MILP solver's objective when
             # restrict_makespan_to_nonperiodic is on).
             machine_combinations_iter = combined_workload.get_machine_combinations()
-            periodic_net_ids = {
-                nid for nid, info in networks.items()
-                if info.get("period") is not None
-            }
-            def _is_periodic_op(op_idx: int) -> bool:
-                jn = (combined_workload.job_names[op_idx]
-                      if op_idx < len(combined_workload.job_names) else "")
-                if not isinstance(jn, str):
-                    return False
-                for nid in periodic_net_ids:
-                    if jn.startswith(nid) and jn[len(nid):].isdigit() and jn != nid:
-                        return True
-                return False
             iter_makespan = 0.0
             iter_makespan_all = 0.0
             for i, op in enumerate(combined_workload.operations):
@@ -444,7 +611,8 @@ def schedule_iree_networks(
                 finish = float(t[i]) + float(dur)
                 if finish > iter_makespan_all:
                     iter_makespan_all = finish
-                if effective_restrict_makespan_to_nonperiodic and _is_periodic_op(i):
+                if effective_restrict_makespan_to_nonperiodic and \
+                        _is_periodic_op(combined_workload, op):
                     continue
                 if finish > iter_makespan:
                     iter_makespan = finish
@@ -456,7 +624,8 @@ def schedule_iree_networks(
 
             # Refine periodic counts: each periodic net needs
             # ceil(makespan/period) instances. Don't shrink — periodic
-            # workloads only need to grow to cover larger makespans.
+            # workloads only need to grow to cover larger makespans.  A net
+            # that declared its own count is pinned to it instead.
             needed_counts: dict[str, int] = {}
             for net_id, net_info in networks.items():
                 period = net_info.get("period")
@@ -469,7 +638,15 @@ def schedule_iree_networks(
                     continue
                 if T <= 0:
                     continue
-                needed = max(1, int(np.ceil(iter_makespan / T)))
+                needed = max(1, int(np.ceil(max(iter_makespan, declared_horizon) / T)))
+                if net_id in declared_instances:
+                    asked = declared_instances[net_id]
+                    if needed > asked:
+                        print(f"  Periodic '{net_id}': the schedule runs to "
+                              f"{max(iter_makespan, declared_horizon):.0f} ms, which would "
+                              f"take {needed} instances, but the workload asks "
+                              f"for {asked} — keeping {asked}")
+                    needed = asked
                 current = int(net_info.get("num_instances") or prev_counts.get(net_id, 0))
                 if current == 0:
                     current = sum(
@@ -492,17 +669,40 @@ def schedule_iree_networks(
             if not bumped:
                 break
             print("  Bumping num_instances:", ", ".join(f"{n}: {a}->{b}" for n, a, b in bumped))
-        print(f"\nFinal greedy makespan: {iter_makespan:.2f} ms (after {it + 1} iteration{'s' if it else ''})")
+        # A workload of nothing but periodic tasks has a non-periodic
+        # makespan of 0 by construction; report the span that means
+        # something for it instead of a bare zero.
+        # Keep the "<N> ms (after <k> iteration" shape: the sweep parses it.
+        if effective_restrict_makespan_to_nonperiodic and iter_makespan <= 0.0:
+            print(f"\nFinal greedy makespan: {iter_makespan_all:.2f} ms "
+                  f"(after {it + 1} iteration{'s' if it else ''}; over all "
+                  f"operations, this workload has no non-periodic work)")
+        else:
+            print(f"\nFinal greedy makespan: {iter_makespan:.2f} ms (after {it + 1} iteration{'s' if it else ''})")
         solver_wall_time_s = time.perf_counter() - solver_t0
 
         if effective_prune_periodic:
             combined_workload, t, alpha = trim_periodic_after_nonperiodic_makespan(
-                combined_workload, t, alpha
+                combined_workload, t, alpha,
+                horizon_ms=networks_data.get("horizon_ms"),
             )
 
     # Name of the algorithm actually run (for metrics / report labeling): the
     # registry scheduler on the MILP path, else the greedy-family solver.
     algo_name = scheduler if solver == "milp" else solver
+
+    # Exact-cycle experiments carry a solver-independent analytic floor. It is
+    # computed from the live workload and the measured implementation choices,
+    # then serialized with the schedule below. This lets a downstream result
+    # prove a separation from the original graph without trusting a solver label.
+    if cfg.get("objective_mode") == "exact_cycle_worst_response":
+        from exact_cycle import workload_lower_bounds
+        combined_workload.analytic_response_lower_bounds = workload_lower_bounds(
+            combined_workload,
+            networks_data,
+            cfg["critical_models"],
+            cfg["heavy_model"],
+        )
     # Calculate makespan (non-periodic operations only, matching the solver objective)
     machine_combinations = combined_workload.get_machine_combinations()
     completion_times = []
@@ -510,13 +710,24 @@ def schedule_iree_networks(
         op = combined_workload.operations[i]
         combo_idx = int(np.argmax(alpha[i]))
         dur = op.get_duration_for_combination(combo_idx, machine_combinations, combined_workload.machines)
-        is_periodic = (op.min_start_t is not None) or (op.max_end_t is not None)
-        if not is_periodic:
+        if not _is_periodic_op(combined_workload, op):
             completion_times.append(float(t[i]) + float(dur))
     makespan = max(completion_times) if completion_times else 0.0
 
+    all_ops_makespan = 0.0
+    for i in range(len(combined_workload.operations)):
+        op = combined_workload.operations[i]
+        combo_idx = int(np.argmax(alpha[i]))
+        dur = op.get_duration_for_combination(combo_idx, machine_combinations, combined_workload.machines)
+        all_ops_makespan = max(all_ops_makespan, float(t[i]) + float(dur))
+
     print(f"\nScheduling completed!")
-    print(f"Makespan (non-periodic): {makespan:.2f} ms")
+    if completion_times:
+        print(f"Makespan (non-periodic): {makespan:.2f} ms "
+              f"(all operations: {all_ops_makespan:.2f} ms)")
+    else:
+        print(f"Makespan (all operations): {all_ops_makespan:.2f} ms "
+              f"(no non-periodic work in this workload)")
 
     # Build combination labels for display
     def _combo_label(combo: list[str]) -> str:
@@ -656,7 +867,9 @@ def schedule_iree_networks(
     # detect when the PDB-on-disk has drifted from the PDB the solve
     # was performed against — the trap that produced v8's 9x
     # predicted/measured gap.
-    _pdb_hash, _pdb_files = compute_pdb_hash(list(_LAST_LOAD_CSV_PATHS))
+    _pdb_declared_files = _portable_repo_paths(list(_LAST_LOAD_CSV_PATHS))
+    _pdb_hash, _pdb_files = compute_pdb_hash(
+        _pdb_declared_files, base_dir=_REPO_ROOT)
     print(f"  pdb_hash = sha256:{_pdb_hash[:16]}... over "
           f"{len(_pdb_files)} CSV(s)")
     output_scheduled_json(
@@ -670,7 +883,33 @@ def schedule_iree_networks(
         profiled_times_by_network=profiled_by_network,
         pdb_hash=_pdb_hash,
         pdb_files=_pdb_files,
+        combo_impls=combo_impls,
     )
+
+    # PER-DISPATCH RUNTIME FEEDBACK. `derive_dispatch_hints` wants the
+    # solver's (t, alpha) directly. They are in hand here, which is why this
+    # lives in the solver rather than in a script that reads the written
+    # schedule back: reconstructing alpha from a serialized schedule means
+    # inferring a one-hot assignment from a machine label, and any dispatch
+    # whose label is ambiguous silently becomes a hint about the wrong
+    # combination.
+    #
+    # Driven by the --emit-feedback / --feedback-run-id CLI flags, which main()
+    # forwards as arguments. They used to be read off a module-global `args`,
+    # which does not exist here -- `args` is a local of main() -- so ANY call
+    # to this function raised NameError before reaching the write.
+    if emit_feedback:
+        import feedback as _feedback
+        _payload = _feedback.derive_dispatch_hints(
+            combined_workload, t, alpha,
+            run_id=feedback_run_id,
+            source_schedule=os.path.basename(json_output_path),
+        )
+        _fb_path = os.path.join(os.path.dirname(json_output_path) or ".",
+                                "xpurt_feedback.json")
+        _feedback.write_feedback_json(_payload, pathlib.Path(_fb_path))
+        print(f"feedback -> {_fb_path}  "
+              f"({len(_payload.get('dispatches', {}))} dispatches with hints)")
 
     # Feedback-driven compilation: surface any dispatch-granularity mismatch
     # between periodic and non-periodic jobs in this schedule. Advisory
@@ -723,13 +962,18 @@ def schedule_iree_networks(
     # consume real runs. Additive and best-effort.
     try:
         from profiling import SchedulerReport
+        solver_state = getattr(combined_workload, "solver_state", {}) or {}
+        certificate = getattr(combined_workload, "solver_certificate", None)
         report = SchedulerReport.from_solver_state(
             combined_workload,
             t,
             alpha,
             solver_name=algo_name,
             solve_wall_s=solver_wall_time_s,
-            solver_status="feasible",
+            solver_status=(
+                "optimal" if certificate and certificate.get("certified")
+                else str(solver_state.get("problem_status", "feasible"))
+            ),
         )
         report_path = json_output_path.replace(".json", "_report.json")
         report.write_json(report_path)
@@ -781,8 +1025,9 @@ if __name__ == "__main__":
     parser.add_argument(
         "--time-limit",
         type=float,
-        default=20,
-        help="(milp only) Maximum optimization time in seconds (override).",
+        default=None,
+        help="(milp only) Maximum optimization time in seconds. Omitted uses "
+             "scheduler.time_limit from the workload; zero disables the limit.",
     )
     parser.add_argument(
         "--profiled",
@@ -862,10 +1107,44 @@ if __name__ == "__main__":
             "missing artifact is a no-op."
         ),
     )
+    parser.add_argument(
+        "--freshness-weight",
+        type=float,
+        default=0.0,
+        help=(
+            "Freshness-aware objective weight (MILP only). 0.0 (default) = pure "
+            "makespan. A positive value adds w * sum(producer start times) to the "
+            "objective, pulling operations of any network named as a producer_task "
+            "in the spec's freshness_edges as early as possible, so consumers read "
+            "fresh inputs. Minimizing makespan alone delays producers and yields "
+            "stale outputs; this term counteracts that."
+        ),
+    )
+    parser.add_argument(
+        "--emit-feedback",
+        action="store_true",
+        help=(
+            "Also write xpurt_feedback.json beside the schedule: per-dispatch "
+            "RUNTIME hints (prefer_coarser / prefer_finer / "
+            "consider_fuse_with_pred / pin_target / consider_split_backend) "
+            "derived from the solved schedule. This is the other feedback "
+            "channel -- compile_advice.json says how to REWRITE the graph, "
+            "this says how to place and size what is already there. Off by "
+            "default: without it the run is byte-identical to before."
+        ),
+    )
+    parser.add_argument(
+        "--feedback-run-id",
+        default=None,
+        help="run_id recorded in xpurt_feedback.json (default: UTC timestamp). "
+             "The ingest merges hints by set-union on the same run_id, so "
+             "repeated emissions during one campaign accumulate.",
+    )
     args = parser.parse_args()
 
     # Contention is additive and off unless asked for: installing None here
     # leaves the schedulers on the plain solo profile.
+    _model = None
     if args.contention is not None:
         import contention_model
         import greedy_scheduler
@@ -898,4 +1177,8 @@ if __name__ == "__main__":
         restrict_makespan_to_nonperiodic=args.restrict_makespan_to_nonperiodic,
         scheduler=args.scheduler,
         max_periodic_iters=args.max_periodic_iters,
+        emit_feedback=args.emit_feedback,
+        feedback_run_id=args.feedback_run_id,
+        freshness_weight=args.freshness_weight,
+        contention_model=_model,
     )

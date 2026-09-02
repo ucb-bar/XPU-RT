@@ -31,6 +31,28 @@ except ImportError:
     from granularity_advisor import analyze_granularity, from_workload
 
 
+def _parse_mosek_params(raw: str) -> dict:
+    """Parse generic MOSEK names with the value type their prefix requires."""
+    parsed = {}
+    for item in (raw or "").split(";"):
+        if "=" not in item:
+            continue
+        key, value = (part.strip() for part in item.split("=", 1))
+        if not key:
+            continue
+        try:
+            if key.startswith("MSK_IPAR_"):
+                parsed[key] = int(value)
+            elif key.startswith("MSK_DPAR_"):
+                parsed[key] = float(value)
+            else:
+                parsed[key] = value
+        except ValueError:
+            # Let MOSEK report malformed values using its native diagnostics.
+            parsed[key] = value
+    return parsed
+
+
 def _constraints_section_logger(enabled: bool, constraints: list):
     """
     Lightweight logger for timing constraint-generation sections.
@@ -148,7 +170,14 @@ def _auto_big_m(operations, machine_combinations, machines, transfer_times,
             if v > max_transfer:
                 max_transfer = v
     H = float(2 * (sum(max_durs) + len(operations) * max_transfer + 1.0))
-    return max(H, 5000.0)
+    # The computed H = 2*(sum of durations) is already a VALID upper bound on any
+    # feasible makespan. The old hard floor of 5000 forces big-M to ~58x the actual
+    # makespan on ms-unit workloads (~86ms), which cripples MOSEK's LP relaxation
+    # (weak bound -> no incumbent). Make the floor env-tunable: XPURT_BIGM_FLOOR=1
+    # lets the tight computed H through, dramatically strengthening the relaxation
+    # for the branch-and-bound (MILP/MOSEK) path. Default 5000 keeps prior behavior.
+    _floor = float(os.environ.get("XPURT_BIGM_FLOOR", "5000") or "5000")
+    return max(H, _floor)
 
 
 def schedule_window(window: Window, debug_constraints: bool = False,
@@ -366,6 +395,8 @@ def schedule(
     debug_constraints: bool = False,
     prune_overlap_constraints_for_dependency_chain: bool = True,
     target_diversity_weight: float = 0.0,
+    freshness_weight: float = 0.0,
+    freshness_producer_op_indices: Optional[list] = None,
     cvxpy_solver: str = "MOSEK",
     emit_report_to: Optional[str] = None,
 ) -> Tuple[np.ndarray, np.ndarray, Optional[Workload], Optional[dict]]:
@@ -683,6 +714,21 @@ def schedule(
     dep_desc = None
     if prune_overlap_constraints_for_dependency_chain:
         dep_desc = _compute_dependency_descendants_bitset(workload.operations)
+    # PER-PAIR big-M (XPURT_PERPAIR_BIGM=1): tighten the disjunctive big-M from the
+    # global H to a valid per-pair bound, strengthening the LP relaxation for MOSEK.
+    # Correct bound (derived after two naive tries were infeasible): the slack term is
+    #   t[.] + dur_[.]_kX - t[.]   where dur_[.]_kX is the duration on a combo the op is
+    # NOT assigned to (so up to its MAX over combos), t[.] <= max_end_t (line 637), and
+    # t[.] >= min_start_t >= 0. So H_ij = max(max_end_t_i,max_end_t_j) + max(maxdur_i,maxdur_j)
+    # covers both constraints. Falls back to global H if either op lacks max_end_t.
+    _perpair_bigm = os.environ.get("XPURT_PERPAIR_BIGM", "").strip() in ("1", "true", "True")
+    _op_maxdur = None
+    if _perpair_bigm:
+        _op_maxdur = []
+        for _op in workload.operations:
+            _ds = [_op.get_duration_for_combination(_k, machine_combinations, workload.machines)
+                   for _k in range(num_combinations)]
+            _op_maxdur.append(max(_ds) if _ds else 0.0)
     for i in range(num_operations):
         for j in range(i+1, num_operations):
             op_i = workload.operations[i]
@@ -698,6 +744,12 @@ def schedule(
                 if ((dep_desc[i] >> j) & 1) or ((dep_desc[j] >> i) & 1):
                     continue
 
+            H_ij = H
+            if _perpair_bigm:
+                _ei = getattr(op_i, "max_end_t", None)
+                _ej = getattr(op_j, "max_end_t", None)
+                if _ei is not None and _ej is not None:
+                    H_ij = max(float(_ei), float(_ej)) + max(_op_maxdur[i], _op_maxdur[j])
             for k1 in range(num_combinations):
                 for k2 in range(num_combinations):
                     # Only add constraint if combinations overlap
@@ -707,18 +759,92 @@ def schedule(
                             k2, machine_combinations, workload.machines
                         )
                         constraints.append(
-                            t[i] >= t[j] + dur_j_k2 - (2 - alpha[i, k1] - alpha[j, k2] + beta[i, j]) * H
+                            t[i] >= t[j] + dur_j_k2 - (2 - alpha[i, k1] - alpha[j, k2] + beta[i, j]) * H_ij
                         )
                         # (5) Operation j starts after i finishes (if j is on k2 and i is on k1)
                         dur_i_k1 = workload.operations[i].get_duration_for_combination(
                             k1, machine_combinations, workload.machines
                         )
                         constraints.append(
-                            t[j] >= t[i] + dur_i_k1 - (3 - alpha[i, k1] - alpha[j, k2] - beta[i, j]) * H
+                            t[j] >= t[i] + dur_i_k1 - (3 - alpha[i, k1] - alpha[j, k2] - beta[i, j]) * H_ij
                         )
     end()
 
-    # (6) Makespan constraints:
+    # (6) Makespan constraints.
+    #
+    # Predecessor-aware lower bound (Phase-E cost_by_pred / gamma). When an op
+    # carries `processing_times_by_pred`, its effective duration depends on
+    # WHERE its dominant predecessor ran (the cross-cluster cold-fetch cost the
+    # k1_cost_by_pred harness measures). We linearise the bilinear
+    # alpha[pred,k_pred] * alpha[i,k_curr] into a gamma tensor and contribute
+    # cost[k_pred,k_curr] * gamma. When the map is empty we fall back to the
+    # flat 2D dur_vec, so workloads WITHOUT cost_by_pred are byte-identical to
+    # before. NOTE: pmap keys are (pred_combo_idx, cur_combo_idx); the loader
+    # (workload_factory) keys them by MACHINE index, which equals the
+    # combination index only in singletons mode — the correct mode for the
+    # single-dispatch cross-cluster transitions Phase E models. This helper is
+    # shared by both the non-periodic and all-ops makespan branches so the
+    # gamma path is live on the actually-used scheduler.schedule() code path
+    # (the _mosek registry entry forwards here), not only in schedule_window.
+    pred_aware_gammas = {}
+
+    # Guard (flagged by the profiling agent): pmap keys are MACHINE indices used
+    # here as COMBINATION indices — valid ONLY when combinations are singletons
+    # (combo k == [machines[k]]). In shard/prefix mode a combination is a block of
+    # harts, so the same integer denotes a different thing and the costs would be
+    # silently misindexed. Detect the identity once; when it does not hold, DROP
+    # the predecessor-aware map (fall back to the flat 2D dur) rather than charge
+    # the wrong cost. cost_by_pred is only ever measured on named singleton
+    # machines, so this loses nothing real and prevents a silent shard-mode bug.
+    _combos_are_singletons = (
+        num_combinations == len(workload.machines)
+        and all(list(machine_combinations[k]) == [workload.machines[k]]
+                for k in range(num_combinations))
+    )
+    _warned_pred_map_skipped = [False]
+
+    def _add_cmax_lb(i):
+        op = workload.operations[i]
+        pmap = getattr(op, "processing_times_by_pred", None) or {}
+        if pmap and not _combos_are_singletons:
+            if not _warned_pred_map_skipped[0]:
+                print("  (warning) cost_by_pred present but machine-combinations are "
+                      "not singletons; dropping the predecessor-aware (gamma) term to "
+                      "avoid misindexing — falling back to flat 2D duration.")
+                _warned_pred_map_skipped[0] = True
+            pmap = {}
+        preds = op.get_predecessors()
+        dom_pred = preds[0] if preds and pmap else None
+        i_pred = None
+        if dom_pred is not None:
+            try:
+                i_pred = workload.operations.index(dom_pred)
+            except ValueError:
+                i_pred = None
+        if i_pred is not None:
+            gamma = cp.Variable((num_combinations, num_combinations), boolean=True)
+            pred_aware_gammas[i] = (i_pred, gamma)
+            constraints.append(cp.sum(gamma) == 1)
+            for k_pred in range(num_combinations):
+                constraints.append(cp.sum(gamma[k_pred, :]) <= alpha[i_pred, k_pred])
+            for k_curr in range(num_combinations):
+                constraints.append(cp.sum(gamma[:, k_curr]) <= alpha[i, k_curr])
+            base_dur_vec = [
+                op.get_duration_for_combination(k, machine_combinations, workload.machines)
+                for k in range(num_combinations)
+            ]
+            cost_matrix = np.zeros((num_combinations, num_combinations))
+            for k_pred in range(num_combinations):
+                for k_curr in range(num_combinations):
+                    cost_matrix[k_pred, k_curr] = pmap.get((k_pred, k_curr), base_dur_vec[k_curr])
+            constraints.append(C_max >= t[i] + cp.sum(cp.multiply(cost_matrix, gamma)))
+        else:
+            dur_vec = [
+                op.get_duration_for_combination(k, machine_combinations, workload.machines)
+                for k in range(num_combinations)
+            ]
+            constraints.append(C_max >= t[i] + cp.sum(cp.multiply(dur_vec, alpha[i, :])))
+
     if restrict_makespan_to_nonperiodic:
         # C_max tracks only NON-periodic operations (operations without explicit time-window bounds).
         # Periodic/background operations (with min_start_t or max_end_t set) do NOT constrain C_max.
@@ -731,28 +857,23 @@ def schedule(
             if is_periodic:
                 continue
             non_periodic_ops_exist = True
-            # Build duration vector for all combinations
-            dur_vec = [
-                workload.operations[i].get_duration_for_combination(k, machine_combinations, workload.machines)
-                for k in range(num_combinations)
-            ]
-            constraints.append(
-                C_max >= t[i] + cp.sum(cp.multiply(dur_vec, alpha[i, :]))
-            )
-        # If there are no non-periodic operations, C_max is unconstrained from below
-        # (objective will be trivial), which is acceptable: only periodic tasks exist.
+            _add_cmax_lb(i)
+        # If there are no non-periodic operations, C_max would be unconstrained
+        # from below and the objective trivial -- MOSEK then fails outright with
+        # a SolverError rather than returning a degenerate answer. A purely
+        # periodic workload is a legitimate input (it just has no non-periodic
+        # work to pack against), so fall back to bounding C_max over ALL
+        # operations. That is exactly the `else` branch's semantics, and it
+        # keeps the intended behaviour whenever non-periodic ops do exist.
+        if not non_periodic_ops_exist:
+            for i in range(num_operations):
+                _add_cmax_lb(i)
         end()
     else:
         # Original behavior: C_max covers all operations (including periodic ones)
         end = log("(6) makespan lower bound (C_max) - all operations")
         for i in range(num_operations):
-            dur_vec = [
-                workload.operations[i].get_duration_for_combination(k, machine_combinations, workload.machines)
-                for k in range(num_combinations)
-            ]
-            constraints.append(
-                C_max >= t[i] + cp.sum(cp.multiply(dur_vec, alpha[i, :]))
-            )
+            _add_cmax_lb(i)
         end()
     
     # Debug: Print durations for first operation to verify they're correct
@@ -810,9 +931,23 @@ def schedule(
                     constraints.append(used[m_idx] >= alpha[i, k])
         objective_func = objective_func - target_diversity_weight * cp.sum(used)
 
+    # Optional freshness term: add a small positive weight on the START times of
+    # producer operations (those feeding a downstream freshness edge). Minimizing
+    # C_max alone lets the solver DELAY producers to pack the makespan tighter,
+    # which makes consumers read stale inputs (high deadline-success, low freshness).
+    # Penalizing producer start times pulls them as early as possible, so the freshest
+    # producer output is available when a consumer runs -- without touching the makespan
+    # objective for everything else. Weight is caller-tuned (0.0 = pure makespan).
+    if freshness_weight and freshness_weight > 0.0 and freshness_producer_op_indices:
+        valid_idx = [i for i in freshness_producer_op_indices if 0 <= i < num_operations]
+        if valid_idx:
+            objective_func = objective_func + freshness_weight * cp.sum(
+                [t[i] for i in valid_idx]
+            )
+
     objective = cp.Minimize(objective_func)
     problem = cp.Problem(objective, constraints)
-    
+
     # Print problem statistics
     if verbose:
         print(f"\n{'='*60}")
@@ -860,16 +995,7 @@ def schedule(
                 pass
         _extra = os.environ.get("XPURT_MOSEK_PARAMS", "")
         if _extra:
-            for kv in _extra.split(";"):
-                if "=" not in kv:
-                    continue
-                k, v = kv.split("=", 1)
-                k = k.strip(); v = v.strip()
-                # Try float first, then string.
-                try:
-                    mosek_params[k] = float(v)
-                except ValueError:
-                    mosek_params[k] = v
+            mosek_params.update(_parse_mosek_params(_extra))
         if mosek_params:
             solver_kwargs["mosek_params"] = mosek_params
     elif cvxpy_solver == "GUROBI":

@@ -731,7 +731,27 @@ Two more traps in the same file, both real:
   the error. On the K1 the columns really are the harness's own timer ticks, and
   24 MHz is the right conversion.
 
-Until the join is fixed, the honest comparison is per-network: sum
+Until that join is fixed, use `XPU-RT/scripts/join_k1_trace.py`, which does the
+same comparison per dispatch and reads both trace schemas:
+
+```bash
+$PY scripts/join_k1_trace.py --schedule <sched.json> --trace <trace.csv> \
+    --ir <graph.json for each model in the schedule>
+```
+
+**Pass `--ir` for every model, or read nothing below the summary.** The trace's
+`dispatch_id` is a record slot rather than the IR dispatch id, and the two
+diverge by the number of zero-cost ops before them — see
+[§8](#the-traces-dispatch_id-is-a-record-slot-not-a-dispatch-id). The tool
+audits this itself, from the schedule's and the trace's own op-kind columns, and
+refuses rather than printing per-dispatch numbers that compare different ops.
+
+On the 3-model 4 Hz run it reports median service-time error **−2.4%** over 1585
+dispatches (−1.3% restricted to dispatches over 1 ms), and 48.7% of elapsed time
+spent queueing rather than computing — which is the split that decides whether a
+deadline miss calls for a faster kernel or an earlier placement.
+
+The per-network sum remains the fallback that needs no IR: sum
 `predicted_duration_ms` from the trace's own columns against
 `(actual_end - actual_start) / 24e3` ms from the same rows. Both come from the
 one file the binary emitted, which sidesteps the labelling hazard described in
@@ -796,26 +816,319 @@ order they cost time:
 4. The trace's labels must be provably generated from the same artifact the
    binary executed.
 
+### Where each piece of the loop actually lives
+
+The modules are not all named after the concepts, which has cost more than one
+person an afternoon.
+
+| the concept | where it lives |
+|---|---|
+| granularity analysis | `xpu-rt/granularity_advisor.py` (the verdict) |
+| candidate generation + scoring | `xpu-rt/rewrite.py` (`Candidate`, `score_candidates`) |
+| the driver | `scripts/granularity_loop.py` — verdict → scored candidates → Contract-2 hint |
+| hint assembly | `xpu-rt/bundle.py` |
+| the rewriters | three, not one: `ModelBlaster/pipeline/apply_{fusion,split,unfuse}_hint.py` |
+| the decision | search: `ModelBlaster/scripts/decision_loop.py` · **verdict: `scripts/compare_candidates.py`** |
+| advice → hint | `scripts/advice_to_{fusion,split,unfuse}_hint.py`, `advice_to_kernel_choice.py` |
+| the acceptance rule | `xpu-rt/candidate_objective.py` |
+| board bundles | `scripts/run_xpurt_bundle.py`, `run_bundle_firesim.sh` (FireSim-era) |
+
+`rewrite.py`, `bundle.py` and `granularity_loop.py` were absent from this branch
+for a while — they were added on `origin/xpurt-scheduler-advisor` and never
+merged forward, so `decision_loop.py` shelled out to a file that was not there
+and the automated loop could not run at all. Restored in
+`feat/k1-granularity-bridge`.
+
+**The predicted cost model has no per-dispatch launch overhead**, so fusing
+tiny dispatches leaves the predicted makespan unchanged — every fuse candidate
+scores Δmakespan 0.00. `granularity_loop.py` therefore judges MERGE by the
+dispatches and cross-device transitions it removes, and SPLIT by makespan
+delta, which is visible in prediction because parallelism is. The merge payoff
+is real but only shows on hardware, so the predicted number ranks; it does not
+decide.
+
+**Searching and deciding are different jobs.** `decision_loop.py` accepts on
+total cycles, which is `candidate_objective`'s ninth and last term. That is
+fine as a cheap search filter and wrong as a verdict — the DroNet split was
+rejected at term 5 while *improving* critical-task p99, which a cycles gate
+cannot see in either direction. Search with `decision_loop`, decide with
+`compare_candidates.py`.
+
+### The four verbs, and how each one reaches the compiler
+
+The scheduler never edits C. It states a recommendation with evidence, a
+narrow adapter turns it into one of ModelBlaster's hint contracts, and a
+JSON-in/JSON-out rewriter applies it. Every stage is a file, so any stage can be
+debugged alone.
+
+| verb | producer | advice → hint | consumer | the VERB on hardware | the BRIDGE end to end |
+|---|---|---|---|---|---|
+| `fuse_with_successor` | `overhead_advice` | `advice_to_fusion_hint.py` | `apply_fusion_hint.py` | **rejected**, 36% slower | ✅ drove that rung |
+| `split` | `blocking_advice` | `advice_to_split_hint.py` | `apply_split_hint.py` | **rejected**, +13.7% | ⚠️ that rung used a hand-written hint |
+| `unfuse` | `unfuse_advice` | `advice_to_unfuse_hint.py` | `apply_unfuse_hint.py` | never | host only |
+| `choose_implementation` | `implementation_advice` | `advice_to_kernel_choice.py` | `generate_kernels --keep-reference-ops` | never | host only |
+| `shard` | `shard_advice` or schedule width | `advice_to_shard_hint.py` or composite target | `apply_shard_hint.py` / `schedule_shards.py` | **accepted**, exact-cycle feedback | ✅ schedule-selected path; advice path host-tested |
+
+**Read the last two columns separately.** "The verb reached a board verdict" and
+"this chain produced that verdict" are different claims, and only
+`fuse_with_successor` satisfies both. The DroNet split that measured +13.7% was
+driven by a hint written by hand — `advice_to_split_hint.py` did not exist
+then — so the split bridge is verified against the rewriter and against real
+advice, but has not yet been the thing that produced a board number. Collapsing
+the two columns is how a chain gets credited with a measurement it did not make.
+
+Three verbs have reached a board verdict. Fusion and split were rejected on
+measurement; schedule-selected sharding was accepted and produced the
+solver-independent exact-cycle separation. Keeping both outcomes is the loop
+working: measurement decides, not the recommendation's name.
+
+A separate measured result is a refusal rather than a rung: on the `dense2`
+workload `advice_to_split_hint` emits **0 splits**, because yolov8_nano's
+largest dispatch is 2.238 ms against a 16.527 ms periodic slot (13.5%) and
+`blocking_advice` fires only above 100%. Nothing blocks, so nothing needs
+splitting, and B4 put 4-way OC sharding at +76% total work. The 64×96 graph is
+already fine enough for that workload — which is what dropping from 160×160
+bought.
+
+Every bridge takes `--advice --ir --model --out`. Each derives what it can from
+the measurement rather than taking it as a parameter — `advice_to_split_hint`
+computes `n_splits` from `ceil(service_time / max_target_piece)`, rounded up to
+a divisor of the tilable axis, where `decision_loop.py` hard-codes `2`.
+
+#### Every bridge proves the advice came from this graph, first
+
+`dispatch_id`s renumber on every rewrite, so an id that still resolves is not
+evidence that it resolves to the *same op*. Worse, the obvious check does not
+fire for the ops that matter: `profile_writer` writes the literal string
+`noshape` wherever it could not read a shape, and it could not read one for any
+fused op until `_conv_shape_of` existed — so every fused dispatch in every
+profile on disk is `noshape`, and the op **kind** alone proves nothing because a
+model's topology is identical at every input size.
+
+This was found by hitting it. The split bridge cheerfully joined the 320×320
+`yolov8_nano` profile (226.86 ms, 90 dispatches, every conv `noshape`) against
+the deployed 64×96 IR (46.4 ms), passing every per-op check, and derived split
+factors from service times 25× too large.
+
+So identity is established from the **whole advice set** — the elementwise and
+concat dispatches carry real signatures even when the convs do not
+(`xpu-rt/advice_join.py`, shared by all four bridges so they cannot disagree
+about what counts as the same graph):
+
+```
+advice(320×320) vs IR 64×96     33 of 33 checkable dispatches disagree → refused
+advice(320×320) vs IR 320×320   33 of 33 agree → proceeds
+```
+
+#### The trace's `dispatch_id` is a record slot, not a dispatch id
+
+`generate_skeleton` sizes the harness's profile record array by the ops that
+emit a kernel call — `view` and the `chunk2_c1` family emit none — and the
+harness stamps each record with its **slot** in that array. The column is called
+`dispatch_id`. It drifts from the IR numbering that the schedule, the profile
+CSV and the advice all use, by the number of zero-cost ops seen so far.
+
+`dronet` and `mlp_control` have none, so their numbering is the identity. That
+is why every earlier per-dispatch validation on this path was clean.
+`yolov8_nano` has 8, and 44 of its 90 dispatches join to an op of a different
+kind:
+
+| joined on | median rel. err | mean | worst \|abs\| | worst case |
+|---|---|---|---|---|
+| the trace's raw id | −3.6% | +204.4% | 16 913 µs | d81: pred 17.465, "meas" 0.577 (−96.8%) |
+| the IR dispatch id | **−2.4%** | **−2.6%** | 2 249 µs | d77: pred 9.567, meas 11.816 (+23.5%) |
+
+Both sets of numbers are real. Only one compares an op against itself: trace
+slot 81 is `detect.cv3_1_2`, a 0.577 ms `conv2d_s8`, while IR dispatch 81 is
+`detect.cv3_0_1.conv`, an 18.7 ms fused conv.
+
+Note the **median barely moved**. A summary statistic does not reveal this; only
+the spread does. Pass `--ir <graph.json>` (repeatable) to `join_k1_trace.py` and
+`plot_predicted_vs_measured.py` to translate. The audit itself is always on and
+needs no IR — the schedule carries the op kind in `module_name`, the trace in
+its own `op` column — and it refuses by default rather than printing numbers
+that compare different ops.
+
+The upstream fix is for the harness to stamp the IR `dispatch_id`; that needs a
+board rebuild and re-run, and this makes every trace already taken readable.
+
+### Running a REWRITTEN IR on the board
+
+The loop's output is a graph.json that no `--model` can regenerate, so the
+runner has to be handed it:
+
+```bash
+bash ModelBlaster/scripts/run_xpurt_k1.sh \
+    --schedule <scheduled_*.json> \
+    --staged-ir <network>:<dir containing graph.json, weights.npz, io.npz> \
+    --models <network>,<...> --backends rvv_x60,rvv_x60
+```
+
+`--staged-ir` copies the graph, records its source path and sha256 in
+`.staged_from` (deliberately *not* `.extract_config`, so a staged graph can
+never satisfy the extraction reuse check), and **renames the IR's `name` field
+to the network name** — every generated C symbol mangles from it
+(`model_<name>_op_record_t`, `MODEL_<NAME>_OUTPUT_SIZE`), while `xpurt_main.c`
+mangles from the schedule's network name. Leave them different and the harness
+fails to compile against a type it just generated.
+
+The same flag covers a network whose name is not a `models/` module —
+`networks_dense2` calls its detector `yolov8_nano_64x96`, which is
+`yolov8_nano` built at another input size.
+
+### Two toolchain traps that cost a board slot each
+
+**Use GCC 14.3, not 13.2.** `run_xpurt_k1.sh` defaults `CROSS` to chipyard's
+`riscv64-unknown-linux-gnu-` 13.2, while the single-model profiling path builds
+with the spacemit 14.3 one. GCC 13.2 **reorders the `__riscv_vsetvl_*`
+intrinsics**, so a widening instruction executes under the narrow vtype:
+
+```
+vsetvli e32,m4     <- sets SEW=32
+vsetvli e8,m1      <- clobbers it to SEW=8
+vle8.v / vle8.v
+vsext.vf4          <- ILLEGAL: widening 8->32 needs SEW=32
+```
+
+Measured in `kernel_add_s8`: SIGILL with no stdout, `epc 0x17020`, `badaddr`
+equal to that instruction's own encoding. Same source and flags, GCC 14.3
+emits `vsetvli e32,m4 / vle8 / vsext.vf4` and it runs. Set:
+
+```bash
+eval "$(scripts/setup_spacemit_toolchain.sh)"
+```
+
+This does not invalidate earlier scheduled runs: a wrong vtype is an *illegal
+instruction*, so it crashes rather than quietly computing a wrong answer.
+
+**A network name may end in a digit.** `<network><instance>` has no separator,
+so `yolov8_nano_64x96` reads as `yolov8_nano_64x` + instance 96 under a
+trailing-digit split. That emitted `#include "yolov8_nano_64x_model.h"` and
+failed the build; it also greyed the model out of every figure. Pass
+`--networks` to `generate_xpurt_main` (the runner does), and prefer the trace's
+own `network` column in any renderer.
+
+### `shard`: schedule-selected and wired end to end
+
+`shard_advice` is per dispatch. The legacy `MB_SHARD_FACTOR` is build-level and
+whole-model, but it is no longer the deployed path: XPU-RT chooses a measured
+width per dispatch, serializes it as a composite `hardware_target`, and
+ModelBlaster derives a codegen-only IR with `schedule_shards.py`. Packed
+convolution weights are re-packed for that width, while the runtime creates a
+persistent pool on the exact selected harts and locks the complete block while
+the dispatch runs.
+
+* ~~**The advice cannot fire at all.** It needs `profiles_by_cores` with a
+  1-core baseline *and* multi-core measurements. Only `topo_0` exists — all 16
+  profile directories on disk.~~ **NO LONGER TRUE.** ffn_block, dronet and
+  yolov8_nano_64x96 are each profiled at `topo_0`, `topo_0_1`, `topo_0_1_2_3`
+  and `topo_0_1_2_3_4_5_6_7`. The data-collection gap is closed; what was
+  actually missing was a board harness, since the Linux harness compiled no
+  thread pool at all.
+* ~~**The measured ceiling is low.** B4 measured 4-way OC sharding costing
+  **+76% total work**, so its ceiling is 2.27×.~~ **THAT NUMBER IS ABOUT A
+  DIFFERENT MECHANISM.** It measured SPLITTING an op into separate dispatches,
+  each redoing its own setup. Intra-op sharding — one dispatch, several harts,
+  per-shard re-packed weights — measures **3.87× and 3.93× on four harts** for
+  ffn_block's two linears. Do not transfer the split cap to sharding; see
+  `docs/the_loop.md` §4c.
+
+The explicit advice bridge also exists:
+`advice_to_shard_hint.py` emits `modelblaster.shard_hints/v1`, and
+`apply_shard_hint.py` annotates the named dispatch without changing IDs or
+edges. For a deployed XPU-RT schedule, however, the serialized machine
+combination is authoritative. The complete current contract is
+`ModelBlaster/docs/xpurt_schedule_sharding.md`.
+
+### Two worked round-trips, both rejections
+
+Both are complete and both ended in the rung being rejected on measurement,
+which is what these are here to show.
+
+**Fusion — `mlp_control`, 7 ops → 4** (`artifacts/k1_run/round1_mlp_control/`).
+The evidence only appeared *after* the previous round: once the curated RVV
+linear kernel landed, the `elu` ops went from noise to **39.7%** of runtime.
+Advice that would have been wrong at round 0 is right at round 1 — the argument
+for closing the loop rather than optimising once.
+
+```bash
+$PY scripts/advice_to_fusion_hint.py --advice artifacts/k1_run/compile_advice.json \
+    --ir ModelBlaster/build/k1_xpurt/mlp_control/int8/graph.json \
+    --model mlp_control --out round1/fusion_hint.json --pair-only
+cd "$MB_ROOT" && $PY -m modelblaster.pipeline.apply_fusion_hint \
+    --hint round1/fusion_hint.json --model mlp_control \
+    --ir  build/k1_xpurt/mlp_control/int8/graph.json \
+    --out build/k1_xpurt/mlp_control/int8/graph.fused.json
+$PY scripts/diff_dispatch_graph.py --before …/graph.json --after …/graph.fused.json
+```
+
+Result: **36% slower on the board**. Rejected.
+
+**Split — DroNet dispatch 0, OC 32 → 2×16**
+(`artifacts/k1_run/round_B3_dronet_split/`). Host-verified bit-exact first
+(100 352 elements, 0 differing, tiles distinct), then measured: **+13.7%**.
+Rejected. It first read as −0.2% against a **stale baseline** that predated the
+`_zfh_zvfh` march change and sat inside the same round directory — panel c of
+`k1_granularity_b3` exists to show that trap.
+
+The split path now reaches the ops that carry the runtime.
+`apply_split_hint` accepts `conv2d_batchnorm2d_s8` and
+`conv2d_batchnorm2d_silu_s8` — 97% of yolov8n and 29% of DroNet — verified
+bit-exact on the deployed graphs with the unmodified
+`verify_ir_rewrite_host.py` verdict:
+
+```
+yolov8_nano d0 ×2   24576 elems  golden 0/0  diff 0  bit_exact True
+yolov8_nano d0 ×4   24576 elems  golden 0/0  diff 0  bit_exact True
+dronet      d3 ×2    6272 elems  golden 0/0  diff 0  bit_exact True
+dronet     d13 ×4    2048 elems  golden 0/0  diff 0  bit_exact True
+```
+
+**A split graph has no profile.** Do not schedule it by dividing the parent's
+cost by `n`: B4 measured 4 OC tiles costing ~0.44 of the parent *each*. The
+order is rewrite → rebuild → **reprofile on the board** → schedule on the
+measured finer profile. A schedule built on derived costs measures the
+derivation, not the solver.
+
+### Figures
+
+Committed scripts, measured data, output into the gitignored `out/figures/`.
+`scripts/figstyle.py` holds the print rcParams and the palette — a model keeps
+one colour across every figure, which it did not before.
+
+```bash
+$PY scripts/plot_loop_schematic.py --out-dir out/figures
+$PY scripts/plot_granularity_evolution.py --out-dir out/figures
+$PY scripts/plot_k1_trace_gantt.py --trace <trace.csv> --schedule <sched.json> \
+    --out out/figures/k1_schedule_measured.png --window-ms 300
+$PY scripts/plot_predicted_vs_measured.py --schedule <sched.json> --trace <trace.csv> \
+    --ir <each model graph.json> --out-dir out/figures
+```
+
+| figure | what it shows |
+|---|---|
+| `k1_loop_schematic` | the loop with the contract on every arrow, plus each verb and where its round-trip actually reached |
+| `k1_granularity_b3` | the DroNet split rung, including the stale-baseline trap |
+| `k1_schedule_measured` | three models on eight real harts, measured |
+| `k1_predicted_vs_measured` | the profile's predictive quality (median −2.4% over 1585 dispatches, four decades) beside the same data joined on the raw id |
+
 ### What does not work on this path yet
 
-* **`scripts/emit_compile_advice.py` cannot read ModelBlaster profiles.** It
-  loads `<gen_root>/profile/<impl>/<target>/<model>/<basename>/<topo>/profile.jsonl`
-  — a file only the retired IREE profiler writes, at a directory depth
-  ModelBlaster's writer does not use (it inserts a `<spec>` level and emits
-  `results.csv`). Verified. `--impls RVV,scalar,IME` are IREE labels too. Until
-  a ModelBlaster-side profile ingester exists, use `xpu-rt/advisor.py` above.
-* **`scripts/apply_compile_advice.py`** rewrites `.vmfb` module paths inside a
-  schedule. There are no VMFBs on this path; it is retired with the runtime it
-  served.
-* **`scripts/join_k1_trace.py`** joins a *merlin* trace CSV. The ModelBlaster
-  trace has a different schema; see §7.
-* **`scripts/advice_to_fusion_hint.py`** (`--advice --ir --model --out
-  [--pair-only]`) is the adapter from `compile_advice.json` to
-  `modelblaster.fusion_hints/v1`. Its input comes from `emit_compile_advice`, so
-  it is blocked behind the first item.
 * **`runtime/scripts/verify_ime_build.sh`** needs merlin's `llvm-objdump` (or
   `OBJDUMP=`). It gates an IREE artifact; nothing on the current path emits IME
   instructions at all.
+* **The harness stamps a record slot, not the IR `dispatch_id`** — see above.
+  Every consumer works around it; the producer should be fixed.
+* **Composite shards require a consistent width across periodic instances of
+  one packed-convolution dispatch.** One generated weight layout cannot encode
+  invocation-dependent widths; `schedule_shards.py` rejects that schedule.
+
+Previously listed here and now resolved: `emit_compile_advice.py` reads
+ModelBlaster profiles (`--profile-format csv`, now the default);
+`join_k1_trace.py` reads both trace schemas via `xpu-rt/k1_trace.py`;
+`advice_to_fusion_hint.py` is unblocked along with three sibling bridges; and
+`scripts/apply_compile_advice.py` is deleted — it rewrote `.vmfb` paths that do
+not exist on this path, and `choose_implementation` now has a live consumer.
 
 ---
 
@@ -837,6 +1150,49 @@ short version, because three earlier claims in this document were wrong:
   instructions later a *masked* `vse32.v` stores **one** of the sixteen int32
   results. It is 23% faster than the RVV form while discarding 15/16 lanes, and
   it is 0.075% of DroNet's runtime: worth 0.027 ms of 122.7.
+* **The 4×4 int32 accumulator is plain ROW-MAJOR across the `(vd, vd+1)`
+  pair.** Measured, not assumed — `ModelBlaster/scripts/k1_ime_accumulator_probe.c`
+  makes all 16 results distinct (`C[i][j] = 16(i+1) + (j+1)`) and prints the
+  pair in memory order: `17 18 19 20 33 34 35 36 49 50 51 52 65 66 67 68`.
+  Element *e* is `C[e/4][e%4]`; `vd` holds rows 0–1 and `vd+1` rows 2–3. No
+  swizzle. This was the single unknown blocking a real IME matmul, because a
+  wrong guess produces a permuted result that the golden compare rejects
+  without naming the permutation. The control is that the same binary exits
+  132 (SIGILL) on hart 5: had the instruction been elided or ignored, cluster 1
+  would have printed the same numbers instead of dying.
+* **A REAL IME MATMUL NOW EXISTS, AND IT WINS 2.30x — ON SOME SHAPES.**
+  `ModelBlaster/kernels/ime/ime_matmul_s8_ime_vmadot_4x4x8.c`, bit-exact
+  (`max_abs_err=0`) over 9 shapes and both data regimes. Measured on the board
+  against the RVV matmul back to back:
+
+  | shape | RVV | IME | IME |
+  |---|---|---|---|
+  | M=7 K=512 N=512 | 0.982 ms | 3.978 ms | **0.25x — loses** |
+  | M=64 K=512 N=512 | 8.966 ms | 6.263 ms | 1.43x |
+  | M=128 K=256 N=256 tbᵀ | 5.998 ms | 2.609 ms | **2.30x** |
+
+  The crossover is structural, not tuning noise: the micro-tile is a
+  hardware-forced 4 rows, so at M=7 one row in eight is padding and the
+  B-panel packing amortizes over two m-tiles instead of thirty-two. Attention
+  matmuls (M=8) are in the losing regime; transformer MLP shapes are in the
+  winning one. **This is what makes `ime` a per-dispatch scheduling choice
+  rather than a backend** — a unit that won everywhere would need no
+  scheduler to select it.
+* **The ceiling is 3.33x, and the obvious comparison gets it wrong.**
+  `ModelBlaster/scripts/k1_mac_throughput_probe.c` issues each MAC instruction
+  on preloaded registers with no memory traffic: `smt.vmadot` sustains
+  **34.02 GMAC/s**, `vwmacc.vv` 25.56, and `vwmul.vv + vwadd.wv` **10.22**.
+  The middle number is a straw man — `vwmacc.vv` accumulates into i16, which
+  a real int8 matmul cannot use (at K=512 the sum reaches ~8.2M against
+  i16's 32767), so bit-exact RVV must pay two instructions per 32 MACs.
+  Against i16 the ceiling reads 1.33x; against what RVV actually needs it is
+  3.33x. The measured 2.30x is 69% of achievable.
+* **Packing, not the MAC unit, is the whole performance story.** The first
+  correct IME kernel packed tiles inside the `(m0, n0)` loop — repacking
+  O(M·N·K/4) against O(M·N·K) MACs — and measured **6.5x SLOWER** than RVV.
+  Packing A once per m-tile block and each B panel once made the same
+  instruction 9x faster. Reporting that first number as a fact about IME
+  would have been wrong.
 * **The "IME wins" in `compile_advice.json` are not IME wins.** Dispatches 14
   and 7 contain no `vmadot` at all; the speedups are incidental codegen variation
   from the `+xsmtvdot` data-tiling path.

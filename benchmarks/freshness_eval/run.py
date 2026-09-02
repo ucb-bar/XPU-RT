@@ -454,7 +454,7 @@ def _git_info() -> Dict[str, object]:
     out: Dict[str, object] = {}
     for name, repo in (
         ("xpu-rt", _REPO),
-        ("ModelBlaster", "/scratch2/agustin/ModelBlaster"),
+        ("ModelBlaster", os.environ.get("MODELBLASTER_ROOT", "/scratch2/agustin/ModelBlaster")),
         ("zephyr-chipyard-sw", os.path.join(_REPO, "zephyr-chipyard-sw")),
     ):
         try:

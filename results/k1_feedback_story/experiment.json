@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "experiment_id": "k1-tri-feedback-v1",
+  "description": "Four-model K1 solver matrix before and after XPU-RT feedback exposes measured ModelBlaster multi-hart implementations.",
+  "common": {
+    "solvers": ["greedy", "cpsat", "mosek"],
+    "critical_models": ["mlp_control", "fused_full", "dronet"],
+    "heavy_model": "ffn_block",
+    "require_distinct_pdb": true,
+    "timeout_s": 0,
+    "solver_time_limit_s": 0,
+    "max_periodic_iters": 1,
+    "window_ms": 45
+  },
+  "gates": {
+    "correctness": {
+      "status": "pass",
+      "evidence": "Multi-hart candidates preserve the same dispatch graph; the split rewrite path is independently bit-exact in artifacts/k1_run/round_B3_dronet_split/host_verify_x2.json and host_verify_x4.json."
+    },
+    "hardware_legality": {
+      "status": "pass",
+      "evidence": "Every stored schedule is checked by scripts/check_schedule_feasibility.py; multi-hart targets are same-cluster K1 combinations."
+    },
+    "profile_validity": {
+      "status": "pass",
+      "evidence": "Tracked K1 measurements exist for DroNet and FFN at topo_0, topo_0_1, topo_0_1_2_3, and topo_0_1_2_3_4_5_6_7 under gen/profile_mb."
+    }
+  },
+  "phases": {
+    "original": {
+      "networks_json": "data/toplevel/networks_k1_tri_small.json",
+      "tag": "story_original",
+      "transformation": null,
+      "cells": [
+        {"solver": "greedy", "status": "validated", "wall_s": 1.3, "schedule": "schedules/scheduled_networks_k1_tri_small_story_original_greedy_profiled.json"},
+        {"solver": "cpsat", "status": "validated", "wall_s": 159.5, "schedule": "schedules/scheduled_networks_k1_tri_small_story_original_cpsat_profiled.json"},
+        {"solver": "mosek", "status": "validated", "wall_s": 76.6, "schedule": "schedules/scheduled_networks_k1_tri_small_story_original_profiled.json"}
+      ]
+    },
+    "feedback": {
+      "networks_json": "data/toplevel/networks_k1_tri_small_feedback.json",
+      "tag": "story_feedback",
+      "transformation": {
+        "kind": "expose_measured_shard_widths",
+        "targets": ["dronet", "ffn_block"],
+        "widths": [1, 2, 4, 8],
+        "source": "XPU-RT prefer_finer hints from the original Greedy schedule",
+        "feedback_artifact": "results/k1_feedback_story/data/original_xpurt_feedback.json",
+        "source_schedule_sha256": "c2e69f8527b3cc60622fbde7c037dcbefa4fe29182abfedc24992a330c4d7cb4",
+        "selection_rule": "Expose wider implementations only for hinted models with existing measured K1 multi-hart profiles.",
+        "allowed_workload_changes": [
+          {"path": "hardware.profile.topo_tag_override", "from": true, "to": false},
+          {"path": "scheduler.machine_combination_mode", "from": "singletons", "to": "shard"}
+        ]
+      },
+      "cells": [
+        {"solver": "greedy", "status": "validated", "wall_s": 1.4, "schedule": "schedules/scheduled_networks_k1_tri_small_feedback_story_feedback_greedy_profiled.json"},
+        {"solver": "cpsat", "status": "validated", "wall_s": 191.0, "schedule": "schedules/scheduled_networks_k1_tri_small_feedback_story_feedback_cpsat_profiled.json"},
+        {"solver": "mosek", "status": "validated", "wall_s": 1272.1, "schedule": "schedules/scheduled_networks_k1_tri_small_feedback_story_feedback_profiled.json"}
+      ]
+    }
+  }
+}

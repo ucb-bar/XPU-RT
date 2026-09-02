@@ -36,67 +36,61 @@ import os
 import sys
 from typing import Dict, List, Optional, Sequence, Tuple
 
+sys.path.insert(0, os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "xpu-rt"))
+
+import k1_trace  # noqa: E402
+
 import matplotlib as mpl
 mpl.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.patches import Patch
 
-MM = 1 / 25.4
-DOUBLE_COL = 183 * MM
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-mpl.rcParams.update({
-    "font.family": "DejaVu Sans", "font.size": 6,
-    "axes.labelsize": 6, "axes.titlesize": 7,
-    "xtick.labelsize": 5, "ytick.labelsize": 4.4,
-    "legend.fontsize": 5, "axes.linewidth": 0.6,
-    "xtick.major.width": 0.5, "ytick.major.width": 0.5,
-    "pdf.fonttype": 42, "ps.fonttype": 42, "savefig.dpi": 300,
-})
+import figstyle  # noqa: E402
+
+# The print rcParams and the palette live in `figstyle` because they were
+# copy-pasted into five renderers and drifted: DroNet was blue in one figure
+# and orange in another, and yolov8_nano was blue in that one. Colour is an
+# identity claim, so it is made once.
+figstyle.use()
+MM = figstyle.MM
+SINGLE_COL = figstyle.SINGLE_COL
+DOUBLE_COL = figstyle.DOUBLE_COL
 
 # Model colours are assigned by first appearance so any model set works.
-_PALETTE = ["#0072B2", "#E69F00", "#009E73", "#CC79A7", "#56B4E9", "#D55E00"]
-C_DEADLINE = "#D55E00"
+#: Fallback order for models `figstyle.MODEL_COLOR` does not name.
+_PALETTE = [figstyle.BLUE, figstyle.ORANGE, figstyle.GREEN,
+            figstyle.PURPLE, figstyle.SKY, figstyle.VERMILLION]
+C_DEADLINE = figstyle.C_DEADLINE
 
 
-def model_of(job_name: str) -> str:
-    return job_name.rstrip("0123456789") or job_name
+def model_of(job_name: str, row: dict | None = None) -> str:
+    """The model a trace row belongs to.
 
-
-#: rdtime on this board. NOT the 1.6 GHz core clock and not 1 MHz -- the
-#: device-tree timebase-frequency is 24000000, and every cycles->time
-#: conversion in this project uses it.
-K1_RDTIME_HZ = 24_000_000.0
-
-
-def _normalise_modelblaster(rows: List[dict]) -> List[dict]:
-    """Map ModelBlaster's harness_xpurt trace onto the canonical column names.
-
-    Two producers emit measured K1 traces and they disagree on spelling, not on
-    meaning: merlin's runner writes `start_us`/`run_us`/`job_name`/`cores`,
-    ModelBlaster's writes `actual_start_cycles`/`actual_end_cycles`/
-    `network`+`instance`/`core_kind`+`hart`. Normalising once here is what keeps
-    this from becoming the fourth renderer that reads exactly one producer.
-
-    Cycles are rdtime ticks at 24 MHz, and the run is stamped from the first
-    tick observed rather than from 0, so the axis starts at the run's own t0.
+    Prefers the trace's own `network` column. Stripping trailing digits off
+    `<network><instance>` is ambiguous the moment a network name ends in a
+    digit -- `yolov8_nano_64x96` is a real one -- and it silently produced a
+    `yolov8_nano_64x` series, in the fallback grey, for the model carrying the
+    workload in the featured figure.
     """
-    if not rows or "actual_start_cycles" not in rows[0]:
-        return rows
-    t0 = min(int(r["actual_start_cycles"]) for r in rows)
-    out = []
-    for r in rows:
-        s, e = int(r["actual_start_cycles"]), int(r["actual_end_cycles"])
-        d = dict(r)
-        d["start_us"] = (s - t0) / K1_RDTIME_HZ * 1e6
-        d["run_us"] = max(e - s, 0) / K1_RDTIME_HZ * 1e6
-        d["job_name"] = f'{r.get("network", "")}{r.get("instance", "")}'
-        out.append(d)
-    return out
+    if row and row.get("network"):
+        return row["network"]
+    return figstyle.model_of(job_name)
+
+
+#: Re-exported so this renderer keeps one name for the board's clock.
+K1_RDTIME_HZ = k1_trace.K1_RDTIME_HZ
 
 
 def read_trace(path: str) -> List[dict]:
-    with open(path, newline="") as f:
-        return _normalise_modelblaster(list(csv.DictReader(f)))
+    """Both producers' schemas, normalised in `xpu-rt/k1_trace.py`.
+
+    It used to live here, which made this the only tool that could read a
+    ModelBlaster trace -- `join_k1_trace.py` sat next to it unable to read one.
+    """
+    return k1_trace.read(path)
 
 
 def read_schedule(path: Optional[str]) -> Dict[str, dict]:
@@ -169,7 +163,7 @@ def draw(ax, rows: Sequence[dict], sched: Dict[str, dict],
         lanes = [lane_idx[l] for l in lanes_for(r, sched) if l in lane_idx]
         if not lanes:
             continue
-        m = model_of(r.get("job_name", ""))
+        m = model_of(r.get("job_name", ""), r)
         lo, hi = min(lanes), max(lanes)
         # One bar spanning the whole held set: that is what the core lock did.
         ax.broken_barh([(start, max(dur, 0.12))], (lo - 0.42, (hi - lo) + 0.84),
@@ -214,7 +208,7 @@ def render(panels: List[Tuple[str, str, Optional[str]]], out: str,
         loaded.append((title, rows, sched, periods_from_schedule(sp)))
         for r in rows:
             all_lanes.extend(lanes_for(r, sched))
-            m = model_of(r.get("job_name", ""))
+            m = model_of(r.get("job_name", ""), r)
             if m not in models:
                 models.append(m)
     lane_order = collect_lane_order(all_lanes)

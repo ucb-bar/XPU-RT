@@ -1,0 +1,30 @@
++ /usr/bin/python3 flow_c.py run --workload /scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c/sweeps/qrb5165_20260829-200620/workloads/fused_seed1.flowc.json --tag xfer_fused_seed1 --tuned --out-dir /scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c/transfer_study/runtimes/fused_seed1 --log-dir /scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c/transfer_study/runs/fused_seed1/rep2 --board root@10.44.120.201 --board-dir /root/flowc_xfer
+(cwd=/scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c)
+
+==> board     : root@10.44.120.201
+==> gen dir   : qnn_models/flow_c/transfer_study/runtimes/fused_seed1
+==> board dir : /root/flowc_xfer_xfer_fused_seed1
+==> ctx dir   : /root/qnn_runtime_ctx
+==> log dir   : /scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c/transfer_study/runs/fused_seed1/rep2
+==> runtime env: FLOWC_ITERATIONS=2 
+
+==> built 91560 B
+==> running...
+==> exit code: 0
+==> log: /scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c/transfer_study/runs/fused_seed1/rep2/run.log (114 lines)
+
+--- summary ---
+[main] iteration 1/2 wall=95.212 ms
+[main] iteration 2/2 wall=99.253 ms
+[summary] 35/35 entries executed, wall=99.253 ms (predicted makespan 84.571 ms, ratio 1.17x), tensor handoffs=3
+
+
+=== run =========================================================
+  [tuned] governor -> performance, FLOWC_ITERATIONS=2
++ bash qnn_models/runtime/deploy_and_run.sh qnn_models/flow_c/transfer_study/runtimes/fused_seed1 root@10.44.120.201 /root/flowc_xfer_xfer_fused_seed1
+  [tuned] governor restored to schedutil
+
+--- stderr ---
+runtime_main.cpp:341:13: warning: 'void pin_to(int)' defined but not used [-Wunused-function]
+  341 | static void pin_to(int core) {
+      |             ^~~~~~

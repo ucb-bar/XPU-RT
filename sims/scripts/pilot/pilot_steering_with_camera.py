@@ -127,7 +127,8 @@ from sims.isaaclab_tasks.track_steering_vision.config.crazyflie.track_steering_e
 def find_latest_checkpoint() -> str:
     """Find the most recently modified policy checkpoint."""
     log_dirs = [
-        "/scratch2/dima/IsaacLab/logs/rsl_rl/crazyflie_steering_tracking",
+        os.path.join(os.environ.get("ISAACLAB_ROOT", "/scratch2/dima/IsaacLab"),
+                     "logs", "rsl_rl", "crazyflie_steering_tracking"),
         os.path.join(freshscheduler_root, "logs/rsl_rl/crazyflie_steering_tracking"),
     ]
     all_checkpoints = []

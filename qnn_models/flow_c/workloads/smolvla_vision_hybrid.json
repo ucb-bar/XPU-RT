@@ -1,0 +1,20 @@
+{
+  "name": "smolvla_vision_hybrid",
+  "_comment": "Flow C port of smolVLA vision, hybrid granularity. Target 2196.9 ms (best-of-cells) against the 3172.2 ms all-CPU baseline. The published 1083.6 ms is not realizable: it credits whole segments with HTA times measured on extracted convs.",
+  "target": "qrb5165_smolvla",
+  "board": "qrb5165_v66",
+  "registry": "cores/qrb5165_qnn.json",
+  "measurements": "measurements/qrb5165_v66_smolvla.json",
+  "slots": {
+    "CPU_P": "hta",
+    "CPU_E": "dsp",
+    "CPU_X": "cpu"
+  },
+  "ctx_dir": "/root/models/smolvlm_vision_v3/ctx",
+  "networks": [
+    {
+      "name": "smolvlm_vision",
+      "bindings": "bindings/smolvlm_vision_hybrid.json"
+    }
+  ]
+}

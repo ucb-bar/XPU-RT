@@ -1,0 +1,20 @@
+{
+ "baseline": "schedules/scheduled_networks_k1_mb_3model_4hz_yolo_ctrl_greedy_profiled.json",
+ "candidate": "schedules/scheduled_networks_k1_mb_3model_4hz_yolo_unfused_greedy_profiled.json",
+ "accepted": true,
+ "why": "accepted -- heavy-model max latency: unfused=116.42 beats ctrl=148.1 (tolerance 1)",
+ "baseline_pdb_hash": "7e0cf65b630b58d879c7cee128616b6a73fa40156cf7f2036a8716b4fc12d41e",
+ "candidate_pdb_hash": "5073cd725fc106799f82a62afee9ff68aad4b83021744603dac3330e7dfc0cf9",
+ "baseline_instances": {
+  "dronet": 10,
+  "mlp_control": 32,
+  "yolov8_nano": 4
+ },
+ "candidate_instances": {
+  "dronet": 10,
+  "mlp_control": 32,
+  "yolov8_nano": 4
+ },
+ "baseline_terms": "CandidateOutcome(label='ctrl', per_model={'dronet': ModelOutcome(instances=10, deadline_misses=0, worst_lateness_ms=0.0, response_p99_ms=8.23, achieved_hz=32.47, required_hz=30.03), 'mlp_control': ModelOutcome(instances=32, deadline_misses=0, worst_lateness_ms=0.0, response_p99_ms=0.08, achieved_hz=103.2, required_hz=100.0), 'yolov8_nano': ModelOutcome(instances=4, deadline_misses=0, worst_lateness_ms=0.0, response_p99_ms=148.1, achieved_hz=4.45, required_hz=4.0)}, makespan_ms=898.0975, critical_models=('mlp_control', 'dronet'), heavy_model='yolov8_nano', heavy_max_latency_ms=148.1, heavy_throughput_hz=4.45, utilization_pct=13.899999999999999, standalone_cycles=961067, ineligible=None)",
+ "candidate_terms": "CandidateOutcome(label='unfused', per_model={'dronet': ModelOutcome(instances=10, deadline_misses=0, worst_lateness_ms=0.0, response_p99_ms=8.23, achieved_hz=32.47, required_hz=30.03), 'mlp_control': ModelOutcome(instances=32, deadline_misses=0, worst_lateness_ms=0.0, response_p99_ms=0.08, achieved_hz=103.2, required_hz=100.0), 'yolov8_nano': ModelOutcome(instances=4, deadline_misses=0, worst_lateness_ms=0.0, response_p99_ms=116.42, achieved_hz=4.62, required_hz=4.0)}, makespan_ms=866.4211, critical_models=('mlp_control', 'dronet'), heavy_model='yolov8_nano', heavy_max_latency_ms=116.42, heavy_throughput_hz=4.62, utilization_pct=11.45, standalone_cycles=794037, ineligible=None)"
+}

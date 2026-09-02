@@ -15,8 +15,8 @@ import onnx
 
 
 HERE = Path(__file__).parent
-PYTHON = "/scratch2/dima/miniforge3/envs/xpurt/bin/python"
-QNN_SDK = "/scratch2/dima/misc_sw/qualcomm/qairt/2.45.0.260326"
+PYTHON = os.environ.get("PYTHON", "/scratch2/dima/miniforge3/envs/xpurt/bin/python")
+QNN_SDK = os.environ.get("QNN_SDK", "/scratch2/dima/misc_sw/qualcomm/qairt/2.45.0.260326")
 DOCKER_IMAGE = "qnn-convert"
 BOARD = "root@10.44.120.201"
 REMOTE_BASE = "/root/decode_probe"

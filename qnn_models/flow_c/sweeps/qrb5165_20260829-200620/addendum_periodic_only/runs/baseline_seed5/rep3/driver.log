@@ -1,0 +1,30 @@
++ /usr/bin/python3 flow_c.py run --workload /scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c/sweeps/qrb5165_20260829-200620/addendum_periodic_only/workloads/baseline_seed5.flowc.json --tag baseline_seed5 --tuned --out-dir /scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c/sweeps/qrb5165_20260829-200620/addendum_periodic_only/runtimes/baseline_seed5 --log-dir /scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c/sweeps/qrb5165_20260829-200620/addendum_periodic_only/runs/baseline_seed5/rep3 --board root@10.44.120.201 --board-dir /root/flowc_sweepc
+(cwd=/scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c)
+
+==> board     : root@10.44.120.201
+==> gen dir   : qnn_models/flow_c/sweeps/qrb5165_20260829-200620/addendum_periodic_only/runtimes/baseline_seed5
+==> board dir : /root/flowc_sweepc_baseline_seed5
+==> ctx dir   : /root/qnn_runtime_ctx
+==> log dir   : /scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c/sweeps/qrb5165_20260829-200620/addendum_periodic_only/runs/baseline_seed5/rep3
+==> runtime env: FLOWC_ITERATIONS=2 
+
+==> built 83600 B
+==> running...
+==> exit code: 0
+==> log: /scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c/sweeps/qrb5165_20260829-200620/addendum_periodic_only/runs/baseline_seed5/rep3/run.log (41 lines)
+
+--- summary ---
+[main] iteration 1/2 wall=48.045 ms
+[main] iteration 2/2 wall=48.046 ms
+[summary] 12/12 entries executed, wall=48.046 ms (predicted makespan 48.107 ms, ratio 1.00x), tensor handoffs=0
+
+
+=== run =========================================================
+  [tuned] governor -> performance, FLOWC_ITERATIONS=2
++ bash qnn_models/runtime/deploy_and_run.sh qnn_models/flow_c/sweeps/qrb5165_20260829-200620/addendum_periodic_only/runtimes/baseline_seed5 root@10.44.120.201 /root/flowc_sweepc_baseline_seed5
+  [tuned] governor restored to schedutil
+
+--- stderr ---
+runtime_main.cpp:332:13: warning: 'void pin_to(int)' defined but not used [-Wunused-function]
+  332 | static void pin_to(int core) {
+      |             ^~~~~~

@@ -34,7 +34,15 @@ artifacts/repo_reconciliation/*.bundle
 #
 # This supersedes the narrower `schedules/*_report.json` rule that preceded it,
 # which existed only because the reports are ~680K each.
-/schedules/
+/schedules/*
+!/schedules/scheduled_networks_k1_tri_exact_100ms_greedy_profiled.json
+!/schedules/scheduled_networks_k1_tri_exact_100ms_feedback_greedy_profiled.json
+# ...and the two that plot_v3_bundles_vs_baseline.py opens by exact path.
+# These cannot be regenerated on dev: gen/ was removed in 2717755e, so the
+# profiles the scheduler reads are no longer here. 68 KB so the figure
+# reproduces from a clean clone.
+!/schedules/scheduled_networks_smolvla_vision_v3_bundles_qrb5165_greedy_profiled.json
+!/schedules/scheduled_networks_smolvla_vision_v3_qrb5165_greedy_profiled.json
 
 # ---------------------------------------------------------------------------
 # Working output. None of this is outward-facing: it is generated, it is
@@ -118,10 +126,42 @@ data/toplevel/_probe_*.json
 /gen/profile/RVV_fused/
 /gen/profile/scalar/spacemit_x60/
 /gen/profile/scalar_c1/
-/gen/profile_mb/rvv_x60/
-/gen/profile_mb/scalar/spacemit_x60/lstm_tiny/
-/gen/profile_mb/scalar/spacemit_x60/vitfly_frontend/
-/gen/profile_mb/scalar/spacemit_x60/vitfly_lstm/
+# NOT /gen/profile_mb/. That tree is what `gen_mb/profile` symlinks to, and
+# it is the MEASURED COST DATABASE THE SCHEDULER INGESTS -- every solve in this
+# repo reads it, and each schedule records the exact files it read in
+# `metadata.pdb_files`. It was ignored under the rule above, on the reasoning
+# that it contained no tracked file; that reasoning is circular, and the effect
+# was that 18 of 21 measured profiles were absent from a clean clone while
+# every recorded verdict had been computed from them. `pdb_hash` proves WHICH
+# costs a solve read; it cannot reconstruct them. 256 KB of CSV is a small
+# price for the numbers the whole project rests on being reproducible.
 /gen/vmfb/dronet/spacemit_x60/
 /gen/vmfb/mlp/
 /gen/vmfb/yolov8_nano/
+
+# NOT /gen25/ or /gen_mb/. Both were blanket-ignored in 230614c6 while they
+# held no tracked file; restoring them showed why that is wrong. gen_mb/vmfb
+# holds the dispatch graphs run_exact_cycle_feedback.py reads, and
+# gen_mb/profile is a SYMLINK to gen/profile_mb, the measured cost database.
+# The ignore rule then shadowed the very data the flagship result needs --
+# the same mistake the /gen/profile_mb/ note above describes.
+
+# Figures are build products: a committed script plus measured data in the
+# repo reproduces every one of them. `scripts/figstyle.py` fixes the style.
+out/figures/
+
+# merlin is no longer a submodule: nothing on the live K1 path imports it,
+# and the one thing that did -- the SpaceMiT cross toolchain -- is now fetched
+# by scripts/setup_spacemit_toolchain.sh. A local checkout may still be present
+# for the retired IREE/runtime flow; it is not tracked.
+/merlin/
+
+# Downloaded cross toolchain (6 GB). scripts/setup_spacemit_toolchain.sh
+# fetches it here on demand; it is an artifact, never a commit.
+/tools/riscv-tools-spacemit/
+
+# Inward-facing working notes: session narrative, blockers, post-mortems.
+# Useful to keep locally, not repo documentation -- committing it publishes
+# an internal account as if it were a changelog.
+/docs/CHANGES.md
+/docs/merging_to_dev.md

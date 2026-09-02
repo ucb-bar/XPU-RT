@@ -1,0 +1,22 @@
++ /usr/bin/python3 flow_c.py plots --workload /scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c/sweeps/qrb5165_20260829-200620/addendum_periodic_only/workloads/fused_seed7.flowc.json --tag fused_seed7 --log-dir /scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c/sweeps/qrb5165_20260829-200620/addendum_periodic_only/runs/fused_seed7/rep3
+(cwd=/scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c)
+
+
+=== plots =======================================================
+
+--- stderr ---
+Traceback (most recent call last):
+  File "/scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c/flow_c.py", line 372, in <module>
+    main()
+  File "/scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c/flow_c.py", line 368, in main
+    stages[s](wl, args)
+  File "/scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c/flow_c.py", line 304, in stage_plots
+    res = plotmod.render(
+          ^^^^^^^^^^^^^^^
+  File "/scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c/flowc/plots.py", line 105, in render
+    rows = plotter.parse_trace(text, clock_mhz=1.0)   # trace ticks are microseconds
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch2/dima/misc_sw/XPU-RT/zephyr-chipyard-sw/modelblaster/scripts/plot_xpurt_trace.py", line 91, in parse_trace
+    actual_start_cyc = int(r["actual_start_cycles"])
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: int() argument must be a string, a bytes-like object or a real number, not 'NoneType'

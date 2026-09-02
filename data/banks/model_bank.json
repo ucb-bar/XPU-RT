@@ -1,0 +1,164 @@
+{
+  "_comment": [
+    "Model bank for scripts/gen_random_workload.py, keyed by the hardware",
+    "config's `profile.target`.  The generator draws networks from the platform",
+    "matching the chosen hardware, measures each against its profile CSVs, and",
+    "drops any it cannot resolve.",
+    "",
+    "Per-model keys:",
+    "  dispatch_deps_path -- repo-relative *_dispatch_graph.json; supplies the",
+    "                        dispatch ids and is copied into the workload.",
+    "  profile_model      -- the <model> level of",
+    "                        gen/profile/<hw>/<target>/<model>/<basename>/...",
+    "  profile_basename   -- the <basename> level; MUST equal the dispatch",
+    "                        path's parent directory name, because",
+    "                        profile_loader derives the basename from the path.",
+    "  role               -- 'periodic' (runs at its own rate, see period_ms)",
+    "                        or 'sporadic' (laid into the gaps, no edges).",
+    "                        At least one usable periodic model is required.",
+    "  period_ms          -- {min,max} for the model's PERIOD in ms: the rate",
+    "                        the task actually runs at, drawn once per",
+    "                        generation and then snapped to a multiple of the",
+    "                        fastest task's period.  It is DECLARED, not",
+    "                        derived from the network's runtime, because a",
+    "                        task's rate is a property of the loop it sits in",
+    "                        -- a 0.4 ms control MLP runs at 100+ Hz whatever",
+    "                        it costs, and sizing its period from its own",
+    "                        window is what produced a 283 ms control loop.",
+    "                        Copies of one model share its period and are",
+    "                        chained; models at different rates get no edges",
+    "                        between them, because an instance-i ->",
+    "                        instance-i edge only means anything at equal",
+    "                        rates.  Omitted, the period falls back to 2x-8x",
+    "                        the model's measured runtime.  Sporadic models",
+    "                        ignore it.",
+    "  window_ms          -- optional {min,max} for the model's WINDOW in ms:",
+    "                        the deadline an instance has inside its period.",
+    "                        Drawn straight from this band, the same way the",
+    "                        period is, and NOT scaled by --min-scale /",
+    "                        --max-scale: a deadline is a property of the loop,",
+    "                        not a multiple of how fast the network happens to",
+    "                        run.  Scaling a 0.4 ms mlp_control gave it a 1 ms",
+    "                        window -- true to the measurement and useless as a",
+    "                        taskset, since nothing else can be scheduled",
+    "                        against a deadline that tight.  The draw is still",
+    "                        fitted to the period afterwards (see",
+    "                        fit_windows): a window never exceeds",
+    "                        period / --period-headroom and never drops below",
+    "                        the measured runtime.  Omitted, the window falls",
+    "                        back to measured runtime x U(--min-scale,",
+    "                        --max-scale).",
+    "  count              -- {min,max} draws per generation; min 0 makes it",
+    "                        optional.  Multiple draws get _a/_b suffixes.",
+    "  max_copies         -- optional ceiling on how many copies may be live",
+    "                        at once.  The count is drawn from `count` and",
+    "                        then clamped here, which is not the same as",
+    "                        narrowing `count`: clamping leaves the RNG",
+    "                        stream alone, so every other model in the",
+    "                        workload draws exactly what it drew before.",
+    "                        Copies of a model are concurrent by",
+    "                        construction -- shared period, chained",
+    "                        back-to-back inside the frame -- so this is how",
+    "                        a model that cannot run alongside itself says",
+    "                        so.  mlp_control caps at 1: two control MLPs a",
+    "                        frame is two loops flying one drone.",
+    "  probability        -- optional chance in [0,1] that the model is drawn",
+    "                        at all; below it the count draw is skipped and",
+    "                        the model sits out this generation entirely.",
+    "                        Use it for a model that should show up now and",
+    "                        then rather than in most workloads -- `count.min:",
+    "                        0` only thins it to 1-in-(max+1).",
+    "  variant_note       -- free text appended to the workload's _comment."
+  ],
+
+  "platforms": {
+
+    "qrb5165_v66": {
+      "models": {
+        "smolvlm_vision_v3": {
+          "dispatch_deps_path": "gen/qnn_vmfb/smolvlm_vision_v3/qrb5165_v66/CPU/smolvlm_vision_v3.int8/smolvlm_vision_v3.int8_dispatch_graph.json",
+          "profile_model": "smolvlm_vision_v3",
+          "profile_basename": "smolvlm_vision_v3.int8",
+          "role": "periodic",
+          "period_ms": { "min": 2000, "max": 6000 },
+          "count": { "min": 1, "max": 3 },
+          "variant_note": "49 dispatches; profiled clean on CPU/DSP/HTA (no unsupported rows), HTA is the fastest whole-network backend."
+        },
+        "smolvlm_vision_v3_bundles": {
+          "dispatch_deps_path": "gen/qnn_vmfb/smolvlm_vision_v3_bundles/qrb5165_v66/CPU/smolvlm_vision_v3_bundles.int8/smolvlm_vision_v3_bundles.int8_dispatch_graph.json",
+          "profile_model": "smolvlm_vision_v3_bundles",
+          "profile_basename": "smolvlm_vision_v3_bundles.int8",
+          "role": "sporadic",
+          "count": { "min": 0, "max": 1 },
+          "variant_note": "Alternative bundling of smolvlm_vision_v3 (97 dispatches). Every backend has unsupported dispatches, so no single backend runs it whole and its reference duration falls back to best-per-dispatch across CPU/DSP/HTA."
+        }
+      }
+    },
+
+    "spike": {
+      "models": {
+        "mlp_control": {
+          "dispatch_deps_path": "zephyr-chipyard-sw/gen/vmfb/mlp_control/generic_riscv64/RVV/mlp_control.fp32/mlp_control.fp32_dispatch_graph.json",
+          "profile_model": "mlp_control",
+          "profile_basename": "mlp_control.fp32",
+          "role": "periodic",
+          "period_ms": { "min": 5, "max": 20 },
+          "window_ms": { "min": 5, "max": 20 },
+          "count": { "min": 1, "max": 2 },
+          "max_copies": 1
+        },
+        "dronet": {
+          "dispatch_deps_path": "zephyr-chipyard-sw/gen/vmfb/dronet/generic_riscv64/RVV/dronet.fp32/dronet.fp32_dispatch_graph.json",
+          "profile_model": "dronet",
+          "profile_basename": "dronet.fp32",
+          "role": "periodic",
+          "period_ms": { "min": 20, "max": 100 },
+          "window_ms": { "min": 20, "max": 100 },
+          "count": { "min": 1, "max": 2 }
+        },
+        "yolov8_nano": {
+          "dispatch_deps_path": "zephyr-chipyard-sw/gen/vmfb/yolov8_nano/generic_riscv64/RVV/yolov8_nano.fp32/yolov8_nano.fp32_dispatch_graph.json",
+          "profile_model": "yolov8_nano",
+          "profile_basename": "yolov8_nano.fp32",
+          "role": "sporadic",
+          "count": { "min": 0, "max": 5 },
+          "variant_note": "Detection load, 0-5 instances per generation: without gemmini it costs 629 ms serial on RVV (10.4 s on scalar) against dronet's 28 ms and mlp_control's 0.4 ms, so each instance stretches the sporadic span and the horizon with it. The count draw alone decides how loaded a workload is -- a sixth of seeds get none and stay a fast mlp+dronet control loop, the rest carry one to five detections. Five of them is ~1060 operations before a single periodic instance, so --max-ops will bind: the horizon shrinks toward one hyperperiod and the periodic tasks cover less of the sporadic span."
+        }
+      }
+    },
+
+    "firesim_rocket_saturn": {
+      "models": {
+        "mlp_control": {
+          "dispatch_deps_path": "zephyr-chipyard-sw/gen/vmfb/mlp_control/generic_riscv64/RVV/mlp_control.fp32/mlp_control.fp32_dispatch_graph.json",
+          "profile_model": "mlp_control",
+          "profile_basename": "mlp_control.fp32",
+          "role": "periodic",
+          "period_ms": { "min": 5, "max": 20 },
+          "window_ms": { "min": 5, "max": 20 },
+          "count": { "min": 1, "max": 2 },
+          "max_copies": 1,
+          "variant_note": "fp32 build: the gemmini_q31 sweep profiles mlp_control.fp32, there is no int8 variant on disk."
+        },
+        "dronet": {
+          "dispatch_deps_path": "zephyr-chipyard-sw/gen/vmfb/dronet/firesim_rocket_saturn/gemmini/dronet.int8/dronet.int8_dispatch_graph.json",
+          "profile_model": "dronet",
+          "profile_basename": "dronet.int8",
+          "role": "periodic",
+          "period_ms": { "min": 20, "max": 100 },
+          "window_ms": { "min": 20, "max": 100 },
+          "count": { "min": 1, "max": 2 },
+          "variant_note": "int8/gemmini build, matching the sweep_v8 profile data. The fp32 build at generic_riscv64/RVV/dronet.fp32 is the one the RVV-only FireSim configs use."
+        },
+        "yolov8_nano": {
+          "dispatch_deps_path": "zephyr-chipyard-sw/gen/vmfb/yolov8_nano/firesim_rocket_saturn/gemmini/yolov8_nano.int8/yolov8_nano.int8_dispatch_graph.json",
+          "profile_model": "yolov8_nano",
+          "profile_basename": "yolov8_nano.int8",
+          "role": "sporadic",
+          "count": { "min": 0, "max": 5 },
+          "variant_note": "Detection load, 0-5 instances per generation -- same count band as the spike platform's so the two RISC-V mixes stay comparable; gemmini brings its cost down but it is still the heaviest network here."
+        }
+      }
+    }
+  }
+}

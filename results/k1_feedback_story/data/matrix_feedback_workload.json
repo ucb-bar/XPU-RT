@@ -1,0 +1,22 @@
+{
+ "_comment": "Feedback-enhanced twin of networks_k1_tri_small.json. Models, periods, instance counts, machine count, implementation choices, seed, and measured profile root are identical. The only change is the XPU-RT-requested ModelBlaster design-space expansion: measured 2/4/8-hart profiles may be selected per dispatch. Networks without a matching multi-hart profile remain single-hart and are marked infeasible on wider combinations by the profile loader.",
+ "hardware": {
+  "machines": { "cpu_p": 4, "cpu_e": 4 },
+  "profile_hw": { "cpu_p": "rvv_x60", "cpu_e": "rvv_x60" },
+  "profile": { "target": "spacemit_x60", "topo_tag": "topo_0", "topo_tag_override": false, "gen_root": "gen_mb" },
+  "p_core_speedup": 1.0
+ },
+ "scheduler": {
+  "random_seed": 42, "solver_verbosity": 1, "time_limit": 180,
+  "use_profiled": true, "prune_periodic": true,
+  "restrict_makespan_to_nonperiodic": false,
+  "machine_combination_mode": "shard", "enable_impls": true
+ },
+ "networks": {
+  "mlp_control": { "id": 0, "identifier": "mlp_control", "dispatch_deps_path": "gen_mb/vmfb/mlp_control/spacemit_x60/rvv_x60/mlp_control.int8/mlp_control.int8_dispatch_graph.json", "period": 20.0, "window_duration": 20.0, "num_instances": 2 },
+  "fused_full": { "id": 1, "identifier": "fused_full", "dispatch_deps_path": "gen_mb/vmfb/fused_full/spacemit_x60/rvv_x60/fused_full.int8/fused_full.int8_dispatch_graph.json", "period": 20.0, "window_duration": 20.0, "num_instances": 1, "stateful": true },
+  "dronet": { "id": 2, "identifier": "dronet", "dispatch_deps_path": "gen_mb/vmfb/dronet/spacemit_x60/rvv_x60/dronet.int8/dronet.int8_dispatch_graph.json", "period": 33.3, "window_duration": 33.3, "num_instances": 1 },
+  "ffn_block": { "id": 3, "identifier": "ffn_block", "dispatch_deps_path": "gen_mb/vmfb/ffn_block/spacemit_x60/rvv_x60/ffn_block.int8/ffn_block.int8_dispatch_graph.json", "period": 100.0, "window_duration": 100.0, "num_instances": 1 }
+ },
+ "edges": []
+}

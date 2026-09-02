@@ -2,8 +2,9 @@
 
 WHAT THIS FILE GUARDS. The advice document is the only channel from "the
 scheduler noticed something" to "the compiler does something about it". Nothing
-on the consuming side validates it: `scripts/apply_compile_advice.py` reaches
-straight into `item["evidence"]["proposed_impl"]`, and
+on the consuming side validates it: `scripts/advice_to_kernel_choice.py` reaches
+straight into `item["evidence"]["proposed_impl"]`,
+`scripts/advice_to_split_hint.py` into `constraints["max_target_piece_us"]`, and
 `scripts/advice_to_fusion_hint.py` into `x["recommendation"]` and
 `x["evidence"]`. A producer that renames a field, nests it one level deeper,
 emits a recommendation word the consumer has never heard of, or drops the
@@ -91,13 +92,18 @@ CONFIDENCE_VALUES = {"high", "medium", "low"}
 #: opposed to merely parse it. Each entry is the set of keys the code that
 #: applies that recommendation dereferences.
 ACTIONABLE_EVIDENCE = {
-    # scripts/apply_compile_advice.py: ev["proposed_impl"]
+    # scripts/advice_to_kernel_choice.py: ev["proposed_impl"]
     "choose_implementation": {"proposed_impl", "baseline_impl", "gain_fraction"},
     # a split needs a target piece size; without the slot it is unmotivated
     "split": {"overrun_factor"},
     # a shard is a claim about measured scaling, so the measurement must be here
     "shard": {"n_cores", "measured_speedup", "parallel_efficiency"},
     "fuse_with_successor": {"n_dispatches", "estimated_overhead_fraction"},
+    # An unfuse is only defensible when the FUSED kernel is the thing running
+    # badly, so the evidence is which implementation each side actually ran --
+    # a measured fact from the profile's `implementation` column, not a model.
+    # Emitting it from a granularity verdict is how you get the 0.81x result.
+    "unfuse": {"fused_impl", "constituent_impls"},
 }
 
 #: Constraints the consumer needs to know the change is legal / bounded.
@@ -106,6 +112,10 @@ REQUIRED_CONSTRAINTS = {
     "shard": {"n_cores"},
     "choose_implementation": {"legal_resources"},
     "fuse_with_successor": {"requires_linear_chain"},
+    # Undoing a fusion is only legal if a kernel exists for every constituent;
+    # otherwise the restored ops fall back to the scalar reference, which is
+    # exactly the failure this verb is meant to CURE.
+    "unfuse": {"requires_constituent_kernels"},
 }
 
 
@@ -240,7 +250,8 @@ class ExtraMustBeFlattened(unittest.TestCase):
         self.assertNotIn("extra", d["evidence"])
 
     def test_the_consumers_own_access_pattern_works(self):
-        """Exactly what `apply_compile_advice.py` does, on real producer output.
+        """Exactly what `advice_to_kernel_choice.py` does, on real producer
+        output.
 
         It builds `{(model, int(dispatch_id)): ev["proposed_impl"]}`. That line
         is the whole reason `extra` has to be flattened AND the reason
@@ -259,8 +270,8 @@ class ExtraMustBeFlattened(unittest.TestCase):
     def test_a_wildcard_dispatch_id_never_reaches_that_int_coercion(self):
         """`overhead_advice` addresses a model with `"*"`, not a dispatch.
 
-        `apply_compile_advice.py` calls `int(item["dispatch_id"])`, guarded only
-        by a `recommendation != "choose_implementation"` filter. So the moment
+        `advice_to_kernel_choice.py` keys its grouping on `dispatch_id` under
+        exactly a `recommendation == "choose_implementation"` filter. So the moment
         any producer emits `"*"` with a `choose_implementation` (or any other
         recommendation that consumer handles), it raises `ValueError` on a
         document that is otherwise perfectly valid. Pin the invariant that keeps
@@ -272,7 +283,7 @@ class ExtraMustBeFlattened(unittest.TestCase):
             if a.dispatch_id == "*":
                 self.assertTrue(a.recommendation.startswith("fuse_"),
                                 f"{a.recommendation} with dispatch_id='*' "
-                                f"would crash apply_compile_advice.py")
+                                f"would crash advice_to_kernel_choice.py")
             else:
                 int(a.dispatch_id)
 
@@ -543,3 +554,58 @@ class AgainstTheRealK1Fixture(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
+
+
+class TheVocabularyDescribesWhatTheSystemCanSay(unittest.TestCase):
+    """A verb with no producer is a word the system cannot say.
+
+    RECOMMENDATIONS carried eight verbs; three of them -- `fuse_with_predecessor`,
+    `pin_core_class`, `coarsen` -- were never emitted by any producer. A
+    contract that advertises capabilities it does not have is worse than a
+    smaller one, because a consumer written against it fails at runtime in
+    another repo.
+
+    These tests keep the annotation in compile_advice.py honest: every verb
+    the contract offers must have a producer, and every verb a producer emits
+    must be in the contract.
+    """
+
+    def _module_src(self):
+        import compile_advice
+        with open(compile_advice.__file__) as f:
+            return f.read()
+
+    def test_every_offered_verb_has_a_producer(self):
+        import compile_advice
+        src = self._module_src()
+        for verb in compile_advice.RECOMMENDATIONS:
+            if verb == "unchanged":
+                continue          # every refusal branch emits it
+            self.assertIn(f'recommendation="{verb}"', src,
+                          f"{verb!r} is offered by RECOMMENDATIONS but no "
+                          f"producer in this module emits it. Either wire a "
+                          f"producer or move it to RETIRED_RECOMMENDATIONS.")
+
+    def test_every_emitted_verb_is_in_the_contract(self):
+        import re
+        import compile_advice
+        emitted = set(re.findall(r'recommendation="([a-z_]+)"', self._module_src()))
+        for verb in emitted:
+            self.assertIn(verb, compile_advice.RECOMMENDATIONS,
+                          f"{verb!r} is emitted but not offered by the "
+                          f"contract, so a consumer validating against "
+                          f"RECOMMENDATIONS would reject it")
+
+    def test_retired_verbs_are_not_also_offered(self):
+        import compile_advice
+        overlap = set(compile_advice.RECOMMENDATIONS) & set(
+            compile_advice.RETIRED_RECOMMENDATIONS)
+        self.assertEqual(overlap, set(),
+                         "a verb cannot be both offered and retired")
+
+    def test_every_actionable_verb_is_offered(self):
+        import compile_advice
+        for verb in set(ACTIONABLE_EVIDENCE) | set(REQUIRED_CONSTRAINTS):
+            self.assertIn(verb, compile_advice.RECOMMENDATIONS,
+                          f"{verb!r} has evidence/constraint requirements but "
+                          f"is not in the contract")

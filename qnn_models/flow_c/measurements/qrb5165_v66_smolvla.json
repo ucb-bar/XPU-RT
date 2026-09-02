@@ -1,0 +1,633 @@
+{
+  "_comment": "Measured cells for the smolVLA vision port. One profile_seg run per (context, backend) pair actually present on the board, 10 iters, gap phase 1000 us, all cores on the performance governor, behind the board lock. Cells are the gap-phase median. Kept OUT of qrb5165_v66.json so the port cannot perturb the cost model the sweep depends on. A backend absent from a cell means no context binary exists for it -- notably no whole dsp_seg_NN has an Hta context; HTA runs only the extracted Conv1x1 sub-models.",
+  "target": "qrb5165_v66",
+  "captured_at": "2026-08-31",
+  "harness": "qnn_models/runtime/profile_segments.cpp (two-phase)",
+  "statistic": "gap_median",
+  "iters": 10,
+  "unit": "us",
+  "conditions": {
+    "governor": "performance on all 8 cores",
+    "cpu_affinity": "unmasked"
+  },
+  "cells": {
+    "smolvlm_vision/cpu_seg_00": {
+      "cpu": 36451.6
+    },
+    "smolvlm_vision/cpu_seg_01": {
+      "cpu": 9161.7
+    },
+    "smolvlm_vision/cpu_seg_02": {
+      "cpu": 35944.5
+    },
+    "smolvlm_vision/cpu_seg_03": {
+      "cpu": 9131.5
+    },
+    "smolvlm_vision/cpu_seg_04": {
+      "cpu": 36092.2
+    },
+    "smolvlm_vision/cpu_seg_05": {
+      "cpu": 9186.3
+    },
+    "smolvlm_vision/cpu_seg_06": {
+      "cpu": 36019.6
+    },
+    "smolvlm_vision/cpu_seg_07": {
+      "cpu": 9137.4
+    },
+    "smolvlm_vision/cpu_seg_08": {
+      "cpu": 36020.8
+    },
+    "smolvlm_vision/cpu_seg_09": {
+      "cpu": 9156.5
+    },
+    "smolvlm_vision/cpu_seg_10": {
+      "cpu": 36153.1
+    },
+    "smolvlm_vision/cpu_seg_11": {
+      "cpu": 9105.9
+    },
+    "smolvlm_vision/cpu_seg_12": {
+      "cpu": 34788.9
+    },
+    "smolvlm_vision/cpu_seg_13": {
+      "cpu": 9181.7
+    },
+    "smolvlm_vision/cpu_seg_14": {
+      "cpu": 36115.8
+    },
+    "smolvlm_vision/cpu_seg_15": {
+      "cpu": 9153.3
+    },
+    "smolvlm_vision/cpu_seg_16": {
+      "cpu": 35934.2
+    },
+    "smolvlm_vision/cpu_seg_17": {
+      "cpu": 9135.9
+    },
+    "smolvlm_vision/cpu_seg_18": {
+      "cpu": 35960.4
+    },
+    "smolvlm_vision/cpu_seg_19": {
+      "cpu": 9147.9
+    },
+    "smolvlm_vision/cpu_seg_20": {
+      "cpu": 35984.9
+    },
+    "smolvlm_vision/cpu_seg_21": {
+      "cpu": 9121.3
+    },
+    "smolvlm_vision/cpu_seg_22": {
+      "cpu": 36173.1
+    },
+    "smolvlm_vision/cpu_seg_23": {
+      "cpu": 9155.6
+    },
+    "smolvlm_vision/dsp_seg_00": {
+      "cpu": 68202.7,
+      "dsp": 125832.3
+    },
+    "smolvlm_vision/dsp_seg_00_node_Conv_2118": {
+      "hta": 293233.1
+    },
+    "smolvlm_vision/dsp_seg_00_sng_MatMul_0_conv1x1": {
+      "hta": 6258.0
+    },
+    "smolvlm_vision/dsp_seg_00_tramp_p1": {
+      "cpu": 18709.2,
+      "dsp": 7144.9
+    },
+    "smolvlm_vision/dsp_seg_00_tramp_p2": {
+      "cpu": 74270.2,
+      "dsp": 43243.2
+    },
+    "smolvlm_vision/dsp_seg_01": {
+      "cpu": 102378.9,
+      "dsp": 74231.8
+    },
+    "smolvlm_vision/dsp_seg_01_node_MatMul_549_conv1x1": {
+      "hta": 3184.8
+    },
+    "smolvlm_vision/dsp_seg_01_node_MatMul_554_conv1x1": {
+      "hta": 9251.5
+    },
+    "smolvlm_vision/dsp_seg_01_tramp_p0": {
+      "cpu": 3178.9,
+      "dsp": 1684.1
+    },
+    "smolvlm_vision/dsp_seg_01_tramp_p1": {
+      "cpu": 18095.2,
+      "dsp": 7453.8
+    },
+    "smolvlm_vision/dsp_seg_01_tramp_p2": {
+      "cpu": 48554.8,
+      "dsp": 23907.5
+    },
+    "smolvlm_vision/dsp_seg_02": {
+      "cpu": 114364.3,
+      "dsp": 129764.5
+    },
+    "smolvlm_vision/dsp_seg_02_node_MatMul_570_conv1x1": {
+      "hta": 12285.2
+    },
+    "smolvlm_vision/dsp_seg_02_sng_MatMul_2_conv1x1": {
+      "hta": 6036.2
+    },
+    "smolvlm_vision/dsp_seg_02_tramp_p0": {
+      "cpu": 29433.0,
+      "dsp": 20165.5
+    },
+    "smolvlm_vision/dsp_seg_02_tramp_p1": {
+      "cpu": 19420.0,
+      "dsp": 7553.1
+    },
+    "smolvlm_vision/dsp_seg_02_tramp_p2": {
+      "cpu": 78363.7,
+      "dsp": 41497.2
+    },
+    "smolvlm_vision/dsp_seg_03": {
+      "cpu": 103738.4,
+      "dsp": 74420.6
+    },
+    "smolvlm_vision/dsp_seg_03_node_MatMul_669_conv1x1": {
+      "hta": 3007.3
+    },
+    "smolvlm_vision/dsp_seg_03_node_MatMul_674_conv1x1": {
+      "hta": 9190.0
+    },
+    "smolvlm_vision/dsp_seg_03_tramp_p0": {
+      "cpu": 3131.1,
+      "dsp": 1680.0
+    },
+    "smolvlm_vision/dsp_seg_03_tramp_p1": {
+      "cpu": 18810.9,
+      "dsp": 7744.0
+    },
+    "smolvlm_vision/dsp_seg_03_tramp_p2": {
+      "cpu": 47710.1,
+      "dsp": 24312.0
+    },
+    "smolvlm_vision/dsp_seg_04": {
+      "cpu": 127168.0,
+      "dsp": 129856.1
+    },
+    "smolvlm_vision/dsp_seg_04_node_MatMul_690_conv1x1": {
+      "hta": 12624.9
+    },
+    "smolvlm_vision/dsp_seg_04_sng_MatMul_4_conv1x1": {
+      "hta": 6094.0
+    },
+    "smolvlm_vision/dsp_seg_04_tramp_p0": {
+      "cpu": 29884.2,
+      "dsp": 19831.9
+    },
+    "smolvlm_vision/dsp_seg_04_tramp_p1": {
+      "cpu": 20002.9,
+      "dsp": 7448.8
+    },
+    "smolvlm_vision/dsp_seg_04_tramp_p2": {
+      "cpu": 78398.4,
+      "dsp": 43076.2
+    },
+    "smolvlm_vision/dsp_seg_05": {
+      "cpu": 103141.3,
+      "dsp": 74326.1
+    },
+    "smolvlm_vision/dsp_seg_05_node_MatMul_789_conv1x1": {
+      "hta": 3218.1
+    },
+    "smolvlm_vision/dsp_seg_05_node_MatMul_794_conv1x1": {
+      "hta": 9258.8
+    },
+    "smolvlm_vision/dsp_seg_05_tramp_p0": {
+      "cpu": 3135.0,
+      "dsp": 1679.3
+    },
+    "smolvlm_vision/dsp_seg_05_tramp_p1": {
+      "cpu": 19503.8,
+      "dsp": 7742.1
+    },
+    "smolvlm_vision/dsp_seg_05_tramp_p2": {
+      "cpu": 47820.2,
+      "dsp": 23467.9
+    },
+    "smolvlm_vision/dsp_seg_06": {
+      "cpu": 120384.9,
+      "dsp": 129783.4
+    },
+    "smolvlm_vision/dsp_seg_06_node_MatMul_810_conv1x1": {
+      "hta": 13077.8
+    },
+    "smolvlm_vision/dsp_seg_06_sng_MatMul_6_conv1x1": {
+      "hta": 6268.1
+    },
+    "smolvlm_vision/dsp_seg_06_tramp_p0": {
+      "cpu": 29868.0,
+      "dsp": 19660.6
+    },
+    "smolvlm_vision/dsp_seg_06_tramp_p1": {
+      "cpu": 18464.5,
+      "dsp": 6771.6
+    },
+    "smolvlm_vision/dsp_seg_06_tramp_p2": {
+      "cpu": 78588.9,
+      "dsp": 43134.2
+    },
+    "smolvlm_vision/dsp_seg_07": {
+      "cpu": 102919.4,
+      "dsp": 73943.3
+    },
+    "smolvlm_vision/dsp_seg_07_node_MatMul_909_conv1x1": {
+      "hta": 3031.1
+    },
+    "smolvlm_vision/dsp_seg_07_node_MatMul_914_conv1x1": {
+      "hta": 9191.1
+    },
+    "smolvlm_vision/dsp_seg_07_tramp_p0": {
+      "cpu": 3207.4,
+      "dsp": 1681.0
+    },
+    "smolvlm_vision/dsp_seg_07_tramp_p1": {
+      "cpu": 20281.7,
+      "dsp": 5878.2
+    },
+    "smolvlm_vision/dsp_seg_07_tramp_p2": {
+      "cpu": 48458.9,
+      "dsp": 23796.1
+    },
+    "smolvlm_vision/dsp_seg_08": {
+      "cpu": 127195.6,
+      "dsp": 130107.6
+    },
+    "smolvlm_vision/dsp_seg_08_node_MatMul_930_conv1x1": {
+      "hta": 12451.6
+    },
+    "smolvlm_vision/dsp_seg_08_sng_MatMul_8_conv1x1": {
+      "hta": 6015.5
+    },
+    "smolvlm_vision/dsp_seg_08_tramp_p0": {
+      "cpu": 29475.3,
+      "dsp": 19633.5
+    },
+    "smolvlm_vision/dsp_seg_08_tramp_p1": {
+      "cpu": 20024.5,
+      "dsp": 7453.9
+    },
+    "smolvlm_vision/dsp_seg_08_tramp_p2": {
+      "cpu": 78381.1,
+      "dsp": 43694.2
+    },
+    "smolvlm_vision/dsp_seg_09": {
+      "cpu": 103058.9,
+      "dsp": 74230.0
+    },
+    "smolvlm_vision/dsp_seg_09_node_MatMul_1029_conv1x1": {
+      "hta": 3121.4
+    },
+    "smolvlm_vision/dsp_seg_09_node_MatMul_1034_conv1x1": {
+      "hta": 9174.2
+    },
+    "smolvlm_vision/dsp_seg_09_tramp_p0": {
+      "cpu": 3093.0,
+      "dsp": 1661.8
+    },
+    "smolvlm_vision/dsp_seg_09_tramp_p1": {
+      "cpu": 18621.9,
+      "dsp": 7708.2
+    },
+    "smolvlm_vision/dsp_seg_09_tramp_p2": {
+      "cpu": 48301.3,
+      "dsp": 24085.5
+    },
+    "smolvlm_vision/dsp_seg_10": {
+      "cpu": 107455.0,
+      "dsp": 129679.1
+    },
+    "smolvlm_vision/dsp_seg_10_node_MatMul_1050_conv1x1": {
+      "hta": 12372.0
+    },
+    "smolvlm_vision/dsp_seg_10_sng_MatMul_10_conv1x1": {
+      "hta": 6103.5
+    },
+    "smolvlm_vision/dsp_seg_10_tramp_p0": {
+      "cpu": 29234.6,
+      "dsp": 18615.8
+    },
+    "smolvlm_vision/dsp_seg_10_tramp_p1": {
+      "cpu": 19419.8,
+      "dsp": 7421.6
+    },
+    "smolvlm_vision/dsp_seg_10_tramp_p2": {
+      "cpu": 78474.3,
+      "dsp": 43282.1
+    },
+    "smolvlm_vision/dsp_seg_11": {
+      "cpu": 102263.3,
+      "dsp": 74320.9
+    },
+    "smolvlm_vision/dsp_seg_11_node_MatMul_1149_conv1x1": {
+      "hta": 3133.0
+    },
+    "smolvlm_vision/dsp_seg_11_node_MatMul_1154_conv1x1": {
+      "hta": 9150.2
+    },
+    "smolvlm_vision/dsp_seg_11_tramp_p0": {
+      "cpu": 3095.5,
+      "dsp": 1663.9
+    },
+    "smolvlm_vision/dsp_seg_11_tramp_p1": {
+      "cpu": 19701.5,
+      "dsp": 7594.0
+    },
+    "smolvlm_vision/dsp_seg_11_tramp_p2": {
+      "cpu": 48396.3,
+      "dsp": 24100.1
+    },
+    "smolvlm_vision/dsp_seg_12": {
+      "cpu": 113774.4,
+      "dsp": 130437.5
+    },
+    "smolvlm_vision/dsp_seg_12_node_MatMul_1170_conv1x1": {
+      "hta": 12304.2
+    },
+    "smolvlm_vision/dsp_seg_12_sng_MatMul_12_conv1x1": {
+      "hta": 6050.9
+    },
+    "smolvlm_vision/dsp_seg_12_tramp_p0": {
+      "cpu": 29755.3,
+      "dsp": 19615.3
+    },
+    "smolvlm_vision/dsp_seg_12_tramp_p1": {
+      "cpu": 19301.8,
+      "dsp": 5694.9
+    },
+    "smolvlm_vision/dsp_seg_12_tramp_p2": {
+      "cpu": 78497.7,
+      "dsp": 41754.4
+    },
+    "smolvlm_vision/dsp_seg_13": {
+      "cpu": 103368.9,
+      "dsp": 74913.6
+    },
+    "smolvlm_vision/dsp_seg_13_node_MatMul_1269_conv1x1": {
+      "hta": 3133.1
+    },
+    "smolvlm_vision/dsp_seg_13_node_MatMul_1274_conv1x1": {
+      "hta": 9297.4
+    },
+    "smolvlm_vision/dsp_seg_13_tramp_p0": {
+      "cpu": 3186.7,
+      "dsp": 1676.2
+    },
+    "smolvlm_vision/dsp_seg_13_tramp_p1": {
+      "cpu": 19589.2,
+      "dsp": 6554.6
+    },
+    "smolvlm_vision/dsp_seg_13_tramp_p2": {
+      "cpu": 48088.7,
+      "dsp": 23730.3
+    },
+    "smolvlm_vision/dsp_seg_14": {
+      "cpu": 106627.6,
+      "dsp": 129609.0
+    },
+    "smolvlm_vision/dsp_seg_14_node_MatMul_1290_conv1x1": {
+      "hta": 12340.3
+    },
+    "smolvlm_vision/dsp_seg_14_sng_MatMul_14_conv1x1": {
+      "hta": 6171.4
+    },
+    "smolvlm_vision/dsp_seg_14_tramp_p0": {
+      "cpu": 29883.1,
+      "dsp": 19879.0
+    },
+    "smolvlm_vision/dsp_seg_14_tramp_p1": {
+      "cpu": 17871.3,
+      "dsp": 5748.5
+    },
+    "smolvlm_vision/dsp_seg_14_tramp_p2": {
+      "cpu": 78477.6,
+      "dsp": 43173.5
+    },
+    "smolvlm_vision/dsp_seg_15": {
+      "cpu": 102956.7,
+      "dsp": 74427.2
+    },
+    "smolvlm_vision/dsp_seg_15_node_MatMul_1389_conv1x1": {
+      "hta": 3123.8
+    },
+    "smolvlm_vision/dsp_seg_15_node_MatMul_1394_conv1x1": {
+      "hta": 9235.0
+    },
+    "smolvlm_vision/dsp_seg_15_tramp_p0": {
+      "cpu": 3082.4,
+      "dsp": 1686.3
+    },
+    "smolvlm_vision/dsp_seg_15_tramp_p1": {
+      "cpu": 19521.3,
+      "dsp": 6328.1
+    },
+    "smolvlm_vision/dsp_seg_15_tramp_p2": {
+      "cpu": 48136.1,
+      "dsp": 21987.3
+    },
+    "smolvlm_vision/dsp_seg_16": {
+      "cpu": 107885.4,
+      "dsp": 129830.9
+    },
+    "smolvlm_vision/dsp_seg_16_node_MatMul_1410_conv1x1": {
+      "hta": 12608.0
+    },
+    "smolvlm_vision/dsp_seg_16_sng_MatMul_16_conv1x1": {
+      "hta": 6038.9
+    },
+    "smolvlm_vision/dsp_seg_16_tramp_p0": {
+      "cpu": 28652.8,
+      "dsp": 20536.2
+    },
+    "smolvlm_vision/dsp_seg_16_tramp_p1": {
+      "cpu": 19956.2,
+      "dsp": 7601.3
+    },
+    "smolvlm_vision/dsp_seg_16_tramp_p2": {
+      "cpu": 78946.2,
+      "dsp": 43715.5
+    },
+    "smolvlm_vision/dsp_seg_17": {
+      "cpu": 102354.2,
+      "dsp": 74373.5
+    },
+    "smolvlm_vision/dsp_seg_17_node_MatMul_1509_conv1x1": {
+      "hta": 3305.7
+    },
+    "smolvlm_vision/dsp_seg_17_node_MatMul_1514_conv1x1": {
+      "hta": 8767.8
+    },
+    "smolvlm_vision/dsp_seg_17_tramp_p0": {
+      "cpu": 3111.3,
+      "dsp": 1663.7
+    },
+    "smolvlm_vision/dsp_seg_17_tramp_p1": {
+      "cpu": 18480.9,
+      "dsp": 7538.4
+    },
+    "smolvlm_vision/dsp_seg_17_tramp_p2": {
+      "cpu": 47412.9,
+      "dsp": 23943.1
+    },
+    "smolvlm_vision/dsp_seg_18": {
+      "cpu": 126991.3,
+      "dsp": 129614.1
+    },
+    "smolvlm_vision/dsp_seg_18_node_MatMul_1530_conv1x1": {
+      "hta": 12730.7
+    },
+    "smolvlm_vision/dsp_seg_18_sng_MatMul_18_conv1x1": {
+      "hta": 6193.5
+    },
+    "smolvlm_vision/dsp_seg_18_tramp_p0": {
+      "cpu": 29678.8,
+      "dsp": 20298.1
+    },
+    "smolvlm_vision/dsp_seg_18_tramp_p1": {
+      "cpu": 19946.1,
+      "dsp": 7659.7
+    },
+    "smolvlm_vision/dsp_seg_18_tramp_p2": {
+      "cpu": 78653.1,
+      "dsp": 41631.4
+    },
+    "smolvlm_vision/dsp_seg_19": {
+      "cpu": 103480.6,
+      "dsp": 74617.1
+    },
+    "smolvlm_vision/dsp_seg_19_node_MatMul_1629_conv1x1": {
+      "hta": 3100.6
+    },
+    "smolvlm_vision/dsp_seg_19_node_MatMul_1634_conv1x1": {
+      "hta": 8876.0
+    },
+    "smolvlm_vision/dsp_seg_19_tramp_p0": {
+      "cpu": 3105.2,
+      "dsp": 1674.0
+    },
+    "smolvlm_vision/dsp_seg_19_tramp_p1": {
+      "cpu": 20294.3,
+      "dsp": 7410.2
+    },
+    "smolvlm_vision/dsp_seg_19_tramp_p2": {
+      "cpu": 47843.5,
+      "dsp": 22737.0
+    },
+    "smolvlm_vision/dsp_seg_20": {
+      "cpu": 127120.6,
+      "dsp": 130065.5
+    },
+    "smolvlm_vision/dsp_seg_20_node_MatMul_1650_conv1x1": {
+      "hta": 12444.1
+    },
+    "smolvlm_vision/dsp_seg_20_sng_MatMul_20_conv1x1": {
+      "hta": 6123.2
+    },
+    "smolvlm_vision/dsp_seg_20_tramp_p0": {
+      "cpu": 29445.6,
+      "dsp": 19197.1
+    },
+    "smolvlm_vision/dsp_seg_20_tramp_p1": {
+      "cpu": 19966.8,
+      "dsp": 5833.9
+    },
+    "smolvlm_vision/dsp_seg_20_tramp_p2": {
+      "cpu": 79194.2,
+      "dsp": 47555.6
+    },
+    "smolvlm_vision/dsp_seg_21": {
+      "cpu": 97886.0,
+      "dsp": 74246.9
+    },
+    "smolvlm_vision/dsp_seg_21_node_MatMul_1749_conv1x1": {
+      "hta": 3223.5
+    },
+    "smolvlm_vision/dsp_seg_21_node_MatMul_1754_conv1x1": {
+      "hta": 9291.2
+    },
+    "smolvlm_vision/dsp_seg_21_tramp_p0": {
+      "cpu": 3137.7,
+      "dsp": 1647.1
+    },
+    "smolvlm_vision/dsp_seg_21_tramp_p1": {
+      "cpu": 19031.9,
+      "dsp": 7473.1
+    },
+    "smolvlm_vision/dsp_seg_21_tramp_p2": {
+      "cpu": 47999.8,
+      "dsp": 22483.4
+    },
+    "smolvlm_vision/dsp_seg_22": {
+      "cpu": 114259.6,
+      "dsp": 129814.0
+    },
+    "smolvlm_vision/dsp_seg_22_node_MatMul_1770_conv1x1": {
+      "hta": 12608.9
+    },
+    "smolvlm_vision/dsp_seg_22_sng_MatMul_22_conv1x1": {
+      "hta": 6055.4
+    },
+    "smolvlm_vision/dsp_seg_22_tramp_p0": {
+      "cpu": 29462.1,
+      "dsp": 19871.4
+    },
+    "smolvlm_vision/dsp_seg_22_tramp_p1": {
+      "cpu": 19447.3,
+      "dsp": 7265.4
+    },
+    "smolvlm_vision/dsp_seg_22_tramp_p2": {
+      "cpu": 78720.4,
+      "dsp": 41546.4
+    },
+    "smolvlm_vision/dsp_seg_23": {
+      "cpu": 102710.0,
+      "dsp": 74384.1
+    },
+    "smolvlm_vision/dsp_seg_23_node_MatMul_1869_conv1x1": {
+      "hta": 3039.0
+    },
+    "smolvlm_vision/dsp_seg_23_node_MatMul_1874_conv1x1": {
+      "hta": 9277.9
+    },
+    "smolvlm_vision/dsp_seg_23_tramp_p0": {
+      "cpu": 3141.5,
+      "dsp": 1695.6
+    },
+    "smolvlm_vision/dsp_seg_23_tramp_p1": {
+      "cpu": 18646.6,
+      "dsp": 5554.0
+    },
+    "smolvlm_vision/dsp_seg_23_tramp_p2": {
+      "cpu": 48391.8,
+      "dsp": 23540.8
+    },
+    "smolvlm_vision/dsp_seg_24": {
+      "cpu": 79706.3,
+      "dsp": 114977.3
+    },
+    "smolvlm_vision/dsp_seg_24_node_MatMul_1890_conv1x1": {
+      "hta": 12672.4
+    },
+    "smolvlm_vision/dsp_seg_24_node_MatMul_1926_conv1x1": {
+      "hta": 71374.6
+    },
+    "smolvlm_vision/dsp_seg_24_tramp_p0": {
+      "cpu": 29505.6,
+      "dsp": 19871.9
+    },
+    "smolvlm_vision/dsp_seg_24_tramp_p1": {
+      "cpu": 31189.1,
+      "dsp": 5841.2
+    },
+    "smolvlm_vision/dsp_seg_24_tramp_p2": {
+      "cpu": 380.3,
+      "dsp": 476.9
+    }
+  }
+}

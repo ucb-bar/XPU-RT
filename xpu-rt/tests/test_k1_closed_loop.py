@@ -65,7 +65,9 @@ for _p in (_REPO, _XPURT, os.path.join(_REPO, "scripts")):
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
+import bundle  # noqa: E402
 import candidate_objective  # noqa: E402
+import compile_advice  # noqa: E402
 import dispatch_lineage  # noqa: E402
 import schedule_trace  # noqa: E402
 import trace_metrics  # noqa: E402
@@ -125,6 +127,9 @@ COMBO_HW = [IMPL, IMPL]
 
 def _module_name(model, did, op):
     return f"{model}$dispatch_{did}_{IMPL}_{op}_n256"
+
+
+from freshness import split_instance_name
 
 
 class Bench:
@@ -369,7 +374,11 @@ class TheLoopRuns(unittest.TestCase):
         `mlp_control` dispatch a `dronet` module name.
         """
         for key, d in self.sched["dispatches"].items():
-            model = key.split("_dispatch_")[0].rstrip("0123456789")
+            known = sorted(self.sched["metadata"].get("periodic_networks") or {})
+            try:
+                model, _ = split_instance_name(d["job_name"], known)
+            except ValueError:
+                model = d["job_name"]
             self.assertIn("module_name", d, key)
             self.assertTrue(d["module_name"].startswith(model + "$"),
                             f"{key} -> {d['module_name']}")
@@ -801,3 +810,443 @@ class AgainstTheRealRewriter(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
+
+
+# --------------------------------------------------------------------------
+# The other three verbs, end to end against the real rewriters.
+#
+# Everything above drives `fuse_with_successor`. That was the only verb with a
+# bridge when this file was written, and it stayed the only one exercised here
+# after three more were built -- so the loop's executable spec covered a
+# quarter of the loop. The classes below close that: real producer, real
+# bridge CLI, real ModelBlaster rewriter, real granularity gate.
+#
+# What they do NOT cover, and the runbook says so too: none of these three has
+# driven a board rung. Bridge-verified and hardware-verified are different
+# claims and this file can only make the first.
+# --------------------------------------------------------------------------
+
+_MB_PIPELINE = os.path.join(_REPO, "ModelBlaster", "pipeline")
+
+
+def _load_mb(name):
+    """Import a ModelBlaster rewriter by path, or skip if it is not here."""
+    path = os.path.join(_MB_PIPELINE, f"{name}.py")
+    if not os.path.exists(path):
+        raise unittest.SkipTest(f"ModelBlaster not checked out beside this "
+                                f"repo: no {path}")
+    spec = importlib.util.spec_from_file_location(f"_mb_{name}", path)
+    mod = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def _run_cli(script, argv):
+    cli = _load_script(script)
+    old = sys.argv
+    try:
+        sys.argv = [script] + argv
+        return cli.main()
+    finally:
+        sys.argv = old
+
+
+def _conv_sig(shape):
+    return "x".join(f"{k}{v}" for k, v in shape.items())
+
+
+class SplitReachesTheRewriter(unittest.TestCase):
+    """`blocking_advice` -> `advice_to_split_hint` -> `apply_split_hint`.
+
+    The DroNet rung that measured +13.7% used a hint written BY HAND; the
+    bridge did not exist. So this is the first thing that checks the bridge
+    emits something the rewriter accepts, on the op kind that matters: a fused
+    conv, which `_SPLITTABLE` refused entirely until ModelBlaster ff14e88.
+    """
+
+    #: One heavy fused conv over its slot, plus a cheap elementwise op that
+    #: carries a REAL shape signature. The second one is not decoration:
+    #: `advice_to_split_hint` refuses a join it cannot confirm, and a fused
+    #: conv profiles as `noshape`, so without a shaped sibling in the same
+    #: advice document there is nothing to establish graph identity from.
+    CONV = {"N": 1, "IC": 64, "IH": 20, "IW": 20, "OC": 64, "OH": 20,
+            "OW": 20, "KH": 3, "KW": 3, "SH": 1, "SW": 1, "PH": 1, "PW": 1}
+
+    def _ir(self):
+        conv = {"name": "c0.conv", "op": "conv2d_s8",
+                "inputs": ["x"], "outputs": ["c0_conv"],
+                "weight": "c0.w", "bias": "c0.b", "shape": dict(self.CONV),
+                "quant": {"input_offset": 0, "filter_offset": 0,
+                          "output_offset": 0, "output_multiplier": 1,
+                          "output_shift": 0, "activation_min": -128,
+                          "activation_max": 127}}
+        bn = {"name": "c0.bn", "op": "batchnorm2d_s8",
+              "inputs": ["c0_conv"], "outputs": ["y0"],
+              "weight": "c0.bn.s", "bias": "c0.bn.b",
+              "shape": {"N": 1, "C": 64, "H": 20, "W": 20},
+              "quant": {"scale_in": 0.04, "scale_out": 1.07,
+                        "activation_min": -128, "activation_max": 127}}
+        return {"name": "m", "version": 1, "quant": "int8",
+                "tensors": {"y0": {"shape": [1, 64, 20, 20], "dtype": "i8"}},
+                "ops": [
+                    {"name": "c0", "op": "conv2d_batchnorm2d_s8",
+                     "inputs": ["x"], "outputs": ["y0"], "sub_ops": [conv, bn],
+                     "dispatch_id": 0, "hardware_target": "any",
+                     "depends_on": []},
+                    {"name": "a1", "op": "add_s8", "inputs": ["y0", "y0"],
+                     "outputs": ["y1"], "shape": {"n": 25600},
+                     "dispatch_id": 1, "hardware_target": "any",
+                     "depends_on": [0]},
+                ]}
+
+    def _advice_doc(self):
+        """Real `blocking_advice` output, serialized by `write_advice`."""
+        profile = {
+            0: {"median_ms": 12.0, "cv_pct": 1.0,
+                "module_name": "m$dispatch_0_rvv_x60_"
+                               "conv2d_batchnorm2d_s8_noshape"},
+            1: {"median_ms": 0.05, "cv_pct": 1.0,
+                "module_name": f"m$dispatch_1_rvv_x60_add_s8_n25600"},
+        }
+        adv = compile_advice.blocking_advice("m", profile,
+                                             free_slot_ms=5.0, misses=3)
+        extra = compile_advice.Advice(
+            model="m", dispatch_id=1, recommendation="unchanged", priority=5,
+            confidence="high",
+            evidence=compile_advice.Evidence(
+                extra={"op": profile[1]["module_name"]}))
+        return adv + [extra]
+
+    def test_the_bridge_emits_a_hint_the_rewriter_accepts(self):
+        rewriter = _load_mb("apply_split_hint")
+        with tempfile.TemporaryDirectory() as d:
+            ir_path = os.path.join(d, "graph.json")
+            with open(ir_path, "w") as f:
+                json.dump(self._ir(), f)
+            advice_path = os.path.join(d, "compile_advice.json")
+            compile_advice.write_advice(advice_path, self._advice_doc(),
+                                        schedule_id="spec")
+            hint_path = os.path.join(d, "split_hint.json")
+
+            rc = _run_cli("advice_to_split_hint.py",
+                          ["--advice", advice_path, "--ir", ir_path,
+                           "--model", "m", "--out", hint_path])
+            self.assertEqual(rc, 0, "the bridge refused its own producer's "
+                                    "advice")
+            hint = json.load(open(hint_path))
+            self.assertEqual(hint["contract"], rewriter.SPLIT_CONTRACT,
+                             "bridge and rewriter disagree on the contract")
+
+            out = os.path.join(d, "graph.split.json")
+            rc = rewriter.main(["--hint", hint_path, "--model", "m",
+                                "--ir", ir_path, "--out", out])
+            self.assertEqual(rc, 0, "the rewriter rejected the bridge's hint")
+            g = json.load(open(out))
+
+        # 12.0 ms against a 5.0 ms slot needs 3 pieces, rounded up to a
+        # divisor of OC=64. The op count is the check that it actually split.
+        n = hint["networks"][0]["split_ops"][0]["n_splits"]
+        self.assertEqual(64 % n, 0)
+        self.assertGreaterEqual(n, 3)
+        self.assertEqual(len(g["ops"]), n + 1)
+        self.assertEqual(g["id_remap"]["0"], list(range(n)))
+        self.assertEqual(g["id_remap"]["1"], [n])
+        # Every tile is a narrowed FUSED op, not an unfused one: splitting must
+        # not lose the epilogue fusion.
+        tiles = [o for o in g["ops"] if o.get("split_from")]
+        self.assertEqual(len(tiles), n)
+        for t in tiles:
+            self.assertEqual(t["op"], "conv2d_batchnorm2d_s8")
+            self.assertEqual(t["sub_ops"][0]["shape"]["OC"], 64 // n)
+            self.assertEqual(t["sub_ops"][1]["shape"]["C"], 64 // n,
+                             "the batchnorm must agree with the conv about "
+                             "how wide the tile is")
+        # The consumer waits for every tile, not just the first.
+        self.assertEqual(g["ops"][-1]["depends_on"], list(range(n)))
+
+    def test_the_bridge_refuses_advice_from_a_different_graph(self):
+        """The guard that matters most: a 320x320 profile joined against a
+        64x96 IR passes every per-op check, because fused convs profile as
+        `noshape` and topology is identical at every input size."""
+        with tempfile.TemporaryDirectory() as d:
+            ir = self._ir()
+            ir["ops"][1]["shape"] = {"n": 6144}      # a different-size graph
+            ir_path = os.path.join(d, "graph.json")
+            with open(ir_path, "w") as f:
+                json.dump(ir, f)
+            advice_path = os.path.join(d, "compile_advice.json")
+            compile_advice.write_advice(advice_path, self._advice_doc(),
+                                        schedule_id="spec")
+            rc = _run_cli("advice_to_split_hint.py",
+                          ["--advice", advice_path, "--ir", ir_path,
+                           "--model", "m",
+                           "--out", os.path.join(d, "hint.json")])
+        self.assertEqual(rc, 2, "the bridge joined advice to a graph it did "
+                                "not come from")
+
+
+class UnfuseReachesTheRewriter(unittest.TestCase):
+    """`unfuse_advice` -> `advice_to_unfuse_hint` -> `apply_unfuse_hint`.
+
+    The trigger is the failure this project shipped: a fused op matches no
+    curated kernel by exact name, so it silently runs the scalar reference
+    inside a build labelled `rvv_x60`. Measured before the curated fused
+    kernel existed: 57 of yolov8_nano's 90 dispatches on reference, 99.8% of
+    the runtime, 0.81x against pure scalar.
+    """
+
+    def _ir(self):
+        conv = {"name": "c.conv", "op": "conv2d_s8", "inputs": ["x"],
+                "outputs": ["c_conv"], "weight": "w", "bias": "b",
+                "shape": {"N": 1, "IC": 3, "IH": 8, "IW": 8, "OC": 16,
+                          "OH": 8, "OW": 8, "KH": 3, "KW": 3, "SH": 1,
+                          "SW": 1, "PH": 1, "PW": 1},
+                "quant": {"input_offset": 0, "filter_offset": 0,
+                          "output_offset": 0, "output_multiplier": 1,
+                          "output_shift": 0, "activation_min": -128,
+                          "activation_max": 127}}
+        bn = {"name": "c.bn", "op": "batchnorm2d_s8", "inputs": ["c_conv"],
+              "outputs": ["y"], "weight": "s", "bias": "bb",
+              "shape": {"N": 1, "C": 16, "H": 8, "W": 8},
+              "quant": {"scale_in": 0.04, "scale_out": 1.07,
+                        "activation_min": -128, "activation_max": 127}}
+        return {"name": "m", "version": 1, "quant": "int8",
+                "tensors": {"y": {"shape": [1, 16, 8, 8], "dtype": "i8",
+                                  "quant": {"scale": 0.05, "zero_point": 0}}},
+                "ops": [
+                    {"name": "c", "op": "conv2d_batchnorm2d_s8",
+                     "inputs": ["x"], "outputs": ["y"], "sub_ops": [conv, bn],
+                     "dispatch_id": 0, "hardware_target": "any",
+                     "depends_on": []},
+                    {"name": "a", "op": "add_s8", "inputs": ["y", "y"],
+                     "outputs": ["z"], "shape": {"n": 1024},
+                     "dispatch_id": 1, "hardware_target": "any",
+                     "depends_on": [0]},
+                ]}
+
+    def _advice(self, kernels_dir):
+        ir = self._ir()
+        ops_by_id = {o["dispatch_id"]: o for o in ir["ops"]}
+        profile = {
+            0: {"median_ms": 9.0, "implementation": "reference/scalar",
+                "module_name": "m$dispatch_0_rvv_x60_"
+                               "conv2d_batchnorm2d_s8_noshape"},
+            1: {"median_ms": 0.01, "implementation": "curated[rvv]/direct",
+                "module_name": "m$dispatch_1_rvv_x60_add_s8_n1024"},
+        }
+        adv = compile_advice.unfuse_advice("m", profile, ops_by_id,
+                                           kernels_dir=kernels_dir,
+                                           backend="rvv")
+        anchor = compile_advice.Advice(
+            model="m", dispatch_id=1, recommendation="unchanged", priority=5,
+            confidence="high",
+            evidence=compile_advice.Evidence(
+                extra={"op": profile[1]["module_name"]}))
+        return adv + [anchor]
+
+    def test_the_bridge_emits_a_hint_the_rewriter_accepts(self):
+        rewriter = _load_mb("apply_unfuse_hint")
+        with tempfile.TemporaryDirectory() as d:
+            # Both constituents have a curated kernel, which is the gate.
+            kdir = os.path.join(d, "kernels")
+            os.makedirs(kdir)
+            for kind in ("conv2d_s8", "batchnorm2d_s8"):
+                open(os.path.join(kdir, f"rvv_{kind}_direct.c"), "w").close()
+
+            ir_path = os.path.join(d, "graph.json")
+            with open(ir_path, "w") as f:
+                json.dump(self._ir(), f)
+            advice_path = os.path.join(d, "compile_advice.json")
+            compile_advice.write_advice(advice_path, self._advice(kdir),
+                                        schedule_id="spec")
+            self.assertEqual(
+                [a["recommendation"] for a in
+                 json.load(open(advice_path))["advice"]][0], "unfuse",
+                "the producer did not fire on a reference fallback whose "
+                "constituents all have curated kernels")
+
+            hint_path = os.path.join(d, "unfuse_hint.json")
+            rc = _run_cli("advice_to_unfuse_hint.py",
+                          ["--advice", advice_path, "--ir", ir_path,
+                           "--model", "m", "--out", hint_path])
+            self.assertEqual(rc, 0)
+            hint = json.load(open(hint_path))
+            self.assertEqual(hint["contract"], rewriter.HINT_CONTRACT)
+
+            out = os.path.join(d, "graph.unfused.json")
+            rc = rewriter.main(["--hint", hint_path, "--model", "m",
+                                "--ir", ir_path, "--out", out])
+            self.assertEqual(rc, 0, "the rewriter rejected the bridge's hint")
+            g = json.load(open(out))
+
+        self.assertEqual(len(g["ops"]), 3, "one fused op -> conv + bn, plus "
+                                          "the untouched add")
+        self.assertEqual(g["id_remap"]["0"], [0, 1])
+        self.assertEqual(g["id_remap"]["1"], [2])
+        self.assertEqual([o["op"] for o in g["ops"]],
+                         ["conv2d_s8", "batchnorm2d_s8", "add_s8"])
+        # The downstream consumer depends on the TAIL alone, not on all the
+        # restored ops -- the mirror image of a split, where it depends on all
+        # the tiles.
+        self.assertEqual(g["ops"][2]["depends_on"], [1])
+
+    def test_a_working_fused_kernel_is_refused_by_the_bridge(self):
+        """Unfusing a curated fused kernel loses the epilogue fusion. The gate
+        is the measured fallback, not a granularity verdict."""
+        with tempfile.TemporaryDirectory() as d:
+            ir_path = os.path.join(d, "graph.json")
+            with open(ir_path, "w") as f:
+                json.dump(self._ir(), f)
+            doc = self._advice(None)
+            # Rewrite the one unfuse item as if the fused kernel were curated.
+            items = [a for a in doc]
+            items[0] = compile_advice.Advice(
+                model="m", dispatch_id=0, recommendation="unfuse", priority=1,
+                confidence="high",
+                evidence=compile_advice.Evidence(
+                    extra={"fused_impl": "curated[rvv]/bn_epilogue",
+                           "op": "m$dispatch_0_rvv_x60_"
+                                 "conv2d_batchnorm2d_s8_noshape"}))
+            advice_path = os.path.join(d, "compile_advice.json")
+            compile_advice.write_advice(advice_path, items, schedule_id="spec")
+            rc = _run_cli("advice_to_unfuse_hint.py",
+                          ["--advice", advice_path, "--ir", ir_path,
+                           "--model", "m",
+                           "--out", os.path.join(d, "hint.json")])
+        self.assertEqual(rc, 1, "the bridge emitted an unfuse for a working "
+                                "curated fused kernel")
+
+
+class ShardReachesTheRewriter(unittest.TestCase):
+    """`shard_advice` -> `advice_to_shard_hint` -> `apply_shard_hint`.
+
+    The fifth verb, and the last to get a chain. `shard_advice` has existed
+    since `compile_advice.py` was written but could never fire: it is gated on
+    the same model being profiled at more than one core width, and for most of
+    this project's life only `topo_0` existed.
+
+    What this pins is the property that distinguishes shard from split, and it
+    is the one a reader is most likely to get wrong: **the dispatch count does
+    not change.** A split cuts one dispatch into n and renumbers everything
+    after it (hence `id_remap`). A shard annotates ONE op with a width and
+    leaves the graph alone -- same ids, same edges, same count. A shard
+    applier that quietly behaved like a split would still produce a graph that
+    builds and runs.
+    """
+
+    #: N=1024 and N=256 both divide 8. The third, N=100, does not divide any
+    #: width above 4 -- it is here so the walk-down is exercised rather than
+    #: assumed.
+    def _ir(self):
+        def lin(did, n, k):
+            return {"name": f"l{did}", "op": "linear_s8",
+                    "inputs": [f"t{did}"], "outputs": [f"t{did + 1}"],
+                    "weight": f"l{did}.w", "bias": f"l{did}.b",
+                    "shape": {"M": 8, "K": k, "N": n},
+                    "dispatch_id": did, "hardware_target": "any",
+                    "depends_on": [] if did == 0 else [did - 1],
+                    "quant": {"scale_a": 0.1, "scale_b": 0.1,
+                              "scale_out": 0.1, "activation_min": -128,
+                              "activation_max": 127}}
+        return {"name": "m", "version": 1, "quant": "int8", "tensors": {},
+                "ops": [lin(0, 1024, 256), lin(1, 256, 1024), lin(2, 100, 256)]}
+
+    def _advice(self, dispatch_id, n_cores=8, efficiency=0.61):
+        """One `shard` item, in the shape `shard_advice` really emits."""
+        return compile_advice.Advice(
+            model="m", dispatch_id=dispatch_id, recommendation="shard",
+            priority=1, confidence="medium",
+            constraints={"n_cores": n_cores,
+                         "legal_resources": ["k1_cluster0", "k1_cluster1"]},
+            evidence=compile_advice.Evidence(
+                extra={"cost_1core_ms": 11.1,
+                       f"cost_{n_cores}core_ms": 2.26,
+                       "measured_speedup": 4.91,
+                       "parallel_efficiency": efficiency,
+                       "sync_overhead_us": 6982.0}))
+
+    def _bridge_then_apply(self, items, d):
+        ir_path = os.path.join(d, "graph.json")
+        with open(ir_path, "w") as f:
+            json.dump(self._ir(), f)
+        advice_path = os.path.join(d, "compile_advice.json")
+        compile_advice.write_advice(advice_path, items, schedule_id="spec")
+        hint_path = os.path.join(d, "hint.json")
+        rc = _run_cli("advice_to_shard_hint.py",
+                      ["--advice", advice_path, "--ir", ir_path,
+                       "--model", "m", "--out", hint_path])
+        return rc, ir_path, hint_path
+
+    def test_the_bridge_emits_a_hint_the_rewriter_accepts(self):
+        rewriter = _load_mb("apply_shard_hint")
+        with tempfile.TemporaryDirectory() as d:
+            rc, ir_path, hint_path = self._bridge_then_apply(
+                [self._advice(0), self._advice(1)], d)
+            self.assertEqual(rc, 0)
+            hint = json.load(open(hint_path))
+            self.assertEqual(hint["contract"], bundle.SHARD_CONTRACT)
+            ops = hint["networks"][0]["shard_ops"]
+            self.assertEqual({o["op"]: o["n_shards"] for o in ops},
+                             {0: 8, 1: 8})
+
+            out = rewriter.apply_shard_hint(json.load(open(ir_path)), ops)
+            self.assertEqual(
+                [o.get("shard_factor") for o in out["ops"]], [8, 8, None],
+                "the annotated ops, and only the annotated ops")
+
+    def test_the_graph_is_not_rewritten_only_annotated(self):
+        """The property that separates shard from split."""
+        rewriter = _load_mb("apply_shard_hint")
+        ir = self._ir()
+        out = rewriter.apply_shard_hint(ir, [{"op": 0, "n_shards": 8}])
+        self.assertEqual(len(out["ops"]), len(ir["ops"]))
+        self.assertEqual([o["dispatch_id"] for o in out["ops"]],
+                         [o["dispatch_id"] for o in ir["ops"]])
+        self.assertEqual([o["depends_on"] for o in out["ops"]],
+                         [o["depends_on"] for o in ir["ops"]])
+        self.assertNotIn("id_remap", out,
+                         "a shard needs no id remap -- every dispatch id "
+                         "still means the same dispatch")
+
+    def test_a_width_that_does_not_divide_is_walked_down_not_rounded(self):
+        """N=100 with 8 advised: 8, 7, 6 do not divide; 5 does.
+
+        Rounding UP would name a width `shard_conv_weights` skips, and a skip
+        there is invisible -- the build succeeds and is simply not sharded.
+        """
+        with tempfile.TemporaryDirectory() as d:
+            rc, _, hint_path = self._bridge_then_apply([self._advice(2)], d)
+            self.assertEqual(rc, 0)
+            ops = json.load(open(hint_path))["networks"][0]["shard_ops"]
+            self.assertEqual(ops, [{"op": 2, "n_shards": 5}])
+
+    def test_a_width_below_measured_efficiency_is_refused(self):
+        with tempfile.TemporaryDirectory() as d:
+            rc, _, _ = self._bridge_then_apply(
+                [self._advice(0, efficiency=0.2)], d)
+            self.assertEqual(rc, 1, "0.2 efficiency means more than half the "
+                                    "added cores go to the barrier")
+
+    def test_the_rewriter_refuses_a_width_that_does_not_divide(self):
+        """The bridge walks widths down, but the rewriter is the backstop."""
+        rewriter = _load_mb("apply_shard_hint")
+        with self.assertRaises(ValueError) as cm:
+            rewriter.apply_shard_hint(self._ir(), [{"op": 2, "n_shards": 8}])
+        self.assertIn("silently unsharded", str(cm.exception))
+
+    def test_the_rewriter_refuses_a_split_hint(self):
+        """The contracts spell the count differently on purpose."""
+        rewriter = _load_mb("apply_shard_hint")
+        with tempfile.TemporaryDirectory() as d:
+            ir_path = os.path.join(d, "graph.json")
+            with open(ir_path, "w") as f:
+                json.dump(self._ir(), f)
+            hint_path = os.path.join(d, "split.json")
+            with open(hint_path, "w") as f:
+                json.dump(bundle.split_hint({"m": [{"op": 0, "n_splits": 2}]},
+                                            reason="wrong verb"), f)
+            rc = rewriter.main(["--ir", ir_path, "--hint", hint_path,
+                                "--network", "m",
+                                "--out", os.path.join(d, "out.json")])
+        self.assertEqual(rc, 2)

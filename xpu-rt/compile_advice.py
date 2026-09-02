@@ -38,9 +38,47 @@ from typing import Any, Dict, List, Optional, Sequence
 
 SCHEMA_VERSION = 1
 
+#: The compiler-facing vocabulary. Every verb here is a directive ModelBlaster
+#: can act on: it names a change to the IR or to kernel selection.
+#:
+#: NOT in this vocabulary, deliberately: `rebalance`. `xpu-rt/advisor.py` emits
+#: it and it is a real recommendation, but it asks the SCHEDULER to re-place
+#: work ("rerun with heft/peft"), not the compiler to change anything. Putting
+#: it here would put a directive in a compiler contract that ModelBlaster can
+#: never execute. The two advisors answer different questions and the split is
+#: the point, not an accident: `advisor.py` diagnoses a schedule for a human,
+#: this file emits directives for a compiler.
+#:
+#: Each entry records its producer. A verb with no producer is a word the
+#: system cannot say, and `test_compile_advice_schema.py` enforces that the
+#: annotation stays true -- an unproduced verb is either wired or removed, not
+#: left advertising a capability that does not exist.
 RECOMMENDATIONS = (
-    "split", "fuse_with_predecessor", "fuse_with_successor",
-    "choose_implementation", "pin_core_class", "shard", "coarsen", "unchanged",
+    "split",                  # blocking_advice
+    "fuse_with_successor",    # overhead_advice
+    "choose_implementation",  # implementation_advice
+    "shard",                  # shard_advice (needs multi-core profiles)
+    "unfuse",                 # unfuse_advice
+    "unchanged",              # every advisor's refusal branch
+)
+
+#: Verbs the contract once advertised and nothing ever emitted. Kept as an
+#: explicit record rather than silently deleted, because "we removed a verb"
+#: and "a consumer is reading a verb that vanished" are different events and
+#: the second should be greppable.
+#:
+#: `fuse_with_predecessor` -- the mirror of fuse_with_successor. No producer
+#:     ever emitted it; `advice_to_fusion_hint.py` would accept it (it filters
+#:     on the `fuse_` prefix), so wiring it is a small change if a producer
+#:     ever wants the other direction.
+#: `pin_core_class`        -- placement. This is the natural home for
+#:     advisor.py's `rebalance`, and wiring that is the one merge worth doing.
+#: `coarsen`               -- a granularity VERDICT, not a directive. It says
+#:     "this graph is too fine", which is what `fuse_with_successor` then does
+#:     something about. A verdict and a directive are different kinds and it
+#:     should not have been in this tuple.
+RETIRED_RECOMMENDATIONS = (
+    "fuse_with_predecessor", "pin_core_class", "coarsen",
 )
 
 
@@ -281,6 +319,195 @@ def blocking_advice(model: str, profile: Dict[int, dict],
     return out
 
 
+def unfuse_advice(model: str, profile: Dict[int, dict],
+                  ops_by_id: Dict[int, dict],
+                  kernels_dir: Optional[str] = None,
+                  backend: str = "rvv",
+                  probe_share: float = 0.25) -> List[Advice]:
+    """Recommend undoing a fusion -- but only for the one case that is a win.
+
+    THE CASE THIS EXISTS FOR, and it is a failure this project actually hit.
+    Curated kernels are looked up by EXACT op name, so a fused op like
+    `conv2d_batchnorm2d_silu_s8` matches no per-constituent kernel and silently
+    falls back to the scalar reference INSIDE a build labelled `rvv_x60`.
+    Measured, before the curated fused kernel existed:
+
+        yolov8_nano  rvv_x60   57 of 90 dispatches on reference, 99.8% of the
+                               4974.8 ms total -- 0.81x against pure scalar
+
+    When the constituents each DO have a vector kernel, unfusing turns one
+    scalar dispatch into three vector ones. That is a large win, and it is
+    detectable from artifacts: the profile's `implementation` column says what
+    ran, and the kernels directory says what exists.
+
+    WHAT MUST NOT TRIGGER IT. Not a granularity verdict, not dispatch count,
+    not op-kind. A curated fused kernel is usually the RIGHT answer -- the
+    conv+BN+SiLU kernel is 97% of yolov8n's runtime and applies BN and SiLU as
+    a table lookup inside the conv's register tile, so unfusing it loses the
+    epilogue fusion, doubles the dispatch count and adds two full passes over
+    the output tensor. `advisor.py` reading this workload says
+    `granularity: too_fine`, i.e. the loop's own measurement wants FEWER
+    dispatches. Emitting unfuse from that verdict is how you get the 0.81x
+    result back.
+
+    So the gate is narrow and measured: the fused op ran `reference`, and every
+    constituent has a curated kernel. Anything else returns `unchanged` with
+    the reason, so a later round does not re-propose it.
+    """
+    out: List[Advice] = []
+    # The probe below asks whether a fused op KIND is a big enough share of the
+    # model to be worth a board rung -- the kind, not the dispatch. Unfusing is
+    # a statement about a KERNEL, so it is applied to every dispatch of that
+    # kind at once, and that is how the yolov8_nano rung was actually run: 57
+    # dispatches together.
+    #
+    # Per-dispatch share cannot express this. yolov8_nano's fused convs are
+    # 1.69% each and 96.2% together, so any per-dispatch threshold low enough
+    # to catch them fires on everything, and any threshold high enough to be
+    # selective never fires at all.
+    total_ms = sum(float(r.get("median_ms") or 0.0) for r in profile.values())
+    kind_ms: Dict[str, float] = {}
+    kind_n: Dict[str, int] = {}
+    for _did, _rec in profile.items():
+        _op = (ops_by_id.get(_did) or {}).get("op", "")
+        if not _op:
+            continue
+        kind_ms[_op] = kind_ms.get(_op, 0.0) + float(_rec.get("median_ms") or 0.0)
+        kind_n[_op] = kind_n.get(_op, 0) + 1
+    for did, rec in sorted(profile.items()):
+        op = ops_by_id.get(did) or {}
+        subs = op.get("sub_ops") or []
+        if len(subs) < 2:
+            continue                      # not a fused op; nothing to undo
+        impl = (rec.get("implementation") or "").strip()
+        fused_kind = op.get("op", "")
+        svc = float(rec.get("median_ms") or 0.0)
+
+        # Hoisted above the fallback check: BOTH branches now depend on whether
+        # the constituents have kernels to land on -- the fallback case as its
+        # justification, the probe case as its safety condition.
+        constituent_impls: Dict[str, Optional[str]] = {}
+        for sub in subs:
+            kind = sub.get("op", "")
+            found = None
+            if kernels_dir:
+                hits = sorted(glob.glob(os.path.join(
+                    kernels_dir, f"{backend}_{kind}_*.c")))
+                found = os.path.basename(hits[0]) if hits else None
+            constituent_impls[kind] = found
+        all_covered = kernels_dir is not None and all(
+            v is not None for v in constituent_impls.values())
+
+        if impl.split("/")[0] != "reference":
+            # The fused kernel is not a fallback. That USED to end the matter,
+            # on the reasoning that a curated fused kernel beats its
+            # constituents. Measured on the board, that reasoning is wrong for
+            # yolov8_nano: unfusing the WORKING curated build is 218.128 ->
+            # 176.370 ms, -19.1%, accepted at term 5. The lost epilogue fusion
+            # costs 4.655 ms (57 BN + 57 SiLU passes) and buys 46.5 ms, because
+            # rvv_conv2d_batchnorm2d_silu_s8_rvv_oc_blocked_bn_silu_epilogue.c
+            # has a slower conv inner loop than rvv_conv2d_s8_rvv_vsmul_vnclip.c.
+            #
+            # The old gate was ASSERTING an outcome the loop exists to MEASURE,
+            # and the cost of that certainty was a 19% win nobody could see. So
+            # a fused op big enough to be worth a board slot, whose constituents
+            # all have curated kernels, is now PROPOSED as a probe rather than
+            # refused -- at lower confidence and priority, and worded as a
+            # question. If the fused kernel is genuinely better the loop rejects
+            # it, which costs one rung and is the loop working.
+            share = ((kind_ms.get(fused_kind, 0.0) / total_ms)
+                     if total_ms > 0 else 0.0)
+            if all_covered and share >= probe_share:
+                out.append(Advice(
+                    model=model, dispatch_id=did, recommendation="unfuse",
+                    priority=3, confidence="low",
+                    evidence=Evidence(
+                        service_time_us=round(svc * 1000, 2),
+                        on_critical_path=True,
+                        extra={"trigger": "runtime_share_probe",
+                               "fused_impl": impl,
+                               "constituent_impls": constituent_impls,
+                               "n_constituents": len(subs),
+                               "kind_runtime_share": round(share, 4),
+                               "kind_dispatch_count": kind_n.get(fused_kind, 1),
+                               "probe_share_threshold": probe_share,
+                               "op": fused_kind}),
+                    constraints={"requires_constituent_kernels": True,
+                                 "measure_before_adopting": True},
+                    rationale=(
+                        f"{fused_kind} runs {impl} across "
+                        f"{kind_n.get(fused_kind, 1)} dispatches and is "
+                        f"{share:.1%} of {model}'s runtime, and all "
+                        f"{len(subs)} constituents have curated kernels. "
+                        f"Whether the fused kernel beats them is a "
+                        f"measurement, not an assumption -- it did not for "
+                        f"yolov8_nano. Worth one rung.")))
+                continue
+            out.append(Advice(
+                model=model, dispatch_id=did, recommendation="unchanged",
+                priority=5, confidence="high",
+                evidence=Evidence(
+                    service_time_us=round(svc * 1000, 2),
+                    extra={"reason": ("fused kernel is not a reference fallback"
+                                      if all_covered else
+                                      "not a fallback, and constituents are "
+                                      "not all covered"),
+                           "fused_impl": impl or "unknown",
+                           "kind_runtime_share": round(
+                               (kind_ms.get(fused_kind, 0.0) / total_ms)
+                               if total_ms > 0 else 0.0, 4),
+                           "op": fused_kind}),
+                rationale=(f"{fused_kind} runs {impl or 'an unrecorded kernel'} "
+                           f"and is too small a share of {model} to be worth a "
+                           f"board rung; unfusing also loses the epilogue "
+                           f"fusion and doubles the dispatch count.")))
+            continue
+
+        # It fell back, and coverage is already known from above.
+        if not all_covered:
+            missing = [k for k, v in constituent_impls.items() if v is None]
+            # Built outside the f-string on purpose. Nesting a quoted literal
+            # inside an f-string's braces is legal only from 3.12 (PEP 701),
+            # and this module is imported by `profile_loader`, so on an older
+            # interpreter the SyntaxError takes down every scheduler run --
+            # not just the advice path.
+            uncovered = missing or "an unverified set"
+            out.append(Advice(
+                model=model, dispatch_id=did, recommendation="unchanged",
+                priority=3, confidence="high",
+                evidence=Evidence(
+                    service_time_us=round(svc * 1000, 2),
+                    extra={"reason": ("constituents have no curated kernel"
+                                      if kernels_dir else
+                                      "no kernels_dir given; cannot verify"),
+                           "fused_impl": impl,
+                           "constituent_impls": constituent_impls,
+                           "op": fused_kind}),
+                rationale=(f"{fused_kind} fell back to {impl}, but unfusing "
+                           f"would land on the reference for {uncovered} -- "
+                           f"the same problem, more dispatches.")))
+            continue
+
+        out.append(Advice(
+            model=model, dispatch_id=did, recommendation="unfuse",
+            priority=1, confidence="high",
+            evidence=Evidence(
+                service_time_us=round(svc * 1000, 2),
+                on_critical_path=True,
+                extra={"fused_impl": impl,
+                       "constituent_impls": constituent_impls,
+                       "n_constituents": len(subs),
+                       "op": fused_kind}),
+            constraints={"requires_constituent_kernels": True,
+                         "legal_resources": ["k1_cluster0", "k1_cluster1"]},
+            rationale=(f"{fused_kind} matched no curated kernel and ran "
+                       f"{impl}, while every constituent has one "
+                       f"({', '.join(sorted(constituent_impls))}). Unfusing "
+                       f"turns one scalar dispatch into {len(subs)} vector "
+                       f"ones.")))
+    return out
+
+
 def write_advice(path: str, advice: List[Advice], *,
                  schedule_id: str, notes: Optional[Dict[str, Any]] = None) -> None:
     doc = {
@@ -298,7 +525,7 @@ def write_advice(path: str, advice: List[Advice], *,
 def _load_results_csv(path: str, n_cores: Optional[int] = None) -> Dict[int, dict]:
     """{dispatch_id: rec} from an IREE-shape `results.csv`.
 
-    The second profile producer on this board. `runtime/scripts/profile_k1.py`
+    The second profile format on this board. The retired IREE path
     writes `profile.jsonl` (all samples, percentiles, cv); ModelBlaster's
     `pipeline/profile_writer.py` writes IREE's `results.csv`, and that is the
     only format the corrected `rvv_x60` builds exist in. Without this the

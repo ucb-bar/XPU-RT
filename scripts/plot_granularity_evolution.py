@@ -36,29 +36,25 @@ import matplotlib.pyplot as plt
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-MM = 1 / 25.4
-SINGLE_COL = 89 * MM
-DOUBLE_COL = 183 * MM
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-# Okabe-Ito: colourblind-safe, and it still reads in greyscale.
-C_BASE = "#0072B2"   # blue    - baseline
-C_SPLIT = "#D55E00"  # vermill - the split tiles
-C_MUTE = "#999999"
-C_WARN = "#CC79A7"   # purple  - the stale comparison
+import figstyle  # noqa: E402
 
-mpl.rcParams.update({
-    "font.family": "DejaVu Sans",
-    "font.size": 6,
-    "axes.labelsize": 6, "axes.titlesize": 7,
-    "xtick.labelsize": 5, "ytick.labelsize": 5,
-    "legend.fontsize": 5,
-    "axes.linewidth": 0.6,
-    "xtick.major.width": 0.5, "ytick.major.width": 0.5,
-    "xtick.major.size": 2.5, "ytick.major.size": 2.5,
-    "lines.linewidth": 1.0,
-    "pdf.fonttype": 42, "ps.fonttype": 42,
-    "savefig.dpi": 300,
-})
+# The print rcParams and the palette live in `figstyle` because they were
+# copy-pasted into five renderers and drifted: DroNet was blue in one figure
+# and orange in another, and yolov8_nano was blue in that one. Colour is an
+# identity claim, so it is made once.
+figstyle.use()
+MM = figstyle.MM
+SINGLE_COL = figstyle.SINGLE_COL
+DOUBLE_COL = figstyle.DOUBLE_COL
+
+#: Roles, not models: this figure is one model before and after a rewrite, so
+#: the axis that carries meaning is baseline-vs-rewrite.
+C_BASE = figstyle.C_BASELINE
+C_SPLIT = figstyle.C_REWRITE
+C_WARN = figstyle.C_WARN
+C_MUTE = figstyle.C_MUTED
 
 _B3 = os.path.join(REPO, "artifacts", "k1_run", "round_B3_dronet_split")
 

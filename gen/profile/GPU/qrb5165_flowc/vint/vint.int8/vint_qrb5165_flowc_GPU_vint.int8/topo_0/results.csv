@@ -1,0 +1,3 @@
+dispatch_id,module_name,vmfb_path,mlir_path,mean_time,mean_unit,mean_time_ns,returncode,log_path,source,op,shape,cycles
+0,vint$dispatch_0_GPU_qnn_graph_ir_ops539,,,55.854000,ms,55854000.000000,0,,qnn-mean@2026-08-28,qnn_graph,ir_ops=539,55854
+1,vint$dispatch_1_GPU_qnn_graph_ir_ops66,,,16.425000,ms,16425000.000000,0,,qnn-mean@2026-08-28,qnn_graph,ir_ops=66,16425

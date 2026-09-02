@@ -15,8 +15,8 @@
 set -uo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PYTHON="/scratch2/dima/miniforge3/envs/xpurt/bin/python"
-QNN_SDK="/scratch2/dima/misc_sw/qualcomm/qairt/2.45.0.260326"
+PYTHON="${PYTHON:-/scratch2/dima/miniforge3/envs/xpurt/bin/python}"
+QNN_SDK="${QNN_SDK:-/scratch2/dima/misc_sw/qualcomm/qairt/2.45.0.260326}"
 DOCKER_IMAGE="qnn-convert"
 
 TRAMP_DIR="$SCRIPT_DIR/vision_slices_v3/trampolines"

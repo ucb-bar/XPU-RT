@@ -1,0 +1,121 @@
+/prj/qct/webtech_scratch20/mlg_user_admin/qaisw_source_repo/rel/qairt-2.45.0/release/SNPE_SRC/avante-tools/prebuilt/dsp/hexagon-sdk-4.1.0/ipc/fastrpc/rpcmem/src/rpcmem_android.c:38:dummy call to rpcmem_init, rpcmem APIs will be used from libxdsprpc
+[run] e=1   mlp_control   #0  mlp_control_full       lane=cpu|mlp_control CPU predicted=  0.107 actual=  0.090 ms (start=   0.035, late=+0.035)
+[run] e=2   fused_split   #0  fused_vision_conv      lane=dsp|fused_split DSP predicted=  0.459 actual=  0.977 ms (start=   0.051, late=+0.051)
+[run] e=0   fused_split   #0  fused_depth_conv       lane=hta|fused_split HTA predicted=  1.568 actual=  1.593 ms (start=   0.049, late=+0.049)
+[run] e=5   mlp_control   #1  mlp_control_full       lane=cpu|mlp_control CPU predicted=  0.107 actual=  0.171 ms (start=   5.019, late=+0.019)
+[run] e=6   fused_split   #0  fused_tail             lane=cpu|fused_split CPU predicted=  0.354 actual=  3.680 ms (start=   6.664, late=+0.018)
+[run] e=7   fused_split   #1  fused_depth_conv       lane=cpu|fused_split CPU predicted=  0.014 actual=  0.055 ms (start=  10.388, late=+0.388)
+[run] e=8   mlp_control   #2  mlp_control_full       lane=cpu|mlp_control CPU predicted=  0.107 actual=  0.072 ms (start=  10.579, late=+0.565)
+[run] e=4   yolov8n_a     #0  yolov8n_backbone       lane=hta|yolov8n_a HTA predicted= 13.909 actual= 13.393 ms (start=   1.688, late=+0.008)
+[run] e=3   vint          #0  vint_encoders          lane=dsp|vint   DSP predicted= 14.213 actual= 16.014 ms (start=   1.057, late=+0.598)
+[run] e=9   mlp_control   #3  mlp_control_full       lane=dsp|mlp_control DSP predicted=  0.589 actual=  0.638 ms (start=  17.128, late=+2.128)
+[run] e=10  fused_split   #1  fused_vision_conv      lane=dsp|fused_split DSP predicted=  0.459 actual=  0.724 ms (start=  17.782, late=+2.193)
+[run] e=11  fused_split   #1  fused_tail             lane=cpu|fused_split CPU predicted=  0.354 actual=  0.548 ms (start=  18.542, late=+1.896)
+[run] e=13  mlp_control   #4  mlp_control_full       lane=cpu|mlp_control CPU predicted=  0.107 actual=  0.058 ms (start=  20.008, late=+0.008)
+[run] e=12  fused_split   #2  fused_vision_conv      lane=dsp|fused_split DSP predicted=  0.459 actual=  0.422 ms (start=  20.006, late=+0.006)
+[run] e=14  fused_split   #2  fused_depth_conv       lane=hta|fused_split HTA predicted=  1.568 actual=  0.746 ms (start=  20.007, late=+0.007)
+[run] e=18  mlp_control   #5  mlp_control_full       lane=cpu|mlp_control CPU predicted=  0.107 actual=  0.113 ms (start=  27.019, late=+0.019)
+[run] e=17  fused_split   #2  fused_tail             lane=cpu|fused_split CPU predicted=  0.354 actual=  1.096 ms (start=  26.675, late=+0.029)
+[run] e=19  fused_split   #3  fused_depth_conv       lane=cpu|fused_split CPU predicted=  0.014 actual=  0.291 ms (start=  30.009, late=+0.009)
+[run] e=20  mlp_control   #6  mlp_control_full       lane=cpu|mlp_control CPU predicted=  0.107 actual=  0.062 ms (start=  32.903, late=+0.010)
+[run] e=16  yolov8n_b     #0  yolov8n_backbone       lane=hta|yolov8n_b HTA predicted= 13.909 actual= 14.112 ms (start=  21.629, late=+0.061)
+[run] e=15  yolov8n_a     #0  yolov8n_head           lane=dsp|yolov8n_a DSP predicted= 15.377 actual= 18.005 ms (start=  20.520, late=+0.061)
+[run] e=22  fused_split   #3  fused_vision_conv      lane=dsp|fused_split DSP predicted=  0.459 actual=  0.685 ms (start=  38.668, late=+2.481)
+[run] e=23  fused_split   #3  fused_tail             lane=cpu|fused_split CPU predicted=  0.354 actual=  1.207 ms (start=  39.701, late=+3.055)
+[run] e=24  mlp_control   #7  mlp_control_full       lane=cpu|mlp_control CPU predicted=  0.107 actual=  0.085 ms (start=  40.967, late=+3.074)
+[run] e=25  mlp_control   #8  mlp_control_full       lane=cpu|mlp_control CPU predicted=  0.107 actual=  0.054 ms (start=  42.418, late=+0.007)
+[run] e=26  fused_split   #4  fused_vision_conv      lane=dsp|fused_split DSP predicted=  0.459 actual=  2.199 ms (start=  44.702, late=+0.010)
+[run] e=28  mlp_control   #9  mlp_control_full       lane=dsp|mlp_control DSP predicted=  0.589 actual=  0.499 ms (start=  46.946, late=+0.501)
+[run] e=27  fused_split   #4  fused_depth_conv       lane=dsp|fused_split DSP predicted=  0.392 actual=  0.431 ms (start=  47.755, late=+1.702)
+[run] e=21  yolov8n_c     #0  yolov8n_backbone       lane=hta|yolov8n_c HTA predicted= 13.909 actual= 13.095 ms (start=  36.153, late=+0.062)
+[run] e=29  fused_split   #4  fused_tail             lane=cpu|fused_split CPU predicted=  0.354 actual=  1.461 ms (start=  48.244, late=+1.598)
+[run] e=31  fused_split   #5  fused_vision_conv      lane=hta|fused_split HTA predicted=  0.931 actual=  0.844 ms (start=  50.004, late=+0.004)
+[run] e=34  mlp_control   #10 mlp_control_full       lane=cpu|mlp_control CPU predicted=  0.107 actual=  0.072 ms (start=  52.905, late=+0.012)
+[run] e=33  fused_split   #5  fused_depth_conv       lane=cpu|fused_split CPU predicted=  0.014 actual=  1.148 ms (start=  52.902, late=+0.023)
+[run] e=36  mlp_control   #11 mlp_control_full       lane=cpu|mlp_control CPU predicted=  0.107 actual=  0.081 ms (start=  57.012, late=+0.012)
+[run] e=35  fused_split   #5  fused_tail             lane=cpu|fused_split CPU predicted=  0.354 actual=  1.000 ms (start=  56.656, late=+0.010)
+[run] e=32  yolov8n_d     #0  yolov8n_backbone       lane=hta|yolov8n_d HTA predicted= 13.909 actual= 13.938 ms (start=  50.991, late=+0.060)
+[run] e=40  fused_split   #6  fused_vision_conv      lane=hta|fused_split HTA predicted=  0.931 actual=  0.918 ms (start=  65.391, late=+0.551)
+[run] e=42  mlp_control   #13 mlp_control_full       lane=cpu|mlp_control CPU predicted=  0.107 actual=  0.061 ms (start=  67.015, late=+0.015)
+[run] e=30  yolov8n_b     #0  yolov8n_head           lane=dsp|yolov8n_b DSP predicted= 15.377 actual= 18.941 ms (start=  48.241, late=+1.207)
+[run] e=37  mlp_control   #12 mlp_control_full       lane=dsp|mlp_control DSP predicted=  0.589 actual=  0.581 ms (start=  67.553, late=+5.142)
+[run] e=38  fused_split   #6  fused_depth_conv       lane=dsp|fused_split DSP predicted=  0.392 actual=  0.409 ms (start=  68.161, late=+3.930)
+[run] e=41  fused_split   #6  fused_tail             lane=cpu|fused_split CPU predicted=  0.354 actual=  0.863 ms (start=  68.769, late=+2.123)
+[run] e=43  fused_split   #7  fused_depth_conv       lane=hta|fused_split HTA predicted=  1.568 actual=  0.754 ms (start=  70.005, late=+0.005)
+[run] e=45  mlp_control   #14 mlp_control_full       lane=cpu|mlp_control CPU predicted=  0.107 actual=  0.061 ms (start=  72.407, late=+0.015)
+[run] e=44  fused_split   #7  fused_vision_conv      lane=hta|fused_split HTA predicted=  0.931 actual=  1.005 ms (start=  71.571, late=+0.003)
+[run] e=47  mlp_control   #15 mlp_control_full       lane=cpu|mlp_control CPU predicted=  0.107 actual=  0.044 ms (start=  75.007, late=+0.007)
+[run] e=46  fused_split   #7  fused_tail             lane=cpu|fused_split CPU predicted=  0.354 actual=  0.860 ms (start=  74.660, late=+0.014)
+[run] e=39  yolov8n_c     #0  yolov8n_head           lane=dsp|yolov8n_c DSP predicted= 15.377 actual= 16.937 ms (start=  68.583, late=+3.960)
+[run] e=50  fused_split   #8  fused_vision_conv      lane=hta|fused_split HTA predicted=  0.931 actual=  3.797 ms (start=  82.334, late=+2.284)
+[run] e=51  mlp_control   #16 mlp_control_full       lane=dsp|mlp_control DSP predicted=  0.589 actual=  0.549 ms (start=  86.018, late=+5.626)
+[run] e=49  fused_split   #8  fused_depth_conv       lane=dsp|fused_split DSP predicted=  0.392 actual=  1.614 ms (start=  86.584, late=+6.584)
+[run] e=53  fused_split   #8  fused_tail             lane=dsp|fused_split DSP predicted=  4.303 actual=  3.327 ms (start=  88.224, late=+7.243)
+[run] e=54  mlp_control   #17 mlp_control_full       lane=dsp|mlp_control DSP predicted=  0.589 actual=  0.797 ms (start=  91.973, late=+6.689)
+[run] e=52  yolov8n_e     #0  yolov8n_backbone       lane=hta|yolov8n_e HTA predicted= 13.909 actual= 15.485 ms (start=  86.222, late=+5.241)
+[run] e=48  vint          #0  vint_decoder           lane=cpu|vint   CPU predicted= 37.826 actual= 26.664 ms (start=  78.867, late=+0.066)
+[run] e=55  yolov8n_d     #0  yolov8n_head           lane=dsp|yolov8n_d DSP predicted= 15.377 actual= 17.529 ms (start=  92.832, late=+6.959)
+[run] e=56  yolov8n_e     #0  yolov8n_head           lane=dsp|yolov8n_e DSP predicted= 15.377 actual= 16.155 ms (start= 110.756, late=+9.506)
+
+[summary] 57/57 entries executed, wall=126.911 ms (predicted makespan 116.627 ms, ratio 1.09x), tensor handoffs=2
+
+=== MODELBLASTER_XPURT_TRACE_BEGIN ===
+entry_id,network,instance,dispatch_id,op,name,core_kind,hart,predicted_start_ms,predicted_duration_ms,worker_kind_idx,actual_start_cycles,actual_end_cycles,time_unit,backend,ctx,graph,dep_wait_ms,gate_ms,n_ir_ops
+0,fused_split,0,1,qnn_graph,fused_depth_conv,hta,7,0.000000,1.568000,0,48,1641,us,HTA,ctx_fused_depth_conv__Hta.bin,fused_depth_conv,0.002135,0.043792,2
+1,mlp_control,0,0,qnn_graph,mlp_control_full,cpu,5,0.000000,0.107000,1,34,124,us,CPU,ctx_mlp_control_fp32__Cpu.bin,mlp_control_fp32,0.007707,0.016090,7
+2,fused_split,0,0,qnn_graph,fused_vision_conv,dsp,6,0.000000,0.459000,2,51,1028,us,DSP,ctx_fused_vision_conv__Dsp.bin,fused_vision_conv,0.011143,0.044625,4
+3,vint,0,0,qnn_graph,vint_encoders,dsp,6,0.459000,14.213000,3,1056,17070,us,DSP,ctx_vint_encoders__Dsp.bin,vint_encoders,0.008123,0.519975,539
+4,yolov8n_a,0,0,qnn_graph,yolov8n_backbone,hta,7,1.680000,13.909000,4,1688,15080,us,HTA,ctx_yolov8n_backbone__Hta.bin,yolov8n_HTA_split_seg100,1.662400,1.684113,103
+5,mlp_control,1,0,qnn_graph,mlp_control_full,cpu,5,5.000000,0.107000,1,5018,5190,us,CPU,ctx_mlp_control_fp32__Cpu.bin,mlp_control_fp32,0.132415,5.000268,7
+6,fused_split,0,2,qnn_graph,fused_tail,cpu,4,6.646000,0.354000,5,6663,10344,us,CPU,ctx_fused_tail_from_conv_fp32__Cpu.bin,fused_tail_from_conv,5.216100,6.646318,10
+7,fused_split,1,1,qnn_graph,fused_depth_conv,cpu,4,10.000000,0.014000,5,10388,10442,us,CPU,ctx_fused_depth_conv__Cpu.bin,fused_depth_conv,10.369194,10.378723,2
+8,mlp_control,2,0,qnn_graph,mlp_control_full,cpu,5,10.014000,0.107000,1,10578,10650,us,CPU,ctx_mlp_control_fp32__Cpu.bin,mlp_control_fp32,10.560293,10.568937,7
+9,mlp_control,3,0,qnn_graph,mlp_control_full,dsp,6,15.000000,0.589000,6,17128,17766,us,DSP,ctx_mlp_control__Dsp.bin,mlp_control,17.110280,17.123506,7
+10,fused_split,1,0,qnn_graph,fused_vision_conv,dsp,6,15.589000,0.459000,2,17781,18506,us,DSP,ctx_fused_vision_conv__Dsp.bin,fused_vision_conv,17.195415,17.197498,4
+11,fused_split,1,2,qnn_graph,fused_tail,cpu,4,16.646000,0.354000,5,18541,19089,us,CPU,ctx_fused_tail_from_conv_fp32__Cpu.bin,fused_tail_from_conv,18.525970,18.532791,10
+12,fused_split,2,0,qnn_graph,fused_vision_conv,dsp,6,20.000000,0.459000,2,20006,20427,us,DSP,ctx_fused_vision_conv__Dsp.bin,fused_vision_conv,18.531333,20.002061,4
+13,mlp_control,4,0,qnn_graph,mlp_control_full,cpu,5,20.000000,0.107000,1,20007,20066,us,CPU,ctx_mlp_control_fp32__Cpu.bin,mlp_control_fp32,19.104159,20.000291,7
+14,fused_split,2,1,qnn_graph,fused_depth_conv,hta,7,20.000000,1.568000,0,20006,20752,us,HTA,ctx_fused_depth_conv__Hta.bin,fused_depth_conv,15.348166,20.001332,2
+15,yolov8n_a,0,1,qnn_graph,yolov8n_head,dsp,6,20.459000,15.377000,7,20520,38525,us,DSP,ctx_yolov8n_head__Dsp.bin,yolov8n_HTA_split_seg101,18.798090,20.513601,146
+16,yolov8n_b,0,0,qnn_graph,yolov8n_backbone,hta,7,21.568000,13.909000,8,21629,35741,us,HTA,ctx_yolov8n_backbone__Hta.bin,yolov8n_HTA_split_seg100,15.341396,21.624575,103
+17,fused_split,2,2,qnn_graph,fused_tail,cpu,4,26.646000,0.354000,5,26674,27770,us,CPU,ctx_fused_tail_from_conv_fp32__Cpu.bin,fused_tail_from_conv,20.765205,26.646608,10
+18,mlp_control,5,0,qnn_graph,mlp_control_full,cpu,5,27.000000,0.107000,1,27019,27132,us,CPU,ctx_mlp_control_fp32__Cpu.bin,mlp_control_fp32,20.072929,27.000114,7
+19,fused_split,3,1,qnn_graph,fused_depth_conv,cpu,4,30.000000,0.014000,5,30009,30300,us,CPU,ctx_fused_depth_conv__Cpu.bin,fused_depth_conv,27.781274,30.000410,2
+20,mlp_control,6,0,qnn_graph,mlp_control_full,cpu,5,32.893000,0.107000,1,32903,32965,us,CPU,ctx_mlp_control_fp32__Cpu.bin,mlp_control_fp32,30.507159,32.893493,7
+21,yolov8n_c,0,0,qnn_graph,yolov8n_backbone,hta,7,36.091000,13.909000,9,36153,49248,us,HTA,ctx_yolov8n_backbone__Hta.bin,yolov8n_HTA_split_seg100,35.840625,36.148153,103
+22,fused_split,3,0,qnn_graph,fused_vision_conv,dsp,6,36.187000,0.459000,2,38667,39352,us,DSP,ctx_fused_vision_conv__Dsp.bin,fused_vision_conv,38.655447,38.663205,4
+23,fused_split,3,2,qnn_graph,fused_tail,cpu,4,36.646000,0.354000,5,39700,40908,us,CPU,ctx_fused_tail_from_conv_fp32__Cpu.bin,fused_tail_from_conv,39.658114,39.678370,10
+24,mlp_control,7,0,qnn_graph,mlp_control_full,cpu,5,37.893000,0.107000,1,40966,41051,us,CPU,ctx_mlp_control_fp32__Cpu.bin,mlp_control_fp32,40.941181,40.954615,7
+25,mlp_control,8,0,qnn_graph,mlp_control_full,cpu,5,42.411000,0.107000,1,42417,42471,us,CPU,ctx_mlp_control_fp32__Cpu.bin,mlp_control_fp32,41.059485,42.411232,7
+26,fused_split,4,0,qnn_graph,fused_vision_conv,dsp,6,44.692000,0.459000,2,44702,46900,us,DSP,ctx_fused_vision_conv__Dsp.bin,fused_vision_conv,39.378496,44.692592,4
+27,fused_split,4,1,qnn_graph,fused_depth_conv,dsp,6,46.053000,0.392000,2,47755,48185,us,DSP,ctx_fused_depth_conv__Dsp.bin,fused_depth_conv,47.005351,47.007278,2
+28,mlp_control,9,0,qnn_graph,mlp_control_full,dsp,6,46.445000,0.589000,6,46945,47445,us,DSP,ctx_mlp_control__Dsp.bin,mlp_control,46.929172,46.934535,7
+29,fused_split,4,2,qnn_graph,fused_tail,cpu,4,46.646000,0.354000,5,48244,49705,us,CPU,ctx_fused_tail_from_conv_fp32__Cpu.bin,fused_tail_from_conv,48.229318,48.235358,10
+30,yolov8n_b,0,1,qnn_graph,yolov8n_head,dsp,6,47.034000,15.377000,10,48241,67182,us,DSP,ctx_yolov8n_head__Dsp.bin,yolov8n_HTA_split_seg101,48.211718,48.234733,146
+31,fused_split,5,0,qnn_graph,fused_vision_conv,hta,7,50.000000,0.931000,0,50004,50848,us,HTA,ctx_fused_vision_conv__Hta.bin,fused_vision_conv,49.523944,50.000336,4
+32,yolov8n_d,0,0,qnn_graph,yolov8n_backbone,hta,7,50.931000,13.909000,11,50990,64928,us,HTA,ctx_yolov8n_backbone__Hta.bin,yolov8n_HTA_split_seg100,49.433602,50.986601,103
+33,fused_split,5,1,qnn_graph,fused_depth_conv,cpu,4,52.879000,0.014000,5,52902,54050,us,CPU,ctx_fused_depth_conv__Cpu.bin,fused_depth_conv,49.721239,52.879256,2
+34,mlp_control,10,0,qnn_graph,mlp_control_full,cpu,5,52.893000,0.107000,1,52904,52976,us,CPU,ctx_mlp_control_fp32__Cpu.bin,mlp_control_fp32,49.723217,52.893575,7
+35,fused_split,5,2,qnn_graph,fused_tail,cpu,4,56.646000,0.354000,5,56655,57655,us,CPU,ctx_fused_tail_from_conv_fp32__Cpu.bin,fused_tail_from_conv,54.059171,56.646497,10
+36,mlp_control,11,0,qnn_graph,mlp_control_full,cpu,5,57.000000,0.107000,1,57012,57093,us,CPU,ctx_mlp_control_fp32__Cpu.bin,mlp_control_fp32,52.991363,57.000263,7
+37,mlp_control,12,0,qnn_graph,mlp_control_full,dsp,6,62.411000,0.589000,6,67552,68133,us,DSP,ctx_mlp_control__Dsp.bin,mlp_control,67.545663,67.548788,7
+38,fused_split,6,1,qnn_graph,fused_depth_conv,dsp,6,64.231000,0.392000,2,68160,68569,us,DSP,ctx_fused_depth_conv__Dsp.bin,fused_depth_conv,68.154054,68.156553,2
+39,yolov8n_c,0,1,qnn_graph,yolov8n_head,dsp,6,64.623000,15.377000,12,68583,85519,us,DSP,ctx_yolov8n_head__Dsp.bin,yolov8n_HTA_split_seg101,68.160250,68.203365,146
+40,fused_split,6,0,qnn_graph,fused_vision_conv,hta,7,64.840000,0.931000,0,65391,66309,us,HTA,ctx_fused_vision_conv__Hta.bin,fused_vision_conv,50.854082,65.383180,4
+41,fused_split,6,2,qnn_graph,fused_tail,cpu,4,66.646000,0.354000,5,68769,69632,us,CPU,ctx_fused_tail_from_conv_fp32__Cpu.bin,fused_tail_from_conv,68.749427,68.758852,10
+42,mlp_control,13,0,qnn_graph,mlp_control_full,cpu,5,67.000000,0.107000,1,67015,67076,us,CPU,ctx_mlp_control_fp32__Cpu.bin,mlp_control_fp32,57.101123,67.000382,7
+43,fused_split,7,1,qnn_graph,fused_depth_conv,hta,7,70.000000,1.568000,0,70005,70759,us,HTA,ctx_fused_depth_conv__Hta.bin,fused_depth_conv,66.327633,70.000054,2
+44,fused_split,7,0,qnn_graph,fused_vision_conv,hta,7,71.568000,0.931000,0,71571,72576,us,HTA,ctx_fused_vision_conv__Hta.bin,fused_vision_conv,70.764447,71.568362,4
+45,mlp_control,14,0,qnn_graph,mlp_control_full,cpu,5,72.392000,0.107000,1,72407,72467,us,CPU,ctx_mlp_control_fp32__Cpu.bin,mlp_control_fp32,67.084372,72.392532,7
+46,fused_split,7,2,qnn_graph,fused_tail,cpu,4,74.646000,0.354000,5,74659,75519,us,CPU,ctx_fused_tail_from_conv_fp32__Cpu.bin,fused_tail_from_conv,72.608989,74.646711,10
+47,mlp_control,15,0,qnn_graph,mlp_control_full,cpu,5,75.000000,0.107000,1,75006,75050,us,CPU,ctx_mlp_control_fp32__Cpu.bin,mlp_control_fp32,72.475897,75.000478,7
+48,vint,0,1,qnn_graph,vint_decoder,cpu,5,78.801000,37.826000,13,78867,105531,us,CPU,ctx_vint_decoder_fp32__Cpu.bin,vint_decoder,75.075251,78.858686,66
+49,fused_split,8,1,qnn_graph,fused_depth_conv,dsp,6,80.000000,0.392000,2,86584,88197,us,DSP,ctx_fused_depth_conv__Dsp.bin,fused_depth_conv,86.077308,86.079860,2
+50,fused_split,8,0,qnn_graph,fused_vision_conv,hta,7,80.050000,0.931000,0,82333,86130,us,HTA,ctx_fused_vision_conv__Hta.bin,fused_vision_conv,72.603521,82.318295,4
+51,mlp_control,16,0,qnn_graph,mlp_control_full,dsp,6,80.392000,0.589000,6,86017,86566,us,DSP,ctx_mlp_control__Dsp.bin,mlp_control,86.001546,86.011491,7
+52,yolov8n_e,0,0,qnn_graph,yolov8n_backbone,hta,7,80.981000,13.909000,14,86222,101707,us,HTA,ctx_yolov8n_backbone__Hta.bin,yolov8n_HTA_split_seg100,72.629973,82.365262,103
+53,fused_split,8,2,qnn_graph,fused_tail,dsp,6,80.981000,4.303000,2,88223,91550,us,DSP,ctx_fused_tail_from_conv__Dsp.bin,fused_tail_from_conv,88.210737,88.217558,10
+54,mlp_control,17,0,qnn_graph,mlp_control_full,dsp,6,85.284000,0.589000,6,91973,92769,us,DSP,ctx_mlp_control__Dsp.bin,mlp_control,91.947360,91.958868,7
+55,yolov8n_d,0,1,qnn_graph,yolov8n_head,dsp,6,85.873000,15.377000,15,92832,110361,us,DSP,ctx_yolov8n_head__Dsp.bin,yolov8n_HTA_split_seg101,91.859517,92.137001,146
+56,yolov8n_e,0,1,qnn_graph,yolov8n_head,dsp,6,101.250000,15.377000,16,110755,126910,us,DSP,ctx_yolov8n_head__Dsp.bin,yolov8n_HTA_split_seg101,101.844328,102.612679,146
+=== MODELBLASTER_XPURT_TRACE_END ===

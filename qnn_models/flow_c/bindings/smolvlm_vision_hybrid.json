@@ -1,0 +1,3252 @@
+{
+ "network": "smolvlm_vision",
+ "ir": {
+  "source": "graph_json:gen/ir/smolvlm_vision_graph.json",
+  "quant": "int8"
+ },
+ "_comment": "HYBRID granularity: per dsp_seg_NN, either the whole segment or its conv1x1/trampoline decomposition, whichever measured cheaper. 23 of 25 decompose (their convs reach HTA); dsp_seg_00 and dsp_seg_24 stay whole because decomposing them is far worse (68.2 vs 349.9 ms for seg_00). Backends per tile are exactly the context binaries that exist on the board -- no tile claims HTA without an Hta.bin. Predicted best-of-cells total 2196.9 ms against a 3172.2 ms all-CPU baseline.",
+ "bindings": [
+  {
+   "id": 0,
+   "name": "dsp_seg_00",
+   "ops": {
+    "ranges": [
+     [
+      0,
+      18
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_dsp_seg_00__Cpu.bin",
+     "graph": "dsp_seg_00"
+    },
+    "dsp": {
+     "ctx": "ctx_dsp_seg_00__Dsp.bin",
+     "graph": "dsp_seg_00"
+    }
+   }
+  },
+  {
+   "id": 1,
+   "name": "cpu_seg_00",
+   "ops": {
+    "ranges": [
+     [
+      19,
+      22
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_cpu_seg_00__Cpu.bin",
+     "graph": "cpu_seg_00"
+    }
+   },
+   "depends_on": [
+    0
+   ]
+  },
+  {
+   "id": 2,
+   "name": "dsp_seg_01_tramp_p0",
+   "ops": {
+    "ranges": [
+     [
+      23,
+      24
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_dsp_seg_01_tramp_p0__Cpu.bin",
+     "graph": "dsp_seg_01_tramp_p0"
+    },
+    "dsp": {
+     "ctx": "ctx_dsp_seg_01_tramp_p0__Dsp.bin",
+     "graph": "dsp_seg_01_tramp_p0"
+    }
+   },
+   "depends_on": [
+    1
+   ]
+  },
+  {
+   "id": 3,
+   "name": "dsp_seg_01_node_MatMul_549_conv1x1",
+   "ops": {
+    "ranges": [
+     [
+      25,
+      25
+     ]
+    ]
+   },
+   "backends": {
+    "hta": {
+     "ctx": "ctx_dsp_seg_01_node_MatMul_549_conv1x1__Hta.bin",
+     "graph": "dsp_seg_01_node_MatMul_549_conv1x1"
+    }
+   },
+   "depends_on": [
+    2
+   ]
+  },
+  {
+   "id": 4,
+   "name": "dsp_seg_01_node_MatMul_554_conv1x1",
+   "ops": {
+    "ranges": [
+     [
+      26,
+      26
+     ]
+    ]
+   },
+   "backends": {
+    "hta": {
+     "ctx": "ctx_dsp_seg_01_node_MatMul_554_conv1x1__Hta.bin",
+     "graph": "dsp_seg_01_node_MatMul_554_conv1x1"
+    }
+   },
+   "depends_on": [
+    3
+   ]
+  },
+  {
+   "id": 5,
+   "name": "dsp_seg_01_tramp_p1",
+   "ops": {
+    "ranges": [
+     [
+      27,
+      32
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_dsp_seg_01_tramp_p1__Cpu.bin",
+     "graph": "dsp_seg_01_tramp_p1"
+    },
+    "dsp": {
+     "ctx": "ctx_dsp_seg_01_tramp_p1__Dsp.bin",
+     "graph": "dsp_seg_01_tramp_p1"
+    }
+   },
+   "depends_on": [
+    4
+   ]
+  },
+  {
+   "id": 6,
+   "name": "dsp_seg_01_tramp_p2",
+   "ops": {
+    "ranges": [
+     [
+      33,
+      38
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_dsp_seg_01_tramp_p2__Cpu.bin",
+     "graph": "dsp_seg_01_tramp_p2"
+    },
+    "dsp": {
+     "ctx": "ctx_dsp_seg_01_tramp_p2__Dsp.bin",
+     "graph": "dsp_seg_01_tramp_p2"
+    }
+   },
+   "depends_on": [
+    5
+   ]
+  },
+  {
+   "id": 7,
+   "name": "cpu_seg_01",
+   "ops": {
+    "ranges": [
+     [
+      39,
+      39
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_cpu_seg_01__Cpu.bin",
+     "graph": "cpu_seg_01"
+    }
+   },
+   "depends_on": [
+    6
+   ]
+  },
+  {
+   "id": 8,
+   "name": "dsp_seg_02_tramp_p0",
+   "ops": {
+    "ranges": [
+     [
+      40,
+      44
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_dsp_seg_02_tramp_p0__Cpu.bin",
+     "graph": "dsp_seg_02_tramp_p0"
+    },
+    "dsp": {
+     "ctx": "ctx_dsp_seg_02_tramp_p0__Dsp.bin",
+     "graph": "dsp_seg_02_tramp_p0"
+    }
+   },
+   "depends_on": [
+    7
+   ]
+  },
+  {
+   "id": 9,
+   "name": "dsp_seg_02_node_MatMul_570_conv1x1",
+   "ops": {
+    "ranges": [
+     [
+      45,
+      45
+     ]
+    ]
+   },
+   "backends": {
+    "hta": {
+     "ctx": "ctx_dsp_seg_02_node_MatMul_570_conv1x1__Hta.bin",
+     "graph": "dsp_seg_02_node_MatMul_570_conv1x1"
+    }
+   },
+   "depends_on": [
+    8
+   ]
+  },
+  {
+   "id": 10,
+   "name": "dsp_seg_02_sng_MatMul_2_conv1x1",
+   "ops": {
+    "ranges": [
+     [
+      46,
+      46
+     ]
+    ]
+   },
+   "backends": {
+    "hta": {
+     "ctx": "ctx_dsp_seg_02_sng_MatMul_2_conv1x1__Hta.bin",
+     "graph": "dsp_seg_02_sng_MatMul_2_conv1x1"
+    }
+   },
+   "depends_on": [
+    9
+   ]
+  },
+  {
+   "id": 11,
+   "name": "dsp_seg_02_tramp_p1",
+   "ops": {
+    "ranges": [
+     [
+      47,
+      52
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_dsp_seg_02_tramp_p1__Cpu.bin",
+     "graph": "dsp_seg_02_tramp_p1"
+    },
+    "dsp": {
+     "ctx": "ctx_dsp_seg_02_tramp_p1__Dsp.bin",
+     "graph": "dsp_seg_02_tramp_p1"
+    }
+   },
+   "depends_on": [
+    10
+   ]
+  },
+  {
+   "id": 12,
+   "name": "dsp_seg_02_tramp_p2",
+   "ops": {
+    "ranges": [
+     [
+      53,
+      67
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_dsp_seg_02_tramp_p2__Cpu.bin",
+     "graph": "dsp_seg_02_tramp_p2"
+    },
+    "dsp": {
+     "ctx": "ctx_dsp_seg_02_tramp_p2__Dsp.bin",
+     "graph": "dsp_seg_02_tramp_p2"
+    }
+   },
+   "depends_on": [
+    11
+   ]
+  },
+  {
+   "id": 13,
+   "name": "cpu_seg_02",
+   "ops": {
+    "ranges": [
+     [
+      68,
+      71
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_cpu_seg_02__Cpu.bin",
+     "graph": "cpu_seg_02"
+    }
+   },
+   "depends_on": [
+    12
+   ]
+  },
+  {
+   "id": 14,
+   "name": "dsp_seg_03_tramp_p0",
+   "ops": {
+    "ranges": [
+     [
+      72,
+      73
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_dsp_seg_03_tramp_p0__Cpu.bin",
+     "graph": "dsp_seg_03_tramp_p0"
+    },
+    "dsp": {
+     "ctx": "ctx_dsp_seg_03_tramp_p0__Dsp.bin",
+     "graph": "dsp_seg_03_tramp_p0"
+    }
+   },
+   "depends_on": [
+    13
+   ]
+  },
+  {
+   "id": 15,
+   "name": "dsp_seg_03_node_MatMul_669_conv1x1",
+   "ops": {
+    "ranges": [
+     [
+      74,
+      74
+     ]
+    ]
+   },
+   "backends": {
+    "hta": {
+     "ctx": "ctx_dsp_seg_03_node_MatMul_669_conv1x1__Hta.bin",
+     "graph": "dsp_seg_03_node_MatMul_669_conv1x1"
+    }
+   },
+   "depends_on": [
+    14
+   ]
+  },
+  {
+   "id": 16,
+   "name": "dsp_seg_03_node_MatMul_674_conv1x1",
+   "ops": {
+    "ranges": [
+     [
+      75,
+      75
+     ]
+    ]
+   },
+   "backends": {
+    "hta": {
+     "ctx": "ctx_dsp_seg_03_node_MatMul_674_conv1x1__Hta.bin",
+     "graph": "dsp_seg_03_node_MatMul_674_conv1x1"
+    }
+   },
+   "depends_on": [
+    15
+   ]
+  },
+  {
+   "id": 17,
+   "name": "dsp_seg_03_tramp_p1",
+   "ops": {
+    "ranges": [
+     [
+      76,
+      81
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_dsp_seg_03_tramp_p1__Cpu.bin",
+     "graph": "dsp_seg_03_tramp_p1"
+    },
+    "dsp": {
+     "ctx": "ctx_dsp_seg_03_tramp_p1__Dsp.bin",
+     "graph": "dsp_seg_03_tramp_p1"
+    }
+   },
+   "depends_on": [
+    16
+   ]
+  },
+  {
+   "id": 18,
+   "name": "dsp_seg_03_tramp_p2",
+   "ops": {
+    "ranges": [
+     [
+      82,
+      87
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_dsp_seg_03_tramp_p2__Cpu.bin",
+     "graph": "dsp_seg_03_tramp_p2"
+    },
+    "dsp": {
+     "ctx": "ctx_dsp_seg_03_tramp_p2__Dsp.bin",
+     "graph": "dsp_seg_03_tramp_p2"
+    }
+   },
+   "depends_on": [
+    17
+   ]
+  },
+  {
+   "id": 19,
+   "name": "cpu_seg_03",
+   "ops": {
+    "ranges": [
+     [
+      88,
+      88
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_cpu_seg_03__Cpu.bin",
+     "graph": "cpu_seg_03"
+    }
+   },
+   "depends_on": [
+    18
+   ]
+  },
+  {
+   "id": 20,
+   "name": "dsp_seg_04_tramp_p0",
+   "ops": {
+    "ranges": [
+     [
+      89,
+      93
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_dsp_seg_04_tramp_p0__Cpu.bin",
+     "graph": "dsp_seg_04_tramp_p0"
+    },
+    "dsp": {
+     "ctx": "ctx_dsp_seg_04_tramp_p0__Dsp.bin",
+     "graph": "dsp_seg_04_tramp_p0"
+    }
+   },
+   "depends_on": [
+    19
+   ]
+  },
+  {
+   "id": 21,
+   "name": "dsp_seg_04_node_MatMul_690_conv1x1",
+   "ops": {
+    "ranges": [
+     [
+      94,
+      94
+     ]
+    ]
+   },
+   "backends": {
+    "hta": {
+     "ctx": "ctx_dsp_seg_04_node_MatMul_690_conv1x1__Hta.bin",
+     "graph": "dsp_seg_04_node_MatMul_690_conv1x1"
+    }
+   },
+   "depends_on": [
+    20
+   ]
+  },
+  {
+   "id": 22,
+   "name": "dsp_seg_04_sng_MatMul_4_conv1x1",
+   "ops": {
+    "ranges": [
+     [
+      95,
+      95
+     ]
+    ]
+   },
+   "backends": {
+    "hta": {
+     "ctx": "ctx_dsp_seg_04_sng_MatMul_4_conv1x1__Hta.bin",
+     "graph": "dsp_seg_04_sng_MatMul_4_conv1x1"
+    }
+   },
+   "depends_on": [
+    21
+   ]
+  },
+  {
+   "id": 23,
+   "name": "dsp_seg_04_tramp_p1",
+   "ops": {
+    "ranges": [
+     [
+      96,
+      101
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_dsp_seg_04_tramp_p1__Cpu.bin",
+     "graph": "dsp_seg_04_tramp_p1"
+    },
+    "dsp": {
+     "ctx": "ctx_dsp_seg_04_tramp_p1__Dsp.bin",
+     "graph": "dsp_seg_04_tramp_p1"
+    }
+   },
+   "depends_on": [
+    22
+   ]
+  },
+  {
+   "id": 24,
+   "name": "dsp_seg_04_tramp_p2",
+   "ops": {
+    "ranges": [
+     [
+      102,
+      116
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_dsp_seg_04_tramp_p2__Cpu.bin",
+     "graph": "dsp_seg_04_tramp_p2"
+    },
+    "dsp": {
+     "ctx": "ctx_dsp_seg_04_tramp_p2__Dsp.bin",
+     "graph": "dsp_seg_04_tramp_p2"
+    }
+   },
+   "depends_on": [
+    23
+   ]
+  },
+  {
+   "id": 25,
+   "name": "cpu_seg_04",
+   "ops": {
+    "ranges": [
+     [
+      117,
+      120
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_cpu_seg_04__Cpu.bin",
+     "graph": "cpu_seg_04"
+    }
+   },
+   "depends_on": [
+    24
+   ]
+  },
+  {
+   "id": 26,
+   "name": "dsp_seg_05_tramp_p0",
+   "ops": {
+    "ranges": [
+     [
+      121,
+      122
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_dsp_seg_05_tramp_p0__Cpu.bin",
+     "graph": "dsp_seg_05_tramp_p0"
+    },
+    "dsp": {
+     "ctx": "ctx_dsp_seg_05_tramp_p0__Dsp.bin",
+     "graph": "dsp_seg_05_tramp_p0"
+    }
+   },
+   "depends_on": [
+    25
+   ]
+  },
+  {
+   "id": 27,
+   "name": "dsp_seg_05_node_MatMul_789_conv1x1",
+   "ops": {
+    "ranges": [
+     [
+      123,
+      123
+     ]
+    ]
+   },
+   "backends": {
+    "hta": {
+     "ctx": "ctx_dsp_seg_05_node_MatMul_789_conv1x1__Hta.bin",
+     "graph": "dsp_seg_05_node_MatMul_789_conv1x1"
+    }
+   },
+   "depends_on": [
+    26
+   ]
+  },
+  {
+   "id": 28,
+   "name": "dsp_seg_05_node_MatMul_794_conv1x1",
+   "ops": {
+    "ranges": [
+     [
+      124,
+      124
+     ]
+    ]
+   },
+   "backends": {
+    "hta": {
+     "ctx": "ctx_dsp_seg_05_node_MatMul_794_conv1x1__Hta.bin",
+     "graph": "dsp_seg_05_node_MatMul_794_conv1x1"
+    }
+   },
+   "depends_on": [
+    27
+   ]
+  },
+  {
+   "id": 29,
+   "name": "dsp_seg_05_tramp_p1",
+   "ops": {
+    "ranges": [
+     [
+      125,
+      130
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_dsp_seg_05_tramp_p1__Cpu.bin",
+     "graph": "dsp_seg_05_tramp_p1"
+    },
+    "dsp": {
+     "ctx": "ctx_dsp_seg_05_tramp_p1__Dsp.bin",
+     "graph": "dsp_seg_05_tramp_p1"
+    }
+   },
+   "depends_on": [
+    28
+   ]
+  },
+  {
+   "id": 30,
+   "name": "dsp_seg_05_tramp_p2",
+   "ops": {
+    "ranges": [
+     [
+      131,
+      136
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_dsp_seg_05_tramp_p2__Cpu.bin",
+     "graph": "dsp_seg_05_tramp_p2"
+    },
+    "dsp": {
+     "ctx": "ctx_dsp_seg_05_tramp_p2__Dsp.bin",
+     "graph": "dsp_seg_05_tramp_p2"
+    }
+   },
+   "depends_on": [
+    29
+   ]
+  },
+  {
+   "id": 31,
+   "name": "cpu_seg_05",
+   "ops": {
+    "ranges": [
+     [
+      137,
+      137
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_cpu_seg_05__Cpu.bin",
+     "graph": "cpu_seg_05"
+    }
+   },
+   "depends_on": [
+    30
+   ]
+  },
+  {
+   "id": 32,
+   "name": "dsp_seg_06_tramp_p0",
+   "ops": {
+    "ranges": [
+     [
+      138,
+      142
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_dsp_seg_06_tramp_p0__Cpu.bin",
+     "graph": "dsp_seg_06_tramp_p0"
+    },
+    "dsp": {
+     "ctx": "ctx_dsp_seg_06_tramp_p0__Dsp.bin",
+     "graph": "dsp_seg_06_tramp_p0"
+    }
+   },
+   "depends_on": [
+    31
+   ]
+  },
+  {
+   "id": 33,
+   "name": "dsp_seg_06_node_MatMul_810_conv1x1",
+   "ops": {
+    "ranges": [
+     [
+      143,
+      143
+     ]
+    ]
+   },
+   "backends": {
+    "hta": {
+     "ctx": "ctx_dsp_seg_06_node_MatMul_810_conv1x1__Hta.bin",
+     "graph": "dsp_seg_06_node_MatMul_810_conv1x1"
+    }
+   },
+   "depends_on": [
+    32
+   ]
+  },
+  {
+   "id": 34,
+   "name": "dsp_seg_06_sng_MatMul_6_conv1x1",
+   "ops": {
+    "ranges": [
+     [
+      144,
+      144
+     ]
+    ]
+   },
+   "backends": {
+    "hta": {
+     "ctx": "ctx_dsp_seg_06_sng_MatMul_6_conv1x1__Hta.bin",
+     "graph": "dsp_seg_06_sng_MatMul_6_conv1x1"
+    }
+   },
+   "depends_on": [
+    33
+   ]
+  },
+  {
+   "id": 35,
+   "name": "dsp_seg_06_tramp_p1",
+   "ops": {
+    "ranges": [
+     [
+      145,
+      150
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_dsp_seg_06_tramp_p1__Cpu.bin",
+     "graph": "dsp_seg_06_tramp_p1"
+    },
+    "dsp": {
+     "ctx": "ctx_dsp_seg_06_tramp_p1__Dsp.bin",
+     "graph": "dsp_seg_06_tramp_p1"
+    }
+   },
+   "depends_on": [
+    34
+   ]
+  },
+  {
+   "id": 36,
+   "name": "dsp_seg_06_tramp_p2",
+   "ops": {
+    "ranges": [
+     [
+      151,
+      165
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_dsp_seg_06_tramp_p2__Cpu.bin",
+     "graph": "dsp_seg_06_tramp_p2"
+    },
+    "dsp": {
+     "ctx": "ctx_dsp_seg_06_tramp_p2__Dsp.bin",
+     "graph": "dsp_seg_06_tramp_p2"
+    }
+   },
+   "depends_on": [
+    35
+   ]
+  },
+  {
+   "id": 37,
+   "name": "cpu_seg_06",
+   "ops": {
+    "ranges": [
+     [
+      166,
+      169
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_cpu_seg_06__Cpu.bin",
+     "graph": "cpu_seg_06"
+    }
+   },
+   "depends_on": [
+    36
+   ]
+  },
+  {
+   "id": 38,
+   "name": "dsp_seg_07_tramp_p0",
+   "ops": {
+    "ranges": [
+     [
+      170,
+      171
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_dsp_seg_07_tramp_p0__Cpu.bin",
+     "graph": "dsp_seg_07_tramp_p0"
+    },
+    "dsp": {
+     "ctx": "ctx_dsp_seg_07_tramp_p0__Dsp.bin",
+     "graph": "dsp_seg_07_tramp_p0"
+    }
+   },
+   "depends_on": [
+    37
+   ]
+  },
+  {
+   "id": 39,
+   "name": "dsp_seg_07_node_MatMul_909_conv1x1",
+   "ops": {
+    "ranges": [
+     [
+      172,
+      172
+     ]
+    ]
+   },
+   "backends": {
+    "hta": {
+     "ctx": "ctx_dsp_seg_07_node_MatMul_909_conv1x1__Hta.bin",
+     "graph": "dsp_seg_07_node_MatMul_909_conv1x1"
+    }
+   },
+   "depends_on": [
+    38
+   ]
+  },
+  {
+   "id": 40,
+   "name": "dsp_seg_07_node_MatMul_914_conv1x1",
+   "ops": {
+    "ranges": [
+     [
+      173,
+      173
+     ]
+    ]
+   },
+   "backends": {
+    "hta": {
+     "ctx": "ctx_dsp_seg_07_node_MatMul_914_conv1x1__Hta.bin",
+     "graph": "dsp_seg_07_node_MatMul_914_conv1x1"
+    }
+   },
+   "depends_on": [
+    39
+   ]
+  },
+  {
+   "id": 41,
+   "name": "dsp_seg_07_tramp_p1",
+   "ops": {
+    "ranges": [
+     [
+      174,
+      179
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_dsp_seg_07_tramp_p1__Cpu.bin",
+     "graph": "dsp_seg_07_tramp_p1"
+    },
+    "dsp": {
+     "ctx": "ctx_dsp_seg_07_tramp_p1__Dsp.bin",
+     "graph": "dsp_seg_07_tramp_p1"
+    }
+   },
+   "depends_on": [
+    40
+   ]
+  },
+  {
+   "id": 42,
+   "name": "dsp_seg_07_tramp_p2",
+   "ops": {
+    "ranges": [
+     [
+      180,
+      185
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_dsp_seg_07_tramp_p2__Cpu.bin",
+     "graph": "dsp_seg_07_tramp_p2"
+    },
+    "dsp": {
+     "ctx": "ctx_dsp_seg_07_tramp_p2__Dsp.bin",
+     "graph": "dsp_seg_07_tramp_p2"
+    }
+   },
+   "depends_on": [
+    41
+   ]
+  },
+  {
+   "id": 43,
+   "name": "cpu_seg_07",
+   "ops": {
+    "ranges": [
+     [
+      186,
+      186
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_cpu_seg_07__Cpu.bin",
+     "graph": "cpu_seg_07"
+    }
+   },
+   "depends_on": [
+    42
+   ]
+  },
+  {
+   "id": 44,
+   "name": "dsp_seg_08_tramp_p0",
+   "ops": {
+    "ranges": [
+     [
+      187,
+      191
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_dsp_seg_08_tramp_p0__Cpu.bin",
+     "graph": "dsp_seg_08_tramp_p0"
+    },
+    "dsp": {
+     "ctx": "ctx_dsp_seg_08_tramp_p0__Dsp.bin",
+     "graph": "dsp_seg_08_tramp_p0"
+    }
+   },
+   "depends_on": [
+    43
+   ]
+  },
+  {
+   "id": 45,
+   "name": "dsp_seg_08_node_MatMul_930_conv1x1",
+   "ops": {
+    "ranges": [
+     [
+      192,
+      192
+     ]
+    ]
+   },
+   "backends": {
+    "hta": {
+     "ctx": "ctx_dsp_seg_08_node_MatMul_930_conv1x1__Hta.bin",
+     "graph": "dsp_seg_08_node_MatMul_930_conv1x1"
+    }
+   },
+   "depends_on": [
+    44
+   ]
+  },
+  {
+   "id": 46,
+   "name": "dsp_seg_08_sng_MatMul_8_conv1x1",
+   "ops": {
+    "ranges": [
+     [
+      193,
+      193
+     ]
+    ]
+   },
+   "backends": {
+    "hta": {
+     "ctx": "ctx_dsp_seg_08_sng_MatMul_8_conv1x1__Hta.bin",
+     "graph": "dsp_seg_08_sng_MatMul_8_conv1x1"
+    }
+   },
+   "depends_on": [
+    45
+   ]
+  },
+  {
+   "id": 47,
+   "name": "dsp_seg_08_tramp_p1",
+   "ops": {
+    "ranges": [
+     [
+      194,
+      199
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_dsp_seg_08_tramp_p1__Cpu.bin",
+     "graph": "dsp_seg_08_tramp_p1"
+    },
+    "dsp": {
+     "ctx": "ctx_dsp_seg_08_tramp_p1__Dsp.bin",
+     "graph": "dsp_seg_08_tramp_p1"
+    }
+   },
+   "depends_on": [
+    46
+   ]
+  },
+  {
+   "id": 48,
+   "name": "dsp_seg_08_tramp_p2",
+   "ops": {
+    "ranges": [
+     [
+      200,
+      214
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_dsp_seg_08_tramp_p2__Cpu.bin",
+     "graph": "dsp_seg_08_tramp_p2"
+    },
+    "dsp": {
+     "ctx": "ctx_dsp_seg_08_tramp_p2__Dsp.bin",
+     "graph": "dsp_seg_08_tramp_p2"
+    }
+   },
+   "depends_on": [
+    47
+   ]
+  },
+  {
+   "id": 49,
+   "name": "cpu_seg_08",
+   "ops": {
+    "ranges": [
+     [
+      215,
+      218
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_cpu_seg_08__Cpu.bin",
+     "graph": "cpu_seg_08"
+    }
+   },
+   "depends_on": [
+    48
+   ]
+  },
+  {
+   "id": 50,
+   "name": "dsp_seg_09_tramp_p0",
+   "ops": {
+    "ranges": [
+     [
+      219,
+      220
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_dsp_seg_09_tramp_p0__Cpu.bin",
+     "graph": "dsp_seg_09_tramp_p0"
+    },
+    "dsp": {
+     "ctx": "ctx_dsp_seg_09_tramp_p0__Dsp.bin",
+     "graph": "dsp_seg_09_tramp_p0"
+    }
+   },
+   "depends_on": [
+    49
+   ]
+  },
+  {
+   "id": 51,
+   "name": "dsp_seg_09_node_MatMul_1029_conv1x1",
+   "ops": {
+    "ranges": [
+     [
+      221,
+      221
+     ]
+    ]
+   },
+   "backends": {
+    "hta": {
+     "ctx": "ctx_dsp_seg_09_node_MatMul_1029_conv1x1__Hta.bin",
+     "graph": "dsp_seg_09_node_MatMul_1029_conv1x1"
+    }
+   },
+   "depends_on": [
+    50
+   ]
+  },
+  {
+   "id": 52,
+   "name": "dsp_seg_09_node_MatMul_1034_conv1x1",
+   "ops": {
+    "ranges": [
+     [
+      222,
+      222
+     ]
+    ]
+   },
+   "backends": {
+    "hta": {
+     "ctx": "ctx_dsp_seg_09_node_MatMul_1034_conv1x1__Hta.bin",
+     "graph": "dsp_seg_09_node_MatMul_1034_conv1x1"
+    }
+   },
+   "depends_on": [
+    51
+   ]
+  },
+  {
+   "id": 53,
+   "name": "dsp_seg_09_tramp_p1",
+   "ops": {
+    "ranges": [
+     [
+      223,
+      228
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_dsp_seg_09_tramp_p1__Cpu.bin",
+     "graph": "dsp_seg_09_tramp_p1"
+    },
+    "dsp": {
+     "ctx": "ctx_dsp_seg_09_tramp_p1__Dsp.bin",
+     "graph": "dsp_seg_09_tramp_p1"
+    }
+   },
+   "depends_on": [
+    52
+   ]
+  },
+  {
+   "id": 54,
+   "name": "dsp_seg_09_tramp_p2",
+   "ops": {
+    "ranges": [
+     [
+      229,
+      234
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_dsp_seg_09_tramp_p2__Cpu.bin",
+     "graph": "dsp_seg_09_tramp_p2"
+    },
+    "dsp": {
+     "ctx": "ctx_dsp_seg_09_tramp_p2__Dsp.bin",
+     "graph": "dsp_seg_09_tramp_p2"
+    }
+   },
+   "depends_on": [
+    53
+   ]
+  },
+  {
+   "id": 55,
+   "name": "cpu_seg_09",
+   "ops": {
+    "ranges": [
+     [
+      235,
+      235
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_cpu_seg_09__Cpu.bin",
+     "graph": "cpu_seg_09"
+    }
+   },
+   "depends_on": [
+    54
+   ]
+  },
+  {
+   "id": 56,
+   "name": "dsp_seg_10_tramp_p0",
+   "ops": {
+    "ranges": [
+     [
+      236,
+      240
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_dsp_seg_10_tramp_p0__Cpu.bin",
+     "graph": "dsp_seg_10_tramp_p0"
+    },
+    "dsp": {
+     "ctx": "ctx_dsp_seg_10_tramp_p0__Dsp.bin",
+     "graph": "dsp_seg_10_tramp_p0"
+    }
+   },
+   "depends_on": [
+    55
+   ]
+  },
+  {
+   "id": 57,
+   "name": "dsp_seg_10_node_MatMul_1050_conv1x1",
+   "ops": {
+    "ranges": [
+     [
+      241,
+      241
+     ]
+    ]
+   },
+   "backends": {
+    "hta": {
+     "ctx": "ctx_dsp_seg_10_node_MatMul_1050_conv1x1__Hta.bin",
+     "graph": "dsp_seg_10_node_MatMul_1050_conv1x1"
+    }
+   },
+   "depends_on": [
+    56
+   ]
+  },
+  {
+   "id": 58,
+   "name": "dsp_seg_10_sng_MatMul_10_conv1x1",
+   "ops": {
+    "ranges": [
+     [
+      242,
+      242
+     ]
+    ]
+   },
+   "backends": {
+    "hta": {
+     "ctx": "ctx_dsp_seg_10_sng_MatMul_10_conv1x1__Hta.bin",
+     "graph": "dsp_seg_10_sng_MatMul_10_conv1x1"
+    }
+   },
+   "depends_on": [
+    57
+   ]
+  },
+  {
+   "id": 59,
+   "name": "dsp_seg_10_tramp_p1",
+   "ops": {
+    "ranges": [
+     [
+      243,
+      248
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_dsp_seg_10_tramp_p1__Cpu.bin",
+     "graph": "dsp_seg_10_tramp_p1"
+    },
+    "dsp": {
+     "ctx": "ctx_dsp_seg_10_tramp_p1__Dsp.bin",
+     "graph": "dsp_seg_10_tramp_p1"
+    }
+   },
+   "depends_on": [
+    58
+   ]
+  },
+  {
+   "id": 60,
+   "name": "dsp_seg_10_tramp_p2",
+   "ops": {
+    "ranges": [
+     [
+      249,
+      263
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_dsp_seg_10_tramp_p2__Cpu.bin",
+     "graph": "dsp_seg_10_tramp_p2"
+    },
+    "dsp": {
+     "ctx": "ctx_dsp_seg_10_tramp_p2__Dsp.bin",
+     "graph": "dsp_seg_10_tramp_p2"
+    }
+   },
+   "depends_on": [
+    59
+   ]
+  },
+  {
+   "id": 61,
+   "name": "cpu_seg_10",
+   "ops": {
+    "ranges": [
+     [
+      264,
+      267
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_cpu_seg_10__Cpu.bin",
+     "graph": "cpu_seg_10"
+    }
+   },
+   "depends_on": [
+    60
+   ]
+  },
+  {
+   "id": 62,
+   "name": "dsp_seg_11_tramp_p0",
+   "ops": {
+    "ranges": [
+     [
+      268,
+      269
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_dsp_seg_11_tramp_p0__Cpu.bin",
+     "graph": "dsp_seg_11_tramp_p0"
+    },
+    "dsp": {
+     "ctx": "ctx_dsp_seg_11_tramp_p0__Dsp.bin",
+     "graph": "dsp_seg_11_tramp_p0"
+    }
+   },
+   "depends_on": [
+    61
+   ]
+  },
+  {
+   "id": 63,
+   "name": "dsp_seg_11_node_MatMul_1149_conv1x1",
+   "ops": {
+    "ranges": [
+     [
+      270,
+      270
+     ]
+    ]
+   },
+   "backends": {
+    "hta": {
+     "ctx": "ctx_dsp_seg_11_node_MatMul_1149_conv1x1__Hta.bin",
+     "graph": "dsp_seg_11_node_MatMul_1149_conv1x1"
+    }
+   },
+   "depends_on": [
+    62
+   ]
+  },
+  {
+   "id": 64,
+   "name": "dsp_seg_11_node_MatMul_1154_conv1x1",
+   "ops": {
+    "ranges": [
+     [
+      271,
+      271
+     ]
+    ]
+   },
+   "backends": {
+    "hta": {
+     "ctx": "ctx_dsp_seg_11_node_MatMul_1154_conv1x1__Hta.bin",
+     "graph": "dsp_seg_11_node_MatMul_1154_conv1x1"
+    }
+   },
+   "depends_on": [
+    63
+   ]
+  },
+  {
+   "id": 65,
+   "name": "dsp_seg_11_tramp_p1",
+   "ops": {
+    "ranges": [
+     [
+      272,
+      277
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_dsp_seg_11_tramp_p1__Cpu.bin",
+     "graph": "dsp_seg_11_tramp_p1"
+    },
+    "dsp": {
+     "ctx": "ctx_dsp_seg_11_tramp_p1__Dsp.bin",
+     "graph": "dsp_seg_11_tramp_p1"
+    }
+   },
+   "depends_on": [
+    64
+   ]
+  },
+  {
+   "id": 66,
+   "name": "dsp_seg_11_tramp_p2",
+   "ops": {
+    "ranges": [
+     [
+      278,
+      283
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_dsp_seg_11_tramp_p2__Cpu.bin",
+     "graph": "dsp_seg_11_tramp_p2"
+    },
+    "dsp": {
+     "ctx": "ctx_dsp_seg_11_tramp_p2__Dsp.bin",
+     "graph": "dsp_seg_11_tramp_p2"
+    }
+   },
+   "depends_on": [
+    65
+   ]
+  },
+  {
+   "id": 67,
+   "name": "cpu_seg_11",
+   "ops": {
+    "ranges": [
+     [
+      284,
+      284
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_cpu_seg_11__Cpu.bin",
+     "graph": "cpu_seg_11"
+    }
+   },
+   "depends_on": [
+    66
+   ]
+  },
+  {
+   "id": 68,
+   "name": "dsp_seg_12_tramp_p0",
+   "ops": {
+    "ranges": [
+     [
+      285,
+      289
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_dsp_seg_12_tramp_p0__Cpu.bin",
+     "graph": "dsp_seg_12_tramp_p0"
+    },
+    "dsp": {
+     "ctx": "ctx_dsp_seg_12_tramp_p0__Dsp.bin",
+     "graph": "dsp_seg_12_tramp_p0"
+    }
+   },
+   "depends_on": [
+    67
+   ]
+  },
+  {
+   "id": 69,
+   "name": "dsp_seg_12_node_MatMul_1170_conv1x1",
+   "ops": {
+    "ranges": [
+     [
+      290,
+      290
+     ]
+    ]
+   },
+   "backends": {
+    "hta": {
+     "ctx": "ctx_dsp_seg_12_node_MatMul_1170_conv1x1__Hta.bin",
+     "graph": "dsp_seg_12_node_MatMul_1170_conv1x1"
+    }
+   },
+   "depends_on": [
+    68
+   ]
+  },
+  {
+   "id": 70,
+   "name": "dsp_seg_12_sng_MatMul_12_conv1x1",
+   "ops": {
+    "ranges": [
+     [
+      291,
+      291
+     ]
+    ]
+   },
+   "backends": {
+    "hta": {
+     "ctx": "ctx_dsp_seg_12_sng_MatMul_12_conv1x1__Hta.bin",
+     "graph": "dsp_seg_12_sng_MatMul_12_conv1x1"
+    }
+   },
+   "depends_on": [
+    69
+   ]
+  },
+  {
+   "id": 71,
+   "name": "dsp_seg_12_tramp_p1",
+   "ops": {
+    "ranges": [
+     [
+      292,
+      297
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_dsp_seg_12_tramp_p1__Cpu.bin",
+     "graph": "dsp_seg_12_tramp_p1"
+    },
+    "dsp": {
+     "ctx": "ctx_dsp_seg_12_tramp_p1__Dsp.bin",
+     "graph": "dsp_seg_12_tramp_p1"
+    }
+   },
+   "depends_on": [
+    70
+   ]
+  },
+  {
+   "id": 72,
+   "name": "dsp_seg_12_tramp_p2",
+   "ops": {
+    "ranges": [
+     [
+      298,
+      312
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_dsp_seg_12_tramp_p2__Cpu.bin",
+     "graph": "dsp_seg_12_tramp_p2"
+    },
+    "dsp": {
+     "ctx": "ctx_dsp_seg_12_tramp_p2__Dsp.bin",
+     "graph": "dsp_seg_12_tramp_p2"
+    }
+   },
+   "depends_on": [
+    71
+   ]
+  },
+  {
+   "id": 73,
+   "name": "cpu_seg_12",
+   "ops": {
+    "ranges": [
+     [
+      313,
+      316
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_cpu_seg_12__Cpu.bin",
+     "graph": "cpu_seg_12"
+    }
+   },
+   "depends_on": [
+    72
+   ]
+  },
+  {
+   "id": 74,
+   "name": "dsp_seg_13_tramp_p0",
+   "ops": {
+    "ranges": [
+     [
+      317,
+      318
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_dsp_seg_13_tramp_p0__Cpu.bin",
+     "graph": "dsp_seg_13_tramp_p0"
+    },
+    "dsp": {
+     "ctx": "ctx_dsp_seg_13_tramp_p0__Dsp.bin",
+     "graph": "dsp_seg_13_tramp_p0"
+    }
+   },
+   "depends_on": [
+    73
+   ]
+  },
+  {
+   "id": 75,
+   "name": "dsp_seg_13_node_MatMul_1269_conv1x1",
+   "ops": {
+    "ranges": [
+     [
+      319,
+      319
+     ]
+    ]
+   },
+   "backends": {
+    "hta": {
+     "ctx": "ctx_dsp_seg_13_node_MatMul_1269_conv1x1__Hta.bin",
+     "graph": "dsp_seg_13_node_MatMul_1269_conv1x1"
+    }
+   },
+   "depends_on": [
+    74
+   ]
+  },
+  {
+   "id": 76,
+   "name": "dsp_seg_13_node_MatMul_1274_conv1x1",
+   "ops": {
+    "ranges": [
+     [
+      320,
+      320
+     ]
+    ]
+   },
+   "backends": {
+    "hta": {
+     "ctx": "ctx_dsp_seg_13_node_MatMul_1274_conv1x1__Hta.bin",
+     "graph": "dsp_seg_13_node_MatMul_1274_conv1x1"
+    }
+   },
+   "depends_on": [
+    75
+   ]
+  },
+  {
+   "id": 77,
+   "name": "dsp_seg_13_tramp_p1",
+   "ops": {
+    "ranges": [
+     [
+      321,
+      326
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_dsp_seg_13_tramp_p1__Cpu.bin",
+     "graph": "dsp_seg_13_tramp_p1"
+    },
+    "dsp": {
+     "ctx": "ctx_dsp_seg_13_tramp_p1__Dsp.bin",
+     "graph": "dsp_seg_13_tramp_p1"
+    }
+   },
+   "depends_on": [
+    76
+   ]
+  },
+  {
+   "id": 78,
+   "name": "dsp_seg_13_tramp_p2",
+   "ops": {
+    "ranges": [
+     [
+      327,
+      332
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_dsp_seg_13_tramp_p2__Cpu.bin",
+     "graph": "dsp_seg_13_tramp_p2"
+    },
+    "dsp": {
+     "ctx": "ctx_dsp_seg_13_tramp_p2__Dsp.bin",
+     "graph": "dsp_seg_13_tramp_p2"
+    }
+   },
+   "depends_on": [
+    77
+   ]
+  },
+  {
+   "id": 79,
+   "name": "cpu_seg_13",
+   "ops": {
+    "ranges": [
+     [
+      333,
+      333
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_cpu_seg_13__Cpu.bin",
+     "graph": "cpu_seg_13"
+    }
+   },
+   "depends_on": [
+    78
+   ]
+  },
+  {
+   "id": 80,
+   "name": "dsp_seg_14_tramp_p0",
+   "ops": {
+    "ranges": [
+     [
+      334,
+      338
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_dsp_seg_14_tramp_p0__Cpu.bin",
+     "graph": "dsp_seg_14_tramp_p0"
+    },
+    "dsp": {
+     "ctx": "ctx_dsp_seg_14_tramp_p0__Dsp.bin",
+     "graph": "dsp_seg_14_tramp_p0"
+    }
+   },
+   "depends_on": [
+    79
+   ]
+  },
+  {
+   "id": 81,
+   "name": "dsp_seg_14_node_MatMul_1290_conv1x1",
+   "ops": {
+    "ranges": [
+     [
+      339,
+      339
+     ]
+    ]
+   },
+   "backends": {
+    "hta": {
+     "ctx": "ctx_dsp_seg_14_node_MatMul_1290_conv1x1__Hta.bin",
+     "graph": "dsp_seg_14_node_MatMul_1290_conv1x1"
+    }
+   },
+   "depends_on": [
+    80
+   ]
+  },
+  {
+   "id": 82,
+   "name": "dsp_seg_14_sng_MatMul_14_conv1x1",
+   "ops": {
+    "ranges": [
+     [
+      340,
+      340
+     ]
+    ]
+   },
+   "backends": {
+    "hta": {
+     "ctx": "ctx_dsp_seg_14_sng_MatMul_14_conv1x1__Hta.bin",
+     "graph": "dsp_seg_14_sng_MatMul_14_conv1x1"
+    }
+   },
+   "depends_on": [
+    81
+   ]
+  },
+  {
+   "id": 83,
+   "name": "dsp_seg_14_tramp_p1",
+   "ops": {
+    "ranges": [
+     [
+      341,
+      346
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_dsp_seg_14_tramp_p1__Cpu.bin",
+     "graph": "dsp_seg_14_tramp_p1"
+    },
+    "dsp": {
+     "ctx": "ctx_dsp_seg_14_tramp_p1__Dsp.bin",
+     "graph": "dsp_seg_14_tramp_p1"
+    }
+   },
+   "depends_on": [
+    82
+   ]
+  },
+  {
+   "id": 84,
+   "name": "dsp_seg_14_tramp_p2",
+   "ops": {
+    "ranges": [
+     [
+      347,
+      361
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_dsp_seg_14_tramp_p2__Cpu.bin",
+     "graph": "dsp_seg_14_tramp_p2"
+    },
+    "dsp": {
+     "ctx": "ctx_dsp_seg_14_tramp_p2__Dsp.bin",
+     "graph": "dsp_seg_14_tramp_p2"
+    }
+   },
+   "depends_on": [
+    83
+   ]
+  },
+  {
+   "id": 85,
+   "name": "cpu_seg_14",
+   "ops": {
+    "ranges": [
+     [
+      362,
+      365
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_cpu_seg_14__Cpu.bin",
+     "graph": "cpu_seg_14"
+    }
+   },
+   "depends_on": [
+    84
+   ]
+  },
+  {
+   "id": 86,
+   "name": "dsp_seg_15_tramp_p0",
+   "ops": {
+    "ranges": [
+     [
+      366,
+      367
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_dsp_seg_15_tramp_p0__Cpu.bin",
+     "graph": "dsp_seg_15_tramp_p0"
+    },
+    "dsp": {
+     "ctx": "ctx_dsp_seg_15_tramp_p0__Dsp.bin",
+     "graph": "dsp_seg_15_tramp_p0"
+    }
+   },
+   "depends_on": [
+    85
+   ]
+  },
+  {
+   "id": 87,
+   "name": "dsp_seg_15_node_MatMul_1389_conv1x1",
+   "ops": {
+    "ranges": [
+     [
+      368,
+      368
+     ]
+    ]
+   },
+   "backends": {
+    "hta": {
+     "ctx": "ctx_dsp_seg_15_node_MatMul_1389_conv1x1__Hta.bin",
+     "graph": "dsp_seg_15_node_MatMul_1389_conv1x1"
+    }
+   },
+   "depends_on": [
+    86
+   ]
+  },
+  {
+   "id": 88,
+   "name": "dsp_seg_15_node_MatMul_1394_conv1x1",
+   "ops": {
+    "ranges": [
+     [
+      369,
+      369
+     ]
+    ]
+   },
+   "backends": {
+    "hta": {
+     "ctx": "ctx_dsp_seg_15_node_MatMul_1394_conv1x1__Hta.bin",
+     "graph": "dsp_seg_15_node_MatMul_1394_conv1x1"
+    }
+   },
+   "depends_on": [
+    87
+   ]
+  },
+  {
+   "id": 89,
+   "name": "dsp_seg_15_tramp_p1",
+   "ops": {
+    "ranges": [
+     [
+      370,
+      375
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_dsp_seg_15_tramp_p1__Cpu.bin",
+     "graph": "dsp_seg_15_tramp_p1"
+    },
+    "dsp": {
+     "ctx": "ctx_dsp_seg_15_tramp_p1__Dsp.bin",
+     "graph": "dsp_seg_15_tramp_p1"
+    }
+   },
+   "depends_on": [
+    88
+   ]
+  },
+  {
+   "id": 90,
+   "name": "dsp_seg_15_tramp_p2",
+   "ops": {
+    "ranges": [
+     [
+      376,
+      381
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_dsp_seg_15_tramp_p2__Cpu.bin",
+     "graph": "dsp_seg_15_tramp_p2"
+    },
+    "dsp": {
+     "ctx": "ctx_dsp_seg_15_tramp_p2__Dsp.bin",
+     "graph": "dsp_seg_15_tramp_p2"
+    }
+   },
+   "depends_on": [
+    89
+   ]
+  },
+  {
+   "id": 91,
+   "name": "cpu_seg_15",
+   "ops": {
+    "ranges": [
+     [
+      382,
+      382
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_cpu_seg_15__Cpu.bin",
+     "graph": "cpu_seg_15"
+    }
+   },
+   "depends_on": [
+    90
+   ]
+  },
+  {
+   "id": 92,
+   "name": "dsp_seg_16_tramp_p0",
+   "ops": {
+    "ranges": [
+     [
+      383,
+      387
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_dsp_seg_16_tramp_p0__Cpu.bin",
+     "graph": "dsp_seg_16_tramp_p0"
+    },
+    "dsp": {
+     "ctx": "ctx_dsp_seg_16_tramp_p0__Dsp.bin",
+     "graph": "dsp_seg_16_tramp_p0"
+    }
+   },
+   "depends_on": [
+    91
+   ]
+  },
+  {
+   "id": 93,
+   "name": "dsp_seg_16_node_MatMul_1410_conv1x1",
+   "ops": {
+    "ranges": [
+     [
+      388,
+      388
+     ]
+    ]
+   },
+   "backends": {
+    "hta": {
+     "ctx": "ctx_dsp_seg_16_node_MatMul_1410_conv1x1__Hta.bin",
+     "graph": "dsp_seg_16_node_MatMul_1410_conv1x1"
+    }
+   },
+   "depends_on": [
+    92
+   ]
+  },
+  {
+   "id": 94,
+   "name": "dsp_seg_16_sng_MatMul_16_conv1x1",
+   "ops": {
+    "ranges": [
+     [
+      389,
+      389
+     ]
+    ]
+   },
+   "backends": {
+    "hta": {
+     "ctx": "ctx_dsp_seg_16_sng_MatMul_16_conv1x1__Hta.bin",
+     "graph": "dsp_seg_16_sng_MatMul_16_conv1x1"
+    }
+   },
+   "depends_on": [
+    93
+   ]
+  },
+  {
+   "id": 95,
+   "name": "dsp_seg_16_tramp_p1",
+   "ops": {
+    "ranges": [
+     [
+      390,
+      395
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_dsp_seg_16_tramp_p1__Cpu.bin",
+     "graph": "dsp_seg_16_tramp_p1"
+    },
+    "dsp": {
+     "ctx": "ctx_dsp_seg_16_tramp_p1__Dsp.bin",
+     "graph": "dsp_seg_16_tramp_p1"
+    }
+   },
+   "depends_on": [
+    94
+   ]
+  },
+  {
+   "id": 96,
+   "name": "dsp_seg_16_tramp_p2",
+   "ops": {
+    "ranges": [
+     [
+      396,
+      410
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_dsp_seg_16_tramp_p2__Cpu.bin",
+     "graph": "dsp_seg_16_tramp_p2"
+    },
+    "dsp": {
+     "ctx": "ctx_dsp_seg_16_tramp_p2__Dsp.bin",
+     "graph": "dsp_seg_16_tramp_p2"
+    }
+   },
+   "depends_on": [
+    95
+   ]
+  },
+  {
+   "id": 97,
+   "name": "cpu_seg_16",
+   "ops": {
+    "ranges": [
+     [
+      411,
+      414
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_cpu_seg_16__Cpu.bin",
+     "graph": "cpu_seg_16"
+    }
+   },
+   "depends_on": [
+    96
+   ]
+  },
+  {
+   "id": 98,
+   "name": "dsp_seg_17_tramp_p0",
+   "ops": {
+    "ranges": [
+     [
+      415,
+      416
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_dsp_seg_17_tramp_p0__Cpu.bin",
+     "graph": "dsp_seg_17_tramp_p0"
+    },
+    "dsp": {
+     "ctx": "ctx_dsp_seg_17_tramp_p0__Dsp.bin",
+     "graph": "dsp_seg_17_tramp_p0"
+    }
+   },
+   "depends_on": [
+    97
+   ]
+  },
+  {
+   "id": 99,
+   "name": "dsp_seg_17_node_MatMul_1509_conv1x1",
+   "ops": {
+    "ranges": [
+     [
+      417,
+      417
+     ]
+    ]
+   },
+   "backends": {
+    "hta": {
+     "ctx": "ctx_dsp_seg_17_node_MatMul_1509_conv1x1__Hta.bin",
+     "graph": "dsp_seg_17_node_MatMul_1509_conv1x1"
+    }
+   },
+   "depends_on": [
+    98
+   ]
+  },
+  {
+   "id": 100,
+   "name": "dsp_seg_17_node_MatMul_1514_conv1x1",
+   "ops": {
+    "ranges": [
+     [
+      418,
+      418
+     ]
+    ]
+   },
+   "backends": {
+    "hta": {
+     "ctx": "ctx_dsp_seg_17_node_MatMul_1514_conv1x1__Hta.bin",
+     "graph": "dsp_seg_17_node_MatMul_1514_conv1x1"
+    }
+   },
+   "depends_on": [
+    99
+   ]
+  },
+  {
+   "id": 101,
+   "name": "dsp_seg_17_tramp_p1",
+   "ops": {
+    "ranges": [
+     [
+      419,
+      424
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_dsp_seg_17_tramp_p1__Cpu.bin",
+     "graph": "dsp_seg_17_tramp_p1"
+    },
+    "dsp": {
+     "ctx": "ctx_dsp_seg_17_tramp_p1__Dsp.bin",
+     "graph": "dsp_seg_17_tramp_p1"
+    }
+   },
+   "depends_on": [
+    100
+   ]
+  },
+  {
+   "id": 102,
+   "name": "dsp_seg_17_tramp_p2",
+   "ops": {
+    "ranges": [
+     [
+      425,
+      430
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_dsp_seg_17_tramp_p2__Cpu.bin",
+     "graph": "dsp_seg_17_tramp_p2"
+    },
+    "dsp": {
+     "ctx": "ctx_dsp_seg_17_tramp_p2__Dsp.bin",
+     "graph": "dsp_seg_17_tramp_p2"
+    }
+   },
+   "depends_on": [
+    101
+   ]
+  },
+  {
+   "id": 103,
+   "name": "cpu_seg_17",
+   "ops": {
+    "ranges": [
+     [
+      431,
+      431
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_cpu_seg_17__Cpu.bin",
+     "graph": "cpu_seg_17"
+    }
+   },
+   "depends_on": [
+    102
+   ]
+  },
+  {
+   "id": 104,
+   "name": "dsp_seg_18_tramp_p0",
+   "ops": {
+    "ranges": [
+     [
+      432,
+      436
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_dsp_seg_18_tramp_p0__Cpu.bin",
+     "graph": "dsp_seg_18_tramp_p0"
+    },
+    "dsp": {
+     "ctx": "ctx_dsp_seg_18_tramp_p0__Dsp.bin",
+     "graph": "dsp_seg_18_tramp_p0"
+    }
+   },
+   "depends_on": [
+    103
+   ]
+  },
+  {
+   "id": 105,
+   "name": "dsp_seg_18_node_MatMul_1530_conv1x1",
+   "ops": {
+    "ranges": [
+     [
+      437,
+      437
+     ]
+    ]
+   },
+   "backends": {
+    "hta": {
+     "ctx": "ctx_dsp_seg_18_node_MatMul_1530_conv1x1__Hta.bin",
+     "graph": "dsp_seg_18_node_MatMul_1530_conv1x1"
+    }
+   },
+   "depends_on": [
+    104
+   ]
+  },
+  {
+   "id": 106,
+   "name": "dsp_seg_18_sng_MatMul_18_conv1x1",
+   "ops": {
+    "ranges": [
+     [
+      438,
+      438
+     ]
+    ]
+   },
+   "backends": {
+    "hta": {
+     "ctx": "ctx_dsp_seg_18_sng_MatMul_18_conv1x1__Hta.bin",
+     "graph": "dsp_seg_18_sng_MatMul_18_conv1x1"
+    }
+   },
+   "depends_on": [
+    105
+   ]
+  },
+  {
+   "id": 107,
+   "name": "dsp_seg_18_tramp_p1",
+   "ops": {
+    "ranges": [
+     [
+      439,
+      444
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_dsp_seg_18_tramp_p1__Cpu.bin",
+     "graph": "dsp_seg_18_tramp_p1"
+    },
+    "dsp": {
+     "ctx": "ctx_dsp_seg_18_tramp_p1__Dsp.bin",
+     "graph": "dsp_seg_18_tramp_p1"
+    }
+   },
+   "depends_on": [
+    106
+   ]
+  },
+  {
+   "id": 108,
+   "name": "dsp_seg_18_tramp_p2",
+   "ops": {
+    "ranges": [
+     [
+      445,
+      459
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_dsp_seg_18_tramp_p2__Cpu.bin",
+     "graph": "dsp_seg_18_tramp_p2"
+    },
+    "dsp": {
+     "ctx": "ctx_dsp_seg_18_tramp_p2__Dsp.bin",
+     "graph": "dsp_seg_18_tramp_p2"
+    }
+   },
+   "depends_on": [
+    107
+   ]
+  },
+  {
+   "id": 109,
+   "name": "cpu_seg_18",
+   "ops": {
+    "ranges": [
+     [
+      460,
+      463
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_cpu_seg_18__Cpu.bin",
+     "graph": "cpu_seg_18"
+    }
+   },
+   "depends_on": [
+    108
+   ]
+  },
+  {
+   "id": 110,
+   "name": "dsp_seg_19_tramp_p0",
+   "ops": {
+    "ranges": [
+     [
+      464,
+      465
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_dsp_seg_19_tramp_p0__Cpu.bin",
+     "graph": "dsp_seg_19_tramp_p0"
+    },
+    "dsp": {
+     "ctx": "ctx_dsp_seg_19_tramp_p0__Dsp.bin",
+     "graph": "dsp_seg_19_tramp_p0"
+    }
+   },
+   "depends_on": [
+    109
+   ]
+  },
+  {
+   "id": 111,
+   "name": "dsp_seg_19_node_MatMul_1629_conv1x1",
+   "ops": {
+    "ranges": [
+     [
+      466,
+      466
+     ]
+    ]
+   },
+   "backends": {
+    "hta": {
+     "ctx": "ctx_dsp_seg_19_node_MatMul_1629_conv1x1__Hta.bin",
+     "graph": "dsp_seg_19_node_MatMul_1629_conv1x1"
+    }
+   },
+   "depends_on": [
+    110
+   ]
+  },
+  {
+   "id": 112,
+   "name": "dsp_seg_19_node_MatMul_1634_conv1x1",
+   "ops": {
+    "ranges": [
+     [
+      467,
+      467
+     ]
+    ]
+   },
+   "backends": {
+    "hta": {
+     "ctx": "ctx_dsp_seg_19_node_MatMul_1634_conv1x1__Hta.bin",
+     "graph": "dsp_seg_19_node_MatMul_1634_conv1x1"
+    }
+   },
+   "depends_on": [
+    111
+   ]
+  },
+  {
+   "id": 113,
+   "name": "dsp_seg_19_tramp_p1",
+   "ops": {
+    "ranges": [
+     [
+      468,
+      473
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_dsp_seg_19_tramp_p1__Cpu.bin",
+     "graph": "dsp_seg_19_tramp_p1"
+    },
+    "dsp": {
+     "ctx": "ctx_dsp_seg_19_tramp_p1__Dsp.bin",
+     "graph": "dsp_seg_19_tramp_p1"
+    }
+   },
+   "depends_on": [
+    112
+   ]
+  },
+  {
+   "id": 114,
+   "name": "dsp_seg_19_tramp_p2",
+   "ops": {
+    "ranges": [
+     [
+      474,
+      479
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_dsp_seg_19_tramp_p2__Cpu.bin",
+     "graph": "dsp_seg_19_tramp_p2"
+    },
+    "dsp": {
+     "ctx": "ctx_dsp_seg_19_tramp_p2__Dsp.bin",
+     "graph": "dsp_seg_19_tramp_p2"
+    }
+   },
+   "depends_on": [
+    113
+   ]
+  },
+  {
+   "id": 115,
+   "name": "cpu_seg_19",
+   "ops": {
+    "ranges": [
+     [
+      480,
+      480
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_cpu_seg_19__Cpu.bin",
+     "graph": "cpu_seg_19"
+    }
+   },
+   "depends_on": [
+    114
+   ]
+  },
+  {
+   "id": 116,
+   "name": "dsp_seg_20_tramp_p0",
+   "ops": {
+    "ranges": [
+     [
+      481,
+      485
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_dsp_seg_20_tramp_p0__Cpu.bin",
+     "graph": "dsp_seg_20_tramp_p0"
+    },
+    "dsp": {
+     "ctx": "ctx_dsp_seg_20_tramp_p0__Dsp.bin",
+     "graph": "dsp_seg_20_tramp_p0"
+    }
+   },
+   "depends_on": [
+    115
+   ]
+  },
+  {
+   "id": 117,
+   "name": "dsp_seg_20_node_MatMul_1650_conv1x1",
+   "ops": {
+    "ranges": [
+     [
+      486,
+      486
+     ]
+    ]
+   },
+   "backends": {
+    "hta": {
+     "ctx": "ctx_dsp_seg_20_node_MatMul_1650_conv1x1__Hta.bin",
+     "graph": "dsp_seg_20_node_MatMul_1650_conv1x1"
+    }
+   },
+   "depends_on": [
+    116
+   ]
+  },
+  {
+   "id": 118,
+   "name": "dsp_seg_20_sng_MatMul_20_conv1x1",
+   "ops": {
+    "ranges": [
+     [
+      487,
+      487
+     ]
+    ]
+   },
+   "backends": {
+    "hta": {
+     "ctx": "ctx_dsp_seg_20_sng_MatMul_20_conv1x1__Hta.bin",
+     "graph": "dsp_seg_20_sng_MatMul_20_conv1x1"
+    }
+   },
+   "depends_on": [
+    117
+   ]
+  },
+  {
+   "id": 119,
+   "name": "dsp_seg_20_tramp_p1",
+   "ops": {
+    "ranges": [
+     [
+      488,
+      493
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_dsp_seg_20_tramp_p1__Cpu.bin",
+     "graph": "dsp_seg_20_tramp_p1"
+    },
+    "dsp": {
+     "ctx": "ctx_dsp_seg_20_tramp_p1__Dsp.bin",
+     "graph": "dsp_seg_20_tramp_p1"
+    }
+   },
+   "depends_on": [
+    118
+   ]
+  },
+  {
+   "id": 120,
+   "name": "dsp_seg_20_tramp_p2",
+   "ops": {
+    "ranges": [
+     [
+      494,
+      508
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_dsp_seg_20_tramp_p2__Cpu.bin",
+     "graph": "dsp_seg_20_tramp_p2"
+    },
+    "dsp": {
+     "ctx": "ctx_dsp_seg_20_tramp_p2__Dsp.bin",
+     "graph": "dsp_seg_20_tramp_p2"
+    }
+   },
+   "depends_on": [
+    119
+   ]
+  },
+  {
+   "id": 121,
+   "name": "cpu_seg_20",
+   "ops": {
+    "ranges": [
+     [
+      509,
+      512
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_cpu_seg_20__Cpu.bin",
+     "graph": "cpu_seg_20"
+    }
+   },
+   "depends_on": [
+    120
+   ]
+  },
+  {
+   "id": 122,
+   "name": "dsp_seg_21_tramp_p0",
+   "ops": {
+    "ranges": [
+     [
+      513,
+      514
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_dsp_seg_21_tramp_p0__Cpu.bin",
+     "graph": "dsp_seg_21_tramp_p0"
+    },
+    "dsp": {
+     "ctx": "ctx_dsp_seg_21_tramp_p0__Dsp.bin",
+     "graph": "dsp_seg_21_tramp_p0"
+    }
+   },
+   "depends_on": [
+    121
+   ]
+  },
+  {
+   "id": 123,
+   "name": "dsp_seg_21_node_MatMul_1749_conv1x1",
+   "ops": {
+    "ranges": [
+     [
+      515,
+      515
+     ]
+    ]
+   },
+   "backends": {
+    "hta": {
+     "ctx": "ctx_dsp_seg_21_node_MatMul_1749_conv1x1__Hta.bin",
+     "graph": "dsp_seg_21_node_MatMul_1749_conv1x1"
+    }
+   },
+   "depends_on": [
+    122
+   ]
+  },
+  {
+   "id": 124,
+   "name": "dsp_seg_21_node_MatMul_1754_conv1x1",
+   "ops": {
+    "ranges": [
+     [
+      516,
+      516
+     ]
+    ]
+   },
+   "backends": {
+    "hta": {
+     "ctx": "ctx_dsp_seg_21_node_MatMul_1754_conv1x1__Hta.bin",
+     "graph": "dsp_seg_21_node_MatMul_1754_conv1x1"
+    }
+   },
+   "depends_on": [
+    123
+   ]
+  },
+  {
+   "id": 125,
+   "name": "dsp_seg_21_tramp_p1",
+   "ops": {
+    "ranges": [
+     [
+      517,
+      522
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_dsp_seg_21_tramp_p1__Cpu.bin",
+     "graph": "dsp_seg_21_tramp_p1"
+    },
+    "dsp": {
+     "ctx": "ctx_dsp_seg_21_tramp_p1__Dsp.bin",
+     "graph": "dsp_seg_21_tramp_p1"
+    }
+   },
+   "depends_on": [
+    124
+   ]
+  },
+  {
+   "id": 126,
+   "name": "dsp_seg_21_tramp_p2",
+   "ops": {
+    "ranges": [
+     [
+      523,
+      528
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_dsp_seg_21_tramp_p2__Cpu.bin",
+     "graph": "dsp_seg_21_tramp_p2"
+    },
+    "dsp": {
+     "ctx": "ctx_dsp_seg_21_tramp_p2__Dsp.bin",
+     "graph": "dsp_seg_21_tramp_p2"
+    }
+   },
+   "depends_on": [
+    125
+   ]
+  },
+  {
+   "id": 127,
+   "name": "cpu_seg_21",
+   "ops": {
+    "ranges": [
+     [
+      529,
+      529
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_cpu_seg_21__Cpu.bin",
+     "graph": "cpu_seg_21"
+    }
+   },
+   "depends_on": [
+    126
+   ]
+  },
+  {
+   "id": 128,
+   "name": "dsp_seg_22_tramp_p0",
+   "ops": {
+    "ranges": [
+     [
+      530,
+      534
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_dsp_seg_22_tramp_p0__Cpu.bin",
+     "graph": "dsp_seg_22_tramp_p0"
+    },
+    "dsp": {
+     "ctx": "ctx_dsp_seg_22_tramp_p0__Dsp.bin",
+     "graph": "dsp_seg_22_tramp_p0"
+    }
+   },
+   "depends_on": [
+    127
+   ]
+  },
+  {
+   "id": 129,
+   "name": "dsp_seg_22_node_MatMul_1770_conv1x1",
+   "ops": {
+    "ranges": [
+     [
+      535,
+      535
+     ]
+    ]
+   },
+   "backends": {
+    "hta": {
+     "ctx": "ctx_dsp_seg_22_node_MatMul_1770_conv1x1__Hta.bin",
+     "graph": "dsp_seg_22_node_MatMul_1770_conv1x1"
+    }
+   },
+   "depends_on": [
+    128
+   ]
+  },
+  {
+   "id": 130,
+   "name": "dsp_seg_22_sng_MatMul_22_conv1x1",
+   "ops": {
+    "ranges": [
+     [
+      536,
+      536
+     ]
+    ]
+   },
+   "backends": {
+    "hta": {
+     "ctx": "ctx_dsp_seg_22_sng_MatMul_22_conv1x1__Hta.bin",
+     "graph": "dsp_seg_22_sng_MatMul_22_conv1x1"
+    }
+   },
+   "depends_on": [
+    129
+   ]
+  },
+  {
+   "id": 131,
+   "name": "dsp_seg_22_tramp_p1",
+   "ops": {
+    "ranges": [
+     [
+      537,
+      542
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_dsp_seg_22_tramp_p1__Cpu.bin",
+     "graph": "dsp_seg_22_tramp_p1"
+    },
+    "dsp": {
+     "ctx": "ctx_dsp_seg_22_tramp_p1__Dsp.bin",
+     "graph": "dsp_seg_22_tramp_p1"
+    }
+   },
+   "depends_on": [
+    130
+   ]
+  },
+  {
+   "id": 132,
+   "name": "dsp_seg_22_tramp_p2",
+   "ops": {
+    "ranges": [
+     [
+      543,
+      557
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_dsp_seg_22_tramp_p2__Cpu.bin",
+     "graph": "dsp_seg_22_tramp_p2"
+    },
+    "dsp": {
+     "ctx": "ctx_dsp_seg_22_tramp_p2__Dsp.bin",
+     "graph": "dsp_seg_22_tramp_p2"
+    }
+   },
+   "depends_on": [
+    131
+   ]
+  },
+  {
+   "id": 133,
+   "name": "cpu_seg_22",
+   "ops": {
+    "ranges": [
+     [
+      558,
+      561
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_cpu_seg_22__Cpu.bin",
+     "graph": "cpu_seg_22"
+    }
+   },
+   "depends_on": [
+    132
+   ]
+  },
+  {
+   "id": 134,
+   "name": "dsp_seg_23_tramp_p0",
+   "ops": {
+    "ranges": [
+     [
+      562,
+      563
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_dsp_seg_23_tramp_p0__Cpu.bin",
+     "graph": "dsp_seg_23_tramp_p0"
+    },
+    "dsp": {
+     "ctx": "ctx_dsp_seg_23_tramp_p0__Dsp.bin",
+     "graph": "dsp_seg_23_tramp_p0"
+    }
+   },
+   "depends_on": [
+    133
+   ]
+  },
+  {
+   "id": 135,
+   "name": "dsp_seg_23_node_MatMul_1869_conv1x1",
+   "ops": {
+    "ranges": [
+     [
+      564,
+      564
+     ]
+    ]
+   },
+   "backends": {
+    "hta": {
+     "ctx": "ctx_dsp_seg_23_node_MatMul_1869_conv1x1__Hta.bin",
+     "graph": "dsp_seg_23_node_MatMul_1869_conv1x1"
+    }
+   },
+   "depends_on": [
+    134
+   ]
+  },
+  {
+   "id": 136,
+   "name": "dsp_seg_23_node_MatMul_1874_conv1x1",
+   "ops": {
+    "ranges": [
+     [
+      565,
+      565
+     ]
+    ]
+   },
+   "backends": {
+    "hta": {
+     "ctx": "ctx_dsp_seg_23_node_MatMul_1874_conv1x1__Hta.bin",
+     "graph": "dsp_seg_23_node_MatMul_1874_conv1x1"
+    }
+   },
+   "depends_on": [
+    135
+   ]
+  },
+  {
+   "id": 137,
+   "name": "dsp_seg_23_tramp_p1",
+   "ops": {
+    "ranges": [
+     [
+      566,
+      571
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_dsp_seg_23_tramp_p1__Cpu.bin",
+     "graph": "dsp_seg_23_tramp_p1"
+    },
+    "dsp": {
+     "ctx": "ctx_dsp_seg_23_tramp_p1__Dsp.bin",
+     "graph": "dsp_seg_23_tramp_p1"
+    }
+   },
+   "depends_on": [
+    136
+   ]
+  },
+  {
+   "id": 138,
+   "name": "dsp_seg_23_tramp_p2",
+   "ops": {
+    "ranges": [
+     [
+      572,
+      577
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_dsp_seg_23_tramp_p2__Cpu.bin",
+     "graph": "dsp_seg_23_tramp_p2"
+    },
+    "dsp": {
+     "ctx": "ctx_dsp_seg_23_tramp_p2__Dsp.bin",
+     "graph": "dsp_seg_23_tramp_p2"
+    }
+   },
+   "depends_on": [
+    137
+   ]
+  },
+  {
+   "id": 139,
+   "name": "cpu_seg_23",
+   "ops": {
+    "ranges": [
+     [
+      578,
+      578
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_cpu_seg_23__Cpu.bin",
+     "graph": "cpu_seg_23"
+    }
+   },
+   "depends_on": [
+    138
+   ]
+  },
+  {
+   "id": 140,
+   "name": "dsp_seg_24",
+   "ops": {
+    "ranges": [
+     [
+      579,
+      590
+     ]
+    ]
+   },
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_dsp_seg_24__Cpu.bin",
+     "graph": "dsp_seg_24"
+    },
+    "dsp": {
+     "ctx": "ctx_dsp_seg_24__Dsp.bin",
+     "graph": "dsp_seg_24"
+    }
+   },
+   "depends_on": [
+    139
+   ]
+  }
+ ]
+}

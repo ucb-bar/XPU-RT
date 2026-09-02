@@ -1,0 +1,46 @@
+{
+ "_comment": "Measured cells for the native-conv-layout expert linear tiles. profile_seg, 50 iters, 3 interleaved repeats per (tile, backend), performance governor on all 8 cores, gap phase 3000 us; the value is the median of the three gap medians. Every (tile, backend) here has a real context binary on the board. DSP repeats were noticeably noisier than cpu/hta (nc_qkv 1633-3131, nc_mlp 2495-4192) -- treat the dsp column as indicative. Also carries the DECODE linear blocks (smolvla_expert_decode_linear/*, seq 50 vs prefill's 113). No accelerator wins any of them -- cpu takes qkv and o_proj outright and ncd_mlp is a 1.3% tie with dsp, inside dsp's own spread. These cells exist so a scheduler sees the real cost and places them on cpu; there is deliberately NO decode binding manifest, because no context binaries for them are resident on the board.",
+ "target": "qrb5165_v66",
+ "captured_at": "2026-09-01",
+ "harness": "qnn_models/runtime/profile_segments.cpp (two-phase)",
+ "statistic": "gap_median",
+ "iters": 50,
+ "unit": "us",
+ "conditions": {
+  "governor": "performance",
+  "gap_us": 3000,
+  "repeats": 3
+ },
+ "cells": {
+  "smolvla_expert_linear/nc_qkv": {
+   "cpu": 1193.1,
+   "dsp": 3075.5,
+   "hta": 2455.3
+  },
+  "smolvla_expert_linear/nc_oproj": {
+   "cpu": 925.1,
+   "dsp": 932.6,
+   "hta": 1773.3
+  },
+  "smolvla_expert_linear/nc_mlp": {
+   "cpu": 4414.9,
+   "dsp": 3820.5,
+   "hta": 2452.2
+  },
+  "smolvla_expert_decode_linear/ncd_qkv": {
+   "cpu": 593.9,
+   "dsp": 919.9,
+   "hta": 1768.7
+  },
+  "smolvla_expert_decode_linear/ncd_oproj": {
+   "cpu": 381.0,
+   "dsp": 690.1,
+   "hta": 2524.0
+  },
+  "smolvla_expert_decode_linear/ncd_mlp": {
+   "cpu": 1700.5,
+   "dsp": 1679.0,
+   "hta": 2512.1
+  }
+ }
+}
