@@ -78,6 +78,14 @@ $ISAAC_PY sims/scripts/train_yolo.py
 The warehouse env: aisle along +Y at x≈−8, cruise z≈2; the four gates at world y≈9, 13, 17, 21
 (also stored as `gates_world` in the dump). The drone spawns at the low-y (south) end.
 
+**Two external dependencies (not vendored in the repo):**
+- **Scene assets** — the warehouse USD + props come from Isaac's asset server
+  (`ISAAC_NUCLEUS_DIR/Environments/Simple_Warehouse/...`), i.e. they ship with **Isaac Sim**; nothing
+  to fetch beyond the Isaac install.
+- **ViNT** (optional) — only `eval_fused_warehouse.py --nav vint` needs
+  `sims/external/visualnav-transformer` + a ViNT weight; the mega figure and the default nav do not.
+  Clone visualnav-transformer into `sims/external/` if you want that variant.
+
 ---
 
 ## 1. Render the flight + sensor bank
