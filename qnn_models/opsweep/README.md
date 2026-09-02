@@ -28,7 +28,8 @@ two terms are only identifiable across decades.
                  the calibration raws.
     sweep.py     gen -> build -> measure -> fit. Resumable; every finished row is
                  appended to results.jsonl and skipped on re-run.
-    plot_opsweep.py   placement heatmap, dispatch-overhead bars, size ladders.
+    plot_opsweep.py   placement heatmap, crossover heatmap, the same map with
+                 dispatch subtracted, overhead bars, size ladders.
 
 The host needs only python3 + numpy: onnx and the QAIRT converters live in the
 `qnn-convert` container, the runtime lives on the board.
