@@ -1,0 +1,138 @@
+{
+ "network": "smolvla_expert_linear",
+ "ir": {
+  "source": "onnx:qnn_models/smolVLA/smolvlm_expert_prefill_trunk.onnx",
+  "quant": "int8"
+ },
+ "_comment": "The seven per-layer linears of smolvlm_expert_prefill_trunk, extracted as NATIVE conv-layout sub-models rather than rewritten in place. This is the only form in which the experts reach an accelerator at all: rewriting the trunk's MatMuls to Conv1x1 with rewrite_matmul_to_conv1x1.py wraps every conv in a rank-3->4->3 Transpose/Reshape pair, and the v66 DSP then refuses to finalize the graph (rpc / error 6022) at EVERY granularity tested -- 1588 ops, 794, and even a single 103-op layer -- while the same layer in MatMul form composes fine at 73 ops. Built directly as [1,C,1,113] Conv(1x1) and converted WITHOUT --preserve_io layout, the converter declares the input NHWC [1,1,113,C] and emits zero layout ops, and all three blocks then compose on cpu, dsp AND hta -- the first time anything expert-shaped has reached HTA. Backends per tile are exactly the context binaries present at /root/models/smolvla_expert_nc on the board; all 9 exist. SCOPE: these are LAYER 0's linears only. The interleaving CPU work (RoPE, attention, RMSNorm, the residual stream) is not yet cut into tiles, and layers 1-15 need their own weights extracted, so this manifest is not yet a runnable whole-network binding -- it is the linear tiles plus their measured cells. op ranges index the trunk ONNX node list.",
+ "bindings": [
+  {
+   "id": 0,
+   "name": "nc_qkv",
+   "_ops_onnx_nodes": [
+    "node_MatMul_16",
+    "node_MatMul_25",
+    "node_MatMul_34"
+   ],
+   "_role": "q(960->960), k(960->320), v(960->320) from mul_1, the post-RMSNorm activation",
+   "ops": {
+    "ranges": [
+     [
+      8,
+      8
+     ],
+     [
+      10,
+      10
+     ],
+     [
+      12,
+      12
+     ]
+    ]
+   },
+   "source_onnx": "qnn_models/smolVLA/expert_rewrite/nativeconv/nc_qkv.onnx",
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_nc_qkv__Cpu.bin",
+     "graph": "nc_qkv",
+     "precision": "int8"
+    },
+    "dsp": {
+     "ctx": "ctx_nc_qkv__Dsp.bin",
+     "graph": "nc_qkv",
+     "precision": "int8"
+    },
+    "hta": {
+     "ctx": "ctx_nc_qkv__Hta.bin",
+     "graph": "nc_qkv",
+     "precision": "int8"
+    }
+   }
+  },
+  {
+   "id": 1,
+   "name": "nc_oproj",
+   "_ops_onnx_nodes": [
+    "node_MatMul_449"
+   ],
+   "_role": "attention output projection (960->960) from _unsafe_view_2; depends on tile 0 only through the attention block, which is still CPU-resident and untiled",
+   "ops": {
+    "ranges": [
+     [
+      56,
+      56
+     ]
+    ]
+   },
+   "depends_on": [
+    0
+   ],
+   "source_onnx": "qnn_models/smolVLA/expert_rewrite/nativeconv/nc_oproj.onnx",
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_nc_oproj__Cpu.bin",
+     "graph": "nc_oproj",
+     "precision": "int8"
+    },
+    "dsp": {
+     "ctx": "ctx_nc_oproj__Dsp.bin",
+     "graph": "nc_oproj",
+     "precision": "int8"
+    },
+    "hta": {
+     "ctx": "ctx_nc_oproj__Hta.bin",
+     "graph": "nc_oproj",
+     "precision": "int8"
+    }
+   }
+  },
+  {
+   "id": 2,
+   "name": "nc_mlp",
+   "_ops_onnx_nodes": [
+    "node_MatMul_465",
+    "node_MatMul_469",
+    "node_MatMul_472"
+   ],
+   "_role": "SwiGLU: gate(960->2560), up(960->2560), down(2560->960) plus Sigmoid and two Mul, from mul_14. The only block where an accelerator wins: hta 2452 us vs cpu 4415 us, 1.80x.",
+   "ops": {
+    "ranges": [
+     [
+      66,
+      66
+     ],
+     [
+      69,
+      69
+     ],
+     [
+      71,
+      71
+     ]
+    ]
+   },
+   "depends_on": [
+    1
+   ],
+   "source_onnx": "qnn_models/smolVLA/expert_rewrite/nativeconv/nc_mlp.onnx",
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_nc_mlp__Cpu.bin",
+     "graph": "nc_mlp",
+     "precision": "int8"
+    },
+    "dsp": {
+     "ctx": "ctx_nc_mlp__Dsp.bin",
+     "graph": "nc_mlp",
+     "precision": "int8"
+    },
+    "hta": {
+     "ctx": "ctx_nc_mlp__Hta.bin",
+     "graph": "nc_mlp",
+     "precision": "int8"
+    }
+   }
+  }
+ ]
+}

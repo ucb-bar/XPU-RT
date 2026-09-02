@@ -325,14 +325,33 @@ struct LoadedCtx {
     std::shared_ptr<SharedBackend>  sb;
     Qnn_ContextHandle_t             ctx = nullptr;
     std::unordered_map<std::string, std::unique_ptr<GraphInfo>> graphs;
+    // --- lazy-load bookkeeping (only used when a budget is set) ---
+    std::string lib_path;          // enough to reconstruct the context on demand
+    bool        loaded   = false;
+    long long   last_use = 0;      // for LRU
+    int         in_use   = 0;      // a lane is executing on it right now
 };
 static std::unordered_map<std::string, std::shared_ptr<LoadedCtx>> g_ctx;
+
+// Lazy context loading. A 141-tile network exhausts the board if every context
+// is created at bringup -- QNN error 0x4 out of contextCreateFromBinary at ~56
+// contexts on QRB5165 v66. With FLOWC_CTX_BUDGET set, contexts are created on
+// first use and the least-recently-used one on the same backend is freed when
+// the budget is reached. Default 0 = eager, which is exactly the old behaviour,
+// so runtimes that already fit are bit-identical.
+static std::mutex g_load_mu;
+static long long  g_use_clock  = 0;
+static int        g_ctx_budget = 0;
+static long long  g_n_loads = 0, g_n_evicts = 0;
+static double     g_load_ms = 0.0;
 
 struct SysFns {
     QnnSystemContext_CreateFn_t        create        = nullptr;
     QnnSystemContext_GetBinaryInfoFn_t getBinaryInfo = nullptr;
     QnnSystemContext_FreeFn_t          free          = nullptr;
 };
+static SysFns g_sys;   // set in main; workers need it to reload lazily
+
 static SysFns load_system() {
     SysFns f{};
     void* lib = dlopen("libQnnSystem.so", RTLD_NOW | RTLD_GLOBAL);
@@ -352,7 +371,7 @@ static int g_warmup = 2;
 static void bringup(LoadedCtx& bc, const std::string& bin_path,
                     const std::string& lib_path, const std::string& label,
                     const SysFns& sys) {
-    bc.label = label; bc.ctx_file = bin_path;
+    bc.label = label; bc.ctx_file = bin_path; bc.lib_path = lib_path;
     auto it = g_backends.find(lib_path);
     if (it != g_backends.end()) {
         bc.sb = it->second;
@@ -445,6 +464,56 @@ static void bringup(LoadedCtx& bc, const std::string& bin_path,
                  bin_path.c_str(), bc.graphs.size());
     for (auto& kv : bc.graphs) std::fprintf(stderr, " %s", kv.first.c_str());
     std::fprintf(stderr, "\n");
+}
+
+// ------------------------------------------------------ lazy ctx loading
+static void unload_ctx(LoadedCtx& bc) {
+    if (!bc.loaded) return;
+    bc.graphs.clear();                       // buffers + tensor storage
+    if (bc.ctx) bc.sb->iface.contextFree(bc.ctx, nullptr);
+    bc.ctx = nullptr;
+    bc.loaded = false;
+    ++g_n_evicts;
+}
+
+// Caller must hold g_load_mu.
+static void evict_for(const std::string& label) {
+    if (g_ctx_budget <= 0) return;
+    for (;;) {
+        int live = 0;
+        LoadedCtx* victim = nullptr;
+        for (auto& kv : g_ctx) {
+            LoadedCtx& c = *kv.second;
+            if (!c.loaded || c.label != label) continue;
+            ++live;
+            if (c.in_use > 0) continue;
+            if (!victim || c.last_use < victim->last_use) victim = &c;
+        }
+        if (live < g_ctx_budget || !victim) return;
+        unload_ctx(*victim);
+    }
+}
+
+static bool ensure_loaded(LoadedCtx& bc, const SysFns& sys) {
+    if (g_ctx_budget <= 0) return true;               // eager: already up
+    std::lock_guard<std::mutex> lk(g_load_mu);
+    if (!bc.loaded) {
+        evict_for(bc.label);
+        double t0 = now_ms();
+        bringup(bc, bc.ctx_file, bc.lib_path, bc.label, sys);
+        g_load_ms += now_ms() - t0;
+        bc.loaded = true;
+        ++g_n_loads;
+    }
+    bc.last_use = ++g_use_clock;
+    ++bc.in_use;
+    return true;
+}
+
+static void release_ctx(LoadedCtx& bc) {
+    if (g_ctx_budget <= 0) return;
+    std::lock_guard<std::mutex> lk(g_load_mu);
+    if (bc.in_use > 0) --bc.in_use;
 }
 
 // ------------------------------------------------------ boundary handoff
@@ -606,10 +675,12 @@ static void worker(int lane, int core, int fifo_prio) {
             continue;
         }
         LoadedCtx& bc = *cit->second;
+        ensure_loaded(bc, g_sys);          // no-op unless FLOWC_CTX_BUDGET is set
         auto git = bc.graphs.find(e.graph);
         if (git == bc.graphs.end()) {
             std::fprintf(stderr, "[run] entry %d: graph %s not in %s — skipping\n",
                          e.entry_id, e.graph, e.ctx);
+            release_ctx(bc);
             sem_post(&g_done[e.entry_id]);
             continue;
         }
@@ -647,6 +718,7 @@ static void worker(int lane, int core, int fifo_prio) {
         }
         tr.hout_ms = now_ms() - h1;
 
+        release_ctx(bc);
         if (err != QNN_SUCCESS)
             std::fprintf(stderr, "[run] entry %d (%s/%s) execute failed: 0x%llx\n",
                          e.entry_id, e.network, e.name, (unsigned long long)err);
@@ -761,7 +833,9 @@ int main() {
         }
     }
 
+    if (const char* v = std::getenv("FLOWC_CTX_BUDGET")) g_ctx_budget = std::atoi(v);
     SysFns sys = load_system();
+    g_sys = sys;
 
     // Bring up every distinct (context binary, backend) the table names.
     // Order follows the table, so the first thing the schedule runs is the
@@ -779,9 +853,21 @@ int main() {
         }
         probe.close();
         auto bc = std::make_shared<LoadedCtx>();
-        bringup(*bc, path, e.backend_lib, e.backend_label, sys);
+        if (g_ctx_budget > 0) {
+            // Lazy: record what a reload needs, create nothing yet.
+            bc->label = e.backend_label; bc->ctx_file = path;
+            bc->lib_path = e.backend_lib;
+            // bc->sb is filled by bringup() on first use; unload_ctx() only
+            // ever touches it for a context that has actually been loaded.
+        } else {
+            bringup(*bc, path, e.backend_lib, e.backend_label, sys);
+            bc->loaded = true;
+        }
         g_ctx[key] = bc;
     }
+    if (g_ctx_budget > 0)
+        std::fprintf(stderr, "[main] lazy contexts: budget %d per backend, "
+                     "%zu registered\n", g_ctx_budget, g_ctx.size());
     std::fprintf(stderr, "[main] %zu context(s), %d entries, %d lane(s):\n",
                  g_ctx.size(), FLOWC_N_ENTRIES, FLOWC_N_LANES);
     for (int l = 0; l < FLOWC_N_LANES; ++l)
@@ -828,6 +914,10 @@ int main() {
                 "(predicted makespan %.3f ms, ratio %.2fx), tensor handoffs=%d\n",
                 ran, FLOWC_N_ENTRIES, wall, predicted,
                 predicted > 0 ? wall / predicted : 0.0, g_handoffs.load());
+
+    if (g_ctx_budget > 0)
+        std::fprintf(stderr, "[main] ctx loads=%lld evictions=%lld load_time=%.1f ms\n",
+                     g_n_loads, g_n_evicts, g_load_ms);
 
     if (trace) {
         // Column names match modelblaster's MODELBLASTER_XPURT_TRACE block so
