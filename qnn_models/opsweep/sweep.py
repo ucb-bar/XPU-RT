@@ -149,7 +149,10 @@ def stage_measure(pts, iters, chunk_n):
             if not os.path.exists(os.path.join(WORK, t, dlc)):
                 continue
             for bk in bks:
-                if (op, tuple(prm), prec, bk) not in have:
+                # rows store the backend lowercased; PRECISION_BACKENDS
+                # spells it "Cpu"/"Dsp"/"Hta"/"Gpu" (the libQnn* suffix),
+                # so this comparison has to normalise or resume never hits
+                if (op, tuple(prm), prec, bk.lower()) not in have:
                     work.append((op, prm, axis, val, t, prec, bk, dlc))
     print(f"[measure] {len(work)} pending of {len(pts)*7} max", flush=True)
     if not work:
