@@ -183,8 +183,9 @@ def crossover(rows, out):
     ncol = max((len(v) for v in order.values()), default=0)
     if not ncol:
         print("  no sizes yet"); return
-    fig, axes = plt.subplots(1, len(lanes), figsize=(3.1*len(lanes)+1.6,
-                                                    0.34*len(ops)+2.6), squeeze=False)
+    figh = 0.34*len(ops)+2.6
+    fig, axes = plt.subplots(1, len(lanes), figsize=(3.1*len(lanes)+1.6, figh),
+                             squeeze=False)
     im = None
     for j, lane in enumerate(lanes):
         M = np.full((len(ops), ncol), np.nan)
@@ -220,7 +221,7 @@ def crossover(rows, out):
                  "at the same size\ngreen = accelerator wins, hatched = will not "
                  "compose, blank = not measured",
                  fontsize=10.5, x=.02, y=.995, ha="left", va="top")
-    fig.subplots_adjust(top=.80)
+    fig.subplots_adjust(top=1 - 0.85/figh)   # constant header, any row count
     cb = fig.colorbar(im, ax=axes[0].tolist(), fraction=0.02, pad=0.02)
     cb.set_ticks([-4, -2, 0, 2, 4]); cb.set_ticklabels(["1/16", "1/4", "1x", "4x", "16x"])
     p = os.path.join(out, "opsweep_crossover_heatmap.png")
