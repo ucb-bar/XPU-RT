@@ -366,3 +366,66 @@ Every part of the expert is now measured on every backend it can reach:
 
 The ~12.07 ms/layer prefill remainder (attention + RoPE + norms) is CPU-only
 and will stay that way. The accelerator search on the experts is complete.
+
+## 9. Applied: the two measured vision wins, and the blocker that hid them
+
+Both wins below had been measured by the parallel studies and neither had been
+applied. `vision_slices_v3/attn_tail/` did not exist; the trampolines still
+shipped fp32.
+
+### 1. The 12 lone-Tanh trampolines, fp32 -> int8
+
+`quantize_tanh_trampolines.py`. The difficulty is entirely calibration:
+`profile_inputs/cpu_seg_NN_*.raw` is range +-0.505 std 0.100 while the real
+distribution entering the Tanh is +-2.9 std 0.413. Rather than substitute a
+nearby tensor, the script extracts the GELU pre-tanh chain from each producing
+`dsp_seg_NN`
+
+    val_364 = fc1(x)  ->  ^3  ->  *0.044715  ->  +x  ->  *sqrt(2/pi) = tanh input
+
+and runs it on the real fc1 activations from `trampolines/calibration/`, which
+is exact and does not depend on reading the GELU constants by hand.
+
+That choice is worth 37x in accuracy. Simulated against the true distribution:
+
+| calibration | max abs err | mean | cosine | clipped |
+|-------------|-------------|------|--------|---------|
+| **derived (this change)** | **0.0144** | 0.00486 | 0.999792 | **0.00%** |
+| shipped `profile_inputs` | 0.5275 | 0.03125 | 0.983025 | **21.89%** |
+
+The shipped raws would clip 22% of the distribution and produce 0.53 max error
+on a [-1,1] output -- unusable. Measured on the board from the DLCs this script
+produces (cpu_seg_01 / cpu_seg_11, gap median):
+
+    CPU 2389.7 / 2494.5 us     DSP 3806.1 / 3732.0     HTA 5067.8 / 4890.2
+    against the shipped fp32 9171 us  ->  3.75x
+
+**110.1 ms -> 29.3 ms, saves 80.8 ms.** TANH_PROBE.md predicted 81.2 ms
+independently.
+
+### 2. The 12 attention tails, head-merge Transpose -> Split+Concat
+
+`rewrite_attention_tail.py --in-dir vision_slices_v3 --out-dir
+vision_slices_v3/attn_tail --check`. All 12 rewrote at
+`max|diff| = 0.000e+00`; the 12 odd segments correctly skip as not attention
+tails. Worth **93.0 ms** (36.15 -> 28.40 ms each) per ATTENTION_MAPPING.md.
+
+### 3. The blocker: build_v3_bundles.py pinned every dispatch to one backend
+
+`emit_results_csvs` wrote
+
+    cost = m["cost_us"] if m["preferred_hw"] == csv_hw else _INFEASIBLE_US
+
+so every backend other than the one this script chose got the 1e9 sentinel.
+The placement was an assumption the scheduler could not revisit, and the
+docstring stated it as fact: *"cpu_seg_XX always contributes 1, CPU-only"*.
+That is why the trampolines' DSP/HTA numbers could not be expressed even once
+they existed.
+
+`add()` now takes `alt_costs_us`, and the emitter offers a dispatch on every
+backend it has a MEASURED cost for, sentinel only where none exists. The odd
+trampolines carry all three; the even ones stay CPU-only deliberately, because
+the attention study measured 0 ms accelerator-recoverable for them.
+
+Net for vision: **173.8 ms** (80.8 + 93.0), about 32% of the 544.7 ms the
+trampolines cost and ~8% of vision's realizable total. Both wins are CPU-side.
