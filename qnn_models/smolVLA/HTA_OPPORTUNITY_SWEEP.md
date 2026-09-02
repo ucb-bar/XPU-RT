@@ -178,3 +178,191 @@ CONVERT time and offers no pass to disable it.
 | conv rewrite applied whole-graph | **negative** -- layout round trips cost 20.6 ms |
 | conv rewrite by extraction, decode | untested; ceiling ~62 ms of 1116 (5.6%) before handoffs |
 | **conv rewrite by extraction, prefill** | **untested and the most promising thing left** |
+
+## 6. Re-examining the text encoder and projectors (correction)
+
+Section 2 dismissed these on the strength of the profile CSVs. Two things were
+wrong with that, in opposite directions.
+
+**First, they run more often than section 2 implied.** `REPRODUCTION.md:915`
+records `projectors x10  159.0 ms  4.8%` -- `action_in`, `time_in` and
+`time_out` (4.68 + 5.85 + 5.37 = 15.90 ms) fire once per denoising step. So the
+CSV-based cost is 159 ms + 9.9 ms one-shot, not the 25.8 ms single-pass figure.
+
+**Second, and decisively: the CSV numbers for small components are wrong.**
+`state_projector` still has context binaries on the board, so it is a free
+control. Re-measured with the current harness:
+
+| | recorded | CPU warm | CPU cold |
+|---|----------|----------|----------|
+| state_projector CPU | 1.33 ms | **17.4 us** | 64.6 us |
+| state_projector DSP | 29.04 ms | 419.1 us | 781.6 us |
+| state_projector HTA | 2.64 ms | 542.3 us | 2465.0 us |
+
+The CPU figure is overstated **76x** and the DSP figure 37x. Only the HTA
+number reproduces, and only against the *cold* measurement. Rebuilding and
+measuring the two per-step projectors that dominate the x10 total:
+
+| projector | recorded | CPU warm | CPU cold |
+|-----------|----------|----------|----------|
+| `time_in`  | 5.85 ms | **0.57 ms** | 2.10 ms |
+| `time_out` | 5.37 ms | **0.31 ms** | 1.38 ms |
+
+3-10x overstated. The pattern -- every tiny component landing at 1-6 ms
+regardless of its actual arithmetic (`action_in` is 0.026 MMAC and "costs"
+4.68 ms) -- is consistent with the coarse profiling harness charging fixed
+setup per component rather than measuring steady-state execute.
+
+`action_in_projector` and `action_out_projector` could not be quantized for
+this check: their `[1,1,36]` and `[1,1,720]` shapes are degenerate for
+`qairt-quantizer`. Their real cost is therefore still unmeasured, but by
+analogy it is almost certainly well under the recorded 4.68 / 2.15 ms.
+
+### Consequence: there is no opportunity here, and less to win than believed
+
+Taking the measured numbers and being generous to the unmeasured `action_in`:
+
+    recorded per step   15.90 ms   ->  x10 = 159.0 ms   (4.8% of pipeline)
+    measured per step   ~1-4.5 ms  ->  x10 = ~10-45 ms  (0.3-1.4%)
+
+So roughly 115-150 ms of the pipeline budget that was attributed to projectors
+does not exist. The components are already close to free.
+
+There is also no accelerator lever. HTA's *warm* floor is 542 us -- already
+above what the CPU spends on every one of these (17-570 us warm). The text
+encoder is a single `Gather` over a 47.3 M-parameter embedding table with zero
+MACs; no accelerator has anything to do with a table lookup, which is why it is
+excluded rather than merely slow.
+
+The one genuine, small effect: these ARE the short dispatches that suffer the
+power-collapse penalty documented in `HTA_DISPATCH_FLOOR.md` -- `time_in` goes
+569 us warm to 2100 us cold, 3.7x, and the same ratio shows on the CPU. Placing
+the three per-step projectors adjacent in the schedule, or fusing them into one
+graph, would recover a few ms per chunk. Single-digit ms, worth doing only if
+it falls out of other scheduling work.
+
+**Action item beyond this file:** `plot_smolvla_gains.py` and
+`REPRODUCTION.md:915` both carry the 159.0 ms figure and should be corrected.
+
+## 7. Are there other blocks to cast to Conv1x1? No -- the lever is exhausted
+
+A Conv1x1 computes, at each spatial position, a **constant-weight linear map
+over the channel axis**. That is the whole expressible set, and it is worth
+scanning the model against it rather than guessing.
+
+Constant-weight MatMul/Gemm remaining, by component:
+
+| component | ops | constW MatMul | dynamic MatMul | Conv |
+|-----------|-----|---------------|----------------|------|
+| prefill trunk (original) | 1108 | 112 | 32 | 0 |
+| prefill trunk (convbar)  | 1588 | **0** | 32 | 112 |
+| decode (original)        | 1096 | 112 | 32 | 0 |
+| vision, 25 dsp_seg orig  | -- | 49 | -- | -- |
+| vision, 25 dsp_seg conv1x1 | -- | **0** | -- | -- |
+| 24 cpu_seg trampolines   | -- | **0** | 12 | -- |
+| projectors (`*_conv` variants exist) | 2 -> 1 | 1 -> **0** | 0 | 1 |
+| text encoder             | 1 | **0** | 0 | 0 |
+
+**There is not a single constant-weight linear left un-converted anywhere in
+SmolVLA.** Prefill and vision are done; decode's 112 are covered by the
+`ncd_*` blocks; the projectors already have `_conv` variants on disk.
+
+The 88 MatMuls that remain (32 prefill + 32 decode + 24 vision trampolines) are
+all **two-dynamic-operand attention products**. A Conv1x1 needs its weights to
+be constant, and in `QK^T` and `A·V` both operands are activations, so these
+are not castable in principle -- not a tooling gap.
+
+### RoPE and the other tempting candidates
+
+Three ops ARE expressible and all three are pessimisations, because they are
+currently *free memory movement* and a Conv1x1 turns them into arithmetic:
+
+| op | today | as Conv1x1 | cost |
+|----|-------|------------|------|
+| RMSNorm scale `x * w[960]` | 108,480 mul (diagonal) | 104,140,800 MAC (dense) | **960x worse** |
+| GQA expand 5->15 heads | 36,160 element copy | 34,713,600 MAC | was free |
+| RoPE `rotate_half` (permute+negate) | 108,480 element shuffle | 6,942,720 MAC (block form) | was free |
+
+RoPE deserves the specific answer since it is the natural thing to ask about.
+After the rotary fold it is `x (*) COS + rotate_half(x) (*) SIN`. The
+`rotate_half` half IS a signed channel permutation and therefore a legal
+block-diagonal Conv1x1 -- but the `(*) COS` and `(*) SIN` halves are **not**,
+because COS and SIN vary per *position*, and a Conv1x1's weights are constant
+across the spatial axis by construction. So RoPE is at best half-castable, and
+the half that can be cast is the half that is currently free.
+
+Not expressible at all: Softmax (nonlinear, normalises across keys), the
+attention output merge `Transpose(0,2,1,3)` (permutes seq against head, not a
+channel map), and the text encoder's `Gather` (a table lookup with zero MACs).
+
+### Why the lever does not generalise
+
+Conv1x1 was worth 13x on the accelerators because those ops were **already
+matmuls being routed through a bad kernel** -- QNN's `FullyConnected` path. It
+was a kernel-selection win, not a mathematical restructuring win. Casting an op
+that is *not* already a matmul does not inherit that win; it converts free work
+into paid work and then charges the accelerator's dispatch floor on top.
+
+The rule that falls out: cast to Conv1x1 exactly when the op is already a
+constant-weight linear. Everywhere that was true in SmolVLA, it has been done.
+
+## 8. The DSP: structurally better behaved, and still loses
+
+Worth separating from HTA, because the two fail differently.
+
+| | floor (warm) | marginal | power-collapse penalty |
+|---|--------------|----------|------------------------|
+| CPU | 14.5 us | 144 GMAC/s | 4.44x |
+| **DSP** | **401.9 us** | **422 GMAC/s** | **1.37x** |
+| HTA | 542.6 us | 493 GMAC/s | 4.68x |
+
+DSP has a **lower dispatch floor than HTA**, a nearly flat power-collapse
+penalty, 2.9x the CPU's throughput, and far broader op support -- it accepts
+Transpose, non-identity Reshape and two-dynamic-operand MatMul, all of which
+HTA refuses outright.
+
+It still loses almost everywhere:
+
+| block | CPU | DSP | HTA |
+|-------|-----|-----|-----|
+| nc_qkv prefill   | **1193.1** | 3075.5 | 2455.3 |
+| nc_oproj prefill | **925.1** | 932.6 | 1773.3 |
+| nc_mlp prefill   | 4414.9 | 3820.5 | **2452.2** |
+| ncd_qkv decode   | **593.9** | 919.9 | 1768.7 |
+| ncd_oproj decode | **381.0** | 690.1 | 2524.0 |
+| ncd_mlp decode   | 1700.5 | **1679.0** | 2512.1 |
+
+DSP beats the CPU on 2 of 6 -- both the largest blocks, both marginally -- and
+loses to HTA wherever HTA runs at all. It is squeezed from both sides: too slow
+to beat the Kryo on small blocks, too slow to beat HTA on large ones.
+
+### The one thing only the DSP can do -- and it is catastrophic
+
+HTA has no dynamic-MatMul kernel at any rank, so attention is HTA-impossible by
+construction. DSP takes it. The expert attention core was extracted from the
+prefill trunk (13 ops: 2 dynamic MatMul, Softmax, 3 Transpose, the mask
+arithmetic; 35.4 MMAC, 276K softmax elements) and measured:
+
+| backend | warm | cold |
+|---------|------|------|
+| **CPU** | **1871.4 us** | 2126.9 us |
+| **DSP** | **40366.5 us** | 40272.3 us |
+| HTA | refused: `unsupported op Transpose` | -- |
+
+**21.6x slower than the CPU** -- worse even than the 5.5x the vision attention
+study measured on its far larger blocks. 35.4 MMAC in 40.4 ms is 0.88 GMAC/s,
+**480x below DSP's own 422 GMAC/s marginal rate**, so the batched MatMuls are
+not the problem; the softmax and the rank-4 batched layout are. Note also the
+warm/cold ratio is 1.00 -- at 40 ms the dispatch floor is irrelevant.
+
+### Consequence
+
+Every part of the expert is now measured on every backend it can reach:
+
+    linears     HTA wins prefill MLP only (1.80x); DSP marginal on 2 blocks
+    attention   HTA impossible; DSP 21.6x worse
+    norms/RoPE  cheap elementwise, nothing to gain, and casting them to
+                Conv1x1 is a pessimisation (section 7)
+
+The ~12.07 ms/layer prefill remainder (attention + RoPE + norms) is CPU-only
+and will stay that way. The accelerator search on the experts is complete.
