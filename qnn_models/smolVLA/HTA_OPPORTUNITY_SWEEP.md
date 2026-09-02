@@ -429,3 +429,31 @@ the attention study measured 0 ms accelerator-recoverable for them.
 
 Net for vision: **173.8 ms** (80.8 + 93.0), about 32% of the 544.7 ms the
 trampolines cost and ~8% of vision's realizable total. Both wins are CPU-side.
+
+### Correction: regenerating the bundle CSVs silently dropped the HTA bundles
+
+Running `build_v3_bundles.py` to pick up the change above **regressed** the
+emitted `results.csv` files, and they were committed that way before the
+regression was caught. Before: 98 unique modules including the HTA bundle
+decomposition (`dsp_seg_NN_conv1`, `_conv2`, `_tramp_p0/p1/p2`) and 24 real HTA
+rows. After: 50 mono modules and 12 real HTA rows.
+
+Cause: `segment_perf.json` in the working tree carries
+
+    "Hta": {"status": "ok", "mean_us": 12392.27, "note": "sum of 2 conv ops"}
+
+-- `mean_us` but **no `convs` list**. `_build_bundle` needs the per-conv
+breakdown and returns `None` without it, so every segment fell back to a
+DSP/CPU mono placement and every HTA bundle dispatch vanished. The committed
+CSVs had been generated from a richer `segment_perf.json` than the one on disk.
+
+The CSVs are restored from the prior commit. `_build_bundle` now warns loudly
+when `Hta.mean_us` is present but `Hta.convs` is not, because "this segment has
+no HTA path" and "the profile data lost its breakdown" were indistinguishable
+and the second silently throws away the entire HTA placement.
+
+**Consequence for the trampoline win:** `TRAMPOLINE_ALT_COSTS_US` is wired in
+and correct, but it only reaches the cost model when the CSVs are regenerated,
+which needs a `segment_perf.json` carrying `Hta.convs`. Until then the 80.8 ms
+is real and measured but not yet expressed in the scheduler's inputs. The
+int8 DLCs themselves exist under `vision_slices_v3/tanh_int8/`.

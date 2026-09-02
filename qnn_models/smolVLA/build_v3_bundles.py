@@ -42,6 +42,7 @@ from __future__ import annotations
 
 import csv
 import json
+import sys
 from pathlib import Path
 
 _HERE = Path(__file__).parent
@@ -69,6 +70,25 @@ TRAMPOLINE_ALT_COSTS_US = {"CPU": 2442.1, "DSP": 3769.0, "HTA": 4979.0}
 MODEL_NAME = "smolvlm_vision_v3_bundles"
 
 
+_warned_convs = False
+
+
+def _warn_missing_convs():
+    """One warning per run; losing the HTA bundles silently is the failure mode
+    this guards, and it has already produced a regression once."""
+    global _warned_convs
+    if _warned_convs:
+        return
+    _warned_convs = True
+    sys.stderr.write(
+        "WARNING: segment_perf.json has Hta.mean_us but no Hta.convs list.\n"
+        "         The HTA bundle variants cannot be built, so every segment will\n"
+        "         fall back to a DSP/CPU mono placement and the emitted\n"
+        "         results.csv will contain NO HTA bundle dispatches. Regenerate\n"
+        "         segment_perf.json with the per-conv breakdown before trusting\n"
+        "         this output.\n")
+
+
 def _load_perf():
     with open(_PROFILE_DIR / "segment_perf.json") as f:
         perf = json.load(f)
@@ -80,7 +100,18 @@ def _load_perf():
 
 
 def _build_bundle(hta_conv_us, hta_convs, tramp_seg, tramp_hw_label):
-    """Build a placement bundle from per-phase trampoline timings."""
+    """Build a placement bundle from per-phase trampoline timings.
+
+    Returns None when the inputs are not there. That is silent by design for
+    segments that genuinely have no HTA path -- but it is indistinguishable
+    from segment_perf.json having lost its per-conv breakdown, which is a data
+    problem that quietly collapses every segment to a mono placement and throws
+    away the HTA bundles. `Hta.convs` is the field that matters; an `Hta` entry
+    carrying only `mean_us` (a "sum of N conv ops" note) is NOT enough, so warn
+    loudly rather than degrade.
+    """
+    if hta_conv_us is not None and not hta_convs:
+        _warn_missing_convs()
     if not (tramp_seg and hta_conv_us is not None and hta_convs):
         return None
     phases = []
