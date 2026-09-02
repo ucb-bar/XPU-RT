@@ -121,8 +121,27 @@ def layernorm(rows, C):
 
 
 def _act(kind, n_elem):
+    if kind == "gelu":
+        # Not a single node: `Gelu` is only registered from opset 20 and the
+        # converter is on 17.  Decomposing is the faithful thing anyway -- this
+        # tanh-approximation chain is exactly what SmolVLA's graph contains and
+        # what the DSP and HTA are actually asked to execute.
+        #   0.5x * (1 + tanh(sqrt(2/pi) * (x + 0.044715 x^3)))
+        c = [numpy_helper.from_array(np.array([v], np.float32), nm) for nm, v in
+             (("g_half", 0.5), ("g_one", 1.0), ("g_k", 0.044715),
+              ("g_s", 0.7978845608028654), ("g_three", 3.0))]
+        n = [helper.make_node("Pow", ["X", "g_three"], ["x3"]),
+             helper.make_node("Mul", ["x3", "g_k"], ["kx3"]),
+             helper.make_node("Add", ["X", "kx3"], ["inner"]),
+             helper.make_node("Mul", ["inner", "g_s"], ["scaled"]),
+             helper.make_node("Tanh", ["scaled"], ["t"]),
+             helper.make_node("Add", ["t", "g_one"], ["t1"]),
+             helper.make_node("Mul", ["X", "g_half"], ["xh"]),
+             helper.make_node("Mul", ["xh", "t1"], ["Y"])]
+        return (_model(n, [_t("X", [1, n_elem])], [_t("Y", [1, n_elem])], c, kind),
+                {"X": [1, n_elem]}, n_elem)
     node = {"relu": "Relu", "sigmoid": "Sigmoid", "tanh": "Tanh",
-            "gelu": "Gelu", "elu": "Elu"}[kind]
+            "elu": "Elu"}[kind]
     n = [helper.make_node(node, ["X"], ["Y"])]
     return (_model(n, [_t("X", [1, n_elem])], [_t("Y", [1, n_elem])], [], kind),
             {"X": [1, n_elem]}, n_elem)

@@ -4,4 +4,4 @@ gen/
 results.jsonl
 results.jsonl.*
 fits.json
-sweep_full.log
+sweep_*.log
