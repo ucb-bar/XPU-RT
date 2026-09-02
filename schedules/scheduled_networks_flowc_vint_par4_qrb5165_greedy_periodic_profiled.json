@@ -1,0 +1,267 @@
+{
+  "dot_file": "combined_schedule_periodic.json",
+  "dispatches": {
+    "vint_par_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_E#0",
+      "start_time": 0.0,
+      "duration": 8.015,
+      "job_name": "vint_par",
+      "module_name": "vint_par$dispatch_0_HTA_qnn_graph_ir_ops296"
+    },
+    "vint_par_dispatch_1": {
+      "id": 1,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_E#0",
+      "start_time": 8.015,
+      "duration": 11.617,
+      "job_name": "vint_par",
+      "module_name": "vint_par$dispatch_1_HTA_qnn_graph_ir_ops243"
+    },
+    "vint_par_dispatch_2": {
+      "id": 2,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vint_par_dispatch_0",
+        "vint_par_dispatch_1"
+      ],
+      "hardware_target": "CPU_E#0",
+      "start_time": 19.632,
+      "duration": 7.003,
+      "job_name": "vint_par",
+      "module_name": "vint_par$dispatch_2_HTA_qnn_graph_ir_ops58",
+      "time_dependency": "vint_par_dispatch_0"
+    },
+    "vint_par_dispatch_3": {
+      "id": 3,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "vint_par_dispatch_2"
+      ],
+      "hardware_target": "CPU_X#0",
+      "start_time": 26.635,
+      "duration": 0.074,
+      "job_name": "vint_par",
+      "module_name": "vint_par$dispatch_3_HTA_qnn_graph_ir_ops8",
+      "time_dependency": "mlp_control13_dispatch_0"
+    },
+    "mlp_control0_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_X#0",
+      "start_time": 0.0,
+      "duration": 0.066,
+      "job_name": "mlp_control0",
+      "module_name": "mlp_control$dispatch_0_HTA_qnn_graph_ir_ops7"
+    },
+    "mlp_control1_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_X#0",
+      "start_time": 2.0,
+      "duration": 0.066,
+      "job_name": "mlp_control1",
+      "module_name": "mlp_control$dispatch_0_HTA_qnn_graph_ir_ops7",
+      "time_dependency": "mlp_control0_dispatch_0"
+    },
+    "mlp_control2_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_X#0",
+      "start_time": 4.0,
+      "duration": 0.066,
+      "job_name": "mlp_control2",
+      "module_name": "mlp_control$dispatch_0_HTA_qnn_graph_ir_ops7",
+      "time_dependency": "mlp_control1_dispatch_0"
+    },
+    "mlp_control3_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_X#0",
+      "start_time": 6.0,
+      "duration": 0.066,
+      "job_name": "mlp_control3",
+      "module_name": "mlp_control$dispatch_0_HTA_qnn_graph_ir_ops7",
+      "time_dependency": "mlp_control2_dispatch_0"
+    },
+    "mlp_control4_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_X#0",
+      "start_time": 8.0,
+      "duration": 0.066,
+      "job_name": "mlp_control4",
+      "module_name": "mlp_control$dispatch_0_HTA_qnn_graph_ir_ops7",
+      "time_dependency": "mlp_control3_dispatch_0"
+    },
+    "mlp_control5_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_X#0",
+      "start_time": 10.0,
+      "duration": 0.066,
+      "job_name": "mlp_control5",
+      "module_name": "mlp_control$dispatch_0_HTA_qnn_graph_ir_ops7",
+      "time_dependency": "mlp_control4_dispatch_0"
+    },
+    "mlp_control6_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_X#0",
+      "start_time": 12.0,
+      "duration": 0.066,
+      "job_name": "mlp_control6",
+      "module_name": "mlp_control$dispatch_0_HTA_qnn_graph_ir_ops7",
+      "time_dependency": "mlp_control5_dispatch_0"
+    },
+    "mlp_control7_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_X#0",
+      "start_time": 14.0,
+      "duration": 0.066,
+      "job_name": "mlp_control7",
+      "module_name": "mlp_control$dispatch_0_HTA_qnn_graph_ir_ops7",
+      "time_dependency": "mlp_control6_dispatch_0"
+    },
+    "mlp_control8_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_X#0",
+      "start_time": 16.0,
+      "duration": 0.066,
+      "job_name": "mlp_control8",
+      "module_name": "mlp_control$dispatch_0_HTA_qnn_graph_ir_ops7",
+      "time_dependency": "mlp_control7_dispatch_0"
+    },
+    "mlp_control9_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_X#0",
+      "start_time": 18.0,
+      "duration": 0.066,
+      "job_name": "mlp_control9",
+      "module_name": "mlp_control$dispatch_0_HTA_qnn_graph_ir_ops7",
+      "time_dependency": "mlp_control8_dispatch_0"
+    },
+    "mlp_control10_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_X#0",
+      "start_time": 20.0,
+      "duration": 0.066,
+      "job_name": "mlp_control10",
+      "module_name": "mlp_control$dispatch_0_HTA_qnn_graph_ir_ops7",
+      "time_dependency": "mlp_control9_dispatch_0"
+    },
+    "mlp_control11_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_X#0",
+      "start_time": 22.0,
+      "duration": 0.066,
+      "job_name": "mlp_control11",
+      "module_name": "mlp_control$dispatch_0_HTA_qnn_graph_ir_ops7",
+      "time_dependency": "mlp_control10_dispatch_0"
+    },
+    "mlp_control12_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_X#0",
+      "start_time": 24.0,
+      "duration": 0.066,
+      "job_name": "mlp_control12",
+      "module_name": "mlp_control$dispatch_0_HTA_qnn_graph_ir_ops7",
+      "time_dependency": "mlp_control11_dispatch_0"
+    },
+    "mlp_control13_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_X#0",
+      "start_time": 26.0,
+      "duration": 0.066,
+      "job_name": "mlp_control13",
+      "module_name": "mlp_control$dispatch_0_HTA_qnn_graph_ir_ops7",
+      "time_dependency": "mlp_control12_dispatch_0"
+    }
+  },
+  "metadata": {
+    "makespan": 26.709000000000003,
+    "num_operations": 18,
+    "machines": [
+      "CPU_P#0",
+      "CPU_E#0",
+      "CPU_X#0",
+      "CPU_G#0"
+    ],
+    "machine_combinations": [
+      [
+        "CPU_P#0"
+      ],
+      [
+        "CPU_E#0"
+      ],
+      [
+        "CPU_X#0"
+      ],
+      [
+        "CPU_G#0"
+      ]
+    ],
+    "profile_hw": {
+      "CPU_P": "HTA",
+      "CPU_E": "DSP",
+      "CPU_X": "CPU",
+      "CPU_G": "GPU"
+    },
+    "periodic_networks": {
+      "mlp_control": 2.0
+    },
+    "granularity_advice": [
+      {
+        "subject": "vint_par",
+        "recommended": "finer",
+        "reason": "the desired granularity for vint_par's dispatches should be finer: its largest dispatch (11.62 ms) exceeds mlp_control's available free slot (1.93 ms) (period 2.00 ms, free slot 1.93 ms after mlp_control's own utilization) -- it would overrun mlp_control's cadence if they shared a core",
+        "conflicting_periodic_job": "mlp_control",
+        "period_ms": 2.0,
+        "free_slot_ms": 1.934,
+        "max_dispatch_duration_ms": 11.617
+      }
+    ]
+  }
+}
