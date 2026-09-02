@@ -1,0 +1,83 @@
+[
+ {
+  "axis": "across_networks",
+  "network": "mlp_control",
+  "ops": 7,
+  "baseline_ms": 0.02952,
+  "best_ms": 0.02553,
+  "speedup": 1.156,
+  "winning_knob": "+slice"
+ },
+ {
+  "axis": "across_networks",
+  "network": "dronet",
+  "ops": 29,
+  "baseline_ms": 7.465529999999999,
+  "best_ms": 0.6509199999999999,
+  "speedup": 11.469,
+  "winning_knob": "+backend"
+ },
+ {
+  "axis": "across_networks",
+  "network": "fused_full",
+  "ops": 91,
+  "baseline_ms": 3.4338699999999998,
+  "best_ms": 0.45242999999999994,
+  "speedup": 7.59,
+  "winning_knob": "+precision"
+ },
+ {
+  "axis": "across_networks",
+  "network": "yolov8n",
+  "ops": 233,
+  "baseline_ms": 72.72161,
+  "best_ms": 25.2316,
+  "speedup": 2.882,
+  "winning_knob": "+backend"
+ },
+ {
+  "axis": "across_networks",
+  "network": "vint",
+  "ops": 1925,
+  "baseline_ms": 59.7749,
+  "best_ms": 23.20066,
+  "speedup": 2.576,
+  "winning_knob": "+slice"
+ },
+ {
+  "axis": "within_network",
+  "variant": "vint_obs_b1",
+  "ops": 512,
+  "cells": {
+   "dsp@int8": 4.6896,
+   "cpu@int8": 6.064,
+   "cpu@fp32": 13.7658
+  },
+  "best_backend": "dsp@int8",
+  "best_ms": 4.6896
+ },
+ {
+  "axis": "within_network",
+  "variant": "vint_obs_b2",
+  "ops": 512,
+  "cells": {
+   "dsp@int8": 5.3222,
+   "cpu@int8": 5.8871,
+   "cpu@fp32": 25.8323
+  },
+  "best_backend": "dsp@int8",
+  "best_ms": 5.3222
+ },
+ {
+  "axis": "within_network",
+  "variant": "vint_obs_b3",
+  "ops": 512,
+  "cells": {
+   "dsp@int8": 5.3422,
+   "cpu@int8": 8.2126,
+   "cpu@fp32": 33.8325
+  },
+  "best_backend": "dsp@int8",
+  "best_ms": 5.3422
+ }
+]
