@@ -159,19 +159,58 @@ def ladders(rows, out, max_ops=12):
     print(f"  -> {p}")
 
 
-def crossover(rows, out):
+def crossover(rows, out, compute_only=False):
     """The size axis the aggregate heatmap collapses.
+
+    With compute_only, the fitted per-lane dispatch intercept is subtracted
+    from every measurement first, so the map answers a different question: not
+    "is this worth offloading" but "if dispatch were free, which side is
+    actually faster at the arithmetic".  That is the ceiling you could reach by
+    batching or fusing enough work to amortise the launch, and the gap between
+    the two maps is exactly what the dispatch floor is costing.
+
+    Subtracting an intercept is only meaningful while it is a modest part of
+    the measurement.  Cells where the overhead is more than 80% of the measured
+    time are stippled: the remainder there is mostly noise, and at the small end
+    it can even go negative.
 
     One panel per accelerator lane: ops down, size rank across, coloured by
     speedup over the best CPU cell at that same size. Accelerators on this
     board lose at small sizes and only ever win past their dispatch floor, so
     the crossover column is the whole placement decision -- a median over sizes
     averages it away."""
-    best_cpu = {}
+    over = {}
+    if compute_only:
+        fp = os.path.join(HERE, "fits.json")
+        if not os.path.exists(fp):
+            print("  no fits yet (compute-only map needs them)"); return
+        for f in json.load(open(fp)):
+            if f["phase"] == "warm_us":
+                over[(f["op"], f["backend"], f["precision"])] = max(f["overhead_us"], 0.0)
+
+    def val(r):
+        """Measured warm time, minus the fitted dispatch cost if asked.
+        Returns (time, reliable)."""
+        t = r.get("warm_us")
+        if t is None:
+            return None, False
+        if not compute_only:
+            return t, True
+        o = over.get((r["op"], r["backend"], r["precision"]))
+        if o is None:
+            return None, False
+        return max(t - o, 1e-3), (o <= 0.8 * t)
+
+    best_cpu, cpu_ok = {}, {}
     for r in rows:
-        if r.get("status") == "ok" and r["backend"] == "cpu" and r.get("warm_us"):
+        if r.get("status") == "ok" and r["backend"] == "cpu":
+            t, good = val(r)
+            if t is None:
+                continue
             k = (r["op"], tuple(r["params"]))
-            best_cpu[k] = min(best_cpu.get(k, 1e18), r["warm_us"])
+            if t < best_cpu.get(k, 1e18):
+                best_cpu[k] = t
+                cpu_ok[k] = good
     lanes = [l for l in LANES if l[0] != "cpu"]
     ops = sorted({r["op"] for r in rows if r.get("macs")})
     if not ops:
@@ -192,6 +231,7 @@ def crossover(rows, out):
     for j, lane in enumerate(lanes):
         M = np.full((len(ops), ncol), np.nan)
         F = np.zeros((len(ops), ncol), bool)
+        U = np.zeros((len(ops), ncol), bool)   # overhead-dominated
         for r in rows:
             if (r["backend"], r.get("precision")) != lane or not r.get("macs"):
                 continue
@@ -200,9 +240,18 @@ def crossover(rows, out):
                 continue
             if r.get("status") != "ok":
                 F[i, c] = True; continue
-            b = best_cpu.get((r["op"], tuple(r["params"])))
-            if b and r.get("warm_us"):
-                M[i, c] = b / r["warm_us"]
+            k = (r["op"], tuple(r["params"]))
+            b = best_cpu.get(k)
+            t, good = val(r)
+            if b and t:
+                if good and cpu_ok.get(k, True):
+                    M[i, c] = b / t
+                else:
+                    # Leave it uncoloured.  Subtracting a 1.3 ms intercept from
+                    # a 1.4 ms measurement leaves noise, and colouring that
+                    # saturated green reads as a result when it is a rounding
+                    # error.  Stipple says "measured, but not decomposable".
+                    U[i, c] = True
         ax = axes[0][j]
         im = ax.imshow(np.log2(np.clip(M, 1/64, 64)), cmap="RdYlGn",
                        vmin=-4, vmax=4, aspect="auto")
@@ -211,6 +260,9 @@ def crossover(rows, out):
                 if F[i, c]:
                     ax.add_patch(plt.Rectangle((c-.5, i-.5), 1, 1, fill=False,
                                                hatch="///", edgecolor="#999", lw=0))
+                elif U[i, c]:
+                    ax.add_patch(plt.Rectangle((c-.5, i-.5), 1, 1, fill=False,
+                                               hatch="....", edgecolor="#444", lw=0))
         ax.set_title(f"{lane[0]}/{lane[1]}", fontsize=9.5)
         ax.set_xlabel("size rank (small to large)", fontsize=8)
         ax.set_xticks(range(0, ncol, max(1, ncol//6)))
@@ -219,14 +271,22 @@ def crossover(rows, out):
             ax.set_yticks(range(len(ops))); ax.set_yticklabels(ops, fontsize=8)
         else:
             ax.set_yticks([])
-    fig.suptitle("Where each accelerator overtakes the CPU — speedup vs best CPU "
-                 "at the same size\ngreen = accelerator wins, hatched = will not "
-                 "compose, blank = not measured",
-                 fontsize=10.5, x=.02, y=.995, ha="left", va="top")
+    if compute_only:
+        fig.suptitle("Compute only, dispatch overhead removed — the ceiling if "
+                     "launches were free\ngreen = accelerator's arithmetic is "
+                     "faster, hatched = will not compose, stippled = overhead was "
+                     ">80% of the measurement so compute is not separable there",
+                     fontsize=10.5, x=.02, y=.995, ha="left", va="top")
+    else:
+        fig.suptitle("Where each accelerator overtakes the CPU — speedup vs best CPU "
+                     "at the same size\ngreen = accelerator wins, hatched = will not "
+                     "compose, blank = not measured",
+                     fontsize=10.5, x=.02, y=.995, ha="left", va="top")
     fig.subplots_adjust(top=1 - 0.85/figh)   # constant header, any row count
     cb = fig.colorbar(im, ax=axes[0].tolist(), fraction=0.02, pad=0.02)
     cb.set_ticks([-4, -2, 0, 2, 4]); cb.set_ticklabels(["1/16", "1/4", "1x", "4x", "16x"])
-    p = os.path.join(out, "opsweep_crossover_heatmap.png")
+    p = os.path.join(out, "opsweep_compute_only_heatmap.png" if compute_only
+                     else "opsweep_crossover_heatmap.png")
     fig.savefig(p, dpi=160, bbox_inches="tight"); plt.close(fig)
     print(f"  -> {p}")
 
@@ -296,6 +356,7 @@ def main():
     rows = load()
     print(f"  {len(rows)} rows")
     heatmap(rows, out); crossover(rows, out)
+    crossover(rows, out, compute_only=True)
     floors(rows, out); decomposition(rows, out); ladders(rows, out)
     return 0
 
