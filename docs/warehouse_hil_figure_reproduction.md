@@ -254,6 +254,29 @@ the deliverable.
 
 ---
 
+## 8. Running it on the real hardware (HIL)
+
+The figure uses the K1's **measured** profile but computes the schedule in software (that's why it
+reproduces without a board). To close the loop on the physical **SpaceMiT K1** — profile → schedule
+→ build → run → measure — the harness and runbooks live in the **ModelBlaster submodule** and the K1
+docs. All repo-relative:
+
+- **Get the submodule:** `git submodule update --init --recursive` (ModelBlaster =
+  `github.com/ucb-bar/ModelBlaster`). The board runner is `ModelBlaster/harness_xpurt_linux` (a CMake
+  project); the loop scripts are `ModelBlaster/scripts/{close_xpurt_loop,run_xpurt_scheduler}.py`.
+- **Toolchain:** `scripts/setup_spacemit_toolchain.sh` (the RISC-V GCC for the K1).
+- **Full board runbook:** `docs/k1_modelblaster_xpurt_closed_loop.md` (profile→schedule→build→run→
+  advise→rewrite, every number measured on the board) and `docs/k1_board.md`.
+- **Run the schedule on the board + collect the trace:** `scripts/evaluate_exact_cycle_board.py`
+  (SCHED_FIFO RT runs), then `scripts/join_k1_trace.py` + `scripts/plot_k1_trace_gantt.py` for the
+  measured Gantt.
+
+Needs the physical K1 board (not part of a clone). The measured profiles for the three deployed nets
+are already in `gen_mb/`, so `--profiled` (§3) reproduces the figure's schedule **without** a board;
+the board is only needed to re-measure the profile or to run the live closed loop.
+
+---
+
 ## Files this runbook uses (all repo-relative)
 
 - `sims/scripts/record_sensor_demo.py` — render (`--dump_figure_data`, `--clean_overview`)
