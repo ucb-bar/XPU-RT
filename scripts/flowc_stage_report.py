@@ -63,11 +63,36 @@ def main() -> int:
                "between two rows is attributable to that knob alone. Costs are "
                "pooled medians from `qnn_models/slicing_study/experiments.jsonl` "
                "(the measured sweep), not a re-run.\n")
-    log.append("| stage | knob | freedom added |\n|---|---|---|")
-    for s in STAGES:
-        log.append(f"| {s} | `{KNOB[s]}` | "
-                   f"{'the fallback, no choice at all' if s=='S0' else 'see below'} |")
-    log.append("")
+    log += ["## How to read the ladder\n",
+            "| stage | freedom added | candidate pool | nested in the row above? |",
+            "|---|---|---|---|",
+            "| S0 | none — backend and precision both pinned | the k=1 whole network | — |",
+            "| S1 | backend may vary, precision still int8 | the k=1 whole network | yes |",
+            "| S2 | precision may vary too | the k=1 whole network | yes |",
+            "| S3 | the network may be CUT, backend+precision free per tile | "
+            "**contiguous** slice sets, k>1 | **no** |",
+            "| S4 | tiles may be NON-contiguous and overlap, one lane per "
+            "backend kind | **branch** slice sets, k>1 | **no** |",
+            "",
+            "**S0 → S1 → S2 are strictly nested**: the same single-tile object "
+            "with progressively fewer constraints, so each is ≤ the row above "
+            "and the step can never fall below 1.00x.",
+            "",
+            "**S3 and S4 are NOT `the previous row plus one more knob`.** Each "
+            "is the best member of a DIFFERENT candidate family — S3 the best "
+            "contiguous slice set (tiles serialised), S4 the best branch slice "
+            "set (independent tiles overlapped, one lane per kind). S3 does not "
+            "include the k=1 option S2 won with, and S4 does not include S3's "
+            "contiguous sets. That is why the ladder is not monotone after S2, "
+            "and why a step can fall BELOW 1.00x: yolov8n S3 is 0.89x (the best "
+            "cut is worse than the best monolith) and fused_full S4 is 0.90x "
+            "(the best branch set is worse than the best contiguous one). Those "
+            "sub-1.0 steps are results, not artefacts — they say the knob does "
+            "not pay for that network.",
+            "",
+            "`vs S0` is cumulative against the S0 baseline; `step` is against "
+            "the row immediately above.",
+            ""]
 
     for net in nets:
         rows = fs.stages(net, pooled)
