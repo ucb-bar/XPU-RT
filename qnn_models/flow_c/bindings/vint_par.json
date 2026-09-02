@@ -1,160 +1,190 @@
 {
-  "network": "vint_par",
-  "ir": {
-    "source": "pytorch_export:vint",
-    "quant": "int8"
-  },
-  "_comment": "Three tiles, and the point of the third is CONCURRENCY, not coverage. The shipped two-tile cut holds both EfficientNet-b0 encoders in one graph, so they serialise inside a single dispatch on one lane. They do not consume each other's output -- the goal encoder takes goal_img plus obs_img, the obs encoder takes obs_img -- so branch-mode slicing (backward closure of each compress projection) makes them independent tiles with depends_on: []. Measured, one lane per machine kind: goal encoder on CPU int8 (6.615 ms) overlapping the obs encoder on DSP (9.533 ms), then the transformer on CPU fp32 (13.559 ms) = 23.955 ms makespan, against 29.379 ms for the shipped two-tile set. The extra dispatch the split costs is exactly what the overhead model predicts: the same three tiles run end-to-end with no concurrency are 29.764 ms, i.e. +0.385 ms over the two-tile 29.379 ms against a predicted 0.367 ms DSP dispatch + 5.4 ns x 512 boundary bytes. So the split pays for itself 15x over. The decoder's op range is not a single span because ops 0-5 and 1070 are constant subgraphs shared by every tile that needs them.",
-  "_provenance": {
-    "study": "qnn_models/slicing_study",
-    "experiment_label": "vint_par_enc",
-    "cut_id": "f1a55807fc80",
-    "slice_mode": "branch",
-    "tile_outputs": [
-      [
-        "/compress_goal_enc/Gemm_output_0"
-      ],
-      [
-        "/compress_obs_enc/Gemm_output_0"
-      ]
-    ],
-    "independent_tile_pairs": [
-      [
-        0,
-        1
-      ]
-    ],
-    "source_onnx": "qnn_models/flow_c/gen/onnx/vint.onnx",
-    "source_onnx_sha256": "41788429c86b5f51bc2ccad02280ee9d7d4a2965f229d34c31417a0a337d0841",
-    "journal": "qnn_models/slicing_study/experiments.jsonl",
-    "board_ctx_dir": "/root/slicing_study/ctx",
-    "reproduce": "python3 qnn_models/slicing_study/slice_experiment.py --network vint --name vint_par_enc --tile /compress_goal_enc/Gemm_output_0 --tile /compress_obs_enc/Gemm_output_0",
-    "statistic": "median of per-sweep median_us, performance governor, CPU cells unmasked",
-    "op_index_space": "flow_c IR (605 ops, pytorch_export:vint) -- derived by qnn_models/slicing_study/ir_branch_ranges.py, the same backward-closure partition the ONNX slicer runs, applied to the IR's depends_on edges. The two encoders have NO shared ancestor in IR space, so the partition is exactly ops 0-295 / 296-538 / 539-604. Each binding also carries _ops_onnx_nodes, the node ranges of the ONNX the artifacts were actually sliced from (1931 nodes); the two spaces differ, as they do for yolov8n.",
-    "ir_independent_pairs": [
-      [
-        0,
-        1
-      ]
-    ]
-  },
-  "bindings": [
-    {
-      "id": 0,
-      "name": "vint_goal_enc",
-      "ops": {
-        "ranges": [
-          [
-            0,
-            295
-          ]
-        ]
-      },
-      "source_onnx": "slicing_study/gen/vint/vint_par_enc__f1a55807fc80/tile0.onnx",
-      "backends": {
-        "dsp": {
-          "ctx": "ctx_vint_par_enc_t0_int8__dsp.bin",
-          "graph": "vint_par_enc_t0",
-          "precision": "int8",
-          "measured_us": 5809.1
-        },
-        "cpu": {
-          "ctx": "ctx_vint_par_enc_t0_int8__cpu.bin",
-          "graph": "vint_par_enc_t0",
-          "precision": "int8",
-          "measured_us": 7075.3
-        }
-      },
-      "compose_blocked": {
-        "hta@int8": "unsupported op StridedSlice"
-      },
-      "_ops_onnx_nodes": [
-        [
-          6,
-          536
-        ]
-      ]
-    },
-    {
-      "id": 1,
-      "name": "vint_obs_enc",
-      "ops": {
-        "ranges": [
-          [
-            296,
-            538
-          ]
-        ]
-      },
-      "source_onnx": "slicing_study/gen/vint/vint_par_enc__f1a55807fc80/tile1.onnx",
-      "backends": {
-        "dsp": {
-          "ctx": "ctx_vint_par_enc_t1_int8__dsp.bin",
-          "graph": "vint_par_enc_t1",
-          "precision": "int8",
-          "measured_us": 9532.6
-        },
-        "cpu": {
-          "ctx": "ctx_vint_par_enc_t1_int8__cpu.bin",
-          "graph": "vint_par_enc_t1",
-          "precision": "int8",
-          "measured_us": 15549.4
-        }
-      },
-      "compose_blocked": {
-        "hta@int8": "unsupported op Split"
-      },
-      "_ops_onnx_nodes": [
-        [
-          540,
-          1069
-        ]
-      ]
-    },
-    {
-      "id": 2,
-      "name": "vint_decoder",
-      "ops": {
-        "ranges": [
-          [
-            539,
-            604
-          ]
-        ]
-      },
-      "depends_on": [
-        0,
-        1
-      ],
-      "source_onnx": "slicing_study/gen/vint/vint_par_enc__f1a55807fc80/tile2.onnx",
-      "backends": {
-        "cpu": {
-          "ctx": "ctx_vint_par_enc_t2_fp32__cpu.bin",
-          "graph": "vint_par_enc_t2",
-          "precision": "fp32",
-          "measured_us": 14422.6
-        },
-        "gpu": {
-          "ctx": "ctx_vint_decoder_fp16__Gpu.bin",
-          "graph": "vint_decoder_fp16",
-          "precision": "fp16"
-        }
-      },
-      "compose_blocked": {
-        "hta@int8": "QnnHta [ ERROR ] QnnHtaHTA op Reshape supports only equal Input and Output dimensions",
-        "dsp@int8": "Param[0] has incorrect Value 1."
-      },
-      "_ops_onnx_nodes": [
-        [
-          538,
-          538
-        ],
-        [
-          1071,
-          1930
-        ]
-      ]
-    }
+ "network": "vint_par",
+ "ir": {
+  "source": "pytorch_export:vint",
+  "quant": "int8"
+ },
+ "_comment": "Three tiles, and the point of the third is CONCURRENCY, not coverage. The shipped two-tile cut holds both EfficientNet-b0 encoders in one graph, so they serialise inside a single dispatch on one lane. They do not consume each other's output -- the goal encoder takes goal_img plus obs_img, the obs encoder takes obs_img -- so branch-mode slicing (backward closure of each compress projection) makes them independent tiles with depends_on: []. Measured, one lane per machine kind: goal encoder on CPU int8 (6.615 ms) overlapping the obs encoder on DSP (9.533 ms), then the transformer on CPU fp32 (13.559 ms) = 23.955 ms makespan, against 29.379 ms for the shipped two-tile set. The extra dispatch the split costs is exactly what the overhead model predicts: the same three tiles run end-to-end with no concurrency are 29.764 ms, i.e. +0.385 ms over the two-tile 29.379 ms against a predicted 0.367 ms DSP dispatch + 5.4 ns x 512 boundary bytes. So the split pays for itself 15x over. The decoder's op range is not a single span because ops 0-5 and 1070 are constant subgraphs shared by every tile that needs them. UPDATE: the decoder is now two tiles. Cutting the 8-op waypoint tail and rewriting the 4 fused GELUs as x*Sigmoid(1.702x) unblocks the DSP (measured 7003.4 us int8, 5 repeats, median; the distribution is wide -- 6096-7858 -- so treat it as +-12%) against 11623.0 us for the same body on CPU fp32. The Conv1x1 step from VINT_FINDINGS.md is deliberately NOT applied: over 5 repeats it measured 7535.9 us on DSP, i.e. no better than without it, while raising waypoint error from 1.48% to 1.72%.",
+ "_provenance": {
+  "study": "qnn_models/slicing_study",
+  "experiment_label": "vint_par_enc",
+  "cut_id": "f1a55807fc80",
+  "slice_mode": "branch",
+  "tile_outputs": [
+   [
+    "/compress_goal_enc/Gemm_output_0"
+   ],
+   [
+    "/compress_obs_enc/Gemm_output_0"
+   ]
   ],
-  "_gpu_merge_note": "Branch-parallel encoders from the slicing study, plus the GPU option for the decoder measured separately (16.4 ms fp16, 0.96x of cell in a real run, on silicon nothing else uses). The study's own trace had the decoder on the contended CPU at 28.5 ms \u2014 2.05x its cell \u2014 so the two results compose: overlap the encoders AND take the decoder off the CPU."
+  "independent_tile_pairs": [
+   [
+    0,
+    1
+   ]
+  ],
+  "source_onnx": "qnn_models/flow_c/gen/onnx/vint.onnx",
+  "source_onnx_sha256": "41788429c86b5f51bc2ccad02280ee9d7d4a2965f229d34c31417a0a337d0841",
+  "journal": "qnn_models/slicing_study/experiments.jsonl",
+  "board_ctx_dir": "/root/slicing_study/ctx",
+  "reproduce": "python3 qnn_models/slicing_study/slice_experiment.py --network vint --name vint_par_enc --tile /compress_goal_enc/Gemm_output_0 --tile /compress_obs_enc/Gemm_output_0",
+  "statistic": "median of per-sweep median_us, performance governor, CPU cells unmasked",
+  "op_index_space": "flow_c IR (605 ops, pytorch_export:vint) -- derived by qnn_models/slicing_study/ir_branch_ranges.py, the same backward-closure partition the ONNX slicer runs, applied to the IR's depends_on edges. The two encoders have NO shared ancestor in IR space, so the partition is exactly ops 0-295 / 296-538 / 539-604. Each binding also carries _ops_onnx_nodes, the node ranges of the ONNX the artifacts were actually sliced from (1931 nodes); the two spaces differ, as they do for yolov8n.",
+  "ir_independent_pairs": [
+   [
+    0,
+    1
+   ]
+  ]
+ },
+ "bindings": [
+  {
+   "id": 0,
+   "name": "vint_goal_enc",
+   "ops": {
+    "ranges": [
+     [
+      0,
+      295
+     ]
+    ]
+   },
+   "source_onnx": "slicing_study/gen/vint/vint_par_enc__f1a55807fc80/tile0.onnx",
+   "backends": {
+    "dsp": {
+     "ctx": "ctx_vint_par_enc_t0_int8__dsp.bin",
+     "graph": "vint_par_enc_t0",
+     "precision": "int8",
+     "measured_us": 5809.1
+    },
+    "cpu": {
+     "ctx": "ctx_vint_par_enc_t0_int8__cpu.bin",
+     "graph": "vint_par_enc_t0",
+     "precision": "int8",
+     "measured_us": 7075.3
+    }
+   },
+   "compose_blocked": {
+    "hta@int8": "unsupported op StridedSlice"
+   },
+   "_ops_onnx_nodes": [
+    [
+     6,
+     536
+    ]
+   ]
+  },
+  {
+   "id": 1,
+   "name": "vint_obs_enc",
+   "ops": {
+    "ranges": [
+     [
+      296,
+      538
+     ]
+    ]
+   },
+   "source_onnx": "slicing_study/gen/vint/vint_par_enc__f1a55807fc80/tile1.onnx",
+   "backends": {
+    "dsp": {
+     "ctx": "ctx_vint_par_enc_t1_int8__dsp.bin",
+     "graph": "vint_par_enc_t1",
+     "precision": "int8",
+     "measured_us": 9532.6
+    },
+    "cpu": {
+     "ctx": "ctx_vint_par_enc_t1_int8__cpu.bin",
+     "graph": "vint_par_enc_t1",
+     "precision": "int8",
+     "measured_us": 15549.4
+    }
+   },
+   "compose_blocked": {
+    "hta@int8": "unsupported op Split"
+   },
+   "_ops_onnx_nodes": [
+    [
+     540,
+     1069
+    ]
+   ]
+  },
+  {
+   "id": 2,
+   "name": "vint_dec_body",
+   "ops": {
+    "ranges": [
+     [
+      539,
+      596
+     ]
+    ]
+   },
+   "depends_on": [
+    0,
+    1
+   ],
+   "source_onnx": "slicing_study/gen/vint/vint_par_enc__f1a55807fc80/tile2.onnx",
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_vint_par_enc_t2_body_fp32__cpu.bin",
+     "graph": "dec_body_g",
+     "precision": "fp32",
+     "measured_us": 9509.3
+    },
+    "dsp": {
+     "ctx": "ctx_vint_par_enc_t2_body_int8__dsp.bin",
+     "graph": "dec_body_g",
+     "precision": "int8",
+     "measured_us": 7003.4
+    }
+   },
+   "compose_blocked": {
+    "hta@int8": "QnnHtaHTA op Reshape supports only equal Input and Output dimensions"
+   },
+   "_ops_onnx_nodes": [
+    [
+     538,
+     538
+    ],
+    [
+     1071,
+     1930
+    ]
+   ],
+   "_role": "the decoder minus its waypoint-integration tail. Splitting at /action_predictor/action_predictor.0/Gemm_output_0 removes the CumulativeSum and both ScatterNd, and rewriting the 4 fused GELUs as x*Sigmoid(1.702x) removes the 'Param[0] has incorrect Value 1' rejection recorded below -- together those are what let this tile compose on the DSP at all."
+  },
+  {
+   "id": 3,
+   "name": "vint_dec_tail",
+   "ops": {
+    "ranges": [
+     [
+      597,
+      604
+     ]
+    ]
+   },
+   "depends_on": [
+    2
+   ],
+   "_role": "the [1,20] waypoint integration: 2 StridedSlice, 2 ScatterNd, 1 Reshape, 1 L2Norm, 1 CumulativeSum. CPU-only on purpose -- CumulativeSum and ScatterNd are what blocked the whole decoder from the DSP, and at 74.7 us it is not worth carving further.",
+   "source_onnx": "slicing_study/gen/vint/vint_par_enc__f1a55807fc80/tile2.onnx",
+   "backends": {
+    "cpu": {
+     "ctx": "ctx_vint_par_enc_t2_tail_fp32__cpu.bin",
+     "graph": "dec_tail",
+     "precision": "fp32",
+     "measured_us": 74.7
+    }
+   }
+  }
+ ],
+ "_gpu_merge_note": "Branch-parallel encoders from the slicing study, plus the GPU option for the decoder measured separately (16.4 ms fp16, 0.96x of cell in a real run, on silicon nothing else uses). The study's own trace had the decoder on the contended CPU at 28.5 ms \u2014 2.05x its cell \u2014 so the two results compose: overlap the encoders AND take the decoder off the CPU.",
+ "lowering": [
+  "gelu_to_sigmoid"
+ ],
+ "lowering_note": "dec_body_g.onnx carries an offline GELU rewrite: the 4 exact (erf) GELUs are re-expressed as x*Sigmoid(1.702x). The v66 DSP rejects a fused GELU with 'Param[0] has incorrect Value 1.' (ElementWiseNeuron operation 1), and those 4 sites were the only thing keeping the decoder off the DSP. Cost: 0.35% of the waypoint output range. Only the decoder tiles carry it; the encoders are unmodified."
 }

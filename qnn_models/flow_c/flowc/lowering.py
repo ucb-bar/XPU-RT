@@ -120,11 +120,47 @@ def _drop_and_rewire(ops: list[dict], drop: set[int]) -> list[dict]:
     return kept
 
 
+def gelu_to_sigmoid(ops: list[dict]) -> list[dict]:
+    """Re-express an exact (erf) GELU as `x * Sigmoid(1.702x)`.
+
+    Not a converter fold -- an offline ONNX rewrite, the same shape of claim
+    dronet's bnfree makes. The v66 DSP and HTA both reject a fused GELU: it
+    lowers to `ElementWiseNeuron` with `operation: 1`, and the validator says
+    `Param[0] has incorrect Value 1.` (GELU = 1, TANH = 8 in QnnOpDef.h). The
+    sigmoid form uses only Mul and Sigmoid, which every backend on this board
+    already runs -- ViNT's own encoders execute 65 Sigmoids on the DSP.
+
+    ViNT's decoder is the case: 4 GELU sites are the ONLY thing between it and
+    a DSP placement, and rewriting them is what took `vint_dec_body` from
+    CPU-only to 7003 us on the DSP.
+
+    The IR keeps one op per site rather than expanding to Mul/Sigmoid/Mul.
+    That is deliberate: dispatch_ids are what binding op-ranges are written
+    against, so a transform that renumbered them would invalidate every
+    manifest. Capability-wise `sigmoid` is the op that has to be supported,
+    and the Muls it elides are supported wherever Sigmoid is. Cost-wise the
+    difference is two elementwise ops on a tensor the surrounding linears
+    already touch.
+
+    Approximation, not identity: max |erf-GELU - sigmoid-GELU| is ~0.02 near
+    |x|~2. On ViNT that measured 0.35% of the waypoint output range.
+    """
+    out = []
+    for o in ops:
+        if o.get("op") in ("gelu", "gelu_s8", "gelu_f16"):
+            o = dict(o)
+            o["op"] = o["op"].replace("gelu", "sigmoid")
+            o["_lowered_from"] = "gelu"
+        out.append(o)
+    return out
+
+
 TRANSFORMS: dict[str, Callable[[list[dict]], list[dict]]] = {
     "fold_batchnorm_into_conv": fold_batchnorm_into_conv,
     "fuse_activation_into_conv": fuse_activation_into_conv,
     "conv_head_for_fc": conv_head_for_fc,
     "drop_trailing_views": drop_trailing_views,
+    "gelu_to_sigmoid": gelu_to_sigmoid,
 }
 
 
