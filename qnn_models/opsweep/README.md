@@ -89,6 +89,86 @@ be interrupted at any point and resumed.
 
 ## What the full sweep found
 
+**The dispatch floor is the whole story.** Median fitted intercept per lane:
+
+    cpu/fp32       2.0 us warm      144.6 us cold   (72x)
+    cpu/int8      23.4 us warm      192.8 us cold   (8.3x)
+    dsp/int8     425.3 us warm      625.8 us cold   (1.5x)
+    hta/int8    1345.1 us warm     2127.0 us cold   (1.6x)
+    gpu/fp16    2307.9 us warm     2801.9 us cold   (1.2x)
+
+An accelerator has to find ~400 us (DSP) or ~1.3 ms (HTA) of arithmetic before
+it breaks even, and most single ops in these models are nowhere near that.  At
+each op's largest measured size, against the **best** CPU lane:
+
+    4.69x  conv2d            hta   38.6 ms ->  8.2 ms
+    3.30x  conv2d            dsp   11.9 ms ->  3.6 ms
+    3.21x  layernorm         dsp  161.1 ms -> 50.2 ms
+    1.59x  layernorm         gpu  161.1 ms -> 101.2 ms   <- the GPU's only win
+    1.53x  concat_c          hta   21.9 ms -> 14.3 ms
+    1.41x  conv1x1           hta    7.2 ms ->  5.1 ms
+    1.22x  add               dsp   40.5 ms -> 33.3 ms
+    1.13x  elu               dsp   31.6 ms -> 28.0 ms
+    1.10x  conv1x1           dsp    1.8 ms ->  1.7 ms
+    1.01x  depthwise_conv2d  hta    5.7 ms ->  5.6 ms
+
+Compare against the *best* CPU lane, not against cpu/int8.  They differ enough
+to invent wins that are not there: int8 `elu` on the CPU takes 197 ms where
+fp32 `elu` takes 31 ms, so a DSP number of 28 ms reads as 7.1x when what you
+would actually run makes it 1.1x.  `--only coverage` uses the best lane.
+
+**Conv1x1 vs FullyConnected, at matched arithmetic.** The single mapping choice
+worth making, with a number per backend:
+
+    hta/int8   linear is 45.3x the time of conv1x1 (median), up to 127.8x
+    dsp/int8   linear is  1.3x            (median), up to  13.5x
+    gpu/fp16   linear is  1.2x
+    cpu/int8   linear is  0.8x  -- on the CPU the mapping is a slight LOSS
+
+So it is an accelerator-side rewrite, not a universal one, and it matters far
+more on HTA than the earlier single-shape measurement suggested.
+
+**Precision.** int8 is the only precision DSP and HTA accept; the GPU is the
+reverse.  On the CPU int8 beats fp32 for the heavy ops (conv2d, linear,
+matmul_dyn, conv1x1) and *loses* for cheap elementwise ones, where the
+quantize/dequantize is the work -- `elu` is the extreme case at 6.3x worse.
+
+## Ladder length is a result, not a setting
+
+Several conclusions above only appeared after the ladders were extended, and
+`sweep.py --only coverage` exists so that is checked rather than eyeballed.
+
+The test is the **local** slope at the top of each ladder, not a global fit: the
+CPU's own throughput degrades at large sizes, so a global fit hides crossovers.
+The ratio tends to `g_acc / g_cpu`, and that asymptote decides everything.
+
+* Extending `layernorm` rows to 16384 moved DSP from 1.4x to **3.21x**, and
+  surfaced the GPU's only win in the entire sweep at 1.59x.
+* `concat_c` topped out at 0.23 MMAC against conv2d's 9664 -- a 42,000x spread.
+  Extended to 16.8 MMAC it went from 0.13x to **1.53x** on HTA.
+* `mul` on HTA was the one crossover the grid provably failed to reach (18.3
+  MMAC predicted, 12.6 swept).  Extended to 33.5M it reaches 0.95x and its
+  asymptote is 0.99 -- it creeps toward parity and never crosses.
+* `transpose`, `maxpool2d`, `avgpool_global` are the counter-case: their rows
+  keep rising because the fixed overhead amortises, but the local slope stays
+  4-5x worse than the CPU's, so they asymptote at 0.16-0.50.  A 4-point local
+  fit on the old short `avgpool_global` ladder predicted a crossover at 6.7
+  MMAC; extending to 16.8 MMAC disproved it.  Short ladders make confident
+  extrapolations and they are not reliable.
+
+## Two backend limits the sweep found on its own
+
+* **The Adreno 650 backend rejects quantized tensors outright** — every int8
+  point fails at `GPU_ERROR_INVALID_TYPE(10012)` -> `OpPackage (qti.aisw)
+  validation failure`, before any op-specific check. The `gpu/int8` lane is
+  therefore empty by construction, which is why nothing in this repo has ever
+  run int8 on the GPU.
+* **HTA has a tensor-size ceiling**, not just an op whitelist: `relu` composes
+  up to 262144 elements and fails at 1048576 with `Fail to prepare graph m in
+  HTA backend`. Ops it nominally supports still fall off the map at size.
+
+## What the full sweep found
+
 1267 distinct lanes, 1021 measured, 246 refused by a backend.
 
 **The dispatch floor is the whole story.** Median fitted intercept per lane:

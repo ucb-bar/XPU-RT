@@ -28,6 +28,7 @@ re-run, so the sweep can be interrupted and restarted, and partial results plot.
 from __future__ import annotations
 
 import argparse
+import glob
 import json
 import os
 import shlex
@@ -89,7 +90,9 @@ def stage_gen(pts):
     os.makedirs(WORK, exist_ok=True)
     plan = [[op, list(prm), axis, val, tag(op, prm)] for op, prm, axis, val in pts]
     todo = [r for r in plan
-            if not os.path.exists(os.path.join(WORK, r[4], "m.onnx"))]
+            if not os.path.exists(os.path.join(WORK, r[4], "m_q.dlc"))
+            and not (os.path.exists(os.path.join(WORK, r[4], "m.onnx"))
+                     and glob.glob(os.path.join(WORK, r[4], "*.raw")))]
     if not todo:
         print(f"[gen]   0 new models, {len(pts)} total"); return
     json.dump(todo, open(os.path.join(WORK, "_plan.json"), "w"))
@@ -135,6 +138,15 @@ def stage_build(pts):
                  timeout=9000)
         ok = sum(1 for l in out.splitlines() if l.startswith("BUILT") and "int8" in l)
         print(f"[build]   chunk {i//25+1}: {ok}/{len(chunk)} quantized", flush=True)
+        # The calibration raws are only needed by qairt-quantizer and they are
+        # by far the biggest thing here (a 33.5M-element binary op carries 1 GB
+        # of them).  Drop them once the int8 DLC exists; stage_gen rebuilds them
+        # if the DLC is ever missing.
+        for t in chunk:
+            d = os.path.join(WORK, t)
+            if os.path.exists(os.path.join(d, "m_q.dlc")):
+                for f in glob.glob(os.path.join(d, "*.raw")):
+                    os.remove(f)
     sh(f"sudo chown -R {os.getuid()}:{os.getgid()} {shlex.quote(WORK)}")
 
 
@@ -288,12 +300,103 @@ def stage_fit():
     print(f"  -> {os.path.join(HERE,'fits.json')}")
 
 
+def stage_coverage():
+    """Is each size ladder long enough to reach the answer?
+
+    A short row in the heatmap is not automatically a gap, and a rising row is
+    not automatically a crossover coming.  What decides it is the SLOPE, and it
+    has to be measured locally: fitting the whole ladder mixes in the small-size
+    regime, and the CPU's own throughput degrades at the top end (cache), so a
+    global fit said avgpool_global on HTA could never win when locally the HTA
+    is the faster of the two and it crosses just past the end of the ladder.
+
+    So fit both lines on the top few points only.  The ratio then tends to
+    g_acc/g_cpu as size grows: if that asymptote is below 1 the row will keep
+    creeping up and never cross, and more rungs only make that visible.  If it
+    is above 1 there is a real crossover, and the question is whether the grid
+    reaches it.
+    """
+    import numpy as np
+    fits = json.load(open(os.path.join(HERE, "fits.json")))
+    rows = [json.loads(l) for l in open(RESULTS)] if os.path.exists(RESULTS) else []
+    uniq = {}
+    for r in rows:
+        uniq[(r["op"], tuple(r["params"]), r["precision"], r["backend"])] = r
+    series = {}
+    for r in uniq.values():
+        if r.get("status") == "ok" and r.get("macs") and r.get("warm_us"):
+            series.setdefault((r["op"], r["backend"], r["precision"]), {})[r["macs"]] = r["warm_us"]
+
+    # The CPU baseline is the BEST cpu lane at each size, not cpu/int8.  They
+    # differ a lot and always in the accelerator's favour if you pick wrong:
+    # int8 elu on the CPU is 197 ms where fp32 elu is 31 ms, which would report
+    # a 7.1x DSP win that is really 1.1x against what you would actually run.
+    best_cpu = {}
+    for (op, bk, prec), d in series.items():
+        if bk != "cpu":
+            continue
+        tgt = best_cpu.setdefault(op, {})
+        for m, t in d.items():
+            tgt[m] = min(tgt.get(m, float("inf")), t)
+
+    def local(d, n=4):
+        if not d or len(d) < 2:
+            return None
+        m = sorted(d)[-n:]
+        return np.polyfit(np.array(m, float), np.array([d[x] for x in m], float), 1)
+
+    short, asym = [], []
+    print(f"  {'op':17s}{'acc':5s}{'ratio@max':>10}{'asymptote':>11}"
+          f"{'crossover':>14}{'ladder max':>13}   verdict")
+    for op in sorted({k[0] for k in series}):
+        cpu = best_cpu.get(op)
+        lc = local(cpu)
+        if lc is None:
+            continue
+        for bk in ("dsp", "hta"):
+            ka = (op, bk, "int8")
+            la = local(series.get(ka))
+            if la is None:
+                continue
+            common = sorted(set(cpu) & set(series[ka]))
+            if not common:
+                continue
+            big = common[-1]
+            ratio = cpu[big] / series[ka][big]
+            sc, ic = lc
+            sa, ia = la
+            # ratio -> (1/sa)/(1/sc) = sc/sa as macs grow
+            ras = sc / sa if sa > 0 else float("inf")
+            if ras <= 1.0:
+                print(f"  {op:17s}{bk:5s}{ratio:10.2f}{ras:11.2f}{'never':>14}"
+                      f"{big/1e6:>13,.2f}   asymptotes below 1")
+                if ratio > 0.7 * ras:
+                    pass
+                else:
+                    asym.append((op, bk, ras))
+                continue
+            m = (ia - ic) / (sc - sa)
+            reached = m <= big
+            if not reached:
+                short.append((op, bk, m / 1e6, m / big))
+            print(f"  {op:17s}{bk:5s}{ratio:10.2f}{ras:11.2f}{m/1e6:>14,.1f}"
+                  f"{big/1e6:>13,.2f}   {'reached' if reached else 'LADDER TOO SHORT'}")
+    print()
+    if short:
+        print(f"  {len(short)} ladder(s) stop before a real crossover:")
+        for op, bk, m, f in short:
+            print(f"    {op} on {bk}: needs >= {m:,.1f} MMAC ({f:.1f}x the current max)")
+    else:
+        print("  every crossover that exists is inside the swept range")
+
+
+
 def main():
     sys.path.insert(0, HERE)
     from grid import points
     ap = argparse.ArgumentParser()
     ap.add_argument("--only", action="append",
-                    choices=["gen", "build", "measure", "fit"])
+                    choices=["gen", "build", "measure", "fit", "coverage"])
     ap.add_argument("--all", action="store_true")
     ap.add_argument("--ops", default="")
     ap.add_argument("--limit", type=int, default=0)
@@ -314,6 +417,7 @@ def main():
         elif s == "build": stage_build(pts)
         elif s == "measure": stage_measure(pts, a.iters, a.chunk)
         elif s == "fit":   stage_fit()
+        elif s == "coverage": stage_coverage()
     return 0
 
 

@@ -31,8 +31,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+# gpu/int8 is not a lane: the Adreno backend rejects quantized tensors outright,
+# so it was 100% compose failures and only ever drew an empty hatched panel.
 LANES = [("cpu", "int8"), ("cpu", "fp32"), ("dsp", "int8"),
-         ("hta", "int8"), ("gpu", "int8"), ("gpu", "fp16"), ("gpu", "fp32")]
+         ("hta", "int8"), ("gpu", "fp16"), ("gpu", "fp32")]
 
 
 def load():
