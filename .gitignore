@@ -14,3 +14,4 @@ docs/*_status.md
 # generated plots — regenerate with qnn_models/smolVLA/plot_expert_gantt.py
 plots/smolvla_expert_gantt.png
 plots/smolvla_decode_gantt.png
+plots/smolvla_vision_hta_gantt.png
