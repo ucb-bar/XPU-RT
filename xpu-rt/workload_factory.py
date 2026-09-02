@@ -46,8 +46,27 @@ def build_machine_combinations(machine_core_counts: dict[str, int]) -> tuple[lis
     combinations = []
     for machine_type, count in machine_core_counts.items():
         cores = [f"{machine_type}#{i}" for i in range(count)]
+        # Cumulative groups: how MANY cores one dispatch uses (intra-op pool
+        # parallelism). The topo tag is derived from the group's LENGTH.
         for n in range(1, count + 1):
             combinations.append(cores[:n])
+        # Singletons for the non-first cores: WHICH core one dispatch uses.
+        #
+        # Without these the enumeration only ever offers prefixes of #0, so two
+        # independent dispatches of the same kind can never be placed on two
+        # sibling harts -- the solver would have handled it (greedy_scheduler's
+        # _earliest_start_for only serialises combinations that OVERLAP, and
+        # ['CPU_E#0'] and ['CPU_E#1'] do not), but the option was never in its
+        # search space. That is why a 12-tile split graph on cpu_e=2 scheduled
+        # all 27 dispatches onto CPU_E#0, and why every same-kind sharding win
+        # measured on the quad bitstream had to come from a hand-written
+        # schedule rather than the solver.
+        #
+        # Safe for profile lookup: topo_tag_for_combination() keys off the
+        # group's LENGTH, so ['CPU_E#1'] resolves to the same topo_0 profile as
+        # ['CPU_E#0'] -- same kind, one core.
+        for i in range(1, count):
+            combinations.append([cores[i]])
     return machines, combinations
 
 
