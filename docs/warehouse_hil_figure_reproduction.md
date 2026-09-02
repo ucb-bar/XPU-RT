@@ -38,25 +38,42 @@ Paths below are absolute so the runbook is copy-pasteable. The sim scripts live 
 **In the repo (committed — you get these on clone):**
 - `sims/isaaclab_tasks/warehouse_nav/` — the warehouse env (scene, MDP, gates, obstacles, sensors).
 - `sims/scripts/record_sensor_demo.py`, `sims/scripts/compose_mega_figure.py` — render + compose.
-- `sims/models/warehouse/yolov8n_gate_person_128x192.pt` — the YOLOv8n gate/person model.
+- `sims/scripts/train_steering_tracking.py`, `train_warehouse_nav.py`, `train_yolo.py` — trainers.
+- **All three trained models the render loads** (so it runs from a clone out-of-the-box):
+  `sims/models/warehouse/nav_fused_v12_cnn.pt` (nav), `rl_controller_velctrl_dr4.pt` (default MLP
+  controller), `yolov8n_gate_person_128x192.pt` (YOLO).
 - `data/toplevel/networks_k1_flight_deployed.json`, `scripts/ros_pinning_periodic.py`,
   `scripts/plot_solver_gantt_annotated.py` — the schedule spec, ROS baseline, and Gantt.
 - `gen_mb/` — the K1 dispatch graphs (`vmfb/`) **and the measured spacemit_x60 profiles** for all
   three deployed nets (`--profiled` is genuinely measured; no board needed to reproduce the figure,
   only to re-measure). Previously only `fused_full` was here — mlp_control/yolov8 are now included.
 
-**NOT in the repo (obtain separately — the one gap):**
-- **The trained MLP flight controller checkpoint** `model_3250.pt`. It lives under `logs/` (training
-  output, not committed — ~10 MB per checkpoint, hundreds of them). Two ways to get it:
-  1. Copy the exact checkpoint used for the figure from the shared host:
-     `/scratch/agustin/projects/DIMA/logs/rsl_rl/crazyflie_steering_tracking/2026-08-29_19-27-23_larger_ctrl_512_512_256_128/model_3250.pt`
-     (host-local path; on this machine the mount is occasionally flaky — retry if a read fails).
-  2. **Re-train it** with the committed PPO config
-     `sims/isaaclab_tasks/warehouse_nav/config/crazyflie/agents/rsl_rl_ppo_cfg.py` (rsl_rl PPO on the
-     warehouse steering-tracking task) and use a late checkpoint. Flight quality varies by seed;
-     confirm 4/4 gates before composing.
-  If your team wants true one-clone reproduction, publish this one checkpoint as a release asset (or
-  git-LFS it) and point `--rl_ckpt` at it.
+**NOT in the repo (one training checkpoint):** the *exact* controller checkpoint used for the
+published figure, `model_3250.pt`, is a training output under `logs/` (not committed — hundreds of
+~10 MB checkpoints). The committed default controller above reproduces an equivalent flight, so a
+fresh clone runs immediately. To reproduce the *exact* figure controller, re-train it — see the
+training commands below — and use iteration 3250; or copy it from the host at
+`/scratch/agustin/projects/DIMA/logs/rsl_rl/crazyflie_steering_tracking/2026-08-29_19-27-23_larger_ctrl_512_512_256_128/model_3250.pt`.
+
+### Training the models from scratch (the repo ships trained ones — this is only if you want to rebuild them)
+
+All three run under the Isaac Lab python. The controller and nav net train in Isaac; YOLO is a
+standard ultralytics fit on rendered gate/person crops.
+
+```bash
+PY=/scratch2/agustin/miniforge3/envs/env_isaaclab/bin/python
+cd /scratch/agustin/projects/DIMA
+# 1. MLP flight controller (the --rl_ckpt) — the exact figure run used --actor_hidden_dims 512,512,256,128
+$PY XPU-RT/sims/scripts/train_steering_tracking.py --headless \
+  --task Isaac-Track-Steering-Vision-Crazyflie-v0 --actor_hidden_dims 512,512,256,128 \
+  --run_note larger_ctrl --max_iterations 4000 --seed 42
+#   -> logs/rsl_rl/crazyflie_steering_tracking/<ts>_larger_ctrl_512_512_256_128/model_3250.pt
+# 2. Collision-avoidance nav net (the --weights)
+$PY XPU-RT/sims/scripts/train_warehouse_nav.py --headless      # -> a fused-BC nav checkpoint
+# 3. YOLOv8n gate/person detector (the --yolo)
+$PY XPU-RT/sims/scripts/train_yolo.py                          # -> yolov8n_gate_person_*.pt
+```
+Flight quality varies by seed; confirm 4/4 gates before composing (§5 verify).
 
 The warehouse env is `warehouse_nav` (the `WithSensors` variant). The aisle runs along +Y at
 x≈−8, cruise z≈2; the four gates are at world y≈9, 13, 17, 21 (also stored as `gates_world` in
@@ -75,12 +92,14 @@ cd /scratch/agustin/projects/DIMA
 PY=/scratch2/agustin/miniforge3/envs/env_isaaclab/bin/python
 $PY XPU-RT/sims/scripts/record_sensor_demo.py --headless \
   --controller rl \
-  --rl_ckpt logs/rsl_rl/crazyflie_steering_tracking/2026-08-29_19-27-23_larger_ctrl_512_512_256_128/model_3250.pt \
   --moment_scale 0.006 \
   --dump_figure_data XPU-RT/sims/out/figdata_mega \
   --save_video XPU-RT/sims/out/_mega.mp4 \
   --episodes 6 --max_steps 1100 --fps 50 --seed 1000
 ```
+This uses the committed default models (`--rl_ckpt`, `--weights`, `--yolo` all default into
+`sims/models/warehouse/`), so it runs from a clone. To reproduce the *exact* published figure, add
+`--rl_ckpt <path>/model_3250.pt` (the specific controller checkpoint — see §0).
 
 Notes that cost time if you skip them:
 - `--moment_scale` is the controller's moment gain. The MLP was learned at 50 Hz; at 100 Hz
@@ -203,7 +222,7 @@ $PY XPU-RT/sims/scripts/compose_mega_figure.py --data-dir XPU-RT/sims/out/figdat
   --gantt $G/solver_gantt_annotated.png --out out/paper_figure_mega
 # ROS variant (same flight, ROS crash schedule at the bottom)
 $PY XPU-RT/sims/scripts/compose_mega_figure.py --data-dir XPU-RT/sims/out/figdata_mega \
-  --gantt $G/solver_gantt_annotated_ros.png --out out/paper_figure_mega_ros
+  --gantt $G/solver_gantt_annotated_ros.png --crash-step 417 --out out/paper_figure_mega_ros
 ```
 
 Output: `out/paper_figure_mega{,_ros}.{png,pdf}`. Layout (top→bottom): tall top-down aisle
@@ -217,10 +236,11 @@ Useful `compose_mega_figure.py` flags: `--td-rot {1,3}` (aisle orientation; 1 = 
 
 ---
 
-## 6. Optional: the gallery
+## 6. Output
 
-`scratchpad/build_gallery.py` embeds all the co-design figures (data-URI) into one self-contained
-`figure_gallery.html`. Rebuild it and open locally after regenerating any figure.
+`out/paper_figure_mega.png` (XPU-RT solver — drone completes) and `out/paper_figure_mega_ros.png`
+(ROS baseline — crash-truncated) plus their `.pdf` twins are the deliverable. The ROS variant is
+produced by adding `--crash-step 417` to the §5 compose call and passing the ROS Gantt.
 
 ---
 
