@@ -683,12 +683,34 @@ def schedule(
     if warm_start is not None:
         ws_t, ws_alpha = warm_start
         try:
-            t.value = np.asarray(ws_t, dtype=float)
+            ws_t = np.asarray(ws_t, dtype=float)
+            chosen = [int(np.argmax(row)) for row in np.asarray(ws_alpha)]
+            t.value = ws_t
             a = np.zeros((num_operations, num_combinations))
-            for i, row in enumerate(np.asarray(ws_alpha)):
-                a[i, int(np.argmax(row))] = 1.0
+            for i, c in enumerate(chosen):
+                a[i, c] = 1.0
             alpha.value = a
-            C_max.value = float(np.max(np.asarray(ws_t, dtype=float)))
+
+            # `beta` is the bulk of the integer solution — 8,012 of the 8,496
+            # booleans on a 242-op instance — and leaving it unset makes the
+            # supplied point 94% unspecified, which no MIP start can use.
+            # Constraints (4)(5) define it as: beta[i,j] == 1 means i runs
+            # before j, 0 means j runs before i.
+            finish = np.array([ws_t[i] + workload.operations[i]
+                               .get_duration_for_combination(
+                                   chosen[i], machine_combinations, workload.machines)
+                               for i in range(num_operations)])
+            b = np.zeros(max(1, len(ordering_pairs)))
+            for idx, (i, j) in enumerate(ordering_pairs):
+                b[idx] = 1.0 if finish[i] <= ws_t[j] + 1e-9 else 0.0
+            beta.value = b
+
+            # C_max bounds the *finish* of the objective set, not the start.
+            targets = [i for i in range(num_operations)
+                       if not (restrict_makespan_to_nonperiodic
+                               and (workload.operations[i].min_start_t is not None
+                                    or workload.operations[i].max_end_t is not None))]
+            C_max.value = float(finish[targets].max() if targets else finish.max())
             opts["warm_start"] = True
             if solver_name == "MOSEK":
                 # Without CONSTRUCT_SOL MOSEK ignores the supplied integer
@@ -697,7 +719,9 @@ def schedule(
                 opts.setdefault("mosek_params", {})
                 opts["mosek_params"]["MSK_IPAR_MIO_CONSTRUCT_SOL"] = 1
             if verbose:
-                print(f"warm start supplied to {solver_name}")
+                print(f"warm start supplied to {solver_name}: "
+                      f"{num_operations} starts, {num_operations * num_combinations} "
+                      f"alpha, {len(ordering_pairs)} beta, C_max={C_max.value:.2f}")
         except Exception as exc:
             print(f"warning: could not apply warm start ({exc}); solving cold")
     if verbose and time_limit:
