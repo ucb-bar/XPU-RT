@@ -210,6 +210,61 @@ Three conclusions:
   three orders of magnitude more wall time — worth it only where the
   heuristics produce no valid schedule at all.
 
+### 4.2b Warm starting the exact solvers
+
+Handing a solver an existing schedule as its initial integer solution works for
+one of the two, and the difference is plumbing rather than principle.
+
+**CP-SAT: worth more than 40x the compute.** On the 242-op RVV+Gemmini q31
+instance, seeded from `heft` (46.91 ms):
+
+| | 15 s budget |
+| --- | --- |
+| cold | 86.56 / 90.77 ms (two runs) |
+| warm | **45.34 ms** |
+
+Warm at 15 s beats *every* cold budget including 600 s (45.44 ms). CP-SAT
+adopts the hint as its incumbent at 0.06 s and improves from there.
+
+Getting there took three fixes, each of which produced a plausible-looking
+number rather than an error, and only the solver's own log distinguished them:
+
+1. **Partial hint.** Hinting `start` and the assignment booleans but not
+   `duration`/`end` broke `end == start + duration`.
+2. **Objective unhinted.** Leaving `cmax` out drew
+   *"The solution hint is incomplete: 1210 out of 1211 non fixed variables
+   hinted"* — and an incomplete hint is advice for the search, not a solution
+   CP-SAT can adopt.
+3. **Independent rounding.** Rounding each start and duration to integer
+   microseconds separately makes abutting operations overlap by 1 us:
+   *"The solution hint is complete, but it is infeasible!"*. Fixed by replaying
+   the schedule on the solver's own integer grid (`_integerize`).
+
+Only after all three does the log say *"The solution hint is complete and is
+feasible. Its objective value is 46913"*.
+
+**MOSEK: cvxpy does not pass a MIP start through.** Same instance, same seed,
+120 s each:
+
+| | objective | wall |
+| --- | --- | --- |
+| `heft` seed | 46.91 | 0.01 s |
+| MOSEK cold | 112.264 | 185.8 s |
+| MOSEK warm | **112.264** | 188.0 s |
+
+Bit-identical, and the warm arm is 2.4x worse than the point it was handed. A
+MIP start that reached the solver would be a feasible upper bound that
+branch-and-bound could only match or beat, so returning the exact cold answer
+means the values never arrived. This was measured with a *complete* start —
+242 starts, 484 `alpha`, all 8,012 `beta` and `C_max = 46.91` — so it is not
+the incomplete-hint failure above.
+
+The cause is cvxpy's reduction chain: MOSEK receives transformed variables, not
+`t`/`alpha`/`beta`, and cvxpy has no mapping to carry a user-set `.value`
+through it. `warm_start=True` is the continuous path;
+`MSK_IPAR_MIO_CONSTRUCT_SOL` arrives with nothing to construct from. Warm
+starting the MILP requires building the model against MOSEK's own API instead.
+
 ### 4.3 Global trends: 30 generated spike workloads
 
 Generated with `scripts/gen_random_workload.py` against the new `spike_rv`
