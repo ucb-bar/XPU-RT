@@ -123,7 +123,62 @@ Notes which steps need the GPU (the warehouse mega plots + the HIL scatter re-ru
 solver-win, and evolution plot are CPU-only from cached schedules). Per-figure commands + inputs are in
 `docs/figure_runbook.md`.
 
-## 4. What is real vs stitched (say this when you present)
+## 4. Relevant files — where to look for each concern (code map)
+
+| Concern | Start here |
+|---|---|
+| **Schedule a workload** | `scripts/run_xpurt_schedule.py` (entry; flags `--solver {milp,greedy}`, `--scheduler {cpsat,mosek,…}`, `--profiled`, `--board-calibration`, `--emit-feedback`) → `xpu-rt/scheduler_cpsat.py`, `xpu-rt/scheduler.py` (MOSEK MILP), `xpu-rt/greedy_scheduler.py` |
+| **Cost model / profiles** | `xpu-rt/profile_loader.py` (`load_profiled_processing_times`; the `--board-calibration` scaling at `base_t`); profile CSVs under `gen_mb/…/<target>/…` |
+| **The AOT feedback loop** | doc `docs/the_loop.md`; drivers `scripts/run_codesign_loop.py` (auto, levers shard/IME), `scratchpad/auto_feedback_loop.py` (CP-SAT + board-cal every round) |
+| **Feedback emission** | `xpu-rt/feedback.py` (`--emit-feedback` → `xpurt_feedback.json`), `xpu-rt/compile_advice.py` + `scripts/emit_compile_advice.py` (`compile_advice.json`, verbs split/fuse/unfuse/shard/choose_impl) |
+| **Feedback consume / corroborate** | `xpu-rt/feedback_join.py`, `xpu-rt/advice_join.py` (identity-safety) |
+| **Graph rewrite (ModelBlaster)** | bridges `scripts/advice_to_{fusion,split,unfuse,shard}_hint.py`, `advice_to_kernel_choice.py` → `ModelBlaster/pipeline/apply_*_hint.py` → `ModelBlaster/pipeline/generate_kernels.py` |
+| **Runtime feedback (run vs Gantt, +31%)** | doc `docs/board_calibration_codesign.md`; `results/codesign_feedback/k1_board_calibration.json`; validate on board with `scripts/evaluate_exact_cycle_board.py` |
+| **Isaac warehouse flight** | `sims/scripts/sweep_rate_demo.py` (metrics/ablation), `sims/scripts/record_sensor_demo.py` (video + `--dump_figure_data`), task `sims/isaaclab_tasks/warehouse_nav/` (`HANDOFF.md`, `SPEC.md`) |
+| **HIL bridge (mock target)** | `hil/` (`hil_host_isaac.py`, `hil_target_mock.py`, `run_hil_pipeline.sh`, `README`) |
+| **Figures** | `scripts/compose_solver_win.py`, `scripts/compose_feedback_evolution.py`, `scripts/plot_solver_gantt_annotated.py`, `sims/scripts/compose_mega_figure.py`; regenerate via `scripts/make_all_codesign_figures.sh`; per-figure recipes in `docs/figure_runbook.md` |
+| **Solvers reference** | `docs/solvers.md` (which `--solver`/`--scheduler` combos exist; MOSEK non-convergence caveat) |
+| **Workload spec format** | `docs/workload_specs.md`; examples in `data/toplevel/*.json` |
+
+## 5. Run each experiment from scratch
+
+**A. Solver-beats-greedy** (CP-SAT vs greedy on a contended workload):
+```
+export XPURT_CPSAT_WORKERS=0
+for s in greedy "milp --scheduler cpsat --time-limit 900"; do
+  .venv/bin/python scripts/run_xpurt_schedule.py --networks-json data/toplevel/<contended-spec>.json \
+    --solver $s --profiled --max-periodic-iters 1
+done
+.venv/bin/python scripts/compose_solver_win.py --greedy <greedy.json> --cpsat <cpsat.json> --spec <spec>
+```
+Read `_metrics.json` (`deadline_miss_count`, `makespan_ms`) + `_report.json` (`solver_status`). See `docs/solvers.md`.
+
+**B. The AOT feedback loop** (og → levers → runtime feedback, each round re-solved):
+```
+.venv/bin/python scripts/run_codesign_loop.py --workload data/toplevel/<spec>.json
+# emits per-round specs + round_*_gantt.png + loop_report.json (accept/reject per lever)
+.venv/bin/python scripts/emit_compile_advice.py …          # compile_advice.json from measurements
+# graph rewrites (driver-mediated): scripts/advice_to_<verb>_hint.py → ModelBlaster/pipeline/apply_<verb>_hint.py
+```
+Full walk-through + the nine-term acceptance rule: `docs/the_loop.md`; operational board runbook:
+`docs/k1_modelblaster_xpurt_closed_loop.md`.
+
+**C. Isaac warehouse flight** (a real closed-loop flight through the gate course):
+```
+<env_isaaclab>/python sims/scripts/record_sensor_demo.py --headless --controller rl \
+  --weights sims/models/warehouse/nav_fused_v12_cnn.pt --prop_density 0.35 --obstacle_level 8 \
+  --fixed_speed 1.2 --episodes 6 --seed 2000 [--sched_latency_ms <ms>] [--dump_figure_data <dir>] [--save_video out/f.mp4]
+```
+Scene/asset notes (crate towers, colliders, gate course, cameras): `sims/isaaclab_tasks/warehouse_nav/HANDOFF.md`.
+The onboard schedule's control latency enters as a zero-order hold (`--sched_latency_ms`): the motor command
+is held for `ceil(latency / control_dt)` steps.
+
+**D. HIL speed × frequency ablation** (the scatter): `bash scratchpad/hil_ablation_grid.sh` (sweeps cruise ×
+control-rate × seeds, real Isaac flights → `hil_ablation.csv` via `sweep_rate_demo.py --sweep-csv`) then
+`scratchpad/hil_ablation_scatter.py`. Honest scope: in-sim ZOH latency injection (+ RoSE-lite mock in `hil/`),
+not live FPGA/K1 co-sim.
+
+## 6. What is real vs stitched (say this when you present)
 
 | Loop stage | Status |
 |---|---|

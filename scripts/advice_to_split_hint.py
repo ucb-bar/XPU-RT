@@ -38,7 +38,7 @@ and its own slice of the weights -- which is where the +76% comes from.
 Sharding leaves the dispatch alone and spreads it across harts with per-shard
 re-packed weights; measured, that is 3.87x and 3.93x on four harts for
 ffn_block's two linears, and 1.59x-2.92x on whole models. Two different
-mechanisms, two different ceilings. See docs/Feature/the_loop.md section 4c.
+mechanisms, two different ceilings. See docs/the_loop.md section 4c.
 
 WHAT IT REFUSES, LOUDLY
 -----------------------
