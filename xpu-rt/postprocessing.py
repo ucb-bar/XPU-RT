@@ -282,7 +282,12 @@ def output_scheduled_json(
     print(f"\nScheduled JSON saved to: {output_path}")
 
 
-def trim_periodic_after_nonperiodic_makespan(workload: Workload, t: np.ndarray, alpha: np.ndarray) -> tuple[Workload, np.ndarray, np.ndarray]:
+def trim_periodic_after_nonperiodic_makespan(
+    workload: Workload,
+    t: np.ndarray,
+    alpha: np.ndarray,
+    horizon_ms: float | None = None,
+) -> tuple[Workload, np.ndarray, np.ndarray]:
     """
     Post-process the schedule to discard periodic/background operations that occur
     entirely after the last non-periodic operation completes.
@@ -291,9 +296,17 @@ def trim_periodic_after_nonperiodic_makespan(workload: Workload, t: np.ndarray, 
     (min_start_t or max_end_t set). Non-periodic operations have both as None.
 
     We:
-      1) Compute the makespan over non-periodic operations only.
-      2) Drop any periodic operation whose window starts at or after this makespan.
-         (i.e., its period does not overlap the non-periodic makespan interval).
+      1) Compute the cut point: the makespan over non-periodic operations
+         only, or `horizon_ms` when the workload declares a longer span.
+      2) Drop any periodic operation whose window starts at or after the cut.
+         (i.e., its period does not overlap the interval of interest).
+
+    `horizon_ms` is how long the workload says it runs.  Without it the cut
+    is the non-periodic makespan alone, which treats every periodic task as
+    background filler for the "real" work — right for a workload built
+    around a yolov8 pass, wrong for a control loop that is the point of the
+    workload.  A 40 ms yolo window would leave a 16 ms mlp_control with two
+    instances on the plot however many the workload asked for.
     """
     if t is None or alpha is None or len(workload.operations) == 0:
         return workload, t, alpha
@@ -309,11 +322,17 @@ def trim_periodic_after_nonperiodic_makespan(workload: Workload, t: np.ndarray, 
         dur = op.get_duration_for_combination(combo_idx, workload.get_machine_combinations(), workload.machines)
         nonperiodic_completion_times.append(float(t[i] + dur))
 
-    if not nonperiodic_completion_times:
-        # No non-periodic ops: nothing to trim
+    try:
+        declared_horizon = max(0.0, float(horizon_ms or 0.0))
+    except (TypeError, ValueError):
+        declared_horizon = 0.0
+
+    if not nonperiodic_completion_times and declared_horizon <= 0.0:
+        # No non-periodic ops and no declared span: nothing to trim against.
         return workload, t, alpha
 
-    nonperiodic_makespan = max(nonperiodic_completion_times)
+    nonperiodic_makespan = max(
+        [declared_horizon] + nonperiodic_completion_times)
 
     # 2) Build keep mask: always keep non-periodic ops; for periodic, keep only
     #    those whose window overlaps [0, nonperiodic_makespan).

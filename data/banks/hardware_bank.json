@@ -1,23 +1,327 @@
 {
   "_comment": [
-    "Hardware bank for scripts/gen_random_workload.py.",
-    "spike_rv is the Flow A / RISC-V target this repo's spike reproduction",
-    "runs on: one RVV hart (CPU_P) and one scalar hart (CPU_E). The",
-    "machines/profile_hw/profile block is field-for-field the one in",
-    "data/toplevel/networks_mlp_dronet_yolo_spike.json, which is the workload",
-    "scripts/repro_mlp_dronet_yolo_spike.sh builds and runs end to end, so",
-    "anything generated against this config resolves the same profile CSVs."
+    "Hardware configs for scripts/gen_random_workload.py.",
+    "Each entry's machines/profile_hw/profile are copied verbatim into the",
+    "generated workload's `hardware` block.",
+    "",
+    "Reconstructed from the distinct `hardware` blocks in data/toplevel/*.json",
+    "(the generator emits them verbatim, so the shipped workloads are the",
+    "authoritative record of what this file held).",
+    "",
+    "`p_core_speedup` is deliberately absent: generate() copies only",
+    "machines/profile_hw/profile, and the generator refuses to emit a speedup",
+    "on top of profiled CSVs.",
+    "",
+    "`available: false` marks configs whose profile CSVs the generator cannot",
+    "reach: find_profile_csv() hardcodes <repo>/gen/profile and ignores the",
+    "`profile.gen_root` key that profile_metrics.py honours.  That is",
+    "deliberate -- the generator mirrors profile_loader's search exactly, so a",
+    "config it accepts is one the scheduler can also load.  A tree that lives",
+    "elsewhere becomes reachable by symlinking it under <repo>/gen/profile",
+    "(gen/profile/{RVV,scalar}/spike/* are tracked symlinks into",
+    "zephyr-chipyard-sw/modelblaster/gen/profile, which is what makes the",
+    "spike_* entries below available); `gen_root` still records where the",
+    "profiling run actually writes, for repro_workload.sh and",
+    "worst_case_nonperiodic_duration.py.",
+    "",
+    "`single_core`/`dual_core`/`quad_core` (qrb5165) and their `spike_*`",
+    "counterparts scale both machine kinds together",
+    "(1, 2 and 4 cores of each).  build_machine_combinations() turns a kind with",
+    "N cores into groups of 1..N cores whose topo tag is derived from the group",
+    "size, but qrb5165_v66 only has topo_0 profiles on disk -- so these entries",
+    "pin `topo_tag_override: true`, and every group reads the single-core",
+    "measurement.  Extra cores therefore buy dispatch-level parallelism, not an",
+    "intra-dispatch speedup.  Re-profile at topo_0_1 / topo_0_1_2_3 and drop the",
+    "override to model multi-hart groups."
   ],
-  "default": "spike_rv",
+  "default": "qrb5165_hetero",
   "configs": {
-    "spike_rv": {
-      "description": "spike RISC-V through ModelBlaster: RVV hart (CPU_P) + scalar hart (CPU_E), one lane each. Profiles are the results.csv files modelblaster writes under gen/profile/{RVV,scalar}/spike.",
+    "qrb5165_hetero": {
+      "description": "QRB5165 v66: HTA + DSP + CPU, one core each",
       "available": true,
-      "machines": { "cpu_p": 1, "cpu_e": 1 },
-      "profile_hw": { "cpu_p": "RVV", "cpu_e": "scalar" },
+      "machines": {
+        "cpu_e": 1,
+        "cpu_p": 1,
+        "cpu_x": 1
+      },
+      "profile_hw": {
+        "cpu_e": "DSP",
+        "cpu_p": "HTA",
+        "cpu_x": "CPU"
+      },
+      "profile": {
+        "gen_root": "gen",
+        "target": "qrb5165_v66",
+        "topo_tag": "topo_0",
+        "topo_tag_override": false
+      }
+    },
+    "qrb5165_hetero_topo_pinned": {
+      "description": "QRB5165 v66, topo_tag pinned rather than derived",
+      "available": true,
+      "machines": {
+        "cpu_e": 1,
+        "cpu_p": 1,
+        "cpu_x": 1
+      },
+      "profile_hw": {
+        "cpu_e": "DSP",
+        "cpu_p": "HTA",
+        "cpu_x": "CPU"
+      },
+      "profile": {
+        "gen_root": "gen",
+        "target": "qrb5165_v66",
+        "topo_tag": "topo_0",
+        "topo_tag_override": true
+      }
+    },
+    "single_core": {
+      "description": "QRB5165 v66: 1 p-core (HTA) + 1 e-core (DSP)",
+      "available": true,
+      "machines": {
+        "cpu_p": 1,
+        "cpu_e": 1
+      },
+      "profile_hw": {
+        "cpu_p": "HTA",
+        "cpu_e": "DSP"
+      },
+      "profile": {
+        "gen_root": "gen",
+        "target": "qrb5165_v66",
+        "topo_tag": "topo_0",
+        "topo_tag_override": true
+      }
+    },
+    "dual_core": {
+      "description": "QRB5165 v66: 2 p-cores (HTA) + 2 e-cores (DSP)",
+      "available": true,
+      "machines": {
+        "cpu_p": 2,
+        "cpu_e": 2
+      },
+      "profile_hw": {
+        "cpu_p": "HTA",
+        "cpu_e": "DSP"
+      },
+      "profile": {
+        "gen_root": "gen",
+        "target": "qrb5165_v66",
+        "topo_tag": "topo_0",
+        "topo_tag_override": true
+      }
+    },
+    "quad_core": {
+      "description": "QRB5165 v66: 4 p-cores (HTA) + 4 e-cores (DSP)",
+      "available": true,
+      "machines": {
+        "cpu_p": 4,
+        "cpu_e": 4
+      },
+      "profile_hw": {
+        "cpu_p": "HTA",
+        "cpu_e": "DSP"
+      },
+      "profile": {
+        "gen_root": "gen",
+        "target": "qrb5165_v66",
+        "topo_tag": "topo_0",
+        "topo_tag_override": true
+      }
+    },
+    "spike_het": {
+      "description": "Spike ISA sim: RVV p-core + scalar e-core",
+      "available": true,
+      "machines": {
+        "cpu_e": 1,
+        "cpu_p": 1
+      },
+      "profile_hw": {
+        "cpu_e": "scalar",
+        "cpu_p": "RVV"
+      },
       "profile": {
         "gen_root": "zephyr-chipyard-sw/modelblaster/gen",
         "target": "spike",
+        "topo_tag": "topo_0",
+        "topo_tag_override": true
+      }
+    },
+    "spike_single_core": {
+      "description": "Spike ISA sim: 1 p-core (RVV) + 1 e-core (scalar)",
+      "available": true,
+      "machines": {
+        "cpu_p": 1,
+        "cpu_e": 1
+      },
+      "profile_hw": {
+        "cpu_p": "RVV",
+        "cpu_e": "scalar"
+      },
+      "profile": {
+        "gen_root": "zephyr-chipyard-sw/modelblaster/gen",
+        "target": "spike",
+        "topo_tag": "topo_0",
+        "topo_tag_override": true
+      }
+    },
+    "spike_dual_core": {
+      "description": "Spike ISA sim: 2 p-cores (RVV) + 2 e-cores (scalar)",
+      "available": true,
+      "machines": {
+        "cpu_p": 2,
+        "cpu_e": 2
+      },
+      "profile_hw": {
+        "cpu_p": "RVV",
+        "cpu_e": "scalar"
+      },
+      "profile": {
+        "gen_root": "zephyr-chipyard-sw/modelblaster/gen",
+        "target": "spike",
+        "topo_tag": "topo_0",
+        "topo_tag_override": true
+      }
+    },
+    "spike_quad_core": {
+      "description": "Spike ISA sim: 4 p-cores (RVV) + 4 e-cores (scalar)",
+      "available": true,
+      "machines": {
+        "cpu_p": 4,
+        "cpu_e": 4
+      },
+      "profile_hw": {
+        "cpu_p": "RVV",
+        "cpu_e": "scalar"
+      },
+      "profile": {
+        "gen_root": "zephyr-chipyard-sw/modelblaster/gen",
+        "target": "spike",
+        "topo_tag": "topo_0",
+        "topo_tag_override": true
+      }
+    },
+    "firesim_gemmini_q31": {
+      "description": "FireSim rocket+saturn: gemmini_q31 p-core + V256D128 RVV e-core",
+      "available": false,
+      "unavailable_reason": [
+        "profile CSVs live under zephyr-chipyard-sw/gen/profile/sweep_v8/,",
+        "which adds a sweep-name level find_profile_csv() does not expect.",
+        "gen/profile/gemmini_q31/firesim_rocket_saturn/ holds no results.csv."
+      ],
+      "machines": {
+        "cpu_e": 1,
+        "cpu_p": 1
+      },
+      "profile_hw": {
+        "cpu_e": "V256D128_rvv",
+        "cpu_p": "gemmini_q31"
+      },
+      "profile": {
+        "gen_root": "zephyr-chipyard-sw/gen",
+        "target": "firesim_rocket_saturn",
+        "topo_tag": "topo_0",
+        "topo_tag_override": true
+      }
+    },
+    "firesim_gemmini": {
+      "description": "FireSim rocket+saturn: gemmini p-core + RVV e-core",
+      "available": false,
+      "unavailable_reason": [
+        "no gen/profile/gemmini/firesim_rocket_saturn/ tree at all."
+      ],
+      "machines": {
+        "cpu_e": 1,
+        "cpu_p": 1
+      },
+      "profile_hw": {
+        "cpu_e": "RVV",
+        "cpu_p": "gemmini"
+      },
+      "profile": {
+        "gen_root": "zephyr-chipyard-sw/gen",
+        "target": "firesim_rocket_saturn",
+        "topo_tag": "topo_0",
+        "topo_tag_override": true
+      }
+    },
+    "firesim_rvv": {
+      "description": "FireSim rocket+saturn: RVV on both cores",
+      "available": false,
+      "unavailable_reason": [
+        "gen/profile/RVV/firesim_rocket_saturn/ does not exist."
+      ],
+      "machines": {
+        "cpu_e": 1,
+        "cpu_p": 1
+      },
+      "profile_hw": {
+        "cpu_e": "RVV",
+        "cpu_p": "RVV"
+      },
+      "profile": {
+        "target": "firesim_rocket_saturn",
+        "topo_tag": "topo_0",
+        "topo_tag_override": true
+      }
+    },
+    "firesim_het": {
+      "description": "FireSim rocket+saturn: RVV p-core + scalar e-core",
+      "available": false,
+      "unavailable_reason": [
+        "gen/profile/{RVV,scalar}/firesim_rocket_saturn/ do not exist."
+      ],
+      "machines": {
+        "cpu_e": 1,
+        "cpu_p": 1
+      },
+      "profile_hw": {
+        "cpu_e": "scalar",
+        "cpu_p": "RVV"
+      },
+      "profile": {
+        "target": "firesim_rocket_saturn",
+        "topo_tag": "topo_0",
+        "topo_tag_override": true
+      }
+    },
+    "spacemit_x60_quad": {
+      "description": "SpaceMiT X60: RVV p-core + scalar e-core, 4-core topology",
+      "available": false,
+      "unavailable_reason": [
+        "the spacemit_x60 dispatch graphs referenced by data/toplevel are not",
+        "on disk (gen/vmfb/... and profiled/gen/vmfb/... are both missing),",
+        "and there is no gen/profile tree for this target."
+      ],
+      "machines": {
+        "CPU_E": 1,
+        "CPU_P": 1
+      },
+      "profile_hw": {
+        "cpu_e": "scalar",
+        "cpu_p": "RVV"
+      },
+      "profile": {
+        "gen_root": "profiled/gen",
+        "target": "spacemit_x60",
+        "topo_tag": "topo_0_1_2_3"
+      }
+    },
+    "f2_gemmini_q31_opt": {
+      "description": "AWS F2 SatGemDualSmall: gemmini_q31 p-core (hart 0) + Saturn V256D128 e-core (hart 1). Profiles from the OPTIMIZED kernel set -- conv2d_s8 = gemmini_tiled_conv (int8 mvout drain, MB_DRIFT_ATOL) on the p-core, curated RVV on the e-core.",
+      "available": true,
+      "machines": {
+        "cpu_p": 1,
+        "cpu_e": 1
+      },
+      "profile_hw": {
+        "cpu_p": "gemmini_q31",
+        "cpu_e": "V256D128_rvv"
+      },
+      "profile": {
+        "gen_root": ".",
+        "target": "firesim_f2_armB",
         "topo_tag": "topo_0",
         "topo_tag_override": true
       }

@@ -15,3 +15,6 @@ docs/*_status.md
 plots/smolvla_expert_gantt.png
 plots/smolvla_decode_gantt.png
 plots/smolvla_vision_hta_gantt.png
+
+# large render artifacts — keep out of git (GitHub rejects >100MB)
+sims/out/*.mp4

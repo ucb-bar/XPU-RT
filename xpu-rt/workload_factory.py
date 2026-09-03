@@ -46,8 +46,27 @@ def build_machine_combinations(machine_core_counts: dict[str, int]) -> tuple[lis
     combinations = []
     for machine_type, count in machine_core_counts.items():
         cores = [f"{machine_type}#{i}" for i in range(count)]
+        # Cumulative groups: how MANY cores one dispatch uses (intra-op pool
+        # parallelism). The topo tag is derived from the group's LENGTH.
         for n in range(1, count + 1):
             combinations.append(cores[:n])
+        # Singletons for the non-first cores: WHICH core one dispatch uses.
+        #
+        # Without these the enumeration only ever offers prefixes of #0, so two
+        # independent dispatches of the same kind can never be placed on two
+        # sibling harts -- the solver would have handled it (greedy_scheduler's
+        # _earliest_start_for only serialises combinations that OVERLAP, and
+        # ['CPU_E#0'] and ['CPU_E#1'] do not), but the option was never in its
+        # search space. That is why a 12-tile split graph on cpu_e=2 scheduled
+        # all 27 dispatches onto CPU_E#0, and why every same-kind sharding win
+        # measured on the quad bitstream had to come from a hand-written
+        # schedule rather than the solver.
+        #
+        # Safe for profile lookup: topo_tag_for_combination() keys off the
+        # group's LENGTH, so ['CPU_E#1'] resolves to the same topo_0 profile as
+        # ['CPU_E#0'] -- same kind, one core.
+        for i in range(1, count):
+            combinations.append([cores[i]])
     return machines, combinations
 
 
@@ -354,11 +373,41 @@ def create_workload_from_network_hierarchy(
             times.append(base / len(combo))
         return times
 
+    def _forced_instances(net_info: Dict) -> Optional[int]:
+        """A network's explicit `num_instances`, if it declares a usable one.
+
+        Honored on every path through the estimator below.  It used not to
+        be: the "no non-periodic operations" shortcut returned 1 for every
+        periodic network without ever looking, so an all-periodic workload
+        scheduled exactly one instance of each network no matter what it
+        asked for.
+        """
+        forced = net_info.get("num_instances", None)
+        if isinstance(forced, bool) or not isinstance(forced, int):
+            return None
+        return forced if forced > 0 else None
+
+    def _declared_horizon_ms() -> float:
+        """The workload's own `horizon_ms`: how long it means to run.
+
+        A periodic taskset with no non-periodic work in it has no makespan
+        to size instance counts against -- the heuristic below reads 0 and
+        returns one instance each, which is a periodic workload that never
+        repeats.  When the document says how long it runs, that is the
+        floor.
+        """
+        try:
+            return max(0.0, float(networks_data.get("horizon_ms") or 0.0))
+        except (TypeError, ValueError):
+            return 0.0
+
     def _estimate_num_periodic_instances() -> Dict[str, int]:
         """
         Heuristic to estimate how many instances to create for each periodic network.
 
-        For now:
+        A network's own `num_instances` always wins; so does the workload's
+        `horizon_ms`, as a floor on the horizon.  Only when the workload
+        says neither does the estimate below decide:
           1) Compute a worst-case horizon H (ms):
                - If hardware.profile + profiled results.csv can be resolved, prefer
                  H = S_np / (1 - F_p)  where
@@ -412,22 +461,30 @@ def create_workload_from_network_hierarchy(
                 worst_dur = max(proc_times)
                 total_worst_nonperiodic += float(worst_dur)
 
-        # If there are no non-periodic operations there is no horizon to derive
-        # instance counts from, so fall back to 1 instance per periodic network.
-        # An explicit per-network `num_instances` still wins: it is the caller
-        # pinning the count directly (same override as below), and silently
-        # collapsing a workload that asks for 6 instances down to 1 makes a
-        # purely-periodic workload unschedulable rather than merely unbounded.
+        # No non-periodic operations: there is no makespan to size against,
+        # so the workload has to say how long it runs.  `num_instances` per
+        # network says it outright; `horizon_ms` says it once for the whole
+        # document.  Absent both, fall back to a single instance each.
         if total_worst_nonperiodic <= 0.0:
+            declared_horizon = _declared_horizon_ms()
             periodic_counts: Dict[str, int] = {}
             for net_id, net_info in networks.items():
                 period = net_info.get("period", None)
                 window_duration = net_info.get("window_duration", None)
-                if period is not None and window_duration is not None:
-                    forced = net_info.get("num_instances", None)
-                    periodic_counts[net_id] = (
-                        forced if isinstance(forced, int) and forced > 0 else 1
-                    )
+                if period is None or window_duration is None:
+                    continue
+                forced = _forced_instances(net_info)
+                if forced is not None:
+                    periodic_counts[net_id] = forced
+                    continue
+                try:
+                    T = float(period)
+                except (TypeError, ValueError):
+                    T = 0.0
+                if declared_horizon > 0.0 and T > 0.0:
+                    periodic_counts[net_id] = max(1, int(np.ceil(declared_horizon / T)))
+                else:
+                    periodic_counts[net_id] = 1
             return periodic_counts
 
         profile_horizon = profile_based_horizon_ms(networks_data, repo_base_path)
@@ -448,6 +505,10 @@ def create_workload_from_network_hierarchy(
             horizon = max(float(profile_horizon), total_worst_nonperiodic)
         else:
             horizon = 2.0 * total_worst_nonperiodic
+        # The workload's declared span is a floor, not a competitor: the
+        # periodic tasks keep ticking for as long as the workload runs, even
+        # when the non-periodic work happens to finish sooner.
+        horizon = max(horizon, _declared_horizon_ms())
         periodic_counts: Dict[str, int] = {}
         for net_id, net_info in networks.items():
             period = net_info.get("period", None)
@@ -461,12 +522,13 @@ def create_workload_from_network_hierarchy(
             if T <= 0:
                 continue
             num_instances = int(np.ceil(horizon / T))
-            # Per-network override: lets the toplevel JSON cap periodic
-            # instance count directly. Useful when the horizon heuristic
-            # over-estimates (e.g. profile data is being pinned per-network
-            # so the cross-product worst-case bloats).
-            forced = net_info.get("num_instances", None)
-            if isinstance(forced, int) and forced > 0:
+            # Per-network override: lets the toplevel JSON set the periodic
+            # instance count directly, up or down.  Useful when the horizon
+            # heuristic over-estimates (e.g. profile data is being pinned
+            # per-network so the cross-product worst-case bloats), and it is
+            # how gen_random_workload states the periodicity it laid out.
+            forced = _forced_instances(net_info)
+            if forced is not None:
                 num_instances = forced
             periodic_counts[net_id] = max(1, num_instances)
 
@@ -565,28 +627,52 @@ def create_workload_from_network_hierarchy(
         from_network = edge.get('from')
         to_network = edge.get('to')
         
-        # Check if networks are periodic and expand them
+        # Whether a side is periodic is membership in the expansion map,
+        # not "it has more than one instance": a periodic network expanded
+        # to a single instance is still periodic, and reading it as
+        # non-periodic emitted edges naming the *base* network, which no
+        # longer exists in expanded_networks.  That only stayed invisible
+        # while every periodic network got the same instance count.
+        from_periodic = from_network in periodic_network_to_instances
+        to_periodic = to_network in periodic_network_to_instances
         from_instances = periodic_network_to_instances.get(from_network, [from_network])
         to_instances = periodic_network_to_instances.get(to_network, [to_network])
-        
-        # For now, if both are periodic, create edges between corresponding instances
-        # (instance 0 -> instance 0, instance 1 -> instance 1, etc.)
-        # This can be customized later
-        if len(from_instances) > 1 and len(to_instances) > 1:
-            # Both are periodic - create edges between corresponding instances
-            for i in range(min(len(from_instances), len(to_instances))):
-                expanded_edges.append({
-                    'from': from_instances[i],
-                    'to': to_instances[i]
-                })
-        elif len(from_instances) > 1:
+
+        if from_periodic and to_periodic:
+            if len(from_instances) == len(to_instances):
+                # Same rate: instance i feeds instance i, one tick to one tick.
+                for from_inst, to_inst in zip(from_instances, to_instances):
+                    expanded_edges.append({'from': from_inst, 'to': to_inst})
+            else:
+                # Different rates, so pairing by index would tie together
+                # instances that are further and further apart in time (the
+                # 8 ms task's 40th tick against the 96 ms task's 40th).
+                # Pair each consumer instance with the newest producer
+                # instance that has already closed when it opens; a consumer
+                # with no such producer starts unconstrained, which is what
+                # the first tick of a fast consumer actually is.
+                producers = sorted(
+                    ((float(expanded_networks[inst].get('max_end_t', 0.0)), inst)
+                     for inst in from_instances),
+                    key=lambda pair: pair[0])
+                for to_inst in to_instances:
+                    opens = float(expanded_networks[to_inst].get('min_start_t', 0.0))
+                    newest = None
+                    for closes, inst in producers:
+                        if closes <= opens:
+                            newest = inst
+                        else:
+                            break
+                    if newest is not None:
+                        expanded_edges.append({'from': newest, 'to': to_inst})
+        elif from_periodic:
             # Only from_network is periodic - create edges from all instances to to_network
             for from_inst in from_instances:
                 expanded_edges.append({
                     'from': from_inst,
                     'to': to_network
                 })
-        elif len(to_instances) > 1:
+        elif to_periodic:
             # Only to_network is periodic - create edges from from_network to all instances
             for to_inst in to_instances:
                 expanded_edges.append({
@@ -596,7 +682,7 @@ def create_workload_from_network_hierarchy(
         else:
             # Neither is periodic - keep original edge
             expanded_edges.append(edge)
-    
+
     # Map to store operations for each network
     network_operations_map: Dict[str, List[Operation]] = {}
     # Map to store all operations by their prefixed names
