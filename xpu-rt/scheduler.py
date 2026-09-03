@@ -384,6 +384,64 @@ def schedule_window(window: Window, debug_constraints: bool = False,
     print("Optimal value: ", problem.value)
     return t.value, alpha.value
 
+# cvxpy solvers that can handle the boolean variables this model needs.
+# CLARABEL/SCS/OSQP/DAQP/ECOS are continuous-only and reject it outright.
+MIP_CAPABLE_SOLVERS = ("MOSEK", "HIGHS", "SCIPY", "GUROBI", "CPLEX", "SCIP",
+                       "CBC", "GLPK_MI", "XPRESS")
+
+
+def _solver_options(solver_name: str, time_limit: Optional[float],
+                    verbose: bool) -> dict:
+    """Per-backend spelling of "stop after this many seconds".
+
+    Every solver names its own time limit, and cvxpy passes these through
+    untouched, so a wrong key is silently ignored rather than rejected —
+    which reads as "the time limit does nothing" at the call site.
+
+    MOSEK additionally picks up the env-injected parameters the convergence
+    sweeps drive, so those apply whether or not a time limit was asked for.
+    """
+    name = (solver_name or "MOSEK").upper()
+
+    if name == "MOSEK":
+        mosek_params: dict = {}
+        if time_limit is not None and time_limit > 0:
+            mosek_params["MSK_DPAR_OPTIMIZER_MAX_TIME"] = time_limit
+            if verbose:
+                print(f"Time limit set to {time_limit:.1f} seconds "
+                      f"({time_limit/60:.1f} minutes)")
+        # F2d/F2e: env-injected MOSEK params for convergence-aid sweeps.
+        # XPURT_MOSEK_MIO_GAP=0.05 sets MSK_DPAR_MIO_TOL_REL_GAP=0.05.
+        # XPURT_MOSEK_PARAMS=key=val;key=val sets arbitrary MOSEK keys.
+        _mio_gap = os.environ.get("XPURT_MOSEK_MIO_GAP", "")
+        if _mio_gap:
+            try:
+                mosek_params["MSK_DPAR_MIO_TOL_REL_GAP"] = float(_mio_gap)
+            except ValueError:
+                pass
+        _extra = os.environ.get("XPURT_MOSEK_PARAMS", "")
+        if _extra:
+            mosek_params.update(_parse_mosek_params(_extra))
+        return {"mosek_params": mosek_params} if mosek_params else {}
+
+    if time_limit is None or time_limit <= 0:
+        return {}
+    if name == "HIGHS":
+        return {"time_limit": float(time_limit)}
+    if name == "SCIPY":
+        return {"scipy_options": {"time_limit": float(time_limit)}}
+    if name in ("GUROBI", "CPLEX", "XPRESS"):
+        return {"TimeLimit": float(time_limit)}
+    if name == "SCIP":
+        return {"scip_params": {"limits/time": float(time_limit)}}
+    if name == "CBC":
+        return {"maximumSeconds": float(time_limit)}
+    if verbose:
+        print(f"warning: no time-limit parameter known for solver {solver_name!r}; "
+              f"running it unbounded")
+    return {}
+
+
 def schedule(
     workload: Workload,
     fusion_threshold: Optional[float] = None,
@@ -399,6 +457,7 @@ def schedule(
     freshness_producer_op_indices: Optional[list] = None,
     cvxpy_solver: str = "MOSEK",
     emit_report_to: Optional[str] = None,
+    warm_start=None,
 ) -> Tuple[np.ndarray, np.ndarray, Optional[Workload], Optional[dict]]:
     """
     Schedule a workload, optionally with operation fusion.
@@ -422,6 +481,14 @@ def schedule(
         prune_overlap_constraints_for_dependency_chain: If True, skip generating (4)(5) non-overlap
                    constraints for operation pairs that are already ordered by the precedence graph
                    via a transitive dependency chain (i ->* j or j ->* i).
+        cvxpy_solver: which cvxpy backend to solve with. Must handle boolean
+                   variables — see MIP_CAPABLE_SOLVERS. Defaults to MOSEK,
+                   the historical hardcoded choice.
+        warm_start: an existing (t, alpha) to hand the solver as its starting
+                   integer solution (a "MIP start"). For MOSEK this sets the
+                   variables' .value and turns on MSK_IPAR_MIO_CONSTRUCT_SOL,
+                   which makes it try to build a feasible incumbent from them
+                   rather than searching for one from scratch.
     
     Returns:
         (t, alpha, fused_workload, fusion_map) where:
@@ -453,7 +520,6 @@ def schedule(
     transfer_times = workload.get_transfer_times()
 
     alpha = cp.Variable((num_operations, num_combinations), boolean=True)
-    beta = cp.Variable((num_operations, num_operations), boolean=True)
     t = cp.Variable(num_operations)
     C_max = cp.Variable()
 
@@ -710,17 +776,55 @@ def schedule(
     end()
 
     # (4) and (5) Non-overlap constraints: if two operations are assigned to overlapping combinations, enforce ordering
+    #
+    # `beta` used to be a dense (num_operations x num_operations) boolean
+    # matrix, allocated before any of the pruning below ran. The pruning is
+    # very effective on the *constraints* — on the QRB5165 3-way workload it
+    # drops 94% of the (4)(5) pairs — but nothing shrank the variable, so
+    # MOSEK still had to presolve an ordering bit for every pair, including
+    # the pruned ones: 36,481 of that model's 37,246 variables, ~95% of them
+    # never referenced by a constraint. Deciding the surviving pairs first
+    # and allocating one ordering bit per surviving pair keeps the model
+    # identical and makes the variable count track the pruning.
     end = log("(4)(5) non-overlap (pairwise, overlapping combinations)")
     dep_desc = None
     if prune_overlap_constraints_for_dependency_chain:
         dep_desc = _compute_dependency_descendants_bitset(workload.operations)
+
+    def _pair_needs_ordering(i: int, j: int) -> bool:
+        op_i = workload.operations[i]
+        op_j = workload.operations[j]
+        # Skip pairs whose time windows cannot overlap.
+        if prune_cross_period_constraints and not _periods_overlap(op_i, op_j):
+            return False
+        # Skip pairs already ordered by a dependency chain (i ->* j or
+        # j ->* i): the precedence constraints already separate them in time.
+        if dep_desc is not None:
+            if ((dep_desc[i] >> j) & 1) or ((dep_desc[j] >> i) & 1):
+                return False
+        return True
+
+    ordering_pairs = [(i, j)
+                      for i in range(num_operations)
+                      for j in range(i + 1, num_operations)
+                      if _pair_needs_ordering(i, j)]
+    beta_index = {pair: n for n, pair in enumerate(ordering_pairs)}
+    # cvxpy rejects a zero-length variable, and a workload with no competing
+    # pairs (a single serial chain, say) legitimately produces none.
+    beta = cp.Variable(max(1, len(ordering_pairs)), boolean=True)
+
     # PER-PAIR big-M (XPURT_PERPAIR_BIGM=1): tighten the disjunctive big-M from the
     # global H to a valid per-pair bound, strengthening the LP relaxation for MOSEK.
     # Correct bound (derived after two naive tries were infeasible): the slack term is
     #   t[.] + dur_[.]_kX - t[.]   where dur_[.]_kX is the duration on a combo the op is
-    # NOT assigned to (so up to its MAX over combos), t[.] <= max_end_t (line 637), and
-    # t[.] >= min_start_t >= 0. So H_ij = max(max_end_t_i,max_end_t_j) + max(maxdur_i,maxdur_j)
-    # covers both constraints. Falls back to global H if either op lacks max_end_t.
+    # NOT assigned to (so up to its MAX over combos), t[.] <= max_end_t (see the
+    # window bound below), and t[.] >= min_start_t >= 0. So
+    # H_ij = max(max_end_t_i,max_end_t_j) + max(maxdur_i,maxdur_j) covers both
+    # constraints. Falls back to global H if either op lacks max_end_t.
+    #
+    # This is independent of the sparse `beta` above: pruning decides WHICH pairs
+    # get an ordering variable, the per-pair bound decides how tight the constant
+    # is on the pairs that survive. Both narrow the same relaxation.
     _perpair_bigm = os.environ.get("XPURT_PERPAIR_BIGM", "").strip() in ("1", "true", "True")
     _op_maxdur = None
     if _perpair_bigm:
@@ -729,45 +833,33 @@ def schedule(
             _ds = [_op.get_duration_for_combination(_k, machine_combinations, workload.machines)
                    for _k in range(num_combinations)]
             _op_maxdur.append(max(_ds) if _ds else 0.0)
-    for i in range(num_operations):
-        for j in range(i+1, num_operations):
-            op_i = workload.operations[i]
-            op_j = workload.operations[j]
 
-            # Optionally skip pairs whose time windows cannot overlap
-            if prune_cross_period_constraints and not _periods_overlap(op_i, op_j):
-                continue
-
-            # Optimization: If i and j are already ordered by a dependency chain (i ->* j or j ->* i),
-            # precedence constraints already enforce a non-overlap in time, so skip overlap constraints.
-            if dep_desc is not None:
-                if ((dep_desc[i] >> j) & 1) or ((dep_desc[j] >> i) & 1):
-                    continue
-
-            H_ij = H
-            if _perpair_bigm:
-                _ei = getattr(op_i, "max_end_t", None)
-                _ej = getattr(op_j, "max_end_t", None)
-                if _ei is not None and _ej is not None:
-                    H_ij = max(float(_ei), float(_ej)) + max(_op_maxdur[i], _op_maxdur[j])
-            for k1 in range(num_combinations):
-                for k2 in range(num_combinations):
-                    # Only add constraint if combinations overlap
-                    if workload.combinations_overlap(k1, k2):
-                        # (4) Operation i starts after j finishes (if i is on k1 and j is on k2)
-                        dur_j_k2 = workload.operations[j].get_duration_for_combination(
-                            k2, machine_combinations, workload.machines
-                        )
-                        constraints.append(
-                            t[i] >= t[j] + dur_j_k2 - (2 - alpha[i, k1] - alpha[j, k2] + beta[i, j]) * H_ij
-                        )
-                        # (5) Operation j starts after i finishes (if j is on k2 and i is on k1)
-                        dur_i_k1 = workload.operations[i].get_duration_for_combination(
-                            k1, machine_combinations, workload.machines
-                        )
-                        constraints.append(
-                            t[j] >= t[i] + dur_i_k1 - (3 - alpha[i, k1] - alpha[j, k2] - beta[i, j]) * H_ij
-                        )
+    for i, j in ordering_pairs:
+        beta_ij = beta[beta_index[(i, j)]]
+        H_ij = H
+        if _perpair_bigm:
+            _ei = getattr(workload.operations[i], "max_end_t", None)
+            _ej = getattr(workload.operations[j], "max_end_t", None)
+            if _ei is not None and _ej is not None:
+                H_ij = max(float(_ei), float(_ej)) + max(_op_maxdur[i], _op_maxdur[j])
+        for k1 in range(num_combinations):
+            for k2 in range(num_combinations):
+                # Only add constraint if combinations overlap
+                if workload.combinations_overlap(k1, k2):
+                    # (4) Operation i starts after j finishes (if i is on k1 and j is on k2)
+                    dur_j_k2 = workload.operations[j].get_duration_for_combination(
+                        k2, machine_combinations, workload.machines
+                    )
+                    constraints.append(
+                        t[i] >= t[j] + dur_j_k2 - (2 - alpha[i, k1] - alpha[j, k2] + beta_ij) * H_ij
+                    )
+                    # (5) Operation j starts after i finishes (if j is on k2 and i is on k1)
+                    dur_i_k1 = workload.operations[i].get_duration_for_combination(
+                        k1, machine_combinations, workload.machines
+                    )
+                    constraints.append(
+                        t[j] >= t[i] + dur_i_k1 - (3 - alpha[i, k1] - alpha[j, k2] - beta_ij) * H_ij
+                    )
     end()
 
     # (6) Makespan constraints.
@@ -955,10 +1047,12 @@ def schedule(
         print(f"{'='*60}")
         print(f"Number of operations: {num_operations}")
         print(f"Number of machine combinations: {num_combinations}")
-        num_vars = num_operations * num_combinations + num_operations * num_operations + num_operations + 1
+        num_vars = (num_operations * num_combinations + len(ordering_pairs)
+                    + num_operations + 1)
         print(f"Number of variables: {num_vars}")
         print(f"  - alpha (operation->combination): {num_operations * num_combinations}")
-        print(f"  - beta (operation ordering): {num_operations * num_operations}")
+        print(f"  - beta (operation ordering): {len(ordering_pairs)} "
+              f"(dense would be {num_operations * num_operations})")
         print(f"  - t (start times): {num_operations}")
         print(f"  - C_max (makespan): 1")
         print(f"Number of constraints: {len(constraints)}")
@@ -966,7 +1060,23 @@ def schedule(
         print("Starting optimization...")
     # Always time the solve regardless of verbosity — SchedulerReport needs it.
     start_time = time.time()
-    
+
+    # Normalise once. The dispatch below is getattr(cp, cvxpy_solver), which is
+    # case-sensitive, and callers write "mosek" as readily as "MOSEK".
+    cvxpy_solver = (cvxpy_solver or "MOSEK").upper()
+    # Catch a continuous-only backend here rather than letting cvxpy fail deep
+    # in compilation with a message that does not mention the boolean variables.
+    if cvxpy_solver not in MIP_CAPABLE_SOLVERS:
+        raise ValueError(
+            f"cvxpy_solver {cvxpy_solver!r} cannot solve a model with boolean "
+            f"variables. MIP-capable backends: {', '.join(MIP_CAPABLE_SOLVERS)}."
+        )
+    if cvxpy_solver not in cp.installed_solvers():
+        raise ValueError(
+            f"cvxpy_solver {cvxpy_solver!r} is not installed in this environment. "
+            f"Installed: {', '.join(cp.installed_solvers())}."
+        )
+
     # Configure solver backend. Default is MOSEK (original behaviour); any CVXPY
     # MILP-capable backend can be selected via cvxpy_solver.
     solver_verbose = verbose or (solver_verbosity > 0)
@@ -976,41 +1086,55 @@ def schedule(
             f"Unknown CVXPY solver '{cvxpy_solver}'. "
             f"Available: {cp.installed_solvers()}"
         )
-    solver_kwargs: dict = {}
+    solver_kwargs = _solver_options(cvxpy_solver, time_limit, verbose)
 
-    if cvxpy_solver == "MOSEK":
-        mosek_params: dict = {}
-        if time_limit is not None and time_limit > 0:
-            mosek_params['MSK_DPAR_OPTIMIZER_MAX_TIME'] = time_limit
+    if warm_start is not None:
+        ws_t, ws_alpha = warm_start
+        try:
+            ws_t = np.asarray(ws_t, dtype=float)
+            chosen = [int(np.argmax(row)) for row in np.asarray(ws_alpha)]
+            t.value = ws_t
+            a = np.zeros((num_operations, num_combinations))
+            for i, c in enumerate(chosen):
+                a[i, c] = 1.0
+            alpha.value = a
+
+            # `beta` is the bulk of the integer solution — 8,012 of the 8,496
+            # booleans on a 242-op instance — and leaving it unset makes the
+            # supplied point 94% unspecified, which no MIP start can use.
+            # Constraints (4)(5) define it as: beta[i,j] == 1 means i runs
+            # before j, 0 means j runs before i.
+            finish = np.array([ws_t[i] + workload.operations[i]
+                               .get_duration_for_combination(
+                                   chosen[i], machine_combinations, workload.machines)
+                               for i in range(num_operations)])
+            b = np.zeros(max(1, len(ordering_pairs)))
+            for idx, (i, j) in enumerate(ordering_pairs):
+                b[idx] = 1.0 if finish[i] <= ws_t[j] + 1e-9 else 0.0
+            beta.value = b
+
+            # C_max bounds the *finish* of the objective set, not the start.
+            targets = [i for i in range(num_operations)
+                       if not (restrict_makespan_to_nonperiodic
+                               and (workload.operations[i].min_start_t is not None
+                                    or workload.operations[i].max_end_t is not None))]
+            C_max.value = float(finish[targets].max() if targets else finish.max())
+            solver_kwargs["warm_start"] = True
+            if cvxpy_solver == "MOSEK":
+                # Without CONSTRUCT_SOL MOSEK ignores the supplied integer
+                # values entirely; with it, it tries to repair them into a
+                # feasible incumbent before branching.
+                solver_kwargs.setdefault("mosek_params", {})
+                solver_kwargs["mosek_params"]["MSK_IPAR_MIO_CONSTRUCT_SOL"] = 1
             if verbose:
-                print(f"Time limit set to {time_limit:.1f} seconds ({time_limit/60:.1f} minutes)")
-        # F2d/F2e: env-injected MOSEK params for convergence-aid sweeps.
-        # XPURT_MOSEK_MIO_GAP=0.05 sets MSK_DPAR_MIO_TOL_REL_GAP=0.05.
-        # XPURT_MOSEK_PARAMS=key=val;key=val sets arbitrary MOSEK keys.
-        _mio_gap = os.environ.get("XPURT_MOSEK_MIO_GAP", "")
-        if _mio_gap:
-            try:
-                mosek_params['MSK_DPAR_MIO_TOL_REL_GAP'] = float(_mio_gap)
-            except ValueError:
-                pass
-        _extra = os.environ.get("XPURT_MOSEK_PARAMS", "")
-        if _extra:
-            mosek_params.update(_parse_mosek_params(_extra))
-        if mosek_params:
-            solver_kwargs["mosek_params"] = mosek_params
-    elif cvxpy_solver == "GUROBI":
-        if time_limit is not None and time_limit > 0:
-            solver_kwargs["TimeLimit"] = time_limit
-    elif cvxpy_solver == "HIGHS":
-        if time_limit is not None and time_limit > 0:
-            solver_kwargs["time_limit"] = time_limit
-    elif cvxpy_solver == "SCIP":
-        if time_limit is not None and time_limit > 0:
-            solver_kwargs["scip_params"] = {"limits/time": time_limit}
-    elif cvxpy_solver == "CBC":
-        if time_limit is not None and time_limit > 0:
-            solver_kwargs["maximumSeconds"] = time_limit
+                print(f"warm start supplied to {cvxpy_solver}: "
+                      f"{num_operations} starts, {num_operations * num_combinations} "
+                      f"alpha, {len(ordering_pairs)} beta, C_max={C_max.value:.2f}")
+        except Exception as exc:
+            print(f"warning: could not apply warm start ({exc}); solving cold")
 
+    if verbose and time_limit:
+        print(f"Solving with {cvxpy_solver}, time limit {time_limit:.1f} s")
     problem.solve(solver=solver_attr, verbose=solver_verbose, **solver_kwargs)
     elapsed_time = time.time() - start_time
 
