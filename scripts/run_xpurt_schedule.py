@@ -602,7 +602,19 @@ def schedule_iree_networks(
                 if not bumped:
                     break
                 print("  Bumping num_instances:", ", ".join(f"{n}: {a}->{b}" for n, a, b in bumped))
-            print(f"\nFinal greedy makespan: {iter_makespan:.2f} ms (after {it + 1} iteration{'s' if it else ''})")
+            # A workload with nothing but periodic networks is a legitimate
+            # input -- it just has no one-shot work to pack against. The
+            # non-periodic makespan is then 0 by construction, and printing it
+            # bare claims the schedule has no span when it plainly does. Report
+            # the all-operations figure and say why. Keep the
+            # "<N> ms (after <k> iteration...)" shape: it is the human-facing
+            # summary line and the surrounding tooling matches on it loosely.
+            if effective_restrict_makespan_to_nonperiodic and iter_makespan <= 0.0:
+                print(f"\nFinal greedy makespan: {iter_makespan_all:.2f} ms "
+                      f"(after {it + 1} iteration{'s' if it else ''}; over all "
+                      f"operations, this workload has no non-periodic work)")
+            else:
+                print(f"\nFinal greedy makespan: {iter_makespan:.2f} ms (after {it + 1} iteration{'s' if it else ''})")
 
             # The loop breaks as soon as a pass is self-consistent, so reaching
             # the cap with a growing makespan means it never was: the schedule
