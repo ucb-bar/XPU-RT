@@ -296,10 +296,21 @@ The rewrite closes the question rather than opening a path.
 
 ### 4.3 Global trends: 30 generated spike workloads
 
-Generated with `scripts/gen_random_workload.py` against the new `spike_rv`
-bank (3-5 networks, 2-4 periodic, real profile data on both lanes). "Valid"
-means no missed periodic window *and* enough periodic instances to cover the
-schedule's own makespan.
+Generated with `scripts/gen_random_workload.py` against the spike RVV +
+scalar bank entry (3-5 networks, 2-4 periodic, real profile data on both
+lanes). "Valid" means no missed periodic window *and* enough periodic
+instances to cover the schedule's own makespan.
+
+The entry was called `spike_rv` when these numbers were measured. Merging
+`rose-2-dev` replaced `data/banks/` with that branch's fuller bank, where the
+same machines/profile_hw/profile block is named `spike_het` (and
+`spike_single_core`) — field-for-field identical, so the hardware these
+workloads were generated against is unchanged. The *model* bank is not: it
+now draws dronet's period from 20-100 ms rather than 40-400, and lets
+yolov8_nano's instance count reach 0. Re-running the generator at the same
+seeds therefore yields a different corpus. The table below is the corpus as
+generated at the time; treat it as a measurement, not as something a fresh
+`gen_random_workload.py` run reproduces.
 
 | method | valid | missed windows | under-covers | both | median vs best |
 | --- | --- | --- | --- | --- | --- |

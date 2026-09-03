@@ -1,0 +1,279 @@
+Loading user config located at: '/scratch2/dima/miniforge3/envs/env_isaaclab/lib/python3.11/site-packages/isaacsim/kit/data/Kit/Isaac-Sim/5.1/user.config.json'
+[Info] [carb] Logging to file: /scratch2/dima/miniforge3/envs/env_isaaclab/lib/python3.11/site-packages/isaacsim/kit/logs/Kit/Isaac-Sim/5.1/kit_20260805_202649.log
+2026-08-06T03:26:49Z [142ms] [Warning] [carb.windowing-glfw.plugin] GLFW initialization failed.
+2026-08-06T03:26:49Z [142ms] [Warning] [carb] Failed to startup plugin carb.windowing-glfw.plugin (interfaces: [carb::windowing::IGLContext v1.0],[carb::windowing::IWindowing v1.5]) (impl: carb.windowing-glfw.plugin)
+2026-08-06T03:26:49Z [169ms] [Warning] [omni.platforminfo.plugin] failed to open the default display.  Can't verify X Server version.
+
+|---------------------------------------------------------------------------------------------|
+| Driver Version: 560.35.05     | Graphics API: Vulkan
+|=============================================================================================|
+| GPU | Name                             | Active | LDA | GPU Memory | Vendor-ID | LUID       |
+|     |                                  |        |     |            | Device-ID | UUID       |
+|     |                                  |        |     |            | Bus-ID    |            |
+|---------------------------------------------------------------------------------------------|
+| 0   | NVIDIA TITAN RTX                 | Yes: 0 |     | 24822   MB | 10de      | 0          |
+|     |                                  |        |     |            | 1e02      | 61ac89bf.. |
+|     |                                  |        |     |            | 41        |            |
+|=============================================================================================|
+| OS: 24.04.4 LTS (Noble Numbat) ubuntu, Version: 24.04.4, Kernel: 6.8.0-136-generic
+| Processor: AMD Ryzen Threadripper PRO 5965WX 24-Cores
+| Cores: 24 | Logical Cores: 48
+|---------------------------------------------------------------------------------------------|
+| Total Memory (MB): 128634 | Free Memory: 63647
+| Total Page/Swap (MB): 8191 | Free Page/Swap: 6477
+|---------------------------------------------------------------------------------------------|
+2026-08-06T03:26:50Z [920ms] [Warning] [gpu.foundation.plugin] IOMMU is enabled.
+2026-08-06T03:26:50Z [1,552ms] [Warning] [carb.windowing-glfw.plugin] GLFW initialization failed.
+2026-08-06T03:26:50Z [1,552ms] [Warning] [carb] Failed to startup plugin carb.windowing-glfw.plugin (interfaces: [carb::windowing::IGLContext v1.0],[carb::windowing::IWindowing v1.5]) (impl: carb.windowing-glfw.plugin)
+2026-08-06T03:26:50Z [1,667ms] [Warning] [carb.windowing-glfw.plugin] GLFW initialization failed.
+2026-08-06T03:26:50Z [1,667ms] [Warning] [carb] Failed to startup plugin carb.windowing-glfw.plugin (interfaces: [carb::windowing::IGLContext v1.0],[carb::windowing::IWindowing v1.5]) (impl: carb.windowing-glfw.plugin)
+2026-08-06T03:26:50Z [1,675ms] [Warning] [carb.windowing-glfw.plugin] GLFW initialization failed.
+2026-08-06T03:26:50Z [1,675ms] [Warning] [carb] Failed to startup plugin carb.windowing-glfw.plugin (interfaces: [carb::windowing::IGLContext v1.0],[carb::windowing::IWindowing v1.5]) (impl: carb.windowing-glfw.plugin)
+2026-08-06T03:26:50Z [1,686ms] [Warning] [carb.windowing-glfw.plugin] GLFW initialization failed.
+2026-08-06T03:26:50Z [1,686ms] [Warning] [carb] Failed to startup plugin carb.windowing-glfw.plugin (interfaces: [carb::windowing::IGLContext v1.0],[carb::windowing::IWindowing v1.5]) (impl: carb.windowing-glfw.plugin)
+2026-08-06T03:26:50Z [1,688ms] [Warning] [carb.windowing-glfw.plugin] GLFW initialization failed.
+2026-08-06T03:26:50Z [1,688ms] [Warning] [carb] Failed to startup plugin carb.windowing-glfw.plugin (interfaces: [carb::windowing::IGLContext v1.0],[carb::windowing::IWindowing v1.5]) (impl: carb.windowing-glfw.plugin)
+2026-08-06T03:26:50Z [1,689ms] [Warning] [carb.windowing-glfw.plugin] GLFW initialization failed.
+2026-08-06T03:26:50Z [1,689ms] [Warning] [carb] Failed to startup plugin carb.windowing-glfw.plugin (interfaces: [carb::windowing::IGLContext v1.0],[carb::windowing::IWindowing v1.5]) (impl: carb.windowing-glfw.plugin)
+2026-08-06T03:26:51Z [1,882ms] [Warning] [omni.log] Source: omni.hydra was already registered.
+2026-08-06T03:26:51Z [2,181ms] [Warning] [carb] Acquiring non optional plugin interface which is not listed as dependency: [omni::physx::IPhysxBenchmarks v1.0] (plugin: <default plugin>), by client: omni.physics.physx.plugin. Add it to CARB_PLUGIN_IMPL_DEPS() macro of a client.
+2026-08-06T03:26:51Z [2,191ms] [Warning] [omni.isaac.dynamic_control] omni.isaac.dynamic_control is deprecated as of Isaac Sim 4.5. No action is needed from end-users.
+2026-08-06T03:26:54Z [5,810ms] [Warning] [pxr.Semantics] pxr.Semantics is deprecated - please use Semantics instead
+2026-08-06T03:26:55Z [5,944ms] [Warning] [omni.graph.core.plugin] Found duplicate of category 'Replicator' - was 'Annotators', adding 'Fabric Reader'
+2026-08-06T03:26:55Z [5,944ms] [Warning] [omni.graph.core.plugin] Category 'Replicator' not accepted on node type 'omni.replicator.core.FabricReader' in extension 'omni.replicator.core'
+2026-08-06T03:26:55Z [5,944ms] [Warning] [omni.replicator.core.scripts.extension] No material configuration file, adding configuration to material settings directly.
+2026-08-06T03:26:56Z [7,336ms] [Warning] [omni.kvdb.plugin] Disabling key-value database because another kit process is locking it
+[INFO][AppLauncher]: Using device: cuda:0
+[INFO][AppLauncher]: Loading experience file: /scratch2/dima/IsaacLab/apps/isaaclab.python.headless.rendering.kit
+[env] gym.make Isaac-Drone-Warehouse-Gates-Vision-Crazyflie-Play-WithSensors-Coll-v0
+
+[36m======================================================================================[0m
+[36m[1m[INFO][IsaacLab]: Logging to file: /tmp/isaaclab/logs/isaaclab_2026-08-05_20-27-42.log[0m
+[36m======================================================================================[0m
+
+[33m20:27:42 [simulation_context.py] WARNING: The `enable_external_forces_every_iteration` parameter in the PhysxCfg is set to False. If you are experiencing noisy velocities, consider enabling this flag. You may need to slightly increase the number of velocity iterations (setting it to 1 or 2 rather than 0), together with this flag, to improve the accuracy of velocity updates.[0m
+[INFO]: Base environment:
+	Environment device    : cuda:0
+	Environment seed      : None
+	Physics step-size     : 0.01
+	Rendering step-size   : 0.02
+	Environment step-size : 0.02
+[INFO]: Time taken for scene creation : 12.503466 seconds
+[INFO]: Scene manager:  <class InteractiveScene>
+	Number of environments: 1
+	Environment spacing   : 40.0
+	Source prim name      : /World/envs/env_0
+	Global prim paths     : []
+	Replicate physics     : True
+[INFO]: Starting the simulation. This may take a few seconds. Please wait...
+[INFO]: Time taken for simulation start : 29.769624 seconds
+[INFO] Command Manager:  <CommandManager> contains 1 active terms.
++---------------------------------------+
+|          Active Command Terms         |
++-------+------+------------------------+
+| Index | Name |          Type          |
++-------+------+------------------------+
+|   0   | goal | FixedGateCourseCommand |
++-------+------+------------------------+
+
+[INFO] Event Manager:  <EventManager> contains 2 active terms.
++------------------------------------+
+| Active Event Terms in Mode: 'reset' |
++----------+-------------------------+
+|  Index   | Name                    |
++----------+-------------------------+
+|    0     | reset_base              |
+|    1     | reset_obstacles         |
+|    2     | randomize_light         |
++----------+-------------------------+
++-------------------------------------------------+
+|      Active Event Terms in Mode: 'interval'     |
++-------+---------------+-------------------------+
+| Index | Name          | Interval time range (s) |
++-------+---------------+-------------------------+
+|   0   | move_people   |        (0.0, 0.0)       |
+|   1   | move_forklift |        (0.0, 0.0)       |
++-------+---------------+-------------------------+
+
+[INFO] Recorder Manager:  <RecorderManager> contains 0 active terms.
++---------------------+
+| Active Recorder Terms |
++-----------+---------+
+|   Index   | Name    |
++-----------+---------+
++-----------+---------+
+
+[INFO] Action Manager:  <ActionManager> contains 1 active terms.
++-----------------------------------+
+|   Active Action Terms (shape: 4)  |
++--------+------------+-------------+
+| Index  | Name       |   Dimension |
++--------+------------+-------------+
+|   0    | velocity   |           4 |
++--------+------------+-------------+
+
+[INFO] Observation Manager: <ObservationManager> contains 1 groups.
++---------------------------------------------------------+
+| Active Observation Terms in Group: 'policy' (shape: (33,)) |
++-----------+---------------------------------+-----------+
+|   Index   | Name                            |   Shape   |
++-----------+---------------------------------+-----------+
+|     0     | base_lin_vel                    |    (3,)   |
+|     1     | base_ang_vel                    |    (3,)   |
+|     2     | projected_gravity               |    (3,)   |
+|     3     | base_height                     |    (1,)   |
+|     4     | goal                            |    (4,)   |
+|     5     | obstacles                       |   (15,)   |
+|     6     | last_action                     |    (4,)   |
++-----------+---------------------------------+-----------+
+
+[INFO] Termination Manager:  <TerminationManager> contains 3 active terms.
++---------------------------------+
+|     Active Termination Terms    |
++-------+--------------+----------+
+| Index | Name         | Time Out |
++-------+--------------+----------+
+|   0   | time_out     |   True   |
+|   1   | crash_ground |  False   |
+|   2   | collision    |  False   |
++-------+--------------+----------+
+
+[INFO] Reward Manager:  <RewardManager> contains 5 active terms.
++---------------------------------+
+|       Active Reward Terms       |
++-------+----------------+--------+
+| Index | Name           | Weight |
++-------+----------------+--------+
+|   0   | navigation     |    1.0 |
+|   1   | gate_pass      |   20.0 |
+|   2   | course_done    |    5.0 |
+|   3   | collision      | -100.0 |
+|   4   | success_metric |    1.0 |
++-------+----------------+--------+
+
+[INFO] Curriculum Manager:  <CurriculumManager> contains 1 active terms.
++---------------------------+
+|  Active Curriculum Terms  |
++--------+------------------+
+| Index  | Name             |
++--------+------------------+
+|   0    | obstacle_count   |
++--------+------------------+
+
+[INFO]: Completed setting up the environment...
+[nav] FusedSensorNet out_dim=2 loaded: /scratch/agustin/projects/DIMA/train_out/fused_bc_warehouse_v12_mixed_cnn/2026-08-03_19-51-49/best.pt  mask_off=none
+[demo] recording 3rd-person chase view → sims/out/gate_crowded.mp4
+    [trace ep0 t=0] xy=(-8.13,5.81) h=2.51 yaw=1.73 pred_yr=-0.54 pred_fwd=0.75 goal=0 dvel_b=(+1.38,-0.25)
+    [trace ep0 t=20] xy=(-8.08,5.94) h=2.42 yaw=1.60 pred_yr=-0.10 pred_fwd=1.43 goal=0 dvel_b=(+1.40,-0.05)
+    [trace ep0 t=40] xy=(-8.07,6.32) h=2.27 yaw=1.57 pred_yr=-0.01 pred_fwd=1.56 goal=0 dvel_b=(+1.40,-0.02)
+    [trace ep0 t=60] xy=(-8.08,6.84) h=2.13 yaw=1.57 pred_yr=+0.00 pred_fwd=1.59 goal=0 dvel_b=(+1.40,-0.01)
+    [trace ep0 t=80] xy=(-8.08,7.43) h=2.03 yaw=1.57 pred_yr=+0.02 pred_fwd=1.59 goal=0 dvel_b=(+1.40,-0.03)
+    [trace ep0 t=100] xy=(-8.08,8.05) h=1.98 yaw=1.58 pred_yr=+0.00 pred_fwd=1.60 goal=0 dvel_b=(+1.40,-0.05)
+    [trace ep0 t=120] xy=(-8.08,8.68) h=1.96 yaw=1.59 pred_yr=+0.03 pred_fwd=1.59 goal=1 dvel_b=(+1.40,+0.05)
+    [trace ep0 t=140] xy=(-8.09,9.32) h=1.96 yaw=1.60 pred_yr=+0.02 pred_fwd=1.60 goal=1 dvel_b=(+1.40,+0.04)
+    [trace ep0 t=160] xy=(-8.10,9.96) h=1.97 yaw=1.60 pred_yr=-0.00 pred_fwd=1.60 goal=1 dvel_b=(+1.40,+0.05)
+    [trace ep0 t=180] xy=(-8.12,10.60) h=1.99 yaw=1.61 pred_yr=+0.08 pred_fwd=1.59 goal=1 dvel_b=(+1.40,+0.05)
+    [trace ep0 t=200] xy=(-8.14,11.23) h=1.99 yaw=1.65 pred_yr=+0.05 pred_fwd=1.60 goal=1 dvel_b=(+1.40,+0.02)
+    [trace ep0 t=220] xy=(-8.18,11.87) h=2.00 yaw=1.65 pred_yr=+0.06 pred_fwd=1.59 goal=1 dvel_b=(+1.40,+0.04)
+    [trace ep0 t=240] xy=(-8.22,12.51) h=2.00 yaw=1.62 pred_yr=-0.28 pred_fwd=1.58 goal=2 dvel_b=(+1.38,-0.21)
+    [trace ep0 t=260] xy=(-8.26,13.14) h=2.00 yaw=1.53 pred_yr=-0.17 pred_fwd=1.58 goal=2 dvel_b=(+1.39,-0.12)
+    [trace ep0 t=280] xy=(-8.27,13.77) h=2.00 yaw=1.47 pred_yr=-0.11 pred_fwd=1.58 goal=2 dvel_b=(+1.40,-0.08)
+    [trace ep0 t=300] xy=(-8.23,14.40) h=2.00 yaw=1.43 pred_yr=-0.09 pred_fwd=1.59 goal=2 dvel_b=(+1.40,-0.06)
+    [trace ep0 t=320] xy=(-8.16,15.03) h=2.00 yaw=1.40 pred_yr=-0.09 pred_fwd=1.58 goal=2 dvel_b=(+1.40,-0.04)
+    [trace ep0 t=340] xy=(-8.07,15.65) h=2.00 yaw=1.36 pred_yr=-0.10 pred_fwd=1.58 goal=2 dvel_b=(+1.40,-0.03)
+    [trace ep0 t=360] xy=(-7.95,16.28) h=2.00 yaw=1.34 pred_yr=+0.31 pred_fwd=1.59 goal=3 dvel_b=(+1.36,+0.34)
+    [trace ep0 t=380] xy=(-7.82,16.90) h=2.00 yaw=1.47 pred_yr=+0.28 pred_fwd=1.58 goal=3 dvel_b=(+1.38,+0.22)
+    [trace ep0 t=400] xy=(-7.73,17.52) h=2.00 yaw=1.56 pred_yr=+0.15 pred_fwd=1.60 goal=3 dvel_b=(+1.39,+0.14)
+    [trace ep0 t=420] xy=(-7.68,18.15) h=2.00 yaw=1.60 pred_yr=+0.09 pred_fwd=1.60 goal=3 dvel_b=(+1.39,+0.13)
+    [trace ep0 t=440] xy=(-7.68,18.79) h=2.00 yaw=1.65 pred_yr=+0.13 pred_fwd=1.59 goal=3 dvel_b=(+1.39,+0.13)
+    [trace ep0 t=460] xy=(-7.70,19.43) h=2.00 yaw=1.69 pred_yr=+0.11 pred_fwd=1.59 goal=3 dvel_b=(+1.39,+0.14)
+    [trace ep0 t=480] xy=(-7.76,20.06) h=2.00 yaw=1.73 pred_yr=+0.09 pred_fwd=1.60 goal=3 dvel_b=(+1.39,+0.20)
+[ep00] outcome=success   gates=4/4 mean_off=0.09 steps=484
+    [trace ep1 t=0] xy=(-8.57,6.04) h=2.53 yaw=1.76 pred_yr=-0.06 pred_fwd=0.93 goal=0 dvel_b=(+1.31,-0.50)
+    [trace ep1 t=20] xy=(-8.62,6.10) h=2.44 yaw=1.64 pred_yr=-0.54 pred_fwd=1.27 goal=0 dvel_b=(+1.35,-0.36)
+    [trace ep1 t=40] xy=(-8.66,6.42) h=2.28 yaw=1.32 pred_yr=-0.26 pred_fwd=1.42 goal=0 dvel_b=(+1.40,+0.03)
+    [trace ep1 t=60] xy=(-8.61,6.87) h=2.13 yaw=1.31 pred_yr=+0.08 pred_fwd=1.55 goal=0 dvel_b=(+1.40,+0.01)
+    [trace ep1 t=80] xy=(-8.49,7.40) h=2.03 yaw=1.33 pred_yr=-0.01 pred_fwd=1.58 goal=0 dvel_b=(+1.40,-0.04)
+    [trace ep1 t=100] xy=(-8.35,7.99) h=1.98 yaw=1.32 pred_yr=-0.06 pred_fwd=1.59 goal=0 dvel_b=(+1.40,-0.05)
+    [trace ep1 t=120] xy=(-8.20,8.59) h=1.96 yaw=1.34 pred_yr=+0.19 pred_fwd=1.57 goal=1 dvel_b=(+1.36,+0.35)
+    [trace ep1 t=140] xy=(-8.05,9.20) h=1.96 yaw=1.42 pred_yr=+0.16 pred_fwd=1.57 goal=1 dvel_b=(+1.37,+0.31)
+    [trace ep1 t=160] xy=(-7.93,9.81) h=1.97 yaw=1.47 pred_yr=+0.06 pred_fwd=1.59 goal=1 dvel_b=(+1.37,+0.31)
+    [trace ep1 t=180] xy=(-7.84,10.44) h=1.98 yaw=1.50 pred_yr=+0.09 pred_fwd=1.59 goal=1 dvel_b=(+1.36,+0.35)
+    [trace ep1 t=200] xy=(-7.78,11.07) h=1.99 yaw=1.52 pred_yr=-0.03 pred_fwd=1.58 goal=1 dvel_b=(+1.33,+0.44)
+    [trace ep1 t=220] xy=(-7.73,11.70) h=2.00 yaw=1.51 pred_yr=+0.00 pred_fwd=1.59 goal=1 dvel_b=(+1.24,+0.64)
+    [trace ep1 t=240] xy=(-7.69,12.33) h=2.00 yaw=1.52 pred_yr=+0.05 pred_fwd=1.58 goal=1 dvel_b=(+0.99,+0.99)
+    [trace ep1 t=260] xy=(-7.65,12.97) h=2.00 yaw=1.53 pred_yr=+0.05 pred_fwd=1.58 goal=2 dvel_b=(+1.40,+0.08)
+    [trace ep1 t=280] xy=(-7.62,13.60) h=2.00 yaw=1.54 pred_yr=-0.04 pred_fwd=1.59 goal=2 dvel_b=(+1.40,+0.09)
+    [trace ep1 t=300] xy=(-7.60,14.23) h=2.00 yaw=1.52 pred_yr=-0.05 pred_fwd=1.58 goal=2 dvel_b=(+1.39,+0.15)
+    [trace ep1 t=320] xy=(-7.58,14.87) h=2.00 yaw=1.50 pred_yr=+0.00 pred_fwd=1.57 goal=2 dvel_b=(+1.38,+0.21)
+    [trace ep1 t=340] xy=(-7.54,15.50) h=2.00 yaw=1.50 pred_yr=+0.08 pred_fwd=1.59 goal=2 dvel_b=(+1.37,+0.29)
+    [trace ep1 t=360] xy=(-7.50,16.13) h=2.00 yaw=1.53 pred_yr=+0.04 pred_fwd=1.58 goal=2 dvel_b=(+1.33,+0.44)
+    [trace ep1 t=380] xy=(-7.47,16.76) h=2.00 yaw=1.56 pred_yr=+0.16 pred_fwd=1.57 goal=3 dvel_b=(+1.38,+0.21)
+    [trace ep1 t=400] xy=(-7.45,17.39) h=2.00 yaw=1.61 pred_yr=+0.08 pred_fwd=1.57 goal=3 dvel_b=(+1.39,+0.17)
+    [trace ep1 t=420] xy=(-7.45,18.02) h=2.00 yaw=1.64 pred_yr=+0.14 pred_fwd=1.57 goal=3 dvel_b=(+1.39,+0.17)
+    [trace ep1 t=440] xy=(-7.48,18.65) h=2.00 yaw=1.69 pred_yr=+0.09 pred_fwd=1.58 goal=3 dvel_b=(+1.39,+0.17)
+    [trace ep1 t=460] xy=(-7.54,19.27) h=2.00 yaw=1.72 pred_yr=+0.04 pred_fwd=1.57 goal=3 dvel_b=(+1.39,+0.20)
+    [trace ep1 t=480] xy=(-7.61,19.90) h=2.00 yaw=1.75 pred_yr=+0.08 pred_fwd=1.58 goal=3 dvel_b=(+1.37,+0.28)
+[ep01] outcome=success   gates=4/4 mean_off=0.42 steps=491
+    [trace ep2 t=0] xy=(-7.95,5.78) h=2.43 yaw=1.82 pred_yr=+0.09 pred_fwd=0.66 goal=0 dvel_b=(+1.37,-0.31)
+    [trace ep2 t=20] xy=(-7.99,5.88) h=2.38 yaw=1.85 pred_yr=-0.52 pred_fwd=1.23 goal=0 dvel_b=(+1.35,-0.36)
+    [trace ep2 t=40] xy=(-8.08,6.18) h=2.25 yaw=1.66 pred_yr=-0.42 pred_fwd=1.38 goal=0 dvel_b=(+1.39,-0.15)
+    [trace ep2 t=60] xy=(-8.16,6.62) h=2.13 yaw=1.57 pred_yr=-0.11 pred_fwd=1.54 goal=0 dvel_b=(+1.40,-0.05)
+    [trace ep2 t=80] xy=(-8.18,7.17) h=2.04 yaw=1.53 pred_yr=-0.07 pred_fwd=1.55 goal=0 dvel_b=(+1.40,-0.04)
+    [trace ep2 t=100] xy=(-8.18,7.76) h=1.99 yaw=1.50 pred_yr=-0.10 pred_fwd=1.56 goal=0 dvel_b=(+1.40,-0.04)
+    [trace ep2 t=120] xy=(-8.15,8.37) h=1.97 yaw=1.48 pred_yr=+0.10 pred_fwd=1.55 goal=1 dvel_b=(+1.39,+0.17)
+    [trace ep2 t=140] xy=(-8.11,8.98) h=1.97 yaw=1.53 pred_yr=+0.14 pred_fwd=1.55 goal=1 dvel_b=(+1.39,+0.12)
+    [trace ep2 t=160] xy=(-8.07,9.60) h=1.98 yaw=1.59 pred_yr=+0.13 pred_fwd=1.55 goal=1 dvel_b=(+1.40,+0.07)
+    [trace ep2 t=180] xy=(-8.06,10.22) h=1.99 yaw=1.62 pred_yr=+0.02 pred_fwd=1.57 goal=1 dvel_b=(+1.40,+0.05)
+    [trace ep2 t=200] xy=(-8.07,10.84) h=1.99 yaw=1.63 pred_yr=+0.08 pred_fwd=1.57 goal=1 dvel_b=(+1.40,+0.07)
+    [trace ep2 t=220] xy=(-8.10,11.47) h=2.00 yaw=1.66 pred_yr=+0.04 pred_fwd=1.56 goal=1 dvel_b=(+1.40,+0.05)
+    [trace ep2 t=240] xy=(-8.15,12.09) h=2.00 yaw=1.68 pred_yr=-0.09 pred_fwd=1.55 goal=1 dvel_b=(+1.40,+0.09)
+    [trace ep2 t=260] xy=(-8.20,12.72) h=2.00 yaw=1.59 pred_yr=-0.23 pred_fwd=1.57 goal=2 dvel_b=(+1.39,-0.17)
+    [trace ep2 t=280] xy=(-8.24,13.34) h=2.00 yaw=1.50 pred_yr=-0.18 pred_fwd=1.57 goal=2 dvel_b=(+1.40,-0.09)
+    [trace ep2 t=300] xy=(-8.23,13.97) h=2.00 yaw=1.43 pred_yr=-0.11 pred_fwd=1.56 goal=2 dvel_b=(+1.40,-0.03)
+    [trace ep2 t=320] xy=(-8.18,14.59) h=2.00 yaw=1.39 pred_yr=-0.06 pred_fwd=1.57 goal=2 dvel_b=(+1.40,+0.01)
+    [trace ep2 t=340] xy=(-8.09,15.21) h=2.00 yaw=1.39 pred_yr=-0.01 pred_fwd=1.56 goal=2 dvel_b=(+1.40,-0.00)
+    [trace ep2 t=360] xy=(-7.98,15.82) h=2.00 yaw=1.37 pred_yr=-0.05 pred_fwd=1.56 goal=2 dvel_b=(+1.40,+0.01)
+    [trace ep2 t=380] xy=(-7.87,16.44) h=2.00 yaw=1.40 pred_yr=+0.31 pred_fwd=1.54 goal=3 dvel_b=(+1.37,+0.29)
+    [trace ep2 t=400] xy=(-7.75,17.05) h=2.00 yaw=1.51 pred_yr=+0.16 pred_fwd=1.56 goal=3 dvel_b=(+1.39,+0.19)
+    [trace ep2 t=420] xy=(-7.68,17.67) h=2.00 yaw=1.56 pred_yr=+0.10 pred_fwd=1.57 goal=3 dvel_b=(+1.39,+0.17)
+    [trace ep2 t=440] xy=(-7.65,18.29) h=2.00 yaw=1.60 pred_yr=+0.11 pred_fwd=1.56 goal=3 dvel_b=(+1.39,+0.16)
+    [trace ep2 t=460] xy=(-7.64,18.92) h=2.00 yaw=1.65 pred_yr=+0.08 pred_fwd=1.56 goal=3 dvel_b=(+1.39,+0.15)
+    [trace ep2 t=480] xy=(-7.67,19.54) h=2.00 yaw=1.69 pred_yr=+0.11 pred_fwd=1.57 goal=3 dvel_b=(+1.39,+0.19)
+    [trace ep2 t=500] xy=(-7.73,20.16) h=2.00 yaw=1.74 pred_yr=+0.09 pred_fwd=1.56 goal=3 dvel_b=(+1.37,+0.28)
+[ep02] outcome=success   gates=4/4 mean_off=0.11 steps=501
+[ep03] outcome=success   gates=4/4 mean_off=0.17 steps=504
+[ep04] outcome=success   gates=4/4 mean_off=0.17 steps=505
+[ep05] outcome=success   gates=4/4 mean_off=0.19 steps=499
+[demo] wrote sims/out/gate_crowded.mp4
+
+=== FUSED WAREHOUSE NAV EVAL ===
+{
+  "env": "warehouse_gate",
+  "nav_arch": "fused",
+  "mask_off": [],
+  "episodes": 6,
+  "success_rate": 1.0,
+  "mean_progress": 1.0,
+  "mean_offset": 0.191,
+  "mean_jerk": 0.0073,
+  "outcomes": {
+    "success": 6,
+    "crash": 0,
+    "timeout": 0
+  }
+}
+2026-08-06T03:27:00Z [11,349ms] [Warning] [omni.fabric.plugin] Warning: attribute viewPickingId not found for bucket id 7
+
+2026-08-06T03:27:42Z [53,746ms] [Warning] [isaaclab.envs.manager_based_env] Seed not set for the environment. The environment creation may not be deterministic.
+2026-08-06T03:28:03Z [74,759ms] [Warning] [carb] Client omni.hydratexture.plugin has acquired [carb::settings::ISettings v1.0] 100 times. Consider accessing this interface with carb::getCachedInterface() (Performance warning)
+2026-08-06T03:28:22Z [93,428ms] [Warning] [rtx.postprocessing.plugin] DLSS increasing input dimensions: Render resolution of (186, 139) is below minimal input resolution of 300.
+2026-08-06T03:28:22Z [93,436ms] [Warning] [rtx.postprocessing.plugin] DLSS Skipped: Target resolution below 64x64.
+2026-08-06T03:28:31Z [101,941ms] [Warning] [carb] Client gpu.foundation.plugin has acquired [gpu::unstable::IMemoryBudgetManagerFactory v0.1] 100 times. Consider accessing this interface with carb::getCachedInterface() (Performance warning)
+Traceback (most recent call last):
+  File "/scratch/dima/rose-infra/RoSE/soc/sw/xpu-rt/sims/scripts/eval_fused_warehouse.py", line 350, in <module>
+    main()
+  File "/scratch/dima/rose-infra/RoSE/soc/sw/xpu-rt/sims/scripts/eval_fused_warehouse.py", line 345, in main
+    json.dump({"agg": agg, "episodes": results, "args": vars(args_cli)}, open(out, "w"), indent=2)
+                                                                         ^^^^^^^^^^^^^^
+PermissionError: [Errno 13] Permission denied: '/tmp/claude-2621/-scratch-agustin-projects-DIMA/057226a3-598b-40aa-8396-ef0c5c742cd9/scratchpad/warehousenav_fused.json'
