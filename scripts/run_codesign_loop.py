@@ -144,7 +144,29 @@ def apply_shard(spec: dict, log) -> dict:
     return spec
 
 
-LEVERS = {"ime": apply_ime, "shard": apply_shard}
+def apply_unfuse(spec: dict, log) -> dict:
+    """AOT graph-rewrite lever (automatic): point each fused net at ModelBlaster's UNFUSED
+    dispatch graph and re-solve. The unfused graph is ModelBlaster's real rewrite output
+    (`apply_unfuse_hint` on the IR, re-exported); it is adopted here rather than regenerated
+    on the fly because kernel regeneration needs the RISC-V cross-toolchain (see
+    generate_kernels.py) and board re-profiling needs the physical target — those are build/
+    hardware steps, not scheduling. The lever is a no-op for a net with no unfused build,
+    and (like every lever) is accepted only if it measures better with no new misses."""
+    spec = copy.deepcopy(spec)
+    swapped = []
+    for key, info in spec.get("networks", {}).items():
+        dp = info.get("dispatch_deps_path", "")
+        cand = dp.replace(".ctrl.int8", ".unfused.int8").replace(".fused.", ".unfused.")
+        cand_abs = cand if os.path.isabs(cand) else os.path.join(REPO, cand)
+        if cand != dp and os.path.exists(cand_abs):
+            info["dispatch_deps_path"] = cand
+            swapped.append(key)
+    log(f"      unfuse: adopted ModelBlaster unfused dispatch graph for "
+        f"{swapped or '(none — no fused net with an unfused build on disk)'}")
+    return spec
+
+
+LEVERS = {"ime": apply_ime, "shard": apply_shard, "unfuse": apply_unfuse}
 
 
 def fusion_note():

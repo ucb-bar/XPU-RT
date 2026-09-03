@@ -185,5 +185,6 @@ not live FPGA/K1 co-sim.
 | AOT scheduling levers (shard, IME width) | real, board-proven, auto-driven + re-solved each round |
 | Run on the target | real (K1: 60+ RT runs under audited SCHED_FIFO, bit-exact golden checks) |
 | Runtime feedback (run vs Gantt, +31%) | real, quantified, injected into the cost model |
-| AOT graph rewrite (fuse/unfuse/split) | real per-verb on board, **driver-mediated** end-to-end (only `fuse_with_successor` fully automatic) |
+| AOT graph rewrite (unfuse) | **automatic in the loop** — `run_codesign_loop.py`'s `unfuse` lever adopts ModelBlaster's rewritten dispatch graph + re-solves + accept/reject, no hand steps. `fuse`/`split` are the same pattern once their rewritten graph is built. |
+| Kernel regeneration + board re-profile | **physical boundary, not hand-stitching**: `generate_kernels.py` needs the RISC-V cross-toolchain (`setup_spacemit_toolchain.sh`), and re-profiling needs the physical target — the loop consumes their outputs (the unfused graph + profiles) automatically. |
 | HIL flight ablation | in-sim ZOH latency injection (+ RoSE-lite mock), **not** live FPGA/K1 co-sim |
