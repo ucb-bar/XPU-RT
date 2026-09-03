@@ -20,7 +20,7 @@ import numpy as np
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-from matplotlib.patches import Rectangle, Circle, FancyArrowPatch
+from matplotlib.patches import Rectangle, Circle, FancyArrowPatch, Patch
 from matplotlib.lines import Line2D
 
 CMAP = matplotlib.colormaps["viridis"]
@@ -50,7 +50,8 @@ def rot_uv(u, v, W, H, k):
 
 
 def draw_topdown(ax, bg, K, cpos, cquat, xyz, gates, people_xy, t_norm, moments, t_s,
-                 rot=0, flipx=False, gate_r=13, path_start=0, crash_step=0):
+                 rot=0, flipx=False, gate_r=13, path_start=0, crash_step=0,
+                 obst_pos=None, obst_kind=None, person_mask=None):
     H, W = bg.shape[:2]
     img = np.rot90(bg, rot)
     if flipx: img = img[:, ::-1]
@@ -62,6 +63,20 @@ def draw_topdown(ax, bg, K, cpos, cquat, xyz, gates, people_xy, t_norm, moments,
         return u2, v2
 
     ax.imshow(img); ax.set_xlim(0, nW); ax.set_ylim(nH, 0); ax.axis("off")
+
+    # highlight crate/box TOWERS with a marker overlaid on the realistic view (the user's box overlay)
+    if obst_pos is not None and obst_kind is not None:
+        TOWER = {"box", "crate", "klt", "pallet"}
+        kinds = np.array([str(k) for k in obst_kind]); pm = person_mask if person_mask is not None else np.zeros(len(kinds), bool)
+        base = obst_pos[0]
+        tow = np.array([i for i in range(len(base)) if (kinds[i] in TOWER) and (not pm[i])
+                        and (-11 <= base[i, 0] <= -5) and (4 <= base[i, 1] <= 23)])
+        if len(tow):
+            ou, ov, ook = project(K, cpos, cquat, base[tow]); ou, ov = T(ou, ov)
+            for i in range(len(tow)):
+                if ook[i] and -6 <= ou[i] <= nW+6 and -6 <= ov[i] <= nH+6:
+                    ax.scatter(ou[i], ov[i], s=95, marker="s", facecolors="none",
+                               edgecolors="#ffb14e", linewidths=1.6, alpha=0.9, zorder=5)
     pu, pv, ok = project(K, cpos, cquat, xyz)
     pu, pv = T(pu, pv)
     idx = np.arange(len(xyz))
@@ -146,6 +161,84 @@ def draw_topdown(ax, bg, K, cpos, cquat, xyz, gates, people_xy, t_norm, moments,
     return mk_px
 
 
+def draw_topdown_schematic(ax, d, xyz, gates, t_s, tnorm, moments, crash_step=0, path_start=0):
+    """Clean world-coordinate top-down (like the crash-trajectory figure): box-marked crate/box towers,
+    the time-coloured flight path overlaid, gates, patrolling people. No camera projection / baked-in drone."""
+    from matplotlib.patches import Rectangle, Circle
+    TOWER = {"box", "crate", "klt", "pallet"}
+    op = d["obst_pos"]; kind = np.array([str(k) for k in d["obst_kind"]])
+    person = np.asarray(d["person_mask"]).astype(bool)
+    XLO, XHI, YLO, YHI = -11.0, -5.0, 4.0, 23.0
+    # static towers/crates (frame 0)
+    for i in range(op.shape[1]):
+        if person[i]:
+            continue
+        x, y = op[0, i, 0], op[0, i, 1]
+        if not (XLO <= x <= XHI and YLO <= y <= YHI):
+            continue
+        if kind[i] in TOWER:
+            ax.add_patch(Rectangle((x-0.24, y-0.24), 0.48, 0.48, facecolor="#a9743e",
+                                   edgecolor="#6b4a26", lw=0.6, alpha=0.9, zorder=2))
+        else:
+            ax.plot(x, y, marker="^", color="#8a8a8a", ms=4, zorder=2)
+    # patrolling people: dotted track over time
+    tcut = (crash_step + 1) if (crash_step and crash_step < len(xyz)) else len(xyz)
+    for i in np.where(person)[0]:
+        px, py = op[:tcut, i, 0], op[:tcut, i, 1]
+        m = (px >= XLO) & (px <= XHI) & (py >= YLO) & (py <= YHI)
+        if m.sum() > 5:
+            ax.plot(px[m], py[m], color=C_MOVER, lw=1.6, ls=(0, (1, 1.4)), alpha=0.9, zorder=3)
+            ax.scatter(px[m][-1], py[m][-1], s=26, facecolors=C_MOVER, edgecolors="white", lw=1.0, zorder=4)
+    # gates
+    for j, g in enumerate(gates):
+        ax.add_patch(Circle((g[0], g[1]), 0.55, fill=False, ec="#ffd400", lw=2.2, zorder=5))
+        ax.text(g[0]+0.7, g[1], f"G{j+1}", color="#d4a800", fontsize=8, weight="bold", va="center", zorder=5)
+    # flight path (time-coloured), trimmed + crash-truncated
+    idx = np.arange(len(xyz)); vis = idx >= path_start
+    if crash_step and crash_step < len(xyz):
+        rem = idx > crash_step
+        ax.plot(xyz[rem, 0], xyz[rem, 1], color="0.72", lw=1.2, ls=(0, (2, 2)), alpha=0.6, zorder=3)
+        vis &= idx <= crash_step
+    p = xyz[vis]; tn = tnorm[vis]
+    ax.plot(p[:, 0], p[:, 1], color="white", lw=4.0, alpha=0.7, zorder=4)
+    for i in range(len(p)-1):
+        ax.plot(p[i:i+2, 0], p[i:i+2, 1], color=CMAP(tn[i]), lw=2.5, zorder=5)
+    if len(p):
+        ax.scatter(p[0, 0], p[0, 1], s=42, color=CMAP(0.0), ec="white", lw=1.2, zorder=6)
+    # crash marker or finish star
+    if crash_step and crash_step < len(xyz):
+        cx, cy = xyz[crash_step, 0], xyz[crash_step, 1]
+        ax.scatter(cx, cy, s=360, marker="X", color="#e2231a", ec="white", lw=2.0, zorder=8)
+        ax.annotate("✗ CRASH\nschedule infeasible", (cx, cy), xytext=(cx-0.3, cy-1.1),
+                    ha="right", va="center", fontsize=8, weight="bold", color="white", zorder=9,
+                    bbox=dict(boxstyle="round,pad=0.3", fc="#b3121b", alpha=0.95, ec="white", lw=1.1))
+    elif len(p):
+        ax.scatter(p[-1, 0], p[-1, 1], s=150, marker="*", color=CMAP(1.0), ec="white", lw=1.2, zorder=6)
+    # numbered moment markers
+    mk = []
+    for mi, (step, lab, _) in enumerate(moments):
+        if crash_step and step > crash_step:
+            mk.append(None); continue
+        mx, my = xyz[step, 0], xyz[step, 1]
+        ax.add_patch(Circle((mx, my), 0.34, fill=True, fc="black", ec="#ffd400", lw=2.0, zorder=8))
+        ax.text(mx, my, str(mi+1), color="white", fontsize=9, weight="bold", ha="center", va="center", zorder=9)
+        ax.annotate(f"{mi+1} · {lab}", (mx, my), xytext=(mx-0.45, my), ha="right", va="center",
+                    fontsize=7.4, weight="bold", color="white", zorder=9,
+                    bbox=dict(boxstyle="round,pad=0.26", fc="#111318", alpha=0.82, ec="#ffd400", lw=1.0))
+        mk.append((mx, my))
+    ax.set_xlim(XLO, XHI); ax.set_ylim(YLO, YHI); ax.set_aspect("equal", adjustable="box")
+    ax.set_xlabel("lateral x (m)", fontsize=7); ax.tick_params(labelsize=6)
+    ax.set_ylabel("along-aisle y (m)  —  flight direction ↑", fontsize=7)
+    ax.legend(handles=[Line2D([0], [0], color=CMAP(0.6), lw=2.6, label="drone path (colour = time)"),
+                       Patch(fc="#a9743e", ec="#6b4a26", label="crate / box tower"),
+                       Line2D([0], [0], color=C_MOVER, lw=1.6, ls=(0, (1, 1.4)), label="patrolling people"),
+                       Line2D([0], [0], marker="o", mfc="none", mec="#ffd400", mew=2, ls="none", label="gate")],
+              loc="lower left", fontsize=6.6, framealpha=0.9, handlelength=1.6)
+    ax.text(0.0, 1.006, "Top-down aisle\nflight path + crate towers + people",
+            transform=ax.transAxes, ha="left", va="bottom", fontsize=9.2, weight="bold", linespacing=1.2)
+    return mk
+
+
 def crop_chase(img, box):
     r0, r1, c0, c1 = box
     return img[r0:r1, c0:c1]
@@ -190,8 +283,8 @@ def main():
 
     # 4 in-flight moments (chronological, spread) — no dull t=0 start
     def frame_idx(step): return int(np.argmin(np.abs(fs - step)))
-    moments = [(130, "gate G1", "0.09 m"), (280, "gate G2 — tight", "0.06 m"),
-               (400, "crate near-miss", "0.66 m"), (519, "moving person", "0.61 m")]
+    moments = [(260, "gate G1", "1.5 m"), (620, "gate G2 — person nearby", "1.2 m"),
+               (970, "gate G3 — tight crate", "0.55 m"), (1180, "final gate stretch", "1.1 m")]
     fr = [np.load(os.path.join(args.data_dir, f"frames/frame_{frame_idx(s):03d}.npz"), allow_pickle=True)
           for s, _, _ in moments]
     CHASE_BOX = (140, 530, 200, 760)             # closer crop, centred on the drone
@@ -210,7 +303,8 @@ def main():
     axt = fig.add_subplot(hero[0])
     top_px = draw_topdown(axt, ov_bg, ovK, ovpos, ovquat, xyz, gates, people, tnorm, moments, t_s,
                           rot=args.td_rot, flipx=args.td_flipx, path_start=args.path_start,
-                          crash_step=args.crash_step)
+                          crash_step=args.crash_step, obst_pos=d["obst_pos"], obst_kind=d["obst_kind"],
+                          person_mask=np.asarray(d["person_mask"]).astype(bool))
     crashed = args.crash_step and args.crash_step < T
     t_crash = t_s[args.crash_step] if crashed else None
     smm = matplotlib.cm.ScalarMappable(cmap=CMAP, norm=matplotlib.colors.Normalize(0, t_s.max()))
@@ -234,11 +328,11 @@ def main():
             axx.text(0.5, 0.40, f"drone crashed at t={t_crash:.1f}s\nthis moment never happens under ROS",
                      ha="center", va="center", transform=axx.transAxes, color="#ffb3b3",
                      fontsize=8, linespacing=1.35)
-            axx.set_title(f"{c+1}. {lab} · t={step*0.02:.1f}s", fontsize=8.2, weight="bold", color="0.55")
+            axx.set_title(f"{c+1}. {lab} · t={t_s[step]:.1f}s", fontsize=8.2, weight="bold", color="0.55")
             b_top.append(axx)
             continue
         ac = fig.add_subplot(cell[0, :]); ac.imshow(crop_chase(f["chase"], CHASE_BOX)); ac.axis("off")
-        ac.set_title(f"{c+1}. {lab} · t={step*0.02:.1f}s · {dd}", fontsize=8.2, weight="bold")
+        ac.set_title(f"{c+1}. {lab} · t={t_s[step]:.1f}s · {dd}", fontsize=8.2, weight="bold")
         b_top.append(ac)
         af = fig.add_subplot(cell[1, 0]); af.imshow(f["fpv"], cmap="gray", vmin=0, vmax=1, aspect="auto")
         dets = [dd for dd in f["det"] if dd[5] >= 0.4]
@@ -289,16 +383,23 @@ def main():
 
     axi2 = fig.add_subplot(tele[0, 2])
     w = d["imu_w"]
+    def _smooth(y, win=15):                          # moving-average envelope (raw is bang-bang noise)
+        if len(y) < win:
+            return y
+        k = np.ones(win) / win
+        return np.convolve(y, k, mode="same")
     for k, (lab, cc) in enumerate([("ω_roll", "#c44e52"), ("ω_pitch", "#e08a2f"), ("ω_yaw", "#3f6fb0")]):
-        axi2.plot(t_s[:Tv], w[:Tv, k], color=cc, lw=0.8, label=lab)
-    axi2.plot(t_s[:Tv], np.linalg.norm(w[:Tv], axis=1), color="0.25", lw=0.9, ls=(0, (3, 2)), label="|ω|")
-    axi2.set_ylabel("IMU gyro (rad/s)", fontsize=7); axi2.set_xlim(t_s.min(), t_s.max())
+        axi2.plot(t_s[:Tv], w[:Tv, k], color=cc, lw=0.5, alpha=0.18, zorder=1)          # raw, faint
+        axi2.plot(t_s[:Tv], _smooth(w[:Tv, k]), color=cc, lw=1.2, label=lab, zorder=3)  # smoothed
+    axi2.plot(t_s[:Tv], _smooth(np.linalg.norm(w[:Tv], axis=1)), color="0.25", lw=1.0,
+              ls=(0, (3, 2)), label="|ω|", zorder=3)
+    axi2.set_ylabel("IMU gyro (rad/s, 0.15 s smoothed)", fontsize=7); axi2.set_xlim(t_s.min(), t_s.max())
     # zoom past the takeoff transient (t<0.6 s spikes to ~10 rad/s and squashes everything else)
     steady = w[t_s > 0.6]
     if len(steady):
-        lim = 1.25 * float(np.abs(steady).max())
+        lim = 1.15 * float(np.abs(_smooth(np.linalg.norm(w, axis=1))[t_s > 0.6]).max())
         axi2.set_ylim(-lim, lim)
-        axi2.text(0.02, 0.97, "(takeoff spike clipped)", transform=axi2.transAxes, fontsize=5.2,
+        axi2.text(0.02, 0.97, "(raw faint; takeoff spike clipped)", transform=axi2.transAxes, fontsize=5.2,
                   color="0.5", va="top", ha="left")
     axi2.legend(fontsize=5.2, ncol=2, loc="upper right", framealpha=0.85, handlelength=1.1,
                 columnspacing=0.9, borderpad=0.3)
@@ -312,7 +413,7 @@ def main():
         a.set_xlabel("time (s)", fontsize=7); a.tick_params(labelsize=6)
         for step, _, _ in moments:
             if not (crashed and step > args.crash_step):
-                a.axvline(step*0.02, color="0.4", ls=(0, (2, 2)), lw=0.7)
+                a.axvline(t_s[step], color="0.4", ls=(0, (2, 2)), lw=0.7)
         if crashed:
             a.axvspan(t_crash, t_s.max(), color="#f4d7d7", alpha=0.5, zorder=0)
             a.axvline(t_crash, color="#e2231a", lw=1.5, zorder=3)

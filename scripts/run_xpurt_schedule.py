@@ -197,6 +197,7 @@ def schedule_iree_networks(
     search_budget: float = 20.0,
     seed_solver: str | None = None,
     cpsat_time_limit: float | None = None,
+    board_calibration: dict | None = None,
 ) -> tuple[Workload, np.ndarray, np.ndarray]:
     """
     Main function to schedule networks from a hierarchical network dependencies JSON file.
@@ -417,6 +418,7 @@ def schedule_iree_networks(
             p_core_speedup=effective_p_core_speedup,
             topo_tag_override=tt_override,
             gen_root=gen_root,
+            board_calibration=board_calibration,
         )
 
     # "Periodic" means the op belongs to a network the workload declared
@@ -1469,7 +1471,32 @@ if __name__ == "__main__":
              "The ingest merges hints by set-union on the same run_id, so "
              "repeated emissions during one campaign accumulate.",
     )
+    parser.add_argument(
+        "--board-calibration",
+        nargs="?", const=True, default=None, metavar="PATH",
+        help=("Scale each dispatch's isolated-profile time by the measured K1 board "
+              "actual/predicted ratio, so the schedule predicts real hardware (the "
+              "additive Gantt under-predicts ~26-31%%; the gap is per-op exec "
+              "inflation, NOT contention). OFF by default. Bare flag uses "
+              "results/codesign_feedback/k1_board_calibration.json; pass a path to "
+              "override. Exact per-(net,dispatch) keys for the calibrated workload; "
+              "per-op fallback (extrapolated) otherwise."),
+    )
     args = parser.parse_args()
+
+    # Load the board-calibration table if requested (opt-in; no-op by default).
+    _calib = None
+    if args.board_calibration is not None:
+        import json as _json
+        _cpath = ("results/codesign_feedback/k1_board_calibration.json"
+                  if args.board_calibration is True else args.board_calibration)
+        _cabs = _cpath if os.path.isabs(_cpath) else os.path.join(_REPO_ROOT, _cpath)
+        if not os.path.exists(_cabs):
+            print(f"--board-calibration: no artifact at {_cabs}; running additive (no-op)")
+        else:
+            _calib = _json.load(open(_cabs))
+            print(f"--board-calibration: loaded {_cabs} "
+                  f"(aggregate x{_calib.get('aggregate_multiplier', 1.0):.3f})")
 
     # Contention is additive and off unless asked for: installing None here
     # leaves the schedulers on the plain solo profile.
@@ -1508,6 +1535,7 @@ if __name__ == "__main__":
         max_periodic_iters=args.max_periodic_iters,
         emit_feedback=args.emit_feedback,
         feedback_run_id=args.feedback_run_id,
+        board_calibration=_calib,
         freshness_weight=args.freshness_weight,
         contention_model=_model,
         reserved_max_slowdown=args.reserved_max_slowdown,
