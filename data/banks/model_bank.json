@@ -210,6 +210,90 @@
           "variant_note": "Detection load, 0-5 instances per generation -- same count band as the spike platform's so the two RISC-V mixes stay comparable; gemmini brings its cost down but it is still the heaviest network here."
         }
       }
+    },
+    "firesim_f2_armB": {
+      "models": {
+        "mlp_control": {
+          "dispatch_deps_path": "zephyr-chipyard-sw/gen/vmfb/mlp_control/firesim_f2_armB/V256D128_rvv/mlp_control.fp32/mlp_control.fp32_dispatch_graph.json",
+          "profile_model": "mlp_control",
+          "profile_basename": "mlp_control.fp32",
+          "role": "periodic",
+          "period_ms": {
+            "min": 5,
+            "max": 20
+          },
+          "window_ms": {
+            "min": 5,
+            "max": 20
+          },
+          "count": {
+            "min": 1,
+            "max": 2
+          },
+          "max_copies": 1,
+          "variant_note": "armB optimized-kernel build: conv2d_s8 = gemmini_tiled_conv (int8 mvout drain) on gemmini_q31, curated RVV on V256D128_rvv."
+        },
+        "dronet": {
+          "dispatch_deps_path": "zephyr-chipyard-sw/gen/vmfb/dronet/firesim_f2_armB/gemmini_q31/dronet.int8/dronet.int8_dispatch_graph.json",
+          "profile_model": "dronet",
+          "profile_basename": "dronet.int8",
+          "role": "periodic",
+          "period_ms": {
+            "min": 20,
+            "max": 100
+          },
+          "window_ms": {
+            "min": 20,
+            "max": 100
+          },
+          "count": {
+            "min": 1,
+            "max": 2
+          },
+          "variant_note": "armB optimized-kernel build: conv2d_s8 = gemmini_tiled_conv (int8 mvout drain) on gemmini_q31, curated RVV on V256D128_rvv."
+        },
+        "yolov8_nano": {
+          "dispatch_deps_path": "zephyr-chipyard-sw/gen/vmfb/yolov8_nano/firesim_f2_armB/gemmini_q31/yolov8_nano.int8/yolov8_nano.int8_dispatch_graph.json",
+          "profile_model": "yolov8_nano",
+          "profile_basename": "yolov8_nano.int8",
+          "role": "sporadic",
+          "count": {
+            "min": 0,
+            "max": 5
+          },
+          "variant_note": "armB optimized-kernel build: conv2d_s8 = gemmini_tiled_conv (int8 mvout drain) on gemmini_q31, curated RVV on V256D128_rvv."
+        },
+        "fused_full": {
+          "dispatch_deps_path": "zephyr-chipyard-sw/gen/vmfb/fused_full/firesim_f2_armB/gemmini_q31/fused_full.int8/fused_full.int8_dispatch_graph.json",
+          "profile_model": "fused_full",
+          "profile_basename": "fused_full.int8",
+          "role": "periodic",
+          "period_ms": {
+            "min": 20,
+            "max": 100
+          },
+          "window_ms": {
+            "min": 20,
+            "max": 100
+          },
+          "count": {
+            "min": 1,
+            "max": 2
+          },
+          "variant_note": "Fused warehouse nav CNN (18 dispatches): int8 conv encoders on gemmini_q31 (non-per-channel conv2d_s8, existing curated kernels) + fp16 tail (linear_f16, lstm_f16, cat3_c1_f16) on V256D128_rvv. Drop-in replacement for dronet in the 3-network schedule."
+        },
+        "vint": {
+          "dispatch_deps_path": "zephyr-chipyard-sw/gen/vmfb/vint/firesim_f2_armB/gemmini_q31/vint.int8/vint.int8_dispatch_graph.json",
+          "profile_model": "vint",
+          "profile_basename": "vint.int8",
+          "role": "sporadic",
+          "count": {
+            "min": 0,
+            "max": 2
+          },
+          "variant_note": "ViNT visual-nav transformer, per-channel int8 + fp16 mixed precision (605 dispatches). conv2d_s8_pc/linear_s8_pc = gemmini int32-drain + per-OC Q0.31 requantize on gemmini_q31; the fp16 half and all elementwise/reduction ops run curated rvv_f16 on V256D128_rvv. Sporadic: event-driven navigation inference, no fixed period."
+        }
+      }
     }
   }
 }

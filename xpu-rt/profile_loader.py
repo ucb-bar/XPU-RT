@@ -244,6 +244,328 @@ def _resolve_topo_for(
     )
 
 
+#: Fraction of a conv/linear kernel's cost that does NOT shrink when the op is
+#: tiled along OC/N.  MEASURED on AWS F2 (f2_dual_small_norose_tacit_q31_60mhz,
+#: dronet conv_modules.0, N1 IC3 112x112 -> OC32 56x56 K3 S2), by running each
+#: tile alone with the other hart idle and fitting t(OC) = a + b*OC:
+#:
+#:     gemmini_q31 (gemmini_tiled_conv)      417 + 24.7*OC us   -> a/t(32) = 0.35
+#:     rvv         (rvv_vsmul_vnclip)       1049 + 14.0*OC us   -> a/t(32) = 0.70
+#:
+#: Both fits hold to <=4% over OC in {2,4,8,16,24,28,32}.  The fixed term is
+#: real work, not overhead: the gemmini kernel transposes the WHOLE input
+#: NCHW->NHWC before it looks at OC at all, and the rvv kernel's
+#: (oh, ow, ic, kh, kw) trip count is OC-independent because OC is its VECTOR
+#: LANE dimension.  On the other nine dronet convs the fixed fraction measured
+#: ~1.0 on gemmini: conv_modules.5 costs 69 us at OC=64 and 69 us at OC=62.
+#:
+#: 1.0 is the DEFAULT on purpose.  The error is asymmetric: over-costing a tile
+#: only means the scheduler declines to split (which was the right answer for
+#: every dronet layer), while under-costing it makes the scheduler choose a
+#: split that loses -- with parent/N it chose an even 16/16 split of
+#: conv_modules.0 that measured 2809 us against 2747 us unsplit.  Set
+#: XPURT_TILE_FIXED_FRACTION only when the per-(backend, op) fixed fraction has
+#: actually been measured, or profile the SPLIT graph and let the tiles carry
+#: their own rows.
+_DEFAULT_TILE_FIXED_FRACTION = 1.0
+
+
+def _tile_fixed_fraction() -> float:
+    raw = os.environ.get("XPURT_TILE_FIXED_FRACTION")
+    if raw is None:
+        return _DEFAULT_TILE_FIXED_FRACTION
+    try:
+        f = float(raw)
+    except ValueError:
+        raise SystemExit(f"XPURT_TILE_FIXED_FRACTION={raw!r} is not a number")
+    if not 0.0 <= f <= 1.0:
+        raise SystemExit(
+            f"XPURT_TILE_FIXED_FRACTION={f} out of range; it is a FRACTION of "
+            f"the parent cost that does not shrink with the tile, so it must "
+            f"be in [0, 1].")
+    return f
+
+
+def _load_tile_widths(dispatch_deps_path: str) -> dict:
+    """`{new_dispatch_id: tile_width}` for a split graph, else `{}`.
+
+    The width is the tile's own extent along the split axis (`tile_oc` for a
+    conv OC split, `tile_n` for a linear N split or a pointwise E split,
+    `tile_oh` for a conv row split, `tile_c` for a pool channel split),
+    recorded by
+    `apply_split_hint`.  It is NOT recoverable as parent/N: `tile_sizes`
+    partitions an axis into tiles that need not be equal, and an uneven
+    partition is the interesting case precisely because the two backends do
+    not have the same cost curve.
+    """
+    try:
+        with open(dispatch_deps_path) as f:
+            g = json.load(f)
+    except (OSError, ValueError):
+        return {}
+    out = {}
+    for op in g.get("ops", []):
+        sf = op.get("split_from") or {}
+        did = op.get("dispatch_id")
+        if not sf or did is None:
+            continue
+        w = next((sf[k] for k in ("tile_oc", "tile_n", "tile_oh", "tile_c")
+                  if isinstance(sf.get(k), int)), None)
+        if isinstance(w, int) and w > 0:
+            out[int(did)] = w
+    return out
+
+
+def _load_tile_axes(dispatch_deps_path: str) -> dict:
+    """`{new_dispatch_id: (axis, window_rows, padded_IH)}` for a split graph.
+
+    The axis decides which cost model applies, and getting that wrong is not a
+    small error: the slab quantum below is a property of the OUTPUT-CHANNEL
+    blocking, so applying it to a tile whose width is a count of ROWS asks
+    "how many 32-channel slabs is 7 rows", which is meaningless.  It also
+    happens to answer 1, which reads as "this tile is free" -- an OH split of a
+    14-row conv would be costed at 1.0x the parent for both tiles and look like
+    a free 2x.  Hence an explicit axis rather than a `hw` lookup alone.
+
+    `window_rows` is the padded input band the tile reads -- its output rows
+    plus the kernel's halo -- which is what an OH tile's cost is proportional
+    to; `padded_IH` is the parent's, so the two together give both the tile's
+    share and the halo's duplication factor.
+    """
+    try:
+        with open(dispatch_deps_path) as f:
+            g = json.load(f)
+    except (OSError, ValueError):
+        return {}
+    out = {}
+    for op in g.get("ops", []):
+        sf = op.get("split_from") or {}
+        did = op.get("dispatch_id")
+        if not sf or did is None:
+            continue
+        axis = sf.get("axis") or ("OC" if "tile_oc" in sf else
+                                  "N" if "tile_n" in sf else None)
+        if axis is None:
+            continue
+        wr = sf.get("window_rows")
+        pih = None
+        if sf.get("parent_IH") is not None and sf.get("parent_PH") is not None:
+            pih = int(sf["parent_IH"]) + 2 * int(sf["parent_PH"])
+        # Halo is KH > 1, read off the tile's own shape. Do NOT infer it from
+        # window_rows > tile_oh: a 1x1 conv at stride 2 spans 2*tile_oh-1 input
+        # rows and still has no halo, because it reads one row per output row
+        # and simply skips the rest. Getting that backwards would tax the one
+        # case (KH == 1) where the gather is pure waste at the cheaper rate.
+        kh = int((op.get("shape") or {}).get("KH", 0) or 0)
+        out[int(did)] = (axis, wr, pih, kh > 1)
+    return out
+
+
+def _load_id_remap(dispatch_deps_path: str) -> dict:
+    """`{old_dispatch_id: [new_dispatch_id, ...]}` for an IR-split model.
+
+    `pipeline/apply_split_hint.py` turns one dispatch into N tiles and
+    RENUMBERS every dispatch after it, emitting the mapping as `id_remap`.
+    Profiles are keyed by dispatch_id and were measured on the UNSPLIT
+    graph, so indexing them with split ids silently hands every dispatch
+    after the split point its neighbour's cost. Observed on a 2-way split
+    of dronet conv2d_s8[0] (FPGA job 374): conv_modules.0.tile_1 was
+    scheduled with maxpool's 0.218024 ms, maxpool1 with batchnorm's
+    0.031082 ms, and so on down the graph. The model still computed the
+    right answer -- data deps come from the model graph, not the schedule
+    -- but every placement and duration after the split was wrong, so the
+    two tiles serialised instead of running concurrently.
+
+    Returns {} when the graph carries no remap, i.e. every unsplit model,
+    so this is a no-op on the existing flow.
+    """
+    try:
+        with open(dispatch_deps_path) as f:
+            g = json.load(f)
+    except (OSError, ValueError):
+        return {}
+    raw = g.get("id_remap") or {}
+    out = {}
+    for old, new in raw.items():
+        try:
+            out[int(old)] = [int(n) for n in new]
+        except (TypeError, ValueError):
+            continue
+    return out
+
+
+# Blocking quantum per backend: the width below which a tile costs the same as
+# a full one, so splitting under it buys nothing and pays for the extra tile.
+#
+#   rvv  32 -- TILE_OC is clamped to vsetvlmax_e32m4() = VLEN(256)*LMUL(4)/SEW(32)
+#             in kernels/rvv/rvv_conv2d_s8_rvv_vsmul_vnclip.c:303-309.
+#   gemmini 16 -- the systolic array DIM (cores/gemmini/include/gemmini_params.h:8).
+#
+# MEASURED (FPGA, quad hetero, 1000 MHz target): on rvv the slab model
+#     ratio = sum_i ceil(w_i/Q) / ceil(W/Q)
+# predicted all 35 sweep cells to a MEDIAN ABSOLUTE ERROR OF 0.008 -- an OC=64
+# conv split 32/32 measured 1.00, split 16/48 measured 1.49 against 1.50
+# predicted. On gemmini the SAME form fails (median error 0.55, max 1.33)
+# because its cost is dominated by a per-tile input NCHW->NHWC transpose that no
+# slab count captures, so gemmini keeps the conservative affine fallback below.
+#: What an OH (output-row) split actually costs, as a multiple of the halo-only
+#: prediction `parent * sum(window_rows)/padded_IH`.  An OH tile is not free of
+#: the parent's work the way the halo model alone suggests: the codegen gathers
+#: the tile's padded input band and scatters its output rows back, because in
+#: NCHW neither end of a row band is contiguous.  Measured on AWS F2 (dronet,
+#: 20 cells, experiments/shard_dim/results/ohvsoc_cells.csv) the tax is bimodal:
+#:
+#:   KH > 1  rvv     0.47-1.22  median 0.80   the tile's working set shrinks and
+#:                                            the cache win outpays the copies
+#:   KH > 1  gemmini 1.48-2.27  median 2.16   gemmini is ~10x faster per conv, so
+#:                                            the same bytes have nothing to hide
+#:                                            behind
+#:   KH == 1 either  1.76-2.32  median ~2.0   no halo, so the gather copies the
+#:                                            whole input to buy nothing
+#:
+#: The spread inside a cell is wide, so this is a model for CHOOSING an axis,
+#: not for predicting a latency: re-profile the split graph when the number
+#: itself matters.  Set XPURT_OH_COPY_TAX to override with a measured value.
+_OH_COPY_TAX = {
+    ("rvv", True): 0.80, ("rvv", False): 1.77,
+    # gemmini re-fit after the zero-copy kernel landed (fq 470/471): its OH
+    # wrapper no longer gathers or scatters, so the tax fell from 2.16/2.10 to
+    # these. That flipped the axis choice on 6 of 10 gemmini convs.
+    ("gemmini", True): 1.22, ("gemmini", False): 1.2,
+}
+_OH_COPY_TAX_DEFAULT = 2.0
+
+
+def _oh_copy_tax(hw: str | None, has_halo: bool) -> float:
+    env = os.environ.get("XPURT_OH_COPY_TAX")
+    if env:
+        try:
+            return float(env)
+        except ValueError:
+            pass
+    fam = "rvv" if hw and "rvv" in hw else ("gemmini" if hw and "gemmini" in hw else None)
+    return _OH_COPY_TAX.get((fam, has_halo), _OH_COPY_TAX_DEFAULT)
+
+
+_BACKEND_SPLIT_QUANTUM = {
+    "V256D128_rvv": 32,
+    "rvv": 32,
+    "rvv_f16": 32,
+}
+
+
+def _quantum_for(hw: str | None) -> int | None:
+    """The blocking quantum for `hw`, or None when no validated model exists.
+
+    Returning None is meaningful: it selects the conservative affine model
+    rather than guessing a quantum. A wrong quantum would UNDER-cost a split
+    and make the scheduler choose it, which is the failure direction that
+    actually costs wall-clock.
+    """
+    if not hw:
+        return None
+    return _BACKEND_SPLIT_QUANTUM.get(hw)
+
+
+def _apply_id_remap(prof: dict, remap: dict, widths: dict | None = None,
+                    fixed_fraction: float | None = None,
+                    hw: str | None = None, axes: dict | None = None) -> dict:
+    """Re-key a profile measured on the unsplit graph onto split ids.
+
+    Splitting a dispatch renumbers every id after it, so a profile keyed by
+    dispatch_id has to be translated before it can be joined against a split
+    graph.  That part is bookkeeping.  The interesting part is what a TILE
+    should be costed at, and the answer this used to give -- parent/N -- is
+    wrong in two separate ways:
+
+      1. **It assumes the tiles are equal.**  `apply_split_hint` accepts an
+         explicit `tile_sizes` partition, and an uneven one is the useful case:
+         the two backends do not share a cost curve, so the split that balances
+         them is not the even one.  Width now comes from the tile's own
+         `split_from.tile_oc` (see `_load_tile_widths`).
+
+      2. **It assumes cost is PROPORTIONAL to width** -- i.e. that a tile with
+         half the channels does half the work.  It does not.  Measured on AWS
+         F2 for dronet conv_modules.0 (see `_DEFAULT_TILE_FIXED_FRACTION` for
+         the fits), an OC=4-of-32 tile costs 515 us on gemmini_q31 where
+         parent/8 predicts 148 (-71%), and 1107 us on rvv where parent/8
+         predicts 187 (-83%).  Every conv kernel here has a large
+         OC-INDEPENDENT term, so a tile costs
+
+             t(w) = T_parent * (f + (1 - f) * w / W_parent)
+
+         with `f` the fraction that does not shrink.  That form fits the
+         measurements to <=4%; proportional-to-width is off by up to 91%.
+
+    Under-costing tiles is what made the scheduler pick a 16/16 split of
+    conv_modules.0 that MEASURED 2809 us against 2747 us unsplit.  So `f`
+    defaults to 1.0 -- a tile is costed at its parent's full cost -- and the
+    scheduler only splits when someone has supplied a measured fixed fraction
+    (XPURT_TILE_FIXED_FRACTION) or profiled the split graph so the tiles carry
+    their own rows.  This is still an ESTIMATE either way; re-profile the split
+    graph when tile costs matter.
+    """
+    if not remap:
+        return prof
+    widths = widths or {}
+    f = _tile_fixed_fraction() if fixed_fraction is None else fixed_fraction
+    out = {}
+    for old, entry in prof.items():
+        tiles = remap.get(old)
+        if not tiles:
+            continue
+        n = len(tiles)
+        parent_ms = entry.get("time_ms", 0.0)
+        # Parent extent along the split axis = the tiles' widths summed. Falls
+        # back to "every tile is 1/n" only when the graph carries no widths at
+        # all (a graph produced before apply_split_hint recorded them).
+        tile_w = [widths.get(t) for t in tiles]
+        total_w = sum(w for w in tile_w if w) if all(tile_w) else 0
+        for k, new_id in enumerate(tiles):
+            e = dict(entry)
+            if n > 1:
+                axis, wr, pih, halo = (axes or {}).get(
+                    new_id, (None, None, None, False))
+                q = _quantum_for(hw)
+                if axis == "OH" and wr and pih:
+                    # Row split. Deliberately NOT the slab model: the quantum is
+                    # a property of output-CHANNEL blocking, and OH's whole
+                    # advantage is that rows carry no such quantum -- which is
+                    # why an OC=32 conv that cannot be split on rvv at all can
+                    # still be split 4 ways along OH. Cost is proportional to
+                    # the padded input band the tile reads (halo included, so a
+                    # narrow tile pays for its overlap), times the measured tax
+                    # for the gather/scatter the NCHW layout forces.
+                    e["time_ms"] = parent_ms * (wr / pih) * _oh_copy_tax(
+                        hw, has_halo=halo)
+                elif axis in ("E", "C") and total_w and all(tile_w):
+                    # Pointwise element range, or a pool's channel range.
+                    # LINEAR in the tile's width, with no slab quantum: neither
+                    # kind blocks its inner loop on an output-channel tile the
+                    # way a conv does, so `ceil(w/q)/ceil(W/q)` would be
+                    # answering a question about hardware that is not in the
+                    # loop. It is not a harmless approximation either -- for
+                    # DroNet's maxpool2d_s8, C=32 is exactly the rvv quantum,
+                    # so the slab model prices both halves of a 2-way split at
+                    # a full slab and reports a 2x split as worth 1.0x.
+                    e["time_ms"] = parent_ms * (tile_w[k] / total_w)
+                elif q and total_w and all(tile_w):
+                    # Slab model -- validated on rvv to 0.008 median error.
+                    # A tile costs ceil(w/q) slabs; the parent costs
+                    # ceil(W/q). Sub-quantum tiles therefore cost a FULL
+                    # slab, which is exactly why an OC=32 conv cannot be
+                    # 2-way split on rvv without doubling the work.
+                    par_slabs = -(-total_w // q)
+                    e["time_ms"] = parent_ms * (
+                        (-(-tile_w[k] // q)) / par_slabs) if par_slabs else parent_ms
+                else:
+                    frac = (tile_w[k] / total_w) if total_w else (1.0 / n)
+                    e["time_ms"] = parent_ms * (f + (1.0 - f) * frac)
+                e["module_name"] = f"{entry.get('module_name', '')}.tile_{k}"
+            out[new_id] = e
+    return out
+
+
 def _load_all_topo_profiles(
     net_id: str,
     net_info: dict,
@@ -296,6 +618,10 @@ def _load_all_topo_profiles(
             if csv_path:
                 prof = load_profiled_times(
                     csv_path, n_cores=n_cores_from_topo_tag(topo))
+                prof = _apply_id_remap(
+                    prof, _load_id_remap(dispatch_deps_path),
+                    _load_tile_widths(dispatch_deps_path), hw=hw,
+                    axes=_load_tile_axes(dispatch_deps_path))
                 if prof:
                     profiles[(hw, topo)] = prof
                     _LAST_LOAD_CSV_PATHS.append(csv_path)

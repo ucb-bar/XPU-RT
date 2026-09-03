@@ -168,3 +168,5 @@ out/figures/
 # an internal account as if it were a changelog.
 /docs/CHANGES.md
 /docs/merging_to_dev.md
+# large render artifacts — keep out of git (GitHub rejects >100MB)
+sims/out/*.mp4

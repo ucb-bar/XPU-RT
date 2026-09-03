@@ -64,6 +64,13 @@ PERSON_H = 1.7
 # Simple_Warehouse prop meshes have no physics schemas, so UsdFileCfg.rigid_props no-ops on them.
 _RB_PROP_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "..", "out", "rb_props")
 _RB_PROP_DIR = os.path.abspath(_RB_PROP_DIR)
+# The crowded-course rack/box prop meshes are a generated asset, not tracked in
+# this repo. Fall back to the collaborator's read-only checkout if the local
+# generated dir is absent (the clean gate course doesn't spawn these).
+if not os.path.isdir(_RB_PROP_DIR):
+    _ag_props = "/scratch/agustin/projects/DIMA/XPU-RT/out/rb_props"
+    if os.path.isdir(_ag_props):
+        _RB_PROP_DIR = _ag_props
 
 
 def _prop_spawn(kind: str, collide: bool = True) -> sim_utils.UsdFileCfg:

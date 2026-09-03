@@ -325,6 +325,24 @@
         "topo_tag": "topo_0",
         "topo_tag_override": true
       }
+    },
+    "f2_gemmini_q31_opt": {
+      "description": "AWS F2 SatGemDualSmall: gemmini_q31 p-core (hart 0) + Saturn V256D128 e-core (hart 1). Profiles from the OPTIMIZED kernel set -- conv2d_s8 = gemmini_tiled_conv (int8 mvout drain, MB_DRIFT_ATOL) on the p-core, curated RVV on the e-core.",
+      "available": true,
+      "machines": {
+        "cpu_p": 1,
+        "cpu_e": 1
+      },
+      "profile_hw": {
+        "cpu_p": "gemmini_q31",
+        "cpu_e": "V256D128_rvv"
+      },
+      "profile": {
+        "gen_root": ".",
+        "target": "firesim_f2_armB",
+        "topo_tag": "topo_0",
+        "topo_tag_override": true
+      }
     }
   }
 }

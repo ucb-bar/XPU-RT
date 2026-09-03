@@ -627,6 +627,27 @@ def generate(args, hw_bank: dict, model_bank: dict) -> dict:
             f"(hardware config {hw_name!r})"
         )
 
+    # --- optional model-mix control ---------------------------------------
+    # Without these the draw uses every usable model in the bank, so adding a
+    # model (fused_full, vint) silently changes every existing sweep point.
+    # --include-models pins the draw to an explicit set; --exclude-models
+    # removes one. Together they let a sweep run matched arms -- e.g. dronet
+    # vs fused_full in the same periodic slot -- instead of hoping the RNG
+    # draws a comparable mix.
+    if getattr(args, "include_models", None):
+        want = [m.strip() for m in args.include_models.split(",") if m.strip()]
+        missing = [m for m in want if m not in models]
+        if missing:
+            raise SystemExit(
+                f"--include-models: {missing} not in the bank for {target!r} "
+                f"(have: {sorted(models)})")
+        models = {k: v for k, v in models.items() if k in want}
+    if getattr(args, "exclude_models", None):
+        drop = {m.strip() for m in args.exclude_models.split(",") if m.strip()}
+        models = {k: v for k, v in models.items() if k not in drop}
+    if not models:
+        raise SystemExit("model filters removed every model from the draw")
+
     # --- measure every candidate on this hardware -------------------------
     timings: Dict[str, ModelTiming] = {}
     skipped: Dict[str, List[str]] = {}
@@ -792,7 +813,26 @@ def generate(args, hw_bank: dict, model_bank: dict) -> dict:
     # The periodic tasks have to keep ticking for as long as there is any
     # work on the machine, so the horizon covers the sporadic span too.
     span = max([s["max_end_t"] for s in sporadic_tasks] or [0.0])
-    horizon = max(horizon, span)
+    if not args.unbounded_nonperiodic:
+        horizon = max(horizon, span)
+    else:
+        # Unbounded non-periodic tasks have no release window, so there is no
+        # sporadic *span* to cover -- but they still take time, and the
+        # makespan is whenever the last of them finishes. If the horizon were
+        # left at the hyperperiod, the periodic groups would stop ticking
+        # early and the schedule tail would again contain only non-periodic
+        # work (exactly the "control loop dies partway" failure the windowed
+        # layout produces). So size the horizon to cover an ESTIMATE of when
+        # the non-periodic work completes, and let the --max-ops loop below
+        # bound it. n_cores divides because non-periodic jobs run in parallel
+        # across cores; reference_ms is the single-backend serial estimate, so
+        # this is deliberately conservative (over-covering is safe -- it only
+        # means the periodic groups tick a little longer than strictly needed).
+        span = 0.0
+        if args.horizon_covers_nonperiodic:
+            n_cores = max(1, sum(int(v) for v in hw_cfg["machines"].values()))
+            est = sum(timings[s["model"]].reference_ms for s in sporadic_tasks)
+            horizon = max(horizon, est / n_cores)
 
     # ...but bounded by an operation budget, because horizon/period is an
     # operation count and the schedulers are superlinear in it.  yolov8_nano
@@ -883,13 +923,15 @@ def generate(args, hw_bank: dict, model_bank: dict) -> dict:
 
     for item in sporadic_tasks:
         spec = models[item["model"]]
-        networks[item["key"]] = {
+        net_entry = {
             "id": next_id,
             "identifier": item["key"],
             "dispatch_deps_path": spec["dispatch_deps_path"],
-            "min_start_t": item["min_start_t"],
-            "max_end_t": item["max_end_t"],
         }
+        if not args.unbounded_nonperiodic:
+            net_entry["min_start_t"] = item["min_start_t"]
+            net_entry["max_end_t"] = item["max_end_t"]
+        networks[item["key"]] = net_entry
         next_id += 1
 
     # Chains run inside a rate group only.  Across groups the periods
@@ -1192,6 +1234,32 @@ def main(argv: Optional[List[str]] = None) -> int:
     ap.add_argument("--num-instances", default="auto",
                     help="explicit num_instances for every periodic network, or "
                          "'auto' to derive it from the horizon")
+    ap.add_argument("--include-models", default=None, metavar="A,B,C",
+                    help="restrict the draw to these bank models (comma list). "
+                         "Use to run matched arms, e.g. --include-models "
+                         "mlp_control,fused_full,yolov8_nano against the same "
+                         "list with dronet in place of fused_full.")
+    ap.add_argument("--exclude-models", default=None, metavar="A,B",
+                    help="drop these bank models from the draw (comma list).")
+    ap.add_argument("--unbounded-nonperiodic", action="store_true",
+                    help="Emit non-periodic ('sporadic') tasks WITHOUT "
+                         "min_start_t/max_end_t. They then carry no release "
+                         "window or deadline and the scheduler packs them as "
+                         "early as dependencies allow, while periodic tasks "
+                         "stay period-bound. Also stops the horizon being "
+                         "widened to cover the sporadic span, so the horizon "
+                         "is driven purely by the periodic hyperperiod -- "
+                         "which is what removes the idle-gap degeneracy that "
+                         "the cursor-based window layout produces.")
+    ap.add_argument("--no-horizon-covers-nonperiodic",
+                    dest="horizon_covers_nonperiodic",
+                    action="store_false", default=True,
+                    help="(with --unbounded-nonperiodic) do NOT extend the "
+                         "horizon to cover the estimated completion of the "
+                         "unbounded non-periodic work. Default is to extend "
+                         "it, so periodic groups keep ticking for the whole "
+                         "schedule; pass this to let the horizon stay at the "
+                         "periodic hyperperiod instead.")
     ap.add_argument("--cap-instances", type=int, default=None,
                     help="with --num-instances auto, cap the derived count at "
                          "this many instances per network")
@@ -1263,8 +1331,12 @@ def main(argv: Optional[List[str]] = None) -> int:
               f"{v['window_duration']:>6} ms  x{v['num_instances']} instances")
     for n, v in nets.items():
         if n not in per:
-            print(f"    {n:<22} sporadic  [{v['min_start_t']:.0f}, "
-                  f"{v['max_end_t']:.0f}] ms")
+            if "min_start_t" in v:
+                print(f"    {n:<22} sporadic  [{v['min_start_t']:.0f}, "
+                      f"{v['max_end_t']:.0f}] ms")
+            else:
+                print(f"    {n:<22} non-periodic (unbounded: no release "
+                      f"window, scheduled as early as deps allow)")
     print(f"  edges    : {len(config['edges'])} (acyclic, chains within a rate group)")
     return 0
 
