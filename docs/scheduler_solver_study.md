@@ -262,8 +262,37 @@ the incomplete-hint failure above.
 The cause is cvxpy's reduction chain: MOSEK receives transformed variables, not
 `t`/`alpha`/`beta`, and cvxpy has no mapping to carry a user-set `.value`
 through it. `warm_start=True` is the continuous path;
-`MSK_IPAR_MIO_CONSTRUCT_SOL` arrives with nothing to construct from. Warm
-starting the MILP requires building the model against MOSEK's own API instead.
+`MSK_IPAR_MIO_CONSTRUCT_SOL` arrives with nothing to construct from.
+
+**`--solver milp_native` settles it.** `xpu-rt/mosek_native.py` builds the same
+formulation straight against MOSEK's Optimizer API, where `putxxslice` +
+`MSK_IPAR_MIO_CONSTRUCT_SOL` is the supported MIP-start path. Same instance,
+same 120 s:
+
+| | objective | note |
+| --- | --- | --- |
+| `heft` seed | 46.91 | 0.01 s |
+| native, cold | 90.906 | 1.94x worse than the seed |
+| **native, warm** | **46.912** | MOSEK log: *"Initial feasible solution objective: 4.6912e+01"* |
+| cvxpy, cold | 112.264 | |
+| cvxpy, warm | 112.264 | start discarded |
+
+Three things follow:
+
+- **The MIP start works natively.** MOSEK reports adopting the 46.91 ms
+  incumbent, which it never did through cvxpy — confirming the blocker was
+  cvxpy, not MOSEK.
+- **It buys nothing beyond not losing.** Warm returns the seed to three
+  decimals: 35,295 branches and 1.45M simplex iterations in 120 s without
+  improving on a schedule HEFT produced in 10 ms. Warm beats cold (90.9 ->
+  46.9) only because cold spends its budget rediscovering something worse.
+- **The native model is better cold too** — 90.9 against cvxpy's 112.3 at the
+  same budget, because cvxpy spends roughly a third of the wall clock compiling
+  and hands MOSEK a transformed problem rather than these rows.
+
+None of which makes the MILP competitive: its best result ties a 10 ms
+heuristic after two minutes, while warm-started CP-SAT reaches 45.34 ms in 15 s.
+The rewrite closes the question rather than opening a path.
 
 ### 4.3 Global trends: 30 generated spike workloads
 
