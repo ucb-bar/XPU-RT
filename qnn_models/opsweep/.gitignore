@@ -1,0 +1,7 @@
+# Raw measurements and generated artifacts: reproducible from the code above,
+# and far too large to track.  `python3 sweep.py --all` regenerates all of it.
+gen/
+results.jsonl
+results.jsonl.*
+fits.json
+sweep_*.log

@@ -422,8 +422,22 @@ You'll see an informational `WARN: granularity advisor -- ...` line about
 dispatch granularity — non-fatal, the schedule JSON is still written
 correctly; not something to act on for this repro.
 
-Expected result with the spec above: 71 `mlp_control` instances, 1 each of
-`dronet`/`yolov8_nano`, 733 total dispatches, ~705ms predicted makespan.
+Expected result with the spec above: 67 `mlp_control` instances, 1 each of
+`dronet`/`yolov8_nano`, 705 total dispatches, ~665ms predicted makespan
+(non-periodic; 694ms across all operations), converging after 3 refinement
+iterations.
+
+**`--solver auto` gives a better schedule here**, and the repro script
+takes the same flag (`bash scripts/repro_mlp_dronet_yolo_spike.sh
+--solver auto`). It runs all four heuristics and keeps the best; on this
+workload `greedy_reserved` wins by leaving dronet on the RVV lane and
+letting yolov8_nano start earlier: **63 `mlp_control` instances, 677 total
+dispatches, 628.94ms predicted non-periodic makespan** (657.35ms across
+all operations), still `OVERALL: PASS (3 models)` on spike. Both solvers
+land every `mlp_control` instance inside its 10ms window. The script's
+default stays `greedy_periodic` so the numbers above remain the recorded
+baseline; see the solver table in the top-level README for the full
+comparison.
 
 ## 6. Build + run the combined binary (`xpurt_demo`)
 

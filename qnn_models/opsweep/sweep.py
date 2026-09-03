@@ -1,0 +1,425 @@
+#!/usr/bin/env python3
+"""Operator sweep across backends, precisions and problem sizes on QRB5165.
+
+Produces one row per (op, size, precision, backend) with enough structure to
+separate the two things that decide every placement on this board:
+
+    system overhead  the per-dispatch cost, which on HTA is ~543 us warm and
+                     ~2470 us cold and is INDEPENDENT of the work
+    compute          the marginal term, recovered as the slope of the size ladder
+
+Both are measured, not modelled. Each point is profiled twice -- `--gap-us 0`
+(back to back, accelerator stays clocked) and `--gap-us 3000` (idle long enough
+to power down) -- so the cold/warm difference isolates the DVFS component from
+the dispatch cost proper. `fit` then regresses `t = overhead + macs/throughput`
+per (op, backend, precision) series.
+
+Failures are data. A backend that refuses an op is recorded with its verbatim
+validator message rather than left blank: "HTA has no two-dynamic-operand MatMul
+at any rank" is a result, and it is why attention cannot be placed there.
+
+Resumable: every finished row is appended to results.jsonl and skipped on a
+re-run, so the sweep can be interrupted and restarted, and partial results plot.
+
+    python3 sweep.py --all                      # gen, build, measure, fit
+    python3 sweep.py --only measure --ops conv2d,linear
+    python3 sweep.py --only fit                 # re-fit without touching the board
+"""
+from __future__ import annotations
+
+import argparse
+import glob
+import json
+import os
+import shlex
+import subprocess
+import sys
+
+import numpy as np
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+WORK = os.path.join(HERE, "gen")
+RESULTS = os.path.join(HERE, "results.jsonl")
+QNN_SDK = os.environ.get("QNN_SDK", "/scratch2/dima/misc_sw/qualcomm/qairt/2.45.0.260326")
+DOCKER_IMG = os.environ.get("QNN_DOCKER_IMG", "qnn-convert")
+BOARD = os.environ.get("QNN_BOARD", "root@10.44.120.201")
+LOCK = "/tmp/qnn_board.lock"
+BDIR = "/data/opsweep"
+PROFILE_SEG = "/root/models/smolvlm_vision_v3/profile_seg"
+LIB = "/root/qairt/lib/target/libQnn%s.so"
+GAPS = (0, 3000)
+
+
+def tag(op, prm):
+    return f"{op}__" + "_".join(str(x) for x in prm)
+
+
+def sh(cmd, timeout=9000):
+    r = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=timeout)
+    return r.stdout + r.stderr
+
+
+def board(script, timeout=3000):
+    inner = f"timeout -s KILL {timeout-120} ssh -o ConnectTimeout=10 {BOARD} bash -s"
+    cmd = f"timeout {timeout} flock -w {timeout} {LOCK} -c {shlex.quote(inner)}"
+    r = subprocess.run(cmd, shell=True, input=script, capture_output=True,
+                       text=True, timeout=timeout + 180)
+    return r.stdout + r.stderr
+
+
+def done_keys():
+    keys = set()
+    if os.path.exists(RESULTS):
+        for ln in open(RESULTS):
+            try:
+                d = json.loads(ln)
+                keys.add((d["op"], tuple(d["params"]), d["precision"], d["backend"]))
+            except Exception:
+                pass
+    return keys
+
+
+def emit(row):
+    with open(RESULTS, "a") as f:
+        f.write(json.dumps(row) + "\n")
+
+
+# ---------------------------------------------------------------- stages ---
+def stage_gen(pts):
+    """Build the ONNX models in the converter container (host needs no onnx)."""
+    os.makedirs(WORK, exist_ok=True)
+    plan = [[op, list(prm), axis, val, tag(op, prm)] for op, prm, axis, val in pts]
+    todo = [r for r in plan
+            if not os.path.exists(os.path.join(WORK, r[4], "m_q.dlc"))
+            and not (os.path.exists(os.path.join(WORK, r[4], "m.onnx"))
+                     and glob.glob(os.path.join(WORK, r[4], "*.raw")))]
+    if not todo:
+        print(f"[gen]   0 new models, {len(pts)} total"); return
+    json.dump(todo, open(os.path.join(WORK, "_plan.json"), "w"))
+    script = ('pip install -q "numpy<2" onnx >/dev/null 2>&1\n'
+              'python3.10 /src/genmodels.py /workspace/_plan.json /workspace\n')
+    out = sh(f"sudo docker run --rm -v {shlex.quote(HERE)}:/src:ro "
+             f"-v {shlex.quote(WORK)}:/workspace {DOCKER_IMG} bash -c {shlex.quote(script)}",
+             timeout=3600)
+    sh(f"sudo chown -R {os.getuid()}:{os.getgid()} {shlex.quote(WORK)}")
+    made = next((l.split()[1] for l in out.splitlines() if l.startswith("GENERATED")), None)
+    if made is None:
+        # Do not carry on with a partial plan: genmodels.py builds in plan
+        # order, so a crash silently drops every op after it and the sweep
+        # looks like it finished with whole operators missing.
+        raise RuntimeError(
+            "model generation failed; no GENERATED line. Container output:\n"
+            + "\n".join(out.splitlines()[-15:]))
+    print(f"[gen]   {made} new models, {len(pts)} total", flush=True)
+
+
+def stage_build(pts):
+    """Convert to fp32 DLC and quantize to int8, batched into one container."""
+    todo = [tag(op, prm) for op, prm, _, _ in pts
+            if not os.path.exists(os.path.join(WORK, tag(op, prm), "m_q.dlc"))]
+    if not todo:
+        print("[build] nothing to do"); return
+    print(f"[build] {len(todo)} models", flush=True)
+    for i in range(0, len(todo), 25):
+        chunk = todo[i:i + 25]
+        script = 'pip install -q "numpy<2" >/dev/null 2>&1\n'
+        for t in chunk:
+            script += (
+                f'C=/qnn/bin/x86_64-linux-clang\n'
+                f'python3.10 $C/snpe-onnx-to-dlc --input_network /workspace/{t}/m.onnx '
+                f'--output_path /workspace/{t}/m.dlc >/workspace/{t}/conv.log 2>&1\n'
+                f'python3.10 $C/qairt-quantizer --input_dlc /workspace/{t}/m.dlc '
+                f'--output_dlc /workspace/{t}/m_q.dlc --input_list /workspace/{t}/list.txt '
+                f'--act_bitwidth 8 --weights_bitwidth 8 >/workspace/{t}/quant.log 2>&1\n'
+                f'echo "BUILT {t} $([ -f /workspace/{t}/m.dlc ] && echo fp32) '
+                f'$([ -f /workspace/{t}/m_q.dlc ] && echo int8)"\n')
+        out = sh(f"sudo docker run --rm -v {shlex.quote(QNN_SDK)}:/qnn:ro "
+                 f"-v {shlex.quote(WORK)}:/workspace {DOCKER_IMG} bash -c {shlex.quote(script)}",
+                 timeout=9000)
+        ok = sum(1 for l in out.splitlines() if l.startswith("BUILT") and "int8" in l)
+        print(f"[build]   chunk {i//25+1}: {ok}/{len(chunk)} quantized", flush=True)
+        # The calibration raws are only needed by qairt-quantizer and they are
+        # by far the biggest thing here (a 33.5M-element binary op carries 1 GB
+        # of them).  Drop them once the int8 DLC exists; stage_gen rebuilds them
+        # if the DLC is ever missing.
+        for t in chunk:
+            d = os.path.join(WORK, t)
+            if os.path.exists(os.path.join(d, "m_q.dlc")):
+                for f in glob.glob(os.path.join(d, "*.raw")):
+                    os.remove(f)
+    sh(f"sudo chown -R {os.getuid()}:{os.getgid()} {shlex.quote(WORK)}")
+
+
+def stage_measure(pts, iters, chunk_n):
+    from grid import PRECISION_BACKENDS
+    have = done_keys()
+    work = []
+    for op, prm, axis, val in pts:
+        t = tag(op, prm)
+        for prec, bks in PRECISION_BACKENDS.items():
+            dlc = "m_q.dlc" if prec == "int8" else "m.dlc"
+            if not os.path.exists(os.path.join(WORK, t, dlc)):
+                continue
+            for bk in bks:
+                # rows store the backend lowercased; PRECISION_BACKENDS
+                # spells it "Cpu"/"Dsp"/"Hta"/"Gpu" (the libQnn* suffix),
+                # so this comparison has to normalise or resume never hits
+                if (op, tuple(prm), prec, bk.lower()) not in have:
+                    work.append((op, prm, axis, val, t, prec, bk, dlc))
+    print(f"[measure] {len(work)} pending of {len(pts)*7} max", flush=True)
+    if not work:
+        return
+    sh(f"timeout 300 flock -w 900 {LOCK} -c {shlex.quote(f'timeout -s KILL 200 ssh -n {BOARD} mkdir -p {BDIR}')}")
+    pushed = set()
+    for i in range(0, len(work), chunk_n):
+        ch = work[i:i + chunk_n]
+        for _, _, _, _, t, _, _, dlc in ch:
+            if (t, dlc) in pushed:
+                continue
+            pushed.add((t, dlc))
+            sh(f"timeout 900 flock -w 1200 {LOCK} -c "
+               f"{shlex.quote(f'timeout -s KILL 800 scp {os.path.join(WORK,t,dlc)} {BOARD}:{BDIR}/{t}__{dlc}')}")
+        lines = "\n".join(
+            f'run {t}__{dlc} {bk} {t}_{prec}_{bk}' for _, _, _, _, t, prec, bk, dlc in ch)
+        script = f"""set -u
+cd {BDIR}
+export LD_LIBRARY_PATH=/root/qairt/lib/target:${{LD_LIBRARY_PATH:-}}
+export ADSP_LIBRARY_PATH=/root/qairt/lib/target
+GOV=$(cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor)
+for c in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; do echo performance > $c; done
+run() {{
+  D=ctx_$3; rm -rf $D; mkdir -p $D
+  timeout -s KILL 400 /root/qairt/bin/target/qnn-context-binary-generator \\
+    --model /root/qairt/lib/target/libQnnModelDlc.so --backend /root/qairt/lib/target/libQnn$2.so \\
+    --dlc_path {BDIR}/$1 --binary_file b --output_dir {BDIR}/$D > $D.log 2>&1
+  if [ ! -f $D/b.bin ]; then
+    E=$(grep -E "\\[ *ERROR *\\]" $D.log | grep -viE "Failed to (successfully compose|create|initialize)|Exception encountered" \\
+        | head -1 | sed -E 's/^ *[0-9.]+m?s *\\[ *ERROR *\\] *//' | cut -c1-120 | tr -d '\\n"')
+    echo "ROW $3 COMPOSE_FAIL ${{E:-no_error_line}}"
+    rm -rf $D $D.log; return
+  fi
+  # Discard run: the first dispatch on a fresh context pays backend bringup,
+  # which otherwise lands on whichever phase happens to run first.
+  timeout -s KILL 300 {PROFILE_SEG} $D/b.bin /root/qairt/lib/target/libQnn$2.so 4 --gap-us 0 >/dev/null 2>&1
+  # ONE call gives both phases: the loop phase is back-to-back (warm), the gap
+  # phase inserts 3 ms so the accelerator power-collapses between calls (cold).
+  R=$(timeout -s KILL 300 {PROFILE_SEG} $D/b.bin /root/qairt/lib/target/libQnn$2.so {iters} --gap-us 3000 2>&1 | grep -E '^{{' | head -1)
+  echo "ROW $3 OK $R"   # bare: a ${{R:-...}} default would close on the JSON's own brace
+  rm -rf $D $D.log
+}}
+{lines}
+for c in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; do echo $GOV > $c; done
+"""
+        out = board(script, timeout=min(3000, 300 + 90 * len(ch)))
+        idx = {f"{t}_{prec}_{bk}": (op, prm, axis, val, prec, bk)
+               for op, prm, axis, val, t, prec, bk, _ in ch}
+        got = 0
+        for ln in out.splitlines():
+            if not ln.startswith("ROW "):
+                continue
+            f = ln.split(None, 3)
+            key = f[1]
+            if key not in idx:
+                continue
+            op, prm, axis, val, prec, bk = idx.pop(key)
+            meta = json.load(open(os.path.join(WORK, tag(op, prm), "meta.json")))
+            row = {"op": op, "params": list(prm), "axis": axis, "value": val,
+                   "precision": prec, "backend": bk.lower(), "macs": meta["macs"],
+                   "shapes": meta["shapes"]}
+            if f[2] == "OK":
+                try:
+                    j = json.loads(f[3]) if len(f) > 3 else {}
+                except ValueError:
+                    j = {}
+                # Back-to-back is the condition a packed pipeline actually
+                # runs in, so the median of the loop phase is the headline.
+                # HTA and GPU are heavy-tailed here (they power-collapse part
+                # way through even a zero-gap loop, sd ~900 us), so keep the
+                # min as the achievable floor and the sd as the evidence.
+                row["warm_us"] = j.get("median_us")
+                row["warm_min_us"] = j.get("min_us")
+                row["warm_std_us"] = j.get("std_us")
+                row["cold_us"] = j.get("gap_median_us")
+                row["init_us"] = j.get("init_us")
+                row["iters"] = j.get("iters")
+                row["status"] = "ok" if row["warm_us"] else "no_timing"
+            else:
+                row["status"] = "compose_fail"
+                row["error"] = (f[3] if len(f) > 3 else "").strip()[:180]
+            emit(row); got += 1
+        for key, (op, prm, axis, val, prec, bk) in idx.items():
+            emit({"op": op, "params": list(prm), "axis": axis, "value": val,
+                  "precision": prec, "backend": bk.lower(), "status": "no_result"})
+        print(f"[measure]   {i+len(ch)}/{len(work)}  (+{got})", flush=True)
+
+
+def stage_fit():
+    rows = [json.loads(l) for l in open(RESULTS)] if os.path.exists(RESULTS) else []
+    ok = [r for r in rows if r.get("status") == "ok" and r.get("macs")]
+    print(f"[fit] {len(rows)} rows, {len(ok)} timed", flush=True)
+    series = {}
+    for r in ok:
+        series.setdefault((r["op"], r["backend"], r["precision"]), []).append(r)
+    out = []
+    for (op, bk, prec), rs in sorted(series.items()):
+        if len(rs) < 3:
+            continue
+        m = np.array([r["macs"] for r in rs], float) / 1e6
+        for phase in ("warm_us", "cold_us"):
+            y = np.array([r.get(phase) or np.nan for r in rs], float)
+            g = ~np.isnan(y)
+            if g.sum() < 3:
+                continue
+            A = np.vstack([np.ones(g.sum()), m[g]]).T
+            (a, s), *_ = np.linalg.lstsq(A, y[g], rcond=None)
+            # A negative intercept is not a negative dispatch cost, it means
+            # this series is not linear in MACs (the op is memory- or
+            # element-bound).  Refit through the origin and say so, rather than
+            # clamping it out of sight at plot time.
+            clamped = bool(a < 0)
+            if clamped:
+                a = 0.0
+                s = float(np.linalg.lstsq(m[g][:, None], y[g], rcond=None)[0][0])
+                A = np.vstack([np.zeros(g.sum()), m[g]]).T
+            pred = A @ np.array([a, s])
+            r2 = 1 - ((y[g]-pred)**2).sum()/max(((y[g]-y[g].mean())**2).sum(), 1e-9)
+            out.append({"op": op, "backend": bk, "precision": prec, "phase": phase,
+                        "overhead_us": round(float(a), 2), "origin_fit": clamped,
+                        # 4 significant digits, not 1 decimal: a slow low-MAC op
+                        # (softmax on DSP) rounds to 0.0 and its compute
+                        # term silently vanishes from the decomposition.
+                        "gmac_per_s": float(f"{1e3/s:.4g}") if s > 0 else None,
+                        "r2": round(float(r2), 3), "n": int(g.sum())})
+    json.dump(out, open(os.path.join(HERE, "fits.json"), "w"), indent=1)
+    print(f"  {'op':<18}{'bk':<5}{'prec':<6}{'phase':<9}{'overhead_us':>12}{'GMAC/s':>10}{'R2':>7}")
+    for f in out:
+        if f["phase"] != "warm_us":
+            continue
+        print(f"  {f['op']:<18}{f['backend']:<5}{f['precision']:<6}{f['phase']:<9}"
+              f"{f['overhead_us']:>12.1f}{(f['gmac_per_s'] or 0):>10.1f}{f['r2']:>7.3f}")
+    print(f"  -> {os.path.join(HERE,'fits.json')}")
+
+
+def stage_coverage():
+    """Is each size ladder long enough to reach the answer?
+
+    A short row in the heatmap is not automatically a gap, and a rising row is
+    not automatically a crossover coming.  What decides it is the SLOPE, and it
+    has to be measured locally: fitting the whole ladder mixes in the small-size
+    regime, and the CPU's own throughput degrades at the top end (cache), so a
+    global fit said avgpool_global on HTA could never win when locally the HTA
+    is the faster of the two and it crosses just past the end of the ladder.
+
+    So fit both lines on the top few points only.  The ratio then tends to
+    g_acc/g_cpu as size grows: if that asymptote is below 1 the row will keep
+    creeping up and never cross, and more rungs only make that visible.  If it
+    is above 1 there is a real crossover, and the question is whether the grid
+    reaches it.
+    """
+    import numpy as np
+    fits = json.load(open(os.path.join(HERE, "fits.json")))
+    rows = [json.loads(l) for l in open(RESULTS)] if os.path.exists(RESULTS) else []
+    uniq = {}
+    for r in rows:
+        uniq[(r["op"], tuple(r["params"]), r["precision"], r["backend"])] = r
+    series = {}
+    for r in uniq.values():
+        if r.get("status") == "ok" and r.get("macs") and r.get("warm_us"):
+            series.setdefault((r["op"], r["backend"], r["precision"]), {})[r["macs"]] = r["warm_us"]
+
+    # The CPU baseline is the BEST cpu lane at each size, not cpu/int8.  They
+    # differ a lot and always in the accelerator's favour if you pick wrong:
+    # int8 elu on the CPU is 197 ms where fp32 elu is 31 ms, which would report
+    # a 7.1x DSP win that is really 1.1x against what you would actually run.
+    best_cpu = {}
+    for (op, bk, prec), d in series.items():
+        if bk != "cpu":
+            continue
+        tgt = best_cpu.setdefault(op, {})
+        for m, t in d.items():
+            tgt[m] = min(tgt.get(m, float("inf")), t)
+
+    def local(d, n=4):
+        if not d or len(d) < 2:
+            return None
+        m = sorted(d)[-n:]
+        return np.polyfit(np.array(m, float), np.array([d[x] for x in m], float), 1)
+
+    short, asym = [], []
+    print(f"  {'op':17s}{'acc':5s}{'ratio@max':>10}{'asymptote':>11}"
+          f"{'crossover':>14}{'ladder max':>13}   verdict")
+    for op in sorted({k[0] for k in series}):
+        cpu = best_cpu.get(op)
+        lc = local(cpu)
+        if lc is None:
+            continue
+        for bk in ("dsp", "hta"):
+            ka = (op, bk, "int8")
+            la = local(series.get(ka))
+            if la is None:
+                continue
+            common = sorted(set(cpu) & set(series[ka]))
+            if not common:
+                continue
+            big = common[-1]
+            ratio = cpu[big] / series[ka][big]
+            sc, ic = lc
+            sa, ia = la
+            # ratio -> (1/sa)/(1/sc) = sc/sa as macs grow
+            ras = sc / sa if sa > 0 else float("inf")
+            if ras <= 1.0:
+                print(f"  {op:17s}{bk:5s}{ratio:10.2f}{ras:11.2f}{'never':>14}"
+                      f"{big/1e6:>13,.2f}   asymptotes below 1")
+                if ratio > 0.7 * ras:
+                    pass
+                else:
+                    asym.append((op, bk, ras))
+                continue
+            m = (ia - ic) / (sc - sa)
+            reached = m <= big
+            if not reached:
+                short.append((op, bk, m / 1e6, m / big))
+            print(f"  {op:17s}{bk:5s}{ratio:10.2f}{ras:11.2f}{m/1e6:>14,.1f}"
+                  f"{big/1e6:>13,.2f}   {'reached' if reached else 'LADDER TOO SHORT'}")
+    print()
+    if short:
+        print(f"  {len(short)} ladder(s) stop before a real crossover:")
+        for op, bk, m, f in short:
+            print(f"    {op} on {bk}: needs >= {m:,.1f} MMAC ({f:.1f}x the current max)")
+    else:
+        print("  every crossover that exists is inside the swept range")
+
+
+
+def main():
+    sys.path.insert(0, HERE)
+    from grid import points
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--only", action="append",
+                    choices=["gen", "build", "measure", "fit", "coverage"])
+    ap.add_argument("--all", action="store_true")
+    ap.add_argument("--ops", default="")
+    ap.add_argument("--limit", type=int, default=0)
+    ap.add_argument("--iters", type=int, default=20)
+    ap.add_argument("--chunk", type=int, default=12)
+    a = ap.parse_args()
+    pts = points()
+    if a.ops:
+        keep = set(a.ops.split(","))
+        pts = [p for p in pts if p[0] in keep]
+    if a.limit:
+        pts = pts[:a.limit]
+    stages = a.only or (["gen", "build", "measure", "fit"] if a.all else None)
+    if not stages:
+        ap.error("pass --all or --only STAGE")
+    for s in stages:
+        if s == "gen":     stage_gen(pts)
+        elif s == "build": stage_build(pts)
+        elif s == "measure": stage_measure(pts, a.iters, a.chunk)
+        elif s == "fit":   stage_fit()
+        elif s == "coverage": stage_coverage()
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -429,3 +429,65 @@ the attention study measured 0 ms accelerator-recoverable for them.
 
 Net for vision: **173.8 ms** (80.8 + 93.0), about 32% of the 544.7 ms the
 trampolines cost and ~8% of vision's realizable total. Both wins are CPU-side.
+
+### Correction: regenerating the bundle CSVs silently dropped the HTA bundles
+
+Running `build_v3_bundles.py` to pick up the change above **regressed** the
+emitted `results.csv` files, and they were committed that way before the
+regression was caught. Before: 98 unique modules including the HTA bundle
+decomposition (`dsp_seg_NN_conv1`, `_conv2`, `_tramp_p0/p1/p2`) and 24 real HTA
+rows. After: 50 mono modules and 12 real HTA rows.
+
+Cause: `segment_perf.json` in the working tree carries
+
+    "Hta": {"status": "ok", "mean_us": 12392.27, "note": "sum of 2 conv ops"}
+
+-- `mean_us` but **no `convs` list**. `_build_bundle` needs the per-conv
+breakdown and returns `None` without it, so every segment fell back to a
+DSP/CPU mono placement and every HTA bundle dispatch vanished. The committed
+CSVs had been generated from a richer `segment_perf.json` than the one on disk.
+
+The CSVs are restored from the prior commit. `_build_bundle` now warns loudly
+when `Hta.mean_us` is present but `Hta.convs` is not, because "this segment has
+no HTA path" and "the profile data lost its breakdown" were indistinguishable
+and the second silently throws away the entire HTA placement.
+
+**Consequence for the trampoline win:** `TRAMPOLINE_ALT_COSTS_US` is wired in
+and correct, but it only reaches the cost model when the CSVs are regenerated,
+which needs a `segment_perf.json` carrying `Hta.convs`. Until then the 80.8 ms
+is real and measured but not yet expressed in the scheduler's inputs. The
+int8 DLCs themselves exist under `vision_slices_v3/tanh_int8/`.
+
+### Root cause of the regeneration failure: ae7baf8 dropped Hta.convs
+
+The guard added above fires because commit `ae7baf8` removed the `convs` array
+from every `Hta` entry in
+`qnn_models/boards/qrb5165_v66/profiles/smolvlm_vision_v3/segment_perf.json`:
+
+    8e0347a   "Hta": {"status","mean_us","note","convs"}   convs: 2 entries
+    ae7baf8   "Hta": {"status","mean_us","note"}           convs: dropped
+
+`_build_bundle` needs the per-conv split, so from `ae7baf8` onward
+`build_v3_bundles.py` silently produced an all-mono plan with **zero** HTA
+bundles. The committed `results.csv` and `dispatch_graph.json` were therefore
+not reproducible from the tree, which is why they show as modified whenever
+anyone runs the script.
+
+Repaired by restoring only the `convs` arrays on all 25 segments; the 99
+`mean_us` values `ae7baf8` legitimately updated are left alone. With the field
+back, `--dsp-tramp-budget 9` builds 9 HTA-bundle-DSP segments again and the
+warning no longer fires.
+
+Note the committed CSVs still will not regenerate byte-identically, because
+`ae7baf8` also changed 99 measurements (e.g. `dsp_seg_21/Dsp` 87783 -> 74268 us),
+so the optimal plan under the current numbers differs slightly from the one that
+produced them. That is a separate question from the script being broken.
+
+### Correction: the "869 ms on the table" figure was wrong
+
+I derived it as 2564.9 - 1695.7 ms. Those two numbers are not comparable:
+1695.7 is a serial sum over the 25 `dsp_seg` only, while 2564.9 is the scheduler
+makespan and includes the 464.1 ms `cpu_seg` chain that is present in **both**
+plans. On consistent data the headroom is about **293 ms**, and an unconstrained
+budget=23 plan lands near 2272 ms -- which is exactly the ceiling
+`MULTIGRAPH_REFACTOR_PLAN.md` already documented.

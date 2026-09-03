@@ -1,5 +1,5 @@
 {
-  "_comment": "Per-(binding, backend) whole-graph wallclock around QnnGraph_execute, captured by qnn_models/runtime/profile_segments.cpp on the physical QRB5165 at 10.44.120.201. Every number here is measured; capability-excluded cells are absent by construction (the registry decides those) rather than carrying a sentinel cost.",
+  "_comment": "Per-(binding, backend) whole-graph wallclock around QnnGraph_execute, captured by qnn_models/runtime/profile_segments.cpp on the physical QRB5165 at 10.44.120.201. Every number here is measured; capability-excluded cells are absent by construction (the registry decides those) rather than carrying a sentinel cost. | ViNT re-measured 2026-09-02: goal_enc dsp 5809.1->8015.6 and cpu 7075.3->5891.3 (the ordering INVERTS, so the scheduler now overlaps goal on CPU with obs on DSP instead of queueing both on the DSP), obs_enc dsp 9532.6->11617.2. Decoder split into vint_dec_body (dsp 7003.4 int8 / cpu 9509.3 fp32) + vint_dec_tail (cpu 74.7).",
   "target": "qrb5165_v66",
   "captured_at": "2026-08-30",
   "harness": "qnn_models/runtime/profile_segments.cpp for standalone cells (now two-phase: loop_* and gap_*); pooled run traces for in-situ cells, via qnn_models/flow_c/rebuild_cost_model.py",
@@ -12,7 +12,7 @@
     },
     "mlp_control/mlp_control_full": {
       "dsp": 685.0,
-      "cpu": 66.5
+      "cpu": 108.0
     },
     "yolov8n/yolov8n_backbone": {
       "hta": 14017.0,
@@ -143,12 +143,12 @@
       "cpu": 2.1
     },
     "vint_par/vint_goal_enc": {
-      "dsp": 5809.1,
-      "cpu": 7075.3
+      "dsp": 5956.0,
+      "cpu": 5891.3
     },
     "vint_par/vint_obs_enc": {
-      "dsp": 9532.6,
-      "cpu": 15549.4
+      "dsp": 11617.2,
+      "cpu": 15392.4
     },
     "vint_par/vint_decoder": {
       "cpu": 28468.0
@@ -197,6 +197,15 @@
       "dsp": 5342.2,
       "cpu": 8212.6,
       "cpu@fp32": 33832.5
+    },
+    "vint_par/vint_dec_body": {
+      "cpu": 9509.3,
+      "dsp": 7003.4,
+      "cpu@fp32": 9509.3
+    },
+    "vint_par/vint_dec_tail": {
+      "cpu": 74.7,
+      "cpu@fp32": 74.7
     }
   },
   "unit": "us",
@@ -525,6 +534,25 @@
           "backend": "cpu",
           "was_us": 12694.0,
           "now_us": 37826.0,
+          "samples": 1
+        }
+      ],
+      "note": "in-situ medians from this run, promoted because a standalone cell cannot see lane contention"
+    },
+    "flowc_vint_par4_qrb5165": {
+      "promoted": [
+        {
+          "cell": "mlp_control/mlp_control_full",
+          "backend": "cpu",
+          "was_us": 66.5,
+          "now_us": 108.0,
+          "samples": 14
+        },
+        {
+          "cell": "vint_par/vint_goal_enc",
+          "backend": "dsp",
+          "was_us": 8015.6,
+          "now_us": 5956.0,
           "samples": 1
         }
       ],
