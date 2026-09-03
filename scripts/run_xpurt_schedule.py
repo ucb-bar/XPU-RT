@@ -166,6 +166,7 @@ def schedule_iree_networks(
     search_budget: float = 20.0,
     seed_solver: str | None = None,
     cpsat_time_limit: float | None = None,
+    no_milp_native_warm_start: bool = False,
 ) -> tuple[Workload, np.ndarray, np.ndarray]:
     """
     Main function to schedule networks from a hierarchical network dependencies JSON file.
@@ -202,8 +203,9 @@ def schedule_iree_networks(
                               fragments by interleaving periodic
                               instances (e.g. dronet 50ms).
     """
-    _SOLVERS = ("milp", "greedy", "greedy_periodic", "greedy_reserved",
-                "decomposed", "heft", "heft_edf", "pso", "sa", "cpsat", "auto")
+    _SOLVERS = ("milp", "milp_native", "greedy", "greedy_periodic",
+                "greedy_reserved", "decomposed", "heft", "heft_edf", "pso",
+                "sa", "cpsat", "auto")
     if solver not in _SOLVERS:
         raise ValueError(f"solver must be one of {_SOLVERS}, got {solver!r}")
     solver_used = solver
@@ -476,6 +478,22 @@ def schedule_iree_networks(
                     sa_schedule, seed=effective_random_seed or 0,
                     time_budget=search_budget,
                     restrict_to_nonperiodic=effective_restrict_makespan_to_nonperiodic)
+            elif candidate == "milp_native":
+                # Same MILP as `milp`, built straight against MOSEK's Optimizer
+                # API. Worth a separate solver rather than a --cvxpy-solver
+                # value because it does not go through cvxpy at all — which is
+                # the point: cvxpy cannot pass a MIP start, and this can.
+                # Warm-started from HEFT by default; cold it is ~2x worse and
+                # still loses to the seed it would have been given.
+                from mosek_native import schedule_mosek_native
+
+                def _greedy_fn(_w, _tl=effective_time_limit or 120.0,
+                               _warm=not no_milp_native_warm_start):
+                    ws = heft_schedule(_w) if _warm else None
+                    return schedule_mosek_native(
+                        _w, time_limit=_tl, warm_start=ws,
+                        restrict_to_nonperiodic=effective_restrict_makespan_to_nonperiodic,
+                        verbose=effective_solver_verbosity > 0)
             elif candidate == "cpsat":
                 from cpsat_scheduler import cpsat_schedule
                 _greedy_fn = functools.partial(
@@ -820,7 +838,7 @@ def schedule_iree_networks(
     elif solver == "greedy_reserved":
         solver_tag = "_greedy_reserved"
         title_solver = "Greedy-reserved "
-    elif solver in ("heft", "heft_edf", "pso", "sa", "cpsat"):
+    elif solver in ("heft", "heft_edf", "pso", "sa", "cpsat", "milp_native"):
         solver_tag = f"_{solver}"
         title_solver = f"{solver.upper()} "
     elif solver == "auto":
@@ -905,9 +923,9 @@ if __name__ == "__main__":
         "--solver",
         type=str,
         default="milp",
-        choices=["milp", "greedy", "greedy_periodic", "greedy_reserved",
-                 "decomposed", "heft", "heft_edf", "pso", "sa", "cpsat",
-                 "auto"],
+        choices=["milp", "milp_native", "greedy", "greedy_periodic",
+                 "greedy_reserved", "decomposed", "heft", "heft_edf", "pso",
+                 "sa", "cpsat", "auto"],
         help="Scheduling algorithm. 'milp' (default) is the global cvxpy/mosek "
              "solver. 'greedy' is a list-scheduling heuristic with iterative "
              "periodic-instance refinement — fast, no external solver needed, "
@@ -996,6 +1014,14 @@ if __name__ == "__main__":
              "is set, 20 s. CP-SAT has its own --cpsat-time-limit.",
     )
     parser.add_argument(
+        "--no-milp-native-warm-start",
+        action="store_true",
+        help="(milp_native only) solve cold instead of warm-starting from "
+             "HEFT. Cold is about 2x worse at the same budget and does not "
+             "beat the seed it would otherwise have been given; this exists "
+             "to measure the difference, not as a recommended setting.",
+    )
+    parser.add_argument(
         "--cpsat-time-limit",
         type=float,
         default=None,
@@ -1082,4 +1108,5 @@ if __name__ == "__main__":
         search_budget=args.search_budget,
         seed_solver=args.seed_solver,
         cpsat_time_limit=args.cpsat_time_limit,
+        no_milp_native_warm_start=args.no_milp_native_warm_start,
     )
