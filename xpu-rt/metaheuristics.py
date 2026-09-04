@@ -14,19 +14,23 @@ Three families, all driving `schedule_decoder.decode`:
     distribution admits and keeping the best feasible one.
 
   - :func:`pso_schedule` — particle swarm over a random-key encoding
-    (Bean 1994): each particle is 2N reals, N priority keys plus N
-    combination keys, decoded by the SGS. PSO needs no gradient, no
-    permutation-repair operator, and no external solver.
+    (Bean 1994): each particle is N priority keys decoded by the SGS, which
+    places each op by its own earliest-finish rule. PSO needs no gradient, no
+    permutation-repair operator, and no external solver. The encoding used to
+    carry N more keys forcing a machine combination per op; measured against
+    the wl_sweep corpus that half was worth 10-24% to *delete* (see
+    :func:`_combo_from_keys`), and `defer_frac` is what brings it back.
 
   - :func:`sa_schedule` — simulated annealing over the same encoding, as a
     cheap control for "is the swarm actually doing anything a random walk
     with a temperature wouldn't".
 
-All three are seeded with the HEFT solution, which both guarantees they never
-return something worse than HEFT and gives the search a sane starting basin.
-Fitness is lexicographic (missed periodic windows first, then makespan),
-flattened into a scalar with a penalty large enough that no makespan gain can
-buy a missed deadline.
+The two searches are seeded with every cheap heuristic's schedule — HEFT,
+deadline-aware HEFT and the greedy pickers — and return the best of those
+unless the search strictly beats it, so they can never be worse than the
+0-second constructive answer they started from. Fitness is lexicographic
+(missed periodic windows first, then makespan), flattened into a scalar with a
+penalty large enough that no makespan gain can buy a missed deadline.
 """
 
 from __future__ import annotations
@@ -38,11 +42,105 @@ import numpy as np
 from schedule_decoder import DecoderContext, decode, evaluate
 
 
+#: Share of the combination-key range that means "no forced combination", so
+#: that 1.0 drops the combination half of the encoding entirely and searches
+#: only the priority order. See :func:`_combo_from_keys` for why that is the
+#: default and :func:`_key_dim` for what it costs.
+DEFER_FRACTION = 1.0
+
+
+def _feasible_combos(ctx: DecoderContext):
+    """Per-op table of the combinations the op can actually run on.
+
+    `(index, count, position)`: `index[i, :count[i]]` lists op *i*'s usable
+    combinations and `position[i, c]` is where combination *c* sits in that
+    list (-1 if unusable). Cached on the context, which is itself built once
+    per solve and reused across thousands of decodes.
+    """
+    tbl = getattr(ctx, "_mh_feasible", None)
+    if tbl is not None:
+        return tbl
+    usable = [np.flatnonzero(np.isfinite(ctx.dur[i])) for i in range(ctx.n)]
+    width = max((len(u) for u in usable), default=1) or 1
+    index = np.zeros((ctx.n, width), dtype=int)
+    count = np.zeros(ctx.n, dtype=int)
+    position = np.full((ctx.n, ctx.n_combos), -1, dtype=int)
+    for i, u in enumerate(usable):
+        count[i] = u.size
+        if u.size:
+            index[i, :u.size] = u
+            position[i, u] = np.arange(u.size)
+    tbl = (index, count, position)
+    ctx._mh_feasible = tbl
+    return tbl
+
+
+def _combo_from_keys(ctx: DecoderContext, ckeys: np.ndarray,
+                     defer_frac: float) -> np.ndarray:
+    """Map the combination half of a key vector onto combination indices.
+
+    Two things separate this from a flat `floor(key * n_combos)`:
+
+      - Keys below `defer_frac` decode to -1, which `decode` reads as "use the
+        earliest-finish rule for this op" — the same rule HEFT uses. Forcing a
+        combination on *every* op is what made the second half of the vector
+        harmful rather than merely useless: a random-key placement displaces
+        the decoder's earliest-finish choice on every uncontended op too, and
+        the search then spends its budget undoing that.
+      - The rest of the range indexes each op's *usable* combinations rather
+        than all of them. This one closes a latent hole rather than a measured
+        one: forcing an op onto a combination it cannot run on is *rewarded*,
+        not punished, because `decode` falls through to its "no usable
+        combination" branch, parks the op at combination 0 with duration 0 and
+        commits nothing, and `evaluate` then scores it as a free, instantaneous
+        op. Every op in the wl_sweep corpus can run on every combination, so
+        nothing there could reach it; a workload with a restricted op could.
+
+    Swept over the wl_sweep corpus at 0, 0.25, 0.5, 0.75 and 1.0, only the
+    endpoint pays: partial deferral is worth hundredths of a percent, and full
+    deferral is worth 10-24% on every spec where two ops ever contend for a
+    lane. Hence the 1.0 default — on this corpus the combination half of the
+    encoding is not a search dimension worth having, and the search is better
+    off spending its whole budget on the priority order.
+    """
+    keys = np.clip(np.asarray(ckeys, dtype=float), 0.0, 1.0 - 1e-12)
+    index, count, _pos = _feasible_combos(ctx)
+    combo = np.full(ctx.n, -1, dtype=int)
+    if defer_frac >= 1.0:
+        return combo
+    forced = (keys >= defer_frac) & (count > 0)
+    rows = np.flatnonzero(forced)
+    if rows.size:
+        scaled = (keys[rows] - defer_frac) / (1.0 - defer_frac)
+        slot = np.floor(np.clip(scaled, 0.0, 1.0 - 1e-12) * count[rows]).astype(int)
+        combo[rows] = index[rows, slot]
+    return combo
+
+
+def _combo_keys_for(ctx: DecoderContext, alpha: np.ndarray,
+                    defer_frac: float) -> np.ndarray:
+    """Inverse of :func:`_combo_from_keys`: keys that force `alpha`'s combos."""
+    if defer_frac >= 1.0:
+        return np.zeros(0)
+    _index, count, position = _feasible_combos(ctx)
+    slot = position[np.arange(ctx.n), np.argmax(alpha, axis=1)]
+    frac = np.where(slot >= 0, (slot + 0.5) / np.maximum(count, 1), 0.5)
+    return defer_frac + (1.0 - defer_frac) * frac
+
+
+def _key_dim(ctx: DecoderContext, defer_frac: float) -> int:
+    """Length of one particle: N priority keys, plus N combination keys unless
+    placement is fully deferred, in which case there is nothing to encode and
+    carrying the half would only dilute SA's mutations across dead keys."""
+    return ctx.n if defer_frac >= 1.0 else 2 * ctx.n
+
+
 def _fitness(ctx: DecoderContext, keys: np.ndarray, penalty: float,
-             restrict: bool) -> tuple[float, np.ndarray, np.ndarray]:
+             restrict: bool,
+             defer_frac: float = DEFER_FRACTION) -> tuple[float, np.ndarray, np.ndarray]:
     n = ctx.n
     priority = keys[:n]
-    combo = np.floor(np.clip(keys[n:], 0.0, 0.999999) * ctx.n_combos).astype(int)
+    combo = _combo_from_keys(ctx, keys[n:], defer_frac)
     t, alpha = decode(ctx, priority, combo)
     obj, misses, _all_end = evaluate(ctx, t, alpha, restrict)
     return obj + penalty * misses, t, alpha
@@ -61,19 +159,20 @@ def _combo_keys(ctx: DecoderContext, alpha: np.ndarray) -> np.ndarray:
     return (np.argmax(alpha, axis=1) + 0.5) / max(1, ctx.n_combos)
 
 
-def _keys_from_schedule(ctx: DecoderContext, t: np.ndarray,
-                        alpha: np.ndarray) -> np.ndarray:
+def _keys_from_schedule(ctx: DecoderContext, t: np.ndarray, alpha: np.ndarray,
+                        defer_frac: float = DEFER_FRACTION) -> np.ndarray:
     """Recover the key vector that makes the SGS reproduce a given schedule.
 
     Start-time order is the schedule's own priority order, so ranking by
     descending start time and normalising gives keys that decode back to
     (approximately) the same sequence — approximately because the SGS still
     enforces precedence, which can only improve on an ordering that violated
-    it. Combination keys are read straight off `alpha`.
+    it. Combination keys are read straight off `alpha`, into the forced band
+    so the seed reproduces the heuristic's placement rather than deferring it.
     """
     order = np.argsort(np.argsort(-np.asarray(t, dtype=float)))
     prio = 1.0 - order / max(1, ctx.n - 1)
-    return np.concatenate([prio, _combo_keys(ctx, alpha)])
+    return np.concatenate([prio, _combo_keys_for(ctx, alpha, defer_frac)])
 
 
 def _true_fitness(ctx: DecoderContext, t, alpha, penalty, restrict) -> float:
@@ -81,7 +180,8 @@ def _true_fitness(ctx: DecoderContext, t, alpha, penalty, restrict) -> float:
     return obj + penalty * misses
 
 
-def _heuristic_seeds(ctx: DecoderContext, workload):
+def _heuristic_seeds(ctx: DecoderContext, workload,
+                     defer_frac: float = DEFER_FRACTION):
     """Key vectors for every cheap heuristic, as starting points.
 
     Seeding only from HEFT was actively harmful: HEFT ignores periodic
@@ -90,6 +190,13 @@ def _heuristic_seeds(ctx: DecoderContext, workload):
     basin instead of improving a schedule that was already deadline-feasible.
     The greedy pickers are cheap (tenths of a second) and land in the feasible
     region, so they belong in the initial population.
+
+    `heft_edf` belongs there for the same reason and was the costly omission:
+    on a workload where plain HEFT misses windows it is usually the *only*
+    deadline-feasible schedule anywhere near HEFT's makespan, so leaving it
+    out meant the search started from a greedy picker several percent worse
+    and — however well it then searched — could only be reported as a loss
+    against a heuristic that cost 0.07 s.
 
     Returns (keys, t, alpha) triples. The schedule is carried alongside the
     keys because the key round-trip is lossy: re-decoding a heuristic's keys
@@ -100,12 +207,25 @@ def _heuristic_seeds(ctx: DecoderContext, workload):
     import greedy_scheduler as _gs
     seeds = []
     ht, ha, hkeys = _heft_keys(ctx)
+    if defer_frac >= 1.0:
+        hkeys = hkeys[:ctx.n]
+    elif defer_frac > 0.0:
+        # HEFT *is* the decoder's earliest-finish rule, so a deferred
+        # combination half reproduces it exactly instead of approximately.
+        hkeys = np.concatenate([hkeys[:ctx.n], np.full(ctx.n, defer_frac * 0.5)])
+    else:
+        hkeys = np.concatenate([hkeys[:ctx.n], _combo_keys_for(ctx, ha, 0.0)])
     seeds.append((hkeys, ht, ha))
-    for fn in (_gs.greedy_reserved_schedule, _gs.greedy_periodic_schedule,
-               _gs.greedy_schedule, _gs.decomposed_schedule):
+    fns = [heft_edf_schedule]
+    for name in ("greedy_reserved_schedule", "greedy_periodic_schedule",
+                 "greedy_schedule", "decomposed_schedule"):
+        fn = getattr(_gs, name, None)
+        if fn is not None:
+            fns.append(fn)
+    for fn in fns:
         try:
             t, alpha = fn(workload)
-            seeds.append((_keys_from_schedule(ctx, t, alpha), t, alpha))
+            seeds.append((_keys_from_schedule(ctx, t, alpha, defer_frac), t, alpha))
         except Exception:
             continue
     return seeds
@@ -347,27 +467,51 @@ def pso_schedule(workload, n_particles: int = 24, iters: int = 60,
                  seed: int = 0, time_budget: float | None = 20.0,
                  restrict_to_nonperiodic: bool = True,
                  w: float = 0.72, c1: float = 1.5, c2: float = 1.5,
+                 stall_iters: int | None = 8,
+                 defer_frac: float = DEFER_FRACTION,
                  verbose: bool = False) -> tuple[np.ndarray, np.ndarray]:
-    """Particle swarm over random keys. Returns the best schedule found."""
+    """Particle swarm over random keys. Returns the best schedule found.
+
+    Two things the swarm proper does not do:
+
+      - The *incumbent* — what gets returned — is tracked separately from
+        `gbest`, the swarm's leader. `gbest` is ranked on decoded key vectors,
+        because that is the space the velocity update moves in; the incumbent
+        is ranked over those *and* over each seed heuristic's own schedule.
+        Ranking one thing on both made the leader a position whose recorded
+        fitness no particle could reproduce, so the swarm had no gradient to
+        follow; keeping them apart also makes "never worse than the best
+        seed" a property of the return statement rather than a coincidence.
+      - `stall_iters` stops the search once `stall_iters` consecutive
+        iterations improve nothing. On the workloads where the seed is already
+        the best thing the encoding can express, the swarm otherwise spends
+        its entire budget rediscovering it.
+    """
     ctx = DecoderContext(workload)
     rng = np.random.default_rng(seed)
-    dim = 2 * ctx.n
+    dim = _key_dim(ctx, defer_frac)
     penalty = _penalty_scale(ctx)
     started = time.perf_counter()
 
-    seeds = _heuristic_seeds(ctx, workload)
-    x = rng.random((n_particles, dim))
-    gbest, gbest_fit, best_t, best_alpha = None, np.inf, None, None
-    for k, (sd, st, sa) in enumerate(seeds[:n_particles]):
-        x[k] = sd
-        # Rank the swarm by the decoded key vector, but hold the incumbent
-        # against the heuristic's own schedule, which may be strictly better.
-        fit_keys, t, alpha = _fitness(ctx, sd, penalty, restrict_to_nonperiodic)
-        if fit_keys < gbest_fit:
-            gbest, gbest_fit, best_t, best_alpha = sd.copy(), fit_keys, t, alpha
+    seeds = _heuristic_seeds(ctx, workload, defer_frac)
+    inc_fit, inc_t, inc_alpha = np.inf, None, None
+    for _sd, st, sa in seeds:
         fit_true = _true_fitness(ctx, st, sa, penalty, restrict_to_nonperiodic)
-        if fit_true < gbest_fit:
-            gbest, gbest_fit, best_t, best_alpha = sd.copy(), fit_true, st, sa
+        if fit_true < inc_fit:
+            inc_fit, inc_t, inc_alpha = fit_true, st, sa
+    seed_fit = inc_fit
+
+    x = rng.random((n_particles, dim))
+    gbest, gbest_fit = None, np.inf
+    for k, (sd, _st, _sa) in enumerate(seeds[:n_particles]):
+        x[k] = sd
+        fit, t, alpha = _fitness(ctx, sd, penalty, restrict_to_nonperiodic, defer_frac)
+        if fit < gbest_fit:
+            gbest, gbest_fit = sd.copy(), fit
+        if fit < inc_fit:
+            inc_fit, inc_t, inc_alpha = fit, t, alpha
+    if gbest is None:
+        gbest = x[0].copy()
     # A few jittered copies of the best seed, so the swarm explores around the
     # good basin rather than only from uniform noise.
     for k in range(len(seeds), min(len(seeds) + 3, n_particles)):
@@ -376,19 +520,29 @@ def pso_schedule(workload, n_particles: int = 24, iters: int = 60,
 
     pbest = x.copy()
     pbest_fit = np.full(n_particles, np.inf)
-    seed_fit = gbest_fit
+    stall = 0
+    stopped = "iteration limit"
+    it = -1
 
     for it in range(iters):
+        improved = False
         for p in range(n_particles):
-            fit, t, alpha = _fitness(ctx, x[p], penalty, restrict_to_nonperiodic)
+            fit, t, alpha = _fitness(ctx, x[p], penalty, restrict_to_nonperiodic,
+                                     defer_frac)
             if fit < pbest_fit[p]:
                 pbest_fit[p], pbest[p] = fit, x[p].copy()
             if fit < gbest_fit:
                 gbest_fit, gbest = fit, x[p].copy()
-                best_t, best_alpha = t, alpha
+                improved = True
+            if fit < inc_fit:
+                inc_fit, inc_t, inc_alpha = fit, t, alpha
+                improved = True
+        stall = 0 if improved else stall + 1
+        if stall_iters is not None and stall >= stall_iters:
+            stopped = f"no gain for {stall} iterations"
+            break
         if time_budget is not None and time.perf_counter() - started > time_budget:
-            if verbose:
-                print(f"  pso: stopped at iteration {it + 1}/{iters} on time budget")
+            stopped = "time budget"
             break
         r1 = rng.random((n_particles, dim))
         r2 = rng.random((n_particles, dim))
@@ -397,52 +551,74 @@ def pso_schedule(workload, n_particles: int = 24, iters: int = 60,
         x = np.clip(x + v, 0.0, 1.0)
 
     if verbose:
-        print(f"  pso: best fitness {gbest_fit:.3f} (best seed {seed_fit:.3f})")
-    return best_t, best_alpha
+        print(f"  pso: stopped at iteration {it + 1}/{iters} on {stopped}; "
+              f"fitness {inc_fit:.3f} (best seed {seed_fit:.3f})")
+    return inc_t, inc_alpha
 
 
 def sa_schedule(workload, iters: int = 4000, seed: int = 0,
                 time_budget: float | None = 20.0,
                 restrict_to_nonperiodic: bool = True,
                 t0: float = 0.25, t1: float = 0.005,
+                stall_iters: int | None = 500,
+                defer_frac: float = DEFER_FRACTION,
                 verbose: bool = False) -> tuple[np.ndarray, np.ndarray]:
-    """Simulated annealing over the same random-key encoding."""
+    """Simulated annealing over the same random-key encoding.
+
+    Carries the same two corrections as :func:`pso_schedule`: the returned
+    incumbent is ranked over the seed heuristics' own schedules as well as
+    over decoded key vectors, and the walk gives up after `stall_iters`
+    consecutive steps that improve nothing.
+    """
     ctx = DecoderContext(workload)
     rng = np.random.default_rng(seed)
     penalty = _penalty_scale(ctx)
     started = time.perf_counter()
 
-    best, best_fit, best_t, best_alpha = None, np.inf, None, None
-    cur, cur_fit = None, np.inf
-    for sd, st, sa in _heuristic_seeds(ctx, workload):
-        fit_keys, t, alpha = _fitness(ctx, sd, penalty, restrict_to_nonperiodic)
-        if fit_keys < cur_fit:
-            cur, cur_fit = sd.copy(), fit_keys
-        if fit_keys < best_fit:
-            best, best_fit, best_t, best_alpha = sd.copy(), fit_keys, t, alpha
+    seeds = _heuristic_seeds(ctx, workload, defer_frac)
+    inc_fit, inc_t, inc_alpha = np.inf, None, None
+    for _sd, st, sa in seeds:
         fit_true = _true_fitness(ctx, st, sa, penalty, restrict_to_nonperiodic)
-        if fit_true < best_fit:
-            best, best_fit, best_t, best_alpha = sd.copy(), fit_true, st, sa
+        if fit_true < inc_fit:
+            inc_fit, inc_t, inc_alpha = fit_true, st, sa
+    seed_fit = inc_fit
+
+    cur, cur_fit = None, np.inf
+    for sd, _st, _sa in seeds:
+        fit, t, alpha = _fitness(ctx, sd, penalty, restrict_to_nonperiodic, defer_frac)
+        if fit < cur_fit:
+            cur, cur_fit = sd.copy(), fit
+        if fit < inc_fit:
+            inc_fit, inc_t, inc_alpha = fit, t, alpha
     dim = cur.size
     # Perturb a handful of keys per step: a full-vector resample is just a
     # random restart, and a single key rarely changes the decoded order.
     n_mut = max(1, dim // 50)
+    stall = 0
+    stopped = "iteration limit"
+    it = 0
 
     for it in range(iters):
         if time_budget is not None and time.perf_counter() - started > time_budget:
-            if verbose:
-                print(f"  sa: stopped at iteration {it}/{iters} on time budget")
+            stopped = "time budget"
+            break
+        if stall_iters is not None and stall >= stall_iters:
+            stopped = f"no gain for {stall} steps"
             break
         temp = t0 * (t1 / t0) ** (it / max(1, iters - 1))
         cand = cur.copy()
         idx = rng.integers(0, dim, n_mut)
         cand[idx] = np.clip(cand[idx] + rng.normal(0, 0.2, n_mut), 0.0, 1.0)
-        fit, t, alpha = _fitness(ctx, cand, penalty, restrict_to_nonperiodic)
+        fit, t, alpha = _fitness(ctx, cand, penalty, restrict_to_nonperiodic, defer_frac)
         if fit < cur_fit or rng.random() < np.exp(-(fit - cur_fit) / max(temp, 1e-9)):
             cur, cur_fit = cand, fit
-            if fit < best_fit:
-                best, best_fit, best_t, best_alpha = cand.copy(), fit, t, alpha
+        if fit < inc_fit:
+            inc_fit, inc_t, inc_alpha = fit, t, alpha
+            stall = 0
+        else:
+            stall += 1
 
     if verbose:
-        print(f"  sa: best fitness {best_fit:.3f}")
-    return best_t, best_alpha
+        print(f"  sa: stopped at iteration {it}/{iters} on {stopped}; "
+              f"fitness {inc_fit:.3f} (best seed {seed_fit:.3f})")
+    return inc_t, inc_alpha
