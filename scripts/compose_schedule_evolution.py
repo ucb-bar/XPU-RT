@@ -160,8 +160,11 @@ def main():
         # delta vs previous panel — lead with the deadline lateness change (the hero), misses second
         if prev_mk is not None:
             if abs(late - prev_late) > 0.05 or miss != prev_miss:
-                col = "#2f7d4f" if (late < prev_late - 0.05 or miss < prev_miss) else "#c0392b"
+                improved = late < prev_late - 0.05 or miss < prev_miss
+                col = "#2f7d4f" if improved else "#c0392b"
                 txt = f"deadline lateness {prev_late:.0f} → {late:.0f} ms     ·     {prev_miss} → {miss} miss"
+                if improved and abs(mk - prev_mk) < 1.0:      # recovered without paying makespan
+                    txt += "     ·     same makespan ✓"
             else:
                 dmk = mk - prev_mk; col = "#777"
                 txt = f"Δ makespan {'−' if dmk < 0 else '+'}{abs(dmk):.1f} ms  ·  deadlines still met"
