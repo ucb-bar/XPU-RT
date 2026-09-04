@@ -9,6 +9,10 @@ Three families, all driving `schedule_decoder.decode`:
     pick whichever ready op finishes first, which repeatedly defers the long
     chain that actually sets the makespan.
 
+  - :func:`heft_edf_schedule` — the same, plus a deadline band for the periodic
+    ops that have no slack to give, chosen by decoding every gate the laxity
+    distribution admits and keeping the best feasible one.
+
   - :func:`pso_schedule` — particle swarm over a random-key encoding
     (Bean 1994): each particle is 2N reals, N priority keys plus N
     combination keys, decoded by the SGS. PSO needs no gradient, no
@@ -121,8 +125,153 @@ def heft_schedule(workload) -> tuple[np.ndarray, np.ndarray]:
     return t, alpha
 
 
-def heft_edf_schedule(workload) -> tuple[np.ndarray, np.ndarray]:
-    """Deadline-aware HEFT: EDF for the periodic ops, upward rank for the rest.
+def total_float(ctx: DecoderContext) -> np.ndarray:
+    """CPM total float per op: how long it can slip before a window is missed.
+
+    Forward pass gives the earliest finish reachable at all,
+
+        eft[i] = max(min_start[i], max over preds p of eft[p]) + min_dur[i]
+
+    backward pass the latest finish that still leaves the chain feasible,
+
+        lft[i] = min(max_end[i], min over succs s of (lft[s] - min_dur[s]))
+
+    and `lft - eft` is the slack. Both use `min_dur` — the fastest combination
+    the op could run on — so the float is a genuine upper bound on the
+    breathing room, never an artefact of a slow combination we would not pick.
+
+    The backward pass is what makes this usable as a laxity signal at all. An
+    op's own `max_end_t` is the *instance* window (every op of a 30-op dronet
+    instance carries the same 20 ms), so the raw `max_end - eft` of the head of
+    a chain looks enormous even when the 29 ops behind it leave no room. The
+    backward pass pushes the real deadline up the chain, and every op in a pure
+    chain ends up with the same float — which is the right semantics, because
+    an instance is tight or slack as a whole, not op by op.
+
+    Non-periodic ops with no periodic successor get `+inf`, as they should.
+    """
+    eft = np.zeros(ctx.n)
+    for u in ctx.topo:
+        es = ctx.min_start[u]
+        for p in ctx.pred[u]:
+            if eft[p] > es:
+                es = eft[p]
+        eft[u] = es + ctx.min_dur[u]
+    lft = np.array(ctx.max_end, dtype=float)
+    for u in reversed(ctx.topo):
+        for s in ctx.succ[u]:
+            v = lft[s] - ctx.min_dur[s]
+            if v < lft[u]:
+                lft[u] = v
+    return lft - eft
+
+
+def _span_lower_bound(ctx: DecoderContext) -> float:
+    """Lower bound on any schedule's length: critical path, or the work each
+    machine must average, whichever binds. Dividing float by it makes laxity
+    scale-free, so the same numbers mean the same thing on a 35 ms control
+    workload and on a 3.7 s vision one."""
+    rank = ctx.upward_rank()
+    cp = float(rank.max()) if ctx.n else 0.0
+    per_machine = float(ctx.min_dur.sum()) / max(len(ctx.machines), 1)
+    return max(cp, per_machine, 1e-9)
+
+
+def laxity(ctx: DecoderContext) -> np.ndarray:
+    """`total_float` normalised by `_span_lower_bound` — "how much of a whole
+    schedule's worth of slack does this op have"."""
+    return total_float(ctx) / _span_lower_bound(ctx)
+
+
+# Ceiling on how many laxity gates `heft_edf_schedule` decodes. A gate can only
+# sit between two adjacent distinct laxity *levels*, and laxity is close to a
+# property of a periodic network rather than of an op — the ops of an instance
+# chain share a float — so the whole family is 7-8 gates wide on the wl_sweep
+# corpus and this ceiling never binds there. It exists so a pathological
+# workload with hundreds of levels cannot turn a tenth-of-a-second heuristic
+# into a minute-long one; above it the levels are thinned by index, which always
+# keeps the two endpoints.
+_MAX_LAXITY_GATES = 12
+
+# Laxity values closer together than this (relatively) are the same level. The
+# float of a chain is a sum of the same durations in a different association
+# order, so ops that are genuinely equally tight come back differing in the last
+# couple of ulps: control_mix_hetero has 140 periodic ops at 32 "distinct"
+# laxities but only 6 levels, the other 26 being spread of order 1e-16. Gating
+# inside that spread splits an instance chain at a boundary decided by
+# floating-point noise — it does move the makespan (up to 2% here), but not
+# reproducibly, so the levels are merged first.
+_LAXITY_RTOL = 1e-9
+
+
+def _band_priority(ctx: DecoderContext, np_band: np.ndarray,
+                   lift: np.ndarray) -> np.ndarray:
+    """Rank priority in [0, 1], with `lift` raised into the EDF band [1, 2]."""
+    priority = np.array(np_band, dtype=float)
+    if np.any(lift):
+        d = ctx.max_end[lift]
+        finite = d[np.isfinite(d)]
+        lo, hi = (finite.min(), finite.max()) if finite.size else (0.0, 1.0)
+        rng = (hi - lo) or 1.0
+        priority[lift] = 2.0 - np.clip((d - lo) / rng, 0.0, 1.0)
+    return priority
+
+
+def laxity_levels(lax: np.ndarray) -> np.ndarray:
+    """Sorted laxity values with floating-point-identical ones merged.
+
+    See `_LAXITY_RTOL`. Each surviving value is the *largest* of its level, so
+    `lax <= level` selects the whole level and never a noise-decided part of it.
+    """
+    vals = np.unique(lax)
+    if vals.size == 0:
+        return vals
+    keep = [vals[0]]
+    for v in vals[1:]:
+        if v - keep[-1] > _LAXITY_RTOL * max(1.0, abs(keep[-1])):
+            keep.append(v)
+        else:
+            keep[-1] = v                   # same level, take its top edge
+    return np.array(keep)
+
+
+def laxity_gates(ctx: DecoderContext, gate=None) -> list[np.ndarray]:
+    """The lift masks `heft_edf_schedule` will try, tightest first, deduped.
+
+    With `gate=None` this enumerates the family: "lift nothing", then "lift
+    every periodic op at or below the k-th laxity level" for each k. The last is
+    "lift every periodic op" — the unconditional band — so both endpoints are
+    always present however hard the list is thinned.
+
+    An explicit `gate` (a float, or a sequence of floats) instead uses those as
+    literal thresholds, `laxity < gate`, which is what pins the behaviour in
+    tests and lets a caller ask for one fixed cut.
+    """
+    per = ctx.periodic
+    lax = laxity(ctx)
+    if gate is not None:
+        thresholds = (float(gate),) if np.isscalar(gate) else tuple(gate)
+        masks = [per & (lax < th) for th in thresholds]
+    else:
+        levels = laxity_levels(lax[per])
+        if levels.size > _MAX_LAXITY_GATES - 1:
+            keep = np.unique(np.linspace(0, levels.size - 1, _MAX_LAXITY_GATES - 1)
+                             .round().astype(int))
+            levels = levels[keep]
+        masks = [np.zeros(ctx.n, dtype=bool)] + [per & (lax <= v) for v in levels]
+    out, seen = [], set()
+    for m in masks:
+        key = np.packbits(m).tobytes()
+        if key not in seen:
+            seen.add(key)
+            out.append(m)
+    return out
+
+
+def heft_edf_schedule(workload, gate=None,
+                      restrict_to_nonperiodic: bool = True
+                      ) -> tuple[np.ndarray, np.ndarray]:
+    """Deadline-aware HEFT: EDF for the *tight* periodic ops, rank for the rest.
 
     Plain HEFT is deadline-blind — it orders purely by distance to a sink — so
     on any workload with periodic windows it packs the long non-periodic chain
@@ -133,24 +282,65 @@ def heft_edf_schedule(workload) -> tuple[np.ndarray, np.ndarray]:
     The fix keeps HEFT's insight (order the makespan-critical chain by upward
     rank, not by who finishes soonest) but puts it in the band *below* the
     periodic work: periodic ops are ordered among themselves by deadline —
-    earliest deadline first, the classic EDF rule — and all of them outrank
-    every non-periodic op, which then backfills the gaps the SGS leaves.
+    earliest deadline first, the classic EDF rule — and outrank every
+    non-periodic op, which then backfills the gaps the SGS leaves.
+
+    Lifting *every* periodic op is what that costs. On configurations with
+    enough machines the deadline band is pure loss: on the wl_sweep corpus's
+    4-machine "quad" configs, where plain HEFT was already valid, the band cost
+    +7.4% on control_mix, +14.7% on saturation and +5.0% on vint_multi, and
+    bought nothing. So the lift is gated on `laxity`: only periodic ops with
+    less than a threshold's worth of slack are promoted, and the roomy ones
+    stay in the rank band where they backfill like ordinary work.
+
+    No *fixed* threshold does that job, and the sweep behind this says so
+    plainly. Laxity is very nearly configuration-invariant — the same ops are
+    tight on two machines and on four, because a window and a chain of work
+    don't change when you add a core — while the amount of crowding those ops
+    must survive changes a great deal. On saturation the gate that recovers
+    HEFT's makespan on quad misses ten windows on hetero, and every constant
+    that is safe on hetero gives quad's 14.7% straight back. Normalising the
+    slack by a span lower bound, by the window, or leaving it in milliseconds
+    all hit the same wall.
+
+    What rescues it is that the gate family is *tiny*. A gate can only fall
+    between two adjacent laxity *levels* (`laxity_levels`), and laxity is close
+    to a property of a periodic network rather than of an op — the ops of an
+    instance chain share a float — so the corpus's 24 workloads admit 7 to 8
+    gates each, endpoints included. There is nothing left to tune: enumerate
+    them (see `laxity_gates`), decode each, and keep the best by (missed
+    windows, makespan), lexicographic — exactly the fitness the searches in
+    this module already use. Because "lift everything" is always in the list
+    the result is never worse than the unconditional band, and because "lift
+    nothing" is too it is never worse than plain HEFT either. That guard is
+    what makes a gate this aggressive safe to ship: a gate that would drop a
+    deadline is decoded, scored, and discarded before it can be returned.
+
+    Cost is one decode per gate — tenths of a second on the largest workload
+    here, against the 20 s the searches in this module take — and
+    `_MAX_LAXITY_GATES` caps it.
+
+    `gate` overrides the enumeration with literal thresholds: a float for one
+    fixed cut, or `float("inf")` to restore the old unconditional band.
     """
     ctx = DecoderContext(workload)
     rank = ctx.upward_rank()
     span = rank.max() - rank.min()
     np_band = (rank - rank.min()) / span if span > 0 else np.full(ctx.n, 0.5)
 
-    priority = np.array(np_band, dtype=float)          # non-periodic: [0, 1]
-    per = ctx.periodic
-    if np.any(per):
-        # Periodic ops occupy [1, 2], ranked by deadline (earliest first).
-        d = ctx.max_end[per]
-        finite = d[np.isfinite(d)]
-        lo, hi = (finite.min(), finite.max()) if finite.size else (0.0, 1.0)
-        rng = (hi - lo) or 1.0
-        priority[per] = 2.0 - np.clip((d - lo) / rng, 0.0, 1.0)
-    return decode(ctx, priority, None)
+    if not np.any(ctx.periodic):           # nothing to band: this is HEFT
+        return decode(ctx, np.array(np_band, dtype=float), None)
+
+    best = None                            # (misses, objective, -lifted, t, alpha)
+    for lift in laxity_gates(ctx, gate):
+        t, alpha = decode(ctx, _band_priority(ctx, np_band, lift), None)
+        obj, misses, _ = evaluate(ctx, t, alpha, restrict_to_nonperiodic)
+        # Ties go to the wider gate: when the objective cannot tell two
+        # schedules apart, the one protecting more deadlines is the safer bet.
+        cand = (misses, obj, -int(lift.sum()), t, alpha)
+        if best is None or cand[:3] < best[:3]:
+            best = cand
+    return best[3], best[4]
 
 
 def pso_schedule(workload, n_particles: int = 24, iters: int = 60,
