@@ -55,7 +55,7 @@ def _integerize(ctx, t, alpha, dur_int) -> tuple[list[int], list[int]] | None:
     n, n_combos = ctx.n, ctx.n_combos
     combos = [int(np.argmax(row)) for row in alpha]
     order = sorted(range(n), key=lambda i: (float(t[i]), i))
-    machine_free: dict[int, int] = {}
+    machine_free: dict = {}
     starts = [0] * n
     ends = [0] * n
     for i in order:
@@ -67,16 +67,23 @@ def _integerize(ctx, t, alpha, dur_int) -> tuple[list[int], list[int]] | None:
         floor = max(floor, int(round(float(ctx.min_start[i]) * _SCALE)))
         for p in ctx.pred[i]:
             floor = max(floor, ends[p])
-        for c2 in range(n_combos):
-            if ctx.conflict[c][c2]:
-                floor = max(floor, machine_free.get(ctx.first_machine[c2], 0))
+        # A combination occupies EVERY machine in it, so availability has to be
+        # tracked per machine. Keying it by the FIRST machine of each
+        # conflicting combination cannot express "CPU_P#1 is busy": once
+        # sibling-core combinations exist -- ['CPU_P#0'], ['CPU_P#0','CPU_P#1'],
+        # ['CPU_P#1'] -- the two-core group reports P#0 while the singleton
+        # reports P#1, so the group's occupancy of P#1 goes unrecorded. The
+        # replay then packs operations that genuinely collide, drifts from the
+        # schedule it is meant to reproduce, and overruns a periodic window
+        # (4.76 ms on the 295-op control_mix gempair workload), at which point
+        # the whole hint is discarded and the "warm" solve is a cold one.
+        for mm in ctx.combos[c]:
+            floor = max(floor, machine_free.get(mm, 0))
         starts[i], ends[i] = floor, floor + d
         if np.isfinite(ctx.max_end[i]) and ends[i] > int(round(float(ctx.max_end[i]) * _SCALE)):
             return None
-        for c2 in range(n_combos):
-            if ctx.conflict[c][c2]:
-                m = ctx.first_machine[c2]
-                machine_free[m] = max(machine_free.get(m, 0), ends[i])
+        for mm in ctx.combos[c]:
+            machine_free[mm] = max(machine_free.get(mm, 0), ends[i])
     return starts, ends
 
 
@@ -136,6 +143,11 @@ def cpsat_schedule(workload, time_limit: float = 60.0,
                       for b in range(len(ctx.machines))]
                      for a in range(len(ctx.machines))],
         "first_machine": ctx.first_machine,
+        # Every machine each combination occupies, not just its first: the
+        # per-machine no-overlap constraints need the whole set, or a
+        # multi-core combination's hold on its non-first cores is invisible.
+        "combo_machines": [[ctx.machines.index(mname) for mname in combo]
+                           for combo in ctx.combos],
         "conflict": [[bool(x) for x in row] for row in ctx.conflict],
         "min_start": [int(round(v * _SCALE)) for v in ctx.min_start],
         "max_end": [int(round(v * _SCALE)) if np.isfinite(v) else -1
