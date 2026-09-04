@@ -96,42 +96,42 @@ def draw(ax, rows, dl, nets, hi, remap, xmax, breaks, feedback):
         ax.plot([(bx0 + bx1) / 2] * 2, [-0.7, len(CORE_ORDER) - 0.3], ls=(0, (2, 2)), lw=0.7, color="0.62", zorder=1)
     # Pass 1 — decide misses at the INSTANCE level (a net-instance misses if its LAST dispatch ends past its
     # deadline). Counting per-dispatch would inflate a single YOLO-instance miss into ~50 (one per dispatch).
-    inst_late = {}          # (net,inst) -> True if the instance's latest end is past its deadline
-    inst_mark = {}          # (net,inst) -> (x_center, y) of its latest dispatch, for the single ✗
+    inst_info = {}          # (net,inst) -> dict(ddl, end, y) for its LATEST dispatch
     for r in rows:
         net, inst = net_of(r["job"], nets)
         if not (net in dl and dl[net][0]):
             continue
         ddl = inst * dl[net][0] + dl[net][1]
-        prev = inst_mark.get((net, inst))
-        if prev is None or r["e"] > prev[0]:
-            hh = [h for h in r["harts"] if h in y]
-            inst_mark[(net, inst)] = (r["e"], remap(r["s"]) + max(remap(r["e"]) - remap(r["s"]), 0.2) / 2,
-                                      (y[hh[0]] if hh else 0))
-        inst_late[(net, inst)] = max(inst_late.get((net, inst), False), r["e"] > ddl + 1e-6)
-    missing = {k for k, v in inst_late.items() if v}
+        hh = [h for h in r["harts"] if h in y]
+        info = inst_info.get((net, inst))
+        if info is None or r["e"] > info["end"]:
+            inst_info[(net, inst)] = {"ddl": ddl, "end": r["e"], "y": (y[hh[0]] if hh else 0), "net": net}
+    missing = {k for k, v in inst_info.items() if v["end"] > v["ddl"] + 1e-6}
     missed = {}
     for (net, inst) in missing:
         missed[NICE.get(net, net)] = missed.get(NICE.get(net, net), 0) + 1
     misses = len(missing)
     for r in rows:
         net, inst = net_of(r["job"], nets)
-        col = NETCOLOR.get(net, "#9aa"); late = (net, inst) in missing
+        col = NETCOLOR.get(net, "#9aa")
         hatch = None; ec = "white"; lw = 0.3     # hairline separators so dense back-to-back dispatches read as texture
         if hi == "ime" and r["impl"] == "ime":
             hatch = "///"; ec = "#0a6b6b"; lw = 0.7
         elif hi == "shard" and r["w"] > 1:
             hatch = "xxx"; ec = "#2a2a2a"; lw = 0.5
-        # (a late instance is flagged only by its single ✗ marker below — not by red-edging all its dispatches,
-        #  which would flood a whole YOLO instance's ~50 bars)
         x0 = remap(r["s"]); wd = max(remap(r["e"]) - x0, 0.2)
         for h in r["harts"]:                       # span EVERY hart the dispatch occupies
             if h in y:
                 ax.barh(y[h], wd, left=x0, height=0.82, color=col, edgecolor=ec,
                         linewidth=lw, hatch=hatch, zorder=3)
-    for k in missing:                              # ONE bold red ✗ per missed instance (at its last dispatch)
-        _, mx, my = inst_mark[k]
-        ax.scatter([mx], [my], marker="X", s=300, color="#e60000", edgecolors="white", linewidths=1.8, zorder=11)
+    # show WHERE each miss happens: a red deadline LINE, a hatched OVERRUN bar (deadline→finish), and the ✗
+    ylo, yhi = -0.7, len(CORE_ORDER) - 0.3
+    for k in sorted(missing, key=lambda kk: inst_info[kk]["ddl"]):
+        v = inst_info[k]; xd = remap(v["ddl"]); xe = remap(v["end"]); yy = v["y"]
+        ax.plot([xd, xd], [ylo, yhi], color="#e60000", ls=(0, (5, 3)), lw=1.5, alpha=0.85, zorder=8)  # deadline
+        ax.barh(yy, max(xe - xd, 0.25), left=xd, height=0.82, facecolor="none", edgecolor="#e60000",
+                hatch="////", linewidth=1.6, zorder=10)                                               # overrun
+        ax.scatter([xe], [yy], marker="X", s=280, color="#e60000", edgecolors="white", linewidths=1.8, zorder=11)
     ax.axhline(3.5, color="0.55", lw=0.8, zorder=1)
     ax.set_yticks(list(y.values())); ax.set_yticklabels([c.replace("CPU_", "") for c in CORE_ORDER], fontsize=10)
     ax.set_ylim(-0.7, len(CORE_ORDER) - 0.3); ax.set_xlim(0, xmax); ax.invert_yaxis()
@@ -204,10 +204,12 @@ def main():
     handles = [Patch(fc=NETCOLOR[x], label=x) for x in nets if x in NETCOLOR]
     handles += [Patch(fc="0.8", hatch="xxx", ec="#2a2a2a", label="Δ sharded (multi-hart)"),
                 Patch(fc="0.8", hatch="///", ec="#0a6b6b", label="Δ IME-routed"),
+                Line2D([0], [0], color="#e60000", ls=(0, (5, 3)), lw=1.5, label="deadline"),
+                Patch(fc="none", ec="#e60000", hatch="////", label="overrun (past deadline)"),
                 Line2D([0], [0], marker="X", color="#e60000", mec="white", ls="none", ms=11, label="deadline MISSED"),
                 Patch(fc="#fbf3ec", ec="0.7", label="runtime-feedback round (board)")]
-    fig.legend(handles=handles, loc="lower center", ncol=3, fontsize=11, frameon=False, bbox_to_anchor=(0.5, -0.005))
-    fig.tight_layout(rect=(0, 0.04, 1, 0.995), h_pad=2.9)
+    fig.legend(handles=handles, loc="lower center", ncol=4, fontsize=11, frameon=False, bbox_to_anchor=(0.5, 0.004))
+    fig.tight_layout(rect=(0, 0.065, 1, 0.995), h_pad=2.9)
     fig.savefig(a.out + ".png", dpi=160, bbox_inches="tight")
     fig.savefig(a.out + ".pdf", bbox_inches="tight")
     print("wrote", a.out + ".png/.pdf")
