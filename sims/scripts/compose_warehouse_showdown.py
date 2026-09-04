@@ -121,10 +121,10 @@ def draw_topdown(ax, bg, K, cpos, cquat, xpu, ros, gates, people, tnorm, rot, fl
             mu, mv = (u[0], v[0]-40) if is_crash else (u[0], v[0])
             ax.add_patch(Circle((mu, mv), 16, fill=True, fc="black", ec=ec, lw=2.8, zorder=8))
             ax.text(mu, mv, str(mi+1), color="white", fontsize=15, weight="bold", ha="center", va="center", zorder=9)
-    # crop vertically to the aisle band (shorter, still full-width) — use the two flight paths + gates
+    # crop vertically to the aisle band (still full-width) — leave a little shelving/stands on each side
     cv = np.concatenate([xv[xvis], rv[rvis], gv[gok]])
-    vmin, vmax = float(np.nanmin(cv)), float(np.nanmax(cv)); pad = 0.34 * (vmax - vmin)
-    ax.set_ylim(min(nH, vmax + pad), max(0, vmin - pad * 1.3))
+    vmin, vmax = float(np.nanmin(cv)), float(np.nanmax(cv)); pad = 0.52 * (vmax - vmin)
+    ax.set_ylim(min(nH, vmax + pad), max(0, vmin - pad))
 
 
 def draw_combined_gantt(ax, xd, rd):
@@ -241,8 +241,8 @@ def main():
                ("XPU", 984, "XPU-RT · gate G3"), ("XPU", 1180, "XPU-RT · gate G4 + person")]
 
     plt.rcParams.update({"font.family": "DejaVu Sans", "font.size": 14, "pdf.fonttype": 42})
-    fig = plt.figure(figsize=(23, 15))
-    outer = fig.add_gridspec(4, 1, height_ratios=[2.9, 3.1, 2.4, 4.2], hspace=0.30,
+    fig = plt.figure(figsize=(23, 14.8))
+    outer = fig.add_gridspec(4, 1, height_ratios=[3.4, 2.35, 2.2, 4.3], hspace=0.34,
                              left=0.028, right=0.995, top=0.965, bottom=0.03)
 
     # A top-down (edge to edge)
@@ -263,11 +263,11 @@ def main():
         dd = a.ros_dir if src == "ROS" else a.xpu_dir
         fs = (R if src == "ROS" else X)["frame_steps"]; f = frame_at(dd, fs, step)
         tt = (rt if src == "ROS" else xt)[min(step, len(rt if src == "ROS" else xt)-1)]
-        col = bgrid[c].subgridspec(2, 3, height_ratios=[1, 16], width_ratios=[1.0, 1.75, 1.2], hspace=0.015, wspace=0.05)
+        col = bgrid[c].subgridspec(2, 3, height_ratios=[1, 16], width_ratios=[1.15, 1.55, 1.15], hspace=0.015, wspace=0.05)
         tc = C_ROS if src == "ROS" else C_XPU
         axh = fig.add_subplot(col[0, :]); axh.axis("off")
         axh.text(0.0, 0.5, f"{c+1}. {lab} · t={tt:.1f}s", fontsize=15.5, weight="bold", color=tc, va="center")
-        ac = fig.add_subplot(col[1, 0]); ac.imshow(f["chase"][200:490, 380:670]); ac.axis("off")   # tighter zoom on drone
+        ac = fig.add_subplot(col[1, 0]); ac.imshow(f["chase"][225:465, 415:655]); ac.axis("off")   # tighter zoom on the drone
         ac.set_title("chase", fontsize=13)
         af = fig.add_subplot(col[1, 1]); af.imshow(f["fpv"], cmap="gray", vmin=0, vmax=1, aspect="equal")
         for x in [d for d in f["det"] if d[5] >= 0.4]:
