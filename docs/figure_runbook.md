@@ -10,8 +10,11 @@ figure builders that should be copied into `scripts/` for a clean checkout (they
 ---
 
 ## 1. `schedule_evolution_mega` — the co-design "Gantt after Gantt" (the 3rd mega plot)
-**Story** (contended sensor-fusion workload, deadline-miss trajectory **4 → 0 → 4 → 0**, each panel a REAL
-solve or a measured re-cost — nothing faked):
+**Story** (contended sensor-fusion workload; HERO metric = deadline **lateness** — hard-real-time control, so
+makespan is secondary context — trajectory **6 → 0 → 38 → 0 ms**, each panel a REAL solve or a measured
+re-cost, nothing faked). Panel 4 re-solves on the board costs to **34.16 ms / 0 miss = the SAME makespan as the
+board panel (3) but 0 misses**, so the fix is strictly better on every metric (resolves the earlier "makespan
+went up" confusion):
 1. **og** — RVV, singletons (1 net per hart): misses control deadlines.
 2. **+ shard + IME** — AOT levers (multi-hart widths + matrix-engine routing): meets every deadline ON THE GANTT
    (4 → 0). `Δ makespan` and `deadlines X→Y miss` annotated between panels.
@@ -45,9 +48,13 @@ Idle stretches are compressed into grey break columns (real-ms x-axis kept); mis
   `results/codesign_feedback/hil_ablation.csv` so the diagram re-renders without the GPU sweep.
 - **Render**:
   `.venv/bin/python scripts/hil_ablation_phase.py --csv results/codesign_feedback/hil_ablation.csv`
-  → `results/codesign_feedback/hil_ablation_phase.{png,pdf}`. A smooth safe→crash surface over (speed, command
-  rate) with the crash frontier drawn, the raw 6-seed cells overlaid, and the schedulers' sustainable command
-  rates marked (XPU-RT shard 204 Hz deep-safe, greedy 125 Hz, ROS 81 Hz on the frontier). Replaces the old
+  → `results/codesign_feedback/hil_ablation_phase.{png,pdf}`. **Two panels sharing the command-rate axis**:
+  LEFT ties each scheduler's worst-case loop response to the rate it sustains (rate = 1000/response — ROS
+  12.40 ms→81 Hz, greedy 8.00→125, shard-feedback 4.89→204; the AOT feedback loop's −39 % response = +80 Hz
+  headroom), against the shrinking loop budget; RIGHT is the flight phase diagram (a smooth safe→crash surface
+  over speed×rate, crash frontier drawn, raw 6-seed cells) with those rates carried across (ROS 81 Hz on the
+  frontier, XPU-RT 125/204 Hz clear). Honest: >100 Hz is hatched "not flight-tested" (no extrapolated surface).
+  The scheduler worst-response numbers (12.40/8.00/4.89 ms) are hard-coded constants in the script. Replaces the old
   `hil_ablation_scatter` (kept for reference).
 
 ## 3–4. Warehouse figures — combined showdown + the two mega plots (GPU to regen flights)
