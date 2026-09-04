@@ -113,11 +113,18 @@ retarget from K1 to another SoC:
    (`schema_version: k1_board_calibration/v2`, `aggregate_multiplier`, per-`network/dispatch_id` multipliers,
    `per_op_multiplier` fallback). Pass it via `--board-calibration <path>`. With no table, the flow runs
    additive-only (predicted, no runtime correction).
-4. **What stays fixed**: the solvers (greedy/CP-SAT/MOSEK), the loop driver, the feedback emission/consume, the
-   figure scripts, and the Isaac flight sim are all target-agnostic — they read the profiled costs.
+4. **What stays fixed**: the solvers (greedy/CP-SAT/MOSEK), the loop driver, the feedback emission/consume, and
+   the Isaac flight sim are all target-agnostic — they read the profiled costs. The figure tooling is too:
+   `gen_schedule_evolution.py` + `compose_schedule_evolution.py` (the evolution mega plot),
+   `recost_schedule_on_board.py` (the runtime-feedback re-cost), and `hil_ablation_grid.sh` +
+   `hil_ablation_scatter.py` (the HIL scatter) take the spec/profiles/calibration you give them — retarget by
+   passing a new `--spec` and `--calibration <target>_board_calibration.json`, nothing in them is K1-wired.
+   `recost_schedule_on_board.py --calibration` is the single seam that carries board reality into the plot;
+   with a target's own calibration file it renders that target's "run-vs-Gantt" story.
 
-**K1-specific facts to not hard-code elsewhere**: IME lives on cluster 0 only (harts 0–3); the +31% board gap
-and the 1.26× YOLO conv multiplier are K1 measurements; the physical-K1 runtime harness is not implemented.
+**K1-specific facts to not hard-code elsewhere**: IME lives on cluster 0 only (harts 0–3); the +31% board gap,
+the 1.26× aggregate multiplier, and the per-op/per-dispatch entries in `k1_board_calibration.json` are K1
+measurements (regenerate the calibration file per target); the physical-K1 runtime harness is not implemented.
 
 ---
 
@@ -201,3 +208,15 @@ results/codesign_feedback/hil_ablation.csv`. Honest scope: in-sim ZOH latency in
 | AOT graph rewrite (unfuse) | **automatic in the loop** — `run_codesign_loop.py`'s `unfuse` lever adopts ModelBlaster's rewritten dispatch graph + re-solves + accept/reject, no hand steps. `fuse`/`split` are the same pattern once their rewritten graph is built. |
 | Kernel regeneration + board re-profile | **physical boundary, not hand-stitching**: `generate_kernels.py` needs the RISC-V cross-toolchain (`setup_spacemit_toolchain.sh`), and re-profiling needs the physical target — the loop consumes their outputs (the unfused graph + profiles) automatically. |
 | HIL flight ablation | in-sim ZOH latency injection (+ RoSE-lite mock), **not** live FPGA/K1 co-sim |
+
+**Verified end-to-end (this snapshot).** Evidence the loop actually closes, reproducible with the commands above:
+- `run_codesign_loop.py` on `networks_k1_mb_3model_4hz_yolo_ctrl.json` converges honestly — `ime` reject (−0.0%),
+  `shard` reject (−0.0%), **`unfuse` accept (898.1 → 866.4 ms, 0 miss)** → converged; emits `loop_report.json`,
+  per-round `specs/` + `round_*_gantt.png`, `objective_vs_round.png`.
+- The runtime-feedback → re-schedule → fix loop, measured, on the sensor workload (the `schedule_evolution_mega`
+  figure): AOT (shard+IME) meets every deadline on the Gantt (32.85 ms, **0 miss**); the same schedule re-cost on
+  the board misses **4** deadlines (34.16 ms); a CP-SAT re-solve on the board-calibrated costs recovers to
+  **0 miss** (34.62 ms). Miss trajectory **0 → 4 → 0** across the feedback boundary — the loop fixes what the
+  board broke, before any further optimization.
+- Solver value on the deployed warehouse workload: CP-SAT 40.4 ms 0-miss (balanced, per-hart 13.5–24.1 ms) vs
+  greedy 42.4 ms 0-miss (lopsided, 13.6–37.8 ms) — `mega_warehouse_xpurt` draws the CP-SAT one.
