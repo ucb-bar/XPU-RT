@@ -91,6 +91,7 @@ def draw(ax, rows, dl, nets, hi, remap, xmax, breaks, feedback):
     for bx0, bx1 in breaks:           # shade + dash the compressed-idle columns so the break is explicit
         ax.axvspan(bx0, bx1, color="0.90", zorder=0)
         ax.plot([(bx0 + bx1) / 2] * 2, [-0.7, len(CORE_ORDER) - 0.3], ls=(0, (2, 2)), lw=0.7, color="0.62", zorder=1)
+    late_marks = []
     for r in rows:
         net, inst = net_of(r["job"], nets)
         col = NETCOLOR.get(net, "#9aa"); late = net in dl and dl[net][0] and r["e"] > inst * dl[net][0] + dl[net][1] + 1e-6
@@ -102,12 +103,26 @@ def draw(ax, rows, dl, nets, hi, remap, xmax, breaks, feedback):
         elif hi == "shard" and r["w"] > 1:
             hatch = "xxx"; ec = "#2a2a2a"; lw = 0.5
         if late:
-            ec = "#d11"; lw = 1.6
+            ec = "#d11"; lw = 1.8
         x0 = remap(r["s"]); wd = max(remap(r["e"]) - x0, 0.18)
         for h in r["harts"]:                       # span EVERY hart the dispatch occupies
             if h in y:
                 ax.barh(y[h], wd, left=x0, height=0.74, color=col, edgecolor=ec,
                         linewidth=lw, hatch=hatch, zorder=3)
+                if late:
+                    late_marks.append((x0 + wd / 2, y[h]))
+    # make MISSED deadlines pop (so the fix's benefit is obvious): a bold red ✗ over each late dispatch
+    for mx, my in late_marks:
+        ax.scatter([mx], [my], marker="X", s=190, color="#e60000", edgecolors="white",
+                   linewidths=1.4, zorder=11)
+    if late_marks:                                 # count badge, top-left, in the tinted board panel
+        ax.text(0.012, 0.90, f"✗ {len(late_marks)} deadline{'s' if len(late_marks) != 1 else ''} MISSED",
+                transform=ax.transAxes, ha="left", va="top", fontsize=10, weight="bold", color="white",
+                bbox=dict(boxstyle="round,pad=0.3", fc="#c0392b", ec="white", lw=1.0, alpha=0.95), zorder=12)
+    elif feedback:                                 # board round with zero misses -> show the recovery clearly
+        ax.text(0.012, 0.90, "✓ 0 missed — all recovered", transform=ax.transAxes, ha="left", va="top",
+                fontsize=10, weight="bold", color="white",
+                bbox=dict(boxstyle="round,pad=0.3", fc="#2f7d4f", ec="white", lw=1.0, alpha=0.95), zorder=12)
     ax.axhline(3.5, color="0.55", lw=0.8, zorder=1)
     ax.set_yticks(list(y.values())); ax.set_yticklabels([c.replace("CPU_", "") for c in CORE_ORDER], fontsize=7)
     ax.set_ylim(-0.7, len(CORE_ORDER) - 0.3); ax.set_xlim(0, xmax); ax.invert_yaxis()
