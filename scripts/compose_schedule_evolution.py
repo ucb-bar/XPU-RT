@@ -40,7 +40,8 @@ def build_remap(P, gap_min=9.0, gap_vis=6.0):
     """Compress idle time (no dispatch on ANY core/panel) so the Gantt shows only where work happens.
     One shared remap across every panel so the time axis stays consistent. Returns (remap, xmax, breaks, merged)."""
     ivs = []
-    for _, _, rows, _, _ in P:
+    for entry in P:
+        rows = entry[2]
         for r in rows:
             ivs.append((r["s"], r["e"]))
     if not ivs:
@@ -132,22 +133,28 @@ def main():
     dl = deadlines(a.spec); nets = list(dl.keys())
     P = []
     for p in panels:
-        title, hi, path = p.split("|", 2)
+        parts = p.split("|")
+        title, hi, path = parts[0], parts[1], parts[2]
+        driver = parts[3] if len(parts) > 3 else ""      # optional: the closed-loop action that PRODUCED this panel
         m = json.load(open(path.replace(".json", "_metrics.json")))
         tl = title.lower()
-        P.append((title, hi, load(path), m, any(w in tl for w in ("feedback", "runtime", "board"))))
+        P.append((title, hi, load(path), m, any(w in tl for w in ("feedback", "runtime", "board")), driver))
     remap, xmax, breaks, merged = build_remap(P)   # squeeze idle time shared across all panels
 
     plt.rcParams.update({"font.family": "DejaVu Sans", "pdf.fonttype": 42})
     n = len(P)
-    fig, axes = plt.subplots(n, 1, figsize=(13.5, 2.35 * n + 1.4), sharex=True)
+    fig, axes = plt.subplots(n, 1, figsize=(13.5, 2.7 * n + 1.8), sharex=True)
     if n == 1:
         axes = [axes]
     _late = lambda mm: float(mm.get("total_lateness_ms", mm.get("total_lateness", 0)) or 0)
     prev_mk = None; prev_miss = None; prev_late = None
-    for i, (ax, (title, hi, rows, m, fb)) in enumerate(zip(axes, P)):
+    for i, (ax, (title, hi, rows, m, fb, driver)) in enumerate(zip(axes, P)):
         mk = m.get("makespan_ms", 0); miss = m.get("deadline_miss_count", 0); late = _late(m)
         drawn_miss = draw(ax, rows, dl, nets, hi, remap, xmax, breaks, fb)
+        if driver:                                       # the closed-loop action that produced this panel
+            ax.text(0.012, 1.48, "▶ loop: " + driver, transform=ax.transAxes, ha="left", va="center",
+                    fontsize=8.8, style="italic", color="#5a3ea8",
+                    bbox=dict(boxstyle="round,pad=0.24", fc="#f1ecfb", ec="#b6a7e0", lw=0.8))
         # HERO metric = deadline lateness (this is a hard-real-time control workload; makespan is secondary
         # context — the board re-solve trades a little makespan to erase all the lateness).
         tag = "✓ all deadlines met" if miss == 0 else f"✗ {miss} miss · {late:.0f} ms total lateness"
@@ -168,7 +175,7 @@ def main():
             else:
                 dmk = mk - prev_mk; col = "#777"
                 txt = f"Δ makespan {'−' if dmk < 0 else '+'}{abs(dmk):.1f} ms  ·  deadlines still met"
-            ax.annotate(txt, xy=(0.012, 1.14), xycoords="axes fraction",
+            ax.annotate(txt, xy=(0.012, 1.24), xycoords="axes fraction",
                         fontsize=9.5, weight="bold", color=col, va="center")
         prev_mk = mk; prev_miss = miss; prev_late = late
     tks, tlbls = gen_ticks(merged, remap)          # real-ms labels at their compressed positions
@@ -183,7 +190,7 @@ def main():
                 Patch(fc="0.90", ec="0.62", label="idle time compressed")]
     fig.legend(handles=handles, loc="lower center", ncol=5, fontsize=8, frameon=False, bbox_to_anchor=(0.5, -0.01))
     fig.suptitle(a.title, fontsize=13.5, weight="bold", y=0.999)
-    fig.tight_layout(rect=(0, 0.035, 1, 0.985), h_pad=2.4)
+    fig.tight_layout(rect=(0, 0.035, 1, 0.975), h_pad=5.8)
     fig.savefig(a.out + ".png", dpi=160, bbox_inches="tight")
     fig.savefig(a.out + ".pdf", bbox_inches="tight")
     print("wrote", a.out + ".png/.pdf")
