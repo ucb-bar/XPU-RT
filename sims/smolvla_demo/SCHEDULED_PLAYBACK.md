@@ -64,6 +64,27 @@ steady-state numbers, and that is the figure to design against.
 `--latency-mode manual --latency-ms N` sweeps a hypothetical latency, which is
 the way to ask "what would this cost if the expert work got 2x faster".
 
+## Video
+
+`--video` writes `runs/scheduled/video_<mode>_ep<n>.mp4` at the control rate, so
+one second of video is one second of sim time. Each frame carries a status band
+-- blue while a fresh chunk is executing, red and reading STALLED while one is
+in flight -- and a strip underneath that accumulates the duty cycle over the
+episode, so the stall pattern is visible as it builds rather than only in the
+summary. The env's own recorder is left off; frames come from the POV camera
+observation and are annotated here.
+
+To put the modes side by side (they end at different steps, so the shorter ones
+hold their last frame):
+
+    cd runs/scheduled
+    ffmpeg -i video_none_ep0.mp4 -i video_schedule_on_empty_ep0.mp4 \
+           -i video_schedule_pipelined_ep0.mp4 -filter_complex "\
+    [0]tpad=stop_mode=clone:stop_duration=10,trim=duration=3.2,setpts=PTS-STARTPTS[a];\
+    [1]tpad=stop_mode=clone:stop_duration=10,trim=duration=3.2,setpts=PTS-STARTPTS[b];\
+    [2]tpad=stop_mode=clone:stop_duration=10,trim=duration=3.2,setpts=PTS-STARTPTS[c];\
+    [a][b][c]hstack=inputs=3[v]" -map "[v]" -r 30 -pix_fmt yuv420p video_compare_3up.mp4
+
 ## Two things worth knowing before you re-run
 
 * **The first chunk is primed.** With latency applied to it there is no

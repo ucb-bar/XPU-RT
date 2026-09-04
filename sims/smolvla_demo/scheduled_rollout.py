@@ -132,6 +132,80 @@ def _extract_success(info: dict, default: bool = False) -> bool:
     return default
 
 
+
+# ------------------------------------------------------------------- video --
+def _grab_frame(observation) -> "np.ndarray | None":
+    """Pull the robot POV camera out of the raw observation dict."""
+    cam = observation.get("camera_obs", {}) if isinstance(observation, dict) else {}
+    frame = cam.get("robot_pov_cam_rgb")
+    if frame is None:
+        return None
+    if hasattr(frame, "detach"):
+        frame = frame.detach().cpu().numpy()
+    frame = np.asarray(frame)
+    if frame.ndim == 4:
+        frame = frame[0]
+    if frame.dtype != np.uint8:
+        scale = 255.0 if float(np.nanmax(frame) or 0.0) <= 1.0 else 1.0
+        frame = np.clip(frame * scale, 0, 255).astype(np.uint8)
+    return frame[..., :3]
+
+
+def _annotate(frame, *, step, t_ms, stalled, chunk_pos, n_infer, title,
+              history, latency_ms):
+    """Stamp the frame with what the scheduler is doing, plus a timeline strip.
+
+    The point of the video is the stall, so it gets the loudest channel: a
+    coloured band and a running strip along the bottom where every past step is
+    one pixel column.
+    """
+    from PIL import Image, ImageDraw
+
+    img = Image.fromarray(frame).convert("RGB")
+    W, H = img.size
+    scale = max(1, W // 320)
+    band_h, strip_h = 22 * scale, 8 * scale
+    canvas = Image.new("RGB", (W, H + band_h + strip_h), (18, 18, 18))
+    canvas.paste(img, (0, 0))
+    d = ImageDraw.Draw(canvas)
+
+    live = (211, 59, 59) if stalled else (42, 120, 214)   # critical / slot 1
+    d.rectangle([0, H, W, H + band_h], fill=live)
+    label = "STALLED - holding a stale action" if stalled else "executing chunk"
+    d.text((6 * scale, H + 5 * scale),
+           f"{label}   t={t_ms/1000:6.2f}s  step {step:3d}  "
+           f"infer #{n_infer}  {title}",
+           fill=(255, 255, 255))
+
+    # timeline strip: one column per elapsed step, so the duty cycle is visible
+    if history:
+        y0, y1 = H + band_h, H + band_h + strip_h
+        d.rectangle([0, y0, W, y1], fill=(38, 38, 38))
+        n = len(history)
+        for i, was_stalled in enumerate(history):
+            x0 = int(W * i / max(n, 1))
+            x1 = max(x0 + 1, int(W * (i + 1) / max(n, 1)))
+            d.rectangle([x0, y0, x1, y1],
+                        fill=(211, 59, 59) if was_stalled else (42, 120, 214))
+    return np.asarray(canvas)
+
+
+def _write_video(path: Path, frames: list, fps: float) -> None:
+    if not frames:
+        print(f"  (no frames captured for {path.name})")
+        return
+    import imageio.v2 as imageio
+    path.parent.mkdir(parents=True, exist_ok=True)
+    # even dimensions keep libx264 happy
+    h, w = frames[0].shape[:2]
+    crop = (h - h % 2, w - w % 2)
+    with imageio.get_writer(path, fps=fps, codec="libx264",
+                            quality=8, macro_block_size=None) as wr:
+        for f in frames:
+            wr.append_data(f[:crop[0], :crop[1]])
+    print(f"  -> {path}  ({len(frames)} frames @ {fps:.0f} fps)")
+
+
 # -------------------------------------------------------------------- main --
 def build_argparser() -> argparse.ArgumentParser:
     ap = argparse.ArgumentParser(description=__doc__,
@@ -184,6 +258,9 @@ def main() -> int:
 
     dt = 1.0 / args.control_hz
     latency_steps = latency_ms / 1000.0 / dt
+    vid_tag = args.latency_mode if latency_ms <= 0 else f"{args.latency_mode}_{args.replan}"
+    vid_title = ("free inference" if latency_ms <= 0
+                 else f"board {latency_ms:.0f} ms / {args.replan}")
 
     print("=" * 66)
     print("SmolVLA @ QRB5165 timing, played back in Isaac sim time")
@@ -254,7 +331,7 @@ def main() -> int:
         state_keys="robot_joint_pos",
         camera_keys="robot_pov_cam_rgb",
         enable_cameras=True,
-        video=bool(args.video),
+        video=False,          # frames are captured and annotated here instead
         video_length=args.max_steps,
         video_interval=15,
     )
@@ -284,6 +361,8 @@ def main() -> int:
         n_infer = 0
         n_stall = 0
         timeline = []
+        frames: list = []
+        stall_history: list[bool] = []
         success = False
         steps_used = args.max_steps
 
@@ -341,6 +420,14 @@ def main() -> int:
             last_action = action_np
             timeline.append({"step": step, "t_ms": t * 1000.0, "stalled": bool(stalled),
                              "in_flight": pending is not None})
+            stall_history.append(bool(stalled))
+            if args.video:
+                raw = _grab_frame(observation)
+                if raw is not None:
+                    frames.append(_annotate(
+                        raw, step=step, t_ms=t * 1000.0, stalled=stalled,
+                        chunk_pos=chunk_pos, n_infer=n_infer, title=vid_title,
+                        history=stall_history, latency_ms=latency_ms))
 
             observation, reward, terminated, truncated, info = env.step(action_np)
 
@@ -361,6 +448,9 @@ def main() -> int:
             "sim_seconds": steps_used * dt,
             "timeline": timeline,
         })
+        if args.video:
+            _write_video(args.out / f"video_{vid_tag}_ep{ep}.mp4",
+                         frames, args.control_hz)
         print(f"[ep {ep}] success={success} steps={steps_used} "
               f"inferences={n_infer} stalled={n_stall} ({stall_frac*100:.1f}% of steps)",
               flush=True)
