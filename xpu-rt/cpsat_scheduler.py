@@ -17,6 +17,7 @@ that interpreter.
 from __future__ import annotations
 
 import json
+import math
 import os
 import subprocess
 import tempfile
@@ -38,6 +39,18 @@ _SCALE = 1000
 # into the return value. Without it a time-limited FEASIBLE answer at a 4x
 # optimality gap is indistinguishable from a proven OPTIMAL one.
 LAST_SOLVE: dict = {}
+
+# Milliseconds -> integer microseconds, rounded outwards. The epsilon absorbs
+# binary-representation noise so an exact 3.0 ms does not become 3001 us.
+_EPS = 1e-9
+
+
+def _ceil(v: float) -> int:
+    return int(math.ceil(float(v) * _SCALE - _EPS))
+
+
+def _floor(v: float) -> int:
+    return int(math.floor(float(v) * _SCALE + _EPS))
 
 
 def _integerize(ctx, t, alpha, dur_int) -> tuple[list[int], list[int]] | None:
@@ -63,8 +76,8 @@ def _integerize(ctx, t, alpha, dur_int) -> tuple[list[int], list[int]] | None:
         d = dur_int[i][c]
         if d < 0:
             return None
-        floor = int(round(float(t[i]) * _SCALE))
-        floor = max(floor, int(round(float(ctx.min_start[i]) * _SCALE)))
+        floor = _ceil(t[i])
+        floor = max(floor, _ceil(ctx.min_start[i]))
         for p in ctx.pred[i]:
             floor = max(floor, ends[p])
         # A combination occupies EVERY machine in it, so availability has to be
@@ -80,7 +93,7 @@ def _integerize(ctx, t, alpha, dur_int) -> tuple[list[int], list[int]] | None:
         for mm in ctx.combos[c]:
             floor = max(floor, machine_free.get(mm, 0))
         starts[i], ends[i] = floor, floor + d
-        if np.isfinite(ctx.max_end[i]) and ends[i] > int(round(float(ctx.max_end[i]) * _SCALE)):
+        if np.isfinite(ctx.max_end[i]) and ends[i] > _floor(ctx.max_end[i]):
             return None
         for mm in ctx.combos[c]:
             machine_free[mm] = max(machine_free.get(mm, 0), ends[i])
@@ -103,8 +116,21 @@ def build_payload(ctx, time_limit: float = 60.0,
         "n": ctx.n,
         "n_combos": ctx.n_combos,
         "scale": _SCALE,
-        "dur": [[int(round(d * _SCALE)) if d >= 0 else -1 for d in row]
-                for row in dur],
+        # Round the model's numbers OUTWARDS, never to nearest.
+        #
+        # `end <= max_end` is enforced on the integer grid, but `evaluate`
+        # scores the schedule in the original floats. Rounding a duration to
+        # nearest understates it by up to half a microsecond, and minimising
+        # makespan pushes periodic operations to end exactly on their deadline,
+        # so the integer model was satisfied while the float schedule overran:
+        # on control_mix_quad, op34 has duration 0.001251 ms, stored as 1 us,
+        # and finished 0.000251 ms past its window -- a real, if tiny, missed
+        # deadline that the solver reported as OPTIMAL and valid.
+        #
+        # Ceiling durations and min_start, and flooring max_end, makes the
+        # integer model strictly conservative: satisfying it implies satisfying
+        # the float constraint it stands for. Costs at most 1 us per operation.
+        "dur": [[_ceil(d) if d >= 0 else -1 for d in row] for row in dur],
         "pred": ctx.pred,
         # Transfer cost is indexed by the *first machine* of each combination,
         # matching how the MILP and the greedy pickers charge it.
@@ -118,9 +144,8 @@ def build_payload(ctx, time_limit: float = 60.0,
         "combo_machines": [[ctx.machines.index(mname) for mname in combo]
                            for combo in ctx.combos],
         "conflict": [[bool(x) for x in row] for row in ctx.conflict],
-        "min_start": [int(round(v * _SCALE)) for v in ctx.min_start],
-        "max_end": [int(round(v * _SCALE)) if np.isfinite(v) else -1
-                    for v in ctx.max_end],
+        "min_start": [_ceil(v) for v in ctx.min_start],
+        "max_end": [_floor(v) if np.isfinite(v) else -1 for v in ctx.max_end],
         "periodic": [bool(v) for v in ctx.periodic],
         "restrict_to_nonperiodic": bool(restrict_to_nonperiodic),
         "time_limit": float(time_limit),

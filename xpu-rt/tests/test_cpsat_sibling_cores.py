@@ -59,6 +59,17 @@ def _two_hart_workload(pt_a, pt_b):
     return w
 
 
+def _windowed_workload(pt, min_start, max_end):
+    """One operation per (pt, window) triple, no dependencies."""
+    machines, combos = build_machine_combinations({"CPU_P": 2})
+    ops = [Operation(processing_times=list(p), operation_id=f"o{k}",
+                     min_start_t=ms, max_end_t=me)
+           for k, (p, ms, me) in enumerate(zip(pt, min_start, max_end))]
+    return Workload(operations=ops, machines=machines,
+                    transfer_times=np.zeros((len(machines), len(machines))),
+                    machine_combinations=combos)
+
+
 def _solve(w, time_limit=10.0):
     t, alpha = cpsat_schedule(w, time_limit=time_limit, workers=1,
                               restrict_to_nonperiodic=False)
@@ -192,6 +203,60 @@ def test_model_serialises_two_ops_on_the_same_hart():
     w = _two_hart_workload([10.0, INF, INF], [10.0, INF, INF])
     t, alpha, all_end = _solve(w)
     assert abs(all_end - 20.0) < 1e-6, f"same hart not serialised: {all_end}"
+
+
+# --------------------------------------------------------------------------
+# The integer grid must never be laxer than the float problem.
+# --------------------------------------------------------------------------
+
+def test_durations_round_up_never_to_nearest():
+    """A duration stored short lets the solver call a late schedule on time.
+
+    CP-SAT enforces `end <= max_end` in integer microseconds while `evaluate`
+    scores the schedule in the original floats, so a duration rounded to
+    nearest can be understated by half a microsecond. Minimising makespan puts
+    periodic operations exactly on their deadline, and there the shortfall
+    becomes a real missed window that the solver still reports as OPTIMAL --
+    observed on control_mix_quad, where a 0.001251 ms operation stored as 1 us
+    finished 0.000251 ms late.
+    """
+    awkward = [0.001251, 0.0025004, 0.0039999]
+    w = _two_hart_workload(awkward, [1.0009, 2.00001, 3.5])
+    ctx = DecoderContext(w)
+    p = build_payload(ctx, time_limit=1.0)
+    for i in range(ctx.n):
+        for c in range(ctx.n_combos):
+            real = float(ctx.dur[i, c])
+            if not np.isfinite(real):
+                continue
+            assert p["dur"][i][c] >= real * 1000 - 1e-9, (
+                f"op{i} combo{c}: model duration {p['dur'][i][c]} us is shorter "
+                f"than the real {real * 1000} us")
+
+
+def test_windows_round_inwards():
+    """max_end floors and min_start ceils, so the model's window is contained
+    in the real one rather than overhanging it."""
+    ms = [0.0012509, 1.9999, 0.5]
+    me = [10.0012509, 12.34567, 20.000001]
+    w = _windowed_workload([[1.0, 1.0, 1.0]] * 3, ms, me)
+    ctx = DecoderContext(w)
+    p = build_payload(ctx, time_limit=1.0)
+    for i in range(3):
+        assert p["min_start"][i] >= ms[i] * 1000 - 1e-9, (
+            f"op{i} may start {p['min_start'][i]} us, before the real {ms[i]*1000}")
+        assert p["max_end"][i] <= me[i] * 1000 + 1e-9, (
+            f"op{i} may end {p['max_end'][i]} us, past the real {me[i]*1000}")
+
+
+def test_exact_millisecond_values_are_not_inflated():
+    """The outward rounding must not add a microsecond to clean values, or
+    every duration in a normal workload grows for nothing."""
+    w = _two_hart_workload([3.0, 0.25, 12.5], [1.0, 2.0, 0.125])
+    ctx = DecoderContext(w)
+    p = build_payload(ctx, time_limit=1.0)
+    assert p["dur"][0] == [3000, 250, 12500], p["dur"][0]
+    assert p["dur"][1] == [1000, 2000, 125], p["dur"][1]
 
 
 if __name__ == "__main__":
