@@ -15,6 +15,8 @@ NETCOLOR = {"attn_block": "#4ba3d3", "fused_full": "#c77fa6", "mlp_control": "#2
             "ffn_block": "#e8c033", "yolov8_nano": "#2f6fb0", "yolov8_nano_64x96": "#2f6fb0",
             "dronet": "#e07a3f"}
 CORE_ORDER = ["CPU_E#0", "CPU_E#1", "CPU_E#2", "CPU_E#3", "CPU_P#0", "CPU_P#1", "CPU_P#2", "CPU_P#3"]
+NICE = {"mlp_control": "CTRL", "fused_full": "NAV", "ffn_block": "FFN", "attn_block": "ATTN",
+        "yolov8_nano_64x96": "YOLO", "yolov8_nano": "YOLO"}     # friendly net names for the miss labels
 
 
 def net_of(job, nets):
@@ -92,44 +94,34 @@ def draw(ax, rows, dl, nets, hi, remap, xmax, breaks, feedback):
     for bx0, bx1 in breaks:           # shade + dash the compressed-idle columns so the break is explicit
         ax.axvspan(bx0, bx1, color="0.90", zorder=0)
         ax.plot([(bx0 + bx1) / 2] * 2, [-0.7, len(CORE_ORDER) - 0.3], ls=(0, (2, 2)), lw=0.7, color="0.62", zorder=1)
-    late_marks = []
+    late_marks = []; missed = {}
     for r in rows:
         net, inst = net_of(r["job"], nets)
         col = NETCOLOR.get(net, "#9aa"); late = net in dl and dl[net][0] and r["e"] > inst * dl[net][0] + dl[net][1] + 1e-6
         if late:
-            misses += 1
+            misses += 1; missed[NICE.get(net, net)] = missed.get(NICE.get(net, net), 0) + 1
         hatch = None; ec = "white"; lw = 0.3     # hairline separators so dense back-to-back dispatches read as texture
         if hi == "ime" and r["impl"] == "ime":
             hatch = "///"; ec = "#0a6b6b"; lw = 0.7
         elif hi == "shard" and r["w"] > 1:
             hatch = "xxx"; ec = "#2a2a2a"; lw = 0.5
         if late:
-            ec = "#d11"; lw = 1.8
-        x0 = remap(r["s"]); wd = max(remap(r["e"]) - x0, 0.18)
+            ec = "#d11"; lw = 2.2
+        x0 = remap(r["s"]); wd = max(remap(r["e"]) - x0, 0.2)
         for h in r["harts"]:                       # span EVERY hart the dispatch occupies
             if h in y:
-                ax.barh(y[h], wd, left=x0, height=0.74, color=col, edgecolor=ec,
+                ax.barh(y[h], wd, left=x0, height=0.82, color=col, edgecolor=ec,
                         linewidth=lw, hatch=hatch, zorder=3)
                 if late:
                     late_marks.append((x0 + wd / 2, y[h]))
-    # make MISSED deadlines pop (so the fix's benefit is obvious): a bold red ✗ over each late dispatch
-    for mx, my in late_marks:
-        ax.scatter([mx], [my], marker="X", s=190, color="#e60000", edgecolors="white",
-                   linewidths=1.4, zorder=11)
-    if late_marks:                                 # count badge, top-left, in the tinted board panel
-        ax.text(0.012, 0.90, f"✗ {len(late_marks)} deadline{'s' if len(late_marks) != 1 else ''} MISSED",
-                transform=ax.transAxes, ha="left", va="top", fontsize=10, weight="bold", color="white",
-                bbox=dict(boxstyle="round,pad=0.3", fc="#c0392b", ec="white", lw=1.0, alpha=0.95), zorder=12)
-    elif feedback:                                 # board round with zero misses -> show the recovery clearly
-        ax.text(0.012, 0.90, "✓ 0 missed — all recovered", transform=ax.transAxes, ha="left", va="top",
-                fontsize=10, weight="bold", color="white",
-                bbox=dict(boxstyle="round,pad=0.3", fc="#2f7d4f", ec="white", lw=1.0, alpha=0.95), zorder=12)
+    for mx, my in late_marks:                      # a bold red ✗ over each missed-deadline dispatch
+        ax.scatter([mx], [my], marker="X", s=300, color="#e60000", edgecolors="white", linewidths=1.8, zorder=11)
     ax.axhline(3.5, color="0.55", lw=0.8, zorder=1)
-    ax.set_yticks(list(y.values())); ax.set_yticklabels([c.replace("CPU_", "") for c in CORE_ORDER], fontsize=9.5)
+    ax.set_yticks(list(y.values())); ax.set_yticklabels([c.replace("CPU_", "") for c in CORE_ORDER], fontsize=10)
     ax.set_ylim(-0.7, len(CORE_ORDER) - 0.3); ax.set_xlim(0, xmax); ax.invert_yaxis()
     for s in ("top", "right"):
         ax.spines[s].set_visible(False)
-    return misses
+    return misses, missed
 
 
 def main():
@@ -159,7 +151,7 @@ def main():
     n = len(P)
     # each panel gets its OWN tight x-axis so it fills the full width (no wasted whitespace from the longest
     # panel) — sized larger for single-column legibility.
-    fig, axes = plt.subplots(n, 1, figsize=(11.0, 2.95 * n + 1.5), sharex=False)
+    fig, axes = plt.subplots(n, 1, figsize=(12.5, 2.85 * n + 1.5), sharex=False)
     if n == 1:
         axes = [axes]
     _late = lambda mm: float(mm.get("total_lateness_ms", mm.get("total_lateness", 0)) or 0)
@@ -167,36 +159,26 @@ def main():
     for i, (ax, (title, hi, rows, m, fb, driver)) in enumerate(zip(axes, P)):
         mk = m.get("makespan_ms", 0); miss = m.get("deadline_miss_count", 0); late = _late(m)
         remap, xmax, breaks, merged = build_remap([P[i]])     # per-panel idle compression + scale
-        drawn_miss = draw(ax, rows, dl, nets, hi, remap, xmax, breaks, fb)
+        miss, missed = draw(ax, rows, dl, nets, hi, remap, xmax, breaks, fb)
         tks, tlbls = gen_ticks(merged, remap)
-        ax.set_xticks(tks); ax.set_xticklabels(tlbls, fontsize=10)
-        if driver:                                       # the closed-loop action that produced this panel
-            ax.text(0.012, 1.44, "▶ loop: " + driver, transform=ax.transAxes, ha="left", va="center",
-                    fontsize=11, style="italic", color="#5a3ea8",
-                    bbox=dict(boxstyle="round,pad=0.28", fc="#f1ecfb", ec="#b6a7e0", lw=1.0))
-        # HERO metric = deadline lateness (hard-real-time control; makespan is secondary context)
-        tag = "✓ all deadlines met" if miss == 0 else f"✗ {miss} miss · {late:.0f} ms total lateness"
-        badge = "#2f7d4f" if miss == 0 else "#c0392b"
-        ax.set_title(f"{'①②③④⑤⑥⑦⑧'[min(i,7)]}  {title}", fontsize=13, weight="bold", loc="left", color="#222", pad=3)
-        ax.text(0.994, 0.92, f"{tag}   ·   {mk:.1f} ms", transform=ax.transAxes, ha="right", va="top",
-                fontsize=12, weight="bold", color="white",
-                bbox=dict(boxstyle="round,pad=0.36", fc=badge, ec="none", alpha=0.96))
-        ax.set_ylabel("K1 cores", fontsize=11)
-        # delta vs previous panel — lead with the deadline lateness change (the hero), misses second
-        if prev_mk is not None:
-            if abs(late - prev_late) > 0.05 or miss != prev_miss:
-                improved = late < prev_late - 0.05 or miss < prev_miss
-                col = "#2f7d4f" if improved else "#c0392b"
-                txt = f"deadline lateness {prev_late:.0f} → {late:.0f} ms   ·   {prev_miss} → {miss} miss"
-                if improved and abs(mk - prev_mk) < 1.0:      # recovered without paying makespan
-                    txt += "   ·   same makespan ✓"
-            else:
-                dmk = mk - prev_mk; col = "#777"
-                txt = f"Δ makespan {'−' if dmk < 0 else '+'}{abs(dmk):.1f} ms  ·  deadlines still met"
-            ax.annotate(txt, xy=(0.012, 1.25), xycoords="axes fraction",
-                        fontsize=11.5, weight="bold", color=col, va="center")
-        ax.set_xlabel("onboard time (ms) — idle stretches compressed" + ("  ·  board-calibrated costs" if fb else ""),
-                      fontsize=10.5)
+        ax.set_xticks(tks); ax.set_xticklabels(tlbls, fontsize=11)
+        # title (short) + the closed-loop driver on one line above it
+        ax.set_title(f"{'①②③④⑤⑥⑦⑧'[min(i,7)]}  {title}", fontsize=15, weight="bold", loc="left", color="#111", pad=4)
+        if driver:
+            ax.text(0.012, 1.40, "▶ " + driver, transform=ax.transAxes, ha="left", va="center",
+                    fontsize=12, style="italic", color="#5a3ea8")
+        # HERO badge = the DEADLINE VERDICT (big); makespan is tiny secondary text
+        if miss == 0:
+            hero = "✓  ALL DEADLINES MET"; bc = "#2f7d4f"
+        else:
+            who = ", ".join(f"{k}×{v}" for k, v in sorted(missed.items(), key=lambda x: -x[1]))
+            hero = f"✗  {miss} DEADLINES MISSED   ({who})"; bc = "#c0392b"
+        ax.text(0.5, 1.20, hero, transform=ax.transAxes, ha="center", va="bottom",
+                fontsize=16, weight="bold", color="white",
+                bbox=dict(boxstyle="round,pad=0.42", fc=bc, ec="white", lw=1.4, alpha=0.98))
+        ax.set_ylabel("K1 cores", fontsize=12)
+        ax.set_xlabel("onboard time (ms)  ·  " + ("measured board costs" if fb else "predicted costs")
+                      + f"  ·  makespan {mk:.0f} ms", fontsize=12)
         prev_mk = mk; prev_miss = miss; prev_late = late
     handles = [Patch(fc=NETCOLOR[x], label=x) for x in nets if x in NETCOLOR]
     handles += [Patch(fc="0.8", hatch="xxx", ec="#2a2a2a", label="Δ sharded (multi-hart)"),
@@ -205,7 +187,7 @@ def main():
                 Patch(fc="#fbf3ec", ec="0.7", label="runtime-feedback round (board)")]
     fig.legend(handles=handles, loc="lower center", ncol=3, fontsize=11, frameon=False, bbox_to_anchor=(0.5, -0.005))
     fig.suptitle(a.title, fontsize=14.5, weight="bold", y=0.999)
-    fig.tight_layout(rect=(0, 0.045, 1, 0.978), h_pad=3.4)
+    fig.tight_layout(rect=(0, 0.045, 1, 0.978), h_pad=2.6)
     fig.savefig(a.out + ".png", dpi=160, bbox_inches="tight")
     fig.savefig(a.out + ".pdf", bbox_inches="tight")
     print("wrote", a.out + ".png/.pdf")

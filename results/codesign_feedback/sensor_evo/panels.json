@@ -1,6 +1,6 @@
 [
- "og \u00b7 RVV, 1 net per hart (singletons)|none|results/codesign_feedback/sensor_evo/p1_og.json|baseline run on board \u2192 2 misses; emits feedback hint \"idle gaps\" (prefer_finer \u00d772)",
- "+ shard + IME  (AOT: multi-hart widths + matrix-engine routing)|shard|results/codesign_feedback/sensor_evo/p2_aot.json|auto-applies SHARD from that hint (+ IME), re-solve",
- "runtime feedback \u2014 the AOT plan RUN on the K1 board (+31%): 4 control deadlines missed, 38 ms late|none|results/codesign_feedback/sensor_evo/p3_feedback.json|feedback measures the run vs the Gantt: +31%, 38 ms lateness",
- "re-scheduled on measured board costs, RUN on the board: all deadlines recovered \u2014 same makespan (CP-SAT-optimal), the fix is free|none|results/codesign_feedback/sensor_evo/p4_fix.json|auto board-readjust: CP-SAT re-solves on the measured costs \u2192 0 miss"
+ "Baseline \u2014 RVV, 1 net per core|none|results/codesign_feedback/sensor_evo/p1_og.json|feedback \u2192 hint: idle gaps",
+ "AOT optimize \u2014 + Shard + IME|shard|results/codesign_feedback/sensor_evo/p2_aot.json|auto-applies SHARD",
+ "Run on the K1 board (+31% slower)|none|results/codesign_feedback/sensor_evo/p3_feedback.json|measure vs the Gantt",
+ "Re-schedule on measured board costs|none|results/codesign_feedback/sensor_evo/p4_fix.json|CP-SAT re-solves on board costs"
 ]
