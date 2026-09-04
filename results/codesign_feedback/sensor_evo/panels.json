@@ -1,6 +1,6 @@
 [
  "og \u00b7 RVV, 1 net per hart (singletons)|none|results/codesign_feedback/sensor_evo/p1_og.json",
- "+ shard + IME  (AOT: multi-hart widths + matrix-engine routing)|shard|results/codesign_feedback/sensor_evo/p2_aot.json",
- "runtime feedback \u2014 measured on the K1 board (+31%): control deadlines now missed|none|results/codesign_feedback/sensor_evo/p3_feedback.json",
- "re-schedule on board-calibrated costs: all deadlines recovered|none|results/codesign_feedback/sensor_evo/p4_fix.json"
+ "+ shard + IME  (AOT: multi-hart widths + matrix-engine routing) \u2014 planned on predicted costs|shard|results/codesign_feedback/sensor_evo/p2_aot.json",
+ "runtime feedback \u2014 the AOT plan RUN on the K1 board (+31%): 4 control deadlines missed|none|results/codesign_feedback/sensor_evo/p3_feedback.json",
+ "re-scheduled on measured board costs, RUN on the board: all deadlines recovered|none|results/codesign_feedback/sensor_evo/p4_fix.json"
 ]

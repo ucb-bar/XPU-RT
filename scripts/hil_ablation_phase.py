@@ -87,10 +87,10 @@ def main():
     axR.contour(sx, fy, ZZ, [0.5], colors="white", linewidths=5, zorder=3)
     axR.contour(sx, fy, ZZ, [0.5], colors="#111", linewidths=2.6, zorder=4)
     x0, x1 = speeds[0]-0.06, speeds[-1]+0.06
-    axR.add_patch(plt.Rectangle((x0, lf[-1]), x1-x0, ymax-lf[-1], facecolor="0.9", edgecolor="0.75", hatch="///", lw=0, zorder=2))
-    axR.axhline(lf[-1], color="0.35", lw=1.2, zorder=5)
-    axR.text((x0+x1)/2, (lf[-1]+ymax)/2+0.02, "not flight-tested above 100 Hz", fontsize=12,
-             style="italic", color="0.4", ha="center", va="center", zorder=6)
+    axR.add_patch(plt.Rectangle((x0, lf[-1]), x1-x0, ymax-lf[-1], facecolor="0.82", edgecolor="0.45",
+                                lw=1.4, zorder=7))                               # solid COVER over the untested region
+    axR.text((x0+x1)/2, (lf[-1]+ymax)/2+0.05, "not flight-tested\n(> 100 Hz — no data)", fontsize=13,
+             style="italic", weight="bold", color="0.3", ha="center", va="center", zorder=8)
     for (s, h), (k, n) in cell.items():
         axR.scatter(s, np.log10(h), s=520, c=[cmap(k/n)], edgecolors="#222", linewidths=1.4, zorder=6)
         axR.text(s, np.log10(h), f"{k}/{n}", ha="center", va="center", fontsize=10.5, weight="bold",
