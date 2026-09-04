@@ -1,0 +1,1834 @@
+{
+ "networks_bimodal_gempair": {
+  "error": "build: FileNotFoundError: profile_loader: required profile data is missing. Schedules generated against synthetic random times produce fictional predicted timelines (this used to be silent \u2014 see the rng.uniform(2.0, 10.0) fallback). Either:\n  1. Run the missing profile sweeps (runtime/scripts/profile_remote.sh\n     or profile_dispatches.py \u2014 make sure the harness flags match\n     the consumer of the schedule, e.g. xpurt_demo's BACKENDS /\n     prj.conf overlay), OR\n  2. Pass strict=False to load_profiled_processing_times to opt\n     into the synthetic fallback explicitly.\nMissing entries (1):\n  - yolov8_nano_sh @ gemmini_q31/topo_0: no profile CSV under gen/profile/gemmini_q31/firesim_f2_rocket_saturn/<model>/<basename>/.../topo_0/results.csv"
+ },
+ "networks_bimodal_hetero": {
+  "error": "build: FileNotFoundError: profile_loader: required profile data is missing. Schedules generated against synthetic random times produce fictional predicted timelines (this used to be silent \u2014 see the rng.uniform(2.0, 10.0) fallback). Either:\n  1. Run the missing profile sweeps (runtime/scripts/profile_remote.sh\n     or profile_dispatches.py \u2014 make sure the harness flags match\n     the consumer of the schedule, e.g. xpurt_demo's BACKENDS /\n     prj.conf overlay), OR\n  2. Pass strict=False to load_profiled_processing_times to opt\n     into the synthetic fallback explicitly.\nMissing entries (2):\n  - yolov8_nano_sh @ gemmini_q31/topo_0: no profile CSV under gen/profile/gemmini_q31/firesim_f2_rocket_saturn/<model>/<basename>/.../topo_0/results.csv\n  - yolov8_nano_sh @ V256D128_rvv/topo_0: no profile CSV under gen/profile/V256D128_rvv/firesim_f2_rocket_saturn/<model>/<basename>/.../topo_0/results.csv"
+ },
+ "networks_bimodal_quad": {
+  "error": "build: FileNotFoundError: profile_loader: required profile data is missing. Schedules generated against synthetic random times produce fictional predicted timelines (this used to be silent \u2014 see the rng.uniform(2.0, 10.0) fallback). Either:\n  1. Run the missing profile sweeps (runtime/scripts/profile_remote.sh\n     or profile_dispatches.py \u2014 make sure the harness flags match\n     the consumer of the schedule, e.g. xpurt_demo's BACKENDS /\n     prj.conf overlay), OR\n  2. Pass strict=False to load_profiled_processing_times to opt\n     into the synthetic fallback explicitly.\nMissing entries (2):\n  - yolov8_nano_sh @ gemmini_q31/topo_0: no profile CSV under gen/profile/gemmini_q31/firesim_f2_rocket_saturn/<model>/<basename>/.../topo_0/results.csv\n  - yolov8_nano_sh @ V256D128_rvv/topo_0: no profile CSV under gen/profile/V256D128_rvv/firesim_f2_rocket_saturn/<model>/<basename>/.../topo_0/results.csv"
+ },
+ "networks_bimodal_rvvpair": {
+  "error": "build: FileNotFoundError: profile_loader: required profile data is missing. Schedules generated against synthetic random times produce fictional predicted timelines (this used to be silent \u2014 see the rng.uniform(2.0, 10.0) fallback). Either:\n  1. Run the missing profile sweeps (runtime/scripts/profile_remote.sh\n     or profile_dispatches.py \u2014 make sure the harness flags match\n     the consumer of the schedule, e.g. xpurt_demo's BACKENDS /\n     prj.conf overlay), OR\n  2. Pass strict=False to load_profiled_processing_times to opt\n     into the synthetic fallback explicitly.\nMissing entries (1):\n  - yolov8_nano_sh @ V256D128_rvv/topo_0: no profile CSV under gen/profile/V256D128_rvv/firesim_f2_rocket_saturn/<model>/<basename>/.../topo_0/results.csv"
+ },
+ "networks_control_mix_gempair": {
+  "lanes": "gemmini_q31+V256D128_rvv",
+  "ops": 295,
+  "rows": [
+   {
+    "method": "greedy",
+    "objective": 62.77,
+    "all_ops": 79.37,
+    "misses": 0,
+    "wall_s": 0.01
+   },
+   {
+    "method": "greedy_periodic",
+    "objective": 58.321,
+    "all_ops": 79.37,
+    "misses": 58,
+    "wall_s": 0.01
+   },
+   {
+    "method": "greedy_reserved",
+    "objective": 60.682,
+    "all_ops": 79.748,
+    "misses": 91,
+    "wall_s": 0.02
+   },
+   {
+    "method": "decomposed",
+    "objective": 62.398,
+    "all_ops": 79.37,
+    "misses": 0,
+    "wall_s": 0.01
+   },
+   {
+    "method": "heft",
+    "objective": 54.074,
+    "all_ops": 79.37,
+    "misses": 14,
+    "wall_s": 0.02
+   },
+   {
+    "method": "heft_edf",
+    "objective": 60.074,
+    "all_ops": 79.37,
+    "misses": 0,
+    "wall_s": 0.01
+   },
+   {
+    "method": "pso",
+    "objective": 61.61,
+    "all_ops": 79.37,
+    "misses": 0,
+    "wall_s": 6.71
+   },
+   {
+    "method": "sa",
+    "objective": 60.141,
+    "all_ops": 79.747,
+    "misses": 0,
+    "wall_s": 20.0
+   },
+   {
+    "method": "cpsat",
+    "objective": 59.534,
+    "all_ops": 82.155,
+    "misses": 0,
+    "wall_s": 60.47
+   },
+   {
+    "method": "cpsat:warm",
+    "objective": 56.985,
+    "all_ops": 79.371,
+    "misses": 0,
+    "wall_s": 60.55
+   }
+  ]
+ },
+ "networks_control_mix_hetero": {
+  "lanes": "gemmini_q31+V256D128_rvv",
+  "ops": 295,
+  "rows": [
+   {
+    "method": "greedy",
+    "objective": 47.986,
+    "all_ops": 121.278,
+    "misses": 0,
+    "wall_s": 0.01
+   },
+   {
+    "method": "greedy_periodic",
+    "objective": 43.455,
+    "all_ops": 121.278,
+    "misses": 56,
+    "wall_s": 0.01
+   },
+   {
+    "method": "greedy_reserved",
+    "objective": 42.121,
+    "all_ops": 121.523,
+    "misses": 37,
+    "wall_s": 0.01
+   },
+   {
+    "method": "decomposed",
+    "objective": 46.037,
+    "all_ops": 121.165,
+    "misses": 0,
+    "wall_s": 0.01
+   },
+   {
+    "method": "heft",
+    "objective": 38.174,
+    "all_ops": 121.164,
+    "misses": 14,
+    "wall_s": 0.01
+   },
+   {
+    "method": "heft_edf",
+    "objective": 44.433,
+    "all_ops": 121.278,
+    "misses": 0,
+    "wall_s": 0.01
+   },
+   {
+    "method": "pso",
+    "objective": 44.295,
+    "all_ops": 121.341,
+    "misses": 0,
+    "wall_s": 4.93
+   },
+   {
+    "method": "sa",
+    "objective": 44.071,
+    "all_ops": 124.713,
+    "misses": 0,
+    "wall_s": 14.56
+   },
+   {
+    "method": "cpsat",
+    "objective": 40.51,
+    "all_ops": 121.903,
+    "misses": 0,
+    "wall_s": 60.48
+   },
+   {
+    "method": "cpsat:warm",
+    "objective": 37.246,
+    "all_ops": 121.286,
+    "misses": 0,
+    "wall_s": 60.55
+   }
+  ]
+ },
+ "networks_control_mix_quad": {
+  "lanes": "gemmini_q31+V256D128_rvv",
+  "ops": 295,
+  "rows": [
+   {
+    "method": "greedy",
+    "objective": 39.16,
+    "all_ops": 121.162,
+    "misses": 0,
+    "wall_s": 0.02
+   },
+   {
+    "method": "greedy_periodic",
+    "objective": 37.039,
+    "all_ops": 121.162,
+    "misses": 56,
+    "wall_s": 0.02
+   },
+   {
+    "method": "greedy_reserved",
+    "objective": 37.513,
+    "all_ops": 121.278,
+    "misses": 56,
+    "wall_s": 0.03
+   },
+   {
+    "method": "decomposed",
+    "objective": 37.283,
+    "all_ops": 121.162,
+    "misses": 0,
+    "wall_s": 0.02
+   },
+   {
+    "method": "heft",
+    "objective": 33.635,
+    "all_ops": 121.162,
+    "misses": 0,
+    "wall_s": 0.01
+   },
+   {
+    "method": "heft_edf",
+    "objective": 36.12,
+    "all_ops": 121.162,
+    "misses": 0,
+    "wall_s": 0.01
+   },
+   {
+    "method": "pso",
+    "objective": 33.62,
+    "all_ops": 121.162,
+    "misses": 0,
+    "wall_s": 5.04
+   },
+   {
+    "method": "sa",
+    "objective": 33.635,
+    "all_ops": 121.162,
+    "misses": 0,
+    "wall_s": 15.07
+   },
+   {
+    "method": "cpsat",
+    "objective": 33.383,
+    "all_ops": 125.768,
+    "misses": 2,
+    "wall_s": 32.46
+   },
+   {
+    "method": "cpsat:warm",
+    "objective": 33.383,
+    "all_ops": 121.162,
+    "misses": 2,
+    "wall_s": 13.54
+   }
+  ]
+ },
+ "networks_control_mix_rvvpair": {
+  "lanes": "gemmini_q31+V256D128_rvv",
+  "ops": 295,
+  "rows": [
+   {
+    "method": "greedy",
+    "objective": 111.151,
+    "all_ops": 126.146,
+    "misses": 0,
+    "wall_s": 0.03
+   },
+   {
+    "method": "greedy_periodic",
+    "objective": 104.595,
+    "all_ops": 126.146,
+    "misses": 81,
+    "wall_s": 0.03
+   },
+   {
+    "method": "greedy_reserved",
+    "objective": 111.509,
+    "all_ops": 126.527,
+    "misses": 88,
+    "wall_s": 0.04
+   },
+   {
+    "method": "decomposed",
+    "objective": 109.604,
+    "all_ops": 126.146,
+    "misses": 0,
+    "wall_s": 0.03
+   },
+   {
+    "method": "heft",
+    "objective": 85.67,
+    "all_ops": 126.146,
+    "misses": 21,
+    "wall_s": 0.03
+   },
+   {
+    "method": "heft_edf",
+    "objective": 97.123,
+    "all_ops": 126.146,
+    "misses": 0,
+    "wall_s": 0.02
+   },
+   {
+    "method": "pso",
+    "objective": 100.766,
+    "all_ops": 126.146,
+    "misses": 0,
+    "wall_s": 7.25
+   },
+   {
+    "method": "sa",
+    "objective": 95.082,
+    "all_ops": 126.351,
+    "misses": 0,
+    "wall_s": 20.0
+   },
+   {
+    "method": "cpsat",
+    "objective": 94.498,
+    "all_ops": 126.346,
+    "misses": 0,
+    "wall_s": 60.44
+   },
+   {
+    "method": "cpsat:warm",
+    "objective": 91.462,
+    "all_ops": 126.527,
+    "misses": 0,
+    "wall_s": 60.44
+   }
+  ]
+ },
+ "networks_perception_heavy_gempair": {
+  "error": "build: FileNotFoundError: profile_loader: required profile data is missing. Schedules generated against synthetic random times produce fictional predicted timelines (this used to be silent \u2014 see the rng.uniform(2.0, 10.0) fallback). Either:\n  1. Run the missing profile sweeps (runtime/scripts/profile_remote.sh\n     or profile_dispatches.py \u2014 make sure the harness flags match\n     the consumer of the schedule, e.g. xpurt_demo's BACKENDS /\n     prj.conf overlay), OR\n  2. Pass strict=False to load_profiled_processing_times to opt\n     into the synthetic fallback explicitly.\nMissing entries (1):\n  - yolov8_nano_sf @ gemmini_q31/topo_0: no profile CSV under gen/profile/gemmini_q31/firesim_f2_rocket_saturn/<model>/<basename>/.../topo_0/results.csv"
+ },
+ "networks_perception_heavy_hetero": {
+  "error": "build: FileNotFoundError: profile_loader: required profile data is missing. Schedules generated against synthetic random times produce fictional predicted timelines (this used to be silent \u2014 see the rng.uniform(2.0, 10.0) fallback). Either:\n  1. Run the missing profile sweeps (runtime/scripts/profile_remote.sh\n     or profile_dispatches.py \u2014 make sure the harness flags match\n     the consumer of the schedule, e.g. xpurt_demo's BACKENDS /\n     prj.conf overlay), OR\n  2. Pass strict=False to load_profiled_processing_times to opt\n     into the synthetic fallback explicitly.\nMissing entries (2):\n  - yolov8_nano_sf @ gemmini_q31/topo_0: no profile CSV under gen/profile/gemmini_q31/firesim_f2_rocket_saturn/<model>/<basename>/.../topo_0/results.csv\n  - yolov8_nano_sf @ V256D128_rvv/topo_0: no profile CSV under gen/profile/V256D128_rvv/firesim_f2_rocket_saturn/<model>/<basename>/.../topo_0/results.csv"
+ },
+ "networks_perception_heavy_quad": {
+  "error": "build: FileNotFoundError: profile_loader: required profile data is missing. Schedules generated against synthetic random times produce fictional predicted timelines (this used to be silent \u2014 see the rng.uniform(2.0, 10.0) fallback). Either:\n  1. Run the missing profile sweeps (runtime/scripts/profile_remote.sh\n     or profile_dispatches.py \u2014 make sure the harness flags match\n     the consumer of the schedule, e.g. xpurt_demo's BACKENDS /\n     prj.conf overlay), OR\n  2. Pass strict=False to load_profiled_processing_times to opt\n     into the synthetic fallback explicitly.\nMissing entries (2):\n  - yolov8_nano_sf @ gemmini_q31/topo_0: no profile CSV under gen/profile/gemmini_q31/firesim_f2_rocket_saturn/<model>/<basename>/.../topo_0/results.csv\n  - yolov8_nano_sf @ V256D128_rvv/topo_0: no profile CSV under gen/profile/V256D128_rvv/firesim_f2_rocket_saturn/<model>/<basename>/.../topo_0/results.csv"
+ },
+ "networks_perception_heavy_rvvpair": {
+  "error": "build: FileNotFoundError: profile_loader: required profile data is missing. Schedules generated against synthetic random times produce fictional predicted timelines (this used to be silent \u2014 see the rng.uniform(2.0, 10.0) fallback). Either:\n  1. Run the missing profile sweeps (runtime/scripts/profile_remote.sh\n     or profile_dispatches.py \u2014 make sure the harness flags match\n     the consumer of the schedule, e.g. xpurt_demo's BACKENDS /\n     prj.conf overlay), OR\n  2. Pass strict=False to load_profiled_processing_times to opt\n     into the synthetic fallback explicitly.\nMissing entries (1):\n  - yolov8_nano_sf @ V256D128_rvv/topo_0: no profile CSV under gen/profile/V256D128_rvv/firesim_f2_rocket_saturn/<model>/<basename>/.../topo_0/results.csv"
+ },
+ "networks_saturation_gempair": {
+  "lanes": "gemmini_q31+V256D128_rvv",
+  "ops": 393,
+  "rows": [
+   {
+    "method": "greedy",
+    "objective": 170.994,
+    "all_ops": 170.994,
+    "misses": 8,
+    "wall_s": 0.03
+   },
+   {
+    "method": "greedy_periodic",
+    "objective": 160.728,
+    "all_ops": 160.728,
+    "misses": 158,
+    "wall_s": 0.03
+   },
+   {
+    "method": "greedy_reserved",
+    "objective": 214.5,
+    "all_ops": 214.5,
+    "misses": 125,
+    "wall_s": 0.03
+   },
+   {
+    "method": "decomposed",
+    "objective": 169.927,
+    "all_ops": 169.927,
+    "misses": 0,
+    "wall_s": 0.03
+   },
+   {
+    "method": "heft",
+    "objective": 112.157,
+    "all_ops": 112.157,
+    "misses": 154,
+    "wall_s": 0.03
+   },
+   {
+    "method": "heft_edf",
+    "objective": 164.668,
+    "all_ops": 164.668,
+    "misses": 0,
+    "wall_s": 0.02
+   },
+   {
+    "method": "pso",
+    "objective": 169.796,
+    "all_ops": 169.796,
+    "misses": 0,
+    "wall_s": 12.1
+   },
+   {
+    "method": "sa",
+    "objective": 169.927,
+    "all_ops": 169.927,
+    "misses": 0,
+    "wall_s": 20.01
+   },
+   {
+    "method": "cpsat",
+    "objective": 180.372,
+    "all_ops": 180.372,
+    "misses": 0,
+    "wall_s": 60.42
+   },
+   {
+    "method": "cpsat:warm",
+    "objective": 156.544,
+    "all_ops": 156.544,
+    "misses": 0,
+    "wall_s": 60.48
+   }
+  ]
+ },
+ "networks_saturation_hetero": {
+  "lanes": "gemmini_q31+V256D128_rvv",
+  "ops": 393,
+  "rows": [
+   {
+    "method": "greedy",
+    "objective": 120.807,
+    "all_ops": 120.807,
+    "misses": 0,
+    "wall_s": 0.02
+   },
+   {
+    "method": "greedy_periodic",
+    "objective": 110.141,
+    "all_ops": 111.908,
+    "misses": 164,
+    "wall_s": 0.02
+   },
+   {
+    "method": "greedy_reserved",
+    "objective": 106.839,
+    "all_ops": 110.445,
+    "misses": 146,
+    "wall_s": 0.02
+   },
+   {
+    "method": "decomposed",
+    "objective": 136.658,
+    "all_ops": 136.658,
+    "misses": 0,
+    "wall_s": 0.02
+   },
+   {
+    "method": "heft",
+    "objective": 86.938,
+    "all_ops": 99.746,
+    "misses": 44,
+    "wall_s": 0.01
+   },
+   {
+    "method": "heft_edf",
+    "objective": 115.835,
+    "all_ops": 115.835,
+    "misses": 0,
+    "wall_s": 0.01
+   },
+   {
+    "method": "pso",
+    "objective": 111.503,
+    "all_ops": 111.503,
+    "misses": 0,
+    "wall_s": 8.69
+   },
+   {
+    "method": "sa",
+    "objective": 120.807,
+    "all_ops": 120.807,
+    "misses": 0,
+    "wall_s": 20.01
+   },
+   {
+    "method": "cpsat",
+    "objective": 140.927,
+    "all_ops": 140.927,
+    "misses": 0,
+    "wall_s": 60.46
+   },
+   {
+    "method": "cpsat:warm",
+    "objective": 104.418,
+    "all_ops": 107.741,
+    "misses": 0,
+    "wall_s": 60.47
+   }
+  ]
+ },
+ "networks_saturation_quad": {
+  "lanes": "gemmini_q31+V256D128_rvv",
+  "ops": 393,
+  "rows": [
+   {
+    "method": "greedy",
+    "objective": 92.44,
+    "all_ops": 99.745,
+    "misses": 0,
+    "wall_s": 0.03
+   },
+   {
+    "method": "greedy_periodic",
+    "objective": 92.758,
+    "all_ops": 99.745,
+    "misses": 189,
+    "wall_s": 0.06
+   },
+   {
+    "method": "greedy_reserved",
+    "objective": 99.081,
+    "all_ops": 99.888,
+    "misses": 189,
+    "wall_s": 0.07
+   },
+   {
+    "method": "decomposed",
+    "objective": 90.562,
+    "all_ops": 99.745,
+    "misses": 0,
+    "wall_s": 0.03
+   },
+   {
+    "method": "heft",
+    "objective": 75.544,
+    "all_ops": 99.745,
+    "misses": 0,
+    "wall_s": 0.02
+   },
+   {
+    "method": "heft_edf",
+    "objective": 86.617,
+    "all_ops": 99.745,
+    "misses": 0,
+    "wall_s": 0.02
+   },
+   {
+    "method": "pso",
+    "objective": 75.443,
+    "all_ops": 99.745,
+    "misses": 0,
+    "wall_s": 8.78
+   },
+   {
+    "method": "sa",
+    "objective": 75.544,
+    "all_ops": 99.745,
+    "misses": 0,
+    "wall_s": 20.01
+   },
+   {
+    "method": "cpsat",
+    "objective": 74.844,
+    "all_ops": 99.799,
+    "misses": 0,
+    "wall_s": 60.55
+   },
+   {
+    "method": "cpsat:warm",
+    "objective": 73.515,
+    "all_ops": 101.453,
+    "misses": 0,
+    "wall_s": 47.3
+   }
+  ]
+ },
+ "networks_saturation_rvvpair": {
+  "lanes": "gemmini_q31+V256D128_rvv",
+  "ops": 393,
+  "rows": [
+   {
+    "method": "greedy",
+    "objective": 248.067,
+    "all_ops": 248.067,
+    "misses": 0,
+    "wall_s": 0.02
+   },
+   {
+    "method": "greedy_periodic",
+    "objective": 221.599,
+    "all_ops": 221.599,
+    "misses": 132,
+    "wall_s": 0.03
+   },
+   {
+    "method": "greedy_reserved",
+    "objective": 264.833,
+    "all_ops": 264.833,
+    "misses": 231,
+    "wall_s": 0.03
+   },
+   {
+    "method": "decomposed",
+    "objective": 248.067,
+    "all_ops": 248.067,
+    "misses": 0,
+    "wall_s": 0.03
+   },
+   {
+    "method": "heft",
+    "objective": 170.96,
+    "all_ops": 170.96,
+    "misses": 47,
+    "wall_s": 0.03
+   },
+   {
+    "method": "heft_edf",
+    "objective": 217.56,
+    "all_ops": 217.56,
+    "misses": 0,
+    "wall_s": 0.02
+   },
+   {
+    "method": "pso",
+    "objective": 233.646,
+    "all_ops": 233.646,
+    "misses": 0,
+    "wall_s": 13.33
+   },
+   {
+    "method": "sa",
+    "objective": 239.505,
+    "all_ops": 239.505,
+    "misses": 0,
+    "wall_s": 20.01
+   },
+   {
+    "method": "cpsat",
+    "objective": 212.089,
+    "all_ops": 212.089,
+    "misses": 0,
+    "wall_s": 60.44
+   },
+   {
+    "method": "cpsat:warm",
+    "objective": 170.954,
+    "all_ops": 170.954,
+    "misses": 0,
+    "wall_s": 60.5
+   }
+  ]
+ },
+ "networks_scale_ladder_gempair": {
+  "lanes": "gemmini_q31+V256D128_rvv",
+  "ops": 126,
+  "rows": [
+   {
+    "method": "greedy",
+    "objective": 128.846,
+    "all_ops": 128.846,
+    "misses": 0,
+    "wall_s": 0.0
+   },
+   {
+    "method": "greedy_periodic",
+    "objective": 128.846,
+    "all_ops": 128.846,
+    "misses": 0,
+    "wall_s": 0.0
+   },
+   {
+    "method": "greedy_reserved",
+    "objective": 128.846,
+    "all_ops": 128.846,
+    "misses": 0,
+    "wall_s": 0.0
+   },
+   {
+    "method": "decomposed",
+    "objective": 128.846,
+    "all_ops": 128.846,
+    "misses": 0,
+    "wall_s": 0.01
+   },
+   {
+    "method": "heft",
+    "objective": 98.589,
+    "all_ops": 98.589,
+    "misses": 0,
+    "wall_s": 0.0
+   },
+   {
+    "method": "heft_edf",
+    "objective": 98.589,
+    "all_ops": 98.589,
+    "misses": 0,
+    "wall_s": 0.0
+   },
+   {
+    "method": "pso",
+    "objective": 98.589,
+    "all_ops": 98.589,
+    "misses": 0,
+    "wall_s": 2.41
+   },
+   {
+    "method": "sa",
+    "objective": 98.589,
+    "all_ops": 98.589,
+    "misses": 0,
+    "wall_s": 6.85
+   },
+   {
+    "method": "cpsat",
+    "objective": 98.589,
+    "all_ops": 98.589,
+    "misses": 0,
+    "wall_s": 6.05
+   },
+   {
+    "method": "cpsat:warm",
+    "objective": 98.589,
+    "all_ops": 98.589,
+    "misses": 0,
+    "wall_s": 0.62
+   }
+  ]
+ },
+ "networks_scale_ladder_hetero": {
+  "lanes": "gemmini_q31+V256D128_rvv",
+  "ops": 126,
+  "rows": [
+   {
+    "method": "greedy",
+    "objective": 111.349,
+    "all_ops": 111.349,
+    "misses": 0,
+    "wall_s": 0.0
+   },
+   {
+    "method": "greedy_periodic",
+    "objective": 111.349,
+    "all_ops": 111.349,
+    "misses": 0,
+    "wall_s": 0.0
+   },
+   {
+    "method": "greedy_reserved",
+    "objective": 111.349,
+    "all_ops": 111.349,
+    "misses": 0,
+    "wall_s": 0.0
+   },
+   {
+    "method": "decomposed",
+    "objective": 111.349,
+    "all_ops": 111.349,
+    "misses": 0,
+    "wall_s": 0.0
+   },
+   {
+    "method": "heft",
+    "objective": 97.164,
+    "all_ops": 97.164,
+    "misses": 0,
+    "wall_s": 0.0
+   },
+   {
+    "method": "heft_edf",
+    "objective": 97.164,
+    "all_ops": 97.164,
+    "misses": 0,
+    "wall_s": 0.0
+   },
+   {
+    "method": "pso",
+    "objective": 97.164,
+    "all_ops": 97.164,
+    "misses": 0,
+    "wall_s": 1.81
+   },
+   {
+    "method": "sa",
+    "objective": 97.164,
+    "all_ops": 97.164,
+    "misses": 0,
+    "wall_s": 5.23
+   },
+   {
+    "method": "cpsat",
+    "objective": 97.163,
+    "all_ops": 97.163,
+    "misses": 0,
+    "wall_s": 1.78
+   },
+   {
+    "method": "cpsat:warm",
+    "objective": 97.163,
+    "all_ops": 97.163,
+    "misses": 0,
+    "wall_s": 0.49
+   }
+  ]
+ },
+ "networks_scale_ladder_quad": {
+  "lanes": "gemmini_q31+V256D128_rvv",
+  "ops": 126,
+  "rows": [
+   {
+    "method": "greedy",
+    "objective": 109.635,
+    "all_ops": 109.635,
+    "misses": 0,
+    "wall_s": 0.01
+   },
+   {
+    "method": "greedy_periodic",
+    "objective": 109.635,
+    "all_ops": 109.635,
+    "misses": 0,
+    "wall_s": 0.01
+   },
+   {
+    "method": "greedy_reserved",
+    "objective": 109.635,
+    "all_ops": 109.635,
+    "misses": 0,
+    "wall_s": 0.01
+   },
+   {
+    "method": "decomposed",
+    "objective": 109.635,
+    "all_ops": 109.635,
+    "misses": 0,
+    "wall_s": 0.01
+   },
+   {
+    "method": "heft",
+    "objective": 97.163,
+    "all_ops": 97.163,
+    "misses": 0,
+    "wall_s": 0.0
+   },
+   {
+    "method": "heft_edf",
+    "objective": 97.163,
+    "all_ops": 97.163,
+    "misses": 0,
+    "wall_s": 0.0
+   },
+   {
+    "method": "pso",
+    "objective": 97.163,
+    "all_ops": 97.163,
+    "misses": 0,
+    "wall_s": 1.48
+   },
+   {
+    "method": "sa",
+    "objective": 97.163,
+    "all_ops": 97.163,
+    "misses": 0,
+    "wall_s": 4.57
+   },
+   {
+    "method": "cpsat",
+    "objective": 97.163,
+    "all_ops": 97.163,
+    "misses": 0,
+    "wall_s": 1.91
+   },
+   {
+    "method": "cpsat:warm",
+    "objective": 97.163,
+    "all_ops": 97.163,
+    "misses": 0,
+    "wall_s": 0.88
+   }
+  ]
+ },
+ "networks_scale_ladder_rvvpair": {
+  "lanes": "gemmini_q31+V256D128_rvv",
+  "ops": 126,
+  "rows": [
+   {
+    "method": "greedy",
+    "objective": 132.654,
+    "all_ops": 132.654,
+    "misses": 0,
+    "wall_s": 0.0
+   },
+   {
+    "method": "greedy_periodic",
+    "objective": 132.654,
+    "all_ops": 132.654,
+    "misses": 0,
+    "wall_s": 0.0
+   },
+   {
+    "method": "greedy_reserved",
+    "objective": 132.654,
+    "all_ops": 132.654,
+    "misses": 0,
+    "wall_s": 0.0
+   },
+   {
+    "method": "decomposed",
+    "objective": 132.654,
+    "all_ops": 132.654,
+    "misses": 0,
+    "wall_s": 0.01
+   },
+   {
+    "method": "heft",
+    "objective": 97.37,
+    "all_ops": 97.37,
+    "misses": 0,
+    "wall_s": 0.01
+   },
+   {
+    "method": "heft_edf",
+    "objective": 97.37,
+    "all_ops": 97.37,
+    "misses": 0,
+    "wall_s": 0.0
+   },
+   {
+    "method": "pso",
+    "objective": 97.37,
+    "all_ops": 97.37,
+    "misses": 0,
+    "wall_s": 2.36
+   },
+   {
+    "method": "sa",
+    "objective": 97.37,
+    "all_ops": 97.37,
+    "misses": 0,
+    "wall_s": 6.53
+   },
+   {
+    "method": "cpsat",
+    "objective": 97.371,
+    "all_ops": 97.371,
+    "misses": 0,
+    "wall_s": 3.31
+   },
+   {
+    "method": "cpsat:warm",
+    "objective": 97.371,
+    "all_ops": 97.371,
+    "misses": 0,
+    "wall_s": 1.25
+   }
+  ]
+ },
+ "networks_tight_loop_gempair": {
+  "lanes": "gemmini_q31+V256D128_rvv",
+  "ops": 252,
+  "rows": [
+   {
+    "method": "greedy",
+    "objective": 98.403,
+    "all_ops": 98.403,
+    "misses": 84,
+    "wall_s": 0.02
+   },
+   {
+    "method": "greedy_periodic",
+    "objective": 98.403,
+    "all_ops": 98.403,
+    "misses": 84,
+    "wall_s": 0.02
+   },
+   {
+    "method": "greedy_reserved",
+    "objective": 98.403,
+    "all_ops": 98.403,
+    "misses": 84,
+    "wall_s": 0.02
+   },
+   {
+    "method": "decomposed",
+    "objective": 93.883,
+    "all_ops": 93.883,
+    "misses": 252,
+    "wall_s": 0.04
+   },
+   {
+    "method": "heft",
+    "objective": 75.58,
+    "all_ops": 75.58,
+    "misses": 119,
+    "wall_s": 0.02
+   },
+   {
+    "method": "heft_edf",
+    "objective": 92.793,
+    "all_ops": 92.793,
+    "misses": 84,
+    "wall_s": 0.01
+   },
+   {
+    "method": "pso",
+    "objective": 98.403,
+    "all_ops": 98.403,
+    "misses": 84,
+    "wall_s": 4.49
+   },
+   {
+    "method": "sa",
+    "objective": 87.723,
+    "all_ops": 87.723,
+    "misses": 84,
+    "wall_s": 17.27
+   },
+   {
+    "method": "cpsat",
+    "error": "RuntimeError: cpsat returned INFEASIBLE with no solution",
+    "wall_s": 0.39
+   },
+   {
+    "method": "cpsat:warm",
+    "error": "RuntimeError: cpsat returned INFEASIBLE with no solution",
+    "wall_s": 0.38
+   }
+  ]
+ },
+ "networks_tight_loop_hetero": {
+  "lanes": "gemmini_q31+V256D128_rvv",
+  "ops": 252,
+  "rows": [
+   {
+    "method": "greedy",
+    "objective": 102.037,
+    "all_ops": 102.037,
+    "misses": 84,
+    "wall_s": 0.01
+   },
+   {
+    "method": "greedy_periodic",
+    "objective": 102.037,
+    "all_ops": 102.037,
+    "misses": 84,
+    "wall_s": 0.01
+   },
+   {
+    "method": "greedy_reserved",
+    "objective": 102.037,
+    "all_ops": 102.037,
+    "misses": 84,
+    "wall_s": 0.01
+   },
+   {
+    "method": "decomposed",
+    "objective": 106.925,
+    "all_ops": 106.925,
+    "misses": 252,
+    "wall_s": 0.02
+   },
+   {
+    "method": "heft",
+    "objective": 76.051,
+    "all_ops": 76.051,
+    "misses": 108,
+    "wall_s": 0.01
+   },
+   {
+    "method": "heft_edf",
+    "objective": 100.831,
+    "all_ops": 100.831,
+    "misses": 84,
+    "wall_s": 0.01
+   },
+   {
+    "method": "pso",
+    "objective": 87.809,
+    "all_ops": 87.809,
+    "misses": 84,
+    "wall_s": 4.26
+   },
+   {
+    "method": "sa",
+    "objective": 81.812,
+    "all_ops": 81.812,
+    "misses": 84,
+    "wall_s": 12.03
+   },
+   {
+    "method": "cpsat",
+    "error": "RuntimeError: cpsat returned INFEASIBLE with no solution",
+    "wall_s": 0.33
+   },
+   {
+    "method": "cpsat:warm",
+    "error": "RuntimeError: cpsat returned INFEASIBLE with no solution",
+    "wall_s": 0.37
+   }
+  ]
+ },
+ "networks_tight_loop_quad": {
+  "lanes": "gemmini_q31+V256D128_rvv",
+  "ops": 252,
+  "rows": [
+   {
+    "method": "greedy",
+    "objective": 84.338,
+    "all_ops": 84.338,
+    "misses": 84,
+    "wall_s": 0.03
+   },
+   {
+    "method": "greedy_periodic",
+    "objective": 84.338,
+    "all_ops": 84.338,
+    "misses": 84,
+    "wall_s": 0.03
+   },
+   {
+    "method": "greedy_reserved",
+    "objective": 84.338,
+    "all_ops": 84.338,
+    "misses": 84,
+    "wall_s": 0.02
+   },
+   {
+    "method": "decomposed",
+    "objective": 64.268,
+    "all_ops": 64.268,
+    "misses": 252,
+    "wall_s": 0.05
+   },
+   {
+    "method": "heft",
+    "objective": 45.916,
+    "all_ops": 45.916,
+    "misses": 84,
+    "wall_s": 0.01
+   },
+   {
+    "method": "heft_edf",
+    "objective": 73.438,
+    "all_ops": 73.438,
+    "misses": 84,
+    "wall_s": 0.01
+   },
+   {
+    "method": "pso",
+    "objective": 45.916,
+    "all_ops": 45.916,
+    "misses": 84,
+    "wall_s": 4.92
+   },
+   {
+    "method": "sa",
+    "objective": 45.916,
+    "all_ops": 45.916,
+    "misses": 84,
+    "wall_s": 13.27
+   },
+   {
+    "method": "cpsat",
+    "error": "RuntimeError: cpsat returned INFEASIBLE with no solution",
+    "wall_s": 0.45
+   },
+   {
+    "method": "cpsat:warm",
+    "error": "RuntimeError: cpsat returned INFEASIBLE with no solution",
+    "wall_s": 0.49
+   }
+  ]
+ },
+ "networks_tight_loop_rvvpair": {
+  "lanes": "gemmini_q31+V256D128_rvv",
+  "ops": 252,
+  "rows": [
+   {
+    "method": "greedy",
+    "objective": 89.921,
+    "all_ops": 89.921,
+    "misses": 84,
+    "wall_s": 0.01
+   },
+   {
+    "method": "greedy_periodic",
+    "objective": 89.921,
+    "all_ops": 89.921,
+    "misses": 84,
+    "wall_s": 0.01
+   },
+   {
+    "method": "greedy_reserved",
+    "objective": 89.921,
+    "all_ops": 89.921,
+    "misses": 84,
+    "wall_s": 0.01
+   },
+   {
+    "method": "decomposed",
+    "objective": 95.507,
+    "all_ops": 95.507,
+    "misses": 252,
+    "wall_s": 0.04
+   },
+   {
+    "method": "heft",
+    "objective": 75.598,
+    "all_ops": 75.598,
+    "misses": 84,
+    "wall_s": 0.01
+   },
+   {
+    "method": "heft_edf",
+    "objective": 91.208,
+    "all_ops": 91.208,
+    "misses": 84,
+    "wall_s": 0.01
+   },
+   {
+    "method": "pso",
+    "objective": 75.414,
+    "all_ops": 75.414,
+    "misses": 84,
+    "wall_s": 6.55
+   },
+   {
+    "method": "sa",
+    "objective": 75.598,
+    "all_ops": 75.598,
+    "misses": 84,
+    "wall_s": 17.59
+   },
+   {
+    "method": "cpsat",
+    "error": "RuntimeError: cpsat returned INFEASIBLE with no solution",
+    "wall_s": 0.38
+   },
+   {
+    "method": "cpsat:warm",
+    "error": "RuntimeError: cpsat returned INFEASIBLE with no solution",
+    "wall_s": 0.42
+   }
+  ]
+ },
+ "networks_vint_intro_gempair": {
+  "lanes": "gemmini_q31+V256D128_rvv",
+  "ops": 661,
+  "rows": [
+   {
+    "method": "greedy",
+    "objective": 4074.944,
+    "all_ops": 4074.944,
+    "misses": 0,
+    "wall_s": 0.04
+   },
+   {
+    "method": "greedy_periodic",
+    "objective": 4074.67,
+    "all_ops": 4074.67,
+    "misses": 5,
+    "wall_s": 0.04
+   },
+   {
+    "method": "greedy_reserved",
+    "objective": 4072.363,
+    "all_ops": 4072.363,
+    "misses": 5,
+    "wall_s": 0.04
+   },
+   {
+    "method": "decomposed",
+    "objective": 4074.368,
+    "all_ops": 4074.368,
+    "misses": 0,
+    "wall_s": 0.07
+   },
+   {
+    "method": "heft",
+    "objective": 3754.051,
+    "all_ops": 3754.051,
+    "misses": 56,
+    "wall_s": 0.08
+   },
+   {
+    "method": "heft_edf",
+    "objective": 3754.051,
+    "all_ops": 3754.051,
+    "misses": 0,
+    "wall_s": 0.07
+   },
+   {
+    "method": "pso",
+    "objective": 4074.368,
+    "all_ops": 4074.368,
+    "misses": 0,
+    "wall_s": 20.47
+   },
+   {
+    "method": "sa",
+    "objective": 4074.368,
+    "all_ops": 4074.368,
+    "misses": 0,
+    "wall_s": 20.04
+   },
+   {
+    "method": "cpsat",
+    "objective": 4764.821,
+    "all_ops": 4764.821,
+    "misses": 0,
+    "wall_s": 60.48
+   },
+   {
+    "method": "cpsat:warm",
+    "objective": 3754.056,
+    "all_ops": 3754.056,
+    "misses": 0,
+    "wall_s": 60.59
+   }
+  ]
+ },
+ "networks_vint_intro_hetero": {
+  "lanes": "gemmini_q31+V256D128_rvv",
+  "ops": 661,
+  "rows": [
+   {
+    "method": "greedy",
+    "objective": 4472.274,
+    "all_ops": 4472.274,
+    "misses": 0,
+    "wall_s": 0.04
+   },
+   {
+    "method": "greedy_periodic",
+    "objective": 4472.374,
+    "all_ops": 4472.374,
+    "misses": 0,
+    "wall_s": 0.04
+   },
+   {
+    "method": "greedy_reserved",
+    "objective": 4472.274,
+    "all_ops": 4472.274,
+    "misses": 0,
+    "wall_s": 0.04
+   },
+   {
+    "method": "decomposed",
+    "objective": 4472.274,
+    "all_ops": 4472.274,
+    "misses": 0,
+    "wall_s": 0.05
+   },
+   {
+    "method": "heft",
+    "objective": 4160.689,
+    "all_ops": 4160.689,
+    "misses": 0,
+    "wall_s": 0.03
+   },
+   {
+    "method": "heft_edf",
+    "objective": 4160.689,
+    "all_ops": 4160.689,
+    "misses": 0,
+    "wall_s": 0.04
+   },
+   {
+    "method": "pso",
+    "objective": 4160.689,
+    "all_ops": 4160.689,
+    "misses": 0,
+    "wall_s": 20.25
+   },
+   {
+    "method": "sa",
+    "objective": 4019.968,
+    "all_ops": 4019.968,
+    "misses": 0,
+    "wall_s": 20.01
+   },
+   {
+    "method": "cpsat",
+    "objective": 9119.446,
+    "all_ops": 9119.446,
+    "misses": 0,
+    "wall_s": 60.49
+   },
+   {
+    "method": "cpsat:warm",
+    "objective": 4123.94,
+    "all_ops": 4123.94,
+    "misses": 0,
+    "wall_s": 60.54
+   }
+  ]
+ },
+ "networks_vint_intro_quad": {
+  "lanes": "gemmini_q31+V256D128_rvv",
+  "ops": 661,
+  "rows": [
+   {
+    "method": "greedy",
+    "objective": 3844.686,
+    "all_ops": 3844.686,
+    "misses": 0,
+    "wall_s": 0.05
+   },
+   {
+    "method": "greedy_periodic",
+    "objective": 3844.686,
+    "all_ops": 3844.686,
+    "misses": 0,
+    "wall_s": 0.05
+   },
+   {
+    "method": "greedy_reserved",
+    "objective": 3844.686,
+    "all_ops": 3844.686,
+    "misses": 0,
+    "wall_s": 0.05
+   },
+   {
+    "method": "decomposed",
+    "objective": 3844.686,
+    "all_ops": 3844.686,
+    "misses": 0,
+    "wall_s": 0.08
+   },
+   {
+    "method": "heft",
+    "objective": 3750.825,
+    "all_ops": 3750.825,
+    "misses": 0,
+    "wall_s": 0.08
+   },
+   {
+    "method": "heft_edf",
+    "objective": 3750.825,
+    "all_ops": 3750.825,
+    "misses": 0,
+    "wall_s": 0.06
+   },
+   {
+    "method": "pso",
+    "objective": 3750.825,
+    "all_ops": 3750.825,
+    "misses": 0,
+    "wall_s": 20.26
+   },
+   {
+    "method": "sa",
+    "objective": 3750.825,
+    "all_ops": 3750.825,
+    "misses": 0,
+    "wall_s": 20.01
+   },
+   {
+    "method": "cpsat",
+    "objective": 3750.829,
+    "all_ops": 3750.829,
+    "misses": 0,
+    "wall_s": 56.32
+   },
+   {
+    "method": "cpsat:warm",
+    "objective": 3750.829,
+    "all_ops": 3750.829,
+    "misses": 0,
+    "wall_s": 22.35
+   }
+  ]
+ },
+ "networks_vint_intro_rvvpair": {
+  "lanes": "gemmini_q31+V256D128_rvv",
+  "ops": 661,
+  "rows": [
+   {
+    "method": "greedy",
+    "objective": 12149.205,
+    "all_ops": 12149.205,
+    "misses": 0,
+    "wall_s": 0.05
+   },
+   {
+    "method": "greedy_periodic",
+    "objective": 12141.93,
+    "all_ops": 12141.93,
+    "misses": 0,
+    "wall_s": 0.06
+   },
+   {
+    "method": "greedy_reserved",
+    "objective": 12187.95,
+    "all_ops": 12187.95,
+    "misses": 0,
+    "wall_s": 0.05
+   },
+   {
+    "method": "decomposed",
+    "objective": 12149.205,
+    "all_ops": 12149.205,
+    "misses": 0,
+    "wall_s": 0.07
+   },
+   {
+    "method": "heft",
+    "objective": 11068.078,
+    "all_ops": 11068.078,
+    "misses": 56,
+    "wall_s": 0.07
+   },
+   {
+    "method": "heft_edf",
+    "objective": 11068.078,
+    "all_ops": 11068.078,
+    "misses": 0,
+    "wall_s": 0.07
+   },
+   {
+    "method": "pso",
+    "objective": 12141.93,
+    "all_ops": 12141.93,
+    "misses": 0,
+    "wall_s": 20.34
+   },
+   {
+    "method": "sa",
+    "objective": 12141.93,
+    "all_ops": 12141.93,
+    "misses": 0,
+    "wall_s": 20.03
+   },
+   {
+    "method": "cpsat",
+    "objective": 15620.433,
+    "all_ops": 15620.433,
+    "misses": 0,
+    "wall_s": 60.47
+   },
+   {
+    "method": "cpsat:warm",
+    "objective": 11068.076,
+    "all_ops": 11068.076,
+    "misses": 0,
+    "wall_s": 60.62
+   }
+  ]
+ },
+ "networks_vint_multi_gempair": {
+  "lanes": "gemmini_q31+V256D128_rvv",
+  "ops": 745,
+  "rows": [
+   {
+    "method": "greedy",
+    "objective": 4107.657,
+    "all_ops": 4107.657,
+    "misses": 0,
+    "wall_s": 0.06
+   },
+   {
+    "method": "greedy_periodic",
+    "objective": 4107.657,
+    "all_ops": 4107.657,
+    "misses": 19,
+    "wall_s": 0.05
+   },
+   {
+    "method": "greedy_reserved",
+    "objective": 4108.035,
+    "all_ops": 4108.035,
+    "misses": 0,
+    "wall_s": 0.06
+   },
+   {
+    "method": "decomposed",
+    "objective": 4107.657,
+    "all_ops": 4107.657,
+    "misses": 0,
+    "wall_s": 0.09
+   },
+   {
+    "method": "heft",
+    "objective": 3754.051,
+    "all_ops": 3754.051,
+    "misses": 140,
+    "wall_s": 0.12
+   },
+   {
+    "method": "heft_edf",
+    "objective": 3874.091,
+    "all_ops": 3874.091,
+    "misses": 0,
+    "wall_s": 0.09
+   },
+   {
+    "method": "pso",
+    "objective": 4107.657,
+    "all_ops": 4107.657,
+    "misses": 0,
+    "wall_s": 21.0
+   },
+   {
+    "method": "sa",
+    "objective": 4107.657,
+    "all_ops": 4107.657,
+    "misses": 0,
+    "wall_s": 20.04
+   },
+   {
+    "method": "cpsat",
+    "objective": 4985.869,
+    "all_ops": 4985.869,
+    "misses": 0,
+    "wall_s": 60.53
+   },
+   {
+    "method": "cpsat:warm",
+    "objective": 3874.095,
+    "all_ops": 3874.095,
+    "misses": 0,
+    "wall_s": 60.59
+   }
+  ]
+ },
+ "networks_vint_multi_hetero": {
+  "lanes": "gemmini_q31+V256D128_rvv",
+  "ops": 745,
+  "rows": [
+   {
+    "method": "greedy",
+    "objective": 4546.388,
+    "all_ops": 4546.388,
+    "misses": 0,
+    "wall_s": 0.06
+   },
+   {
+    "method": "greedy_periodic",
+    "objective": 4546.388,
+    "all_ops": 4546.388,
+    "misses": 63,
+    "wall_s": 0.05
+   },
+   {
+    "method": "greedy_reserved",
+    "objective": 4546.633,
+    "all_ops": 4546.633,
+    "misses": 63,
+    "wall_s": 0.05
+   },
+   {
+    "method": "decomposed",
+    "objective": 4546.275,
+    "all_ops": 4546.275,
+    "misses": 0,
+    "wall_s": 0.06
+   },
+   {
+    "method": "heft",
+    "objective": 4160.689,
+    "all_ops": 4160.689,
+    "misses": 33,
+    "wall_s": 0.04
+   },
+   {
+    "method": "heft_edf",
+    "objective": 4239.12,
+    "all_ops": 4239.12,
+    "misses": 0,
+    "wall_s": 0.05
+   },
+   {
+    "method": "pso",
+    "objective": 4546.275,
+    "all_ops": 4546.275,
+    "misses": 0,
+    "wall_s": 20.65
+   },
+   {
+    "method": "sa",
+    "objective": 4469.094,
+    "all_ops": 4469.094,
+    "misses": 0,
+    "wall_s": 20.03
+   },
+   {
+    "method": "cpsat",
+    "objective": 5327.289,
+    "all_ops": 5327.289,
+    "misses": 0,
+    "wall_s": 60.54
+   },
+   {
+    "method": "cpsat:warm",
+    "objective": 4208.463,
+    "all_ops": 4208.463,
+    "misses": 0,
+    "wall_s": 60.73
+   }
+  ]
+ },
+ "networks_vint_multi_quad": {
+  "lanes": "gemmini_q31+V256D128_rvv",
+  "ops": 745,
+  "rows": [
+   {
+    "method": "greedy",
+    "objective": 4012.814,
+    "all_ops": 4012.814,
+    "misses": 0,
+    "wall_s": 0.07
+   },
+   {
+    "method": "greedy_periodic",
+    "objective": 4012.814,
+    "all_ops": 4012.814,
+    "misses": 0,
+    "wall_s": 0.07
+   },
+   {
+    "method": "greedy_reserved",
+    "objective": 4011.504,
+    "all_ops": 4011.504,
+    "misses": 0,
+    "wall_s": 0.09
+   },
+   {
+    "method": "decomposed",
+    "objective": 4012.786,
+    "all_ops": 4012.786,
+    "misses": 0,
+    "wall_s": 0.09
+   },
+   {
+    "method": "heft",
+    "objective": 3750.825,
+    "all_ops": 3750.825,
+    "misses": 0,
+    "wall_s": 0.08
+   },
+   {
+    "method": "heft_edf",
+    "objective": 3939.278,
+    "all_ops": 3939.278,
+    "misses": 0,
+    "wall_s": 0.08
+   },
+   {
+    "method": "pso",
+    "objective": 3750.825,
+    "all_ops": 3750.825,
+    "misses": 0,
+    "wall_s": 20.51
+   },
+   {
+    "method": "sa",
+    "objective": 3750.825,
+    "all_ops": 3750.825,
+    "misses": 0,
+    "wall_s": 20.01
+   },
+   {
+    "method": "cpsat",
+    "objective": 4242.584,
+    "all_ops": 4242.584,
+    "misses": 0,
+    "wall_s": 60.92
+   },
+   {
+    "method": "cpsat:warm",
+    "objective": 3750.829,
+    "all_ops": 3750.829,
+    "misses": 5,
+    "wall_s": 53.27
+   }
+  ]
+ },
+ "networks_vint_multi_rvvpair": {
+  "lanes": "gemmini_q31+V256D128_rvv",
+  "ops": 745,
+  "rows": [
+   {
+    "method": "greedy",
+    "objective": 12337.001,
+    "all_ops": 12337.001,
+    "misses": 0,
+    "wall_s": 0.06
+   },
+   {
+    "method": "greedy_periodic",
+    "objective": 12337.001,
+    "all_ops": 12337.001,
+    "misses": 0,
+    "wall_s": 0.06
+   },
+   {
+    "method": "greedy_reserved",
+    "objective": 12290.346,
+    "all_ops": 12290.346,
+    "misses": 0,
+    "wall_s": 0.06
+   },
+   {
+    "method": "decomposed",
+    "objective": 12337.001,
+    "all_ops": 12337.001,
+    "misses": 0,
+    "wall_s": 0.09
+   },
+   {
+    "method": "heft",
+    "objective": 11068.078,
+    "all_ops": 11068.078,
+    "misses": 140,
+    "wall_s": 0.09
+   },
+   {
+    "method": "heft_edf",
+    "objective": 11263.61,
+    "all_ops": 11263.61,
+    "misses": 0,
+    "wall_s": 0.08
+   },
+   {
+    "method": "pso",
+    "objective": 12290.346,
+    "all_ops": 12290.346,
+    "misses": 0,
+    "wall_s": 20.27
+   },
+   {
+    "method": "sa",
+    "objective": 12290.346,
+    "all_ops": 12290.346,
+    "misses": 0,
+    "wall_s": 20.02
+   },
+   {
+    "method": "cpsat",
+    "objective": 16528.104,
+    "all_ops": 16528.104,
+    "misses": 0,
+    "wall_s": 60.95
+   },
+   {
+    "method": "cpsat:warm",
+    "objective": 11263.608,
+    "all_ops": 11263.608,
+    "misses": 0,
+    "wall_s": 60.6
+   }
+  ]
+ }
+}
