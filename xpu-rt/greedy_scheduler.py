@@ -73,6 +73,22 @@ _EPS = 1e-9
 # 2x-resnet50 workload nothing below 8 finds the 21.81 ms schedule. Hence the
 # per-run override (`scheduler.reserved_max_slowdown` in the workload spec, or
 # --reserved-max-slowdown) rather than a constant everyone has to live with.
+#
+# Re-swept over {1, 1.25, 1.5, 2, 3, 4, 6, 8, 12, 16, unbounded} on the 48
+# specs that build from the rose-infra data root, and left at 2.0. The knob is
+# *inert* on 20 of the 24 wl_sweep specs — every value returns the same
+# schedule — and inert on all 12 same-kind-pair configs for a structural
+# reason: the cap rejects a lane more than `max_slowdown` times slower than the
+# op's own fastest, and two identical lanes offer no such lane to reject, so
+# --reserved-max-slowdown does nothing at all on a single-lane-family machine
+# set. Where it does move, wl_sweep weakly prefers *lower* (1.25 buys one more
+# valid spec) and the other 24 specs strongly prefer higher (`vint_only` is
+# +56% makespan at 1.0), so the two corpora disagree and neither is deep enough
+# to overturn the original sweep. 3.0 weakly dominates 2.0 on all 48 — identical
+# on wl_sweep, better on two others — but the eleven spike/FireSim workloads
+# that ruled out a 4x cap cannot be built from this data root, so moving would
+# trade a documented 30 ms win for a 2 ms one, blind. See §4.6 of
+# docs/scheduler_solver_study.md for the numbers and the follow-up measurement.
 _RESERVED_MAX_SLOWDOWN = 2.0
 
 

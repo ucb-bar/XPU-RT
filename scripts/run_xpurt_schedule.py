@@ -435,6 +435,15 @@ def schedule_iree_networks(
         # yolov8n, and `decomposed` is the only one that does so on the
         # FireSim dronet@50ms + yolov8. Trying all of them and scoring the
         # results removes that per-workload guess.
+        #
+        # `greedy_reserved` earns nothing on the 48 specs that build from the
+        # rose-infra data root: it is the unique best candidate on 0 of them,
+        # and dropping it from this list changes `auto`'s answer on 0 of them.
+        # It stays because the workload its case rests on — the QRB5165 3-way,
+        # where it matches the MILP optimum — is one of the specs that root
+        # cannot build, and a pass costs about a second. See §4.6 of
+        # docs/scheduler_solver_study.md, which names the measurement that
+        # would justify removing it.
         if solver == "auto":
             candidate_solvers = ["greedy_reserved", "greedy_periodic",
                                  "greedy", "decomposed", "heft", "heft_edf"]
