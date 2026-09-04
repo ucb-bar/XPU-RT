@@ -346,3 +346,174 @@ generated at the time; treat it as a measurement, not as something a fresh
   workloads where the heuristics produce no valid schedule — the six
   under-covering corpus cases are the obvious target.
 
+### 4.5 The `wl_sweep` corpus: gating `heft_edf`'s deadline band
+
+`scripts/solver_study/wl_sweep_bench.py` runs every solver over the 24
+buildable `wl_sweep` specs — six workload families (`control_mix`,
+`saturation`, `scale_ladder`, `tight_loop`, `vint_intro`, `vint_multi`) each in
+four machine configurations: `hetero` (1 P + 1 E), `gempair` and `rvvpair` (two
+identical lanes), and `quad` (2 P + 2 E, 6 combinations).
+`scripts/solver_study/data/wl_sweep_baseline.json` freezes the run these
+numbers are diffed against.
+
+**The finding.** `heft_edf`'s periodic priority band was unconditional: every
+periodic op outranked every non-periodic one. That was tuned on the 30 spike
+workloads of §4.3, where plain `heft` scored 0/30 and the band was the
+difference between a valid schedule and none. On `quad` there is enough machine
+slack that the band buys nothing and costs real makespan — measured on the
+three specs where plain `heft` was *also* valid, so the safety was pure loss:
+
+| spec | `heft` | `heft_edf` | penalty |
+| --- | --- | --- | --- |
+| `control_mix_quad` | 33.63 | 36.12 | +7.4% |
+| `saturation_quad` | 75.54 | 86.62 | +14.7% |
+| `vint_multi_quad` | 3750.82 | 3939.28 | +5.0% |
+
+Concentrated, not diffuse: the median penalty over the nine both-valid specs
+was +0.00%.
+
+**The laxity signal.** Each op gets its CPM *total float* — a forward pass for
+the earliest finish it could reach and a backward pass for the latest finish
+that still leaves the chain feasible, both using the fastest combination
+available. The backward pass is what makes the signal usable. `op.max_end_t` is
+the *instance* window, carried identically by every op of the instance, so the
+raw `max_end - eft` of a chain head reads as though it had the whole window to
+itself; the backward pass pushes the real deadline up the chain and gives every
+op of an instance the same float, which is the right semantics — an instance is
+tight or slack as a whole. Dividing by a span lower bound (critical path, or
+total work per machine, whichever binds) makes it scale-free.
+
+**No fixed threshold works.** Swept absolute (ms), normalised by the span lower
+bound, and normalised by the window width, 20-35 values each:
+
+| gate | valid | geomean vs `heft_edf` | worst vs `heft` |
+| --- | --- | --- | --- |
+| `float/L < 0.03` | 14/24 | 0.935 | 1.000 |
+| `float/L < 0.08` | 19/24 | 0.960 | 1.050 |
+| `float/L < 0.13` | 20/24 | 0.982 | 1.147 |
+| `float < 14 ms` | 17/24 | 0.963 | 1.000 |
+| unconditional | 20/24 | 1.000 | 1.147 |
+
+Every constant that recovers `quad` drops windows somewhere else, and every
+constant that is safe everywhere gives `quad`'s penalty straight back. The
+reason is structural: laxity is very nearly configuration-invariant — a window
+and a chain of work do not change when you add a core — while the crowding
+those ops must survive changes a great deal. On `saturation`, the gate that
+recovers `quad`'s makespan (lift 112 of 238) misses ten windows on `hetero`.
+
+**What works is enumeration plus a guard.** A gate can only fall between two
+adjacent laxity *levels*, and because laxity is close to a per-network property
+the corpus admits only 7-8 levels per workload, endpoints included. So there is
+nothing to tune: decode every gate, score each by (missed windows, makespan),
+and keep the best. "Lift everything" is always in the list, so the result is
+never worse than the unconditional band; "lift nothing" is too, so it is never
+worse than plain `heft`. A gate that would drop a deadline is decoded, scored
+and discarded before it can be returned — the guard is what makes a gate this
+aggressive safe to ship.
+
+One caveat found the hard way: the floats of ops that are *equally* tight come
+back differing in the last ulp, because they are the same durations summed in a
+different association order. `control_mix_hetero` has 140 periodic ops at 32
+"distinct" laxities but only 6 levels, the other 26 being spread of order
+1e-16. Gating inside that spread splits an instance chain at a boundary decided
+by rounding; it did move the makespan — a further 2% on two specs — but not
+reproducibly, so `laxity_levels` merges to a relative tolerance first and those
+two percent are deliberately left on the table.
+
+**Result** (objective / missed windows; `misses == 0` is valid):
+
+| spec | config | `heft` | `heft_edf` before | after | delta |
+| --- | --- | --- | --- | --- | --- |
+| `control_mix` | gempair | 54.07 / 14 | 60.07 / 0 | 54.07 / 0 | **-9.99%** |
+| `control_mix` | hetero | 38.17 / 14 | 44.43 / 0 | 42.14 / 0 | **-5.16%** |
+| `control_mix` | quad | 33.63 / 0 | 36.12 / 0 | 33.63 / 0 | **-6.88%** |
+| `control_mix` | rvvpair | 85.67 / 21 | 97.12 / 0 | 85.67 / 0 | **-11.79%** |
+| `saturation` | gempair | 112.16 / 154 | 164.67 / 0 | 154.64 / 0 | **-6.09%** |
+| `saturation` | hetero | 86.94 / 44 | 115.83 / 0 | 109.18 / 0 | **-5.75%** |
+| `saturation` | quad | 75.54 / 0 | 86.62 / 0 | 75.54 / 0 | **-12.78%** |
+| `saturation` | rvvpair | 170.96 / 47 | 217.56 / 0 | 182.98 / 0 | **-15.89%** |
+| `scale_ladder` | gempair | 98.59 / 0 | 98.59 / 0 | 98.59 / 0 | — |
+| `scale_ladder` | hetero | 97.16 / 0 | 97.16 / 0 | 97.16 / 0 | — |
+| `scale_ladder` | quad | 97.16 / 0 | 97.16 / 0 | 97.16 / 0 | — |
+| `scale_ladder` | rvvpair | 97.37 / 0 | 97.37 / 0 | 97.37 / 0 | — |
+| `tight_loop` | gempair | 75.58 / 119 | 92.79 / 84 | 92.20 / 84 | -0.63% |
+| `tight_loop` | hetero | 76.05 / 108 | 100.83 / 84 | 100.81 / 84 | -0.02% |
+| `tight_loop` | quad | 45.92 / 84 | 73.44 / 84 | 45.92 / 84 | -37.48% |
+| `tight_loop` | rvvpair | 75.60 / 84 | 91.21 / 84 | 75.60 / 84 | -17.11% |
+| `vint_intro` | gempair | 3754.05 / 56 | 3754.05 / 0 | 3754.05 / 0 | — |
+| `vint_intro` | hetero | 4160.69 / 0 | 4160.69 / 0 | 4160.69 / 0 | — |
+| `vint_intro` | quad | 3750.82 / 0 | 3750.82 / 0 | 3750.82 / 0 | — |
+| `vint_intro` | rvvpair | 11068.08 / 56 | 11068.08 / 0 | 11068.08 / 0 | — |
+| `vint_multi` | gempair | 3754.05 / 140 | 3874.09 / 0 | 3757.46 / 0 | **-3.01%** |
+| `vint_multi` | hetero | 4160.69 / 33 | 4239.12 / 0 | 4160.69 / 0 | **-1.85%** |
+| `vint_multi` | quad | 3750.82 / 0 | 3939.28 / 0 | 3750.82 / 0 | **-4.78%** |
+| `vint_multi` | rvvpair | 11068.08 / 140 | 11263.61 / 0 | 11069.59 / 0 | **-1.72%** |
+
+- **Validity is unchanged at 20/24** — every spec that was valid still is, and
+  no spec gained validity (the four `tight_loop` specs are statically
+  infeasible: their periodic ops carry *negative* float, so no ordering saves
+  them, and every method misses exactly 84 windows).
+- **All three `quad` penalties are fully recovered**, to `heft`'s makespan to
+  the last decimal.
+- Sixteen of the 24 improve; the largest wins are on specs where `heft` was
+  *invalid*, so they were never visible as a "penalty" at all:
+  `saturation_rvvpair` -15.9%, `control_mix_rvvpair` -11.8%.
+- Deadline margin is not spent to buy this. Worst-case lateness on all 20 valid
+  specs is identical before and after — every window still finishes 1.2-13.1 ms
+  early. Among the infeasible `tight_loop` four, total lateness falls on one,
+  rises 1.1% on another, and is unchanged on two.
+- Cost: 7-8 decodes instead of one, worst case 0.97 s on the 745-op
+  `vint_multi` against 0.16 s — against 20 s for PSO and 60 s for CP-SAT.
+
+**Out of corpus.** The same comparison on the 24 non-`wl_sweep` toplevel specs
+that build from this data root (the `3net` family, `mlp10_dronet20_yolov8`, the
+`smolvla`, `vint` and `yolov8` singles): 0 validity regressions, 0 objective
+regressions, 15 improvements, up to -18.9% on `3net_rvvpair`. None of these
+specs was used to design the gate.
+
+### 4.6 Re-sweeping `greedy_reserved`'s `max_slowdown`
+
+`_RESERVED_MAX_SLOWDOWN = 2.0` was swept over {1, 2, 4, 8, unbounded} on eleven
+spike/FireSim workloads and never re-examined for the gemmini/RVV lanes. Swept
+again over {1, 1.25, 1.5, 2, 3, 4, 6, 8, 12, 16, unbounded}:
+
+- **On `wl_sweep` the knob is inert on 20 of 24 specs** — every value from 1.0
+  to unbounded returns an identical schedule. It moves only on `hetero` and
+  `quad`. On the same-kind pairs it is inert on 12/12, which is structural: the
+  cap rejects a lane more than `max_slowdown` times slower than the op's own
+  fastest, and with two identical lanes there is no such lane to reject. So
+  `--reserved-max-slowdown` is a no-op on any single-lane-family machine set.
+- Where it does move, `wl_sweep` weakly prefers *lower*: 1.0 and 1.25 give
+  11/24 valid against 10/24 for everything ≥1.5, on the strength of one spec
+  (`vint_multi_hetero`), with the geomean objective within 0.1% across the
+  whole range.
+- **That preference reverses on the other 24 specs.** There the knob moves on
+  13/24, validity is 13/24 at every value, and values below 1.5 are much worse
+  on makespan: `vint_only` 4231 ms at 1.0 against 2713 at ≥1.5 (+56%),
+  `vint_stack` 4237 against 2858. So the `wl_sweep` signal is one spec deep and
+  does not generalise.
+- **3.0 weakly dominates 2.0 across all 48 specs measurable here**: identical on
+  every `wl_sweep` spec, and better on two others — `3net_armA` 80 missed
+  windows against 101, `3net_fused_v2` 74.6 ms against 76.6. 4.0 is *worse* than
+  2.0 on `vint_multi_hetero` (4547.4 against 4546.6).
+
+**Recommendation: leave `_RESERVED_MAX_SLOWDOWN` at 2.0, and keep
+`greedy_reserved` in `auto`.** Not because either is earning its place here —
+`greedy_reserved` is the unique best candidate on **0 of 48** specs, and
+removing it from `auto` changes `auto`'s answer on **0 of 48** — but because
+the evidence that put both there is on workloads this data root cannot build.
+The eleven spike/FireSim specs the constant was tuned on all fail with
+`profile_loader: required profile data is missing`, as does the QRB5165 3-way
+workload where `greedy_reserved` reportedly matches the MILP optimum (33.57 ms
+against 90.13 for every other picker). Raising the constant to 3.0 would trade
+a documented 30 ms win on FireSim dronet@20ms+yolov8 — the measurement that
+ruled out a 4x cap — for a 2 ms gain on one spec here, blind. A
+`greedy_reserved` pass costs about a second, so dropping it buys a second and
+risks a documented win.
+
+**The measurement that would settle both:** restore the FireSim/spike profile
+data to a data root and re-run those eleven specs at {2.0, 3.0}. If 3.0 holds
+there it dominates on both corpora and the constant should move; if
+`greedy_reserved`'s QRB5165 3-way win no longer reproduces, it should come out
+of `auto` at the same time.
+
