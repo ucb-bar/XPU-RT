@@ -121,9 +121,9 @@ def draw_topdown(ax, bg, K, cpos, cquat, xpu, ros, gates, people, tnorm, rot, fl
             mu, mv = (u[0], v[0]-40) if is_crash else (u[0], v[0])
             ax.add_patch(Circle((mu, mv), 16, fill=True, fc="black", ec=ec, lw=2.8, zorder=8))
             ax.text(mu, mv, str(mi+1), color="white", fontsize=15, weight="bold", ha="center", va="center", zorder=9)
-    # crop vertically to the aisle band (still full-width) — leave a little shelving/stands on each side
+    # crop vertically to the aisle band (still full-width) — show a good band of shelving/stands each side
     cv = np.concatenate([xv[xvis], rv[rvis], gv[gok]])
-    vmin, vmax = float(np.nanmin(cv)), float(np.nanmax(cv)); pad = 0.52 * (vmax - vmin)
+    vmin, vmax = float(np.nanmin(cv)), float(np.nanmax(cv)); pad = 0.85 * (vmax - vmin)
     ax.set_ylim(min(nH, vmax + pad), max(0, vmin - pad))
 
 
@@ -241,8 +241,8 @@ def main():
                ("XPU", 984, "XPU-RT · gate G3"), ("XPU", 1180, "XPU-RT · gate G4 + person")]
 
     plt.rcParams.update({"font.family": "DejaVu Sans", "font.size": 14, "pdf.fonttype": 42})
-    fig = plt.figure(figsize=(23, 14.8))
-    outer = fig.add_gridspec(4, 1, height_ratios=[3.4, 2.35, 2.2, 4.3], hspace=0.34,
+    fig = plt.figure(figsize=(27, 15.5))
+    outer = fig.add_gridspec(4, 1, height_ratios=[4.0, 2.7, 1.95, 4.0], hspace=0.30,
                              left=0.028, right=0.995, top=0.965, bottom=0.03)
 
     # A top-down (edge to edge)
