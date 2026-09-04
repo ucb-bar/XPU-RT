@@ -16,6 +16,9 @@ def main(inp, outp):
     n, n_combos = m["n"], m["n_combos"]
     dur, pred = m["dur"], m["pred"]
     conflict, first_machine, transfer = m["conflict"], m["first_machine"], m["transfer"]
+    # Machines each combination occupies. Falls back to the first machine only
+    # if an older payload omits it.
+    combo_machines = m.get("combo_machines") or [[c] for c in first_machine]
     min_start, max_end, periodic = m["min_start"], m["max_end"], m["periodic"]
 
     horizon = sum(max(d for d in row if d >= 0) if any(d >= 0 for d in row) else 0
@@ -65,10 +68,24 @@ def main(inp, outp):
                 continue
             iv = model.NewOptionalIntervalVar(start[i], dur_var[i], end[i], b,
                                               f"iv{i}_{c}")
-            for c2 in range(n_combos):
-                if conflict[c][c2]:
-                    per_machine[first_machine[c2]].append(iv)
-                    break
+            # One interval per machine the combination actually occupies.
+            #
+            # This used to walk the conflict row and file the interval under
+            # the FIRST conflicting combination's first machine, then break.
+            # With sibling-core combinations -- ['CPU_P#0'], ['CPU_P#0',
+            # 'CPU_P#1'], ['CPU_P#1'] -- combination 2 conflicts first with
+            # combination 1, whose first machine is CPU_P#0, so ALL THREE
+            # combinations landed on machine 0's list and machine 1's list
+            # stayed empty. The single resulting AddNoOverlap then forbade
+            # ['CPU_P#0'] and ['CPU_P#1'] from running at the same time, which
+            # is precisely the two-hart parallelism the pair configurations
+            # exist to use: CP-SAT was solving a model where a gemmini or rvv
+            # pair is serialised. It answered that model correctly (85.42 ms on
+            # control_mix_gempair against heft_edf's 60.07) and rejected a
+            # correct schedule handed to it as a hint, reporting it "complete,
+            # but infeasible".
+            for mi in combo_machines[c]:
+                per_machine[mi].append(iv)
     for machine_intervals in per_machine:
         if len(machine_intervals) > 1:
             model.AddNoOverlap(machine_intervals)
