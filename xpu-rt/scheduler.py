@@ -412,6 +412,38 @@ def schedule(
     log = _constraints_section_logger(enabled=constraints_debug_enabled, constraints=constraints)
     build_all_start = time.perf_counter()
 
+    # `time_limit` used to bound only the solver call --
+    # MSK_DPAR_OPTIMIZER_MAX_TIME and friends, set in _solver_options -- while
+    # everything below it ran unbounded. Building the model is not a
+    # formality: the (4)(5) rows are O(surviving pairs x combinations^2) cvxpy
+    # expressions, and on a 295-operation workload that is ~18 minutes of
+    # construction against a 120 s budget. The flag therefore did not mean what
+    # it says, and the overrun was silent -- the run simply appeared to hang.
+    #
+    # Construction now shares the budget: it is checked against a deadline as
+    # it goes, and whatever it consumes is deducted from what the solver is
+    # given, so `time_limit` bounds total wall time. Exhausting it during
+    # construction raises rather than continuing, because a model that cannot
+    # be built inside the budget cannot be solved inside it either.
+    _budget = float(time_limit) if time_limit and time_limit > 0 else None
+    _deadline = (build_all_start + _budget) if _budget else None
+
+    def _check_budget(where: str, done: int = 0, total: int = 0):
+        if _deadline is None or time.perf_counter() <= _deadline:
+            return
+        spent = time.perf_counter() - build_all_start
+        progress = f", {done}/{total} of them built" if total else ""
+        raise TimeoutError(
+            f"MILP model construction hit the {_budget:g} s time limit after "
+            f"{spent:.1f} s, while building {where}{progress}; "
+            f"{len(constraints)} constraints so far for {num_operations} "
+            f"operations x {num_combinations} combinations. cvxpy builds every "
+            f"row as a symbolic expression and the count grows quadratically "
+            f"in operations, so this does not finish by waiting a little "
+            f"longer. Raise time_limit, shrink the workload, or use a backend "
+            f"that skips cvxpy: --solver milp_native (MOSEK's own API) or "
+            f"--solver cpsat.")
+
     # (2) Each operation must be assigned to exactly one machine combination
     end = log("(2) assignment (alpha row-sum == 1)")
     for i in range(num_operations):
@@ -546,7 +578,12 @@ def schedule(
     # pairs (a single serial chain, say) legitimately produces none.
     beta = cp.Variable(max(1, len(ordering_pairs)), boolean=True)
 
-    for i, j in ordering_pairs:
+    for _pair_n, (i, j) in enumerate(ordering_pairs):
+        # This loop dominates construction; check often enough to stop
+        # promptly, rarely enough not to matter.
+        if not _pair_n & 0x1FF:
+            _check_budget("(4)(5) pairwise non-overlap rows",
+                          _pair_n, len(ordering_pairs))
         beta_ij = beta[beta_index[(i, j)]]
         for k1 in range(num_combinations):
             for k2 in range(num_combinations):
@@ -679,7 +716,42 @@ def schedule(
             f"Installed: {', '.join(cp.installed_solvers())}."
         )
     solver_verbose = verbose or (solver_verbosity > 0)
-    opts = _solver_options(solver_name, time_limit, verbose)
+    # Whatever construction spent is no longer available to the solver, or
+    # `time_limit` would be a per-phase allowance rather than a wall-clock one.
+    _solver_budget = time_limit
+    if _budget is not None:
+        _build_s = time.perf_counter() - build_all_start
+        _check_budget("the model", 0, 0)
+        _solver_budget = max(_budget - _build_s, 1e-3)
+        # `problem.solve` does not go straight to MOSEK: cvxpy first
+        # canonicalises the whole model, and that pass is neither
+        # interruptible nor covered by MSK_DPAR_OPTIMIZER_MAX_TIME. It is the
+        # real cost -- on a 295-op workload the rows take ~114 s to build and
+        # canonicalisation then runs for many minutes, which is where the
+        # 18-minute overrun against a 120 s budget came from.
+        #
+        # Since it cannot be bounded from in here, refuse instead of entering
+        # it with a budget that cannot cover it. Canonicalising N rows costs at
+        # least as much as building them did, so "less time left than building
+        # took" is a conservative test for "this cannot finish in budget".
+        if _solver_budget < _build_s:
+            raise TimeoutError(
+                f"MILP model built in {_build_s:.1f} s of a {_budget:g} s time "
+                f"limit, leaving {_solver_budget:.1f} s -- not enough to "
+                f"canonicalise it, let alone solve it. cvxpy canonicalisation "
+                f"runs inside problem.solve(), is not interruptible, and is "
+                f"not covered by the solver's own time limit, so continuing "
+                f"here would overrun the budget by minutes with no way to stop "
+                f"({len(constraints)} constraints, {len(ordering_pairs)} "
+                f"ordering pairs, {num_operations} operations). Raise "
+                f"time_limit, shrink the workload, or use a backend that "
+                f"skips cvxpy: --solver milp_native (MOSEK's own API) or "
+                f"--solver cpsat.")
+        if verbose:
+            print(f"model built in {_build_s:.1f} s; "
+                  f"{_solver_budget:.1f} s of the {_budget:g} s budget left "
+                  f"for {solver_name}")
+    opts = _solver_options(solver_name, _solver_budget, verbose)
     if warm_start is not None:
         ws_t, ws_alpha = warm_start
         try:
@@ -725,7 +797,7 @@ def schedule(
         except Exception as exc:
             print(f"warning: could not apply warm start ({exc}); solving cold")
     if verbose and time_limit:
-        print(f"Solving with {solver_name}, time limit {time_limit:.1f} s")
+        print(f"Solving with {solver_name}, time limit {_solver_budget:.1f} s")
     problem.solve(solver=solver_name, verbose=solver_verbose, **opts)
     
     if verbose:

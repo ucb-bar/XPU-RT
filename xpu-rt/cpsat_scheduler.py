@@ -87,48 +87,17 @@ def _integerize(ctx, t, alpha, dur_int) -> tuple[list[int], list[int]] | None:
     return starts, ends
 
 
-def cpsat_available() -> str | None:
-    """Path to an interpreter that can import ortools, or None."""
-    for cand in (os.environ.get("XPURT_CPSAT_PYTHON"), "python3"):
-        if not cand:
-            continue
-        try:
-            r = subprocess.run([cand, "-c", "import ortools"],
-                               capture_output=True, timeout=60)
-            if r.returncode == 0:
-                return cand
-        except Exception:
-            continue
-    return None
+def build_payload(ctx, time_limit: float = 60.0,
+                  restrict_to_nonperiodic: bool = True, workers: int = 8,
+                  random_seed: int = 0, warm_start=None,
+                  verbose: bool = False) -> dict:
+    """The JSON model handed to `_cpsat_solve.py`.
 
-
-def cpsat_schedule(workload, time_limit: float = 60.0,
-                   restrict_to_nonperiodic: bool = True,
-                   workers: int = 8, verbose: bool = False,
-                   warm_start=None, random_seed: int = 0,
-                   ) -> tuple[np.ndarray, np.ndarray]:
-    """Solve with CP-SAT. Raises RuntimeError if no ortools interpreter exists.
-
-    Determinism: CP-SAT is only reproducible with `workers=1`. With several
-    search workers the result depends on thread interleaving, and repeated
-    runs of an identical configuration differ — measured spread on a 242-op
-    instance is about +/-1.5 ms on a 46 ms schedule. `random_seed` is passed
-    through either way, but it does not make a multi-worker solve
-    deterministic.
-
-    `warm_start` is an existing (t, alpha) — typically a greedy schedule — fed
-    to CP-SAT as a solution hint. CP-SAT does not have to respect a hint, but
-    a feasible one gives it an incumbent immediately instead of spending the
-    first part of its budget finding any solution at all, and it bounds the
-    search from the start.
+    Split out from `cpsat_schedule` so the model can be inspected without an
+    ortools interpreter: the two bugs fixed in 95db5778 were both in this
+    payload's account of which machines a combination occupies, and neither
+    was reachable by a test that could only look at an objective value.
     """
-    python = cpsat_available()
-    if python is None:
-        raise RuntimeError(
-            "no interpreter with ortools found; set XPURT_CPSAT_PYTHON to one "
-            "(e.g. a venv created with `python -m venv && pip install ortools`)")
-
-    ctx = DecoderContext(workload)
     dur = np.where(np.isfinite(ctx.dur), ctx.dur, -1.0)
     model = {
         "n": ctx.n,
@@ -179,6 +148,55 @@ def cpsat_schedule(workload, time_limit: float = 60.0,
             model["hint_combo"] = combos
             model["hint_dur"] = [dur_int[i][combos[i]] for i in range(ctx.n)]
             model["hint_end"] = ends
+    return model
+
+
+def cpsat_available() -> str | None:
+    """Path to an interpreter that can import ortools, or None."""
+    for cand in (os.environ.get("XPURT_CPSAT_PYTHON"), "python3"):
+        if not cand:
+            continue
+        try:
+            r = subprocess.run([cand, "-c", "import ortools"],
+                               capture_output=True, timeout=60)
+            if r.returncode == 0:
+                return cand
+        except Exception:
+            continue
+    return None
+
+
+def cpsat_schedule(workload, time_limit: float = 60.0,
+                   restrict_to_nonperiodic: bool = True,
+                   workers: int = 8, verbose: bool = False,
+                   warm_start=None, random_seed: int = 0,
+                   ) -> tuple[np.ndarray, np.ndarray]:
+    """Solve with CP-SAT. Raises RuntimeError if no ortools interpreter exists.
+
+    Determinism: CP-SAT is only reproducible with `workers=1`. With several
+    search workers the result depends on thread interleaving, and repeated
+    runs of an identical configuration differ — measured spread on a 242-op
+    instance is about +/-1.5 ms on a 46 ms schedule. `random_seed` is passed
+    through either way, but it does not make a multi-worker solve
+    deterministic.
+
+    `warm_start` is an existing (t, alpha) — typically a greedy schedule — fed
+    to CP-SAT as a solution hint. CP-SAT does not have to respect a hint, but
+    a feasible one gives it an incumbent immediately instead of spending the
+    first part of its budget finding any solution at all, and it bounds the
+    search from the start.
+    """
+    python = cpsat_available()
+    if python is None:
+        raise RuntimeError(
+            "no interpreter with ortools found; set XPURT_CPSAT_PYTHON to one "
+            "(e.g. a venv created with `python -m venv && pip install ortools`)")
+
+    ctx = DecoderContext(workload)
+    model = build_payload(ctx, time_limit=time_limit,
+                          restrict_to_nonperiodic=restrict_to_nonperiodic,
+                          workers=workers, random_seed=random_seed,
+                          warm_start=warm_start, verbose=verbose)
 
     with tempfile.TemporaryDirectory() as td:
         inp, outp = os.path.join(td, "model.json"), os.path.join(td, "sol.json")
