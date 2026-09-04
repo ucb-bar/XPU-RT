@@ -167,7 +167,7 @@ def main():
     n = len(P)
     # each panel gets its OWN tight x-axis so it fills the full width (no wasted whitespace from the longest
     # panel) — sized larger for single-column legibility.
-    fig, axes = plt.subplots(n, 1, figsize=(12.5, 2.85 * n + 1.5), sharex=False)
+    fig, axes = plt.subplots(n, 1, figsize=(12.5, 3.35 * n + 1.1), sharex=False)
     if n == 1:
         axes = [axes]
     _late = lambda mm: float(mm.get("total_lateness_ms", mm.get("total_lateness", 0)) or 0)
@@ -178,20 +178,25 @@ def main():
         miss, missed = draw(ax, rows, dl, nets, hi, remap, xmax, breaks, fb)
         tks, tlbls = gen_ticks(merged, remap)
         ax.set_xticks(tks); ax.set_xticklabels(tlbls, fontsize=11)
-        # title (short) + the closed-loop driver on one line above it
-        ax.set_title(f"{'①②③④⑤⑥⑦⑧'[min(i,7)]}  {title}", fontsize=15, weight="bold", loc="left", color="#111", pad=4)
-        if driver:
-            ax.text(0.012, 1.40, "▶ " + driver, transform=ax.transAxes, ha="left", va="center",
-                    fontsize=12, style="italic", color="#5a3ea8")
-        # HERO badge = the DEADLINE VERDICT (big); makespan is tiny secondary text
+        verdict_c = "#2f7d4f" if miss == 0 else "#c0392b"
+        # BIG step number in a verdict-coloured circle (far left) — makes the iteration step obvious
+        ax.text(0.008, 1.17, str(i + 1), transform=ax.transAxes, fontsize=30, weight="bold",
+                color="white", ha="center", va="center", zorder=6,
+                bbox=dict(boxstyle="circle,pad=0.30", fc=verdict_c, ec="none"))
+        ax.text(0.052, 1.17, title, transform=ax.transAxes, fontsize=16.5, weight="bold", color="#111",
+                ha="left", va="center")
+        # verdict badge, RIGHT-aligned so it never clips the left title/driver
         if miss == 0:
-            hero = "✓  ALL DEADLINES MET"; bc = "#2f7d4f"
+            hero = "✓  ALL DEADLINES MET"
         else:
-            who = ", ".join(f"{k}×{v}" for k, v in sorted(missed.items(), key=lambda x: -x[1]))
-            hero = f"✗  {miss} DEADLINE{'S' if miss!=1 else ''} MISSED   ({who})"; bc = "#c0392b"
-        ax.text(0.5, 1.20, hero, transform=ax.transAxes, ha="center", va="bottom",
-                fontsize=16, weight="bold", color="white",
-                bbox=dict(boxstyle="round,pad=0.42", fc=bc, ec="white", lw=1.4, alpha=0.98))
+            who = "  ".join(f"{k}×{v}" for k, v in sorted(missed.items(), key=lambda x: -x[1]))
+            hero = f"✗  {miss} MISSED    {who}"
+        ax.text(0.998, 1.17, hero, transform=ax.transAxes, ha="right", va="center",
+                fontsize=15, weight="bold", color="white",
+                bbox=dict(boxstyle="round,pad=0.4", fc=verdict_c, ec="white", lw=1.3))
+        if driver:
+            ax.text(0.052, 1.44, "▶ " + driver, transform=ax.transAxes, ha="left", va="center",
+                    fontsize=12, style="italic", color="#5a3ea8")
         ax.set_ylabel("K1 cores", fontsize=12)
         ax.set_xlabel("onboard time (ms)  ·  " + ("measured board costs" if fb else "predicted costs")
                       + f"  ·  makespan {mk:.0f} ms", fontsize=12)
@@ -202,8 +207,7 @@ def main():
                 Line2D([0], [0], marker="X", color="#e60000", mec="white", ls="none", ms=11, label="deadline MISSED"),
                 Patch(fc="#fbf3ec", ec="0.7", label="runtime-feedback round (board)")]
     fig.legend(handles=handles, loc="lower center", ncol=3, fontsize=11, frameon=False, bbox_to_anchor=(0.5, -0.005))
-    fig.suptitle(a.title, fontsize=14.5, weight="bold", y=0.999)
-    fig.tight_layout(rect=(0, 0.045, 1, 0.978), h_pad=2.6)
+    fig.tight_layout(rect=(0, 0.04, 1, 0.995), h_pad=2.9)
     fig.savefig(a.out + ".png", dpi=160, bbox_inches="tight")
     fig.savefig(a.out + ".pdf", bbox_inches="tight")
     print("wrote", a.out + ".png/.pdf")
