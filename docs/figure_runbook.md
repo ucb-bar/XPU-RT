@@ -11,24 +11,31 @@ figure builders that should be copied into `scripts/` for a clean checkout (they
 
 ## 1. `schedule_evolution_mega` — the co-design "Gantt after Gantt" (the 3rd mega plot)
 **Story**: og (fused, RVV) → +sharding → +unfuse (ModelBlaster graph rewrite) → runtime feedback
-(board-calibrated re-solve) → +other. Each panel a REAL CP-SAT schedule; per-round makespan Δ + verdict.
-- **Generate the sequence** (re-solves 5 lever configs fresh with CP-SAT):
-  `.venv/bin/python scratchpad/evolution_seq.py`  → writes `schedules/scheduled__evo_*_cpsat_profiled.json`
-  and `scratchpad/evo_panels.json`.
+(board-calibrated re-solve) → +other. Each panel a REAL solved schedule; per-round makespan Δ + verdict.
+Idle stretches (this YOLO workload is compute-bound with only ~2 real idle gaps) are compressed into grey
+break columns so no panel shows empty time; the x-axis keeps real dispatch-time labels.
+- **Generate the sequence** (re-solves 5 lever configs fresh, `XPURT_CPSAT_WORKERS=0`; greedy — this workload
+  is slack-rich so greedy is near-optimal AND tractable where CP-SAT is not on the fused+shard model):
+  `.venv/bin/python scripts/gen_schedule_evolution.py`  → writes `schedules/scheduled__evo_*_greedy_profiled.json`
+  and `results/codesign_feedback/evo_panels.json`.
 - **Render**:
-  `.venv/bin/python scratchpad/evolution_mega.py --spec data/toplevel/_evo_og.json \
-     $(python -c "import json;print(' '.join('--panel \"'+p+'\"' for p in json.load(open('scratchpad/evo_panels.json'))))")`
+  `.venv/bin/python scripts/compose_schedule_evolution.py --spec data/toplevel/_evo_og.json \
+     --panels-json results/codesign_feedback/evo_panels.json`
   → `results/codesign_feedback/schedule_evolution_mega.{png,pdf}`.
 - **Inputs**: the 5 `_evo_*` schedules + their `_metrics.json`; the YOLO fused/unfused dispatch graphs under
   `gen_mb/vmfb/yolov8_nano/…`; `k1_board_calibration.json` (for the runtime-feedback round).
 
 ## 2. `hil_ablation_scatter` — HIL speed × frequency × crash/success (GPU)
-- **Generate** the per-flight grid (real Isaac flights; ~120 flights, GPU-hours):
-  `bash scratchpad/hil_ablation_grid.sh`  → appends rows to `scratchpad/hil_grid/hil_ablation.csv`
-  (via `sims/scripts/sweep_rate_demo.py --sweep-csv`; one row/episode:
-  `seed,cruise_speed,control_dt_ms,sched_latency_ms,hold_steps,eff_cmd_hz,…,outcome`).
+- **Generate** the per-flight grid (real Isaac flights; 5 speeds × 4 rates × 6 seeds = 120 flights, GPU-hours).
+  Needs the conda `env_isaaclab` python — pass it via `ISAAC_PY` (see `docs/REPRODUCE.md` §1):
+  `ISAAC_PY=<env_isaaclab>/bin/python bash scripts/hil_ablation_grid.sh`
+  → appends rows to `results/codesign_feedback/hil_grid/hil_ablation.csv` (via
+  `sims/scripts/sweep_rate_demo.py --sweep-csv`; one row/episode:
+  `seed,cruise_speed,sim_dt,decimation,control_dt_ms,sched_latency_ms,hold_steps,eff_cmd_hz,…,outcome`).
+  Overridable env: `XPURT_REPO`, `HIL_OUTDIR`, `HIL_WEIGHTS`. A pre-run copy of the 120-flight CSV is committed
+  at `results/codesign_feedback/hil_ablation.csv` so the scatter can be re-rendered without the GPU sweep.
 - **Render**:
-  `.venv/bin/python scratchpad/hil_ablation_scatter.py --csv scratchpad/hil_grid/hil_ablation.csv`
+  `.venv/bin/python scripts/hil_ablation_scatter.py --csv results/codesign_feedback/hil_ablation.csv`
   → `results/codesign_feedback/hil_ablation_scatter.{png,pdf}`. Overlays the analytic crash-frontier from
   `results/microros_baseline_k1/flyfaster_crash_band.json`.
 

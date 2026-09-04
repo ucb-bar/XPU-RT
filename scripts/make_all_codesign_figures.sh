@@ -3,9 +3,8 @@
 # CPU-only steps run here; GPU steps (Isaac flight data for the warehouse mega plots + HIL scatter grid) are
 # NOTED and skipped unless their inputs already exist. See docs/figure_runbook.md for full commands.
 set -u
-REPO=/scratch2/agustin/XPU-RT
-PY=$REPO/.venv/bin/python
-SP=/scratch/agustin/tmp/claude-2621/-scratch-agustin-projects-DIMA/057226a3-598b-40aa-8396-ef0c5c742cd9/scratchpad
+REPO="${XPURT_REPO:-$(cd "$(dirname "$0")/.." && pwd)}"
+PY="${XPURT_PY:-$REPO/.venv/bin/python}"
 R=$REPO/results/codesign_feedback
 export XPURT_CPSAT_WORKERS=0
 cd "$REPO"
@@ -34,18 +33,22 @@ if [ -f schedules/scheduled__flight_deployed_2frame_greedy_profiled.json ]; then
     --desc "ROS per-net pinning, K1 measured profile" || true
 fi
 
-# 3. Schedule-evolution mega plot — CPU, needs the fresh _evo_* schedules (run scratchpad/evolution_seq.py first)
-if [ -f $SP/evo_panels.json ]; then
+# 3. Schedule-evolution mega plot — CPU. Regenerate the sequence first if it's missing.
+if [ ! -f $R/evo_panels.json ]; then
+  say "gen_schedule_evolution (re-solving 5 lever configs, greedy)"; $PY scripts/gen_schedule_evolution.py || true
+fi
+if [ -f $R/evo_panels.json ]; then
   say "schedule_evolution_mega"
-  PANELS=$($PY -c "import json;print(' '.join('--panel '+repr(p) for p in json.load(open('$SP/evo_panels.json'))))")
-  eval $PY $SP/evolution_mega.py --spec data/toplevel/_evo_og.json $PANELS || true
+  $PY scripts/compose_schedule_evolution.py --spec data/toplevel/_evo_og.json --panels-json $R/evo_panels.json || true
 fi
 
-# 4. HIL ablation scatter — needs the grid CSV (run scratchpad/hil_ablation_grid.sh on a GPU box first)
-if [ -f $SP/hil_grid/hil_ablation.csv ]; then
-  say "hil_ablation_scatter"; $PY $SP/hil_ablation_scatter.py --csv $SP/hil_grid/hil_ablation.csv || true
+# 4. HIL ablation scatter — needs the grid CSV (committed copy at $R/hil_ablation.csv; regen via
+#    scripts/hil_ablation_grid.sh on a GPU box with ISAAC_PY set — see docs/figure_runbook.md §2).
+CSV=$R/hil_ablation.csv; [ -f $R/hil_grid/hil_ablation.csv ] && CSV=$R/hil_grid/hil_ablation.csv
+if [ -f "$CSV" ]; then
+  say "hil_ablation_scatter"; $PY scripts/hil_ablation_scatter.py --csv "$CSV" || true
 else
-  echo "(skip hil_ablation_scatter: run scratchpad/hil_ablation_grid.sh on a GPU box first)"
+  echo "(skip hil_ablation_scatter: run scripts/hil_ablation_grid.sh on a GPU box first)"
 fi
 
 # 5. Warehouse mega plots — need Isaac flight dumps (GPU). Regenerate only if the figdata exists.
