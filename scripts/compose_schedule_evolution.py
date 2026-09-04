@@ -143,31 +143,31 @@ def main():
     fig, axes = plt.subplots(n, 1, figsize=(13.5, 2.35 * n + 1.4), sharex=True)
     if n == 1:
         axes = [axes]
-    prev_mk = None; prev_miss = None
+    _late = lambda mm: float(mm.get("total_lateness_ms", mm.get("total_lateness", 0)) or 0)
+    prev_mk = None; prev_miss = None; prev_late = None
     for i, (ax, (title, hi, rows, m, fb)) in enumerate(zip(axes, P)):
-        mk = m.get(a.metric, m.get("makespan_ms", 0)); miss = m.get("deadline_miss_count", 0)
+        mk = m.get("makespan_ms", 0); miss = m.get("deadline_miss_count", 0); late = _late(m)
         drawn_miss = draw(ax, rows, dl, nets, hi, remap, xmax, breaks, fb)
-        tag = "✓ all deadlines met" if miss == 0 else f"✗ {miss} miss ({m.get('total_lateness_ms',0):.0f} ms late)"
+        # HERO metric = deadline lateness (this is a hard-real-time control workload; makespan is secondary
+        # context — the board re-solve trades a little makespan to erase all the lateness).
+        tag = "✓ all deadlines met" if miss == 0 else f"✗ {miss} miss · {late:.0f} ms total lateness"
         badge = "#2f7d4f" if miss == 0 else "#c0392b"
         ax.set_title(f"{'①②③④⑤⑥⑦⑧'[min(i,7)]}  {title}", fontsize=11, weight="bold", loc="left", color="#222")
-        ax.text(0.997, 0.90, f"makespan {mk:.1f} ms   ·   {tag}", transform=ax.transAxes, ha="right", va="top",
+        ax.text(0.997, 0.90, f"{tag}   ·   makespan {mk:.1f} ms", transform=ax.transAxes, ha="right", va="top",
                 fontsize=9.5, weight="bold", color="white",
                 bbox=dict(boxstyle="round,pad=0.34", fc=badge, ec="none", alpha=0.95))
         ax.set_ylabel("K1 cores", fontsize=8)
-        # delta vs previous panel — lead with the deadline-miss change (the hero metric here),
-        # makespan second; colour by the miss change when it moves, else by makespan.
+        # delta vs previous panel — lead with the deadline lateness change (the hero), misses second
         if prev_mk is not None:
-            dmk = mk - prev_mk
-            sign = "−" if dmk < 0 else ("+" if dmk > 0 else "±")
-            parts = [f"Δ makespan {sign}{abs(dmk):.1f} ms"]
-            if miss != prev_miss:
-                parts.append(f"deadlines {prev_miss}→{miss} miss")
-                col = "#2f7d4f" if miss < prev_miss else "#c0392b"
+            if abs(late - prev_late) > 0.05 or miss != prev_miss:
+                col = "#2f7d4f" if (late < prev_late - 0.05 or miss < prev_miss) else "#c0392b"
+                txt = f"deadline lateness {prev_late:.0f} → {late:.0f} ms     ·     {prev_miss} → {miss} miss"
             else:
-                col = "#2f7d4f" if dmk < -0.05 else ("#c0392b" if dmk > 0.05 else "#777")
-            ax.annotate("     ·     ".join(parts), xy=(0.012, 1.14), xycoords="axes fraction",
-                        fontsize=9, weight="bold", color=col, va="center")
-        prev_mk = mk; prev_miss = miss
+                dmk = mk - prev_mk; col = "#777"
+                txt = f"Δ makespan {'−' if dmk < 0 else '+'}{abs(dmk):.1f} ms  ·  deadlines still met"
+            ax.annotate(txt, xy=(0.012, 1.14), xycoords="axes fraction",
+                        fontsize=9.5, weight="bold", color=col, va="center")
+        prev_mk = mk; prev_miss = miss; prev_late = late
     tks, tlbls = gen_ticks(merged, remap)          # real-ms labels at their compressed positions
     axes[-1].set_xticks(tks); axes[-1].set_xticklabels(tlbls, fontsize=8)
     axes[-1].set_xlabel("time (ms), real dispatch times — idle stretches compressed (grey ┊ breaks); 'runtime feedback' panel uses board-calibrated costs",

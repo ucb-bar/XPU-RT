@@ -6,7 +6,7 @@
       "ordinal": 1,
       "total": 1,
       "dependencies": [],
-      "hardware_target": "CPU_E#3",
+      "hardware_target": "CPU_E#2",
       "start_time": 0.0,
       "duration": 0.0225523289,
       "job_name": "mlp_control0",
@@ -25,12 +25,12 @@
       "dependencies": [
         "mlp_control0_dispatch_0"
       ],
-      "hardware_target": "CPU_P#1",
-      "start_time": 0.024,
+      "hardware_target": "CPU_P#3",
+      "start_time": 0.071,
       "duration": 0.0157950375,
       "job_name": "mlp_control0",
       "module_name": "mlp_control$dispatch_1_rvv_x60_elu_s8_n256",
-      "time_dependency": "attn_block0_dispatch_9",
+      "time_dependency": "fused_full0_dispatch_6",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "deadline_miss": true,
@@ -45,11 +45,11 @@
         "mlp_control0_dispatch_1"
       ],
       "hardware_target": "CPU_E#3",
-      "start_time": 0.045,
+      "start_time": 0.087,
       "duration": 0.018055615599999998,
       "job_name": "mlp_control0",
       "module_name": "mlp_control$dispatch_2_rvv_x60_linear_s8_M1xK256xN128",
-      "time_dependency": "attn_block0_dispatch_3",
+      "time_dependency": "attn_block0_dispatch_7",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "deadline_miss": true,
@@ -63,8 +63,8 @@
       "dependencies": [
         "mlp_control0_dispatch_2"
       ],
-      "hardware_target": "CPU_E#2",
-      "start_time": 0.064,
+      "hardware_target": "CPU_P#1",
+      "start_time": 0.106,
       "duration": 0.008838225,
       "job_name": "mlp_control0",
       "module_name": "mlp_control$dispatch_3_rvv_x60_elu_s8_n128",
@@ -82,11 +82,11 @@
         "mlp_control0_dispatch_3"
       ],
       "hardware_target": "CPU_E#2",
-      "start_time": 0.073,
+      "start_time": 0.115,
       "duration": 0.007797500000000001,
       "job_name": "mlp_control0",
       "module_name": "mlp_control$dispatch_4_rvv_x60_linear_s8_M1xK128xN64",
-      "time_dependency": "mlp_control0_dispatch_3",
+      "time_dependency": "mlp_control0_dispatch_0",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "deadline_miss": true,
@@ -100,12 +100,12 @@
       "dependencies": [
         "mlp_control0_dispatch_4"
       ],
-      "hardware_target": "CPU_E#2",
-      "start_time": 2.839,
+      "hardware_target": "CPU_E#3",
+      "start_time": 0.123,
       "duration": 0.0058296875,
       "job_name": "mlp_control0",
       "module_name": "mlp_control$dispatch_5_rvv_x60_elu_s8_n64",
-      "time_dependency": "mlp_control0_dispatch_4",
+      "time_dependency": "mlp_control0_dispatch_2",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "deadline_miss": true,
@@ -119,12 +119,12 @@
       "dependencies": [
         "mlp_control0_dispatch_5"
       ],
-      "hardware_target": "CPU_E#3",
-      "start_time": 2.845,
+      "hardware_target": "CPU_P#3",
+      "start_time": 0.129,
       "duration": 0.0017737875,
       "job_name": "mlp_control0",
       "module_name": "mlp_control$dispatch_6_rvv_x60_linear_s8_M1xK64xN4",
-      "time_dependency": "fused_full0_dispatch_1",
+      "time_dependency": "mlp_control0_dispatch_1",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "deadline_miss": true,
@@ -136,12 +136,12 @@
       "ordinal": 1,
       "total": 1,
       "dependencies": [],
-      "hardware_target": "CPU_P#3",
-      "start_time": 9.508,
+      "hardware_target": "CPU_E#1",
+      "start_time": 5.728,
       "duration": 0.0225523289,
       "job_name": "mlp_control1",
       "module_name": "mlp_control$dispatch_0_rvv_x60_linear_s8_M1xK16xN256",
-      "time_dependency": "ffn_block0_dispatch_1",
+      "time_dependency": "fused_full0_dispatch_12",
       "release_policy": "phase_locked",
       "release_us": 5000.0,
       "time_dep_mode": "soft",
@@ -154,12 +154,11 @@
       "dependencies": [
         "mlp_control1_dispatch_0"
       ],
-      "hardware_target": "CPU_P#3",
-      "start_time": 9.531,
+      "hardware_target": "CPU_E#0",
+      "start_time": 5.751,
       "duration": 0.0157950375,
       "job_name": "mlp_control1",
       "module_name": "mlp_control$dispatch_1_rvv_x60_elu_s8_n256",
-      "time_dependency": "mlp_control1_dispatch_0",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "deadline_miss": true,
@@ -173,12 +172,12 @@
       "dependencies": [
         "mlp_control1_dispatch_1"
       ],
-      "hardware_target": "CPU_P#2",
-      "start_time": 9.547,
+      "hardware_target": "CPU_P#3",
+      "start_time": 9.454,
       "duration": 0.018055615599999998,
       "job_name": "mlp_control1",
       "module_name": "mlp_control$dispatch_2_rvv_x60_linear_s8_M1xK256xN128",
-      "time_dependency": "fused_full1_dispatch_1",
+      "time_dependency": "ffn_block0_dispatch_1",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "deadline_miss": true,
@@ -192,12 +191,12 @@
       "dependencies": [
         "mlp_control1_dispatch_2"
       ],
-      "hardware_target": "CPU_E#0",
-      "start_time": 9.779,
+      "hardware_target": "CPU_E#3",
+      "start_time": 9.975,
       "duration": 0.008838225,
       "job_name": "mlp_control1",
       "module_name": "mlp_control$dispatch_3_rvv_x60_elu_s8_n128",
-      "time_dependency": "fused_full1_dispatch_13",
+      "time_dependency": "fused_full1_dispatch_11",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "deadline_miss": true,
@@ -211,8 +210,8 @@
       "dependencies": [
         "mlp_control1_dispatch_3"
       ],
-      "hardware_target": "CPU_E#0",
-      "start_time": 9.788,
+      "hardware_target": "CPU_E#3",
+      "start_time": 9.984,
       "duration": 0.007797500000000001,
       "job_name": "mlp_control1",
       "module_name": "mlp_control$dispatch_4_rvv_x60_linear_s8_M1xK128xN64",
@@ -230,12 +229,12 @@
       "dependencies": [
         "mlp_control1_dispatch_4"
       ],
-      "hardware_target": "CPU_E#2",
-      "start_time": 9.796,
+      "hardware_target": "CPU_P#1",
+      "start_time": 9.992,
       "duration": 0.0058296875,
       "job_name": "mlp_control1",
       "module_name": "mlp_control$dispatch_5_rvv_x60_elu_s8_n64",
-      "time_dependency": "mlp_control0_dispatch_5",
+      "time_dependency": "fused_full1_dispatch_14",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "deadline_miss": true,
@@ -250,11 +249,11 @@
         "mlp_control1_dispatch_5"
       ],
       "hardware_target": "CPU_E#3",
-      "start_time": 9.802,
+      "start_time": 9.998,
       "duration": 0.0017737875,
       "job_name": "mlp_control1",
       "module_name": "mlp_control$dispatch_6_rvv_x60_linear_s8_M1xK64xN4",
-      "time_dependency": "fused_full1_dispatch_9",
+      "time_dependency": "mlp_control1_dispatch_4",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "deadline_miss": true,
@@ -266,12 +265,12 @@
       "ordinal": 1,
       "total": 1,
       "dependencies": [],
-      "hardware_target": "CPU_E#3",
-      "start_time": 10.071,
+      "hardware_target": "CPU_E#0",
+      "start_time": 10.0,
       "duration": 0.0225523289,
       "job_name": "mlp_control2",
       "module_name": "mlp_control$dispatch_0_rvv_x60_linear_s8_M1xK16xN256",
-      "time_dependency": "fused_full2_dispatch_6",
+      "time_dependency": "fused_full1_dispatch_12",
       "release_policy": "phase_locked",
       "release_us": 10000.0,
       "time_dep_mode": "soft",
@@ -284,12 +283,12 @@
       "dependencies": [
         "mlp_control2_dispatch_0"
       ],
-      "hardware_target": "CPU_P#1",
-      "start_time": 10.646,
+      "hardware_target": "CPU_P#3",
+      "start_time": 10.141,
       "duration": 0.0157950375,
       "job_name": "mlp_control2",
       "module_name": "mlp_control$dispatch_1_rvv_x60_elu_s8_n256",
-      "time_dependency": "fused_full2_dispatch_0",
+      "time_dependency": "ffn_block0_dispatch_2",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "deadline_miss": true,
@@ -303,8 +302,8 @@
       "dependencies": [
         "mlp_control2_dispatch_1"
       ],
-      "hardware_target": "CPU_P#1",
-      "start_time": 10.662,
+      "hardware_target": "CPU_P#3",
+      "start_time": 10.157,
       "duration": 0.018055615599999998,
       "job_name": "mlp_control2",
       "module_name": "mlp_control$dispatch_2_rvv_x60_linear_s8_M1xK256xN128",
@@ -323,11 +322,11 @@
         "mlp_control2_dispatch_2"
       ],
       "hardware_target": "CPU_P#2",
-      "start_time": 10.681,
+      "start_time": 10.176,
       "duration": 0.008838225,
       "job_name": "mlp_control2",
       "module_name": "mlp_control$dispatch_3_rvv_x60_elu_s8_n128",
-      "time_dependency": "fused_full2_dispatch_8",
+      "time_dependency": "fused_full2_dispatch_6",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "deadline_miss": true,
@@ -342,11 +341,11 @@
         "mlp_control2_dispatch_3"
       ],
       "hardware_target": "CPU_E#0",
-      "start_time": 11.476,
+      "start_time": 10.637,
       "duration": 0.007797500000000001,
       "job_name": "mlp_control2",
       "module_name": "mlp_control$dispatch_4_rvv_x60_linear_s8_M1xK128xN64",
-      "time_dependency": "fused_full2_dispatch_1",
+      "time_dependency": "mlp_control2_dispatch_0",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "deadline_miss": true,
@@ -360,12 +359,12 @@
       "dependencies": [
         "mlp_control2_dispatch_4"
       ],
-      "hardware_target": "CPU_E#0",
-      "start_time": 11.484,
+      "hardware_target": "CPU_E#2",
+      "start_time": 14.992,
       "duration": 0.0058296875,
       "job_name": "mlp_control2",
       "module_name": "mlp_control$dispatch_5_rvv_x60_elu_s8_n64",
-      "time_dependency": "mlp_control2_dispatch_4",
+      "time_dependency": "fused_full2_dispatch_11",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "deadline_miss": true,
@@ -379,12 +378,12 @@
       "dependencies": [
         "mlp_control2_dispatch_5"
       ],
-      "hardware_target": "CPU_P#2",
-      "start_time": 11.49,
+      "hardware_target": "CPU_E#3",
+      "start_time": 14.998,
       "duration": 0.0017737875,
       "job_name": "mlp_control2",
       "module_name": "mlp_control$dispatch_6_rvv_x60_linear_s8_M1xK64xN4",
-      "time_dependency": "mlp_control2_dispatch_3",
+      "time_dependency": "fused_full2_dispatch_14",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "deadline_miss": true,
@@ -397,11 +396,11 @@
       "total": 1,
       "dependencies": [],
       "hardware_target": "CPU_E#3",
-      "start_time": 15.95,
+      "start_time": 15.0,
       "duration": 0.0225523289,
       "job_name": "mlp_control3",
       "module_name": "mlp_control$dispatch_0_rvv_x60_linear_s8_M1xK16xN256",
-      "time_dependency": "mlp_control2_dispatch_0",
+      "time_dependency": "mlp_control2_dispatch_6",
       "release_policy": "phase_locked",
       "release_us": 15000.0,
       "time_dep_mode": "soft",
@@ -414,12 +413,12 @@
       "dependencies": [
         "mlp_control3_dispatch_0"
       ],
-      "hardware_target": "CPU_E#3",
-      "start_time": 16.953,
+      "hardware_target": "CPU_E#2",
+      "start_time": 16.952,
       "duration": 0.0157950375,
       "job_name": "mlp_control3",
       "module_name": "mlp_control$dispatch_1_rvv_x60_elu_s8_n256",
-      "time_dependency": "mlp_control3_dispatch_0",
+      "time_dependency": "fused_full3_dispatch_0",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -431,12 +430,12 @@
       "dependencies": [
         "mlp_control3_dispatch_1"
       ],
-      "hardware_target": "CPU_E#0",
-      "start_time": 17.176,
+      "hardware_target": "CPU_E#3",
+      "start_time": 18.585,
       "duration": 0.018055615599999998,
       "job_name": "mlp_control3",
       "module_name": "mlp_control$dispatch_2_rvv_x60_linear_s8_M1xK256xN128",
-      "time_dependency": "fused_full2_dispatch_5",
+      "time_dependency": "fused_full3_dispatch_5",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -448,12 +447,12 @@
       "dependencies": [
         "mlp_control3_dispatch_2"
       ],
-      "hardware_target": "CPU_E#3",
-      "start_time": 17.364,
+      "hardware_target": "CPU_E#1",
+      "start_time": 18.604,
       "duration": 0.008838225,
       "job_name": "mlp_control3",
       "module_name": "mlp_control$dispatch_3_rvv_x60_elu_s8_n128",
-      "time_dependency": "mlp_control3_dispatch_1",
+      "time_dependency": "attn_block0_dispatch_2",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -465,12 +464,12 @@
       "dependencies": [
         "mlp_control3_dispatch_3"
       ],
-      "hardware_target": "CPU_P#0",
-      "start_time": 17.373,
+      "hardware_target": "CPU_E#2",
+      "start_time": 18.613,
       "duration": 0.007797500000000001,
       "job_name": "mlp_control3",
       "module_name": "mlp_control$dispatch_4_rvv_x60_linear_s8_M1xK128xN64",
-      "time_dependency": "fused_full3_dispatch_7",
+      "time_dependency": "fused_full3_dispatch_10",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "deadline_miss": true,
@@ -484,12 +483,12 @@
       "dependencies": [
         "mlp_control3_dispatch_4"
       ],
-      "hardware_target": "CPU_E#2",
-      "start_time": 17.381,
+      "hardware_target": "CPU_E#1",
+      "start_time": 18.621,
       "duration": 0.0058296875,
       "job_name": "mlp_control3",
       "module_name": "mlp_control$dispatch_5_rvv_x60_elu_s8_n64",
-      "time_dependency": "fused_full2_dispatch_7",
+      "time_dependency": "mlp_control3_dispatch_3",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "deadline_miss": true,
@@ -503,12 +502,12 @@
       "dependencies": [
         "mlp_control3_dispatch_5"
       ],
-      "hardware_target": "CPU_E#2",
-      "start_time": 17.387,
+      "hardware_target": "CPU_P#0",
+      "start_time": 19.796,
       "duration": 0.0017737875,
       "job_name": "mlp_control3",
       "module_name": "mlp_control$dispatch_6_rvv_x60_linear_s8_M1xK64xN4",
-      "time_dependency": "mlp_control3_dispatch_5",
+      "time_dependency": "yolov8_nano_64x960_dispatch_51",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "deadline_miss": true,
@@ -520,12 +519,12 @@
       "ordinal": 1,
       "total": 1,
       "dependencies": [],
-      "hardware_target": "CPU_E#3",
+      "hardware_target": "CPU_E#1",
       "start_time": 20.0,
       "duration": 0.0225523289,
       "job_name": "mlp_control4",
       "module_name": "mlp_control$dispatch_0_rvv_x60_linear_s8_M1xK16xN256",
-      "time_dependency": "mlp_control3_dispatch_3",
+      "time_dependency": "mlp_control3_dispatch_5",
       "release_policy": "phase_locked",
       "release_us": 20000.0,
       "time_dep_mode": "soft",
@@ -538,12 +537,12 @@
       "dependencies": [
         "mlp_control4_dispatch_0"
       ],
-      "hardware_target": "CPU_E#0",
+      "hardware_target": "CPU_E#3",
       "start_time": 20.023,
       "duration": 0.0157950375,
       "job_name": "mlp_control4",
       "module_name": "mlp_control$dispatch_1_rvv_x60_elu_s8_n256",
-      "time_dependency": "fused_full3_dispatch_13",
+      "time_dependency": "attn_block0_dispatch_10",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -555,12 +554,12 @@
       "dependencies": [
         "mlp_control4_dispatch_1"
       ],
-      "hardware_target": "CPU_E#1",
-      "start_time": 20.039,
+      "hardware_target": "CPU_P#3",
+      "start_time": 20.772,
       "duration": 0.018055615599999998,
       "job_name": "mlp_control4",
       "module_name": "mlp_control$dispatch_2_rvv_x60_linear_s8_M1xK256xN128",
-      "time_dependency": "fused_full3_dispatch_5",
+      "time_dependency": "yolov8_nano_64x960_dispatch_43",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -572,12 +571,12 @@
       "dependencies": [
         "mlp_control4_dispatch_2"
       ],
-      "hardware_target": "CPU_P#0",
-      "start_time": 20.384,
+      "hardware_target": "CPU_E#1",
+      "start_time": 20.791,
       "duration": 0.008838225,
       "job_name": "mlp_control4",
       "module_name": "mlp_control$dispatch_3_rvv_x60_elu_s8_n128",
-      "time_dependency": "yolov8_nano_64x960_dispatch_37",
+      "time_dependency": "mlp_control4_dispatch_0",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -589,12 +588,12 @@
       "dependencies": [
         "mlp_control4_dispatch_3"
       ],
-      "hardware_target": "CPU_E#1",
-      "start_time": 20.393,
+      "hardware_target": "CPU_P#2",
+      "start_time": 20.8,
       "duration": 0.007797500000000001,
       "job_name": "mlp_control4",
       "module_name": "mlp_control$dispatch_4_rvv_x60_linear_s8_M1xK128xN64",
-      "time_dependency": "mlp_control4_dispatch_2",
+      "time_dependency": "fused_full3_dispatch_1",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -606,8 +605,8 @@
       "dependencies": [
         "mlp_control4_dispatch_4"
       ],
-      "hardware_target": "CPU_E#1",
-      "start_time": 20.419,
+      "hardware_target": "CPU_P#2",
+      "start_time": 20.808,
       "duration": 0.0058296875,
       "job_name": "mlp_control4",
       "module_name": "mlp_control$dispatch_5_rvv_x60_elu_s8_n64",
@@ -623,12 +622,12 @@
       "dependencies": [
         "mlp_control4_dispatch_5"
       ],
-      "hardware_target": "CPU_E#0",
-      "start_time": 20.425,
+      "hardware_target": "CPU_P#2",
+      "start_time": 22.018,
       "duration": 0.0017737875,
       "job_name": "mlp_control4",
       "module_name": "mlp_control$dispatch_6_rvv_x60_linear_s8_M1xK64xN4",
-      "time_dependency": "mlp_control4_dispatch_1",
+      "time_dependency": "mlp_control4_dispatch_5",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -638,7 +637,7 @@
       "ordinal": 1,
       "total": 1,
       "dependencies": [],
-      "hardware_target": "CPU_E#0",
+      "hardware_target": "CPU_P#0",
       "start_time": 0.0,
       "duration": 0.6459624500000001,
       "job_name": "fused_full0",
@@ -655,12 +654,12 @@
       "dependencies": [
         "fused_full0_dispatch_0"
       ],
-      "hardware_target": "CPU_E#3",
-      "start_time": 0.647,
+      "hardware_target": "CPU_P#1",
+      "start_time": 0.646,
       "duration": 0.82951625,
       "job_name": "fused_full0",
       "module_name": "fused_full$dispatch_1_rvv_x60_conv2d_s8_N1xIC16xIH30xIW45xOC32xOH15xOW23xKH3xKW3xSH2xSW2xPH1xPW1",
-      "time_dependency": "fused_full0_dispatch_7",
+      "time_dependency": "mlp_control0_dispatch_3",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -672,12 +671,12 @@
       "dependencies": [
         "fused_full0_dispatch_1"
       ],
-      "hardware_target": "CPU_P#1",
-      "start_time": 1.477,
+      "hardware_target": "CPU_P#0",
+      "start_time": 1.476,
       "duration": 0.8845663283999999,
       "job_name": "fused_full0",
       "module_name": "fused_full$dispatch_2_rvv_x60_conv2d_s8_N1xIC32xIH15xIW23xOC64xOH8xOW12xKH3xKW3xSH2xSW2xPH1xPW1",
-      "time_dependency": "mlp_control0_dispatch_1",
+      "time_dependency": "attn_block0_dispatch_9",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -689,8 +688,8 @@
       "dependencies": [
         "fused_full0_dispatch_2"
       ],
-      "hardware_target": "CPU_P#1",
-      "start_time": 2.362,
+      "hardware_target": "CPU_P#0",
+      "start_time": 2.361,
       "duration": 0.49263343080000005,
       "job_name": "fused_full0",
       "module_name": "fused_full$dispatch_3_rvv_x60_conv2d_s8_N1xIC64xIH8xIW12xOC64xOH4xOW6xKH3xKW3xSH2xSW2xPH1xPW1",
@@ -706,11 +705,12 @@
       "dependencies": [
         "fused_full0_dispatch_3"
       ],
-      "hardware_target": "CPU_E#1",
-      "start_time": 2.855,
+      "hardware_target": "CPU_P#1",
+      "start_time": 2.854,
       "duration": 0.0039249515,
       "job_name": "fused_full0",
       "module_name": "fused_full$dispatch_4_rvv_x60_cast_i8_to_f16_n1536",
+      "time_dependency": "fused_full0_dispatch_1",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -723,11 +723,11 @@
         "fused_full0_dispatch_4"
       ],
       "hardware_target": "CPU_P#1",
-      "start_time": 2.859,
+      "start_time": 2.858,
       "duration": 0.6646869230999999,
       "job_name": "fused_full0",
       "module_name": "fused_full$dispatch_5_rvv_x60_linear_f16_M1xK1536xN512",
-      "time_dependency": "fused_full0_dispatch_3",
+      "time_dependency": "fused_full0_dispatch_4",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -737,7 +737,7 @@
       "ordinal": 1,
       "total": 1,
       "dependencies": [],
-      "hardware_target": "CPU_P#0",
+      "hardware_target": "CPU_P#3",
       "start_time": 0.0,
       "duration": 0.0700392744,
       "job_name": "fused_full0",
@@ -745,7 +745,7 @@
       "release_policy": "phase_locked",
       "release_us": 0.0,
       "time_dep_mode": "soft",
-      "impl": "rvv"
+      "impl": "ime"
     },
     "fused_full0_dispatch_7": {
       "id": 7,
@@ -754,12 +754,12 @@
       "dependencies": [
         "fused_full0_dispatch_6"
       ],
-      "hardware_target": "CPU_E#3",
+      "hardware_target": "CPU_P#2",
       "start_time": 0.071,
       "duration": 0.1398506026,
       "job_name": "fused_full0",
       "module_name": "fused_full$dispatch_7_rvv_x60_conv2d_s8_N1xIC16xIH8xIW8xOC16xOH8xOW8xKH3xKW3xSH1xSW1xPH1xPW1",
-      "time_dependency": "mlp_control0_dispatch_2",
+      "time_dependency": "attn_block0_dispatch_0",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -771,12 +771,12 @@
       "dependencies": [
         "fused_full0_dispatch_7"
       ],
-      "hardware_target": "CPU_P#3",
-      "start_time": 1.265,
+      "hardware_target": "CPU_E#3",
+      "start_time": 0.211,
       "duration": 0.0058218496,
       "job_name": "fused_full0",
       "module_name": "fused_full$dispatch_8_rvv_x60_cast_i8_to_f16_n1024",
-      "time_dependency": "attn_block0_dispatch_5",
+      "time_dependency": "mlp_control0_dispatch_5",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -788,12 +788,12 @@
       "dependencies": [
         "fused_full0_dispatch_8"
       ],
-      "hardware_target": "CPU_P#0",
-      "start_time": 1.271,
+      "hardware_target": "CPU_E#3",
+      "start_time": 0.217,
       "duration": 0.0654161944,
       "job_name": "fused_full0",
       "module_name": "fused_full$dispatch_9_rvv_x60_linear_f16_M1xK1024xN64",
-      "time_dependency": "ffn_block0_dispatch_0",
+      "time_dependency": "fused_full0_dispatch_8",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -806,12 +806,11 @@
         "fused_full0_dispatch_5",
         "fused_full0_dispatch_9"
       ],
-      "hardware_target": "CPU_E#0",
-      "start_time": 3.557,
+      "hardware_target": "CPU_E#1",
+      "start_time": 3.523,
       "duration": 0.0038245545,
       "job_name": "fused_full0",
       "module_name": "fused_full$dispatch_10_rvv_x60_cat3_c1_f16_N1xH1xW1xC_inputs512|64|21xC_total597",
-      "time_dependency": "attn_block0_dispatch_2",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -823,12 +822,12 @@
       "dependencies": [
         "fused_full0_dispatch_10"
       ],
-      "hardware_target": "CPU_P#0",
-      "start_time": 3.561,
+      "hardware_target": "CPU_P#1",
+      "start_time": 3.527,
       "duration": 0.5387657376,
       "job_name": "fused_full0",
       "module_name": "fused_full$dispatch_11_rvv_x60_lstm_f16_input_size597xhidden_size128",
-      "time_dependency": "fused_full0_dispatch_9",
+      "time_dependency": "fused_full0_dispatch_5",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "ime"
@@ -840,15 +839,15 @@
       "dependencies": [
         "fused_full0_dispatch_11"
       ],
-      "hardware_target": "CPU_P#1",
-      "start_time": 4.1,
+      "hardware_target": "CPU_E#1",
+      "start_time": 4.066,
       "duration": 0.2870321375,
       "job_name": "fused_full0",
       "module_name": "fused_full$dispatch_12_rvv_x60_lstm_f16_input_size128xhidden_size128",
-      "time_dependency": "fused_full0_dispatch_5",
+      "time_dependency": "fused_full0_dispatch_10",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
-      "impl": "ime"
+      "impl": "rvv"
     },
     "fused_full0_dispatch_13": {
       "id": 13,
@@ -857,15 +856,15 @@
       "dependencies": [
         "fused_full0_dispatch_12"
       ],
-      "hardware_target": "CPU_P#1",
-      "start_time": 4.388,
+      "hardware_target": "CPU_P#0",
+      "start_time": 4.354,
       "duration": 0.2704685697,
       "job_name": "fused_full0",
       "module_name": "fused_full$dispatch_13_rvv_x60_lstm_f16_input_size128xhidden_size128",
-      "time_dependency": "fused_full0_dispatch_12",
+      "time_dependency": "fused_full0_dispatch_3",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
-      "impl": "rvv"
+      "impl": "ime"
     },
     "fused_full0_dispatch_14": {
       "id": 14,
@@ -875,14 +874,14 @@
         "fused_full0_dispatch_13"
       ],
       "hardware_target": "CPU_P#0",
-      "start_time": 4.659,
+      "start_time": 4.625,
       "duration": 0.0021205625,
       "job_name": "fused_full0",
       "module_name": "fused_full$dispatch_14_rvv_x60_linear_f16_M1xK128xN2",
-      "time_dependency": "fused_full0_dispatch_11",
+      "time_dependency": "fused_full0_dispatch_13",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
-      "impl": "rvv"
+      "impl": "ime"
     },
     "fused_full1_dispatch_0": {
       "id": 0,
@@ -891,14 +890,15 @@
       "dependencies": [
         "fused_full0_dispatch_14"
       ],
-      "hardware_target": "CPU_P#2",
+      "hardware_target": "CPU_P#1",
       "start_time": 5.0,
       "duration": 0.6459624500000001,
       "job_name": "fused_full1",
       "module_name": "fused_full$dispatch_0_rvv_x60_conv2d_s8_N1xIC1xIH60xIW90xOC16xOH30xOW45xKH5xKW5xSH2xSW2xPH2xPW2",
+      "time_dependency": "fused_full0_dispatch_11",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
-      "impl": "ime"
+      "impl": "rvv"
     },
     "fused_full1_dispatch_1": {
       "id": 1,
@@ -907,15 +907,15 @@
       "dependencies": [
         "fused_full1_dispatch_0"
       ],
-      "hardware_target": "CPU_P#2",
+      "hardware_target": "CPU_P#0",
       "start_time": 5.646,
       "duration": 0.82951625,
       "job_name": "fused_full1",
       "module_name": "fused_full$dispatch_1_rvv_x60_conv2d_s8_N1xIC16xIH30xIW45xOC32xOH15xOW23xKH3xKW3xSH2xSW2xPH1xPW1",
-      "time_dependency": "fused_full1_dispatch_0",
+      "time_dependency": "fused_full0_dispatch_14",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
-      "impl": "ime"
+      "impl": "rvv"
     },
     "fused_full1_dispatch_2": {
       "id": 2,
@@ -924,12 +924,12 @@
       "dependencies": [
         "fused_full1_dispatch_1"
       ],
-      "hardware_target": "CPU_P#0",
+      "hardware_target": "CPU_P#2",
       "start_time": 6.476,
       "duration": 0.8845663283999999,
       "job_name": "fused_full1",
       "module_name": "fused_full$dispatch_2_rvv_x60_conv2d_s8_N1xIC32xIH15xIW23xOC64xOH8xOW12xKH3xKW3xSH2xSW2xPH1xPW1",
-      "time_dependency": "yolov8_nano_64x960_dispatch_7",
+      "time_dependency": "ffn_block0_dispatch_0",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -941,12 +941,12 @@
       "dependencies": [
         "fused_full1_dispatch_2"
       ],
-      "hardware_target": "CPU_P#0",
+      "hardware_target": "CPU_E#0",
       "start_time": 7.361,
       "duration": 0.49263343080000005,
       "job_name": "fused_full1",
       "module_name": "fused_full$dispatch_3_rvv_x60_conv2d_s8_N1xIC64xIH8xIW12xOC64xOH4xOW6xKH3xKW3xSH2xSW2xPH1xPW1",
-      "time_dependency": "fused_full1_dispatch_2",
+      "time_dependency": "mlp_control1_dispatch_1",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -963,10 +963,10 @@
       "duration": 0.0039249515,
       "job_name": "fused_full1",
       "module_name": "fused_full$dispatch_4_rvv_x60_cast_i8_to_f16_n1536",
-      "time_dependency": "fused_full1_dispatch_3",
+      "time_dependency": "fused_full1_dispatch_1",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
-      "impl": "ime"
+      "impl": "rvv"
     },
     "fused_full1_dispatch_5": {
       "id": 5,
@@ -975,12 +975,12 @@
       "dependencies": [
         "fused_full1_dispatch_4"
       ],
-      "hardware_target": "CPU_P#0",
+      "hardware_target": "CPU_P#2",
       "start_time": 7.858,
       "duration": 0.6646869230999999,
       "job_name": "fused_full1",
       "module_name": "fused_full$dispatch_5_rvv_x60_linear_f16_M1xK1536xN512",
-      "time_dependency": "fused_full1_dispatch_4",
+      "time_dependency": "fused_full1_dispatch_2",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -993,14 +993,14 @@
         "fused_full0_dispatch_14"
       ],
       "hardware_target": "CPU_P#1",
-      "start_time": 5.0,
+      "start_time": 5.646,
       "duration": 0.0700392744,
       "job_name": "fused_full1",
       "module_name": "fused_full$dispatch_6_rvv_x60_conv2d_s8_N1xIC4xIH8xIW8xOC16xOH8xOW8xKH3xKW3xSH1xSW1xPH1xPW1",
-      "time_dependency": "fused_full0_dispatch_13",
+      "time_dependency": "fused_full1_dispatch_0",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
-      "impl": "rvv"
+      "impl": "ime"
     },
     "fused_full1_dispatch_7": {
       "id": 7,
@@ -1009,12 +1009,12 @@
       "dependencies": [
         "fused_full1_dispatch_6"
       ],
-      "hardware_target": "CPU_P#0",
-      "start_time": 5.073,
+      "hardware_target": "CPU_P#1",
+      "start_time": 5.8,
       "duration": 0.1398506026,
       "job_name": "fused_full1",
       "module_name": "fused_full$dispatch_7_rvv_x60_conv2d_s8_N1xIC16xIH8xIW8xOC16xOH8xOW8xKH3xKW3xSH1xSW1xPH1xPW1",
-      "time_dependency": "fused_full0_dispatch_14",
+      "time_dependency": "yolov8_nano_64x960_dispatch_7",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -1026,12 +1026,12 @@
       "dependencies": [
         "fused_full1_dispatch_7"
       ],
-      "hardware_target": "CPU_E#3",
-      "start_time": 5.213,
+      "hardware_target": "CPU_P#1",
+      "start_time": 5.94,
       "duration": 0.0058218496,
       "job_name": "fused_full1",
       "module_name": "fused_full$dispatch_8_rvv_x60_cast_i8_to_f16_n1024",
-      "time_dependency": "mlp_control0_dispatch_6",
+      "time_dependency": "fused_full1_dispatch_7",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -1044,11 +1044,11 @@
         "fused_full1_dispatch_8"
       ],
       "hardware_target": "CPU_E#3",
-      "start_time": 6.397,
+      "start_time": 7.332,
       "duration": 0.0654161944,
       "job_name": "fused_full1",
       "module_name": "fused_full$dispatch_9_rvv_x60_linear_f16_M1xK1024xN64",
-      "time_dependency": "fused_full1_dispatch_8",
+      "time_dependency": "fused_full0_dispatch_9",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -1061,12 +1061,12 @@
         "fused_full1_dispatch_5",
         "fused_full1_dispatch_9"
       ],
-      "hardware_target": "CPU_P#0",
+      "hardware_target": "CPU_E#0",
       "start_time": 8.523,
       "duration": 0.0038245545,
       "job_name": "fused_full1",
       "module_name": "fused_full$dispatch_10_rvv_x60_cat3_c1_f16_N1xH1xW1xC_inputs512|64|21xC_total597",
-      "time_dependency": "fused_full1_dispatch_5",
+      "time_dependency": "fused_full1_dispatch_3",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -1078,12 +1078,12 @@
       "dependencies": [
         "fused_full1_dispatch_10"
       ],
-      "hardware_target": "CPU_P#0",
+      "hardware_target": "CPU_E#3",
       "start_time": 8.527,
       "duration": 0.5387657376,
       "job_name": "fused_full1",
       "module_name": "fused_full$dispatch_11_rvv_x60_lstm_f16_input_size597xhidden_size128",
-      "time_dependency": "fused_full1_dispatch_10",
+      "time_dependency": "fused_full1_dispatch_9",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -1095,12 +1095,12 @@
       "dependencies": [
         "fused_full1_dispatch_11"
       ],
-      "hardware_target": "CPU_P#0",
+      "hardware_target": "CPU_E#0",
       "start_time": 9.066,
       "duration": 0.2870321375,
       "job_name": "fused_full1",
       "module_name": "fused_full$dispatch_12_rvv_x60_lstm_f16_input_size128xhidden_size128",
-      "time_dependency": "fused_full1_dispatch_11",
+      "time_dependency": "fused_full1_dispatch_10",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -1112,15 +1112,15 @@
       "dependencies": [
         "fused_full1_dispatch_12"
       ],
-      "hardware_target": "CPU_E#0",
-      "start_time": 9.508,
+      "hardware_target": "CPU_P#0",
+      "start_time": 9.354,
       "duration": 0.2704685697,
       "job_name": "fused_full1",
       "module_name": "fused_full$dispatch_13_rvv_x60_lstm_f16_input_size128xhidden_size128",
-      "time_dependency": "fused_full0_dispatch_10",
+      "time_dependency": "fused_full1_dispatch_4",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
-      "impl": "rvv"
+      "impl": "ime"
     },
     "fused_full1_dispatch_14": {
       "id": 14,
@@ -1129,15 +1129,15 @@
       "dependencies": [
         "fused_full1_dispatch_13"
       ],
-      "hardware_target": "CPU_P#0",
-      "start_time": 9.78,
+      "hardware_target": "CPU_P#1",
+      "start_time": 9.625,
       "duration": 0.0021205625,
       "job_name": "fused_full1",
       "module_name": "fused_full$dispatch_14_rvv_x60_linear_f16_M1xK128xN2",
-      "time_dependency": "fused_full1_dispatch_12",
+      "time_dependency": "yolov8_nano_64x960_dispatch_11",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
-      "impl": "rvv"
+      "impl": "ime"
     },
     "fused_full2_dispatch_0": {
       "id": 0,
@@ -1151,7 +1151,7 @@
       "duration": 0.6459624500000001,
       "job_name": "fused_full2",
       "module_name": "fused_full$dispatch_0_rvv_x60_conv2d_s8_N1xIC1xIH60xIW90xOC16xOH30xOW45xKH5xKW5xSH2xSW2xPH2xPW2",
-      "time_dependency": "yolov8_nano_64x960_dispatch_11",
+      "time_dependency": "mlp_control1_dispatch_5",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -1163,12 +1163,12 @@
       "dependencies": [
         "fused_full2_dispatch_0"
       ],
-      "hardware_target": "CPU_E#0",
+      "hardware_target": "CPU_E#3",
       "start_time": 10.646,
       "duration": 0.82951625,
       "job_name": "fused_full2",
       "module_name": "fused_full$dispatch_1_rvv_x60_conv2d_s8_N1xIC16xIH30xIW45xOC32xOH15xOW23xKH3xKW3xSH2xSW2xPH1xPW1",
-      "time_dependency": "mlp_control1_dispatch_4",
+      "time_dependency": "mlp_control1_dispatch_6",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -1180,12 +1180,12 @@
       "dependencies": [
         "fused_full2_dispatch_1"
       ],
-      "hardware_target": "CPU_P#1",
+      "hardware_target": "CPU_E#2",
       "start_time": 11.476,
       "duration": 0.8845663283999999,
       "job_name": "fused_full2",
       "module_name": "fused_full$dispatch_2_rvv_x60_conv2d_s8_N1xIC32xIH15xIW23xOC64xOH8xOW12xKH3xKW3xSH2xSW2xPH1xPW1",
-      "time_dependency": "yolov8_nano_64x960_dispatch_14",
+      "time_dependency": "fused_full2_dispatch_9",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -1197,12 +1197,12 @@
       "dependencies": [
         "fused_full2_dispatch_2"
       ],
-      "hardware_target": "CPU_E#0",
+      "hardware_target": "CPU_E#2",
       "start_time": 12.361,
       "duration": 0.49263343080000005,
       "job_name": "fused_full2",
       "module_name": "fused_full$dispatch_3_rvv_x60_conv2d_s8_N1xIC64xIH8xIW12xOC64xOH4xOW6xKH3xKW3xSH2xSW2xPH1xPW1",
-      "time_dependency": "mlp_control2_dispatch_5",
+      "time_dependency": "fused_full2_dispatch_2",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -1214,12 +1214,12 @@
       "dependencies": [
         "fused_full2_dispatch_3"
       ],
-      "hardware_target": "CPU_P#1",
-      "start_time": 12.924,
+      "hardware_target": "CPU_E#2",
+      "start_time": 12.854,
       "duration": 0.0039249515,
       "job_name": "fused_full2",
       "module_name": "fused_full$dispatch_4_rvv_x60_cast_i8_to_f16_n1536",
-      "time_dependency": "fused_full2_dispatch_2",
+      "time_dependency": "fused_full2_dispatch_3",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -1231,12 +1231,12 @@
       "dependencies": [
         "fused_full2_dispatch_4"
       ],
-      "hardware_target": "CPU_E#0",
-      "start_time": 12.928,
+      "hardware_target": "CPU_E#3",
+      "start_time": 12.858,
       "duration": 0.6646869230999999,
       "job_name": "fused_full2",
       "module_name": "fused_full$dispatch_5_rvv_x60_linear_f16_M1xK1536xN512",
-      "time_dependency": "fused_full2_dispatch_3",
+      "time_dependency": "fused_full2_dispatch_1",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -1248,12 +1248,12 @@
       "dependencies": [
         "fused_full1_dispatch_14"
       ],
-      "hardware_target": "CPU_E#3",
+      "hardware_target": "CPU_P#2",
       "start_time": 10.0,
       "duration": 0.0700392744,
       "job_name": "fused_full2",
       "module_name": "fused_full$dispatch_6_rvv_x60_conv2d_s8_N1xIC4xIH8xIW8xOC16xOH8xOW8xKH3xKW3xSH1xSW1xPH1xPW1",
-      "time_dependency": "mlp_control1_dispatch_6",
+      "time_dependency": "fused_full1_dispatch_5",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -1266,11 +1266,11 @@
         "fused_full2_dispatch_6"
       ],
       "hardware_target": "CPU_E#2",
-      "start_time": 10.071,
+      "start_time": 10.637,
       "duration": 0.1398506026,
       "job_name": "fused_full2",
       "module_name": "fused_full$dispatch_7_rvv_x60_conv2d_s8_N1xIC16xIH8xIW8xOC16xOH8xOW8xKH3xKW3xSH1xSW1xPH1xPW1",
-      "time_dependency": "mlp_control1_dispatch_5",
+      "time_dependency": "mlp_control0_dispatch_4",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -1282,12 +1282,12 @@
       "dependencies": [
         "fused_full2_dispatch_7"
       ],
-      "hardware_target": "CPU_P#2",
-      "start_time": 10.211,
+      "hardware_target": "CPU_E#0",
+      "start_time": 10.777,
       "duration": 0.0058218496,
       "job_name": "fused_full2",
       "module_name": "fused_full$dispatch_8_rvv_x60_cast_i8_to_f16_n1024",
-      "time_dependency": "mlp_control1_dispatch_2",
+      "time_dependency": "mlp_control2_dispatch_4",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -1299,15 +1299,15 @@
       "dependencies": [
         "fused_full2_dispatch_8"
       ],
-      "hardware_target": "CPU_P#3",
-      "start_time": 10.217,
+      "hardware_target": "CPU_E#2",
+      "start_time": 10.783,
       "duration": 0.0654161944,
       "job_name": "fused_full2",
       "module_name": "fused_full$dispatch_9_rvv_x60_linear_f16_M1xK1024xN64",
-      "time_dependency": "ffn_block0_dispatch_2",
+      "time_dependency": "fused_full2_dispatch_7",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
-      "impl": "ime"
+      "impl": "rvv"
     },
     "fused_full2_dispatch_10": {
       "id": 10,
@@ -1317,15 +1317,15 @@
         "fused_full2_dispatch_5",
         "fused_full2_dispatch_9"
       ],
-      "hardware_target": "CPU_P#1",
-      "start_time": 13.593,
+      "hardware_target": "CPU_P#3",
+      "start_time": 13.568,
       "duration": 0.0038245545,
       "job_name": "fused_full2",
       "module_name": "fused_full$dispatch_10_rvv_x60_cat3_c1_f16_N1xH1xW1xC_inputs512|64|21xC_total597",
-      "time_dependency": "fused_full2_dispatch_4",
+      "time_dependency": "mlp_control2_dispatch_2",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
-      "impl": "rvv"
+      "impl": "ime"
     },
     "fused_full2_dispatch_11": {
       "id": 11,
@@ -1334,15 +1334,15 @@
       "dependencies": [
         "fused_full2_dispatch_10"
       ],
-      "hardware_target": "CPU_P#1",
-      "start_time": 13.597,
+      "hardware_target": "CPU_E#2",
+      "start_time": 13.572,
       "duration": 0.5387657376,
       "job_name": "fused_full2",
       "module_name": "fused_full$dispatch_11_rvv_x60_lstm_f16_input_size597xhidden_size128",
-      "time_dependency": "fused_full2_dispatch_10",
+      "time_dependency": "fused_full2_dispatch_4",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
-      "impl": "ime"
+      "impl": "rvv"
     },
     "fused_full2_dispatch_12": {
       "id": 12,
@@ -1351,12 +1351,12 @@
       "dependencies": [
         "fused_full2_dispatch_11"
       ],
-      "hardware_target": "CPU_E#1",
-      "start_time": 14.136,
+      "hardware_target": "CPU_E#3",
+      "start_time": 14.111,
       "duration": 0.2870321375,
       "job_name": "fused_full2",
       "module_name": "fused_full$dispatch_12_rvv_x60_lstm_f16_input_size128xhidden_size128",
-      "time_dependency": "fused_full0_dispatch_4",
+      "time_dependency": "fused_full2_dispatch_5",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -1368,8 +1368,8 @@
       "dependencies": [
         "fused_full2_dispatch_12"
       ],
-      "hardware_target": "CPU_E#1",
-      "start_time": 14.424,
+      "hardware_target": "CPU_E#3",
+      "start_time": 14.399,
       "duration": 0.2704685697,
       "job_name": "fused_full2",
       "module_name": "fused_full$dispatch_13_rvv_x60_lstm_f16_input_size128xhidden_size128",
@@ -1385,12 +1385,12 @@
       "dependencies": [
         "fused_full2_dispatch_13"
       ],
-      "hardware_target": "CPU_P#0",
-      "start_time": 14.937,
+      "hardware_target": "CPU_E#3",
+      "start_time": 14.67,
       "duration": 0.0021205625,
       "job_name": "fused_full2",
       "module_name": "fused_full$dispatch_14_rvv_x60_linear_f16_M1xK128xN2",
-      "time_dependency": "yolov8_nano_64x960_dispatch_25",
+      "time_dependency": "fused_full2_dispatch_13",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -1402,12 +1402,12 @@
       "dependencies": [
         "fused_full2_dispatch_14"
       ],
-      "hardware_target": "CPU_E#1",
+      "hardware_target": "CPU_E#2",
       "start_time": 15.0,
       "duration": 0.6459624500000001,
       "job_name": "fused_full3",
       "module_name": "fused_full$dispatch_0_rvv_x60_conv2d_s8_N1xIC1xIH60xIW90xOC16xOH30xOW45xKH5xKW5xSH2xSW2xPH2xPW2",
-      "time_dependency": "fused_full2_dispatch_13",
+      "time_dependency": "mlp_control2_dispatch_5",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -1419,15 +1419,15 @@
       "dependencies": [
         "fused_full3_dispatch_0"
       ],
-      "hardware_target": "CPU_P#0",
+      "hardware_target": "CPU_P#2",
       "start_time": 15.646,
       "duration": 0.82951625,
       "job_name": "fused_full3",
       "module_name": "fused_full$dispatch_1_rvv_x60_conv2d_s8_N1xIC16xIH30xIW45xOC32xOH15xOW23xKH3xKW3xSH2xSW2xPH1xPW1",
-      "time_dependency": "yolov8_nano_64x960_dispatch_29",
+      "time_dependency": "mlp_control2_dispatch_3",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
-      "impl": "ime"
+      "impl": "rvv"
     },
     "fused_full3_dispatch_2": {
       "id": 2,
@@ -1436,12 +1436,12 @@
       "dependencies": [
         "fused_full3_dispatch_1"
       ],
-      "hardware_target": "CPU_P#3",
+      "hardware_target": "CPU_E#3",
       "start_time": 16.476,
       "duration": 0.8845663283999999,
       "job_name": "fused_full3",
       "module_name": "fused_full$dispatch_2_rvv_x60_conv2d_s8_N1xIC32xIH15xIW23xOC64xOH8xOW12xKH3xKW3xSH2xSW2xPH1xPW1",
-      "time_dependency": "yolov8_nano_64x960_dispatch_16",
+      "time_dependency": "mlp_control3_dispatch_0",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -1453,12 +1453,12 @@
       "dependencies": [
         "fused_full3_dispatch_2"
       ],
-      "hardware_target": "CPU_P#2",
+      "hardware_target": "CPU_E#3",
       "start_time": 17.361,
       "duration": 0.49263343080000005,
       "job_name": "fused_full3",
       "module_name": "fused_full$dispatch_3_rvv_x60_conv2d_s8_N1xIC64xIH8xIW12xOC64xOH4xOW6xKH3xKW3xSH2xSW2xPH1xPW1",
-      "time_dependency": "mlp_control2_dispatch_6",
+      "time_dependency": "fused_full3_dispatch_2",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -1470,12 +1470,12 @@
       "dependencies": [
         "fused_full3_dispatch_3"
       ],
-      "hardware_target": "CPU_P#1",
+      "hardware_target": "CPU_P#3",
       "start_time": 17.854,
       "duration": 0.0039249515,
       "job_name": "fused_full3",
       "module_name": "fused_full$dispatch_4_rvv_x60_cast_i8_to_f16_n1536",
-      "time_dependency": "attn_block0_dispatch_4",
+      "time_dependency": "yolov8_nano_64x960_dispatch_41",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -1487,8 +1487,8 @@
       "dependencies": [
         "fused_full3_dispatch_4"
       ],
-      "hardware_target": "CPU_E#1",
-      "start_time": 17.858,
+      "hardware_target": "CPU_E#3",
+      "start_time": 17.92,
       "duration": 0.6646869230999999,
       "job_name": "fused_full3",
       "module_name": "fused_full$dispatch_5_rvv_x60_linear_f16_M1xK1536xN512",
@@ -1504,12 +1504,12 @@
       "dependencies": [
         "fused_full2_dispatch_14"
       ],
-      "hardware_target": "CPU_P#0",
-      "start_time": 16.826,
+      "hardware_target": "CPU_E#0",
+      "start_time": 16.52,
       "duration": 0.0700392744,
       "job_name": "fused_full3",
       "module_name": "fused_full$dispatch_6_rvv_x60_conv2d_s8_N1xIC4xIH8xIW8xOC16xOH8xOW8xKH3xKW3xSH1xSW1xPH1xPW1",
-      "time_dependency": "fused_full3_dispatch_1",
+      "time_dependency": "fused_full2_dispatch_8",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -1521,12 +1521,12 @@
       "dependencies": [
         "fused_full3_dispatch_6"
       ],
-      "hardware_target": "CPU_P#0",
-      "start_time": 16.897,
+      "hardware_target": "CPU_P#1",
+      "start_time": 17.542,
       "duration": 0.1398506026,
       "job_name": "fused_full3",
       "module_name": "fused_full$dispatch_7_rvv_x60_conv2d_s8_N1xIC16xIH8xIW8xOC16xOH8xOW8xKH3xKW3xSH1xSW1xPH1xPW1",
-      "time_dependency": "fused_full3_dispatch_6",
+      "time_dependency": "yolov8_nano_64x960_dispatch_16",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -1538,12 +1538,12 @@
       "dependencies": [
         "fused_full3_dispatch_7"
       ],
-      "hardware_target": "CPU_P#1",
-      "start_time": 17.037,
+      "hardware_target": "CPU_P#0",
+      "start_time": 17.682,
       "duration": 0.0058218496,
       "job_name": "fused_full3",
       "module_name": "fused_full$dispatch_8_rvv_x60_cast_i8_to_f16_n1024",
-      "time_dependency": "fused_full2_dispatch_11",
+      "time_dependency": "yolov8_nano_64x960_dispatch_37",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -1555,12 +1555,12 @@
       "dependencies": [
         "fused_full3_dispatch_8"
       ],
-      "hardware_target": "CPU_E#1",
-      "start_time": 17.242,
+      "hardware_target": "CPU_E#3",
+      "start_time": 17.854,
       "duration": 0.0654161944,
       "job_name": "fused_full3",
       "module_name": "fused_full$dispatch_9_rvv_x60_linear_f16_M1xK1024xN64",
-      "time_dependency": "fused_full3_dispatch_0",
+      "time_dependency": "fused_full3_dispatch_3",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -1573,12 +1573,12 @@
         "fused_full3_dispatch_5",
         "fused_full3_dispatch_9"
       ],
-      "hardware_target": "CPU_P#0",
-      "start_time": 18.528,
+      "hardware_target": "CPU_E#2",
+      "start_time": 18.585,
       "duration": 0.0038245545,
       "job_name": "fused_full3",
       "module_name": "fused_full$dispatch_10_rvv_x60_cat3_c1_f16_N1xH1xW1xC_inputs512|64|21xC_total597",
-      "time_dependency": "mlp_control3_dispatch_4",
+      "time_dependency": "yolov8_nano_64x960_dispatch_42",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "deadline_miss": true,
@@ -1592,17 +1592,17 @@
       "dependencies": [
         "fused_full3_dispatch_10"
       ],
-      "hardware_target": "CPU_P#1",
-      "start_time": 18.769,
+      "hardware_target": "CPU_E#3",
+      "start_time": 18.899,
       "duration": 0.5387657376,
       "job_name": "fused_full3",
       "module_name": "fused_full$dispatch_11_rvv_x60_lstm_f16_input_size597xhidden_size128",
-      "time_dependency": "fused_full3_dispatch_4",
+      "time_dependency": "attn_block0_dispatch_4",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "deadline_miss": true,
       "deadline_overrun_us": 0.9319066522999933,
-      "impl": "ime"
+      "impl": "rvv"
     },
     "fused_full3_dispatch_12": {
       "id": 12,
@@ -1611,12 +1611,12 @@
       "dependencies": [
         "fused_full3_dispatch_11"
       ],
-      "hardware_target": "CPU_E#2",
-      "start_time": 19.308,
+      "hardware_target": "CPU_E#3",
+      "start_time": 19.438,
       "duration": 0.2870321375,
       "job_name": "fused_full3",
       "module_name": "fused_full$dispatch_12_rvv_x60_lstm_f16_input_size128xhidden_size128",
-      "time_dependency": "mlp_control3_dispatch_6",
+      "time_dependency": "fused_full3_dispatch_11",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "deadline_miss": true,
@@ -1630,12 +1630,12 @@
       "dependencies": [
         "fused_full3_dispatch_12"
       ],
-      "hardware_target": "CPU_E#0",
-      "start_time": 19.596,
+      "hardware_target": "CPU_E#3",
+      "start_time": 19.726,
       "duration": 0.2704685697,
       "job_name": "fused_full3",
       "module_name": "fused_full$dispatch_13_rvv_x60_lstm_f16_input_size128xhidden_size128",
-      "time_dependency": "mlp_control3_dispatch_2",
+      "time_dependency": "fused_full3_dispatch_12",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "deadline_miss": true,
@@ -1649,12 +1649,12 @@
       "dependencies": [
         "fused_full3_dispatch_13"
       ],
-      "hardware_target": "CPU_E#2",
-      "start_time": 19.867,
+      "hardware_target": "CPU_E#3",
+      "start_time": 19.997,
       "duration": 0.0021205625,
       "job_name": "fused_full3",
       "module_name": "fused_full$dispatch_14_rvv_x60_linear_f16_M1xK128xN2",
-      "time_dependency": "fused_full3_dispatch_12",
+      "time_dependency": "fused_full3_dispatch_13",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "deadline_miss": true,
@@ -1666,8 +1666,8 @@
       "ordinal": 1,
       "total": 1,
       "dependencies": [],
-      "hardware_target": "CPU_P#2+CPU_P#3",
-      "start_time": 0.053,
+      "hardware_target": "CPU_E#0+CPU_E#1",
+      "start_time": 0.0,
       "duration": 1.2115241535999999,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_0_rvv_x60_conv2d_batchnorm2d_silu_s8_N1xIC3xIH64xIW96xOC16xOH32xOW48xKH3xKW3xSH2xSW2xPH1xPW1",
@@ -1684,7 +1684,7 @@
         "yolov8_nano_64x960_dispatch_0"
       ],
       "hardware_target": "CPU_E#0+CPU_E#1+CPU_E#2+CPU_E#3",
-      "start_time": 1.477,
+      "start_time": 1.212,
       "duration": 1.3614017536,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_1_rvv_x60_conv2d_batchnorm2d_silu_s8_N1xIC16xIH32xIW48xOC32xOH16xOW24xKH3xKW3xSH2xSW2xPH1xPW1",
@@ -1700,7 +1700,7 @@
         "yolov8_nano_64x960_dispatch_1"
       ],
       "hardware_target": "CPU_E#0+CPU_E#1+CPU_E#2+CPU_E#3",
-      "start_time": 2.859,
+      "start_time": 2.574,
       "duration": 0.6979574464,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_2_rvv_x60_conv2d_batchnorm2d_silu_s8_N1xIC32xIH16xIW24xOC32xOH16xOW24xKH1xKW1xSH1xSW1xPH0xPW0",
@@ -1716,11 +1716,10 @@
       "dependencies": [
         "yolov8_nano_64x960_dispatch_2"
       ],
-      "hardware_target": "CPU_E#0",
-      "start_time": 3.557,
+      "hardware_target": "CPU_E#2+CPU_E#3",
+      "start_time": 3.272,
       "duration": 0.0,
       "job_name": "yolov8_nano_64x960",
-      "time_dependency": "attn_block0_dispatch_2",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -1732,12 +1731,11 @@
       "dependencies": [
         "yolov8_nano_64x960_dispatch_3"
       ],
-      "hardware_target": "CPU_E#0+CPU_E#1+CPU_E#2+CPU_E#3",
-      "start_time": 3.561,
-      "duration": 1.2216622464,
+      "hardware_target": "CPU_E#2+CPU_E#3",
+      "start_time": 3.272,
+      "duration": 1.2778737535999998,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_4_rvv_x60_conv2d_batchnorm2d_silu_s8_N1xIC16xIH16xIW24xOC16xOH16xOW24xKH3xKW3xSH1xSW1xPH1xPW1",
-      "time_dependency": "yolov8_nano_64x960_dispatch_2",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -1750,11 +1748,11 @@
         "yolov8_nano_64x960_dispatch_4"
       ],
       "hardware_target": "CPU_E#0+CPU_E#1+CPU_E#2+CPU_E#3",
-      "start_time": 5.219,
+      "start_time": 4.55,
       "duration": 1.1772719999999999,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_5_rvv_x60_conv2d_batchnorm2d_silu_s8_N1xIC16xIH16xIW24xOC16xOH16xOW24xKH3xKW3xSH1xSW1xPH1xPW1",
-      "time_dependency": "yolov8_nano_64x960_dispatch_4",
+      "time_dependency": "yolov8_nano_64x960_dispatch_2",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -1768,7 +1766,7 @@
         "yolov8_nano_64x960_dispatch_5"
       ],
       "hardware_target": "CPU_P#1",
-      "start_time": 6.397,
+      "start_time": 5.728,
       "duration": 0.04588475,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_6_rvv_x60_add_s8_n6144",
@@ -1785,12 +1783,12 @@
         "yolov8_nano_64x960_dispatch_3",
         "yolov8_nano_64x960_dispatch_6"
       ],
-      "hardware_target": "CPU_P#0",
-      "start_time": 6.443,
+      "hardware_target": "CPU_P#1",
+      "start_time": 5.774,
       "duration": 0.0253736,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_7_rvv_x60_cat3_c1_s8_N1xH16xW24xC_inputs16|16|16xC_total48",
-      "time_dependency": "fused_full1_dispatch_7",
+      "time_dependency": "yolov8_nano_64x960_dispatch_6",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -1803,7 +1801,7 @@
         "yolov8_nano_64x960_dispatch_7"
       ],
       "hardware_target": "CPU_E#0+CPU_E#1+CPU_E#2+CPU_E#3",
-      "start_time": 6.469,
+      "start_time": 5.8,
       "duration": 0.8478350464,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_8_rvv_x60_conv2d_batchnorm2d_silu_s8_N1xIC48xIH16xIW24xOC32xOH16xOW24xKH1xKW1xSH1xSW1xPH0xPW0",
@@ -1820,7 +1818,7 @@
         "yolov8_nano_64x960_dispatch_8"
       ],
       "hardware_target": "CPU_E#0+CPU_E#1+CPU_E#2+CPU_E#3",
-      "start_time": 7.317,
+      "start_time": 6.648,
       "duration": 0.6837217536,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_9_rvv_x60_conv2d_batchnorm2d_silu_s8_N1xIC32xIH16xIW24xOC64xOH8xOW12xKH3xKW3xSH2xSW2xPH1xPW1",
@@ -1837,7 +1835,7 @@
         "yolov8_nano_64x960_dispatch_9"
       ],
       "hardware_target": "CPU_E#0+CPU_E#1+CPU_E#2+CPU_E#3",
-      "start_time": 8.001,
+      "start_time": 7.854,
       "duration": 0.3775566464,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_10_rvv_x60_conv2d_batchnorm2d_silu_s8_N1xIC64xIH8xIW12xOC64xOH8xOW12xKH1xKW1xSH1xSW1xPH0xPW0",
@@ -1854,10 +1852,10 @@
         "yolov8_nano_64x960_dispatch_10"
       ],
       "hardware_target": "CPU_P#1",
-      "start_time": 8.379,
+      "start_time": 8.232,
       "duration": 0.0,
       "job_name": "yolov8_nano_64x960",
-      "time_dependency": "yolov8_nano_64x960_dispatch_6",
+      "time_dependency": "fused_full1_dispatch_8",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -1870,7 +1868,7 @@
         "yolov8_nano_64x960_dispatch_11"
       ],
       "hardware_target": "CPU_E#0+CPU_E#1+CPU_E#2+CPU_E#3",
-      "start_time": 8.379,
+      "start_time": 9.354,
       "duration": 0.6111198463999999,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_12_rvv_x60_conv2d_batchnorm2d_silu_s8_N1xIC32xIH8xIW12xOC32xOH8xOW12xKH3xKW3xSH1xSW1xPH1xPW1",
@@ -1886,12 +1884,12 @@
       "dependencies": [
         "yolov8_nano_64x960_dispatch_12"
       ],
-      "hardware_target": "CPU_P#0",
-      "start_time": 9.783,
-      "duration": 0.7259585536,
+      "hardware_target": "CPU_E#0+CPU_E#1+CPU_E#2+CPU_E#3",
+      "start_time": 10.023,
+      "duration": 0.6133262464,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_13_rvv_x60_conv2d_batchnorm2d_silu_s8_N1xIC32xIH8xIW12xOC32xOH8xOW12xKH3xKW3xSH1xSW1xPH1xPW1",
-      "time_dependency": "fused_full1_dispatch_14",
+      "time_dependency": "yolov8_nano_64x960_dispatch_12",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -1905,14 +1903,14 @@
         "yolov8_nano_64x960_dispatch_13"
       ],
       "hardware_target": "CPU_P#1",
-      "start_time": 10.681,
+      "start_time": 10.646,
       "duration": 0.0225095,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_14_rvv_x60_add_s8_n3072",
-      "time_dependency": "mlp_control2_dispatch_2",
+      "time_dependency": "fused_full2_dispatch_0",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
-      "impl": "ime"
+      "impl": "rvv"
     },
     "yolov8_nano_64x960_dispatch_15": {
       "id": 15,
@@ -1921,9 +1919,9 @@
       "dependencies": [
         "yolov8_nano_64x960_dispatch_14"
       ],
-      "hardware_target": "CPU_P#0+CPU_P#1",
-      "start_time": 10.704,
-      "duration": 0.6640734463999999,
+      "hardware_target": "CPU_P#0+CPU_P#1+CPU_P#2+CPU_P#3",
+      "start_time": 10.669,
+      "duration": 0.6107529535999999,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_15_rvv_x60_conv2d_batchnorm2d_silu_s8_N1xIC32xIH8xIW12xOC32xOH8xOW12xKH3xKW3xSH1xSW1xPH1xPW1",
       "release_policy": "immediate",
@@ -1937,15 +1935,15 @@
       "dependencies": [
         "yolov8_nano_64x960_dispatch_15"
       ],
-      "hardware_target": "CPU_P#3",
-      "start_time": 11.369,
+      "hardware_target": "CPU_P#1",
+      "start_time": 11.28,
       "duration": 0.7244872,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_16_rvv_x60_conv2d_batchnorm2d_silu_s8_N1xIC32xIH8xIW12xOC32xOH8xOW12xKH3xKW3xSH1xSW1xPH1xPW1",
-      "time_dependency": "fused_full2_dispatch_9",
+      "time_dependency": "yolov8_nano_64x960_dispatch_14",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
-      "impl": "ime"
+      "impl": "rvv"
     },
     "yolov8_nano_64x960_dispatch_17": {
       "id": 17,
@@ -1956,11 +1954,11 @@
         "yolov8_nano_64x960_dispatch_16"
       ],
       "hardware_target": "CPU_P#0",
-      "start_time": 12.094,
+      "start_time": 12.005,
       "duration": 0.0221632,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_17_rvv_x60_add_s8_n3072",
-      "time_dependency": "yolov8_nano_64x960_dispatch_13",
+      "time_dependency": "fused_full1_dispatch_13",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -1975,7 +1973,7 @@
         "yolov8_nano_64x960_dispatch_17"
       ],
       "hardware_target": "CPU_P#0",
-      "start_time": 12.117,
+      "start_time": 12.028,
       "duration": 0.0172313536,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_18_rvv_x60_cat4_c1_s8_N1xH8xW12xC_inputs32|32|32|32xC_total128",
@@ -1992,10 +1990,11 @@
         "yolov8_nano_64x960_dispatch_18"
       ],
       "hardware_target": "CPU_P#0+CPU_P#1+CPU_P#2+CPU_P#3",
-      "start_time": 12.361,
+      "start_time": 12.046,
       "duration": 0.5623697536,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_19_rvv_x60_conv2d_batchnorm2d_silu_s8_N1xIC128xIH8xIW12xOC64xOH8xOW12xKH1xKW1xSH1xSW1xPH0xPW0",
+      "time_dependency": "yolov8_nano_64x960_dispatch_15",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -2008,7 +2007,7 @@
         "yolov8_nano_64x960_dispatch_19"
       ],
       "hardware_target": "CPU_P#0+CPU_P#1+CPU_P#2+CPU_P#3",
-      "start_time": 12.928,
+      "start_time": 12.609,
       "duration": 0.39421055359999996,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_20_rvv_x60_conv2d_batchnorm2d_silu_s8_N1xIC64xIH8xIW12xOC128xOH4xOW6xKH3xKW3xSH2xSW2xPH1xPW1",
@@ -2025,7 +2024,7 @@
         "yolov8_nano_64x960_dispatch_20"
       ],
       "hardware_target": "CPU_P#0+CPU_P#1+CPU_P#2+CPU_P#3",
-      "start_time": 13.323,
+      "start_time": 13.004,
       "duration": 0.2274168,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_21_rvv_x60_conv2d_batchnorm2d_silu_s8_N1xIC128xIH4xIW6xOC128xOH4xOW6xKH1xKW1xSH1xSW1xPH0xPW0",
@@ -2042,7 +2041,7 @@
         "yolov8_nano_64x960_dispatch_21"
       ],
       "hardware_target": "CPU_P#0",
-      "start_time": 13.551,
+      "start_time": 13.232,
       "duration": 0.0,
       "job_name": "yolov8_nano_64x960",
       "time_dependency": "yolov8_nano_64x960_dispatch_18",
@@ -2057,12 +2056,12 @@
       "dependencies": [
         "yolov8_nano_64x960_dispatch_22"
       ],
-      "hardware_target": "CPU_P#0",
-      "start_time": 13.551,
-      "duration": 0.6980633535999999,
+      "hardware_target": "CPU_P#0+CPU_P#1+CPU_P#2+CPU_P#3",
+      "start_time": 13.232,
+      "duration": 0.33558335359999997,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_23_rvv_x60_conv2d_batchnorm2d_silu_s8_N1xIC64xIH4xIW6xOC64xOH4xOW6xKH3xKW3xSH1xSW1xPH1xPW1",
-      "time_dependency": "yolov8_nano_64x960_dispatch_18",
+      "time_dependency": "yolov8_nano_64x960_dispatch_21",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -2075,11 +2074,11 @@
         "yolov8_nano_64x960_dispatch_23"
       ],
       "hardware_target": "CPU_P#0+CPU_P#1+CPU_P#2+CPU_P#3",
-      "start_time": 14.25,
+      "start_time": 13.572,
       "duration": 0.3391552,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_24_rvv_x60_conv2d_batchnorm2d_silu_s8_N1xIC64xIH4xIW6xOC64xOH4xOW6xKH3xKW3xSH1xSW1xPH1xPW1",
-      "time_dependency": "yolov8_nano_64x960_dispatch_21",
+      "time_dependency": "yolov8_nano_64x960_dispatch_23",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -2093,11 +2092,11 @@
         "yolov8_nano_64x960_dispatch_24"
       ],
       "hardware_target": "CPU_P#0",
-      "start_time": 14.59,
+      "start_time": 13.912,
       "duration": 0.0118891716,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_25_rvv_x60_add_s8_n1536",
-      "time_dependency": "yolov8_nano_64x960_dispatch_23",
+      "time_dependency": "yolov8_nano_64x960_dispatch_22",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -2110,7 +2109,7 @@
         "yolov8_nano_64x960_dispatch_25"
       ],
       "hardware_target": "CPU_P#0+CPU_P#1+CPU_P#2+CPU_P#3",
-      "start_time": 14.602,
+      "start_time": 13.924,
       "duration": 0.33437424639999996,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_26_rvv_x60_conv2d_batchnorm2d_silu_s8_N1xIC64xIH4xIW6xOC64xOH4xOW6xKH3xKW3xSH1xSW1xPH1xPW1",
@@ -2127,7 +2126,7 @@
         "yolov8_nano_64x960_dispatch_26"
       ],
       "hardware_target": "CPU_P#0+CPU_P#1+CPU_P#2+CPU_P#3",
-      "start_time": 14.94,
+      "start_time": 14.259,
       "duration": 0.3396809536,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_27_rvv_x60_conv2d_batchnorm2d_silu_s8_N1xIC64xIH4xIW6xOC64xOH4xOW6xKH3xKW3xSH1xSW1xPH1xPW1",
@@ -2145,11 +2144,11 @@
         "yolov8_nano_64x960_dispatch_27"
       ],
       "hardware_target": "CPU_P#0",
-      "start_time": 15.28,
+      "start_time": 14.599,
       "duration": 0.0111965716,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_28_rvv_x60_add_s8_n1536",
-      "time_dependency": "fused_full2_dispatch_14",
+      "time_dependency": "yolov8_nano_64x960_dispatch_25",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -2164,7 +2163,7 @@
         "yolov8_nano_64x960_dispatch_28"
       ],
       "hardware_target": "CPU_P#0",
-      "start_time": 15.292,
+      "start_time": 14.611,
       "duration": 0.0090361536,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_29_rvv_x60_cat4_c1_s8_N1xH4xW6xC_inputs64|64|64|64xC_total256",
@@ -2181,7 +2180,7 @@
         "yolov8_nano_64x960_dispatch_29"
       ],
       "hardware_target": "CPU_P#0+CPU_P#1+CPU_P#2+CPU_P#3",
-      "start_time": 15.302,
+      "start_time": 14.621,
       "duration": 0.31977039999999995,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_30_rvv_x60_conv2d_batchnorm2d_silu_s8_N1xIC256xIH4xIW6xOC128xOH4xOW6xKH1xKW1xSH1xSW1xPH0xPW0",
@@ -2198,7 +2197,7 @@
         "yolov8_nano_64x960_dispatch_30"
       ],
       "hardware_target": "CPU_P#0+CPU_P#1+CPU_P#2+CPU_P#3",
-      "start_time": 17.858,
+      "start_time": 14.941,
       "duration": 0.4347654464,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_31_rvv_x60_conv2d_batchnorm2d_silu_s8_N1xIC128xIH4xIW6xOC256xOH2xOW3xKH3xKW3xSH2xSW2xPH1xPW1",
@@ -2215,7 +2214,7 @@
         "yolov8_nano_64x960_dispatch_31"
       ],
       "hardware_target": "CPU_P#0+CPU_P#1+CPU_P#2+CPU_P#3",
-      "start_time": 18.293,
+      "start_time": 15.376,
       "duration": 0.2343512,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_32_rvv_x60_conv2d_batchnorm2d_silu_s8_N1xIC256xIH2xIW3xOC256xOH2xOW3xKH1xKW1xSH1xSW1xPH0xPW0",
@@ -2232,10 +2231,10 @@
         "yolov8_nano_64x960_dispatch_32"
       ],
       "hardware_target": "CPU_P#0",
-      "start_time": 18.528,
+      "start_time": 15.611,
       "duration": 0.0,
       "job_name": "yolov8_nano_64x960",
-      "time_dependency": "mlp_control3_dispatch_4",
+      "time_dependency": "yolov8_nano_64x960_dispatch_29",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -2248,7 +2247,7 @@
         "yolov8_nano_64x960_dispatch_33"
       ],
       "hardware_target": "CPU_P#0+CPU_P#1+CPU_P#2+CPU_P#3",
-      "start_time": 18.532,
+      "start_time": 16.476,
       "duration": 0.23618944639999997,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_34_rvv_x60_conv2d_batchnorm2d_silu_s8_N1xIC128xIH2xIW3xOC128xOH2xOW3xKH3xKW3xSH1xSW1xPH1xPW1",
@@ -2265,7 +2264,7 @@
         "yolov8_nano_64x960_dispatch_34"
       ],
       "hardware_target": "CPU_P#0+CPU_P#1+CPU_P#2+CPU_P#3",
-      "start_time": 19.308,
+      "start_time": 16.713,
       "duration": 0.234036,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_35_rvv_x60_conv2d_batchnorm2d_silu_s8_N1xIC128xIH2xIW3xOC128xOH2xOW3xKH3xKW3xSH1xSW1xPH1xPW1",
@@ -2282,12 +2281,12 @@
         "yolov8_nano_64x960_dispatch_33",
         "yolov8_nano_64x960_dispatch_35"
       ],
-      "hardware_target": "CPU_P#1",
-      "start_time": 19.543,
+      "hardware_target": "CPU_P#0",
+      "start_time": 16.948,
       "duration": 0.0060020716,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_36_rvv_x60_add_s8_n768",
-      "time_dependency": "fused_full3_dispatch_11",
+      "time_dependency": "yolov8_nano_64x960_dispatch_33",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -2301,11 +2300,11 @@
         "yolov8_nano_64x960_dispatch_36"
       ],
       "hardware_target": "CPU_P#0",
-      "start_time": 19.55,
+      "start_time": 16.955,
       "duration": 0.0318352,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_37_rvv_x60_cat3_c1_s8_N1xH2xW3xC_inputs128|128|128xC_total384",
-      "time_dependency": "fused_full3_dispatch_10",
+      "time_dependency": "yolov8_nano_64x960_dispatch_36",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -2318,7 +2317,7 @@
         "yolov8_nano_64x960_dispatch_37"
       ],
       "hardware_target": "CPU_P#0+CPU_P#1+CPU_P#2+CPU_P#3",
-      "start_time": 19.582,
+      "start_time": 16.987,
       "duration": 0.28457264639999996,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_38_rvv_x60_conv2d_batchnorm2d_silu_s8_N1xIC384xIH2xIW3xOC256xOH2xOW3xKH1xKW1xSH1xSW1xPH0xPW0",
@@ -2335,7 +2334,7 @@
         "yolov8_nano_64x960_dispatch_38"
       ],
       "hardware_target": "CPU_P#0+CPU_P#1+CPU_P#2+CPU_P#3",
-      "start_time": 19.867,
+      "start_time": 17.272,
       "duration": 0.1431008,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_39_rvv_x60_conv2d_batchnorm2d_silu_s8_N1xIC256xIH2xIW3xOC128xOH2xOW3xKH1xKW1xSH1xSW1xPH0xPW0",
@@ -2352,11 +2351,10 @@
         "yolov8_nano_64x960_dispatch_39"
       ],
       "hardware_target": "CPU_P#0+CPU_P#1",
-      "start_time": 20.011,
+      "start_time": 17.416,
       "duration": 0.1253716855,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_40_rvv_x60_maxpool2d_s8_N1xC128xIH2xIW3xOH2xOW3xKH5xKW5xSH1xSW1xPH2xPW2xDH1xDW1",
-      "time_dependency": "yolov8_nano_64x960_dispatch_15",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -2368,15 +2366,15 @@
       "dependencies": [
         "yolov8_nano_64x960_dispatch_40"
       ],
-      "hardware_target": "CPU_P#0+CPU_P#1+CPU_P#2+CPU_P#3",
-      "start_time": 20.137,
-      "duration": 0.122245502,
+      "hardware_target": "CPU_P#3",
+      "start_time": 17.542,
+      "duration": 0.12378693549999999,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_41_rvv_x60_maxpool2d_s8_N1xC128xIH2xIW3xOH2xOW3xKH5xKW5xSH1xSW1xPH2xPW2xDH1xDW1",
-      "time_dependency": "yolov8_nano_64x960_dispatch_39",
+      "time_dependency": "fused_full2_dispatch_10",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
-      "impl": "rvv"
+      "impl": "ime"
     },
     "yolov8_nano_64x960_dispatch_42": {
       "id": 42,
@@ -2385,12 +2383,12 @@
       "dependencies": [
         "yolov8_nano_64x960_dispatch_41"
       ],
-      "hardware_target": "CPU_P#0+CPU_P#1",
-      "start_time": 20.26,
-      "duration": 0.12339074800000001,
+      "hardware_target": "CPU_E#2",
+      "start_time": 17.732,
+      "duration": 0.1250631875,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_42_rvv_x60_maxpool2d_s8_N1xC128xIH2xIW3xOH2xOW3xKH5xKW5xSH1xSW1xPH2xPW2xDH1xDW1",
-      "time_dependency": "yolov8_nano_64x960_dispatch_40",
+      "time_dependency": "attn_block0_dispatch_3",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -2405,12 +2403,12 @@
         "yolov8_nano_64x960_dispatch_41",
         "yolov8_nano_64x960_dispatch_42"
       ],
-      "hardware_target": "CPU_P#0",
-      "start_time": 20.393,
+      "hardware_target": "CPU_P#3",
+      "start_time": 17.858,
       "duration": 0.005305446399999999,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_43_rvv_x60_cat4_c1_s8_N1xH2xW3xC_inputs128|128|128|128xC_total512",
-      "time_dependency": "mlp_control4_dispatch_3",
+      "time_dependency": "fused_full3_dispatch_4",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -2423,11 +2421,11 @@
         "yolov8_nano_64x960_dispatch_43"
       ],
       "hardware_target": "CPU_P#0+CPU_P#1+CPU_P#2+CPU_P#3",
-      "start_time": 20.4,
+      "start_time": 17.864,
       "duration": 0.3076352,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_44_rvv_x60_conv2d_batchnorm2d_silu_s8_N1xIC512xIH2xIW3xOC256xOH2xOW3xKH1xKW1xSH1xSW1xPH0xPW0",
-      "time_dependency": "yolov8_nano_64x960_dispatch_41",
+      "time_dependency": "yolov8_nano_64x960_dispatch_39",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -2440,7 +2438,7 @@
         "yolov8_nano_64x960_dispatch_44"
       ],
       "hardware_target": "CPU_P#0+CPU_P#1+CPU_P#2+CPU_P#3",
-      "start_time": 20.708,
+      "start_time": 18.172,
       "duration": 0.05684064639999999,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_45_rvv_x60_upsample_nearest_s8_N1xC256xIH2xIW3xscale2",
@@ -2458,11 +2456,11 @@
         "yolov8_nano_64x960_dispatch_45"
       ],
       "hardware_target": "CPU_P#0",
-      "start_time": 20.765,
+      "start_time": 18.229,
       "duration": 0.0310472,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_46_rvv_x60_cat2_c1_s8_N1xH4xW6xC_inputs256|128xC_total384",
-      "time_dependency": "yolov8_nano_64x960_dispatch_43",
+      "time_dependency": "fused_full3_dispatch_8",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -2475,7 +2473,7 @@
         "yolov8_nano_64x960_dispatch_46"
       ],
       "hardware_target": "CPU_P#0+CPU_P#1+CPU_P#2+CPU_P#3",
-      "start_time": 20.797,
+      "start_time": 18.261,
       "duration": 0.4463761536,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_47_rvv_x60_conv2d_batchnorm2d_silu_s8_N1xIC384xIH4xIW6xOC128xOH4xOW6xKH1xKW1xSH1xSW1xPH0xPW0",
@@ -2491,11 +2489,11 @@
       "dependencies": [
         "yolov8_nano_64x960_dispatch_47"
       ],
-      "hardware_target": "CPU_P#0",
-      "start_time": 21.244,
+      "hardware_target": "CPU_E#0+CPU_E#1+CPU_E#2+CPU_E#3",
+      "start_time": 18.708,
       "duration": 0.0,
       "job_name": "yolov8_nano_64x960",
-      "time_dependency": "yolov8_nano_64x960_dispatch_46",
+      "time_dependency": "yolov8_nano_64x960_dispatch_13",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -2508,7 +2506,7 @@
         "yolov8_nano_64x960_dispatch_48"
       ],
       "hardware_target": "CPU_P#0+CPU_P#1+CPU_P#2+CPU_P#3",
-      "start_time": 21.244,
+      "start_time": 18.708,
       "duration": 0.3349,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_49_rvv_x60_conv2d_batchnorm2d_silu_s8_N1xIC64xIH4xIW6xOC64xOH4xOW6xKH3xKW3xSH1xSW1xPH1xPW1",
@@ -2525,7 +2523,7 @@
         "yolov8_nano_64x960_dispatch_49"
       ],
       "hardware_target": "CPU_P#0+CPU_P#1+CPU_P#2+CPU_P#3",
-      "start_time": 21.579,
+      "start_time": 19.043,
       "duration": 0.33390144639999997,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_50_rvv_x60_conv2d_batchnorm2d_silu_s8_N1xIC64xIH4xIW6xOC64xOH4xOW6xKH3xKW3xSH1xSW1xPH1xPW1",
@@ -2543,11 +2541,11 @@
         "yolov8_nano_64x960_dispatch_50"
       ],
       "hardware_target": "CPU_P#0",
-      "start_time": 21.913,
+      "start_time": 19.377,
       "duration": 0.017125446399999997,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_51_rvv_x60_cat3_c1_s8_N1xH4xW6xC_inputs64|64|64xC_total192",
-      "time_dependency": "yolov8_nano_64x960_dispatch_48",
+      "time_dependency": "yolov8_nano_64x960_dispatch_46",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -2560,7 +2558,7 @@
         "yolov8_nano_64x960_dispatch_51"
       ],
       "hardware_target": "CPU_P#0+CPU_P#1+CPU_P#2+CPU_P#3",
-      "start_time": 21.931,
+      "start_time": 19.395,
       "duration": 0.27275264639999997,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_52_rvv_x60_conv2d_batchnorm2d_silu_s8_N1xIC192xIH4xIW6xOC128xOH4xOW6xKH1xKW1xSH1xSW1xPH0xPW0",
@@ -2577,11 +2575,11 @@
         "yolov8_nano_64x960_dispatch_52"
       ],
       "hardware_target": "CPU_P#0+CPU_P#1",
-      "start_time": 22.204,
+      "start_time": 19.668,
       "duration": 0.09140799999999999,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_53_rvv_x60_upsample_nearest_s8_N1xC128xIH4xIW6xscale2",
-      "time_dependency": "yolov8_nano_64x960_dispatch_42",
+      "time_dependency": "yolov8_nano_64x960_dispatch_40",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -2595,7 +2593,7 @@
         "yolov8_nano_64x960_dispatch_53"
       ],
       "hardware_target": "CPU_P#0+CPU_P#1",
-      "start_time": 22.296,
+      "start_time": 19.76,
       "duration": 0.035985753599999996,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_54_rvv_x60_cat2_c1_s8_N1xH8xW12xC_inputs128|64xC_total192",
@@ -2612,11 +2610,11 @@
         "yolov8_nano_64x960_dispatch_54"
       ],
       "hardware_target": "CPU_E#0+CPU_E#1+CPU_E#2+CPU_E#3",
-      "start_time": 22.332,
+      "start_time": 20.039,
       "duration": 0.7511216,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_55_rvv_x60_conv2d_batchnorm2d_silu_s8_N1xIC192xIH8xIW12xOC64xOH8xOW12xKH1xKW1xSH1xSW1xPH0xPW0",
-      "time_dependency": "yolov8_nano_64x960_dispatch_12",
+      "time_dependency": "yolov8_nano_64x960_dispatch_48",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -2629,10 +2627,10 @@
         "yolov8_nano_64x960_dispatch_55"
       ],
       "hardware_target": "CPU_P#1",
-      "start_time": 23.084,
+      "start_time": 20.791,
       "duration": 0.0,
       "job_name": "yolov8_nano_64x960",
-      "time_dependency": "attn_block0_dispatch_8",
+      "time_dependency": "attn_block0_dispatch_12",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -2645,7 +2643,7 @@
         "yolov8_nano_64x960_dispatch_56"
       ],
       "hardware_target": "CPU_E#0+CPU_E#1+CPU_E#2+CPU_E#3",
-      "start_time": 23.084,
+      "start_time": 20.8,
       "duration": 0.6144824,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_57_rvv_x60_conv2d_batchnorm2d_silu_s8_N1xIC32xIH8xIW12xOC32xOH8xOW12xKH3xKW3xSH1xSW1xPH1xPW1",
@@ -2661,12 +2659,12 @@
       "dependencies": [
         "yolov8_nano_64x960_dispatch_57"
       ],
-      "hardware_target": "CPU_E#0+CPU_E#1+CPU_E#2+CPU_E#3",
-      "start_time": 23.699,
-      "duration": 0.6124865535999999,
+      "hardware_target": "CPU_P#3",
+      "start_time": 21.415,
+      "duration": 0.7251705535999999,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_58_rvv_x60_conv2d_batchnorm2d_silu_s8_N1xIC32xIH8xIW12xOC32xOH8xOW12xKH3xKW3xSH1xSW1xPH1xPW1",
-      "time_dependency": "yolov8_nano_64x960_dispatch_57",
+      "time_dependency": "mlp_control4_dispatch_2",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -2680,7 +2678,7 @@
         "yolov8_nano_64x960_dispatch_58"
       ],
       "hardware_target": "CPU_P#1",
-      "start_time": 24.312,
+      "start_time": 22.141,
       "duration": 0.0177041536,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_59_rvv_x60_cat3_c1_s8_N1xH8xW12xC_inputs32|32|32xC_total96",
@@ -2696,12 +2694,12 @@
       "dependencies": [
         "yolov8_nano_64x960_dispatch_59"
       ],
-      "hardware_target": "CPU_E#2+CPU_E#3",
-      "start_time": 24.547,
-      "duration": 0.5720879999999999,
+      "hardware_target": "CPU_E#0+CPU_E#1+CPU_E#2+CPU_E#3",
+      "start_time": 22.159,
+      "duration": 0.4700161536,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_60_rvv_x60_conv2d_batchnorm2d_silu_s8_N1xIC96xIH8xIW12xOC64xOH8xOW12xKH1xKW1xSH1xSW1xPH0xPW0",
-      "time_dependency": "ffn_block0_dispatch_3",
+      "time_dependency": "yolov8_nano_64x960_dispatch_57",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -2714,11 +2712,11 @@
         "yolov8_nano_64x960_dispatch_60"
       ],
       "hardware_target": "CPU_E#0+CPU_E#1+CPU_E#2+CPU_E#3",
-      "start_time": 25.12,
+      "start_time": 22.63,
       "duration": 0.3454592,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_61_rvv_x60_conv2d_batchnorm2d_silu_s8_N1xIC64xIH8xIW12xOC64xOH4xOW6xKH3xKW3xSH2xSW2xPH1xPW1",
-      "time_dependency": "yolov8_nano_64x960_dispatch_58",
+      "time_dependency": "yolov8_nano_64x960_dispatch_60",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -2732,7 +2730,7 @@
         "yolov8_nano_64x960_dispatch_61"
       ],
       "hardware_target": "CPU_P#1",
-      "start_time": 25.466,
+      "start_time": 22.976,
       "duration": 0.0159705536,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_62_rvv_x60_cat2_c1_s8_N1xH4xW6xC_inputs64|128xC_total192",
@@ -2749,7 +2747,7 @@
         "yolov8_nano_64x960_dispatch_62"
       ],
       "hardware_target": "CPU_E#0+CPU_E#1+CPU_E#2+CPU_E#3",
-      "start_time": 25.482,
+      "start_time": 22.992,
       "duration": 0.2739617536,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_63_rvv_x60_conv2d_batchnorm2d_silu_s8_N1xIC192xIH4xIW6xOC128xOH4xOW6xKH1xKW1xSH1xSW1xPH0xPW0",
@@ -2766,7 +2764,7 @@
         "yolov8_nano_64x960_dispatch_63"
       ],
       "hardware_target": "CPU_P#1",
-      "start_time": 25.756,
+      "start_time": 23.266,
       "duration": 0.0,
       "job_name": "yolov8_nano_64x960",
       "time_dependency": "yolov8_nano_64x960_dispatch_62",
@@ -2782,7 +2780,7 @@
         "yolov8_nano_64x960_dispatch_64"
       ],
       "hardware_target": "CPU_E#0+CPU_E#1+CPU_E#2+CPU_E#3",
-      "start_time": 25.756,
+      "start_time": 23.266,
       "duration": 0.33069775360000003,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_65_rvv_x60_conv2d_batchnorm2d_silu_s8_N1xIC64xIH4xIW6xOC64xOH4xOW6xKH3xKW3xSH1xSW1xPH1xPW1",
@@ -2798,12 +2796,11 @@
       "dependencies": [
         "yolov8_nano_64x960_dispatch_65"
       ],
-      "hardware_target": "CPU_P#0+CPU_P#1+CPU_P#2+CPU_P#3",
-      "start_time": 26.093,
-      "duration": 0.331748,
+      "hardware_target": "CPU_P#2+CPU_P#3",
+      "start_time": 23.597,
+      "duration": 0.3631633536,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_66_rvv_x60_conv2d_batchnorm2d_silu_s8_N1xIC64xIH4xIW6xOC64xOH4xOW6xKH3xKW3xSH1xSW1xPH1xPW1",
-      "time_dependency": "yolov8_nano_64x960_dispatch_52",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -2817,11 +2814,11 @@
         "yolov8_nano_64x960_dispatch_66"
       ],
       "hardware_target": "CPU_P#0",
-      "start_time": 26.425,
+      "start_time": 23.961,
       "duration": 0.0170208,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_67_rvv_x60_cat3_c1_s8_N1xH4xW6xC_inputs64|64|64xC_total192",
-      "time_dependency": "yolov8_nano_64x960_dispatch_51",
+      "time_dependency": "attn_block0_dispatch_13",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -2834,11 +2831,11 @@
         "yolov8_nano_64x960_dispatch_67"
       ],
       "hardware_target": "CPU_P#0+CPU_P#1+CPU_P#2+CPU_P#3",
-      "start_time": 26.443,
+      "start_time": 23.979,
       "duration": 0.27621984639999997,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_68_rvv_x60_conv2d_batchnorm2d_silu_s8_N1xIC192xIH4xIW6xOC128xOH4xOW6xKH1xKW1xSH1xSW1xPH0xPW0",
-      "time_dependency": "yolov8_nano_64x960_dispatch_66",
+      "time_dependency": "yolov8_nano_64x960_dispatch_52",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -2851,7 +2848,7 @@
         "yolov8_nano_64x960_dispatch_68"
       ],
       "hardware_target": "CPU_P#0+CPU_P#1+CPU_P#2+CPU_P#3",
-      "start_time": 26.72,
+      "start_time": 24.256,
       "duration": 0.23844879999999996,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_69_rvv_x60_conv2d_batchnorm2d_silu_s8_N1xIC128xIH4xIW6xOC128xOH2xOW3xKH3xKW3xSH2xSW2xPH1xPW1",
@@ -2869,7 +2866,7 @@
         "yolov8_nano_64x960_dispatch_69"
       ],
       "hardware_target": "CPU_P#0",
-      "start_time": 26.959,
+      "start_time": 24.495,
       "duration": 0.0310472,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_70_rvv_x60_cat2_c1_s8_N1xH2xW3xC_inputs128|256xC_total384",
@@ -2886,7 +2883,7 @@
         "yolov8_nano_64x960_dispatch_70"
       ],
       "hardware_target": "CPU_P#0+CPU_P#1+CPU_P#2+CPU_P#3",
-      "start_time": 26.991,
+      "start_time": 24.527,
       "duration": 0.2692337536,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_71_rvv_x60_conv2d_batchnorm2d_silu_s8_N1xIC384xIH2xIW3xOC256xOH2xOW3xKH1xKW1xSH1xSW1xPH0xPW0",
@@ -2903,7 +2900,7 @@
         "yolov8_nano_64x960_dispatch_71"
       ],
       "hardware_target": "CPU_P#0",
-      "start_time": 27.261,
+      "start_time": 24.797,
       "duration": 0.0,
       "job_name": "yolov8_nano_64x960",
       "time_dependency": "yolov8_nano_64x960_dispatch_70",
@@ -2918,12 +2915,12 @@
       "dependencies": [
         "yolov8_nano_64x960_dispatch_72"
       ],
-      "hardware_target": "CPU_P#3",
-      "start_time": 27.261,
+      "hardware_target": "CPU_P#0",
+      "start_time": 24.797,
       "duration": 0.6359689535999999,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_73_rvv_x60_conv2d_batchnorm2d_silu_s8_N1xIC128xIH2xIW3xOC128xOH2xOW3xKH3xKW3xSH1xSW1xPH1xPW1",
-      "time_dependency": "ffn_block1_dispatch_0",
+      "time_dependency": "yolov8_nano_64x960_dispatch_70",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -2935,12 +2932,12 @@
       "dependencies": [
         "yolov8_nano_64x960_dispatch_73"
       ],
-      "hardware_target": "CPU_P#0+CPU_P#1+CPU_P#2+CPU_P#3",
-      "start_time": 27.897,
-      "duration": 0.2321448,
+      "hardware_target": "CPU_E#2",
+      "start_time": 25.433,
+      "duration": 0.6336566464,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_74_rvv_x60_conv2d_batchnorm2d_silu_s8_N1xIC128xIH2xIW3xOC128xOH2xOW3xKH3xKW3xSH1xSW1xPH1xPW1",
-      "time_dependency": "yolov8_nano_64x960_dispatch_71",
+      "time_dependency": "mlp_control3_dispatch_4",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -2953,12 +2950,12 @@
         "yolov8_nano_64x960_dispatch_72",
         "yolov8_nano_64x960_dispatch_74"
       ],
-      "hardware_target": "CPU_P#0",
-      "start_time": 28.13,
+      "hardware_target": "CPU_E#3",
+      "start_time": 26.067,
       "duration": 0.0319928,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_75_rvv_x60_cat3_c1_s8_N1xH2xW3xC_inputs128|128|128xC_total384",
-      "time_dependency": "yolov8_nano_64x960_dispatch_72",
+      "time_dependency": "ffn_block0_dispatch_4",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -2970,12 +2967,12 @@
       "dependencies": [
         "yolov8_nano_64x960_dispatch_75"
       ],
-      "hardware_target": "CPU_P#0",
-      "start_time": 28.162,
+      "hardware_target": "CPU_E#0",
+      "start_time": 27.512,
       "duration": 0.7813808,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_76_rvv_x60_conv2d_batchnorm2d_silu_s8_N1xIC384xIH2xIW3xOC256xOH2xOW3xKH1xKW1xSH1xSW1xPH0xPW0",
-      "time_dependency": "yolov8_nano_64x960_dispatch_75",
+      "time_dependency": "yolov8_nano_64x960_dispatch_77",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -2987,12 +2984,12 @@
       "dependencies": [
         "yolov8_nano_64x960_dispatch_60"
       ],
-      "hardware_target": "CPU_P#2",
-      "start_time": 28.13,
+      "hardware_target": "CPU_E#0",
+      "start_time": 23.597,
       "duration": 2.7733401535999995,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_77_rvv_x60_conv2d_batchnorm2d_silu_s8_N1xIC64xIH8xIW12xOC64xOH8xOW12xKH3xKW3xSH1xSW1xPH1xPW1",
-      "time_dependency": "attn_block0_dispatch_11",
+      "time_dependency": "fused_full3_dispatch_6",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -3005,11 +3002,11 @@
         "yolov8_nano_64x960_dispatch_77"
       ],
       "hardware_target": "CPU_E#0+CPU_E#1+CPU_E#2+CPU_E#3",
-      "start_time": 30.906,
+      "start_time": 28.739,
       "duration": 1.1629303999999998,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_78_rvv_x60_conv2d_batchnorm2d_silu_s8_N1xIC64xIH8xIW12xOC64xOH8xOW12xKH3xKW3xSH1xSW1xPH1xPW1",
-      "time_dependency": "ffn_block1_dispatch_1",
+      "time_dependency": "yolov8_nano_64x960_dispatch_80",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -3021,12 +3018,12 @@
       "dependencies": [
         "yolov8_nano_64x960_dispatch_78"
       ],
-      "hardware_target": "CPU_E#0",
-      "start_time": 32.65,
+      "hardware_target": "CPU_P#1",
+      "start_time": 30.242,
       "duration": 0.327078128,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_79_rvv_x60_conv2d_s8_N1xIC64xIH8xIW12xOC64xOH8xOW12xKH1xKW1xSH1xSW1xPH0xPW0",
-      "time_dependency": "mlp_control4_dispatch_6",
+      "time_dependency": "yolov8_nano_64x960_dispatch_64",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -3038,15 +3035,15 @@
       "dependencies": [
         "yolov8_nano_64x960_dispatch_60"
       ],
-      "hardware_target": "CPU_P#3",
-      "start_time": 28.13,
-      "duration": 2.8001321536,
+      "hardware_target": "CPU_E#0+CPU_E#1+CPU_E#2+CPU_E#3",
+      "start_time": 26.371,
+      "duration": 1.1409193536,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_80_rvv_x60_conv2d_batchnorm2d_silu_s8_N1xIC64xIH8xIW12xOC64xOH8xOW12xKH3xKW3xSH1xSW1xPH1xPW1",
-      "time_dependency": "yolov8_nano_64x960_dispatch_73",
+      "time_dependency": "yolov8_nano_64x960_dispatch_65",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
-      "impl": "ime"
+      "impl": "rvv"
     },
     "yolov8_nano_64x960_dispatch_81": {
       "id": 81,
@@ -3056,11 +3053,11 @@
         "yolov8_nano_64x960_dispatch_80"
       ],
       "hardware_target": "CPU_E#2+CPU_E#3",
-      "start_time": 32.65,
+      "start_time": 27.512,
       "duration": 1.2265478464,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_81_rvv_x60_conv2d_batchnorm2d_silu_s8_N1xIC64xIH8xIW12xOC64xOH8xOW12xKH3xKW3xSH1xSW1xPH1xPW1",
-      "time_dependency": "yolov8_nano_64x960_dispatch_92",
+      "time_dependency": "yolov8_nano_64x960_dispatch_4",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -3072,15 +3069,15 @@
       "dependencies": [
         "yolov8_nano_64x960_dispatch_81"
       ],
-      "hardware_target": "CPU_E#3",
-      "start_time": 33.877,
+      "hardware_target": "CPU_P#2",
+      "start_time": 30.754,
       "duration": 0.153702497,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_82_rvv_x60_conv2d_s8_N1xIC64xIH8xIW12xOC2xOH8xOW12xKH1xKW1xSH1xSW1xPH0xPW0",
-      "time_dependency": "yolov8_nano_64x960_dispatch_93",
+      "time_dependency": "mlp_control4_dispatch_6",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
-      "impl": "rvv"
+      "impl": "ime"
     },
     "yolov8_nano_64x960_dispatch_83": {
       "id": 83,
@@ -3090,12 +3087,12 @@
         "yolov8_nano_64x960_dispatch_79",
         "yolov8_nano_64x960_dispatch_82"
       ],
-      "hardware_target": "CPU_P#0",
-      "start_time": 34.436,
-      "duration": 0.0126609536,
+      "hardware_target": "CPU_E#2+CPU_E#3",
+      "start_time": 30.908,
+      "duration": 0.025688799999999998,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_83_rvv_x60_cat2_c1_s8_N1xH8xW12xC_inputs64|2xC_total66",
-      "time_dependency": "yolov8_nano_64x960_dispatch_89",
+      "time_dependency": "yolov8_nano_64x960_dispatch_81",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -3107,12 +3104,12 @@
       "dependencies": [
         "yolov8_nano_64x960_dispatch_68"
       ],
-      "hardware_target": "CPU_E#0+CPU_E#1+CPU_E#2+CPU_E#3",
-      "start_time": 32.069,
-      "duration": 0.5809135999999999,
+      "hardware_target": "CPU_E#1",
+      "start_time": 24.256,
+      "duration": 1.2378950463999998,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_84_rvv_x60_conv2d_batchnorm2d_silu_s8_N1xIC128xIH4xIW6xOC64xOH4xOW6xKH3xKW3xSH1xSW1xPH1xPW1",
-      "time_dependency": "yolov8_nano_64x960_dispatch_78",
+      "time_dependency": "mlp_control4_dispatch_3",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -3125,11 +3122,11 @@
         "yolov8_nano_64x960_dispatch_84"
       ],
       "hardware_target": "CPU_E#1",
-      "start_time": 32.65,
+      "start_time": 25.494,
       "duration": 0.7062056,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_85_rvv_x60_conv2d_batchnorm2d_silu_s8_N1xIC64xIH4xIW6xOC64xOH4xOW6xKH3xKW3xSH1xSW1xPH1xPW1",
-      "time_dependency": "mlp_control4_dispatch_5",
+      "time_dependency": "yolov8_nano_64x960_dispatch_84",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -3141,12 +3138,12 @@
       "dependencies": [
         "yolov8_nano_64x960_dispatch_85"
       ],
-      "hardware_target": "CPU_P#0",
-      "start_time": 34.449,
+      "hardware_target": "CPU_E#3",
+      "start_time": 26.201,
       "duration": 0.083619003,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_86_rvv_x60_conv2d_s8_N1xIC64xIH4xIW6xOC64xOH4xOW6xKH1xKW1xSH1xSW1xPH0xPW0",
-      "time_dependency": "yolov8_nano_64x960_dispatch_83",
+      "time_dependency": "yolov8_nano_64x960_dispatch_75",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -3158,12 +3155,12 @@
       "dependencies": [
         "yolov8_nano_64x960_dispatch_68"
       ],
-      "hardware_target": "CPU_P#1",
-      "start_time": 28.13,
-      "duration": 1.2261809536,
+      "hardware_target": "CPU_E#0+CPU_E#1+CPU_E#2+CPU_E#3",
+      "start_time": 31.002,
+      "duration": 0.5715622464,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_87_rvv_x60_conv2d_batchnorm2d_silu_s8_N1xIC128xIH4xIW6xOC64xOH4xOW6xKH3xKW3xSH1xSW1xPH1xPW1",
-      "time_dependency": "yolov8_nano_64x960_dispatch_64",
+      "time_dependency": "yolov8_nano_64x960_dispatch_78",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -3175,12 +3172,12 @@
       "dependencies": [
         "yolov8_nano_64x960_dispatch_87"
       ],
-      "hardware_target": "CPU_P#1",
-      "start_time": 29.357,
+      "hardware_target": "CPU_E#0",
+      "start_time": 31.574,
       "duration": 0.6953311999999999,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_88_rvv_x60_conv2d_batchnorm2d_silu_s8_N1xIC64xIH4xIW6xOC64xOH4xOW6xKH3xKW3xSH1xSW1xPH1xPW1",
-      "time_dependency": "yolov8_nano_64x960_dispatch_87",
+      "time_dependency": "yolov8_nano_64x960_dispatch_92",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -3192,12 +3189,12 @@
       "dependencies": [
         "yolov8_nano_64x960_dispatch_88"
       ],
-      "hardware_target": "CPU_P#0",
-      "start_time": 34.396,
+      "hardware_target": "CPU_E#2",
+      "start_time": 32.27,
       "duration": 0.039239252999999995,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_89_rvv_x60_conv2d_s8_N1xIC64xIH4xIW6xOC2xOH4xOW6xKH1xKW1xSH1xSW1xPH0xPW0",
-      "time_dependency": "yolov8_nano_64x960_dispatch_97",
+      "time_dependency": "ffn_block1_dispatch_2",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -3210,12 +3207,12 @@
         "yolov8_nano_64x960_dispatch_86",
         "yolov8_nano_64x960_dispatch_89"
       ],
-      "hardware_target": "CPU_E#1",
-      "start_time": 34.533,
+      "hardware_target": "CPU_P#3",
+      "start_time": 33.929,
       "duration": 0.0064086464,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_90_rvv_x60_cat2_c1_s8_N1xH4xW6xC_inputs64|2xC_total66",
-      "time_dependency": "yolov8_nano_64x960_dispatch_85",
+      "time_dependency": "yolov8_nano_64x960_dispatch_94",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -3228,11 +3225,11 @@
         "yolov8_nano_64x960_dispatch_76"
       ],
       "hardware_target": "CPU_P#0",
-      "start_time": 28.944,
+      "start_time": 30.242,
       "duration": 0.5451913535999999,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_91_rvv_x60_conv2d_batchnorm2d_silu_s8_N1xIC256xIH2xIW3xOC64xOH2xOW3xKH3xKW3xSH1xSW1xPH1xPW1",
-      "time_dependency": "yolov8_nano_64x960_dispatch_76",
+      "time_dependency": "yolov8_nano_64x960_dispatch_73",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -3244,12 +3241,12 @@
       "dependencies": [
         "yolov8_nano_64x960_dispatch_91"
       ],
-      "hardware_target": "CPU_E#2+CPU_E#3",
-      "start_time": 30.714,
-      "duration": 0.1689472,
+      "hardware_target": "CPU_E#0",
+      "start_time": 30.788,
+      "duration": 0.1904337536,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_92_rvv_x60_conv2d_batchnorm2d_silu_s8_N1xIC64xIH2xIW3xOC64xOH2xOW3xKH3xKW3xSH1xSW1xPH1xPW1",
-      "time_dependency": "yolov8_nano_64x960_dispatch_94",
+      "time_dependency": "yolov8_nano_64x960_dispatch_76",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -3262,11 +3259,11 @@
         "yolov8_nano_64x960_dispatch_92"
       ],
       "hardware_target": "CPU_E#3",
-      "start_time": 30.883,
+      "start_time": 30.979,
       "duration": 0.022766496999999997,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_93_rvv_x60_conv2d_s8_N1xIC64xIH2xIW3xOC64xOH2xOW3xKH1xKW1xSH1xSW1xPH0xPW0",
-      "time_dependency": "yolov8_nano_64x960_dispatch_96",
+      "time_dependency": "yolov8_nano_64x960_dispatch_86",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -3278,15 +3275,15 @@
       "dependencies": [
         "yolov8_nano_64x960_dispatch_76"
       ],
-      "hardware_target": "CPU_E#2+CPU_E#3",
+      "hardware_target": "CPU_P#3",
       "start_time": 30.242,
-      "duration": 0.3167230464,
+      "duration": 0.5410937536,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_94_rvv_x60_conv2d_batchnorm2d_silu_s8_N1xIC256xIH2xIW3xOC64xOH2xOW3xKH3xKW3xSH1xSW1xPH1xPW1",
-      "time_dependency": "yolov8_nano_64x960_dispatch_60",
+      "time_dependency": "ffn_block1_dispatch_0",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
-      "impl": "rvv"
+      "impl": "ime"
     },
     "yolov8_nano_64x960_dispatch_95": {
       "id": 95,
@@ -3295,12 +3292,12 @@
       "dependencies": [
         "yolov8_nano_64x960_dispatch_94"
       ],
-      "hardware_target": "CPU_P#0+CPU_P#1",
-      "start_time": 30.559,
-      "duration": 0.14362655359999998,
+      "hardware_target": "CPU_E#1",
+      "start_time": 30.784,
+      "duration": 0.191484,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_95_rvv_x60_conv2d_batchnorm2d_silu_s8_N1xIC64xIH2xIW3xOC64xOH2xOW3xKH3xKW3xSH1xSW1xPH1xPW1",
-      "time_dependency": "yolov8_nano_64x960_dispatch_54",
+      "time_dependency": "yolov8_nano_64x960_dispatch_85",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -3312,12 +3309,12 @@
       "dependencies": [
         "yolov8_nano_64x960_dispatch_95"
       ],
-      "hardware_target": "CPU_E#3",
-      "start_time": 30.703,
-      "duration": 0.010597002999999997,
+      "hardware_target": "CPU_E#0+CPU_E#1+CPU_E#2+CPU_E#3",
+      "start_time": 32.31,
+      "duration": 0.011592871999999999,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_96_rvv_x60_conv2d_s8_N1xIC64xIH2xIW3xOC2xOH2xOW3xKH1xKW1xSH1xSW1xPH0xPW0",
-      "time_dependency": "ffn_block0_dispatch_4",
+      "time_dependency": "yolov8_nano_64x960_dispatch_87",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -3330,12 +3327,12 @@
         "yolov8_nano_64x960_dispatch_93",
         "yolov8_nano_64x960_dispatch_96"
       ],
-      "hardware_target": "CPU_P#0",
-      "start_time": 34.39,
-      "duration": 0.005516,
+      "hardware_target": "CPU_E#2+CPU_E#3",
+      "start_time": 32.322,
+      "duration": 0.006776799999999999,
       "job_name": "yolov8_nano_64x960",
       "module_name": "yolov8_nano_64x96$dispatch_97_rvv_x60_cat2_c1_s8_N1xH2xW3xC_inputs64|2xC_total66",
-      "time_dependency": "ffn_block1_dispatch_2",
+      "time_dependency": "yolov8_nano_64x960_dispatch_83",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -3345,12 +3342,12 @@
       "ordinal": 1,
       "total": 1,
       "dependencies": [],
-      "hardware_target": "CPU_P#0",
-      "start_time": 0.071,
+      "hardware_target": "CPU_P#2",
+      "start_time": 0.211,
       "duration": 1.095570168,
       "job_name": "ffn_block0",
       "module_name": "ffn_block$dispatch_0_rvv_x60_layernorm_s8_M128xK256",
-      "time_dependency": "fused_full0_dispatch_6",
+      "time_dependency": "fused_full0_dispatch_7",
       "release_policy": "phase_locked",
       "release_us": 0.0,
       "time_dep_mode": "soft",
@@ -3364,11 +3361,11 @@
         "ffn_block0_dispatch_0"
       ],
       "hardware_target": "CPU_P#3",
-      "start_time": 1.271,
+      "start_time": 1.307,
       "duration": 8.146488933,
       "job_name": "ffn_block0",
       "module_name": "ffn_block$dispatch_1_rvv_x60_linear_s8_M128xK256xN1024",
-      "time_dependency": "fused_full0_dispatch_8",
+      "time_dependency": "mlp_control0_dispatch_6",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "deadline_miss": true,
@@ -3383,16 +3380,16 @@
         "ffn_block0_dispatch_1"
       ],
       "hardware_target": "CPU_P#3",
-      "start_time": 9.547,
-      "duration": 0.6650066250000001,
+      "start_time": 9.473,
+      "duration": 0.6676722135000001,
       "job_name": "ffn_block0",
       "module_name": "ffn_block$dispatch_2_rvv_x60_gelu_s8_n131072",
-      "time_dependency": "mlp_control1_dispatch_1",
+      "time_dependency": "mlp_control1_dispatch_2",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "deadline_miss": true,
       "deadline_overrun_us": 5.8606664396999975,
-      "impl": "rvv"
+      "impl": "ime"
     },
     "ffn_block0_dispatch_3": {
       "id": 3,
@@ -3401,11 +3398,12 @@
       "dependencies": [
         "ffn_block0_dispatch_2"
       ],
-      "hardware_target": "CPU_E#2+CPU_E#3",
-      "start_time": 10.213,
+      "hardware_target": "CPU_E#0+CPU_E#1",
+      "start_time": 10.783,
       "duration": 5.736967022999999,
       "job_name": "ffn_block0",
       "module_name": "ffn_block$dispatch_3_rvv_x60_linear_s8_M128xK1024xN256",
+      "time_dependency": "yolov8_nano_64x960_dispatch_0",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "deadline_miss": true,
@@ -3420,11 +3418,11 @@
         "ffn_block0_dispatch_3"
       ],
       "hardware_target": "CPU_E#3",
-      "start_time": 24.312,
+      "start_time": 24.765,
       "duration": 0.2346950022,
       "job_name": "ffn_block0",
       "module_name": "ffn_block$dispatch_4_rvv_x60_add_s8_n32768",
-      "time_dependency": "attn_block0_dispatch_13",
+      "time_dependency": "mlp_control4_dispatch_1",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "deadline_miss": true,
@@ -3441,7 +3439,7 @@
       "duration": 1.092952168,
       "job_name": "ffn_block1",
       "module_name": "ffn_block$dispatch_0_rvv_x60_layernorm_s8_M128xK256",
-      "time_dependency": "fused_full3_dispatch_2",
+      "time_dependency": "yolov8_nano_64x960_dispatch_58",
       "release_policy": "phase_locked",
       "release_us": 25000.0,
       "time_dep_mode": "soft",
@@ -3454,12 +3452,12 @@
       "dependencies": [
         "ffn_block1_dispatch_0"
       ],
-      "hardware_target": "CPU_E#0+CPU_E#1+CPU_E#2+CPU_E#3",
+      "hardware_target": "CPU_P#0+CPU_P#1+CPU_P#2+CPU_P#3",
       "start_time": 26.093,
       "duration": 4.148694000000001,
       "job_name": "ffn_block1",
       "module_name": "ffn_block$dispatch_1_rvv_x60_linear_s8_M128xK256xN1024",
-      "time_dependency": "yolov8_nano_64x960_dispatch_65",
+      "time_dependency": "yolov8_nano_64x960_dispatch_71",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -3471,12 +3469,12 @@
       "dependencies": [
         "ffn_block1_dispatch_1"
       ],
-      "hardware_target": "CPU_P#0",
-      "start_time": 30.703,
+      "hardware_target": "CPU_E#2",
+      "start_time": 30.242,
       "duration": 0.6650066250000001,
       "job_name": "ffn_block1",
       "module_name": "ffn_block$dispatch_2_rvv_x60_gelu_s8_n131072",
-      "time_dependency": "yolov8_nano_64x960_dispatch_91",
+      "time_dependency": "yolov8_nano_64x960_dispatch_74",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -3489,11 +3487,11 @@
         "ffn_block1_dispatch_2"
       ],
       "hardware_target": "CPU_P#0+CPU_P#1+CPU_P#2+CPU_P#3",
-      "start_time": 31.369,
+      "start_time": 30.908,
       "duration": 3.020593125,
       "job_name": "ffn_block1",
       "module_name": "ffn_block$dispatch_3_rvv_x60_linear_s8_M128xK1024xN256",
-      "time_dependency": "yolov8_nano_64x960_dispatch_74",
+      "time_dependency": "ffn_block1_dispatch_1",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -3505,12 +3503,12 @@
       "dependencies": [
         "ffn_block1_dispatch_3"
       ],
-      "hardware_target": "CPU_P#1",
-      "start_time": 34.39,
+      "hardware_target": "CPU_P#0",
+      "start_time": 33.929,
       "duration": 0.23429316030000003,
       "job_name": "ffn_block1",
       "module_name": "ffn_block$dispatch_4_rvv_x60_add_s8_n32768",
-      "time_dependency": "yolov8_nano_64x960_dispatch_88",
+      "time_dependency": "yolov8_nano_64x960_dispatch_91",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "ime"
@@ -3520,15 +3518,15 @@
       "ordinal": 1,
       "total": 1,
       "dependencies": [],
-      "hardware_target": "CPU_P#3",
+      "hardware_target": "CPU_P#2",
       "start_time": 0.0,
-      "duration": 0.009287168,
+      "duration": 0.009474168,
       "job_name": "attn_block0",
       "module_name": "attn_block$dispatch_0_rvv_x60_layernorm_s8_M8xK32",
       "release_policy": "phase_locked",
       "release_us": 0.0,
       "time_dep_mode": "soft",
-      "impl": "ime"
+      "impl": "rvv"
     },
     "attn_block0_dispatch_1": {
       "id": 1,
@@ -3537,12 +3535,12 @@
       "dependencies": [
         "attn_block0_dispatch_0"
       ],
-      "hardware_target": "CPU_P#3",
-      "start_time": 0.01,
+      "hardware_target": "CPU_E#1",
+      "start_time": 17.185,
       "duration": 0.013835080199999999,
       "job_name": "attn_block0",
       "module_name": "attn_block$dispatch_1_rvv_x60_linear_s8_M8xK32xN32",
-      "time_dependency": "attn_block0_dispatch_0",
+      "time_dependency": "mlp_control1_dispatch_0",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -3554,12 +3552,12 @@
       "dependencies": [
         "attn_block0_dispatch_1"
       ],
-      "hardware_target": "CPU_E#0",
-      "start_time": 0.646,
+      "hardware_target": "CPU_E#1",
+      "start_time": 17.199,
       "duration": 0.023062553599999997,
       "job_name": "attn_block0",
       "module_name": "attn_block$dispatch_2_rvv_x60_sin_s8_n256",
-      "time_dependency": "fused_full0_dispatch_0",
+      "time_dependency": "attn_block0_dispatch_1",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -3571,12 +3569,12 @@
       "dependencies": [
         "attn_block0_dispatch_1"
       ],
-      "hardware_target": "CPU_E#3",
-      "start_time": 0.024,
+      "hardware_target": "CPU_E#2",
+      "start_time": 17.199,
       "duration": 0.0209078464,
       "job_name": "attn_block0",
       "module_name": "attn_block$dispatch_3_rvv_x60_cos_s8_n256",
-      "time_dependency": "mlp_control0_dispatch_0",
+      "time_dependency": "mlp_control3_dispatch_1",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -3589,15 +3587,15 @@
         "attn_block0_dispatch_2",
         "attn_block0_dispatch_3"
       ],
-      "hardware_target": "CPU_P#1",
-      "start_time": 17.334,
+      "hardware_target": "CPU_E#3",
+      "start_time": 18.604,
       "duration": 0.0017335999999999999,
       "job_name": "attn_block0",
       "module_name": "attn_block$dispatch_4_rvv_x60_mul_s8_n256",
-      "time_dependency": "fused_full3_dispatch_8",
+      "time_dependency": "mlp_control3_dispatch_2",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
-      "impl": "ime"
+      "impl": "rvv"
     },
     "attn_block0_dispatch_5": {
       "id": 5,
@@ -3606,12 +3604,11 @@
       "dependencies": [
         "attn_block0_dispatch_0"
       ],
-      "hardware_target": "CPU_P#3",
-      "start_time": 0.038,
+      "hardware_target": "CPU_E#3",
+      "start_time": 0.01,
       "duration": 0.0136971927,
       "job_name": "attn_block0",
       "module_name": "attn_block$dispatch_5_rvv_x60_linear_s8_M8xK32xN32",
-      "time_dependency": "attn_block0_dispatch_7",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -3624,15 +3621,15 @@
         "attn_block0_dispatch_4",
         "attn_block0_dispatch_5"
       ],
-      "hardware_target": "CPU_P#2",
-      "start_time": 20.384,
+      "hardware_target": "CPU_P#0",
+      "start_time": 19.798,
       "duration": 0.0017335999999999999,
       "job_name": "attn_block0",
       "module_name": "attn_block$dispatch_6_rvv_x60_mul_s8_n256",
-      "time_dependency": "fused_full3_dispatch_3",
+      "time_dependency": "mlp_control3_dispatch_6",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
-      "impl": "ime"
+      "impl": "rvv"
     },
     "attn_block0_dispatch_7": {
       "id": 7,
@@ -3641,12 +3638,12 @@
       "dependencies": [
         "attn_block0_dispatch_0"
       ],
-      "hardware_target": "CPU_P#3",
+      "hardware_target": "CPU_E#3",
       "start_time": 0.024,
       "duration": 0.01378875,
       "job_name": "attn_block0",
       "module_name": "attn_block$dispatch_7_rvv_x60_linear_s8_M8xK32xN32",
-      "time_dependency": "attn_block0_dispatch_1",
+      "time_dependency": "attn_block0_dispatch_5",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -3660,14 +3657,14 @@
         "attn_block0_dispatch_7"
       ],
       "hardware_target": "CPU_P#1",
-      "start_time": 20.384,
-      "duration": 0.0016806464,
+      "start_time": 19.377,
+      "duration": 0.0017335999999999999,
       "job_name": "attn_block0",
       "module_name": "attn_block$dispatch_8_rvv_x60_mul_s8_n256",
-      "time_dependency": "yolov8_nano_64x960_dispatch_36",
+      "time_dependency": "fused_full3_dispatch_7",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
-      "impl": "ime"
+      "impl": "rvv"
     },
     "attn_block0_dispatch_9": {
       "id": 9,
@@ -3676,11 +3673,12 @@
       "dependencies": [
         "attn_block0_dispatch_0"
       ],
-      "hardware_target": "CPU_P#1",
-      "start_time": 0.01,
+      "hardware_target": "CPU_P#0",
+      "start_time": 0.646,
       "duration": 0.013512975,
       "job_name": "attn_block0",
       "module_name": "attn_block$dispatch_9_rvv_x60_linear_s8_M8xK32xN32",
+      "time_dependency": "fused_full0_dispatch_0",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -3693,15 +3691,15 @@
         "attn_block0_dispatch_6",
         "attn_block0_dispatch_8"
       ],
-      "hardware_target": "CPU_P#2",
-      "start_time": 20.386,
-      "duration": 0.007249599999999999,
+      "hardware_target": "CPU_E#3",
+      "start_time": 20.0,
+      "duration": 0.0082998464,
       "job_name": "attn_block0",
       "module_name": "attn_block$dispatch_10_rvv_x60_matmul_s8_M8xK32xN8xtranspose_b1",
-      "time_dependency": "attn_block0_dispatch_6",
+      "time_dependency": "fused_full3_dispatch_14",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
-      "impl": "ime"
+      "impl": "rvv"
     },
     "attn_block0_dispatch_11": {
       "id": 11,
@@ -3710,15 +3708,15 @@
       "dependencies": [
         "attn_block0_dispatch_10"
       ],
-      "hardware_target": "CPU_P#2",
-      "start_time": 20.394,
-      "duration": 0.005831199999999999,
+      "hardware_target": "CPU_P#0",
+      "start_time": 20.009,
+      "duration": 0.0056206464,
       "job_name": "attn_block0",
       "module_name": "attn_block$dispatch_11_rvv_x60_softmax_s8_M8xK8",
-      "time_dependency": "attn_block0_dispatch_10",
+      "time_dependency": "attn_block0_dispatch_6",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
-      "impl": "rvv"
+      "impl": "ime"
     },
     "attn_block0_dispatch_12": {
       "id": 12,
@@ -3728,12 +3726,12 @@
         "attn_block0_dispatch_9",
         "attn_block0_dispatch_11"
       ],
-      "hardware_target": "CPU_E#3",
-      "start_time": 20.4,
+      "hardware_target": "CPU_P#1",
+      "start_time": 20.015,
       "duration": 0.0147614464,
       "job_name": "attn_block0",
       "module_name": "attn_block$dispatch_12_rvv_x60_matmul_s8_M8xK8xN32xtranspose_b0",
-      "time_dependency": "mlp_control4_dispatch_0",
+      "time_dependency": "attn_block0_dispatch_8",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "impl": "rvv"
@@ -3745,12 +3743,12 @@
       "dependencies": [
         "attn_block0_dispatch_12"
       ],
-      "hardware_target": "CPU_E#3",
-      "start_time": 20.415,
+      "hardware_target": "CPU_P#0",
+      "start_time": 20.03,
       "duration": 0.0136045323,
       "job_name": "attn_block0",
       "module_name": "attn_block$dispatch_13_rvv_x60_linear_s8_M8xK32xN32",
-      "time_dependency": "attn_block0_dispatch_12",
+      "time_dependency": "attn_block0_dispatch_11",
       "release_policy": "immediate",
       "time_dep_mode": "hard",
       "deadline_miss": true,
@@ -3759,7 +3757,7 @@
     }
   },
   "metadata": {
-    "makespan": 34.6242931603,
+    "makespan": 34.1632931603,
     "num_operations": 217,
     "machines": [
       "CPU_P#0",
@@ -3915,7 +3913,7 @@
           "status": "OPTIMAL",
           "objective": 0.0,
           "best_bound": 0.0,
-          "wall_s": 29.227260723
+          "wall_s": 64.53314045
         },
         {
           "name": "total_dispatch_lateness",
@@ -3923,18 +3921,18 @@
           "status": "OPTIMAL",
           "objective": 0.0,
           "best_bound": 0.0,
-          "wall_s": 34.189765105
+          "wall_s": 24.106391089000002
         },
         {
           "name": "makespan_plus_transfer",
           "unit": "us",
-          "status": "FEASIBLE",
-          "objective": 34625.0,
+          "status": "OPTIMAL",
+          "objective": 34164.0,
           "best_bound": 34164.0,
-          "wall_s": 150.640613231
+          "wall_s": 212.327793941
         }
       ],
-      "certified": false,
+      "certified": true,
       "certified_through": "makespan_plus_transfer"
     }
   }
