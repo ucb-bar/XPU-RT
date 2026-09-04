@@ -9,6 +9,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.patches import Patch, FancyArrowPatch
+from matplotlib.lines import Line2D
 
 NETCOLOR = {"attn_block": "#4ba3d3", "fused_full": "#c77fa6", "mlp_control": "#2f8f4e",
             "ffn_block": "#e8c033", "yolov8_nano": "#2f6fb0", "yolov8_nano_64x96": "#2f6fb0",
@@ -124,7 +125,7 @@ def draw(ax, rows, dl, nets, hi, remap, xmax, breaks, feedback):
                 fontsize=10, weight="bold", color="white",
                 bbox=dict(boxstyle="round,pad=0.3", fc="#2f7d4f", ec="white", lw=1.0, alpha=0.95), zorder=12)
     ax.axhline(3.5, color="0.55", lw=0.8, zorder=1)
-    ax.set_yticks(list(y.values())); ax.set_yticklabels([c.replace("CPU_", "") for c in CORE_ORDER], fontsize=7)
+    ax.set_yticks(list(y.values())); ax.set_yticklabels([c.replace("CPU_", "") for c in CORE_ORDER], fontsize=9.5)
     ax.set_ylim(-0.7, len(CORE_ORDER) - 0.3); ax.set_xlim(0, xmax); ax.invert_yaxis()
     for s in ("top", "right"):
         ax.spines[s].set_visible(False)
@@ -154,58 +155,57 @@ def main():
         m = json.load(open(path.replace(".json", "_metrics.json")))
         tl = title.lower()
         P.append((title, hi, load(path), m, any(w in tl for w in ("feedback", "runtime", "board")), driver))
-    remap, xmax, breaks, merged = build_remap(P)   # squeeze idle time shared across all panels
-
     plt.rcParams.update({"font.family": "DejaVu Sans", "pdf.fonttype": 42})
     n = len(P)
-    fig, axes = plt.subplots(n, 1, figsize=(13.5, 2.7 * n + 1.8), sharex=True)
+    # each panel gets its OWN tight x-axis so it fills the full width (no wasted whitespace from the longest
+    # panel) — sized larger for single-column legibility.
+    fig, axes = plt.subplots(n, 1, figsize=(11.0, 2.95 * n + 1.5), sharex=False)
     if n == 1:
         axes = [axes]
     _late = lambda mm: float(mm.get("total_lateness_ms", mm.get("total_lateness", 0)) or 0)
     prev_mk = None; prev_miss = None; prev_late = None
     for i, (ax, (title, hi, rows, m, fb, driver)) in enumerate(zip(axes, P)):
         mk = m.get("makespan_ms", 0); miss = m.get("deadline_miss_count", 0); late = _late(m)
+        remap, xmax, breaks, merged = build_remap([P[i]])     # per-panel idle compression + scale
         drawn_miss = draw(ax, rows, dl, nets, hi, remap, xmax, breaks, fb)
+        tks, tlbls = gen_ticks(merged, remap)
+        ax.set_xticks(tks); ax.set_xticklabels(tlbls, fontsize=10)
         if driver:                                       # the closed-loop action that produced this panel
-            ax.text(0.012, 1.48, "▶ loop: " + driver, transform=ax.transAxes, ha="left", va="center",
-                    fontsize=8.8, style="italic", color="#5a3ea8",
-                    bbox=dict(boxstyle="round,pad=0.24", fc="#f1ecfb", ec="#b6a7e0", lw=0.8))
-        # HERO metric = deadline lateness (this is a hard-real-time control workload; makespan is secondary
-        # context — the board re-solve trades a little makespan to erase all the lateness).
+            ax.text(0.012, 1.44, "▶ loop: " + driver, transform=ax.transAxes, ha="left", va="center",
+                    fontsize=11, style="italic", color="#5a3ea8",
+                    bbox=dict(boxstyle="round,pad=0.28", fc="#f1ecfb", ec="#b6a7e0", lw=1.0))
+        # HERO metric = deadline lateness (hard-real-time control; makespan is secondary context)
         tag = "✓ all deadlines met" if miss == 0 else f"✗ {miss} miss · {late:.0f} ms total lateness"
         badge = "#2f7d4f" if miss == 0 else "#c0392b"
-        ax.set_title(f"{'①②③④⑤⑥⑦⑧'[min(i,7)]}  {title}", fontsize=11, weight="bold", loc="left", color="#222")
-        ax.text(0.997, 0.90, f"{tag}   ·   makespan {mk:.1f} ms", transform=ax.transAxes, ha="right", va="top",
-                fontsize=9.5, weight="bold", color="white",
-                bbox=dict(boxstyle="round,pad=0.34", fc=badge, ec="none", alpha=0.95))
-        ax.set_ylabel("K1 cores", fontsize=8)
+        ax.set_title(f"{'①②③④⑤⑥⑦⑧'[min(i,7)]}  {title}", fontsize=13, weight="bold", loc="left", color="#222", pad=3)
+        ax.text(0.994, 0.92, f"{tag}   ·   {mk:.1f} ms", transform=ax.transAxes, ha="right", va="top",
+                fontsize=12, weight="bold", color="white",
+                bbox=dict(boxstyle="round,pad=0.36", fc=badge, ec="none", alpha=0.96))
+        ax.set_ylabel("K1 cores", fontsize=11)
         # delta vs previous panel — lead with the deadline lateness change (the hero), misses second
         if prev_mk is not None:
             if abs(late - prev_late) > 0.05 or miss != prev_miss:
                 improved = late < prev_late - 0.05 or miss < prev_miss
                 col = "#2f7d4f" if improved else "#c0392b"
-                txt = f"deadline lateness {prev_late:.0f} → {late:.0f} ms     ·     {prev_miss} → {miss} miss"
+                txt = f"deadline lateness {prev_late:.0f} → {late:.0f} ms   ·   {prev_miss} → {miss} miss"
                 if improved and abs(mk - prev_mk) < 1.0:      # recovered without paying makespan
-                    txt += "     ·     same makespan ✓"
+                    txt += "   ·   same makespan ✓"
             else:
                 dmk = mk - prev_mk; col = "#777"
                 txt = f"Δ makespan {'−' if dmk < 0 else '+'}{abs(dmk):.1f} ms  ·  deadlines still met"
-            ax.annotate(txt, xy=(0.012, 1.24), xycoords="axes fraction",
-                        fontsize=9.5, weight="bold", color=col, va="center")
+            ax.annotate(txt, xy=(0.012, 1.25), xycoords="axes fraction",
+                        fontsize=11.5, weight="bold", color=col, va="center")
+        ax.set_xlabel("onboard time (ms) — idle stretches compressed" + ("  ·  board-calibrated costs" if fb else ""),
+                      fontsize=10.5)
         prev_mk = mk; prev_miss = miss; prev_late = late
-    tks, tlbls = gen_ticks(merged, remap)          # real-ms labels at their compressed positions
-    axes[-1].set_xticks(tks); axes[-1].set_xticklabels(tlbls, fontsize=8)
-    axes[-1].set_xlabel("time (ms), real dispatch times — idle stretches compressed (grey ┊ breaks); 'runtime feedback' panel uses board-calibrated costs",
-                        fontsize=9.5)
     handles = [Patch(fc=NETCOLOR[x], label=x) for x in nets if x in NETCOLOR]
     handles += [Patch(fc="0.8", hatch="xxx", ec="#2a2a2a", label="Δ sharded (multi-hart)"),
                 Patch(fc="0.8", hatch="///", ec="#0a6b6b", label="Δ IME-routed"),
-                Patch(fc="none", ec="#d11", lw=1.6, label="deadline miss"),
-                Patch(fc="#fbf3ec", ec="0.7", label="runtime-feedback round (board-calibrated)"),
-                Patch(fc="0.90", ec="0.62", label="idle time compressed")]
-    fig.legend(handles=handles, loc="lower center", ncol=5, fontsize=8, frameon=False, bbox_to_anchor=(0.5, -0.01))
-    fig.suptitle(a.title, fontsize=13.5, weight="bold", y=0.999)
-    fig.tight_layout(rect=(0, 0.035, 1, 0.975), h_pad=5.8)
+                Line2D([0], [0], marker="X", color="#e60000", mec="white", ls="none", ms=11, label="deadline MISSED"),
+                Patch(fc="#fbf3ec", ec="0.7", label="runtime-feedback round (board)")]
+    fig.legend(handles=handles, loc="lower center", ncol=3, fontsize=11, frameon=False, bbox_to_anchor=(0.5, -0.005))
+    fig.suptitle(a.title, fontsize=14.5, weight="bold", y=0.999)
+    fig.tight_layout(rect=(0, 0.045, 1, 0.978), h_pad=3.4)
     fig.savefig(a.out + ".png", dpi=160, bbox_inches="tight")
     fig.savefig(a.out + ".pdf", bbox_inches="tight")
     print("wrote", a.out + ".png/.pdf")
