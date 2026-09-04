@@ -34,35 +34,42 @@ Idle stretches are compressed into grey break columns (real-ms x-axis kept); mis
 - **Inputs**: the sensor workload spec `_4w_networks_k1_sensor_sharded_rich_shard_ime_s4.0.json` + its profiles
   under `gen_mb/…`; `k1_board_calibration.json` (drives both the re-cost and the board-calibrated re-solve).
 
-## 2. `hil_ablation_scatter` — HIL speed × frequency × crash/success (GPU)
+## 2. `hil_ablation_phase` — HIL command-rate phase diagram (GPU for the grid)
 - **Generate** the per-flight grid (real Isaac flights; 5 speeds × 4 rates × 6 seeds = 120 flights, GPU-hours).
   Needs the conda `env_isaaclab` python — pass it via `ISAAC_PY` (see `docs/REPRODUCE.md` §1):
   `ISAAC_PY=<env_isaaclab>/bin/python bash scripts/hil_ablation_grid.sh`
   → appends rows to `results/codesign_feedback/hil_grid/hil_ablation.csv` (via
   `sims/scripts/sweep_rate_demo.py --sweep-csv`; one row/episode:
   `seed,cruise_speed,sim_dt,decimation,control_dt_ms,sched_latency_ms,hold_steps,eff_cmd_hz,…,outcome`).
-  Overridable env: `XPURT_REPO`, `HIL_OUTDIR`, `HIL_WEIGHTS`. A pre-run copy of the 120-flight CSV is committed
-  at `results/codesign_feedback/hil_ablation.csv` so the scatter can be re-rendered without the GPU sweep.
+  Overridable env: `XPURT_REPO`, `HIL_OUTDIR`, `HIL_WEIGHTS`. The 120-flight CSV is committed at
+  `results/codesign_feedback/hil_ablation.csv` so the diagram re-renders without the GPU sweep.
 - **Render**:
-  `.venv/bin/python scripts/hil_ablation_scatter.py --csv results/codesign_feedback/hil_ablation.csv`
-  → `results/codesign_feedback/hil_ablation_scatter.{png,pdf}`. Overlays the analytic crash-frontier from
-  `results/microros_baseline_k1/flyfaster_crash_band.json`.
+  `.venv/bin/python scripts/hil_ablation_phase.py --csv results/codesign_feedback/hil_ablation.csv`
+  → `results/codesign_feedback/hil_ablation_phase.{png,pdf}`. A smooth safe→crash surface over (speed, command
+  rate) with the crash frontier drawn, the raw 6-seed cells overlaid, and the schedulers' sustainable command
+  rates marked (XPU-RT shard 204 Hz deep-safe, greedy 125 Hz, ROS 81 Hz on the frontier). Replaces the old
+  `hil_ablation_scatter` (kept for reference).
 
-## 3–4. `mega_warehouse_xpurt` / `mega_warehouse_ros` — warehouse HIL mega plots (GPU to regen flight)
-- **Flight data** (one clean successful weave; dump poses + a drone-free overhead background):
+## 3–4. Warehouse figures — combined showdown + the two mega plots (GPU to regen flights)
+- **Flight data** — TWO dumps: the XPU-RT successful weave and the ROS crash:
   `<env_isaaclab>/python sims/scripts/record_sensor_demo.py --headless --controller rl \
      --weights sims/models/warehouse/nav_fused_v12_cnn.pt --sched_latency_ms 12.40 --decimation 1 \
      --prop_density 0.35 --obstacle_level 8 --fixed_speed 1.2 --episodes 4 --seed 2000 \
-     --dump_figure_data <dir>` then once more with `--clean_overview --clean_out <dir>` for `clean_bg.npz`.
-- **Schedule Gantt** (bottom panel): `.venv/bin/python scripts/plot_solver_gantt_annotated.py \
-     --sched schedules/scheduled__flight_deployed_2frame_greedy_profiled.json --window-ms 44 \
-     --out results/codesign_feedback/gantt_annotated_cpsat` (CP-SAT variant when a feasible full-frame CP-SAT
-  schedule is available; the deployed 2-frame CP-SAT does not converge feasibly, so use a feasible schedule).
-- **Compose**: `<env_isaaclab>/python sims/scripts/compose_mega_figure.py --data-dir <dir> \
-     --gantt <gantt.png> [--crash-step 779] --out results/codesign_feedback/mega_warehouse_{xpurt,ros}`.
-  `--crash-step` (ROS variant only) truncates the weave mid-course at a crate tower with a crash marker.
-- **Notes**: the top-down uses the realistic overhead render (`clean_bg.npz`; without it the drone is baked in)
-  with crate-tower box markers overlaid; IMU is smoothed; moment times come from `t_s[step]`.
+     --dump_figure_data <xpu-dir>` (+ once with `--clean_overview --clean_out <xpu-dir>` for `clean_bg.npz`);
+  the ROS crash dump is the same command with the ROS-rate latency (crashes ~y=10, past gate 1) → `<ros-dir>`.
+- **`warehouse_showdown`** (the combined, horizontal figure — the headline): both paths on one top-down aisle,
+  2 ROS + 2 XPU snapshots, IMU/goal/speed/velocity comparing both, and the combined XPU-over-ROS Gantt:
+  `<env_isaaclab>/python sims/scripts/compose_warehouse_showdown.py --xpu-dir <xpu-dir> --ros-dir <ros-dir> \
+     --rot 0` → `results/codesign_feedback/warehouse_showdown.{png,pdf}`. Schedules default to the committed
+  `scheduled__flight_deployed_2frame_cpsat_profiled.json` (XPU) and `scheduled_ros_partition_deployed.json` (ROS).
+- **`mega_warehouse_xpurt` / `mega_warehouse_ros`** (the per-scheduler mega plots) — Gantt strip via
+  `scripts/plot_solver_gantt_annotated.py --sched schedules/scheduled__flight_deployed_2frame_cpsat_profiled.json`
+  (the CP-SAT deployed schedule: 40.4 ms 0-miss, balanced), then
+  `<env_isaaclab>/python sims/scripts/compose_mega_figure.py --data-dir <xpu-dir> --gantt <gantt.png>
+   [--crash-step 779] --out results/codesign_feedback/mega_warehouse_{xpurt,ros}`.
+- **Notes**: people are projected at their real height (z≈0.85, not 2.0); moment markers are placed at the
+  actual gate crossings; IMU is smoothed. `make_all_codesign_figures.sh §5` drives all three (set
+  `WAREHOUSE_FIGDATA`/`WAREHOUSE_ROS_FIGDATA`).
 
 ## 5. `solver_win_sensor` — CP-SAT beats greedy (contended sensor workload)
 `.venv/bin/python scripts/compose_solver_win.py \

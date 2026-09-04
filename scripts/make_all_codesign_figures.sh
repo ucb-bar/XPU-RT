@@ -44,25 +44,30 @@ if [ -f $R/sensor_evo/panels.json ]; then
     --title "Co-design schedule evolution — contended sensor-fusion workload: AOT opts meet the Gantt, runtime feedback exposes board deadline misses, re-scheduling recovers them" || true
 fi
 
-# 4. HIL ablation scatter — needs the grid CSV (committed copy at $R/hil_ablation.csv; regen via
+# 4. HIL command-rate PHASE DIAGRAM — needs the grid CSV (committed copy at $R/hil_ablation.csv; regen via
 #    scripts/hil_ablation_grid.sh on a GPU box with ISAAC_PY set — see docs/figure_runbook.md §2).
 CSV=$R/hil_ablation.csv; [ -f $R/hil_grid/hil_ablation.csv ] && CSV=$R/hil_grid/hil_ablation.csv
 if [ -f "$CSV" ]; then
-  say "hil_ablation_scatter"; $PY scripts/hil_ablation_scatter.py --csv "$CSV" || true
+  say "hil_ablation_phase"; $PY scripts/hil_ablation_phase.py --csv "$CSV" || true
 else
-  echo "(skip hil_ablation_scatter: run scripts/hil_ablation_grid.sh on a GPU box first)"
+  echo "(skip hil_ablation_phase: run scripts/hil_ablation_grid.sh on a GPU box first)"
 fi
 
-# 5. Warehouse mega plots — need Isaac flight dumps (GPU). Regenerate only if the figdata exists.
-CFD="${WAREHOUSE_FIGDATA:-$R/crash_demo/complete_figdata}"
+# 5. Warehouse figures — need Isaac flight dumps (GPU). XPU-RT success dump + ROS crash dump.
+CFD="${WAREHOUSE_FIGDATA:-$R/crash_demo/complete_figdata}"       # XPU-RT (successful) flight
+RFD="${WAREHOUSE_ROS_FIGDATA:-$R/crash_demo/crash_figdata}"      # ROS (crash) flight
+ISAAC="${ISAAC_PY:-python}"
+if [ -f $CFD/figure_data.npz ] && [ -f $RFD/figure_data.npz ]; then
+  say "warehouse_showdown (combined XPU-RT vs ROS)"; $ISAAC sims/scripts/compose_warehouse_showdown.py \
+    --xpu-dir $CFD --ros-dir $RFD --rot 0 --out $R/warehouse_showdown || true
+fi
 if [ -f $CFD/figure_data.npz ] && [ -f $CFD/clean_bg.npz ]; then
-  ISAAC="${ISAAC_PY:-python}"
   say "mega_warehouse_xpurt"; $ISAAC sims/scripts/compose_mega_figure.py --data-dir $CFD \
     --gantt $R/gantt_annotated_cpsat.png --out $R/mega_warehouse_xpurt || true
   say "mega_warehouse_ros"; $ISAAC sims/scripts/compose_mega_figure.py --data-dir $CFD \
     --gantt $R/gantt_annotated_ros.png --crash-step 779 --out $R/mega_warehouse_ros || true
 else
-  echo "(skip warehouse mega plots: need Isaac flight dump; see docs/figure_runbook.md §3-4)"
+  echo "(skip warehouse figures: need Isaac flight dumps; see docs/figure_runbook.md §2-4)"
 fi
 
 say "done — figures in $R"
