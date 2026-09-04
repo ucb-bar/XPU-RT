@@ -1,0 +1,5 @@
+[
+ "Baseline \u2014 RVV, 1 net per core|none|results/codesign_feedback/flight_evo/p1_og.json|singletons: YOLO frames run ~13 ms late",
+ "+ Shard  (the sharding win)|shard|results/codesign_feedback/flight_evo/p2_aot.json|shard \u2192 all deadlines met",
+ "Run on the K1 board (+31% slower) \u2014 robust|none|results/codesign_feedback/flight_evo/p3_feedback.json|board-robust: only 0.1 ms over on 1 YOLO frame"
+]

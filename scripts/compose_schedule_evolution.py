@@ -94,27 +94,43 @@ def draw(ax, rows, dl, nets, hi, remap, xmax, breaks, feedback):
     for bx0, bx1 in breaks:           # shade + dash the compressed-idle columns so the break is explicit
         ax.axvspan(bx0, bx1, color="0.90", zorder=0)
         ax.plot([(bx0 + bx1) / 2] * 2, [-0.7, len(CORE_ORDER) - 0.3], ls=(0, (2, 2)), lw=0.7, color="0.62", zorder=1)
-    late_marks = []; missed = {}
+    # Pass 1 — decide misses at the INSTANCE level (a net-instance misses if its LAST dispatch ends past its
+    # deadline). Counting per-dispatch would inflate a single YOLO-instance miss into ~50 (one per dispatch).
+    inst_late = {}          # (net,inst) -> True if the instance's latest end is past its deadline
+    inst_mark = {}          # (net,inst) -> (x_center, y) of its latest dispatch, for the single ✗
     for r in rows:
         net, inst = net_of(r["job"], nets)
-        col = NETCOLOR.get(net, "#9aa"); late = net in dl and dl[net][0] and r["e"] > inst * dl[net][0] + dl[net][1] + 1e-6
-        if late:
-            misses += 1; missed[NICE.get(net, net)] = missed.get(NICE.get(net, net), 0) + 1
+        if not (net in dl and dl[net][0]):
+            continue
+        ddl = inst * dl[net][0] + dl[net][1]
+        prev = inst_mark.get((net, inst))
+        if prev is None or r["e"] > prev[0]:
+            hh = [h for h in r["harts"] if h in y]
+            inst_mark[(net, inst)] = (r["e"], remap(r["s"]) + max(remap(r["e"]) - remap(r["s"]), 0.2) / 2,
+                                      (y[hh[0]] if hh else 0))
+        inst_late[(net, inst)] = max(inst_late.get((net, inst), False), r["e"] > ddl + 1e-6)
+    missing = {k for k, v in inst_late.items() if v}
+    missed = {}
+    for (net, inst) in missing:
+        missed[NICE.get(net, net)] = missed.get(NICE.get(net, net), 0) + 1
+    misses = len(missing)
+    for r in rows:
+        net, inst = net_of(r["job"], nets)
+        col = NETCOLOR.get(net, "#9aa"); late = (net, inst) in missing
         hatch = None; ec = "white"; lw = 0.3     # hairline separators so dense back-to-back dispatches read as texture
         if hi == "ime" and r["impl"] == "ime":
             hatch = "///"; ec = "#0a6b6b"; lw = 0.7
         elif hi == "shard" and r["w"] > 1:
             hatch = "xxx"; ec = "#2a2a2a"; lw = 0.5
-        if late:
-            ec = "#d11"; lw = 2.2
+        # (a late instance is flagged only by its single ✗ marker below — not by red-edging all its dispatches,
+        #  which would flood a whole YOLO instance's ~50 bars)
         x0 = remap(r["s"]); wd = max(remap(r["e"]) - x0, 0.2)
         for h in r["harts"]:                       # span EVERY hart the dispatch occupies
             if h in y:
                 ax.barh(y[h], wd, left=x0, height=0.82, color=col, edgecolor=ec,
                         linewidth=lw, hatch=hatch, zorder=3)
-                if late:
-                    late_marks.append((x0 + wd / 2, y[h]))
-    for mx, my in late_marks:                      # a bold red ✗ over each missed-deadline dispatch
+    for k in missing:                              # ONE bold red ✗ per missed instance (at its last dispatch)
+        _, mx, my = inst_mark[k]
         ax.scatter([mx], [my], marker="X", s=300, color="#e60000", edgecolors="white", linewidths=1.8, zorder=11)
     ax.axhline(3.5, color="0.55", lw=0.8, zorder=1)
     ax.set_yticks(list(y.values())); ax.set_yticklabels([c.replace("CPU_", "") for c in CORE_ORDER], fontsize=10)
@@ -172,7 +188,7 @@ def main():
             hero = "✓  ALL DEADLINES MET"; bc = "#2f7d4f"
         else:
             who = ", ".join(f"{k}×{v}" for k, v in sorted(missed.items(), key=lambda x: -x[1]))
-            hero = f"✗  {miss} DEADLINES MISSED   ({who})"; bc = "#c0392b"
+            hero = f"✗  {miss} DEADLINE{'S' if miss!=1 else ''} MISSED   ({who})"; bc = "#c0392b"
         ax.text(0.5, 1.20, hero, transform=ax.transAxes, ha="center", va="bottom",
                 fontsize=16, weight="bold", color="white",
                 bbox=dict(boxstyle="round,pad=0.42", fc=bc, ec="white", lw=1.4, alpha=0.98))
