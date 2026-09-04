@@ -68,10 +68,15 @@ schedule against ≥10 real board runs.)
 
 **(5) Adjust AOT + re-schedule automatically** — the driver that ties (2)–(4) into rounds:
 ```
-.venv/bin/python scripts/run_codesign_loop.py --workload data/toplevel/<spec>.json   # levers: shard, IME
+export XPURT_CPSAT_WORKERS=0
+# XPURT_PY defaults to <repo>/.venv/bin/python; set it if your interpreter lives elsewhere.
+XPURT_PY=$(command -v python) python scripts/run_codesign_loop.py \
+    --workload data/toplevel/networks_k1_mb_3model_4hz_yolo_ctrl.json   # levers: shard, IME, unfuse
 ```
 It starts from a clean baseline, proposes each lever, **re-solves each candidate**, and accepts the best
-*measured* win with 0 new misses; emits per-round `specs/…`, `round_*_gantt.png`, `loop_report.json`.
+*measured* win with 0 new misses; emits per-round `specs/…`, `round_*_gantt.png`, `loop_report.json`,
+`objective_vs_round.png`. Verified end-to-end on this workload: `ime` reject (−0.0%), `shard` reject (−0.0%),
+**`unfuse` accept (898.1 → 866.4 ms, −3.5%, 0 miss) → converged** — the honest accept/reject the loop is for.
 The calibration-aware variant (CP-SAT + `--board-calibration` every round) is
 `scratchpad/auto_feedback_loop.py`. Graph-rewrite levers (fuse/unfuse/split) go through the bridges
 `scripts/advice_to_*_hint.py` → `ModelBlaster/pipeline/apply_*_hint.py` → `generate_kernels.py` (driver-mediated).
@@ -83,8 +88,10 @@ The calibration-aware variant (CP-SAT + `--board-calibration` every round) is
   --moment_scale 0.0055 --cruise_speed <v> --sched_latency_ms <ms> --episodes 6 --sweep-csv out.csv
 ```
 `sched_latency_ms` is the schedule's worst response; the sim holds each motor command for
-`ceil(latency/control_dt)` steps (ZOH). Grid driver: `scratchpad/hil_ablation_grid.sh`; scatter:
-`scratchpad/hil_ablation_scatter.py`.
+`ceil(latency/control_dt)` steps (ZOH). Grid driver (5 speeds × 4 rates × 6 seeds = 120 flights):
+`ISAAC_PY=<env_isaaclab>/bin/python bash scripts/hil_ablation_grid.sh`; scatter:
+`scripts/hil_ablation_scatter.py --csv results/codesign_feedback/hil_ablation.csv` (a pre-run CSV is committed
+so the scatter re-renders without the GPU sweep). See `docs/figure_runbook.md` §2.
 
 ---
 
@@ -129,14 +136,14 @@ solver-win, and evolution plot are CPU-only from cached schedules). Per-figure c
 |---|---|
 | **Schedule a workload** | `scripts/run_xpurt_schedule.py` (entry; flags `--solver {milp,greedy}`, `--scheduler {cpsat,mosek,…}`, `--profiled`, `--board-calibration`, `--emit-feedback`) → `xpu-rt/scheduler_cpsat.py`, `xpu-rt/scheduler.py` (MOSEK MILP), `xpu-rt/greedy_scheduler.py` |
 | **Cost model / profiles** | `xpu-rt/profile_loader.py` (`load_profiled_processing_times`; the `--board-calibration` scaling at `base_t`); profile CSVs under `gen_mb/…/<target>/…` |
-| **The AOT feedback loop** | doc `docs/the_loop.md`; drivers `scripts/run_codesign_loop.py` (auto, levers shard/IME), `scratchpad/auto_feedback_loop.py` (CP-SAT + board-cal every round) |
+| **The AOT feedback loop** | doc `docs/the_loop.md`; drivers `scripts/run_codesign_loop.py` (auto, levers shard/IME/unfuse), `scratchpad/auto_feedback_loop.py` (CP-SAT + board-cal every round) |
 | **Feedback emission** | `xpu-rt/feedback.py` (`--emit-feedback` → `xpurt_feedback.json`), `xpu-rt/compile_advice.py` + `scripts/emit_compile_advice.py` (`compile_advice.json`, verbs split/fuse/unfuse/shard/choose_impl) |
 | **Feedback consume / corroborate** | `xpu-rt/feedback_join.py`, `xpu-rt/advice_join.py` (identity-safety) |
 | **Graph rewrite (ModelBlaster)** | bridges `scripts/advice_to_{fusion,split,unfuse,shard}_hint.py`, `advice_to_kernel_choice.py` → `ModelBlaster/pipeline/apply_*_hint.py` → `ModelBlaster/pipeline/generate_kernels.py` |
 | **Runtime feedback (run vs Gantt, +31%)** | doc `docs/board_calibration_codesign.md`; `results/codesign_feedback/k1_board_calibration.json`; validate on board with `scripts/evaluate_exact_cycle_board.py` |
 | **Isaac warehouse flight** | `sims/scripts/sweep_rate_demo.py` (metrics/ablation), `sims/scripts/record_sensor_demo.py` (video + `--dump_figure_data`), task `sims/isaaclab_tasks/warehouse_nav/` (`HANDOFF.md`, `SPEC.md`) |
 | **HIL bridge (mock target)** | `hil/` (`hil_host_isaac.py`, `hil_target_mock.py`, `run_hil_pipeline.sh`, `README`) |
-| **Figures** | `scripts/compose_solver_win.py`, `scripts/compose_feedback_evolution.py`, `scripts/plot_solver_gantt_annotated.py`, `sims/scripts/compose_mega_figure.py`; regenerate via `scripts/make_all_codesign_figures.sh`; per-figure recipes in `docs/figure_runbook.md` |
+| **Figures** | `scripts/compose_solver_win.py`, `scripts/gen_schedule_evolution.py` + `scripts/compose_schedule_evolution.py` (the 3rd mega plot), `scripts/hil_ablation_grid.sh` + `scripts/hil_ablation_scatter.py`, `scripts/plot_solver_gantt_annotated.py`, `sims/scripts/compose_mega_figure.py`; regenerate via `scripts/make_all_codesign_figures.sh`; per-figure recipes in `docs/figure_runbook.md` |
 | **Solvers reference** | `docs/solvers.md` (which `--solver`/`--scheduler` combos exist; MOSEK non-convergence caveat) |
 | **Workload spec format** | `docs/workload_specs.md`; examples in `data/toplevel/*.json` |
 
@@ -163,6 +170,11 @@ Read `_metrics.json` (`deadline_miss_count`, `makespan_ms`) + `_report.json` (`s
 Full walk-through + the nine-term acceptance rule: `docs/the_loop.md`; operational board runbook:
 `docs/k1_modelblaster_xpurt_closed_loop.md`.
 
+The **"Gantt after Gantt" mega figure** of this same story (og → +shard+IME → runtime feedback exposes board
+misses → re-schedule recovers them; deadline-miss trajectory 4→0→4→0) is
+`scripts/gen_schedule_evolution.py` → `scripts/compose_schedule_evolution.py` (figure_runbook §1). The
+runtime-feedback panel is a real board re-cost via `scripts/recost_schedule_on_board.py`.
+
 **C. Isaac warehouse flight** (a real closed-loop flight through the gate course):
 ```
 <env_isaaclab>/python sims/scripts/record_sensor_demo.py --headless --controller rl \
@@ -173,10 +185,11 @@ Scene/asset notes (crate towers, colliders, gate course, cameras): `sims/isaacla
 The onboard schedule's control latency enters as a zero-order hold (`--sched_latency_ms`): the motor command
 is held for `ceil(latency / control_dt)` steps.
 
-**D. HIL speed × frequency ablation** (the scatter): `bash scratchpad/hil_ablation_grid.sh` (sweeps cruise ×
-control-rate × seeds, real Isaac flights → `hil_ablation.csv` via `sweep_rate_demo.py --sweep-csv`) then
-`scratchpad/hil_ablation_scatter.py`. Honest scope: in-sim ZOH latency injection (+ RoSE-lite mock in `hil/`),
-not live FPGA/K1 co-sim.
+**D. HIL speed × frequency ablation** (the scatter): `ISAAC_PY=<env_isaaclab>/bin/python bash
+scripts/hil_ablation_grid.sh` (sweeps cruise × control-rate × seeds, real Isaac flights → `hil_ablation.csv`
+via `sweep_rate_demo.py --sweep-csv`) then `scripts/hil_ablation_scatter.py --csv
+results/codesign_feedback/hil_ablation.csv`. Honest scope: in-sim ZOH latency injection (+ RoSE-lite mock in
+`hil/`), not live FPGA/K1 co-sim.
 
 ## 6. What is real vs stitched (say this when you present)
 

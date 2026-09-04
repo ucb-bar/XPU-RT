@@ -36,7 +36,9 @@ import subprocess
 import sys
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-PY = os.path.join(REPO, ".venv/bin/python")
+# Interpreter used for the child scheduler runs: $XPURT_PY, else the repo-root venv, else this interpreter.
+_venv_py = os.path.join(REPO, ".venv/bin/python")
+PY = os.environ.get("XPURT_PY") or (_venv_py if os.path.exists(_venv_py) else sys.executable)
 EPS = 0.05  # ms; a smaller "improvement" is noise, not a win
 
 sys.path.insert(0, os.path.join(REPO, "xpu-rt"))

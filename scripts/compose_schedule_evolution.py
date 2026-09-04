@@ -134,7 +134,8 @@ def main():
     for p in panels:
         title, hi, path = p.split("|", 2)
         m = json.load(open(path.replace(".json", "_metrics.json")))
-        P.append((title, hi, load(path), m, "feedback" in title.lower() or "runtime" in title.lower()))
+        tl = title.lower()
+        P.append((title, hi, load(path), m, any(w in tl for w in ("feedback", "runtime", "board"))))
     remap, xmax, breaks, merged = build_remap(P)   # squeeze idle time shared across all panels
 
     plt.rcParams.update({"font.family": "DejaVu Sans", "pdf.fonttype": 42})
@@ -142,7 +143,7 @@ def main():
     fig, axes = plt.subplots(n, 1, figsize=(13.5, 2.35 * n + 1.4), sharex=True)
     if n == 1:
         axes = [axes]
-    prev_mk = None
+    prev_mk = None; prev_miss = None
     for i, (ax, (title, hi, rows, m, fb)) in enumerate(zip(axes, P)):
         mk = m.get(a.metric, m.get("makespan_ms", 0)); miss = m.get("deadline_miss_count", 0)
         drawn_miss = draw(ax, rows, dl, nets, hi, remap, xmax, breaks, fb)
@@ -153,14 +154,20 @@ def main():
                 fontsize=9.5, weight="bold", color="white",
                 bbox=dict(boxstyle="round,pad=0.34", fc=badge, ec="none", alpha=0.95))
         ax.set_ylabel("K1 cores", fontsize=8)
-        # delta arrow + reason vs previous panel
+        # delta vs previous panel — lead with the deadline-miss change (the hero metric here),
+        # makespan second; colour by the miss change when it moves, else by makespan.
         if prev_mk is not None:
             dmk = mk - prev_mk
             sign = "−" if dmk < 0 else ("+" if dmk > 0 else "±")
-            col = "#2f7d4f" if dmk < -0.05 else ("#c0392b" if dmk > 0.05 else "#777")
-            ax.annotate(f"Δ makespan {sign}{abs(dmk):.1f} ms", xy=(0.012, 1.14), xycoords="axes fraction",
+            parts = [f"Δ makespan {sign}{abs(dmk):.1f} ms"]
+            if miss != prev_miss:
+                parts.append(f"deadlines {prev_miss}→{miss} miss")
+                col = "#2f7d4f" if miss < prev_miss else "#c0392b"
+            else:
+                col = "#2f7d4f" if dmk < -0.05 else ("#c0392b" if dmk > 0.05 else "#777")
+            ax.annotate("     ·     ".join(parts), xy=(0.012, 1.14), xycoords="axes fraction",
                         fontsize=9, weight="bold", color=col, va="center")
-        prev_mk = mk
+        prev_mk = mk; prev_miss = miss
     tks, tlbls = gen_ticks(merged, remap)          # real-ms labels at their compressed positions
     axes[-1].set_xticks(tks); axes[-1].set_xticklabels(tlbls, fontsize=8)
     axes[-1].set_xlabel("time (ms), real dispatch times — idle stretches compressed (grey ┊ breaks); 'runtime feedback' panel uses board-calibrated costs",

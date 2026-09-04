@@ -10,20 +10,29 @@ figure builders that should be copied into `scripts/` for a clean checkout (they
 ---
 
 ## 1. `schedule_evolution_mega` — the co-design "Gantt after Gantt" (the 3rd mega plot)
-**Story**: og (fused, RVV) → +sharding → +unfuse (ModelBlaster graph rewrite) → runtime feedback
-(board-calibrated re-solve) → +other. Each panel a REAL solved schedule; per-round makespan Δ + verdict.
-Idle stretches (this YOLO workload is compute-bound with only ~2 real idle gaps) are compressed into grey
-break columns so no panel shows empty time; the x-axis keeps real dispatch-time labels.
-- **Generate the sequence** (re-solves 5 lever configs fresh, `XPURT_CPSAT_WORKERS=0`; greedy — this workload
-  is slack-rich so greedy is near-optimal AND tractable where CP-SAT is not on the fused+shard model):
-  `.venv/bin/python scripts/gen_schedule_evolution.py`  → writes `schedules/scheduled__evo_*_greedy_profiled.json`
-  and `results/codesign_feedback/evo_panels.json`.
+**Story** (contended sensor-fusion workload, deadline-miss trajectory **4 → 0 → 4 → 0**, each panel a REAL
+solve or a measured re-cost — nothing faked):
+1. **og** — RVV, singletons (1 net per hart): misses control deadlines.
+2. **+ shard + IME** — AOT levers (multi-hart widths + matrix-engine routing): meets every deadline ON THE GANTT
+   (4 → 0). `Δ makespan` and `deadlines X→Y miss` annotated between panels.
+3. **runtime feedback** — panel-2 schedule RE-COST on the measured board (+31% per-op inflation): deadlines the
+   optimistic Gantt promised are now MISSED (0 → 4). Panel tinted (board-calibrated round).
+4. **re-schedule on board-calibrated costs** — CP-SAT re-solves knowing the true costs: deadlines RECOVERED
+   (4 → 0). This is the loop closing: adjust after runtime feedback, before any further optimization.
+
+Idle stretches are compressed into grey break columns (real-ms x-axis kept); misses are ringed red.
+- **Generate the sequence** (`XPURT_CPSAT_WORKERS=0`; CP-SAT solves for og/AOT/fix + a board re-cost):
+  `XPURT_PY=$(command -v python) python scripts/gen_schedule_evolution.py`
+  → writes the 4 panel schedules + `panels.json` under `results/codesign_feedback/sensor_evo/`.
+  (The board re-cost is `scripts/recost_schedule_on_board.py` — re-times a fixed schedule under the board's
+  per-op multipliers; the software twin of "how the run differs from the Gantt".)
 - **Render**:
-  `.venv/bin/python scripts/compose_schedule_evolution.py --spec data/toplevel/_evo_og.json \
-     --panels-json results/codesign_feedback/evo_panels.json`
+  `.venv/bin/python scripts/compose_schedule_evolution.py \
+     --spec data/toplevel/_4w_networks_k1_sensor_sharded_rich_shard_ime_s4.0.json \
+     --panels-json results/codesign_feedback/sensor_evo/panels.json`
   → `results/codesign_feedback/schedule_evolution_mega.{png,pdf}`.
-- **Inputs**: the 5 `_evo_*` schedules + their `_metrics.json`; the YOLO fused/unfused dispatch graphs under
-  `gen_mb/vmfb/yolov8_nano/…`; `k1_board_calibration.json` (for the runtime-feedback round).
+- **Inputs**: the sensor workload spec `_4w_networks_k1_sensor_sharded_rich_shard_ime_s4.0.json` + its profiles
+  under `gen_mb/…`; `k1_board_calibration.json` (drives both the re-cost and the board-calibrated re-solve).
 
 ## 2. `hil_ablation_scatter` — HIL speed × frequency × crash/success (GPU)
 - **Generate** the per-flight grid (real Isaac flights; 5 speeds × 4 rates × 6 seeds = 120 flights, GPU-hours).
