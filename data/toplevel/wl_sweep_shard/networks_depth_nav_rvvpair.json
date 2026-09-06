@@ -46,8 +46,8 @@
    "id": 2,
    "identifier": "mlp_control_sd",
    "dispatch_deps_path": "zephyr-chipyard-sw/gen/vmfb/mlp_control_sd/firesim_f2_rocket_saturn/gemmini_q31/mlp_control_sd.fp32/mlp_control_sd.fp32_dispatch_graph.json",
-   "period": 2.384,
-   "window_duration": 2.384,
+   "period": 0.328,
+   "window_duration": 0.328,
    "num_instances": 16
   }
  },
