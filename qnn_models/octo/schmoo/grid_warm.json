@@ -1,0 +1,827 @@
+{
+ "source": {
+  "host": "ubuntu@18.212.216.130",
+  "repo": "~/xpurt_sched",
+  "status_log": "~/xpurt_sched/gridw.log",
+  "schedules": "~/xpurt_sched/schedules/scheduled_networks_octo_pareto_GW_p{P}_w{W}_cpsat_profiled.json",
+  "extractor": "~/xpurt_sched/extract_gw.py (run as ~/miniforge3/envs/sched/bin/python)",
+  "solver": "CP-SAT, warm-started (cpsat:warmbest)",
+  "schedule_file_mtime": "2026-09-07",
+  "note": "All age/cadence values are PREDICTED from the schedule JSON, not board-measured."
+ },
+ "tally": {
+  "INFEASIBLE": 21,
+  "UNKNOWN": 21,
+  "FEASIBLE": 10,
+  "OPTIMAL": 56
+ },
+ "n_cells": 108,
+ "n_solved": 66,
+ "n_distinct_operating_points": 39,
+ "cells": {
+  "100_240": {
+   "p": 100,
+   "w": 240,
+   "status": "INFEASIBLE"
+  },
+  "100_260": {
+   "p": 100,
+   "w": 260,
+   "status": "INFEASIBLE"
+  },
+  "100_275": {
+   "p": 100,
+   "w": 275,
+   "status": "INFEASIBLE"
+  },
+  "100_290": {
+   "p": 100,
+   "w": 290,
+   "status": "INFEASIBLE"
+  },
+  "100_305": {
+   "p": 100,
+   "w": 305,
+   "status": "UNKNOWN"
+  },
+  "100_320": {
+   "p": 100,
+   "w": 320,
+   "status": "UNKNOWN"
+  },
+  "100_350": {
+   "p": 100,
+   "w": 350,
+   "status": "UNKNOWN"
+  },
+  "100_400": {
+   "p": 100,
+   "w": 400,
+   "status": "UNKNOWN"
+  },
+  "100_450": {
+   "p": 100,
+   "w": 450,
+   "status": "UNKNOWN"
+  },
+  "110_240": {
+   "p": 110,
+   "w": 240,
+   "status": "INFEASIBLE"
+  },
+  "110_260": {
+   "p": 110,
+   "w": 260,
+   "status": "INFEASIBLE"
+  },
+  "110_275": {
+   "p": 110,
+   "w": 275,
+   "status": "INFEASIBLE"
+  },
+  "110_290": {
+   "p": 110,
+   "w": 290,
+   "status": "UNKNOWN"
+  },
+  "110_305": {
+   "p": 110,
+   "w": 305,
+   "status": "UNKNOWN"
+  },
+  "110_320": {
+   "p": 110,
+   "w": 320,
+   "status": "UNKNOWN"
+  },
+  "110_350": {
+   "p": 110,
+   "w": 350,
+   "status": "UNKNOWN"
+  },
+  "110_400": {
+   "p": 110,
+   "w": 400,
+   "status": "UNKNOWN"
+  },
+  "110_450": {
+   "p": 110,
+   "w": 450,
+   "status": "FEASIBLE",
+   "lat_med": 389.849,
+   "lat_max": 447.262,
+   "cadence": 110.0,
+   "makespan": 1321.306
+  },
+  "120_240": {
+   "p": 120,
+   "w": 240,
+   "status": "INFEASIBLE"
+  },
+  "120_260": {
+   "p": 120,
+   "w": 260,
+   "status": "INFEASIBLE"
+  },
+  "120_275": {
+   "p": 120,
+   "w": 275,
+   "status": "UNKNOWN"
+  },
+  "120_290": {
+   "p": 120,
+   "w": 290,
+   "status": "UNKNOWN"
+  },
+  "120_305": {
+   "p": 120,
+   "w": 305,
+   "status": "UNKNOWN"
+  },
+  "120_320": {
+   "p": 120,
+   "w": 320,
+   "status": "UNKNOWN"
+  },
+  "120_350": {
+   "p": 120,
+   "w": 350,
+   "status": "UNKNOWN"
+  },
+  "120_400": {
+   "p": 120,
+   "w": 400,
+   "status": "FEASIBLE",
+   "lat_med": 381.108,
+   "lat_max": 397.659,
+   "cadence": 120.0,
+   "makespan": 1375.053
+  },
+  "120_450": {
+   "p": 120,
+   "w": 450,
+   "status": "FEASIBLE",
+   "lat_med": 387.441,
+   "lat_max": 442.307,
+   "cadence": 120.0,
+   "makespan": 1354.365
+  },
+  "130_240": {
+   "p": 130,
+   "w": 240,
+   "status": "INFEASIBLE"
+  },
+  "130_260": {
+   "p": 130,
+   "w": 260,
+   "status": "INFEASIBLE"
+  },
+  "130_275": {
+   "p": 130,
+   "w": 275,
+   "status": "UNKNOWN"
+  },
+  "130_290": {
+   "p": 130,
+   "w": 290,
+   "status": "UNKNOWN"
+  },
+  "130_305": {
+   "p": 130,
+   "w": 305,
+   "status": "UNKNOWN"
+  },
+  "130_320": {
+   "p": 130,
+   "w": 320,
+   "status": "UNKNOWN"
+  },
+  "130_350": {
+   "p": 130,
+   "w": 350,
+   "status": "UNKNOWN"
+  },
+  "130_400": {
+   "p": 130,
+   "w": 400,
+   "status": "FEASIBLE",
+   "lat_med": 356.259,
+   "lat_max": 399.639,
+   "cadence": 130.0,
+   "makespan": 1412.28
+  },
+  "130_450": {
+   "p": 130,
+   "w": 450,
+   "status": "FEASIBLE",
+   "lat_med": 395.632,
+   "lat_max": 445.377,
+   "cadence": 130.0,
+   "makespan": 1422.039
+  },
+  "140_240": {
+   "p": 140,
+   "w": 240,
+   "status": "INFEASIBLE"
+  },
+  "140_260": {
+   "p": 140,
+   "w": 260,
+   "status": "INFEASIBLE"
+  },
+  "140_275": {
+   "p": 140,
+   "w": 275,
+   "status": "UNKNOWN"
+  },
+  "140_290": {
+   "p": 140,
+   "w": 290,
+   "status": "OPTIMAL",
+   "lat_med": 283.667,
+   "lat_max": 286.668,
+   "cadence": 140.0,
+   "makespan": 1497.954
+  },
+  "140_305": {
+   "p": 140,
+   "w": 305,
+   "status": "FEASIBLE",
+   "lat_med": 297.612,
+   "lat_max": 303.199,
+   "cadence": 140.0,
+   "makespan": 1496.676
+  },
+  "140_320": {
+   "p": 140,
+   "w": 320,
+   "status": "FEASIBLE",
+   "lat_med": 312.428,
+   "lat_max": 318.741,
+   "cadence": 140.0,
+   "makespan": 1495.398
+  },
+  "140_350": {
+   "p": 140,
+   "w": 350,
+   "status": "FEASIBLE",
+   "lat_med": 339.238,
+   "lat_max": 346.047,
+   "cadence": 140.0,
+   "makespan": 1572.091
+  },
+  "140_400": {
+   "p": 140,
+   "w": 400,
+   "status": "FEASIBLE",
+   "lat_med": 328.279,
+   "lat_max": 386.695,
+   "cadence": 140.89,
+   "makespan": 1502.378
+  },
+  "140_450": {
+   "p": 140,
+   "w": 450,
+   "status": "FEASIBLE",
+   "lat_med": 391.632,
+   "lat_max": 424.488,
+   "cadence": 140.0,
+   "makespan": 1507.602
+  },
+  "150_240": {
+   "p": 150,
+   "w": 240,
+   "status": "INFEASIBLE"
+  },
+  "150_260": {
+   "p": 150,
+   "w": 260,
+   "status": "INFEASIBLE"
+  },
+  "150_275": {
+   "p": 150,
+   "w": 275,
+   "status": "INFEASIBLE"
+  },
+  "150_290": {
+   "p": 150,
+   "w": 290,
+   "status": "OPTIMAL",
+   "lat_med": 281.338,
+   "lat_max": 289.88,
+   "cadence": 150.0,
+   "makespan": 1586.209
+  },
+  "150_305": {
+   "p": 150,
+   "w": 305,
+   "status": "OPTIMAL",
+   "lat_med": 303.105,
+   "lat_max": 304.877,
+   "cadence": 150.0,
+   "makespan": 1584.931
+  },
+  "150_320": {
+   "p": 150,
+   "w": 320,
+   "status": "OPTIMAL",
+   "lat_med": 312.378,
+   "lat_max": 319.342,
+   "cadence": 150.0,
+   "makespan": 1583.616
+  },
+  "150_350": {
+   "p": 150,
+   "w": 350,
+   "status": "OPTIMAL",
+   "lat_med": 318.97,
+   "lat_max": 346.447,
+   "cadence": 150.0,
+   "makespan": 1582.694
+  },
+  "150_400": {
+   "p": 150,
+   "w": 400,
+   "status": "OPTIMAL",
+   "lat_med": 319.012,
+   "lat_max": 376.289,
+   "cadence": 150.0,
+   "makespan": 1582.694
+  },
+  "150_450": {
+   "p": 150,
+   "w": 450,
+   "status": "OPTIMAL",
+   "lat_med": 317.622,
+   "lat_max": 421.227,
+   "cadence": 150.0,
+   "makespan": 1582.694
+  },
+  "165_240": {
+   "p": 165,
+   "w": 240,
+   "status": "INFEASIBLE"
+  },
+  "165_260": {
+   "p": 165,
+   "w": 260,
+   "status": "INFEASIBLE"
+  },
+  "165_275": {
+   "p": 165,
+   "w": 275,
+   "status": "OPTIMAL",
+   "lat_med": 270.304,
+   "lat_max": 270.304,
+   "cadence": 165.24,
+   "makespan": 1728.183
+  },
+  "165_290": {
+   "p": 165,
+   "w": 290,
+   "status": "OPTIMAL",
+   "lat_med": 277.563,
+   "lat_max": 289.67,
+   "cadence": 165.0,
+   "makespan": 1719.931
+  },
+  "165_305": {
+   "p": 165,
+   "w": 305,
+   "status": "OPTIMAL",
+   "lat_med": 297.11,
+   "lat_max": 304.749,
+   "cadence": 165.0,
+   "makespan": 1718.616
+  },
+  "165_320": {
+   "p": 165,
+   "w": 320,
+   "status": "OPTIMAL",
+   "lat_med": 312.877,
+   "lat_max": 319.738,
+   "cadence": 165.0,
+   "makespan": 1717.694
+  },
+  "165_350": {
+   "p": 165,
+   "w": 350,
+   "status": "OPTIMAL",
+   "lat_med": 326.304,
+   "lat_max": 349.826,
+   "cadence": 165.0,
+   "makespan": 1717.694
+  },
+  "165_400": {
+   "p": 165,
+   "w": 400,
+   "status": "OPTIMAL",
+   "lat_med": 311.001,
+   "lat_max": 375.97,
+   "cadence": 165.0,
+   "makespan": 1717.694
+  },
+  "165_450": {
+   "p": 165,
+   "w": 450,
+   "status": "OPTIMAL",
+   "lat_med": 327.241,
+   "lat_max": 393.387,
+   "cadence": 165.0,
+   "makespan": 1717.694
+  },
+  "180_240": {
+   "p": 180,
+   "w": 240,
+   "status": "INFEASIBLE"
+  },
+  "180_260": {
+   "p": 180,
+   "w": 260,
+   "status": "INFEASIBLE"
+  },
+  "180_275": {
+   "p": 180,
+   "w": 275,
+   "status": "OPTIMAL",
+   "lat_med": 269.578,
+   "lat_max": 273.745,
+   "cadence": 180.0,
+   "makespan": 1857.659
+  },
+  "180_290": {
+   "p": 180,
+   "w": 290,
+   "status": "OPTIMAL",
+   "lat_med": 282.282,
+   "lat_max": 289.619,
+   "cadence": 180.0,
+   "makespan": 1853.616
+  },
+  "180_305": {
+   "p": 180,
+   "w": 305,
+   "status": "OPTIMAL",
+   "lat_med": 292.558,
+   "lat_max": 304.65,
+   "cadence": 180.0,
+   "makespan": 1852.694
+  },
+  "180_320": {
+   "p": 180,
+   "w": 320,
+   "status": "OPTIMAL",
+   "lat_med": 303.096,
+   "lat_max": 319.694,
+   "cadence": 180.0,
+   "makespan": 1852.694
+  },
+  "180_350": {
+   "p": 180,
+   "w": 350,
+   "status": "OPTIMAL",
+   "lat_med": 294.7,
+   "lat_max": 334.738,
+   "cadence": 180.0,
+   "makespan": 1852.694
+  },
+  "180_400": {
+   "p": 180,
+   "w": 400,
+   "status": "OPTIMAL",
+   "lat_med": 352.554,
+   "lat_max": 399.419,
+   "cadence": 180.0,
+   "makespan": 1852.694
+  },
+  "180_450": {
+   "p": 180,
+   "w": 450,
+   "status": "OPTIMAL",
+   "lat_med": 357.655,
+   "lat_max": 439.788,
+   "cadence": 182.291,
+   "makespan": 1852.694
+  },
+  "200_240": {
+   "p": 200,
+   "w": 240,
+   "status": "INFEASIBLE"
+  },
+  "200_260": {
+   "p": 200,
+   "w": 260,
+   "status": "OPTIMAL",
+   "lat_med": 246.013,
+   "lat_max": 257.856,
+   "cadence": 200.0,
+   "makespan": 2032.694
+  },
+  "200_275": {
+   "p": 200,
+   "w": 275,
+   "status": "OPTIMAL",
+   "lat_med": 264.766,
+   "lat_max": 273.678,
+   "cadence": 200.0,
+   "makespan": 2032.694
+  },
+  "200_290": {
+   "p": 200,
+   "w": 290,
+   "status": "OPTIMAL",
+   "lat_med": 268.969,
+   "lat_max": 289.716,
+   "cadence": 200.0,
+   "makespan": 2032.694
+  },
+  "200_305": {
+   "p": 200,
+   "w": 305,
+   "status": "OPTIMAL",
+   "lat_med": 257.856,
+   "lat_max": 303.984,
+   "cadence": 200.0,
+   "makespan": 2032.694
+  },
+  "200_320": {
+   "p": 200,
+   "w": 320,
+   "status": "OPTIMAL",
+   "lat_med": 280.693,
+   "lat_max": 307.994,
+   "cadence": 200.0,
+   "makespan": 2032.694
+  },
+  "200_350": {
+   "p": 200,
+   "w": 350,
+   "status": "OPTIMAL",
+   "lat_med": 257.856,
+   "lat_max": 257.856,
+   "cadence": 200.0,
+   "makespan": 2032.694
+  },
+  "200_400": {
+   "p": 200,
+   "w": 400,
+   "status": "OPTIMAL",
+   "lat_med": 257.856,
+   "lat_max": 398.762,
+   "cadence": 200.0,
+   "makespan": 2032.694
+  },
+  "200_450": {
+   "p": 200,
+   "w": 450,
+   "status": "OPTIMAL",
+   "lat_med": 369.207,
+   "lat_max": 449.271,
+   "cadence": 200.0,
+   "makespan": 2032.694
+  },
+  "220_240": {
+   "p": 220,
+   "w": 240,
+   "status": "OPTIMAL",
+   "lat_med": 232.694,
+   "lat_max": 232.694,
+   "cadence": 220.0,
+   "makespan": 2212.694
+  },
+  "220_260": {
+   "p": 220,
+   "w": 260,
+   "status": "OPTIMAL",
+   "lat_med": 232.694,
+   "lat_max": 232.694,
+   "cadence": 220.0,
+   "makespan": 2212.694
+  },
+  "220_275": {
+   "p": 220,
+   "w": 275,
+   "status": "OPTIMAL",
+   "lat_med": 232.694,
+   "lat_max": 232.694,
+   "cadence": 220.0,
+   "makespan": 2212.694
+  },
+  "220_290": {
+   "p": 220,
+   "w": 290,
+   "status": "OPTIMAL",
+   "lat_med": 232.694,
+   "lat_max": 232.694,
+   "cadence": 220.0,
+   "makespan": 2212.694
+  },
+  "220_305": {
+   "p": 220,
+   "w": 305,
+   "status": "OPTIMAL",
+   "lat_med": 232.694,
+   "lat_max": 232.694,
+   "cadence": 220.0,
+   "makespan": 2212.694
+  },
+  "220_320": {
+   "p": 220,
+   "w": 320,
+   "status": "OPTIMAL",
+   "lat_med": 232.694,
+   "lat_max": 298.174,
+   "cadence": 220.0,
+   "makespan": 2212.694
+  },
+  "220_350": {
+   "p": 220,
+   "w": 350,
+   "status": "OPTIMAL",
+   "lat_med": 232.694,
+   "lat_max": 232.694,
+   "cadence": 220.0,
+   "makespan": 2212.694
+  },
+  "220_400": {
+   "p": 220,
+   "w": 400,
+   "status": "OPTIMAL",
+   "lat_med": 232.694,
+   "lat_max": 232.694,
+   "cadence": 220.0,
+   "makespan": 2212.694
+  },
+  "220_450": {
+   "p": 220,
+   "w": 450,
+   "status": "OPTIMAL",
+   "lat_med": 232.694,
+   "lat_max": 232.694,
+   "cadence": 220.0,
+   "makespan": 2212.694
+  },
+  "250_240": {
+   "p": 250,
+   "w": 240,
+   "status": "OPTIMAL",
+   "lat_med": 232.694,
+   "lat_max": 236.347,
+   "cadence": 250.0,
+   "makespan": 2482.694
+  },
+  "250_260": {
+   "p": 250,
+   "w": 260,
+   "status": "OPTIMAL",
+   "lat_med": 232.694,
+   "lat_max": 232.694,
+   "cadence": 250.0,
+   "makespan": 2482.694
+  },
+  "250_275": {
+   "p": 250,
+   "w": 275,
+   "status": "OPTIMAL",
+   "lat_med": 232.694,
+   "lat_max": 253.847,
+   "cadence": 250.0,
+   "makespan": 2482.694
+  },
+  "250_290": {
+   "p": 250,
+   "w": 290,
+   "status": "OPTIMAL",
+   "lat_med": 232.694,
+   "lat_max": 261.347,
+   "cadence": 250.0,
+   "makespan": 2482.694
+  },
+  "250_305": {
+   "p": 250,
+   "w": 305,
+   "status": "OPTIMAL",
+   "lat_med": 232.694,
+   "lat_max": 268.847,
+   "cadence": 250.0,
+   "makespan": 2482.694
+  },
+  "250_320": {
+   "p": 250,
+   "w": 320,
+   "status": "OPTIMAL",
+   "lat_med": 232.694,
+   "lat_max": 314.627,
+   "cadence": 250.0,
+   "makespan": 2482.694
+  },
+  "250_350": {
+   "p": 250,
+   "w": 350,
+   "status": "OPTIMAL",
+   "lat_med": 232.694,
+   "lat_max": 232.694,
+   "cadence": 250.0,
+   "makespan": 2482.694
+  },
+  "250_400": {
+   "p": 250,
+   "w": 400,
+   "status": "OPTIMAL",
+   "lat_med": 232.694,
+   "lat_max": 232.694,
+   "cadence": 250.0,
+   "makespan": 2482.694
+  },
+  "250_450": {
+   "p": 250,
+   "w": 450,
+   "status": "OPTIMAL",
+   "lat_med": 232.694,
+   "lat_max": 232.694,
+   "cadence": 250.0,
+   "makespan": 2482.694
+  },
+  "283_240": {
+   "p": 283,
+   "w": 240,
+   "status": "OPTIMAL",
+   "lat_med": 232.694,
+   "lat_max": 236.347,
+   "cadence": 283.0,
+   "makespan": 2779.694
+  },
+  "283_260": {
+   "p": 283,
+   "w": 260,
+   "status": "OPTIMAL",
+   "lat_med": 232.694,
+   "lat_max": 232.694,
+   "cadence": 283.0,
+   "makespan": 2779.694
+  },
+  "283_275": {
+   "p": 283,
+   "w": 275,
+   "status": "OPTIMAL",
+   "lat_med": 232.694,
+   "lat_max": 232.694,
+   "cadence": 283.0,
+   "makespan": 2779.694
+  },
+  "283_290": {
+   "p": 283,
+   "w": 290,
+   "status": "OPTIMAL",
+   "lat_med": 232.694,
+   "lat_max": 261.347,
+   "cadence": 283.0,
+   "makespan": 2779.694
+  },
+  "283_305": {
+   "p": 283,
+   "w": 305,
+   "status": "OPTIMAL",
+   "lat_med": 232.694,
+   "lat_max": 232.694,
+   "cadence": 283.0,
+   "makespan": 2779.694
+  },
+  "283_320": {
+   "p": 283,
+   "w": 320,
+   "status": "OPTIMAL",
+   "lat_med": 232.694,
+   "lat_max": 303.63,
+   "cadence": 283.0,
+   "makespan": 2779.694
+  },
+  "283_350": {
+   "p": 283,
+   "w": 350,
+   "status": "OPTIMAL",
+   "lat_med": 232.694,
+   "lat_max": 232.694,
+   "cadence": 283.0,
+   "makespan": 2779.694
+  },
+  "283_400": {
+   "p": 283,
+   "w": 400,
+   "status": "OPTIMAL",
+   "lat_med": 232.694,
+   "lat_max": 232.694,
+   "cadence": 283.0,
+   "makespan": 2779.694
+  },
+  "283_450": {
+   "p": 283,
+   "w": 450,
+   "status": "OPTIMAL",
+   "lat_med": 232.694,
+   "lat_max": 232.694,
+   "cadence": 283.0,
+   "makespan": 2779.694
+  }
+ }
+}

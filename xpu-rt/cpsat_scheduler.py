@@ -191,6 +191,24 @@ def cpsat_available() -> str | None:
     return None
 
 
+def _default_workers() -> int:
+    """CP-SAT search workers, overridable with XPURT_CPSAT_WORKERS.
+
+    The default of 8 is a sensible laptop setting but leaves most of a large
+    scheduling host idle -- there is no CLI flag for it, so this env var is the
+    only way to use one. NOTE the determinism caveat below: with more than one
+    worker the result depends on thread interleaving, so a run is reproducible
+    only in the sense that any schedule it returns is valid and is verified
+    against the deadline separately.
+    """
+    import os as _os
+    try:
+        v = int(_os.environ.get("XPURT_CPSAT_WORKERS", "8"))
+        return v if v > 0 else 8
+    except ValueError:
+        return 8
+
+
 def cpsat_schedule(workload, time_limit: float = 60.0,
                    restrict_to_nonperiodic: bool = True,
                    workers: int = 8, verbose: bool = False,
@@ -220,7 +238,8 @@ def cpsat_schedule(workload, time_limit: float = 60.0,
     ctx = DecoderContext(workload)
     model = build_payload(ctx, time_limit=time_limit,
                           restrict_to_nonperiodic=restrict_to_nonperiodic,
-                          workers=workers, random_seed=random_seed,
+                          workers=(workers if workers != 8 else _default_workers()),
+                          random_seed=random_seed,
                           warm_start=warm_start, verbose=verbose)
 
     with tempfile.TemporaryDirectory() as td:
