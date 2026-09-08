@@ -1,0 +1,1571 @@
+[
+ {
+  "id": "dronet_sa",
+  "family": "dronet",
+  "zoo": "/scratch/dima/rose-infra/RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
+  "export_rc": 0,
+  "onnx": "gen/onnx/dronet_sa.onnx",
+  "onnx_bytes": 1238940,
+  "inputs": {
+   "input": [
+    1,
+    3,
+    32,
+    32
+   ]
+  },
+  "ir_rc": 0,
+  "graph_json": "gen/ir/dronet_sa/int8/graph.json",
+  "ir_ops": 23,
+  "ir_op_kinds": {
+   "conv2d_s8": 10,
+   "maxpool2d_s8": 1,
+   "batchnorm2d_s8": 3,
+   "add_s8": 3,
+   "view": 2,
+   "relu_s8": 1,
+   "linear_s8": 2,
+   "sigmoid_s8": 1
+  },
+  "dlc_rc": 0,
+  "dlc_bytes": 1266748,
+  "macs": 995618,
+  "dlc_input_names": [
+   "input"
+  ],
+  "dlc_input_dims": [
+   [
+    1,
+    32,
+    32,
+    3
+   ]
+  ],
+  "dlc_graph_name": "dronet_sa",
+  "calib": {
+   "n": 10,
+   "seed": 0,
+   "dims": [
+    [
+     1,
+     32,
+     32,
+     3
+    ]
+   ]
+  },
+  "quant_rc": 0,
+  "qdlc_bytes": 345724,
+  "stage": "composed",
+  "compose_board_s": 2.6,
+  "compose": {
+   "hta": {
+    "status": "fail",
+    "precision": "int8",
+    "ctx": "ctx_s10_dronet_sa_int8__Hta.bin",
+    "rc": "rc=14",
+    "compose_ms": 41,
+    "reason": "QnnHta [ ERROR ] QnnHtaunsupported op Batchnorm      6.5ms [ ERROR ] Exception encountered: Validate OpConfig failed: QNN_GRAPH_ERROR_INVALID_OP_CONFIG: Some elements in the op config data are invalid      6.5ms [ ERROR ] Failed to successfully compose graph"
+   },
+   "dsp": {
+    "status": "ok",
+    "precision": "int8",
+    "ctx": "ctx_s10_dronet_sa_int8__Dsp.bin",
+    "bytes": 332136,
+    "compose_ms": 1222
+   },
+   "cpu": {
+    "status": "ok",
+    "precision": "fp32",
+    "ctx": "ctx_s10_dronet_sa_fp32__Cpu.bin",
+    "bytes": 1260784,
+    "compose_ms": 48
+   },
+   "cpu@int8": {
+    "status": "ok",
+    "precision": "int8",
+    "ctx": "ctx_s10_dronet_sa_int8__CpuInt8.bin",
+    "bytes": 336120,
+    "compose_ms": 42
+   },
+   "gpu": {
+    "status": "ok",
+    "precision": "fp16",
+    "ctx": "ctx_s10_dronet_sa_fp16__Gpu.bin",
+    "bytes": 1376104,
+    "compose_ms": 692
+   }
+  },
+  "board_df": "/dev/root        98G   52G   47G  53% /",
+  "compose_stdout_tail": " [ ERROR ] QnnHtaunsupported op Batchnorm      6.5ms [ ERROR ] Exception encountered: Validate OpConfig failed: QNN_GRAPH_ERROR_INVALID_OP_CONFIG: Some elements in the op config data are invalid      6.5ms [ ERROR ] Failed to successfully compose graph \nRESULT dsp OK 332136 1222\nRESULT cpu OK 1260784 48\nRESULT cpu@int8 OK 336120 42\nRESULT gpu OK 1376104 692\n/dev/root        98G   52G   47G  53% /\n",
+  "build_s": 55.3
+ },
+ {
+  "id": "dronet_sb",
+  "family": "dronet",
+  "zoo": "/scratch/dima/rose-infra/RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
+  "export_rc": 0,
+  "onnx": "gen/onnx/dronet_sb.onnx",
+  "onnx_bytes": 1242012,
+  "inputs": {
+   "input": [
+    1,
+    3,
+    48,
+    48
+   ]
+  },
+  "ir_rc": 0,
+  "graph_json": "gen/ir/dronet_sb/int8/graph.json",
+  "ir_ops": 23,
+  "ir_op_kinds": {
+   "conv2d_s8": 10,
+   "maxpool2d_s8": 1,
+   "batchnorm2d_s8": 3,
+   "add_s8": 3,
+   "view": 2,
+   "relu_s8": 1,
+   "linear_s8": 2,
+   "sigmoid_s8": 1
+  },
+  "dlc_rc": 0,
+  "dlc_bytes": 1269820,
+  "macs": 2642786,
+  "dlc_input_names": [
+   "input"
+  ],
+  "dlc_input_dims": [
+   [
+    1,
+    48,
+    48,
+    3
+   ]
+  ],
+  "dlc_graph_name": "dronet_sb",
+  "calib": {
+   "n": 10,
+   "seed": 0,
+   "dims": [
+    [
+     1,
+     48,
+     48,
+     3
+    ]
+   ]
+  },
+  "quant_rc": 0,
+  "qdlc_bytes": 346492,
+  "stage": "composed",
+  "compose_board_s": 2.5,
+  "compose": {
+   "hta": {
+    "status": "fail",
+    "precision": "int8",
+    "ctx": "ctx_s10_dronet_sb_int8__Hta.bin",
+    "rc": "rc=14",
+    "compose_ms": 34,
+    "reason": "QnnHta [ ERROR ] QnnHtaunsupported op Batchnorm      7.0ms [ ERROR ] Exception encountered: Validate OpConfig failed: QNN_GRAPH_ERROR_INVALID_OP_CONFIG: Some elements in the op config data are invalid      7.0ms [ ERROR ] Failed to successfully compose graph"
+   },
+   "dsp": {
+    "status": "ok",
+    "precision": "int8",
+    "ctx": "ctx_s10_dronet_sb_int8__Dsp.bin",
+    "bytes": 332904,
+    "compose_ms": 1230
+   },
+   "cpu": {
+    "status": "ok",
+    "precision": "fp32",
+    "ctx": "ctx_s10_dronet_sb_fp32__Cpu.bin",
+    "bytes": 1263856,
+    "compose_ms": 39
+   },
+   "cpu@int8": {
+    "status": "ok",
+    "precision": "int8",
+    "ctx": "ctx_s10_dronet_sb_int8__CpuInt8.bin",
+    "bytes": 336888,
+    "compose_ms": 41
+   },
+   "gpu": {
+    "status": "ok",
+    "precision": "fp16",
+    "ctx": "ctx_s10_dronet_sb_fp16__Gpu.bin",
+    "bytes": 1379176,
+    "compose_ms": 690
+   }
+  },
+  "board_df": "/dev/root        98G   52G   47G  53% /",
+  "compose_stdout_tail": " [ ERROR ] QnnHtaunsupported op Batchnorm      7.0ms [ ERROR ] Exception encountered: Validate OpConfig failed: QNN_GRAPH_ERROR_INVALID_OP_CONFIG: Some elements in the op config data are invalid      7.0ms [ ERROR ] Failed to successfully compose graph \nRESULT dsp OK 332904 1230\nRESULT cpu OK 1263856 39\nRESULT cpu@int8 OK 336888 41\nRESULT gpu OK 1379176 690\n/dev/root        98G   52G   47G  53% /\n",
+  "build_s": 38.2
+ },
+ {
+  "id": "dronet_sc",
+  "family": "dronet",
+  "zoo": "/scratch/dima/rose-infra/RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
+  "export_rc": 0,
+  "onnx": "gen/onnx/dronet_sc.onnx",
+  "onnx_bytes": 1242012,
+  "inputs": {
+   "input": [
+    1,
+    3,
+    64,
+    64
+   ]
+  },
+  "ir_rc": 0,
+  "graph_json": "gen/ir/dronet_sc/int8/graph.json",
+  "ir_ops": 23,
+  "ir_op_kinds": {
+   "conv2d_s8": 10,
+   "maxpool2d_s8": 1,
+   "batchnorm2d_s8": 3,
+   "add_s8": 3,
+   "view": 2,
+   "relu_s8": 1,
+   "linear_s8": 2,
+   "sigmoid_s8": 1
+  },
+  "dlc_rc": 0,
+  "dlc_bytes": 1269820,
+  "macs": 3983394,
+  "dlc_input_names": [
+   "input"
+  ],
+  "dlc_input_dims": [
+   [
+    1,
+    64,
+    64,
+    3
+   ]
+  ],
+  "dlc_graph_name": "dronet_sc",
+  "calib": {
+   "n": 10,
+   "seed": 0,
+   "dims": [
+    [
+     1,
+     64,
+     64,
+     3
+    ]
+   ]
+  },
+  "quant_rc": 0,
+  "qdlc_bytes": 346492,
+  "stage": "composed",
+  "compose_board_s": 2.5,
+  "compose": {
+   "hta": {
+    "status": "fail",
+    "precision": "int8",
+    "ctx": "ctx_s10_dronet_sc_int8__Hta.bin",
+    "rc": "rc=14",
+    "compose_ms": 40,
+    "reason": "QnnHta [ ERROR ] QnnHtaunsupported op Batchnorm      6.5ms [ ERROR ] Exception encountered: Validate OpConfig failed: QNN_GRAPH_ERROR_INVALID_OP_CONFIG: Some elements in the op config data are invalid      6.5ms [ ERROR ] Failed to successfully compose graph"
+   },
+   "dsp": {
+    "status": "ok",
+    "precision": "int8",
+    "ctx": "ctx_s10_dronet_sc_int8__Dsp.bin",
+    "bytes": 332904,
+    "compose_ms": 1220
+   },
+   "cpu": {
+    "status": "ok",
+    "precision": "fp32",
+    "ctx": "ctx_s10_dronet_sc_fp32__Cpu.bin",
+    "bytes": 1263856,
+    "compose_ms": 44
+   },
+   "cpu@int8": {
+    "status": "ok",
+    "precision": "int8",
+    "ctx": "ctx_s10_dronet_sc_int8__CpuInt8.bin",
+    "bytes": 336888,
+    "compose_ms": 43
+   },
+   "gpu": {
+    "status": "ok",
+    "precision": "fp16",
+    "ctx": "ctx_s10_dronet_sc_fp16__Gpu.bin",
+    "bytes": 1379176,
+    "compose_ms": 686
+   }
+  },
+  "board_df": "/dev/root        98G   52G   47G  53% /",
+  "compose_stdout_tail": " [ ERROR ] QnnHtaunsupported op Batchnorm      6.5ms [ ERROR ] Exception encountered: Validate OpConfig failed: QNN_GRAPH_ERROR_INVALID_OP_CONFIG: Some elements in the op config data are invalid      6.5ms [ ERROR ] Failed to successfully compose graph \nRESULT dsp OK 332904 1220\nRESULT cpu OK 1263856 44\nRESULT cpu@int8 OK 336888 43\nRESULT gpu OK 1379176 686\n/dev/root        98G   52G   47G  53% /\n",
+  "build_s": 39.3
+ },
+ {
+  "id": "dronet_sd",
+  "family": "dronet",
+  "zoo": "/scratch/dima/rose-infra/RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
+  "export_rc": 0,
+  "onnx": "gen/onnx/dronet_sd.onnx",
+  "onnx_bytes": 1247132,
+  "inputs": {
+   "input": [
+    1,
+    3,
+    80,
+    80
+   ]
+  },
+  "ir_rc": 0,
+  "graph_json": "gen/ir/dronet_sd/int8/graph.json",
+  "ir_ops": 23,
+  "ir_op_kinds": {
+   "conv2d_s8": 10,
+   "maxpool2d_s8": 1,
+   "batchnorm2d_s8": 3,
+   "add_s8": 3,
+   "view": 2,
+   "relu_s8": 1,
+   "linear_s8": 2,
+   "sigmoid_s8": 1
+  },
+  "dlc_rc": 0,
+  "dlc_bytes": 1274940,
+  "macs": 6856546,
+  "dlc_input_names": [
+   "input"
+  ],
+  "dlc_input_dims": [
+   [
+    1,
+    80,
+    80,
+    3
+   ]
+  ],
+  "dlc_graph_name": "dronet_sd",
+  "calib": {
+   "n": 10,
+   "seed": 0,
+   "dims": [
+    [
+     1,
+     80,
+     80,
+     3
+    ]
+   ]
+  },
+  "quant_rc": 0,
+  "qdlc_bytes": 347772,
+  "stage": "composed",
+  "compose_board_s": 2.5,
+  "compose": {
+   "hta": {
+    "status": "fail",
+    "precision": "int8",
+    "ctx": "ctx_s10_dronet_sd_int8__Hta.bin",
+    "rc": "rc=14",
+    "compose_ms": 50,
+    "reason": "QnnHta [ ERROR ] QnnHtaunsupported op Batchnorm     10.5ms [ ERROR ] Exception encountered: Validate OpConfig failed: QNN_GRAPH_ERROR_INVALID_OP_CONFIG: Some elements in the op config data are invalid     10.5ms [ ERROR ] Failed to successfully compose graph"
+   },
+   "dsp": {
+    "status": "ok",
+    "precision": "int8",
+    "ctx": "ctx_s10_dronet_sd_int8__Dsp.bin",
+    "bytes": 334184,
+    "compose_ms": 1215
+   },
+   "cpu": {
+    "status": "ok",
+    "precision": "fp32",
+    "ctx": "ctx_s10_dronet_sd_fp32__Cpu.bin",
+    "bytes": 1268976,
+    "compose_ms": 38
+   },
+   "cpu@int8": {
+    "status": "ok",
+    "precision": "int8",
+    "ctx": "ctx_s10_dronet_sd_int8__CpuInt8.bin",
+    "bytes": 338168,
+    "compose_ms": 42
+   },
+   "gpu": {
+    "status": "ok",
+    "precision": "fp16",
+    "ctx": "ctx_s10_dronet_sd_fp16__Gpu.bin",
+    "bytes": 1384408,
+    "compose_ms": 688
+   }
+  },
+  "board_df": "/dev/root        98G   52G   47G  53% /",
+  "compose_stdout_tail": " [ ERROR ] QnnHtaunsupported op Batchnorm     10.5ms [ ERROR ] Exception encountered: Validate OpConfig failed: QNN_GRAPH_ERROR_INVALID_OP_CONFIG: Some elements in the op config data are invalid     10.5ms [ ERROR ] Failed to successfully compose graph \nRESULT dsp OK 334184 1215\nRESULT cpu OK 1268976 38\nRESULT cpu@int8 OK 338168 42\nRESULT gpu OK 1384408 688\n/dev/root        98G   52G   47G  53% /\n",
+  "build_s": 46.1
+ },
+ {
+  "id": "dronet_se",
+  "family": "dronet",
+  "zoo": "/scratch/dima/rose-infra/RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
+  "export_rc": 0,
+  "onnx": "gen/onnx/dronet_se.onnx",
+  "onnx_bytes": 1255308,
+  "inputs": {
+   "input": [
+    1,
+    3,
+    112,
+    112
+   ]
+  },
+  "ir_rc": 0,
+  "graph_json": "gen/ir/dronet_se/int8/graph.json",
+  "ir_ops": 23,
+  "ir_op_kinds": {
+   "conv2d_s8": 10,
+   "maxpool2d_s8": 1,
+   "batchnorm2d_s8": 3,
+   "add_s8": 3,
+   "view": 2,
+   "relu_s8": 1,
+   "linear_s8": 2,
+   "sigmoid_s8": 1
+  },
+  "dlc_rc": 0,
+  "dlc_bytes": 1282108,
+  "macs": 13062498,
+  "dlc_input_names": [
+   "input"
+  ],
+  "dlc_input_dims": [
+   [
+    1,
+    112,
+    112,
+    3
+   ]
+  ],
+  "dlc_graph_name": "dronet_se",
+  "calib": {
+   "n": 10,
+   "seed": 0,
+   "dims": [
+    [
+     1,
+     112,
+     112,
+     3
+    ]
+   ]
+  },
+  "quant_rc": 0,
+  "qdlc_bytes": 349564,
+  "stage": "composed",
+  "compose_board_s": 2.5,
+  "compose": {
+   "hta": {
+    "status": "fail",
+    "precision": "int8",
+    "ctx": "ctx_s10_dronet_se_int8__Hta.bin",
+    "rc": "rc=14",
+    "compose_ms": 44,
+    "reason": "QnnHta [ ERROR ] QnnHtaunsupported op Batchnorm      8.6ms [ ERROR ] Exception encountered: Validate OpConfig failed: QNN_GRAPH_ERROR_INVALID_OP_CONFIG: Some elements in the op config data are invalid      8.6ms [ ERROR ] Failed to successfully compose graph"
+   },
+   "dsp": {
+    "status": "ok",
+    "precision": "int8",
+    "ctx": "ctx_s10_dronet_se_int8__Dsp.bin",
+    "bytes": 335976,
+    "compose_ms": 1226
+   },
+   "cpu": {
+    "status": "ok",
+    "precision": "fp32",
+    "ctx": "ctx_s10_dronet_se_fp32__Cpu.bin",
+    "bytes": 1276144,
+    "compose_ms": 43
+   },
+   "cpu@int8": {
+    "status": "ok",
+    "precision": "int8",
+    "ctx": "ctx_s10_dronet_se_int8__CpuInt8.bin",
+    "bytes": 339984,
+    "compose_ms": 41
+   },
+   "gpu": {
+    "status": "ok",
+    "precision": "fp16",
+    "ctx": "ctx_s10_dronet_se_fp16__Gpu.bin",
+    "bytes": 1392168,
+    "compose_ms": 688
+   }
+  },
+  "board_df": "/dev/root        98G   52G   47G  53% /",
+  "compose_stdout_tail": " [ ERROR ] QnnHtaunsupported op Batchnorm      8.6ms [ ERROR ] Exception encountered: Validate OpConfig failed: QNN_GRAPH_ERROR_INVALID_OP_CONFIG: Some elements in the op config data are invalid      8.6ms [ ERROR ] Failed to successfully compose graph \nRESULT dsp OK 335976 1226\nRESULT cpu OK 1276144 43\nRESULT cpu@int8 OK 339984 41\nRESULT gpu OK 1392168 688\n/dev/root        98G   52G   47G  53% /\n",
+  "build_s": 61.6
+ },
+ {
+  "id": "dronet_sf",
+  "family": "dronet",
+  "zoo": "/scratch/dima/rose-infra/RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
+  "export_rc": 0,
+  "onnx": "gen/onnx/dronet_sf.onnx",
+  "onnx_bytes": 1254302,
+  "inputs": {
+   "input": [
+    1,
+    3,
+    128,
+    128
+   ]
+  },
+  "ir_rc": 0,
+  "graph_json": "gen/ir/dronet_sf/int8/graph.json",
+  "ir_ops": 23,
+  "ir_op_kinds": {
+   "conv2d_s8": 10,
+   "maxpool2d_s8": 1,
+   "batchnorm2d_s8": 3,
+   "add_s8": 3,
+   "view": 2,
+   "relu_s8": 1,
+   "linear_s8": 2,
+   "sigmoid_s8": 1
+  },
+  "dlc_rc": 0,
+  "dlc_bytes": 1282108,
+  "macs": 15935522,
+  "dlc_input_names": [
+   "input"
+  ],
+  "dlc_input_dims": [
+   [
+    1,
+    128,
+    128,
+    3
+   ]
+  ],
+  "dlc_graph_name": "dronet_sf",
+  "calib": {
+   "n": 10,
+   "seed": 0,
+   "dims": [
+    [
+     1,
+     128,
+     128,
+     3
+    ]
+   ]
+  },
+  "quant_rc": 0,
+  "qdlc_bytes": 349556,
+  "stage": "composed",
+  "compose_board_s": 2.5,
+  "compose": {
+   "hta": {
+    "status": "fail",
+    "precision": "int8",
+    "ctx": "ctx_s10_dronet_sf_int8__Hta.bin",
+    "rc": "rc=14",
+    "compose_ms": 48,
+    "reason": "QnnHta [ ERROR ] QnnHtaunsupported op Batchnorm     14.4ms [ ERROR ] Exception encountered: Validate OpConfig failed: QNN_GRAPH_ERROR_INVALID_OP_CONFIG: Some elements in the op config data are invalid     14.4ms [ ERROR ] Failed to successfully compose graph"
+   },
+   "dsp": {
+    "status": "ok",
+    "precision": "int8",
+    "ctx": "ctx_s10_dronet_sf_int8__Dsp.bin",
+    "bytes": 335976,
+    "compose_ms": 1256
+   },
+   "cpu": {
+    "status": "ok",
+    "precision": "fp32",
+    "ctx": "ctx_s10_dronet_sf_fp32__Cpu.bin",
+    "bytes": 1276144,
+    "compose_ms": 42
+   },
+   "cpu@int8": {
+    "status": "ok",
+    "precision": "int8",
+    "ctx": "ctx_s10_dronet_sf_int8__CpuInt8.bin",
+    "bytes": 339960,
+    "compose_ms": 41
+   },
+   "gpu": {
+    "status": "ok",
+    "precision": "fp16",
+    "ctx": "ctx_s10_dronet_sf_fp16__Gpu.bin",
+    "bytes": 1392168,
+    "compose_ms": 686
+   }
+  },
+  "board_df": "/dev/root        98G   52G   47G  53% /",
+  "compose_stdout_tail": " [ ERROR ] QnnHtaunsupported op Batchnorm     14.4ms [ ERROR ] Exception encountered: Validate OpConfig failed: QNN_GRAPH_ERROR_INVALID_OP_CONFIG: Some elements in the op config data are invalid     14.4ms [ ERROR ] Failed to successfully compose graph \nRESULT dsp OK 335976 1256\nRESULT cpu OK 1276144 42\nRESULT cpu@int8 OK 339960 41\nRESULT gpu OK 1392168 686\n/dev/root        98G   52G   47G  53% /\n",
+  "build_s": 63.7
+ },
+ {
+  "id": "dronet_sg",
+  "family": "dronet",
+  "zoo": "/scratch/dima/rose-infra/RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
+  "export_rc": 0,
+  "onnx": "gen/onnx/dronet_sg.onnx",
+  "onnx_bytes": 1263518,
+  "inputs": {
+   "input": [
+    1,
+    3,
+    144,
+    144
+   ]
+  },
+  "ir_rc": 0,
+  "graph_json": "gen/ir/dronet_sg/int8/graph.json",
+  "ir_ops": 23,
+  "ir_op_kinds": {
+   "conv2d_s8": 10,
+   "maxpool2d_s8": 1,
+   "batchnorm2d_s8": 3,
+   "add_s8": 3,
+   "view": 2,
+   "relu_s8": 1,
+   "linear_s8": 2,
+   "sigmoid_s8": 1
+  },
+  "dlc_rc": 0,
+  "dlc_bytes": 1291324,
+  "macs": 21260642,
+  "dlc_input_names": [
+   "input"
+  ],
+  "dlc_input_dims": [
+   [
+    1,
+    144,
+    144,
+    3
+   ]
+  ],
+  "dlc_graph_name": "dronet_sg",
+  "calib": {
+   "n": 10,
+   "seed": 0,
+   "dims": [
+    [
+     1,
+     144,
+     144,
+     3
+    ]
+   ]
+  },
+  "quant_rc": 0,
+  "qdlc_bytes": 351844,
+  "stage": "composed",
+  "compose_board_s": 2.5,
+  "compose": {
+   "hta": {
+    "status": "fail",
+    "precision": "int8",
+    "ctx": "ctx_s10_dronet_sg_int8__Hta.bin",
+    "rc": "rc=14",
+    "compose_ms": 43,
+    "reason": "QnnHta [ ERROR ] QnnHtaunsupported op Batchnorm      6.4ms [ ERROR ] Exception encountered: Validate OpConfig failed: QNN_GRAPH_ERROR_INVALID_OP_CONFIG: Some elements in the op config data are invalid      6.4ms [ ERROR ] Failed to successfully compose graph"
+   },
+   "dsp": {
+    "status": "ok",
+    "precision": "int8",
+    "ctx": "ctx_s10_dronet_sg_int8__Dsp.bin",
+    "bytes": 338280,
+    "compose_ms": 1233
+   },
+   "cpu": {
+    "status": "ok",
+    "precision": "fp32",
+    "ctx": "ctx_s10_dronet_sg_fp32__Cpu.bin",
+    "bytes": 1285360,
+    "compose_ms": 36
+   },
+   "cpu@int8": {
+    "status": "ok",
+    "precision": "int8",
+    "ctx": "ctx_s10_dronet_sg_int8__CpuInt8.bin",
+    "bytes": 342264,
+    "compose_ms": 35
+   },
+   "gpu": {
+    "status": "ok",
+    "precision": "fp16",
+    "ctx": "ctx_s10_dronet_sg_fp16__Gpu.bin",
+    "bytes": 1400680,
+    "compose_ms": 686
+   }
+  },
+  "board_df": "/dev/root        98G   52G   47G  53% /",
+  "compose_stdout_tail": " [ ERROR ] QnnHtaunsupported op Batchnorm      6.4ms [ ERROR ] Exception encountered: Validate OpConfig failed: QNN_GRAPH_ERROR_INVALID_OP_CONFIG: Some elements in the op config data are invalid      6.4ms [ ERROR ] Failed to successfully compose graph \nRESULT dsp OK 338280 1233\nRESULT cpu OK 1285360 36\nRESULT cpu@int8 OK 342264 35\nRESULT gpu OK 1400680 686\n/dev/root        98G   52G   47G  53% /\n",
+  "build_s": 91.7
+ },
+ {
+  "id": "mlp_control_sa",
+  "family": "mlp_control",
+  "zoo": "/scratch/dima/rose-infra/RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
+  "export_rc": 0,
+  "onnx": "gen/onnx/mlp_control_sa.onnx",
+  "onnx_bytes": 6091,
+  "inputs": {
+   "input": [
+    1,
+    16
+   ]
+  },
+  "ir_rc": 0,
+  "graph_json": "gen/ir/mlp_control_sa/int8/graph.json",
+  "ir_ops": 7,
+  "ir_op_kinds": {
+   "linear_s8": 4,
+   "elu_s8": 3
+  },
+  "dlc_rc": 0,
+  "dlc_bytes": 14908,
+  "macs": 1187,
+  "dlc_input_names": [
+   "input"
+  ],
+  "dlc_input_dims": [
+   [
+    1,
+    16
+   ]
+  ],
+  "dlc_graph_name": "mlp_control_sa",
+  "calib": {
+   "n": 10,
+   "seed": 0,
+   "dims": [
+    [
+     1,
+     16
+    ]
+   ]
+  },
+  "quant_rc": 0,
+  "quant_error": "quantize failed (see logs/phase1/quant_*.log)",
+  "stage": "composed",
+  "compose": {
+   "hta": {
+    "status": "fail",
+    "precision": "int8",
+    "ctx": "ctx_s10_mlp_control_sa_int8__Hta.bin",
+    "rc": "rc=14",
+    "compose_ms": 67,
+    "reason": "33.8ms [ ERROR ] unsupported elementwise neuson op 0     33.9ms [ ERROR ] failed to create IHtaOp type name ElementWiseNeuron from package qti.aisw in graph mlp_control_sa     12.1ms [ ERROR ] Exception encountered: Failed to addNode: QNN_GRAPH_ERROR_INVALID_OP_CONFIG: Some elements in the op config data are invalid"
+   },
+   "dsp": {
+    "status": "ok",
+    "precision": "int8",
+    "ctx": "ctx_s10_mlp_control_sa_int8__Dsp.bin",
+    "bytes": 11584,
+    "compose_ms": 1214
+   },
+   "cpu@int8": {
+    "status": "ok",
+    "precision": "int8",
+    "ctx": "ctx_s10_mlp_control_sa_int8__CpuInt8.bin",
+    "bytes": 6736,
+    "compose_ms": 35
+   },
+   "cpu": {
+    "status": "ok",
+    "precision": "fp32",
+    "ctx": "ctx_s10_mlp_control_sa_fp32__Cpu.bin",
+    "bytes": 10256,
+    "compose_ms": 39
+   },
+   "gpu": {
+    "status": "ok",
+    "precision": "fp16",
+    "ctx": "ctx_s10_mlp_control_sa_fp16__Gpu.bin",
+    "bytes": 63752,
+    "compose_ms": 215
+   }
+  },
+  "compose_board_s": 2.0,
+  "board_df": "/dev/root        98G   52G   47G  53% /",
+  "compose_stdout_tail": "3.9ms [ ERROR ] failed to create IHtaOp type name ElementWiseNeuron from package qti.aisw in graph mlp_control_sa     12.1ms [ ERROR ] Exception encountered: Failed to addNode: QNN_GRAPH_ERROR_INVALID_OP_CONFIG: Some elements in the op config data are invalid \nRESULT dsp OK 11584 1214\nRESULT cpu OK 10256 39\nRESULT cpu@int8 OK 6736 35\nRESULT gpu OK 63752 215\n/dev/root        98G   52G   47G  53% /\n",
+  "build_s": 16.6,
+  "qdlc_bytes": 14204
+ },
+ {
+  "id": "mlp_control_sb",
+  "family": "mlp_control",
+  "zoo": "/scratch/dima/rose-infra/RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
+  "export_rc": 0,
+  "onnx": "gen/onnx/mlp_control_sb.onnx",
+  "onnx_bytes": 16173,
+  "inputs": {
+   "input": [
+    1,
+    16
+   ]
+  },
+  "ir_rc": 0,
+  "graph_json": "gen/ir/mlp_control_sb/int8/graph.json",
+  "ir_ops": 7,
+  "ir_op_kinds": {
+   "linear_s8": 4,
+   "elu_s8": 3
+  },
+  "dlc_rc": 0,
+  "dlc_bytes": 24988,
+  "macs": 3651,
+  "dlc_input_names": [
+   "input"
+  ],
+  "dlc_input_dims": [
+   [
+    1,
+    16
+   ]
+  ],
+  "dlc_graph_name": "mlp_control_sb",
+  "calib": {
+   "n": 10,
+   "seed": 0,
+   "dims": [
+    [
+     1,
+     16
+    ]
+   ]
+  },
+  "quant_rc": 0,
+  "qdlc_bytes": 16724,
+  "stage": "composed",
+  "compose_board_s": 2.0,
+  "compose": {
+   "hta": {
+    "status": "fail",
+    "precision": "int8",
+    "ctx": "ctx_s10_mlp_control_sb_int8__Hta.bin",
+    "rc": "rc=14",
+    "compose_ms": 36,
+    "reason": "21.4ms [ ERROR ] unsupported elementwise neuson op 0     21.4ms [ ERROR ] failed to create IHtaOp type name ElementWiseNeuron from package qti.aisw in graph mlp_control_sb     10.2ms [ ERROR ] Exception encountered: Failed to addNode: QNN_GRAPH_ERROR_INVALID_OP_CONFIG: Some elements in the op config data are invalid"
+   },
+   "dsp": {
+    "status": "ok",
+    "precision": "int8",
+    "ctx": "ctx_s10_mlp_control_sb_int8__Dsp.bin",
+    "bytes": 13624,
+    "compose_ms": 1213
+   },
+   "cpu": {
+    "status": "ok",
+    "precision": "fp32",
+    "ctx": "ctx_s10_mlp_control_sb_fp32__Cpu.bin",
+    "bytes": 20336,
+    "compose_ms": 32
+   },
+   "cpu@int8": {
+    "status": "ok",
+    "precision": "int8",
+    "ctx": "ctx_s10_mlp_control_sb_int8__CpuInt8.bin",
+    "bytes": 9256,
+    "compose_ms": 31
+   },
+   "gpu": {
+    "status": "ok",
+    "precision": "fp16",
+    "ctx": "ctx_s10_mlp_control_sb_fp16__Gpu.bin",
+    "bytes": 72168,
+    "compose_ms": 216
+   }
+  },
+  "board_df": "/dev/root        98G   52G   47G  53% /",
+  "compose_stdout_tail": "1.4ms [ ERROR ] failed to create IHtaOp type name ElementWiseNeuron from package qti.aisw in graph mlp_control_sb     10.2ms [ ERROR ] Exception encountered: Failed to addNode: QNN_GRAPH_ERROR_INVALID_OP_CONFIG: Some elements in the op config data are invalid \nRESULT dsp OK 13624 1213\nRESULT cpu OK 20336 32\nRESULT cpu@int8 OK 9256 31\nRESULT gpu OK 72168 216\n/dev/root        98G   52G   47G  53% /\n",
+  "build_s": 13.6
+ },
+ {
+  "id": "mlp_control_sd",
+  "family": "mlp_control",
+  "zoo": "/scratch/dima/rose-infra/RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
+  "export_rc": 0,
+  "onnx": "gen/onnx/mlp_control_sd.onnx",
+  "onnx_bytes": 184188,
+  "inputs": {
+   "input": [
+    1,
+    16
+   ]
+  },
+  "ir_rc": 0,
+  "graph_json": "gen/ir/mlp_control_sd/int8/graph.json",
+  "ir_ops": 7,
+  "ir_op_kinds": {
+   "linear_s8": 4,
+   "elu_s8": 3
+  },
+  "dlc_rc": 0,
+  "dlc_bytes": 192988,
+  "macs": 45315,
+  "dlc_input_names": [
+   "input"
+  ],
+  "dlc_input_dims": [
+   [
+    1,
+    16
+   ]
+  ],
+  "dlc_graph_name": "mlp_control_sd",
+  "calib": {
+   "n": 10,
+   "seed": 0,
+   "dims": [
+    [
+     1,
+     16
+    ]
+   ]
+  },
+  "quant_rc": 0,
+  "qdlc_bytes": 58724,
+  "stage": "composed",
+  "compose_board_s": 2.0,
+  "compose": {
+   "hta": {
+    "status": "fail",
+    "precision": "int8",
+    "ctx": "ctx_s10_mlp_control_sd_int8__Hta.bin",
+    "rc": "rc=14",
+    "compose_ms": 41,
+    "reason": "25.6ms [ ERROR ] unsupported elementwise neuson op 0     25.6ms [ ERROR ] failed to create IHtaOp type name ElementWiseNeuron from package qti.aisw in graph mlp_control_sd      6.0ms [ ERROR ] Exception encountered: Failed to addNode: QNN_GRAPH_ERROR_INVALID_OP_CONFIG: Some elements in the op config data are invalid"
+   },
+   "dsp": {
+    "status": "ok",
+    "precision": "int8",
+    "ctx": "ctx_s10_mlp_control_sd_int8__Dsp.bin",
+    "bytes": 55528,
+    "compose_ms": 1217
+   },
+   "cpu": {
+    "status": "ok",
+    "precision": "fp32",
+    "ctx": "ctx_s10_mlp_control_sd_fp32__Cpu.bin",
+    "bytes": 188336,
+    "compose_ms": 43
+   },
+   "cpu@int8": {
+    "status": "ok",
+    "precision": "int8",
+    "ctx": "ctx_s10_mlp_control_sd_int8__CpuInt8.bin",
+    "bytes": 51256,
+    "compose_ms": 35
+   },
+   "gpu": {
+    "status": "ok",
+    "precision": "fp16",
+    "ctx": "ctx_s10_mlp_control_sd_fp16__Gpu.bin",
+    "bytes": 239400,
+    "compose_ms": 220
+   }
+  },
+  "board_df": "/dev/root        98G   52G   47G  53% /",
+  "compose_stdout_tail": "ms [ ERROR ] failed to create IHtaOp type name ElementWiseNeuron from package qti.aisw in graph mlp_control_sd      6.0ms [ ERROR ] Exception encountered: Failed to addNode: QNN_GRAPH_ERROR_INVALID_OP_CONFIG: Some elements in the op config data are invalid \nRESULT dsp OK 55528 1217\nRESULT cpu OK 188336 43\nRESULT cpu@int8 OK 51256 35\nRESULT gpu OK 239400 220\n/dev/root        98G   52G   47G  53% /\n",
+  "build_s": 14.8
+ },
+ {
+  "id": "mlp_control_sf",
+  "family": "mlp_control",
+  "zoo": "/scratch/dima/rose-infra/RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
+  "export_rc": 0,
+  "onnx": "gen/onnx/mlp_control_sf.onnx",
+  "onnx_bytes": 694911,
+  "inputs": {
+   "input": [
+    1,
+    16
+   ]
+  },
+  "ir_rc": 0,
+  "graph_json": "gen/ir/mlp_control_sf/int8/graph.json",
+  "ir_ops": 7,
+  "ir_op_kinds": {
+   "linear_s8": 4,
+   "elu_s8": 3
+  },
+  "dlc_rc": 0,
+  "dlc_bytes": 703708,
+  "macs": 172547,
+  "dlc_input_names": [
+   "input"
+  ],
+  "dlc_input_dims": [
+   [
+    1,
+    16
+   ]
+  ],
+  "dlc_graph_name": "mlp_control_sf",
+  "calib": {
+   "n": 10,
+   "seed": 0,
+   "dims": [
+    [
+     1,
+     16
+    ]
+   ]
+  },
+  "quant_rc": 0,
+  "qdlc_bytes": 186428,
+  "stage": "composed",
+  "compose_board_s": 1.9,
+  "compose": {
+   "hta": {
+    "status": "fail",
+    "precision": "int8",
+    "ctx": "ctx_s10_mlp_control_sf_int8__Hta.bin",
+    "rc": "rc=14",
+    "compose_ms": 46,
+    "reason": "28.9ms [ ERROR ] unsupported elementwise neuson op 0     28.9ms [ ERROR ] failed to create IHtaOp type name ElementWiseNeuron from package qti.aisw in graph mlp_control_sf      7.9ms [ ERROR ] Exception encountered: Failed to addNode: QNN_GRAPH_ERROR_INVALID_OP_CONFIG: Some elements in the op config data are invalid"
+   },
+   "dsp": {
+    "status": "ok",
+    "precision": "int8",
+    "ctx": "ctx_s10_mlp_control_sf_int8__Dsp.bin",
+    "bytes": 183784,
+    "compose_ms": 1177
+   },
+   "cpu": {
+    "status": "ok",
+    "precision": "fp32",
+    "ctx": "ctx_s10_mlp_control_sf_fp32__Cpu.bin",
+    "bytes": 699056,
+    "compose_ms": 42
+   },
+   "cpu@int8": {
+    "status": "ok",
+    "precision": "int8",
+    "ctx": "ctx_s10_mlp_control_sf_int8__CpuInt8.bin",
+    "bytes": 178936,
+    "compose_ms": 39
+   },
+   "gpu": {
+    "status": "ok",
+    "precision": "fp16",
+    "ctx": "ctx_s10_mlp_control_sf_fp16__Gpu.bin",
+    "bytes": 765480,
+    "compose_ms": 230
+   }
+  },
+  "board_df": "/dev/root        98G   52G   47G  53% /",
+  "compose_stdout_tail": " [ ERROR ] failed to create IHtaOp type name ElementWiseNeuron from package qti.aisw in graph mlp_control_sf      7.9ms [ ERROR ] Exception encountered: Failed to addNode: QNN_GRAPH_ERROR_INVALID_OP_CONFIG: Some elements in the op config data are invalid \nRESULT dsp OK 183784 1177\nRESULT cpu OK 699056 42\nRESULT cpu@int8 OK 178936 39\nRESULT gpu OK 765480 230\n/dev/root        98G   52G   47G  53% /\n",
+  "build_s": 15.7
+ },
+ {
+  "id": "yolov8_nano_sc",
+  "family": "yolov8_nano",
+  "zoo": "/scratch/dima/rose-infra/RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
+  "export_rc": 0,
+  "onnx": "gen/onnx/yolov8_nano_sc.onnx",
+  "onnx_bytes": 12651071,
+  "inputs": {
+   "input": [
+    1,
+    3,
+    128,
+    128
+   ]
+  },
+  "ir_rc": 0,
+  "graph_json": "gen/ir/yolov8_nano_sc/int8/graph.json",
+  "ir_ops": 155,
+  "ir_op_kinds": {
+   "conv2d_s8": 63,
+   "silu_s8": 57,
+   "chunk2_c1": 8,
+   "add_s8": 6,
+   "cat3_c1_s8": 6,
+   "cat4_c1_s8": 3,
+   "maxpool2d_s8": 3,
+   "upsample_nearest_s8": 2,
+   "cat2_c1_s8": 7
+  },
+  "dlc_rc": 0,
+  "dlc_bytes": 12796676,
+  "macs": 176012288,
+  "dlc_input_names": [
+   "input"
+  ],
+  "dlc_input_dims": [
+   [
+    1,
+    128,
+    128,
+    3
+   ]
+  ],
+  "dlc_graph_name": "yolov8_nano_sc",
+  "calib": {
+   "n": 10,
+   "seed": 0,
+   "dims": [
+    [
+     1,
+     128,
+     128,
+     3
+    ]
+   ]
+  },
+  "quant_rc": 0,
+  "qdlc_bytes": 3350604,
+  "stage": "composed",
+  "compose_board_s": 3.4,
+  "compose": {
+   "hta": {
+    "status": "fail",
+    "precision": "int8",
+    "ctx": "ctx_s10_yolov8_nano_sc_int8__Hta.bin",
+    "rc": "rc=14",
+    "compose_ms": 56,
+    "reason": "QnnHta [ ERROR ] QnnHtaunsupported op StridedSlice     13.6ms [ ERROR ] Exception encountered: Validate OpConfig failed: QNN_GRAPH_ERROR_INVALID_OP_CONFIG: Some elements in the op config data are invalid     13.6ms [ ERROR ] Failed to successfully compose graph"
+   },
+   "dsp": {
+    "status": "ok",
+    "precision": "int8",
+    "ctx": "ctx_s10_yolov8_nano_sc_int8__Dsp.bin",
+    "bytes": 3333216,
+    "compose_ms": 1518
+   },
+   "cpu": {
+    "status": "ok",
+    "precision": "fp32",
+    "ctx": "ctx_s10_yolov8_nano_sc_fp32__Cpu.bin",
+    "bytes": 12781872,
+    "compose_ms": 172
+   },
+   "cpu@int8": {
+    "status": "ok",
+    "precision": "int8",
+    "ctx": "ctx_s10_yolov8_nano_sc_int8__CpuInt8.bin",
+    "bytes": 3330576,
+    "compose_ms": 82
+   },
+   "gpu": {
+    "status": "ok",
+    "precision": "fp16",
+    "ctx": "ctx_s10_yolov8_nano_sc_fp16__Gpu.bin",
+    "bytes": 12994504,
+    "compose_ms": 901
+   }
+  },
+  "board_df": "/dev/root        98G   52G   46G  54% /",
+  "compose_stdout_tail": " ] QnnHtaunsupported op StridedSlice     13.6ms [ ERROR ] Exception encountered: Validate OpConfig failed: QNN_GRAPH_ERROR_INVALID_OP_CONFIG: Some elements in the op config data are invalid     13.6ms [ ERROR ] Failed to successfully compose graph \nRESULT dsp OK 3333216 1518\nRESULT cpu OK 12781872 172\nRESULT cpu@int8 OK 3330576 82\nRESULT gpu OK 12994504 901\n/dev/root        98G   52G   46G  54% /\n",
+  "build_s": 583.8
+ },
+ {
+  "id": "yolov8_nano_se",
+  "family": "yolov8_nano",
+  "zoo": "/scratch/dima/rose-infra/RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
+  "export_rc": 0,
+  "onnx": "gen/onnx/yolov8_nano_se.onnx",
+  "onnx_bytes": 12651071,
+  "inputs": {
+   "input": [
+    1,
+    3,
+    192,
+    192
+   ]
+  },
+  "ir_rc": 0,
+  "graph_json": "gen/ir/yolov8_nano_se/int8/graph.json",
+  "ir_ops": 155,
+  "ir_op_kinds": {
+   "conv2d_s8": 63,
+   "silu_s8": 57,
+   "chunk2_c1": 8,
+   "add_s8": 6,
+   "cat3_c1_s8": 6,
+   "cat4_c1_s8": 3,
+   "maxpool2d_s8": 3,
+   "upsample_nearest_s8": 2,
+   "cat2_c1_s8": 7
+  },
+  "dlc_rc": 0,
+  "dlc_bytes": 12796676,
+  "macs": 396027648,
+  "dlc_input_names": [
+   "input"
+  ],
+  "dlc_input_dims": [
+   [
+    1,
+    192,
+    192,
+    3
+   ]
+  ],
+  "dlc_graph_name": "yolov8_nano_se",
+  "calib": {
+   "n": 10,
+   "seed": 0,
+   "dims": [
+    [
+     1,
+     192,
+     192,
+     3
+    ]
+   ]
+  },
+  "quant_rc": 0,
+  "qdlc_bytes": 3350604,
+  "stage": "composed",
+  "compose_board_s": 4.0,
+  "compose": {
+   "hta": {
+    "status": "fail",
+    "precision": "int8",
+    "ctx": "ctx_s10_yolov8_nano_se_int8__Hta.bin",
+    "rc": "rc=14",
+    "compose_ms": 78,
+    "reason": "QnnHta [ ERROR ] QnnHtaunsupported op StridedSlice     11.5ms [ ERROR ] Exception encountered: Validate OpConfig failed: QNN_GRAPH_ERROR_INVALID_OP_CONFIG: Some elements in the op config data are invalid     11.5ms [ ERROR ] Failed to successfully compose graph"
+   },
+   "dsp": {
+    "status": "ok",
+    "precision": "int8",
+    "ctx": "ctx_s10_yolov8_nano_se_int8__Dsp.bin",
+    "bytes": 3333216,
+    "compose_ms": 2237
+   },
+   "cpu": {
+    "status": "ok",
+    "precision": "fp32",
+    "ctx": "ctx_s10_yolov8_nano_se_fp32__Cpu.bin",
+    "bytes": 12781872,
+    "compose_ms": 152
+   },
+   "cpu@int8": {
+    "status": "ok",
+    "precision": "int8",
+    "ctx": "ctx_s10_yolov8_nano_se_int8__CpuInt8.bin",
+    "bytes": 3330576,
+    "compose_ms": 82
+   },
+   "gpu": {
+    "status": "ok",
+    "precision": "fp16",
+    "ctx": "ctx_s10_yolov8_nano_se_fp16__Gpu.bin",
+    "bytes": 12995560,
+    "compose_ms": 891
+   }
+  },
+  "board_df": "/dev/root        98G   54G   45G  55% /",
+  "compose_stdout_tail": " ] QnnHtaunsupported op StridedSlice     11.5ms [ ERROR ] Exception encountered: Validate OpConfig failed: QNN_GRAPH_ERROR_INVALID_OP_CONFIG: Some elements in the op config data are invalid     11.5ms [ ERROR ] Failed to successfully compose graph \nRESULT dsp OK 3333216 2237\nRESULT cpu OK 12781872 152\nRESULT cpu@int8 OK 3330576 82\nRESULT gpu OK 12995560 891\n/dev/root        98G   54G   45G  55% /\n",
+  "build_s": 1021.5
+ },
+ {
+  "id": "yolov8_nano_sf",
+  "family": "yolov8_nano",
+  "zoo": "/scratch/dima/rose-infra/RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
+  "export_rc": 0,
+  "onnx": "gen/onnx/yolov8_nano_sf.onnx",
+  "onnx_bytes": 12651071,
+  "inputs": {
+   "input": [
+    1,
+    3,
+    224,
+    224
+   ]
+  },
+  "ir_rc": 0,
+  "graph_json": "gen/ir/yolov8_nano_sf/int8/graph.json",
+  "ir_ops": 155,
+  "ir_op_kinds": {
+   "conv2d_s8": 63,
+   "silu_s8": 57,
+   "chunk2_c1": 8,
+   "add_s8": 6,
+   "cat3_c1_s8": 6,
+   "cat4_c1_s8": 3,
+   "maxpool2d_s8": 3,
+   "upsample_nearest_s8": 2,
+   "cat2_c1_s8": 7
+  },
+  "dlc_rc": 0,
+  "dlc_bytes": 12796676,
+  "macs": 539037632,
+  "dlc_input_names": [
+   "input"
+  ],
+  "dlc_input_dims": [
+   [
+    1,
+    224,
+    224,
+    3
+   ]
+  ],
+  "dlc_graph_name": "yolov8_nano_sf",
+  "calib": {
+   "n": 10,
+   "seed": 0,
+   "dims": [
+    [
+     1,
+     224,
+     224,
+     3
+    ]
+   ]
+  },
+  "quant_rc": 0,
+  "qdlc_bytes": 3350596,
+  "stage": "composed",
+  "compose_board_s": 3.2,
+  "compose": {
+   "hta": {
+    "status": "fail",
+    "precision": "int8",
+    "ctx": "ctx_s10_yolov8_nano_sf_int8__Hta.bin",
+    "rc": "rc=14",
+    "compose_ms": 51,
+    "reason": "QnnHta [ ERROR ] QnnHtaunsupported op StridedSlice     10.7ms [ ERROR ] Exception encountered: Validate OpConfig failed: QNN_GRAPH_ERROR_INVALID_OP_CONFIG: Some elements in the op config data are invalid     10.7ms [ ERROR ] Failed to successfully compose graph"
+   },
+   "dsp": {
+    "status": "ok",
+    "precision": "int8",
+    "ctx": "ctx_s10_yolov8_nano_sf_int8__Dsp.bin",
+    "bytes": 3333216,
+    "compose_ms": 1533
+   },
+   "cpu": {
+    "status": "ok",
+    "precision": "fp32",
+    "ctx": "ctx_s10_yolov8_nano_sf_fp32__Cpu.bin",
+    "bytes": 12781872,
+    "compose_ms": 150
+   },
+   "cpu@int8": {
+    "status": "ok",
+    "precision": "int8",
+    "ctx": "ctx_s10_yolov8_nano_sf_int8__CpuInt8.bin",
+    "bytes": 3330576,
+    "compose_ms": 76
+   },
+   "gpu": {
+    "status": "ok",
+    "precision": "fp16",
+    "ctx": "ctx_s10_yolov8_nano_sf_fp16__Gpu.bin",
+    "bytes": 12995488,
+    "compose_ms": 931
+   }
+  },
+  "board_df": "/dev/root        98G   54G   45G  55% /",
+  "compose_stdout_tail": " ] QnnHtaunsupported op StridedSlice     10.7ms [ ERROR ] Exception encountered: Validate OpConfig failed: QNN_GRAPH_ERROR_INVALID_OP_CONFIG: Some elements in the op config data are invalid     10.7ms [ ERROR ] Failed to successfully compose graph \nRESULT dsp OK 3333216 1533\nRESULT cpu OK 12781872 150\nRESULT cpu@int8 OK 3330576 76\nRESULT gpu OK 12995488 931\n/dev/root        98G   54G   45G  55% /\n",
+  "build_s": 1094.0
+ },
+ {
+  "id": "yolov8_nano_sh",
+  "family": "yolov8_nano",
+  "zoo": "/scratch/dima/rose-infra/RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
+  "export_rc": 0,
+  "onnx": "gen/onnx/yolov8_nano_sh.onnx",
+  "onnx_bytes": 12651071,
+  "inputs": {
+   "input": [
+    1,
+    3,
+    320,
+    320
+   ]
+  },
+  "ir_rc": 0,
+  "graph_json": "gen/ir/yolov8_nano_sh/int8/graph.json",
+  "ir_ops": 155,
+  "ir_op_kinds": {
+   "conv2d_s8": 63,
+   "silu_s8": 57,
+   "chunk2_c1": 8,
+   "add_s8": 6,
+   "cat3_c1_s8": 6,
+   "cat4_c1_s8": 3,
+   "maxpool2d_s8": 3,
+   "upsample_nearest_s8": 2,
+   "cat2_c1_s8": 7
+  },
+  "dlc_rc": 0,
+  "dlc_bytes": 12796676,
+  "macs": 1100076800,
+  "dlc_input_names": [
+   "input"
+  ],
+  "dlc_input_dims": [
+   [
+    1,
+    320,
+    320,
+    3
+   ]
+  ],
+  "dlc_graph_name": "yolov8_nano_sh",
+  "calib": {
+   "n": 10,
+   "seed": 0,
+   "dims": [
+    [
+     1,
+     320,
+     320,
+     3
+    ]
+   ]
+  },
+  "quant_rc": 0,
+  "qdlc_bytes": 3350596,
+  "stage": "composed",
+  "compose_board_s": 3.9,
+  "compose": {
+   "hta": {
+    "status": "fail",
+    "precision": "int8",
+    "ctx": "ctx_s10_yolov8_nano_sh_int8__Hta.bin",
+    "rc": "rc=14",
+    "compose_ms": 47,
+    "reason": "QnnHta [ ERROR ] QnnHtaunsupported op StridedSlice     10.7ms [ ERROR ] Exception encountered: Validate OpConfig failed: QNN_GRAPH_ERROR_INVALID_OP_CONFIG: Some elements in the op config data are invalid     10.7ms [ ERROR ] Failed to successfully compose graph"
+   },
+   "dsp": {
+    "status": "ok",
+    "precision": "int8",
+    "ctx": "ctx_s10_yolov8_nano_sh_int8__Dsp.bin",
+    "bytes": 3333216,
+    "compose_ms": 2236
+   },
+   "cpu": {
+    "status": "ok",
+    "precision": "fp32",
+    "ctx": "ctx_s10_yolov8_nano_sh_fp32__Cpu.bin",
+    "bytes": 12781872,
+    "compose_ms": 166
+   },
+   "cpu@int8": {
+    "status": "ok",
+    "precision": "int8",
+    "ctx": "ctx_s10_yolov8_nano_sh_int8__CpuInt8.bin",
+    "bytes": 3330576,
+    "compose_ms": 80
+   },
+   "gpu": {
+    "status": "ok",
+    "precision": "fp16",
+    "ctx": "ctx_s10_yolov8_nano_sh_fp16__Gpu.bin",
+    "bytes": 12995576,
+    "compose_ms": 903
+   }
+  },
+  "board_df": "/dev/root        98G   54G   45G  55% /",
+  "compose_stdout_tail": " ] QnnHtaunsupported op StridedSlice     10.7ms [ ERROR ] Exception encountered: Validate OpConfig failed: QNN_GRAPH_ERROR_INVALID_OP_CONFIG: Some elements in the op config data are invalid     10.7ms [ ERROR ] Failed to successfully compose graph \nRESULT dsp OK 3333216 2236\nRESULT cpu OK 12781872 166\nRESULT cpu@int8 OK 3330576 80\nRESULT gpu OK 12995576 903\n/dev/root        98G   54G   45G  55% /\n",
+  "build_s": 1998.5
+ },
+ {
+  "id": "fastdepth",
+  "family": "fastdepth",
+  "zoo": "/scratch/dima/rose-infra/RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
+  "export_rc": 0,
+  "onnx": "gen/onnx/fastdepth.onnx",
+  "onnx_bytes": 1443241,
+  "inputs": {
+   "input": [
+    1,
+    3,
+    128,
+    128
+   ]
+  },
+  "ir_rc": 0,
+  "graph_json": "gen/ir/fastdepth/int8/graph.json",
+  "ir_ops": 114,
+  "ir_op_kinds": {
+   "conv2d_s8": 41,
+   "relu6_s8": 35,
+   "depthwise_conv2d_s8": 22,
+   "add_s8": 11,
+   "upsample_nearest_s8": 5
+  },
+  "dlc_rc": 0,
+  "dlc_bytes": 1542940,
+  "macs": 18923520,
+  "dlc_input_names": [
+   "input"
+  ],
+  "dlc_input_dims": [
+   [
+    1,
+    128,
+    128,
+    3
+   ]
+  ],
+  "dlc_graph_name": "fastdepth",
+  "calib": {
+   "n": 10,
+   "seed": 0,
+   "dims": [
+    [
+     1,
+     128,
+     128,
+     3
+    ]
+   ]
+  },
+  "quant_rc": 0,
+  "qdlc_bytes": 501388,
+  "stage": "composed",
+  "compose_board_s": 2.6,
+  "compose": {
+   "hta": {
+    "status": "ok",
+    "precision": "int8",
+    "ctx": "ctx_s10_fastdepth_int8__Hta.bin",
+    "bytes": 623952,
+    "compose_ms": 132
+   },
+   "dsp": {
+    "status": "ok",
+    "precision": "int8",
+    "ctx": "ctx_s10_fastdepth_int8__Dsp.bin",
+    "bytes": 450856,
+    "compose_ms": 1333
+   },
+   "cpu": {
+    "status": "ok",
+    "precision": "fp32",
+    "ctx": "ctx_s10_fastdepth_fp32__Cpu.bin",
+    "bytes": 1524840,
+    "compose_ms": 88
+   },
+   "cpu@int8": {
+    "status": "ok",
+    "precision": "int8",
+    "ctx": "ctx_s10_fastdepth_int8__CpuInt8.bin",
+    "bytes": 464736,
+    "compose_ms": 44
+   },
+   "gpu": {
+    "status": "ok",
+    "precision": "fp16",
+    "ctx": "ctx_s10_fastdepth_fp16__Gpu.bin",
+    "bytes": 2272112,
+    "compose_ms": 591
+   }
+  },
+  "board_df": "/dev/root        98G   54G   45G  55% /",
+  "compose_stdout_tail": "RESULT hta OK 623952 132\nRESULT dsp OK 450856 1333\nRESULT cpu OK 1524840 88\nRESULT cpu@int8 OK 464736 44\nRESULT gpu OK 2272112 591\n/dev/root        98G   54G   45G  55% /\n",
+  "build_s": 66.9
+ }
+]

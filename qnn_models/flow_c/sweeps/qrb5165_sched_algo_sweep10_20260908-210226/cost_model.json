@@ -1,0 +1,1595 @@
+{
+ "_comment": "FROZEN cost model for the sched_algo_sweep10 QRB5165 port. Cells for the 16 rebuilt networks are the MEDIAN over independent passes of the gap-phase median (profile_segments.cpp, idle gap before each execute, which is how the scheduled runtime invokes a tile); vint's two tiles are copied verbatim from the shipped model and carry their own provenance. Every predicted number in this sweep is solved against THIS file and not against measurements/qrb5165_v66.json, which keeps being rebuilt.",
+ "target": "qrb5165_v66",
+ "captured_at": "2026-09-08",
+ "unit": "us",
+ "statistic": "gap_median+in_situ_p50_pooled",
+ "harness": "qnn_models/runtime/profile_segments.cpp",
+ "iters": 40,
+ "gap_us": 3000,
+ "conditions": {
+  "governor": "performance on all 8 cores (forced by this script; restored to 'performance' after)",
+  "cpu_affinity": "UNMASKED \u2014 the lane exec mask binds only the lane thread, not QnnCpu's own pool"
+ },
+ "git_rev": "dbf78500fd8d41a809686ed813c5a4675a0a3bb0",
+ "inputs": {
+  "raw_measurements": "measurements/qrb5165_v66_s10port_raw.json",
+  "raw_measurements_sha256": "7c90de3aa3ab0c10943f4670d53025f69da69de56beb08de5863b79097febb50",
+  "shipped_model": "measurements/qrb5165_v66.json",
+  "shipped_model_sha256": "2c4214408db7f32d05bd522b89f08898723e653c1d7cf51110bbd567a64798f9"
+ },
+ "cells": {
+  "dronet_sa/dronet_sa_full": {
+   "cpu": 860.1,
+   "cpu@int8": 5024.0,
+   "dsp": 702.1,
+   "gpu": 1444.8
+  },
+  "dronet_sb/dronet_sb_full": {
+   "cpu": 1364.0,
+   "cpu@int8": 7231.4,
+   "dsp": 672.9,
+   "gpu": 1481.1
+  },
+  "dronet_sc/dronet_sc_full": {
+   "cpu": 1256.6,
+   "cpu@int8": 7332.4,
+   "dsp": 691.0,
+   "gpu": 1522.3
+  },
+  "dronet_sd/dronet_sd_full": {
+   "cpu": 1474.2,
+   "cpu@int8": 9850.9,
+   "dsp": 672.4,
+   "gpu": 1530.3
+  },
+  "dronet_se/dronet_se_full": {
+   "cpu": 1871.0,
+   "cpu@int8": 9743.0,
+   "dsp": 838.4,
+   "gpu": 1658.8
+  },
+  "dronet_sf/dronet_sf_full": {
+   "cpu": 2144.3,
+   "cpu@int8": 10299.8,
+   "dsp": 881.1,
+   "gpu": 1693.6
+  },
+  "dronet_sg/dronet_sg_full": {
+   "cpu": 2604.9,
+   "cpu@int8": 10693.2,
+   "dsp": 1077.4,
+   "gpu": 1876.9
+  },
+  "fastdepth/fastdepth_full": {
+   "cpu": 6469.2,
+   "cpu@int8": 3643.1,
+   "dsp": 2821.8,
+   "gpu": 3624.1,
+   "hta": 3745.6
+  },
+  "mlp_control_sa/mlp_control_sa_full": {
+   "cpu": 59.8,
+   "cpu@int8": 61.7,
+   "dsp": 522.4,
+   "gpu": 451.3
+  },
+  "mlp_control_sb/mlp_control_sb_full": {
+   "cpu": 65.7,
+   "cpu@int8": 66.2,
+   "dsp": 516.0,
+   "gpu": 439.4
+  },
+  "mlp_control_sd/mlp_control_sd_full": {
+   "cpu": 115.1,
+   "cpu@int8": 110.2,
+   "dsp": 523.6,
+   "gpu": 445.0
+  },
+  "mlp_control_sf/mlp_control_sf_full": {
+   "cpu": 176.1,
+   "cpu@int8": 178.6,
+   "dsp": 527.1,
+   "gpu": 446.5
+  },
+  "yolov8_nano_sc/yolov8_nano_sc_full": {
+   "cpu": 17772.5,
+   "cpu@int8": 3887.2,
+   "dsp": 4065.4,
+   "gpu": 14936.0
+  },
+  "yolov8_nano_se/yolov8_nano_se_full": {
+   "cpu": 28869.9,
+   "cpu@int8": 6805.1,
+   "dsp": 7428.6,
+   "gpu": 20072.3
+  },
+  "yolov8_nano_sf/yolov8_nano_sf_full": {
+   "cpu": 32449.0,
+   "cpu@int8": 8665.5,
+   "dsp": 8620.8,
+   "gpu": 26067.3
+  },
+  "yolov8_nano_sh/yolov8_nano_sh_full": {
+   "cpu": 60294.9,
+   "cpu@int8": 16627.4,
+   "dsp": 11466.7,
+   "gpu": 41916.9
+  },
+  "vint/vint_decoder": {
+   "cpu": 37826.0,
+   "gpu": 16425.0
+  },
+  "vint/vint_encoders": {
+   "dsp": 14213.0,
+   "cpu": 84163.0,
+   "gpu": 55854.0
+  }
+ },
+ "cell_provenance": {
+  "dronet_sa/dronet_sa_full@cpu": {
+   "statistic": "gap_median",
+   "iters": 40,
+   "gap_us": 3000,
+   "passes": 5,
+   "declared": true,
+   "precision": "fp32",
+   "gap_median_us_per_pass": [
+    860.1,
+    961.0,
+    835.8,
+    797.6,
+    869.9
+   ],
+   "pass_spread_us": 163.3,
+   "pass_spread_pct": 18.99,
+   "loop_median_us": 428.3,
+   "gap_over_loop": 2.008,
+   "p99_us": 1476.8
+  },
+  "dronet_sa/dronet_sa_full@cpu@int8": {
+   "statistic": "gap_median",
+   "iters": 40,
+   "gap_us": 3000,
+   "passes": 5,
+   "declared": false,
+   "precision": "int8",
+   "gap_median_us_per_pass": [
+    4991.2,
+    5686.8,
+    4927.5,
+    5232.0,
+    5024.0
+   ],
+   "pass_spread_us": 759.3,
+   "pass_spread_pct": 15.11,
+   "loop_median_us": 5876.0,
+   "gap_over_loop": 0.855,
+   "p99_us": 6844.1
+  },
+  "dronet_sa/dronet_sa_full@dsp": {
+   "statistic": "gap_median",
+   "iters": 40,
+   "gap_us": 3000,
+   "passes": 5,
+   "declared": true,
+   "precision": "int8",
+   "gap_median_us_per_pass": [
+    535.4,
+    899.9,
+    803.5,
+    535.2,
+    702.1
+   ],
+   "pass_spread_us": 364.7,
+   "pass_spread_pct": 51.94,
+   "loop_median_us": 515.1,
+   "gap_over_loop": 1.363,
+   "p99_us": 2988.1
+  },
+  "dronet_sa/dronet_sa_full@gpu": {
+   "statistic": "gap_median",
+   "iters": 40,
+   "gap_us": 3000,
+   "passes": 5,
+   "declared": true,
+   "precision": "fp16",
+   "gap_median_us_per_pass": [
+    1398.6,
+    1444.8,
+    1409.2,
+    1476.2,
+    1542.1
+   ],
+   "pass_spread_us": 143.4,
+   "pass_spread_pct": 9.93,
+   "loop_median_us": 1358.0,
+   "gap_over_loop": 1.064,
+   "p99_us": 1782.5
+  },
+  "dronet_sb/dronet_sb_full@cpu": {
+   "statistic": "gap_median",
+   "iters": 40,
+   "gap_us": 3000,
+   "passes": 5,
+   "declared": true,
+   "precision": "fp32",
+   "gap_median_us_per_pass": [
+    1518.6,
+    1188.6,
+    1299.2,
+    1364.0,
+    1955.4
+   ],
+   "pass_spread_us": 766.8,
+   "pass_spread_pct": 56.22,
+   "loop_median_us": 893.7,
+   "gap_over_loop": 1.526,
+   "p99_us": 4081.1
+  },
+  "dronet_sb/dronet_sb_full@cpu@int8": {
+   "statistic": "gap_median",
+   "iters": 40,
+   "gap_us": 3000,
+   "passes": 5,
+   "declared": false,
+   "precision": "int8",
+   "gap_median_us_per_pass": [
+    7231.4,
+    7123.5,
+    7944.8,
+    7161.2,
+    7425.5
+   ],
+   "pass_spread_us": 821.4,
+   "pass_spread_pct": 11.36,
+   "loop_median_us": 8564.4,
+   "gap_over_loop": 0.844,
+   "p99_us": 10628.6
+  },
+  "dronet_sb/dronet_sb_full@dsp": {
+   "statistic": "gap_median",
+   "iters": 40,
+   "gap_us": 3000,
+   "passes": 5,
+   "declared": true,
+   "precision": "int8",
+   "gap_median_us_per_pass": [
+    672.9,
+    908.1,
+    665.5,
+    588.0,
+    675.0
+   ],
+   "pass_spread_us": 320.2,
+   "pass_spread_pct": 47.59,
+   "loop_median_us": 524.6,
+   "gap_over_loop": 1.283,
+   "p99_us": 2998.5
+  },
+  "dronet_sb/dronet_sb_full@gpu": {
+   "statistic": "gap_median",
+   "iters": 40,
+   "gap_us": 3000,
+   "passes": 5,
+   "declared": true,
+   "precision": "fp16",
+   "gap_median_us_per_pass": [
+    1481.1,
+    1466.0,
+    1435.8,
+    1482.8,
+    1505.3
+   ],
+   "pass_spread_us": 69.6,
+   "pass_spread_pct": 4.7,
+   "loop_median_us": 1395.7,
+   "gap_over_loop": 1.061,
+   "p99_us": 1701.9
+  },
+  "dronet_sc/dronet_sc_full@cpu": {
+   "statistic": "gap_median",
+   "iters": 40,
+   "gap_us": 3000,
+   "passes": 5,
+   "declared": true,
+   "precision": "fp32",
+   "gap_median_us_per_pass": [
+    1233.4,
+    1671.9,
+    1199.2,
+    1256.6,
+    1290.3
+   ],
+   "pass_spread_us": 472.8,
+   "pass_spread_pct": 37.63,
+   "loop_median_us": 786.7,
+   "gap_over_loop": 1.597,
+   "p99_us": 3488.9
+  },
+  "dronet_sc/dronet_sc_full@cpu@int8": {
+   "statistic": "gap_median",
+   "iters": 40,
+   "gap_us": 3000,
+   "passes": 5,
+   "declared": false,
+   "precision": "int8",
+   "gap_median_us_per_pass": [
+    7802.8,
+    7332.4,
+    7666.0,
+    7276.2,
+    7253.8
+   ],
+   "pass_spread_us": 549.0,
+   "pass_spread_pct": 7.49,
+   "loop_median_us": 8373.8,
+   "gap_over_loop": 0.876,
+   "p99_us": 10383.0
+  },
+  "dronet_sc/dronet_sc_full@dsp": {
+   "statistic": "gap_median",
+   "iters": 40,
+   "gap_us": 3000,
+   "passes": 5,
+   "declared": true,
+   "precision": "int8",
+   "gap_median_us_per_pass": [
+    2666.4,
+    645.5,
+    829.8,
+    691.0,
+    585.1
+   ],
+   "pass_spread_us": 2081.3,
+   "pass_spread_pct": 301.2,
+   "loop_median_us": 539.6,
+   "gap_over_loop": 1.28,
+   "p99_us": 2964.5
+  },
+  "dronet_sc/dronet_sc_full@gpu": {
+   "statistic": "gap_median",
+   "iters": 40,
+   "gap_us": 3000,
+   "passes": 5,
+   "declared": true,
+   "precision": "fp16",
+   "gap_median_us_per_pass": [
+    1529.2,
+    1485.1,
+    1472.4,
+    1522.3,
+    1549.1
+   ],
+   "pass_spread_us": 76.6,
+   "pass_spread_pct": 5.03,
+   "loop_median_us": 1306.9,
+   "gap_over_loop": 1.165,
+   "p99_us": 1805.4
+  },
+  "dronet_sd/dronet_sd_full@cpu": {
+   "statistic": "gap_median",
+   "iters": 40,
+   "gap_us": 3000,
+   "passes": 5,
+   "declared": true,
+   "precision": "fp32",
+   "gap_median_us_per_pass": [
+    1444.8,
+    1474.2,
+    1428.8,
+    1483.3,
+    2022.7
+   ],
+   "pass_spread_us": 593.9,
+   "pass_spread_pct": 40.29,
+   "loop_median_us": 1113.1,
+   "gap_over_loop": 1.324,
+   "p99_us": 2388.2
+  },
+  "dronet_sd/dronet_sd_full@cpu@int8": {
+   "statistic": "gap_median",
+   "iters": 40,
+   "gap_us": 3000,
+   "passes": 5,
+   "declared": false,
+   "precision": "int8",
+   "gap_median_us_per_pass": [
+    9909.9,
+    9529.9,
+    9312.6,
+    10143.8,
+    9850.9
+   ],
+   "pass_spread_us": 831.2,
+   "pass_spread_pct": 8.44,
+   "loop_median_us": 9242.2,
+   "gap_over_loop": 1.066,
+   "p99_us": 14097.4
+  },
+  "dronet_sd/dronet_sd_full@dsp": {
+   "statistic": "gap_median",
+   "iters": 40,
+   "gap_us": 3000,
+   "passes": 5,
+   "declared": true,
+   "precision": "int8",
+   "gap_median_us_per_pass": [
+    645.9,
+    645.5,
+    728.7,
+    788.9,
+    672.4
+   ],
+   "pass_spread_us": 143.4,
+   "pass_spread_pct": 21.33,
+   "loop_median_us": 599.9,
+   "gap_over_loop": 1.121,
+   "p99_us": 3008.1
+  },
+  "dronet_sd/dronet_sd_full@gpu": {
+   "statistic": "gap_median",
+   "iters": 40,
+   "gap_us": 3000,
+   "passes": 5,
+   "declared": true,
+   "precision": "fp16",
+   "gap_median_us_per_pass": [
+    1500.8,
+    1546.5,
+    1605.8,
+    1530.3,
+    1517.9
+   ],
+   "pass_spread_us": 105.0,
+   "pass_spread_pct": 6.86,
+   "loop_median_us": 1316.9,
+   "gap_over_loop": 1.162,
+   "p99_us": 1877.7
+  },
+  "dronet_se/dronet_se_full@cpu": {
+   "statistic": "gap_median",
+   "iters": 40,
+   "gap_us": 3000,
+   "passes": 5,
+   "declared": true,
+   "precision": "fp32",
+   "gap_median_us_per_pass": [
+    1871.0,
+    2480.7,
+    1772.9,
+    1831.4,
+    2101.4
+   ],
+   "pass_spread_us": 707.8,
+   "pass_spread_pct": 37.83,
+   "loop_median_us": 1518.0,
+   "gap_over_loop": 1.233,
+   "p99_us": 3898.9
+  },
+  "dronet_se/dronet_se_full@cpu@int8": {
+   "statistic": "gap_median",
+   "iters": 40,
+   "gap_us": 3000,
+   "passes": 5,
+   "declared": false,
+   "precision": "int8",
+   "gap_median_us_per_pass": [
+    9743.0,
+    10124.5,
+    9600.6,
+    9980.5,
+    9563.7
+   ],
+   "pass_spread_us": 560.8,
+   "pass_spread_pct": 5.76,
+   "loop_median_us": 9598.4,
+   "gap_over_loop": 1.015,
+   "p99_us": 14829.1
+  },
+  "dronet_se/dronet_se_full@dsp": {
+   "statistic": "gap_median",
+   "iters": 40,
+   "gap_us": 3000,
+   "passes": 5,
+   "declared": true,
+   "precision": "int8",
+   "gap_median_us_per_pass": [
+    885.4,
+    765.8,
+    825.8,
+    838.4,
+    916.5
+   ],
+   "pass_spread_us": 150.7,
+   "pass_spread_pct": 17.97,
+   "loop_median_us": 723.8,
+   "gap_over_loop": 1.158,
+   "p99_us": 3001.7
+  },
+  "dronet_se/dronet_se_full@gpu": {
+   "statistic": "gap_median",
+   "iters": 40,
+   "gap_us": 3000,
+   "passes": 5,
+   "declared": true,
+   "precision": "fp16",
+   "gap_median_us_per_pass": [
+    1635.3,
+    1683.2,
+    1673.4,
+    1641.5,
+    1658.8
+   ],
+   "pass_spread_us": 47.9,
+   "pass_spread_pct": 2.89,
+   "loop_median_us": 1541.1,
+   "gap_over_loop": 1.076,
+   "p99_us": 1938.4
+  },
+  "dronet_sf/dronet_sf_full@cpu": {
+   "statistic": "gap_median",
+   "iters": 40,
+   "gap_us": 3000,
+   "passes": 5,
+   "declared": true,
+   "precision": "fp32",
+   "gap_median_us_per_pass": [
+    2144.3,
+    2644.7,
+    1894.3,
+    2506.3,
+    2032.9
+   ],
+   "pass_spread_us": 750.4,
+   "pass_spread_pct": 35.0,
+   "loop_median_us": 2046.0,
+   "gap_over_loop": 1.048,
+   "p99_us": 5080.6
+  },
+  "dronet_sf/dronet_sf_full@cpu@int8": {
+   "statistic": "gap_median",
+   "iters": 40,
+   "gap_us": 3000,
+   "passes": 5,
+   "declared": false,
+   "precision": "int8",
+   "gap_median_us_per_pass": [
+    10936.4,
+    9789.3,
+    10299.8,
+    10417.1,
+    9762.0
+   ],
+   "pass_spread_us": 1174.3,
+   "pass_spread_pct": 11.4,
+   "loop_median_us": 9457.9,
+   "gap_over_loop": 1.089,
+   "p99_us": 13457.5
+  },
+  "dronet_sf/dronet_sf_full@dsp": {
+   "statistic": "gap_median",
+   "iters": 40,
+   "gap_us": 3000,
+   "passes": 5,
+   "declared": true,
+   "precision": "int8",
+   "gap_median_us_per_pass": [
+    881.1,
+    790.9,
+    2766.6,
+    865.4,
+    899.3
+   ],
+   "pass_spread_us": 1975.7,
+   "pass_spread_pct": 224.23,
+   "loop_median_us": 743.0,
+   "gap_over_loop": 1.186,
+   "p99_us": 3107.9
+  },
+  "dronet_sf/dronet_sf_full@gpu": {
+   "statistic": "gap_median",
+   "iters": 40,
+   "gap_us": 3000,
+   "passes": 5,
+   "declared": true,
+   "precision": "fp16",
+   "gap_median_us_per_pass": [
+    1663.5,
+    1735.1,
+    1683.0,
+    1693.6,
+    1752.5
+   ],
+   "pass_spread_us": 89.0,
+   "pass_spread_pct": 5.26,
+   "loop_median_us": 1561.8,
+   "gap_over_loop": 1.084,
+   "p99_us": 1944.1
+  },
+  "dronet_sg/dronet_sg_full@cpu": {
+   "statistic": "gap_median",
+   "iters": 40,
+   "gap_us": 3000,
+   "passes": 5,
+   "declared": true,
+   "precision": "fp32",
+   "gap_median_us_per_pass": [
+    3025.4,
+    2604.9,
+    2321.3,
+    2553.3,
+    2977.6
+   ],
+   "pass_spread_us": 704.1,
+   "pass_spread_pct": 27.03,
+   "loop_median_us": 2046.6,
+   "gap_over_loop": 1.273,
+   "p99_us": 6611.8
+  },
+  "dronet_sg/dronet_sg_full@cpu@int8": {
+   "statistic": "gap_median",
+   "iters": 40,
+   "gap_us": 3000,
+   "passes": 5,
+   "declared": false,
+   "precision": "int8",
+   "gap_median_us_per_pass": [
+    10849.1,
+    10117.0,
+    9947.5,
+    10693.2,
+    10747.5
+   ],
+   "pass_spread_us": 901.6,
+   "pass_spread_pct": 8.43,
+   "loop_median_us": 9204.4,
+   "gap_over_loop": 1.162,
+   "p99_us": 13832.8
+  },
+  "dronet_sg/dronet_sg_full@dsp": {
+   "statistic": "gap_median",
+   "iters": 40,
+   "gap_us": 3000,
+   "passes": 5,
+   "declared": true,
+   "precision": "int8",
+   "gap_median_us_per_pass": [
+    948.0,
+    1077.4,
+    2798.5,
+    2824.1,
+    948.9
+   ],
+   "pass_spread_us": 1876.1,
+   "pass_spread_pct": 174.13,
+   "loop_median_us": 910.5,
+   "gap_over_loop": 1.183,
+   "p99_us": 2974.9
+  },
+  "dronet_sg/dronet_sg_full@gpu": {
+   "statistic": "gap_median",
+   "iters": 40,
+   "gap_us": 3000,
+   "passes": 5,
+   "declared": true,
+   "precision": "fp16",
+   "gap_median_us_per_pass": [
+    1907.5,
+    1875.8,
+    1832.0,
+    1938.0,
+    1876.9
+   ],
+   "pass_spread_us": 106.0,
+   "pass_spread_pct": 5.65,
+   "loop_median_us": 1895.1,
+   "gap_over_loop": 0.99,
+   "p99_us": 2154.8
+  },
+  "fastdepth/fastdepth_full@cpu": {
+   "statistic": "gap_median",
+   "iters": 40,
+   "gap_us": 3000,
+   "passes": 5,
+   "declared": true,
+   "precision": "fp32",
+   "gap_median_us_per_pass": [
+    6466.1,
+    6846.4,
+    6469.2,
+    6448.3,
+    7392.2
+   ],
+   "pass_spread_us": 944.0,
+   "pass_spread_pct": 14.59,
+   "loop_median_us": 8599.8,
+   "gap_over_loop": 0.752,
+   "p99_us": 10723.9
+  },
+  "fastdepth/fastdepth_full@cpu@int8": {
+   "statistic": "gap_median",
+   "iters": 40,
+   "gap_us": 3000,
+   "passes": 5,
+   "declared": false,
+   "precision": "int8",
+   "gap_median_us_per_pass": [
+    3639.3,
+    3643.1,
+    3645.1,
+    3642.5,
+    3651.2
+   ],
+   "pass_spread_us": 11.8,
+   "pass_spread_pct": 0.32,
+   "loop_median_us": 3190.5,
+   "gap_over_loop": 1.142,
+   "p99_us": 4113.0
+  },
+  "fastdepth/fastdepth_full@dsp": {
+   "statistic": "gap_median",
+   "iters": 40,
+   "gap_us": 3000,
+   "passes": 5,
+   "declared": true,
+   "precision": "int8",
+   "gap_median_us_per_pass": [
+    2821.8,
+    4588.8,
+    2941.1,
+    2751.7,
+    2626.2
+   ],
+   "pass_spread_us": 1962.6,
+   "pass_spread_pct": 69.55,
+   "loop_median_us": 2807.1,
+   "gap_over_loop": 1.005,
+   "p99_us": 4849.1
+  },
+  "fastdepth/fastdepth_full@gpu": {
+   "statistic": "gap_median",
+   "iters": 40,
+   "gap_us": 3000,
+   "passes": 5,
+   "declared": true,
+   "precision": "fp16",
+   "gap_median_us_per_pass": [
+    3646.1,
+    3600.3,
+    3624.1,
+    3579.2,
+    3628.9
+   ],
+   "pass_spread_us": 66.9,
+   "pass_spread_pct": 1.85,
+   "loop_median_us": 3621.3,
+   "gap_over_loop": 1.001,
+   "p99_us": 4024.4
+  },
+  "fastdepth/fastdepth_full@hta": {
+   "statistic": "gap_median",
+   "iters": 40,
+   "gap_us": 3000,
+   "passes": 5,
+   "declared": true,
+   "precision": "int8",
+   "gap_median_us_per_pass": [
+    3730.3,
+    3769.9,
+    3745.6,
+    3746.8,
+    3731.1
+   ],
+   "pass_spread_us": 39.6,
+   "pass_spread_pct": 1.06,
+   "loop_median_us": 3664.6,
+   "gap_over_loop": 1.022,
+   "p99_us": 4602.6
+  },
+  "mlp_control_sa/mlp_control_sa_full@cpu": {
+   "statistic": "gap_median",
+   "iters": 40,
+   "gap_us": 3000,
+   "passes": 5,
+   "declared": true,
+   "precision": "fp32",
+   "gap_median_us_per_pass": [
+    60.0,
+    59.8,
+    59.8,
+    64.2,
+    59.2
+   ],
+   "pass_spread_us": 4.9,
+   "pass_spread_pct": 8.19,
+   "loop_median_us": 50.0,
+   "gap_over_loop": 1.195,
+   "p99_us": 75.5
+  },
+  "mlp_control_sa/mlp_control_sa_full@cpu@int8": {
+   "statistic": "gap_median",
+   "iters": 40,
+   "gap_us": 3000,
+   "passes": 5,
+   "declared": false,
+   "precision": "int8",
+   "gap_median_us_per_pass": [
+    62.0,
+    61.7,
+    61.4,
+    61.9,
+    60.7
+   ],
+   "pass_spread_us": 1.2,
+   "pass_spread_pct": 1.94,
+   "loop_median_us": 14.5,
+   "gap_over_loop": 4.244,
+   "p99_us": 108.2
+  },
+  "mlp_control_sa/mlp_control_sa_full@dsp": {
+   "statistic": "gap_median",
+   "iters": 40,
+   "gap_us": 3000,
+   "passes": 5,
+   "declared": true,
+   "precision": "int8",
+   "gap_median_us_per_pass": [
+    428.9,
+    533.1,
+    426.1,
+    767.3,
+    522.4
+   ],
+   "pass_spread_us": 341.2,
+   "pass_spread_pct": 65.31,
+   "loop_median_us": 407.3,
+   "gap_over_loop": 1.283,
+   "p99_us": 807.7
+  },
+  "mlp_control_sa/mlp_control_sa_full@gpu": {
+   "statistic": "gap_median",
+   "iters": 40,
+   "gap_us": 3000,
+   "passes": 5,
+   "declared": true,
+   "precision": "fp16",
+   "gap_median_us_per_pass": [
+    451.3,
+    490.2,
+    440.8,
+    435.2,
+    453.7
+   ],
+   "pass_spread_us": 55.0,
+   "pass_spread_pct": 12.19,
+   "loop_median_us": 180.0,
+   "gap_over_loop": 2.507,
+   "p99_us": 2391.4
+  },
+  "mlp_control_sb/mlp_control_sb_full@cpu": {
+   "statistic": "gap_median",
+   "iters": 40,
+   "gap_us": 3000,
+   "passes": 5,
+   "declared": true,
+   "precision": "fp32",
+   "gap_median_us_per_pass": [
+    65.7,
+    66.3,
+    65.9,
+    65.0,
+    65.5
+   ],
+   "pass_spread_us": 1.3,
+   "pass_spread_pct": 1.98,
+   "loop_median_us": 55.9,
+   "gap_over_loop": 1.175,
+   "p99_us": 93.1
+  },
+  "mlp_control_sb/mlp_control_sb_full@cpu@int8": {
+   "statistic": "gap_median",
+   "iters": 40,
+   "gap_us": 3000,
+   "passes": 5,
+   "declared": false,
+   "precision": "int8",
+   "gap_median_us_per_pass": [
+    66.1,
+    66.2,
+    67.0,
+    66.2,
+    65.7
+   ],
+   "pass_spread_us": 1.3,
+   "pass_spread_pct": 1.96,
+   "loop_median_us": 15.4,
+   "gap_over_loop": 4.292,
+   "p99_us": 90.6
+  },
+  "mlp_control_sb/mlp_control_sb_full@dsp": {
+   "statistic": "gap_median",
+   "iters": 40,
+   "gap_us": 3000,
+   "passes": 5,
+   "declared": true,
+   "precision": "int8",
+   "gap_median_us_per_pass": [
+    516.0,
+    523.1,
+    431.3,
+    565.9,
+    426.9
+   ],
+   "pass_spread_us": 139.1,
+   "pass_spread_pct": 26.96,
+   "loop_median_us": 402.9,
+   "gap_over_loop": 1.281,
+   "p99_us": 812.9
+  },
+  "mlp_control_sb/mlp_control_sb_full@gpu": {
+   "statistic": "gap_median",
+   "iters": 40,
+   "gap_us": 3000,
+   "passes": 5,
+   "declared": true,
+   "precision": "fp16",
+   "gap_median_us_per_pass": [
+    439.4,
+    526.4,
+    434.3,
+    437.9,
+    442.5
+   ],
+   "pass_spread_us": 92.1,
+   "pass_spread_pct": 20.96,
+   "loop_median_us": 178.3,
+   "gap_over_loop": 2.464,
+   "p99_us": 2429.2
+  },
+  "mlp_control_sd/mlp_control_sd_full@cpu": {
+   "statistic": "gap_median",
+   "iters": 40,
+   "gap_us": 3000,
+   "passes": 5,
+   "declared": true,
+   "precision": "fp32",
+   "gap_median_us_per_pass": [
+    114.2,
+    116.3,
+    115.7,
+    115.1,
+    114.4
+   ],
+   "pass_spread_us": 2.1,
+   "pass_spread_pct": 1.82,
+   "loop_median_us": 106.7,
+   "gap_over_loop": 1.079,
+   "p99_us": 143.3
+  },
+  "mlp_control_sd/mlp_control_sd_full@cpu@int8": {
+   "statistic": "gap_median",
+   "iters": 40,
+   "gap_us": 3000,
+   "passes": 5,
+   "declared": false,
+   "precision": "int8",
+   "gap_median_us_per_pass": [
+    111.1,
+    111.7,
+    110.1,
+    110.2,
+    109.6
+   ],
+   "pass_spread_us": 2.1,
+   "pass_spread_pct": 1.91,
+   "loop_median_us": 27.4,
+   "gap_over_loop": 4.022,
+   "p99_us": 148.2
+  },
+  "mlp_control_sd/mlp_control_sd_full@dsp": {
+   "statistic": "gap_median",
+   "iters": 40,
+   "gap_us": 3000,
+   "passes": 5,
+   "declared": true,
+   "precision": "int8",
+   "gap_median_us_per_pass": [
+    579.8,
+    426.5,
+    524.3,
+    523.6,
+    422.1
+   ],
+   "pass_spread_us": 157.8,
+   "pass_spread_pct": 30.14,
+   "loop_median_us": 402.5,
+   "gap_over_loop": 1.301,
+   "p99_us": 802.7
+  },
+  "mlp_control_sd/mlp_control_sd_full@gpu": {
+   "statistic": "gap_median",
+   "iters": 40,
+   "gap_us": 3000,
+   "passes": 5,
+   "declared": true,
+   "precision": "fp16",
+   "gap_median_us_per_pass": [
+    429.9,
+    462.8,
+    435.0,
+    458.5,
+    445.0
+   ],
+   "pass_spread_us": 32.9,
+   "pass_spread_pct": 7.39,
+   "loop_median_us": 187.7,
+   "gap_over_loop": 2.371,
+   "p99_us": 2305.3
+  },
+  "mlp_control_sf/mlp_control_sf_full@cpu": {
+   "statistic": "gap_median",
+   "iters": 40,
+   "gap_us": 3000,
+   "passes": 5,
+   "declared": true,
+   "precision": "fp32",
+   "gap_median_us_per_pass": [
+    182.5,
+    169.9,
+    475.3,
+    176.1,
+    171.3
+   ],
+   "pass_spread_us": 305.4,
+   "pass_spread_pct": 173.42,
+   "loop_median_us": 52.2,
+   "gap_over_loop": 3.375,
+   "p99_us": 1616.7
+  },
+  "mlp_control_sf/mlp_control_sf_full@cpu@int8": {
+   "statistic": "gap_median",
+   "iters": 40,
+   "gap_us": 3000,
+   "passes": 5,
+   "declared": false,
+   "precision": "int8",
+   "gap_median_us_per_pass": [
+    176.8,
+    182.3,
+    178.6,
+    177.5,
+    179.2
+   ],
+   "pass_spread_us": 5.5,
+   "pass_spread_pct": 3.08,
+   "loop_median_us": 53.8,
+   "gap_over_loop": 3.32,
+   "p99_us": 1474.6
+  },
+  "mlp_control_sf/mlp_control_sf_full@dsp": {
+   "statistic": "gap_median",
+   "iters": 40,
+   "gap_us": 3000,
+   "passes": 5,
+   "declared": true,
+   "precision": "int8",
+   "gap_median_us_per_pass": [
+    443.7,
+    527.1,
+    533.5,
+    767.4,
+    443.7
+   ],
+   "pass_spread_us": 323.7,
+   "pass_spread_pct": 61.41,
+   "loop_median_us": 413.2,
+   "gap_over_loop": 1.276,
+   "p99_us": 818.0
+  },
+  "mlp_control_sf/mlp_control_sf_full@gpu": {
+   "statistic": "gap_median",
+   "iters": 40,
+   "gap_us": 3000,
+   "passes": 5,
+   "declared": true,
+   "precision": "fp16",
+   "gap_median_us_per_pass": [
+    428.7,
+    471.2,
+    447.6,
+    446.5,
+    443.7
+   ],
+   "pass_spread_us": 42.5,
+   "pass_spread_pct": 9.52,
+   "loop_median_us": 268.8,
+   "gap_over_loop": 1.661,
+   "p99_us": 2406.6
+  },
+  "yolov8_nano_sc/yolov8_nano_sc_full@cpu": {
+   "statistic": "gap_median",
+   "iters": 40,
+   "gap_us": 3000,
+   "passes": 5,
+   "declared": true,
+   "precision": "fp32",
+   "gap_median_us_per_pass": [
+    17840.4,
+    20114.3,
+    17772.5,
+    15060.0,
+    15059.3
+   ],
+   "pass_spread_us": 5055.0,
+   "pass_spread_pct": 28.44,
+   "loop_median_us": 17448.1,
+   "gap_over_loop": 1.019,
+   "p99_us": 42055.4
+  },
+  "yolov8_nano_sc/yolov8_nano_sc_full@cpu@int8": {
+   "statistic": "gap_median",
+   "iters": 40,
+   "gap_us": 3000,
+   "passes": 5,
+   "declared": false,
+   "precision": "int8",
+   "gap_median_us_per_pass": [
+    3887.8,
+    3887.2,
+    3882.6,
+    3892.0,
+    3874.0
+   ],
+   "pass_spread_us": 18.0,
+   "pass_spread_pct": 0.46,
+   "loop_median_us": 3692.6,
+   "gap_over_loop": 1.053,
+   "p99_us": 4303.1
+  },
+  "yolov8_nano_sc/yolov8_nano_sc_full@dsp": {
+   "statistic": "gap_median",
+   "iters": 40,
+   "gap_us": 3000,
+   "passes": 5,
+   "declared": true,
+   "precision": "int8",
+   "gap_median_us_per_pass": [
+    3742.1,
+    4002.9,
+    4366.2,
+    4780.9,
+    4065.4
+   ],
+   "pass_spread_us": 1038.8,
+   "pass_spread_pct": 25.55,
+   "loop_median_us": 3803.4,
+   "gap_over_loop": 1.069,
+   "p99_us": 6020.6
+  },
+  "yolov8_nano_sc/yolov8_nano_sc_full@gpu": {
+   "statistic": "gap_median",
+   "iters": 40,
+   "gap_us": 3000,
+   "passes": 5,
+   "declared": true,
+   "precision": "fp16",
+   "gap_median_us_per_pass": [
+    14936.0,
+    14936.1,
+    14934.7,
+    14960.2,
+    14873.4
+   ],
+   "pass_spread_us": 86.9,
+   "pass_spread_pct": 0.58,
+   "loop_median_us": 14882.6,
+   "gap_over_loop": 1.004,
+   "p99_us": 15127.0
+  },
+  "yolov8_nano_se/yolov8_nano_se_full@cpu": {
+   "statistic": "gap_median",
+   "iters": 40,
+   "gap_us": 3000,
+   "passes": 5,
+   "declared": true,
+   "precision": "fp32",
+   "gap_median_us_per_pass": [
+    28869.9,
+    25087.5,
+    26425.3,
+    29045.9,
+    29602.5
+   ],
+   "pass_spread_us": 4515.0,
+   "pass_spread_pct": 15.64,
+   "loop_median_us": 28047.7,
+   "gap_over_loop": 1.029,
+   "p99_us": 54031.6
+  },
+  "yolov8_nano_se/yolov8_nano_se_full@cpu@int8": {
+   "statistic": "gap_median",
+   "iters": 40,
+   "gap_us": 3000,
+   "passes": 5,
+   "declared": false,
+   "precision": "int8",
+   "gap_median_us_per_pass": [
+    6787.2,
+    6805.1,
+    6841.8,
+    6811.1,
+    6755.5
+   ],
+   "pass_spread_us": 86.2,
+   "pass_spread_pct": 1.27,
+   "loop_median_us": 7183.7,
+   "gap_over_loop": 0.947,
+   "p99_us": 7102.1
+  },
+  "yolov8_nano_se/yolov8_nano_se_full@dsp": {
+   "statistic": "gap_median",
+   "iters": 40,
+   "gap_us": 3000,
+   "passes": 5,
+   "declared": true,
+   "precision": "int8",
+   "gap_median_us_per_pass": [
+    7405.6,
+    7428.6,
+    7482.5,
+    7208.2,
+    7607.0
+   ],
+   "pass_spread_us": 398.9,
+   "pass_spread_pct": 5.37,
+   "loop_median_us": 7171.6,
+   "gap_over_loop": 1.036,
+   "p99_us": 8190.5
+  },
+  "yolov8_nano_se/yolov8_nano_se_full@gpu": {
+   "statistic": "gap_median",
+   "iters": 40,
+   "gap_us": 3000,
+   "passes": 5,
+   "declared": true,
+   "precision": "fp16",
+   "gap_median_us_per_pass": [
+    20082.3,
+    20072.3,
+    20043.4,
+    20075.1,
+    20002.9
+   ],
+   "pass_spread_us": 79.4,
+   "pass_spread_pct": 0.4,
+   "loop_median_us": 20001.2,
+   "gap_over_loop": 1.004,
+   "p99_us": 20318.4
+  },
+  "yolov8_nano_sf/yolov8_nano_sf_full@cpu": {
+   "statistic": "gap_median",
+   "iters": 40,
+   "gap_us": 3000,
+   "passes": 5,
+   "declared": true,
+   "precision": "fp32",
+   "gap_median_us_per_pass": [
+    31584.2,
+    43413.4,
+    34465.7,
+    32449.0,
+    32260.2
+   ],
+   "pass_spread_us": 11829.2,
+   "pass_spread_pct": 36.45,
+   "loop_median_us": 32196.8,
+   "gap_over_loop": 1.008,
+   "p99_us": 58614.3
+  },
+  "yolov8_nano_sf/yolov8_nano_sf_full@cpu@int8": {
+   "statistic": "gap_median",
+   "iters": 40,
+   "gap_us": 3000,
+   "passes": 5,
+   "declared": false,
+   "precision": "int8",
+   "gap_median_us_per_pass": [
+    8655.5,
+    8670.2,
+    8665.5,
+    8683.6,
+    8641.2
+   ],
+   "pass_spread_us": 42.4,
+   "pass_spread_pct": 0.49,
+   "loop_median_us": 9231.1,
+   "gap_over_loop": 0.939,
+   "p99_us": 8883.6
+  },
+  "yolov8_nano_sf/yolov8_nano_sf_full@dsp": {
+   "statistic": "gap_median",
+   "iters": 40,
+   "gap_us": 3000,
+   "passes": 5,
+   "declared": true,
+   "precision": "int8",
+   "gap_median_us_per_pass": [
+    8620.8,
+    8695.9,
+    8105.0,
+    8625.6,
+    7611.6
+   ],
+   "pass_spread_us": 1084.3,
+   "pass_spread_pct": 12.58,
+   "loop_median_us": 7662.7,
+   "gap_over_loop": 1.125,
+   "p99_us": 9291.8
+  },
+  "yolov8_nano_sf/yolov8_nano_sf_full@gpu": {
+   "statistic": "gap_median",
+   "iters": 40,
+   "gap_us": 3000,
+   "passes": 5,
+   "declared": true,
+   "precision": "fp16",
+   "gap_median_us_per_pass": [
+    26046.8,
+    26166.7,
+    26067.3,
+    26182.1,
+    26049.7
+   ],
+   "pass_spread_us": 135.3,
+   "pass_spread_pct": 0.52,
+   "loop_median_us": 25982.8,
+   "gap_over_loop": 1.003,
+   "p99_us": 26453.3
+  },
+  "yolov8_nano_sh/yolov8_nano_sh_full@cpu": {
+   "statistic": "gap_median",
+   "iters": 40,
+   "gap_us": 3000,
+   "passes": 5,
+   "declared": true,
+   "precision": "fp32",
+   "gap_median_us_per_pass": [
+    60544.5,
+    60049.9,
+    71552.8,
+    60294.9,
+    58119.6
+   ],
+   "pass_spread_us": 13433.2,
+   "pass_spread_pct": 22.28,
+   "loop_median_us": 61933.7,
+   "gap_over_loop": 0.974,
+   "p99_us": 99224.5
+  },
+  "yolov8_nano_sh/yolov8_nano_sh_full@cpu@int8": {
+   "statistic": "gap_median",
+   "iters": 40,
+   "gap_us": 3000,
+   "passes": 5,
+   "declared": false,
+   "precision": "int8",
+   "gap_median_us_per_pass": [
+    16659.8,
+    16627.4,
+    16598.8,
+    16670.1,
+    16597.4
+   ],
+   "pass_spread_us": 72.7,
+   "pass_spread_pct": 0.44,
+   "loop_median_us": 16611.0,
+   "gap_over_loop": 1.001,
+   "p99_us": 16951.1
+  },
+  "yolov8_nano_sh/yolov8_nano_sh_full@dsp": {
+   "statistic": "gap_median",
+   "iters": 40,
+   "gap_us": 3000,
+   "passes": 5,
+   "declared": true,
+   "precision": "int8",
+   "gap_median_us_per_pass": [
+    11466.7,
+    11077.9,
+    11477.8,
+    10890.1,
+    12690.4
+   ],
+   "pass_spread_us": 1800.3,
+   "pass_spread_pct": 15.7,
+   "loop_median_us": 10630.8,
+   "gap_over_loop": 1.079,
+   "p99_us": 12968.9
+  },
+  "yolov8_nano_sh/yolov8_nano_sh_full@gpu": {
+   "statistic": "gap_median",
+   "iters": 40,
+   "gap_us": 3000,
+   "passes": 5,
+   "declared": true,
+   "precision": "fp16",
+   "gap_median_us_per_pass": [
+    41763.1,
+    41830.6,
+    41990.3,
+    42043.0,
+    41916.9
+   ],
+   "pass_spread_us": 279.9,
+   "pass_spread_pct": 0.67,
+   "loop_median_us": 41888.0,
+   "gap_over_loop": 1.001,
+   "p99_us": 42669.5
+  },
+  "vint/vint_decoder@cpu": {
+   "statistic": "in_situ_p50_pooled",
+   "captured_at": "2026-08-30",
+   "source": "measurements/qrb5165_v66.json",
+   "reused": true
+  },
+  "vint/vint_decoder@gpu": {
+   "statistic": "in_situ_p50_pooled",
+   "captured_at": "2026-08-30",
+   "source": "measurements/qrb5165_v66.json",
+   "reused": true
+  },
+  "vint/vint_encoders@dsp": {
+   "statistic": "in_situ_p50_pooled",
+   "captured_at": "2026-08-30",
+   "source": "measurements/qrb5165_v66.json",
+   "reused": true
+  },
+  "vint/vint_encoders@cpu": {
+   "statistic": "in_situ_p50_pooled",
+   "captured_at": "2026-08-30",
+   "source": "measurements/qrb5165_v66.json",
+   "reused": true
+  },
+  "vint/vint_encoders@gpu": {
+   "statistic": "in_situ_p50_pooled",
+   "captured_at": "2026-08-30",
+   "source": "measurements/qrb5165_v66.json",
+   "reused": true
+  }
+ },
+ "compose_failures": [
+  {
+   "cell": "dronet_sa/dronet_sa_full",
+   "backend": "hta",
+   "precision": "int8",
+   "reason": "QnnHta [ ERROR ] QnnHtaunsupported op Batchnorm      6.5ms [ ERROR ] Exception encountered: Validate OpConfig failed: QNN_GRAPH_ERROR_INVALID_OP_CONFIG: Some elements in the op config data are invalid      6.5ms [ ERROR ] Failed to successfully compose graph"
+  },
+  {
+   "cell": "dronet_sb/dronet_sb_full",
+   "backend": "hta",
+   "precision": "int8",
+   "reason": "QnnHta [ ERROR ] QnnHtaunsupported op Batchnorm      7.0ms [ ERROR ] Exception encountered: Validate OpConfig failed: QNN_GRAPH_ERROR_INVALID_OP_CONFIG: Some elements in the op config data are invalid      7.0ms [ ERROR ] Failed to successfully compose graph"
+  },
+  {
+   "cell": "dronet_sc/dronet_sc_full",
+   "backend": "hta",
+   "precision": "int8",
+   "reason": "QnnHta [ ERROR ] QnnHtaunsupported op Batchnorm      6.5ms [ ERROR ] Exception encountered: Validate OpConfig failed: QNN_GRAPH_ERROR_INVALID_OP_CONFIG: Some elements in the op config data are invalid      6.5ms [ ERROR ] Failed to successfully compose graph"
+  },
+  {
+   "cell": "dronet_sd/dronet_sd_full",
+   "backend": "hta",
+   "precision": "int8",
+   "reason": "QnnHta [ ERROR ] QnnHtaunsupported op Batchnorm     10.5ms [ ERROR ] Exception encountered: Validate OpConfig failed: QNN_GRAPH_ERROR_INVALID_OP_CONFIG: Some elements in the op config data are invalid     10.5ms [ ERROR ] Failed to successfully compose graph"
+  },
+  {
+   "cell": "dronet_se/dronet_se_full",
+   "backend": "hta",
+   "precision": "int8",
+   "reason": "QnnHta [ ERROR ] QnnHtaunsupported op Batchnorm      8.6ms [ ERROR ] Exception encountered: Validate OpConfig failed: QNN_GRAPH_ERROR_INVALID_OP_CONFIG: Some elements in the op config data are invalid      8.6ms [ ERROR ] Failed to successfully compose graph"
+  },
+  {
+   "cell": "dronet_sf/dronet_sf_full",
+   "backend": "hta",
+   "precision": "int8",
+   "reason": "QnnHta [ ERROR ] QnnHtaunsupported op Batchnorm     14.4ms [ ERROR ] Exception encountered: Validate OpConfig failed: QNN_GRAPH_ERROR_INVALID_OP_CONFIG: Some elements in the op config data are invalid     14.4ms [ ERROR ] Failed to successfully compose graph"
+  },
+  {
+   "cell": "dronet_sg/dronet_sg_full",
+   "backend": "hta",
+   "precision": "int8",
+   "reason": "QnnHta [ ERROR ] QnnHtaunsupported op Batchnorm      6.4ms [ ERROR ] Exception encountered: Validate OpConfig failed: QNN_GRAPH_ERROR_INVALID_OP_CONFIG: Some elements in the op config data are invalid      6.4ms [ ERROR ] Failed to successfully compose graph"
+  },
+  {
+   "cell": "mlp_control_sa/mlp_control_sa_full",
+   "backend": "hta",
+   "precision": "int8",
+   "reason": "33.8ms [ ERROR ] unsupported elementwise neuson op 0     33.9ms [ ERROR ] failed to create IHtaOp type name ElementWiseNeuron from package qti.aisw in graph mlp_control_sa     12.1ms [ ERROR ] Exception encountered: Failed to addNode: QNN_GRAPH_ERROR_INVALID_OP_CONFIG: Some elements in the op config data are invalid"
+  },
+  {
+   "cell": "mlp_control_sb/mlp_control_sb_full",
+   "backend": "hta",
+   "precision": "int8",
+   "reason": "21.4ms [ ERROR ] unsupported elementwise neuson op 0     21.4ms [ ERROR ] failed to create IHtaOp type name ElementWiseNeuron from package qti.aisw in graph mlp_control_sb     10.2ms [ ERROR ] Exception encountered: Failed to addNode: QNN_GRAPH_ERROR_INVALID_OP_CONFIG: Some elements in the op config data are invalid"
+  },
+  {
+   "cell": "mlp_control_sd/mlp_control_sd_full",
+   "backend": "hta",
+   "precision": "int8",
+   "reason": "25.6ms [ ERROR ] unsupported elementwise neuson op 0     25.6ms [ ERROR ] failed to create IHtaOp type name ElementWiseNeuron from package qti.aisw in graph mlp_control_sd      6.0ms [ ERROR ] Exception encountered: Failed to addNode: QNN_GRAPH_ERROR_INVALID_OP_CONFIG: Some elements in the op config data are invalid"
+  },
+  {
+   "cell": "mlp_control_sf/mlp_control_sf_full",
+   "backend": "hta",
+   "precision": "int8",
+   "reason": "28.9ms [ ERROR ] unsupported elementwise neuson op 0     28.9ms [ ERROR ] failed to create IHtaOp type name ElementWiseNeuron from package qti.aisw in graph mlp_control_sf      7.9ms [ ERROR ] Exception encountered: Failed to addNode: QNN_GRAPH_ERROR_INVALID_OP_CONFIG: Some elements in the op config data are invalid"
+  },
+  {
+   "cell": "yolov8_nano_sc/yolov8_nano_sc_full",
+   "backend": "hta",
+   "precision": "int8",
+   "reason": "QnnHta [ ERROR ] QnnHtaunsupported op StridedSlice     13.6ms [ ERROR ] Exception encountered: Validate OpConfig failed: QNN_GRAPH_ERROR_INVALID_OP_CONFIG: Some elements in the op config data are invalid     13.6ms [ ERROR ] Failed to successfully compose graph"
+  },
+  {
+   "cell": "yolov8_nano_se/yolov8_nano_se_full",
+   "backend": "hta",
+   "precision": "int8",
+   "reason": "QnnHta [ ERROR ] QnnHtaunsupported op StridedSlice     11.5ms [ ERROR ] Exception encountered: Validate OpConfig failed: QNN_GRAPH_ERROR_INVALID_OP_CONFIG: Some elements in the op config data are invalid     11.5ms [ ERROR ] Failed to successfully compose graph"
+  },
+  {
+   "cell": "yolov8_nano_sf/yolov8_nano_sf_full",
+   "backend": "hta",
+   "precision": "int8",
+   "reason": "QnnHta [ ERROR ] QnnHtaunsupported op StridedSlice     10.7ms [ ERROR ] Exception encountered: Validate OpConfig failed: QNN_GRAPH_ERROR_INVALID_OP_CONFIG: Some elements in the op config data are invalid     10.7ms [ ERROR ] Failed to successfully compose graph"
+  },
+  {
+   "cell": "yolov8_nano_sh/yolov8_nano_sh_full",
+   "backend": "hta",
+   "precision": "int8",
+   "reason": "QnnHta [ ERROR ] QnnHtaunsupported op StridedSlice     10.7ms [ ERROR ] Exception encountered: Validate OpConfig failed: QNN_GRAPH_ERROR_INVALID_OP_CONFIG: Some elements in the op config data are invalid     10.7ms [ ERROR ] Failed to successfully compose graph"
+  },
+  {
+   "cell": "vint/whole",
+   "backend": "hta",
+   "reason": "unsupported op StridedSlice",
+   "source": "measurements/qrb5165_v66.json"
+  },
+  {
+   "cell": "vint/whole",
+   "backend": "dsp",
+   "reason": "Param[0] has incorrect Value 1 (op-config validation)",
+   "source": "measurements/qrb5165_v66.json"
+  },
+  {
+   "cell": "vint/vint_encoders",
+   "backend": "hta",
+   "reason": "unsupported op StridedSlice (the 6-frame slice of obs_img)",
+   "source": "measurements/qrb5165_v66.json"
+  },
+  {
+   "cell": "vint/vint_decoder",
+   "backend": "dsp",
+   "reason": "Param[0] has incorrect Value 1 \u2014 the transformer half is what DSP rejects",
+   "source": "measurements/qrb5165_v66.json"
+  },
+  {
+   "cell": "vint/vint_decoder",
+   "backend": "hta",
+   "reason": "transformer op set not in the HTA op package",
+   "source": "measurements/qrb5165_v66.json"
+  },
+  {
+   "cell": "vint/vint_whole",
+   "backend": "hta",
+   "reason": "unsupported op StridedSlice",
+   "source": "measurements/qrb5165_v66.json"
+  },
+  {
+   "cell": "vint/vint_whole",
+   "backend": "dsp",
+   "reason": "Param[0] has incorrect Value 1.",
+   "source": "measurements/qrb5165_v66.json"
+  }
+ ]
+}

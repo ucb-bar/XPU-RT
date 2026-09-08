@@ -1,0 +1,92 @@
+[
+ {
+  "cell": "dronet_sa/dronet_sa_full",
+  "backend": "hta",
+  "precision": "int8",
+  "reason": "QnnHta [ ERROR ] QnnHtaunsupported op Batchnorm      6.5ms [ ERROR ] Exception encountered: Validate OpConfig failed: QNN_GRAPH_ERROR_INVALID_OP_CONFIG: Some elements in the op config data are invalid      6.5ms [ ERROR ] Failed to successfully compose graph"
+ },
+ {
+  "cell": "dronet_sb/dronet_sb_full",
+  "backend": "hta",
+  "precision": "int8",
+  "reason": "QnnHta [ ERROR ] QnnHtaunsupported op Batchnorm      7.0ms [ ERROR ] Exception encountered: Validate OpConfig failed: QNN_GRAPH_ERROR_INVALID_OP_CONFIG: Some elements in the op config data are invalid      7.0ms [ ERROR ] Failed to successfully compose graph"
+ },
+ {
+  "cell": "dronet_sc/dronet_sc_full",
+  "backend": "hta",
+  "precision": "int8",
+  "reason": "QnnHta [ ERROR ] QnnHtaunsupported op Batchnorm      6.5ms [ ERROR ] Exception encountered: Validate OpConfig failed: QNN_GRAPH_ERROR_INVALID_OP_CONFIG: Some elements in the op config data are invalid      6.5ms [ ERROR ] Failed to successfully compose graph"
+ },
+ {
+  "cell": "dronet_sd/dronet_sd_full",
+  "backend": "hta",
+  "precision": "int8",
+  "reason": "QnnHta [ ERROR ] QnnHtaunsupported op Batchnorm     10.5ms [ ERROR ] Exception encountered: Validate OpConfig failed: QNN_GRAPH_ERROR_INVALID_OP_CONFIG: Some elements in the op config data are invalid     10.5ms [ ERROR ] Failed to successfully compose graph"
+ },
+ {
+  "cell": "dronet_se/dronet_se_full",
+  "backend": "hta",
+  "precision": "int8",
+  "reason": "QnnHta [ ERROR ] QnnHtaunsupported op Batchnorm      8.6ms [ ERROR ] Exception encountered: Validate OpConfig failed: QNN_GRAPH_ERROR_INVALID_OP_CONFIG: Some elements in the op config data are invalid      8.6ms [ ERROR ] Failed to successfully compose graph"
+ },
+ {
+  "cell": "dronet_sf/dronet_sf_full",
+  "backend": "hta",
+  "precision": "int8",
+  "reason": "QnnHta [ ERROR ] QnnHtaunsupported op Batchnorm     14.4ms [ ERROR ] Exception encountered: Validate OpConfig failed: QNN_GRAPH_ERROR_INVALID_OP_CONFIG: Some elements in the op config data are invalid     14.4ms [ ERROR ] Failed to successfully compose graph"
+ },
+ {
+  "cell": "dronet_sg/dronet_sg_full",
+  "backend": "hta",
+  "precision": "int8",
+  "reason": "QnnHta [ ERROR ] QnnHtaunsupported op Batchnorm      6.4ms [ ERROR ] Exception encountered: Validate OpConfig failed: QNN_GRAPH_ERROR_INVALID_OP_CONFIG: Some elements in the op config data are invalid      6.4ms [ ERROR ] Failed to successfully compose graph"
+ },
+ {
+  "cell": "mlp_control_sa/mlp_control_sa_full",
+  "backend": "hta",
+  "precision": "int8",
+  "reason": "33.8ms [ ERROR ] unsupported elementwise neuson op 0     33.9ms [ ERROR ] failed to create IHtaOp type name ElementWiseNeuron from package qti.aisw in graph mlp_control_sa     12.1ms [ ERROR ] Exception encountered: Failed to addNode: QNN_GRAPH_ERROR_INVALID_OP_CONFIG: Some elements in the op config data are invalid"
+ },
+ {
+  "cell": "mlp_control_sb/mlp_control_sb_full",
+  "backend": "hta",
+  "precision": "int8",
+  "reason": "21.4ms [ ERROR ] unsupported elementwise neuson op 0     21.4ms [ ERROR ] failed to create IHtaOp type name ElementWiseNeuron from package qti.aisw in graph mlp_control_sb     10.2ms [ ERROR ] Exception encountered: Failed to addNode: QNN_GRAPH_ERROR_INVALID_OP_CONFIG: Some elements in the op config data are invalid"
+ },
+ {
+  "cell": "mlp_control_sd/mlp_control_sd_full",
+  "backend": "hta",
+  "precision": "int8",
+  "reason": "25.6ms [ ERROR ] unsupported elementwise neuson op 0     25.6ms [ ERROR ] failed to create IHtaOp type name ElementWiseNeuron from package qti.aisw in graph mlp_control_sd      6.0ms [ ERROR ] Exception encountered: Failed to addNode: QNN_GRAPH_ERROR_INVALID_OP_CONFIG: Some elements in the op config data are invalid"
+ },
+ {
+  "cell": "mlp_control_sf/mlp_control_sf_full",
+  "backend": "hta",
+  "precision": "int8",
+  "reason": "28.9ms [ ERROR ] unsupported elementwise neuson op 0     28.9ms [ ERROR ] failed to create IHtaOp type name ElementWiseNeuron from package qti.aisw in graph mlp_control_sf      7.9ms [ ERROR ] Exception encountered: Failed to addNode: QNN_GRAPH_ERROR_INVALID_OP_CONFIG: Some elements in the op config data are invalid"
+ },
+ {
+  "cell": "yolov8_nano_sc/yolov8_nano_sc_full",
+  "backend": "hta",
+  "precision": "int8",
+  "reason": "QnnHta [ ERROR ] QnnHtaunsupported op StridedSlice     13.6ms [ ERROR ] Exception encountered: Validate OpConfig failed: QNN_GRAPH_ERROR_INVALID_OP_CONFIG: Some elements in the op config data are invalid     13.6ms [ ERROR ] Failed to successfully compose graph"
+ },
+ {
+  "cell": "yolov8_nano_se/yolov8_nano_se_full",
+  "backend": "hta",
+  "precision": "int8",
+  "reason": "QnnHta [ ERROR ] QnnHtaunsupported op StridedSlice     11.5ms [ ERROR ] Exception encountered: Validate OpConfig failed: QNN_GRAPH_ERROR_INVALID_OP_CONFIG: Some elements in the op config data are invalid     11.5ms [ ERROR ] Failed to successfully compose graph"
+ },
+ {
+  "cell": "yolov8_nano_sf/yolov8_nano_sf_full",
+  "backend": "hta",
+  "precision": "int8",
+  "reason": "QnnHta [ ERROR ] QnnHtaunsupported op StridedSlice     10.7ms [ ERROR ] Exception encountered: Validate OpConfig failed: QNN_GRAPH_ERROR_INVALID_OP_CONFIG: Some elements in the op config data are invalid     10.7ms [ ERROR ] Failed to successfully compose graph"
+ },
+ {
+  "cell": "yolov8_nano_sh/yolov8_nano_sh_full",
+  "backend": "hta",
+  "precision": "int8",
+  "reason": "QnnHta [ ERROR ] QnnHtaunsupported op StridedSlice     10.7ms [ ERROR ] Exception encountered: Validate OpConfig failed: QNN_GRAPH_ERROR_INVALID_OP_CONFIG: Some elements in the op config data are invalid     10.7ms [ ERROR ] Failed to successfully compose graph"
+ }
+]
