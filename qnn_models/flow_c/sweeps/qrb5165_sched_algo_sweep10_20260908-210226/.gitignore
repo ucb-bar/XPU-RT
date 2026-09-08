@@ -1,0 +1,11 @@
+# Raw artifacts and measurement data are NOT committed; everything needed to
+# replicate the experiment is (scripts, specs, bindings, SETUP.md, ANALYSIS.md,
+# the frozen cost model, provenance, and the per-cell result tables).
+gen/
+plots/
+runs/
+runtimes/
+logs/
+measurements/*_raw.json
+__pycache__/
+*.pyc
