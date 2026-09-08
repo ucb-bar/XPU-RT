@@ -487,6 +487,16 @@ def cmd_run(args):
         if rec["reps"] and all(v.get("ok") for v in rec["reps"].values()):
             rec["status"] = "run"
         save(STATE, st)
+        # Each point gets its own board dir with a built binary. Across ~100
+        # points that is hundreds of MB, and cDSP crash dumps have filled this
+        # board's / to 94% before. Drop the point's tree once its reps are in,
+        # and record what df says so a slow leak is visible in the record
+        # rather than discovered at hour six.
+        b = board(f"rm -rf /root/flowc_s10run_{pid}; df -h / | tail -1", timeout=120)
+        for l in (b.stdout or "").splitlines():
+            if l.strip().startswith("/dev/root"):
+                rec["board_df_after"] = l.strip()
+        save(STATE, st)
     return 0
 
 
