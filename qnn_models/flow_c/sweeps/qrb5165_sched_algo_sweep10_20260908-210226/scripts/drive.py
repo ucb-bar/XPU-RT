@@ -360,7 +360,28 @@ SUMMARY = re.compile(r"\[summary\] (\d+)/(\d+) entries executed, wall=([\d.]+) m
                      r"\(predicted makespan ([\d.]+) ms, ratio ([\d.]+)x\)")
 
 
-def analyse_run(log_path):
+def periodic_networks(workload):
+    """Which networks in this taskset carry a period.
+
+    Needed because the quantity the reference RANKS solvers on is NOT the wall
+    clock. `sweep10_runner` scores with `evaluate(ctx, t, alpha, True)`, whose
+    objective is the makespan over NON-PERIODIC operations only: periodic ops
+    have their own windows and are not what is being minimised. The board's
+    wall clock is the all-operations makespan, which is usually pinned by the
+    last periodic instance and is therefore nearly identical across solvers.
+    Measuring only the wall clock would make every solver look the same.
+    So both are extracted, and the ranking is checked against the one the
+    ranking is about.
+    """
+    p = os.path.join(REPO, "data", "toplevel", ARM, workload + ".json")
+    if not os.path.exists(p):
+        return set(), set()
+    nets = json.load(open(p))["networks"]
+    per = {k for k, v in nets.items() if v.get("period") is not None}
+    return per, set(nets) - per
+
+
+def analyse_run(log_path, periodic=(), nonperiodic=()):
     out = {"ok": False}
     if not os.path.exists(log_path):
         out["error"] = "no run.log"
@@ -377,21 +398,42 @@ def analyse_run(log_path):
     out["bringups"] = len(re.findall(r"\[bringup\]", txt))
     out["skipped"] = len(re.findall(r"\[skip\]|skipped entry", txt))
     # per-tile in-situ durations from the embedded trace block
-    tr = re.search(r"MODELBLASTER_XPURT_TRACE_BEGIN(.*?)MODELBLASTER_XPURT_TRACE_END",
-                   txt, re.S)
+    # The markers are printed as `=== MODELBLASTER_XPURT_TRACE_BEGIN ===`, so
+    # the capture must start AFTER that whole line -- otherwise csv.DictReader
+    # takes " ===" as the one and only field name and every row parses to
+    # nothing, silently.
+    tr = re.search(r"MODELBLASTER_XPURT_TRACE_BEGIN[^\n]*\n(.*?)\n[^\n]*"
+                   r"MODELBLASTER_XPURT_TRACE_END", txt, re.S)
     if tr:
         rows = list(csv.DictReader(io.StringIO(tr.group(1).strip())))
-        per = {}
+        out["trace_rows"] = len(rows)
+        per, ends, np_ends = {}, [], []
+        unit_ms = {"us": 1e-3, "ms": 1.0, "ns": 1e-6}
         for r in rows:
             try:
-                key = f'{r.get("network")}/{r.get("name")}@{r.get("core_kind")}'
-                per.setdefault(key, []).append(float(r.get("exec_ms") or 0))
-            except (TypeError, ValueError):
+                u = unit_ms.get((r.get("time_unit") or "us").strip(), 1e-3)
+                st = float(r["actual_start_cycles"]) * u
+                en = float(r["actual_end_cycles"]) * u
+            except (TypeError, ValueError, KeyError):
                 continue
+            ends.append(en)
+            net = (r.get("network") or "").strip()
+            if net in nonperiodic:
+                np_ends.append(en)
+            key = f'{net}/{(r.get("name") or "").strip()}@{(r.get("core_kind") or "").strip()}'
+            per.setdefault(key, []).append(round(en - st, 4))
+        if ends:
+            out["measured_all_ms"] = round(max(ends), 4)
+        if np_ends:
+            out["measured_nonperiodic_ms"] = round(max(np_ends), 4)
+        elif ends:
+            # every op is periodic: the objective degenerates to the
+            # all-operations makespan, exactly as evaluate() does
+            out["measured_nonperiodic_ms"] = round(max(ends), 4)
+            out["nonperiodic_degenerate"] = True
         out["per_tile"] = {k: dict(n=len(v), p50=round(statistics.median(v), 4),
                                    max=round(max(v), 4))
                            for k, v in per.items() if v}
-        out["trace_rows"] = len(rows)
     return out
 
 
@@ -421,7 +463,9 @@ def cmd_run(args):
                 rc = q.returncode
             except subprocess.TimeoutExpired:
                 rc, dt = -9, args.run_timeout
-            info = analyse_run(os.path.join(log_dir, "run.log"))
+            per_nets, np_nets = periodic_networks(p["workload"])
+            info = analyse_run(os.path.join(log_dir, "run.log"),
+                               per_nets, np_nets)
             info.update(lock_wait_s=wait, lock_probe_rc=wrc, wall_s=dt,
                         flow_c_rc=rc)
             rec["reps"][key] = info
@@ -434,6 +478,12 @@ def cmd_run(args):
             rec["measured_median_ms"] = round(statistics.median(walls), 3)
             rec["measured_spread_ms"] = round(max(walls) - min(walls), 3)
             rec["measured_reps_ms"] = walls
+        nps = [v["measured_nonperiodic_ms"] for v in rec["reps"].values()
+               if v.get("measured_nonperiodic_ms")]
+        if nps:
+            rec["measured_np_median_ms"] = round(statistics.median(nps), 3)
+            rec["measured_np_spread_ms"] = round(max(nps) - min(nps), 3)
+            rec["measured_np_reps_ms"] = nps
         if rec["reps"] and all(v.get("ok") for v in rec["reps"].values()):
             rec["status"] = "run"
         save(STATE, st)
@@ -458,7 +508,9 @@ def cmd_results(args):
                   "lane_entry_counts", "dispatch_table_sha256",
                   "predicate6_missing_contexts",
                   "predicate7_excluded_placements", "measured_median_ms",
-                  "measured_spread_ms", "measured_reps_ms", "validation",
+                  "measured_spread_ms", "measured_reps_ms",
+                  "measured_np_median_ms", "measured_np_spread_ms",
+                  "measured_np_reps_ms", "all_ops", "validation",
                   "board_df"):
             if k in rec:
                 r[k] = rec[k]
@@ -467,6 +519,10 @@ def cmd_results(args):
         if r.get("measured_median_ms") and r.get("table_predicted_makespan_ms"):
             r["measured_over_predicted"] = round(
                 r["measured_median_ms"] / r["table_predicted_makespan_ms"], 4)
+        # the quantity the reference actually ranks on
+        if r.get("measured_np_median_ms") and r.get("objective"):
+            r["np_measured_over_predicted"] = round(
+                r["measured_np_median_ms"] / r["objective"], 4)
         rows.append(r)
     out = os.path.join(SWEEP, "results", "phase4_results.json")
     save(out, rows)
