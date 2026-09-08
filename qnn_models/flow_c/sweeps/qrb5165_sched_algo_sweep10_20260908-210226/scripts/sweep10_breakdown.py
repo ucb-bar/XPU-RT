@@ -14,7 +14,7 @@ res = sys.argv[1]
 d = json.load(open(f"{res}/all_results.json"))
 tbl = {(r["arm"], r["workload"], r["solver"]): r for r in d}
 allwls = sorted({(a, w) for a, w, s in tbl})
-PAIRS = ["gempair", "hetero", "quad", "rvvpair"]
+PAIRS = ["dc", "dg", "cg", "dcg"]      # QRB5165 lane subsets
 S = ["best-of-fast", "pso", "sa", "cpsat", "cpsat:warm", "cpsat:warmbest",
      "heft_edf", "heft", "decomposed", "greedy_periodic", "greedy_reserved"]
 
@@ -68,12 +68,12 @@ emit("\nEvery cell is mean % makespan improvement over `greedy`, counted only on
 fams = sorted({fam(w)[0] for a, w in allwls})
 table("By family (both arms pooled)",
       [(f, [k for k in allwls if fam(k[1])[0] == f]) for f in fams])
-table("By machine pair (tight_loop excluded)",
+table("By lane config (tight_loop excluded)",
       [(p, [k for k in allwls if fam(k[1])[1] == p and fam(k[1])[0] != "tight_loop"])
        for p in PAIRS])
 table("By arm (tight_loop excluded)",
       [(a, [k for k in allwls if k[0] == a and fam(k[1])[0] != "tight_loop"])
-       for a in ("wl_sweep", "wl_sweep_shard")])
+       for a in ("s10port",)])
 
 wls = [k for k in allwls if fam(k[1])[0] != "tight_loop"]
 emit("\n### Paired head-to-head (tight_loop excluded, both feasible)\n")

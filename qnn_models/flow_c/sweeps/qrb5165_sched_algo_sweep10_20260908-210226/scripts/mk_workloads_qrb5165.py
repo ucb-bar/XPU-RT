@@ -132,6 +132,8 @@ def load_cost_model(path):
 def tile_costs(cost_model, bindings_dir, net):
     """[(tile_name, {kind: us})] for one network, in binding order."""
     man_path = os.path.join(FLOWC, bindings_rel(net))
+    if not os.path.exists(man_path):
+        return None                      # network not built — caller rejects
     with open(man_path) as f:
         man = json.load(f)
     cells = cost_model.get("cells", {})
@@ -154,6 +156,8 @@ def net_cost_ms(cost_model, net, kinds):
     rather than being silently mixed in per tile.
     """
     tiles = tile_costs(cost_model, None, net)
+    if tiles is None:
+        return None, None, None
     per_lane = {}
     for k in kinds:
         if all(k in m for _, m in tiles):
@@ -200,6 +204,11 @@ def build_one(fam, spec, edges, cfg, cost_model):
     problems = []
     for name in spec:
         worst, best, per_lane = net_cost_ms(cost_model, name, kinds)
+        if per_lane is None:
+            problems.append(
+                f"{name}: no binding manifest — Phase 1 did not build this "
+                f"network, so the cell cannot be generated")
+            continue
         if worst is None:
             problems.append(
                 f"{name}: no lane in config {cfg} ({','.join(kinds)}) has a "
@@ -264,7 +273,7 @@ def build_one(fam, spec, edges, cfg, cost_model):
     }
     if edges:
         doc["edges"] = edges
-    meta = dict(family=fam, config=cfg, kinds=kinds, est_busy_ms=round(busy, 3),
+    meta = dict(kinds=kinds, est_busy_ms=round(busy, 3),
                 lane_costs_ms=lanes,
                 periods={k: v.get("period") for k, v in nets.items()},
                 instances={k: v["num_instances"] for k, v in nets.items()})
@@ -284,9 +293,9 @@ def main():
     rows, n = [], 0
     print(f"  cost model: {a.cost_model} "
           f"(statistic={cm.get('statistic')}, {len(cm.get('cells', {}))} cells)")
-    print(f"\n  {'family':<20}{'cfg':<6}{'status':<10}{'ops-ish':>8}"
-          f"{'busy ms':>10}  periods")
-    print("  " + "-" * 108)
+    print(f"\n  {'family':<20}{'cfg':<6}{'status':<10}{'tiles':>7}"
+          f"{'busy ms':>10}  periods (ms)")
+    print("  " + "-" * 124)
     for fam, spec, edges in FAMILIES:
         for cfg in cfgs:
             doc, problems, meta = build_one(fam, spec, edges, cfg, cm)
@@ -298,13 +307,13 @@ def main():
                 for p in problems:
                     print(f"      - {p}")
                 continue
-            ntiles = sum(len(tile_costs(cm, None, k)) * v["num_instances"]
+            ntiles = sum(len(tile_costs(cm, None, k) or []) * v["num_instances"]
                          for k, v in doc["networks"].items())
-            per = " ".join(f"{k.split('_')[-1]}={v['period']}" if v.get("period")
-                           else f"{k.split('_')[-1]}=np"
+            per = " ".join(f"{k}={v['period']}" if v.get("period")
+                           else f"{k}=np"
                            for k, v in doc["networks"].items())
             print(f"  {fam:<20}{cfg:<6}{'ok':<10}{ntiles:>8}"
-                  f"{meta['est_busy_ms']:>10.1f}  {per[:60]}")
+                  f"{meta['est_busy_ms']:>10.1f}  {per[:74]}")
             rows.append(dict(family=fam, config=cfg, workload=name,
                              status="ok", **meta))
             if a.emit:

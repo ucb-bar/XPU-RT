@@ -69,10 +69,17 @@ def collect(only=None):
     todo = []
     bdir = os.path.join(SWEEP, "bindings")
     compose = {}
-    cpath = os.path.join(SWEEP, "results", "phase1_compose.json")
-    if os.path.exists(cpath):
-        for r in json.load(open(cpath)):
-            compose[r["id"]] = r
+    # phase1_state.json is written after EVERY model, so the cpu@int8 audit
+    # contexts are visible while a build is still in flight; phase1_compose.json
+    # is the flat record written only when the build finishes.
+    for cpath in (os.path.join(SWEEP, "results", "phase1_compose.json"),
+                  os.path.join(SWEEP, "results", "phase1_state.json")):
+        if not os.path.exists(cpath):
+            continue
+        d = json.load(open(cpath))
+        for r in (d.values() if isinstance(d, dict) else d):
+            if isinstance(r, dict) and r.get("compose"):
+                compose.setdefault(r["id"], r)
     for fn in sorted(os.listdir(bdir)):
         if not fn.endswith(".json"):
             continue
@@ -162,7 +169,13 @@ def main():
                 js = json.loads(line) if line else {"status": "no_output"}
             except json.JSONDecodeError:
                 js = {"status": "unparsable", "raw": line[:300]}
-            rec = dict(t, **js, lock_wait_s=wait, board_s=dt)
+            # profile_seg's JSON has its own `backend` key (the .so it was
+            # handed), which silently overwrote the registry KIND this record
+            # is about -- every cell came back keyed "libQnnDsp.so" and the
+            # cost model had no lane names at all. Let the record win, keep
+            # the harness value under a different name.
+            rec = {**js, **t, "harness_backend": js.get("backend"),
+                   "lock_wait_s": wait, "board_s": dt}
             results.append(rec)
             tag = f'{t["cell"]}@{t["backend"]}'
             if js.get("status") == "ok":

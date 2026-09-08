@@ -1,4 +1,11 @@
-"""Turn the 880 per-job JSONs into the tables and plots the study reports.
+"""Turn the per-job JSONs into the tables and plots the study reports.
+
+PORTED for the QRB5165 replication: `PAIRS` is this board's lane-subset
+config axis instead of FireSim's machine-count pairs, there is ONE arm
+(the shard arm does not port -- see scripts/mk_workloads_qrb5165.py), and the
+hardcoded /88 denominator is computed. The ranking rule, the feasible-first
+key, the best-of-fast synthesis and every aggregate are unchanged, which is
+the point: the comparison being replicated is of METHOD.
 
 Ranking rule, applied everywhere: FEASIBLE-THEN-FASTEST. A schedule that beats
 greedy on makespan while overrunning a periodic window has not beaten greedy —
@@ -29,7 +36,7 @@ CHEAP6 = ["greedy", "greedy_periodic", "greedy_reserved", "decomposed",
 FAMILIES = ["bimodal", "control_mix", "depth_chain", "depth_contended",
             "depth_nav", "perception_heavy", "saturation", "scale_ladder",
             "tight_loop", "vint_intro", "vint_multi"]
-PAIRS = ["gempair", "hetero", "quad", "rvvpair"]
+PAIRS = ["dc", "dg", "cg", "dcg"]      # QRB5165 lane subsets
 
 
 def load(outdir):
@@ -246,7 +253,7 @@ def main():
 
     # ---------------- markdown tables ----------------
     with open(f"{a.dest}/RESULTS.md", "w") as fh:
-        fh.write("# Ten-solver scheduler bench: wl_sweep x {base, shard}\n\n")
+        fh.write("# Ten-solver scheduler bench, QRB5165 / Flow C port (one arm)\n\n")
         fh.write(f"{len(wls)} workload-arms x {len(SOLVERS)} solvers = {len(tbl)} solves.\n\n")
         fh.write("## Headline (feasible-first, tight_loop excluded)\n\n")
         fh.write("`usable` = workload-arms where the solver returned a schedule with ZERO "
@@ -262,8 +269,8 @@ def main():
             fh.write(f"| {s} | {h['usable']}/{h['of']} | {h['usable_pct']} | "
                      f"{h['mean']} | {h['median']} | {h['p25']} | {h['p75']} | "
                      f"{h['worst']} | {h['best']} | {summary[s]['mean_wall_s']} |\n")
-        fh.write("\n## Per-solver summary (all 88 workload-arms)\n\n")
-        fh.write("| solver | feasible/88 | wins | wins (ex tight_loop) | total misses | "
+        fh.write(f"\n## Per-solver summary (all {len(wls)} workload-cells)\n\n")
+        fh.write(f"| solver | feasible/{len(wls)} | wins | wins (ex tight_loop) | total misses | "
                  "misses ex tight_loop | mean impr vs greedy %% | median wall s | max wall s |\n")
         fh.write("|---|---|---|---|---|---|---|---|---|\n")
         for s in SOLVERS:
@@ -376,23 +383,16 @@ def plots(tbl, wls, dest, summary, headline):
     for ax, (title, kf) in zip(axes, [
             ("workload-arms with >=1 missed window", None),
             ("total missed windows (log)", "tot")]):
-        base, shard = [], []
+        base = []      # one arm: the shard arm does not port
         for s in SOLVERS:
             b = sum(1 for (arm, wl) in wls
-                    if famof(wl)[0] != "tight_loop" and arm == "wl_sweep"
+                    if famof(wl)[0] != "tight_loop"
                     and (tbl.get((arm, wl, s)) or {}).get("misses", 0) > 0) if kf is None else \
                 sum((tbl.get((arm, wl, s)) or {}).get("misses", 0) or 0
-                    for (arm, wl) in wls if famof(wl)[0] != "tight_loop" and arm == "wl_sweep")
-            sh = sum(1 for (arm, wl) in wls
-                     if famof(wl)[0] != "tight_loop" and arm == "wl_sweep_shard"
-                     and (tbl.get((arm, wl, s)) or {}).get("misses", 0) > 0) if kf is None else \
-                sum((tbl.get((arm, wl, s)) or {}).get("misses", 0) or 0
-                    for (arm, wl) in wls if famof(wl)[0] != "tight_loop" and arm == "wl_sweep_shard")
+                    for (arm, wl) in wls if famof(wl)[0] != "tight_loop")
             base.append(b)
-            shard.append(sh)
         x = np.arange(len(SOLVERS))
-        ax.bar(x - .2, base, .4, label="wl_sweep")
-        ax.bar(x + .2, shard, .4, label="wl_sweep_shard")
+        ax.bar(x, base, .5, label="s10port")
         ax.set_xticks(x)
         ax.set_xticklabels(SOLVERS, rotation=70, fontsize=8)
         ax.set_title(title + " (tight_loop excluded)")
@@ -421,10 +421,10 @@ def plots(tbl, wls, dest, summary, headline):
     ax.set_yticks(range(len(SOLVERS)))
     ax.set_yticklabels(SOLVERS, fontsize=9)
     ax.set_xticks(range(len(order)))
-    ax.set_xticklabels([f"{'S' if a=='wl_sweep_shard' else 'B'}:{famof(w)[0]}.{famof(w)[1]}"
+    ax.set_xticklabels([f"{famof(w)[0]}.{famof(w)[1]}"
                         for a, w in order], rotation=90, fontsize=5)
     fig.colorbar(im, label="% makespan improvement over greedy (ignores misses)")
-    ax.set_title("Improvement over greedy per workload-arm  (B=base arm, S=shard arm)")
+    ax.set_title("Improvement over greedy per workload-cell (family.laneconfig)")
     fig.tight_layout()
     fig.savefig(f"{dest}/improvement_heatmap.png", dpi=110)
     plt.close(fig)

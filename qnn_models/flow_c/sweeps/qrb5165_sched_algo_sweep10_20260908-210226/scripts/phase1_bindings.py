@@ -47,6 +47,11 @@ def main():
     ap.add_argument("--compose", default=COMPOSE)
     a = ap.parse_args()
     rows = json.load(open(a.compose))
+    if isinstance(rows, dict):
+        # phase1_state.json is a dict keyed by model id and is written after
+        # EVERY model, so it can be read while a build is still in flight;
+        # phase1_compose.json is the flat record written at the end.
+        rows = [v for v in rows.values() if v.get("stage") == "composed"]
     os.makedirs(BDIR, exist_ok=True)
     n, fails = 0, []
     print(f"  {'network':<18}{'ir ops':>7}{'macs':>12}  declared lanes")
