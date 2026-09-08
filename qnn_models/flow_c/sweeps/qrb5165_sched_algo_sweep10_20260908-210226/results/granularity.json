@@ -1,0 +1,663 @@
+[
+ {
+  "network": "dronet_sa",
+  "family": "dronet",
+  "lanes_ms": {
+   "cpu": 0.86,
+   "dsp": 0.702,
+   "gpu": 1.445
+  },
+  "fastest_lane": "dsp",
+  "fastest_ms": 0.702,
+  "cut_candidates": "residual sums /Add_output_0, /Add_1_output_0, /Add_2_output_0",
+  "n_cuts": 3,
+  "boundary_bytes": 896,
+  "boundary_detail": [
+   [
+    "/Add_output_0",
+    [
+     1,
+     32,
+     4,
+     4
+    ],
+    512
+   ],
+   [
+    "/Add_1_output_0",
+    [
+     1,
+     64,
+     2,
+     2
+    ],
+    256
+   ],
+   [
+    "/Add_2_output_0",
+    [
+     1,
+     128,
+     1,
+     1
+    ],
+    128
+   ]
+  ],
+  "breakeven_dsp_ms": 0.375,
+  "breakeven_hta_ms": 0.505,
+  "decision": "keep whole",
+  "why": [
+   "3 cut(s) would add 1.12 ms of DSP dispatch (0.37 ms fixed + 896 boundary bytes x 5.4 ns) against a whole-network critical path of 0.702 ms on its fastest lane",
+   "the added dispatch alone exceeds the whole network, so no assignment of the pieces can win"
+  ]
+ },
+ {
+  "network": "dronet_sb",
+  "family": "dronet",
+  "lanes_ms": {
+   "cpu": 1.364,
+   "dsp": 0.673,
+   "gpu": 1.481
+  },
+  "fastest_lane": "dsp",
+  "fastest_ms": 0.673,
+  "cut_candidates": "residual sums /Add_output_0, /Add_1_output_0, /Add_2_output_0",
+  "n_cuts": 3,
+  "boundary_bytes": 2240,
+  "boundary_detail": [
+   [
+    "/Add_output_0",
+    [
+     1,
+     32,
+     6,
+     6
+    ],
+    1152
+   ],
+   [
+    "/Add_1_output_0",
+    [
+     1,
+     64,
+     3,
+     3
+    ],
+    576
+   ],
+   [
+    "/Add_2_output_0",
+    [
+     1,
+     128,
+     2,
+     2
+    ],
+    512
+   ]
+  ],
+  "breakeven_dsp_ms": 0.382,
+  "breakeven_hta_ms": 0.512,
+  "decision": "keep whole",
+  "why": [
+   "3 cut(s) would add 1.15 ms of DSP dispatch (0.37 ms fixed + 2240 boundary bytes x 5.4 ns) against a whole-network critical path of 0.673 ms on its fastest lane",
+   "the added dispatch alone exceeds the whole network, so no assignment of the pieces can win"
+  ]
+ },
+ {
+  "network": "dronet_sc",
+  "family": "dronet",
+  "lanes_ms": {
+   "cpu": 1.257,
+   "dsp": 0.691,
+   "gpu": 1.522
+  },
+  "fastest_lane": "dsp",
+  "fastest_ms": 0.691,
+  "cut_candidates": "residual sums /Add_output_0, /Add_1_output_0, /Add_2_output_0",
+  "n_cuts": 3,
+  "boundary_bytes": 3584,
+  "boundary_detail": [
+   [
+    "/Add_output_0",
+    [
+     1,
+     32,
+     8,
+     8
+    ],
+    2048
+   ],
+   [
+    "/Add_1_output_0",
+    [
+     1,
+     64,
+     4,
+     4
+    ],
+    1024
+   ],
+   [
+    "/Add_2_output_0",
+    [
+     1,
+     128,
+     2,
+     2
+    ],
+    512
+   ]
+  ],
+  "breakeven_dsp_ms": 0.389,
+  "breakeven_hta_ms": 0.519,
+  "decision": "keep whole",
+  "why": [
+   "3 cut(s) would add 1.17 ms of DSP dispatch (0.37 ms fixed + 3584 boundary bytes x 5.4 ns) against a whole-network critical path of 0.691 ms on its fastest lane",
+   "the added dispatch alone exceeds the whole network, so no assignment of the pieces can win"
+  ]
+ },
+ {
+  "network": "dronet_sd",
+  "family": "dronet",
+  "lanes_ms": {
+   "cpu": 1.474,
+   "dsp": 0.672,
+   "gpu": 1.53
+  },
+  "fastest_lane": "dsp",
+  "fastest_ms": 0.672,
+  "cut_candidates": "residual sums /Add_output_0, /Add_1_output_0, /Add_2_output_0",
+  "n_cuts": 3,
+  "boundary_bytes": 5952,
+  "boundary_detail": [
+   [
+    "/Add_output_0",
+    [
+     1,
+     32,
+     10,
+     10
+    ],
+    3200
+   ],
+   [
+    "/Add_1_output_0",
+    [
+     1,
+     64,
+     5,
+     5
+    ],
+    1600
+   ],
+   [
+    "/Add_2_output_0",
+    [
+     1,
+     128,
+     3,
+     3
+    ],
+    1152
+   ]
+  ],
+  "breakeven_dsp_ms": 0.402,
+  "breakeven_hta_ms": 0.532,
+  "decision": "keep whole",
+  "why": [
+   "3 cut(s) would add 1.21 ms of DSP dispatch (0.37 ms fixed + 5952 boundary bytes x 5.4 ns) against a whole-network critical path of 0.672 ms on its fastest lane",
+   "the added dispatch alone exceeds the whole network, so no assignment of the pieces can win"
+  ]
+ },
+ {
+  "network": "dronet_se",
+  "family": "dronet",
+  "lanes_ms": {
+   "cpu": 1.871,
+   "dsp": 0.838,
+   "gpu": 1.659
+  },
+  "fastest_lane": "dsp",
+  "fastest_ms": 0.838,
+  "cut_candidates": "residual sums /Add_output_0, /Add_1_output_0, /Add_2_output_0",
+  "n_cuts": 3,
+  "boundary_bytes": 11456,
+  "boundary_detail": [
+   [
+    "/Add_output_0",
+    [
+     1,
+     32,
+     14,
+     14
+    ],
+    6272
+   ],
+   [
+    "/Add_1_output_0",
+    [
+     1,
+     64,
+     7,
+     7
+    ],
+    3136
+   ],
+   [
+    "/Add_2_output_0",
+    [
+     1,
+     128,
+     4,
+     4
+    ],
+    2048
+   ]
+  ],
+  "breakeven_dsp_ms": 0.432,
+  "breakeven_hta_ms": 0.562,
+  "decision": "keep whole",
+  "why": [
+   "3 cut(s) would add 1.30 ms of DSP dispatch (0.37 ms fixed + 11456 boundary bytes x 5.4 ns) against a whole-network critical path of 0.838 ms on its fastest lane",
+   "the added dispatch alone exceeds the whole network, so no assignment of the pieces can win"
+  ]
+ },
+ {
+  "network": "dronet_sf",
+  "family": "dronet",
+  "lanes_ms": {
+   "cpu": 2.144,
+   "dsp": 0.881,
+   "gpu": 1.694
+  },
+  "fastest_lane": "dsp",
+  "fastest_ms": 0.881,
+  "cut_candidates": "residual sums /Add_output_0, /Add_1_output_0, /Add_2_output_0",
+  "n_cuts": 3,
+  "boundary_bytes": 14336,
+  "boundary_detail": [
+   [
+    "/Add_output_0",
+    [
+     1,
+     32,
+     16,
+     16
+    ],
+    8192
+   ],
+   [
+    "/Add_1_output_0",
+    [
+     1,
+     64,
+     8,
+     8
+    ],
+    4096
+   ],
+   [
+    "/Add_2_output_0",
+    [
+     1,
+     128,
+     4,
+     4
+    ],
+    2048
+   ]
+  ],
+  "breakeven_dsp_ms": 0.447,
+  "breakeven_hta_ms": 0.577,
+  "decision": "keep whole",
+  "why": [
+   "3 cut(s) would add 1.34 ms of DSP dispatch (0.37 ms fixed + 14336 boundary bytes x 5.4 ns) against a whole-network critical path of 0.881 ms on its fastest lane",
+   "the added dispatch alone exceeds the whole network, so no assignment of the pieces can win"
+  ]
+ },
+ {
+  "network": "dronet_sg",
+  "family": "dronet",
+  "lanes_ms": {
+   "cpu": 2.605,
+   "dsp": 1.077,
+   "gpu": 1.877
+  },
+  "fastest_lane": "dsp",
+  "fastest_ms": 1.077,
+  "cut_candidates": "residual sums /Add_output_0, /Add_1_output_0, /Add_2_output_0",
+  "n_cuts": 3,
+  "boundary_bytes": 18752,
+  "boundary_detail": [
+   [
+    "/Add_output_0",
+    [
+     1,
+     32,
+     18,
+     18
+    ],
+    10368
+   ],
+   [
+    "/Add_1_output_0",
+    [
+     1,
+     64,
+     9,
+     9
+    ],
+    5184
+   ],
+   [
+    "/Add_2_output_0",
+    [
+     1,
+     128,
+     5,
+     5
+    ],
+    3200
+   ]
+  ],
+  "breakeven_dsp_ms": 0.471,
+  "breakeven_hta_ms": 0.601,
+  "decision": "keep whole",
+  "why": [
+   "3 cut(s) would add 1.41 ms of DSP dispatch (0.37 ms fixed + 18752 boundary bytes x 5.4 ns) against a whole-network critical path of 1.077 ms on its fastest lane",
+   "the added dispatch alone exceeds the whole network, so no assignment of the pieces can win"
+  ]
+ },
+ {
+  "network": "mlp_control_sa",
+  "family": "mlp_control",
+  "lanes_ms": {
+   "cpu": 0.06,
+   "dsp": 0.522,
+   "gpu": 0.451
+  },
+  "fastest_lane": "cpu",
+  "fastest_ms": 0.06,
+  "cut_candidates": "none -- 7 ops, no interior activation worth a dispatch",
+  "n_cuts": 0,
+  "boundary_bytes": 0,
+  "boundary_detail": [],
+  "breakeven_dsp_ms": 0.37,
+  "breakeven_hta_ms": 0.5,
+  "decision": "keep whole",
+  "why": [
+   "no interior boundary: the whole network is one dispatch of work"
+  ]
+ },
+ {
+  "network": "mlp_control_sb",
+  "family": "mlp_control",
+  "lanes_ms": {
+   "cpu": 0.066,
+   "dsp": 0.516,
+   "gpu": 0.439
+  },
+  "fastest_lane": "cpu",
+  "fastest_ms": 0.066,
+  "cut_candidates": "none -- 7 ops, no interior activation worth a dispatch",
+  "n_cuts": 0,
+  "boundary_bytes": 0,
+  "boundary_detail": [],
+  "breakeven_dsp_ms": 0.37,
+  "breakeven_hta_ms": 0.5,
+  "decision": "keep whole",
+  "why": [
+   "no interior boundary: the whole network is one dispatch of work"
+  ]
+ },
+ {
+  "network": "mlp_control_sd",
+  "family": "mlp_control",
+  "lanes_ms": {
+   "cpu": 0.115,
+   "dsp": 0.524,
+   "gpu": 0.445
+  },
+  "fastest_lane": "cpu",
+  "fastest_ms": 0.115,
+  "cut_candidates": "none -- 7 ops, no interior activation worth a dispatch",
+  "n_cuts": 0,
+  "boundary_bytes": 0,
+  "boundary_detail": [],
+  "breakeven_dsp_ms": 0.37,
+  "breakeven_hta_ms": 0.5,
+  "decision": "keep whole",
+  "why": [
+   "no interior boundary: the whole network is one dispatch of work"
+  ]
+ },
+ {
+  "network": "mlp_control_sf",
+  "family": "mlp_control",
+  "lanes_ms": {
+   "cpu": 0.176,
+   "dsp": 0.527,
+   "gpu": 0.447
+  },
+  "fastest_lane": "cpu",
+  "fastest_ms": 0.176,
+  "cut_candidates": "none -- 7 ops, no interior activation worth a dispatch",
+  "n_cuts": 0,
+  "boundary_bytes": 0,
+  "boundary_detail": [],
+  "breakeven_dsp_ms": 0.37,
+  "breakeven_hta_ms": 0.5,
+  "decision": "keep whole",
+  "why": [
+   "no interior boundary: the whole network is one dispatch of work"
+  ]
+ },
+ {
+  "network": "yolov8_nano_sc",
+  "family": "yolov8_nano",
+  "lanes_ms": {
+   "cpu": 17.773,
+   "dsp": 4.065,
+   "gpu": 14.936
+  },
+  "fastest_lane": "dsp",
+  "fastest_ms": 4.065,
+  "cut_candidates": "FPN neck + detect-head split (the study's k=3 shape)",
+  "n_cuts": 2,
+  "boundary_bytes": 36864,
+  "boundary_detail": [
+   [
+    "/l15/Concat_output_0",
+    [
+     1,
+     96,
+     16,
+     16
+    ],
+    24576
+   ],
+   [
+    "/l18/Concat_output_0",
+    [
+     1,
+     192,
+     8,
+     8
+    ],
+    12288
+   ]
+  ],
+  "breakeven_dsp_ms": 0.569,
+  "breakeven_hta_ms": 0.699,
+  "decision": "keep whole",
+  "why": [
+   "2 cut(s) would add 1.14 ms of DSP dispatch (0.37 ms fixed + 36864 boundary bytes x 5.4 ns) against a whole-network critical path of 4.065 ms on its fastest lane",
+   "the dispatch is affordable, but Phase 1R's rewrites already made every lane reachable whole, so a cut unlocks no placement it does not already have"
+  ]
+ },
+ {
+  "network": "yolov8_nano_se",
+  "family": "yolov8_nano",
+  "lanes_ms": {
+   "cpu": 28.87,
+   "dsp": 7.429,
+   "gpu": 20.072
+  },
+  "fastest_lane": "dsp",
+  "fastest_ms": 7.429,
+  "cut_candidates": "FPN neck + detect-head split (the study's k=3 shape)",
+  "n_cuts": 2,
+  "boundary_bytes": 82944,
+  "boundary_detail": [
+   [
+    "/l15/Concat_output_0",
+    [
+     1,
+     96,
+     24,
+     24
+    ],
+    55296
+   ],
+   [
+    "/l18/Concat_output_0",
+    [
+     1,
+     192,
+     12,
+     12
+    ],
+    27648
+   ]
+  ],
+  "breakeven_dsp_ms": 0.818,
+  "breakeven_hta_ms": 0.948,
+  "decision": "keep whole",
+  "why": [
+   "2 cut(s) would add 1.64 ms of DSP dispatch (0.37 ms fixed + 82944 boundary bytes x 5.4 ns) against a whole-network critical path of 7.429 ms on its fastest lane",
+   "the dispatch is affordable, but Phase 1R's rewrites already made every lane reachable whole, so a cut unlocks no placement it does not already have"
+  ]
+ },
+ {
+  "network": "yolov8_nano_sf",
+  "family": "yolov8_nano",
+  "lanes_ms": {
+   "cpu": 32.449,
+   "dsp": 8.621,
+   "gpu": 26.067
+  },
+  "fastest_lane": "dsp",
+  "fastest_ms": 8.621,
+  "cut_candidates": "FPN neck + detect-head split (the study's k=3 shape)",
+  "n_cuts": 2,
+  "boundary_bytes": 112896,
+  "boundary_detail": [
+   [
+    "/l15/Concat_output_0",
+    [
+     1,
+     96,
+     28,
+     28
+    ],
+    75264
+   ],
+   [
+    "/l18/Concat_output_0",
+    [
+     1,
+     192,
+     14,
+     14
+    ],
+    37632
+   ]
+  ],
+  "breakeven_dsp_ms": 0.98,
+  "breakeven_hta_ms": 1.11,
+  "decision": "keep whole",
+  "why": [
+   "2 cut(s) would add 1.96 ms of DSP dispatch (0.37 ms fixed + 112896 boundary bytes x 5.4 ns) against a whole-network critical path of 8.621 ms on its fastest lane",
+   "the dispatch is affordable, but Phase 1R's rewrites already made every lane reachable whole, so a cut unlocks no placement it does not already have"
+  ]
+ },
+ {
+  "network": "yolov8_nano_sh",
+  "family": "yolov8_nano",
+  "lanes_ms": {
+   "cpu": 60.295,
+   "dsp": 11.467,
+   "gpu": 41.917
+  },
+  "fastest_lane": "dsp",
+  "fastest_ms": 11.467,
+  "cut_candidates": "FPN neck + detect-head split (the study's k=3 shape)",
+  "n_cuts": 2,
+  "boundary_bytes": 230400,
+  "boundary_detail": [
+   [
+    "/l15/Concat_output_0",
+    [
+     1,
+     96,
+     40,
+     40
+    ],
+    153600
+   ],
+   [
+    "/l18/Concat_output_0",
+    [
+     1,
+     192,
+     20,
+     20
+    ],
+    76800
+   ]
+  ],
+  "breakeven_dsp_ms": 1.614,
+  "breakeven_hta_ms": 1.744,
+  "decision": "keep whole",
+  "why": [
+   "2 cut(s) would add 3.23 ms of DSP dispatch (0.37 ms fixed + 230400 boundary bytes x 5.4 ns) against a whole-network critical path of 11.467 ms on its fastest lane",
+   "the dispatch is affordable, but Phase 1R's rewrites already made every lane reachable whole, so a cut unlocks no placement it does not already have"
+  ]
+ },
+ {
+  "network": "fastdepth",
+  "family": "fastdepth",
+  "lanes_ms": {
+   "cpu": 6.469,
+   "dsp": 2.822,
+   "gpu": 3.624,
+   "hta": 3.746
+  },
+  "fastest_lane": "dsp",
+  "fastest_ms": 2.822,
+  "cut_candidates": "decoder upsample boundary (/dec4/dec4.5/Relu_output_0)",
+  "n_cuts": 1,
+  "boundary_bytes": 32768,
+  "boundary_detail": [
+   [
+    "/dec4/dec4.5/Relu_output_0",
+    [
+     1,
+     8,
+     64,
+     64
+    ],
+    32768
+   ]
+  ],
+  "breakeven_dsp_ms": 0.547,
+  "breakeven_hta_ms": 0.677,
+  "decision": "keep whole",
+  "why": [
+   "1 cut(s) would add 0.55 ms of DSP dispatch (0.37 ms fixed + 32768 boundary bytes x 5.4 ns) against a whole-network critical path of 2.822 ms on its fastest lane",
+   "the dispatch is affordable, but Phase 1R's rewrites already made every lane reachable whole, so a cut unlocks no placement it does not already have"
+  ]
+ }
+]

@@ -45,8 +45,16 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--write", action="store_true")
     ap.add_argument("--compose", default=COMPOSE)
+    ap.add_argument("--candidates", action="store_true",
+                    help="also emit a manifest per rewritten variant, so every "
+                         "candidate lane gets a measured cell before anything "
+                         "is adopted")
     a = ap.parse_args()
     rows = json.load(open(a.compose))
+    if a.candidates:
+        vp = os.path.join(SWEEP, "results", "phase1r_variants.json")
+        if os.path.exists(vp):
+            rows = list(rows) + json.load(open(vp))
     if isinstance(rows, dict):
         # phase1_state.json is a dict keyed by model id and is written after
         # EVERY model, so it can be read while a build is still in flight;
@@ -73,8 +81,16 @@ def main():
                                   or "not attempted"))
         alt = cm.get("cpu@int8") or {}
         if alt.get("status") == "ok":
-            # recorded, deliberately not a declared lane -- see the docstring
-            pass
+            if a.candidates:
+                # A candidate manifest declares int8-on-CPU as its own lane so
+                # phase1_measure gives it a cell; phase1_adopt then picks the
+                # CPU precision per tile on the measured numbers. The study this
+                # follows found int8 beats fp32 by 4x on ViNT's encoders and
+                # loses by 5x on dronet -- precision is not a per-network
+                # constant.
+                backends["cpu@int8"] = {
+                    "ctx": alt["ctx"], "graph": r["dlc_graph_name"],
+                    "precision": "int8", "ctx_bytes": alt["bytes"]}
         else:
             fails.append(dict(cell=f"{net}/{net}_full", backend="cpu@int8",
                               precision="int8",
