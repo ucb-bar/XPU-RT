@@ -124,8 +124,10 @@ def main():
         "target": "qrb5165_v66",
         "captured_at": time.strftime("%Y-%m-%d", time.gmtime()),
         "unit": "us",
-        "statistic": "gap_median (16 rebuilt networks) + "
-                     "in_situ_p50_pooled (vint, reused)",
+        # Short on purpose: this string is copied verbatim into the `source`
+        # column of every emitted results.csv. Which statistic each individual
+        # cell carries is in `cell_provenance`, which is the authority.
+        "statistic": "gap_median+in_situ_p50_pooled",
         "harness": "qnn_models/runtime/profile_segments.cpp",
         "iters": raw["iters"],
         "gap_us": raw["gap_us"],
