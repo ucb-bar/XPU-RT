@@ -24,7 +24,18 @@ builds its thread pool at bringup with full-machine affinity, so a
 `taskset -c 4-5` measurement does not describe how the runtime executes the
 tile.
 
-    python3 phase1_measure.py [--iters 40] [--gap-us 3000] [--only net,net]
+Three independent PASSES over every pair, not one. The first single-pass run
+produced `dronet_sc/dronet_sc_full@dsp` at 2.666 ms against 0.673 and 0.646 ms
+for the rungs either side of it, with a gap/loop ratio of 4.9x where every
+other cell sat at 1.0-1.5x. That is the bimodal power-collapse the opsweep
+documents for the accelerators ("they power-collapse mid-loop even at zero gap,
+so repeat passes scatter 4x"), and a single pass cannot tell it from a real
+cost. Rather than hand-pick which cells to redo, every pair is measured three
+times and `build_cost_model.py` takes the per-cell MEDIAN across passes and
+records the spread, so the repeatability of each cell is part of the record.
+
+    python3 phase1_measure.py [--iters 40] [--gap-us 3000] [--passes 3]
+                              [--only net,net] [--resume]
 """
 from __future__ import annotations
 
@@ -111,20 +122,25 @@ def main():
     ap.add_argument("--only", default=None)
     ap.add_argument("--out", default=os.path.join(SWEEP, "measurements",
                                                  "qrb5165_v66_s10port_raw.json"))
+    ap.add_argument("--passes", type=int, default=3,
+                    help="independent repeats of the whole sweep; the cost "
+                         "model takes the per-cell median across them")
     ap.add_argument("--resume", action="store_true",
                     help="keep results already in --out and only measure the rest")
     a = ap.parse_args()
     only = set(a.only.split(",")) if a.only else None
-    todo = collect(only)
-    print(f"{len(todo)} (cell, backend) pairs "
-          f"({sum(1 for t in todo if t['declared'])} declared, "
-          f"{sum(1 for t in todo if not t['declared'])} audit-only)")
+    base = collect(only)
+    todo = [dict(t, pass_i=i) for i in range(1, a.passes + 1) for t in base]
+    print(f"{len(base)} (cell, backend) pairs "
+          f"({sum(1 for t in base if t['declared'])} declared, "
+          f"{sum(1 for t in base if not t['declared'])} audit-only)"
+          f" x {a.passes} pass(es) = {len(todo)} measurements")
 
     have = {}
     if a.resume and os.path.exists(a.out):
         for r in json.load(open(a.out)).get("results", []):
             if r.get("status") == "ok":
-                have[(r["cell"], r["backend"])] = r
+                have[(r["cell"], r["backend"], r.get("pass_i", 1))] = r
         print(f"  resuming: {len(have)} already measured")
 
     # governor: save, force performance, restore in the finally below
@@ -151,7 +167,7 @@ def main():
                f'ADSP_LIBRARY_PATH="{SDK}/lib/hexagon-v66/unsigned;'
                f'{SDK}/lib/hexagon-v66;/dsp/cdsp;/dsp" ')
         for i, t in enumerate(todo, 1):
-            key = (t["cell"], t["backend"])
+            key = (t["cell"], t["backend"], t["pass_i"])
             if key in have:
                 results.append(have[key])
                 continue
@@ -177,7 +193,7 @@ def main():
             rec = {**js, **t, "harness_backend": js.get("backend"),
                    "lock_wait_s": wait, "board_s": dt}
             results.append(rec)
-            tag = f'{t["cell"]}@{t["backend"]}'
+            tag = f'{t["cell"]}@{t["backend"]} p{t["pass_i"]}'
             if js.get("status") == "ok":
                 print(f"  [{i:3}/{len(todo)}] {tag:<42} loop "
                       f"{js['median_us']/1000:9.3f}  gap {js['gap_median_us']/1000:9.3f}"
@@ -207,6 +223,7 @@ def dump(a, results, prev_gov):
                      "how the scheduled runtime invokes a tile. Cost cells are "
                      "built from gap_median_us -- see scripts/build_cost_model.py."),
         "target": "qrb5165_v66", "iters": a.iters, "gap_us": a.gap_us,
+        "passes": a.passes,
         "harness": "qnn_models/runtime/profile_segments.cpp",
         "conditions": {"governor": "performance on all 8 cores (forced by this "
                                    f"script; restored to {prev_gov!r} after)",

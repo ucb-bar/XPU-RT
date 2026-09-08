@@ -24,7 +24,7 @@ in one model, which is stated rather than blended.
 """
 from __future__ import annotations
 
-import argparse, hashlib, json, os, subprocess, time
+import argparse, hashlib, json, os, statistics, subprocess, time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SWEEP = os.path.abspath(os.path.join(HERE, ".."))
@@ -58,19 +58,36 @@ def main():
     shipped = json.load(open(SHIPPED))
 
     cells, prov = {}, {}
-    # 1. the 16 networks Phase 1 built -- gap_median_us, declared lanes only
+    # 1. the 16 networks Phase 1 built -- MEDIAN of gap_median_us across the
+    #    independent passes. One pass is not enough: the accelerators
+    #    power-collapse mid-loop, and a single pass put dronet_sc@dsp at
+    #    2.666 ms between neighbours at 0.673 and 0.646 ms. The per-cell
+    #    spread across passes is recorded next to the value.
+    by_pair = {}
     for r in raw["results"]:
         if r.get("status") != "ok":
             continue
-        cell, be = r["cell"], r["backend"]
-        v = round(float(r["gap_median_us"]), 1)
+        by_pair.setdefault((r["cell"], r["backend"]), []).append(r)
+    for (cell, be), rs in sorted(by_pair.items()):
+        gaps = [float(x["gap_median_us"]) for x in rs]
+        loops = [float(x["median_us"]) for x in rs]
+        v = round(statistics.median(gaps), 1)
         cells.setdefault(cell, {})[be] = v
+        spread = round(max(gaps) - min(gaps), 1)
         prov[f"{cell}@{be}"] = dict(
             statistic="gap_median", iters=raw["iters"], gap_us=raw["gap_us"],
-            declared=r.get("declared", True), precision=r.get("precision"),
-            loop_median_us=round(float(r["median_us"]), 1),
-            gap_minus_loop_us=round(float(r["gap_minus_loop_us"]), 1),
-            p99_us=round(float(r.get("gap_p99_us") or 0), 1))
+            passes=len(rs),
+            declared=rs[0].get("declared", True),
+            precision=rs[0].get("precision"),
+            gap_median_us_per_pass=[round(g, 1) for g in gaps],
+            pass_spread_us=spread,
+            pass_spread_pct=round(spread / v * 100, 2) if v else None,
+            loop_median_us=round(statistics.median(loops), 1),
+            gap_over_loop=round(statistics.median(gaps)
+                                / statistics.median(loops), 3)
+            if statistics.median(loops) else None,
+            p99_us=round(statistics.median(
+                [float(x.get("gap_p99_us") or 0) for x in rs]), 1))
     # 2. vint, verbatim
     for cell in sorted(REUSED):
         src = (shipped.get("cells") or {}).get(cell)
@@ -96,7 +113,8 @@ def main():
     doc = {
         "_comment": (
             "FROZEN cost model for the sched_algo_sweep10 QRB5165 port. Cells "
-            "for the 16 rebuilt networks are gap-phase medians "
+            "for the 16 rebuilt networks are the MEDIAN over independent "
+            "passes of the gap-phase median "
             "(profile_segments.cpp, idle gap before each execute, which is how "
             "the scheduled runtime invokes a tile); vint's two tiles are copied "
             "verbatim from the shipped model and carry their own provenance. "
@@ -126,6 +144,17 @@ def main():
     n_pairs = sum(len(v) for v in cells.values())
     print(f"  {len(cells)} cells, {n_pairs} (cell, backend) pairs, "
           f"{len(fails)} compose failures")
+    sp = [p["pass_spread_pct"] for p in prov.values()
+          if p.get("pass_spread_pct") is not None]
+    if sp:
+        print(f"  pass-to-pass cell spread: median {statistics.median(sp):.2f}%  "
+              f"max {max(sp):.2f}%  ({sum(1 for x in sp if x > 25)} cells > 25%)")
+        worst = sorted(((v, k) for k, v in
+                        ((k, p.get('pass_spread_pct')) for k, p in prov.items())
+                        if v is not None), reverse=True)[:5]
+        for v, k in worst:
+            print(f"      {k:<48} {v:>7.1f}%  "
+                  f"{prov[k]['gap_median_us_per_pass']}")
     per_be = {}
     for v in cells.values():
         for k in v:
