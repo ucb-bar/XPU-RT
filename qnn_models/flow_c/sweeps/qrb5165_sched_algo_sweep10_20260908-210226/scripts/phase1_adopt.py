@@ -161,13 +161,13 @@ def main():
         return f"{v/1000:.3f}" if v else "—"
 
     print(f"{'network':<20}{'lane':<5}{'base':>9}{'variant':>9}{'adopted':>9}"
-          f"  {'from':<12}{'prec':<6} blocker the rewrite removed")
+          f"  {'from':<16}{'prec':<6} blocker the rewrite removed")
     print("-" * 112)
     for r in ledger:
         bl = (r["blocker"] or "").split("]")[-1].strip()[:32]
         print(f"{r['network']:<20}{r['lane']:<5}{ms(r['base_us']):>9}"
               f"{ms(r['variant_us']):>9}{ms(r['adopted_us']):>9}"
-              f"  {str(r['adopted'] or '—'):<12}"
+              f"  {str(r['adopted'] or '—'):<16}"
               f"{str(r['adopted_precision'] or '—'):<6} {bl}")
     n_new = sum(1 for r in ledger if r["base_us"] is None and r["adopted_us"])
     n_rw = sum(1 for r in ledger if r["adopted"] not in (None, "base"))

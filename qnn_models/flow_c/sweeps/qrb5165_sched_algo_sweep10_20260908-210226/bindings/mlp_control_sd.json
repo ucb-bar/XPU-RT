@@ -13,25 +13,29 @@
    "ops": "all",
    "source_onnx": "gen/onnx/mlp_control_sd.onnx",
    "backends": {
+    "cpu": {
+     "ctx": "ctx_s10_mlp_control_sd_int8__CpuInt8.bin",
+     "graph": "mlp_control_sd",
+     "precision": "int8",
+     "from": "base",
+     "measured_us": 110.2
+    },
     "dsp": {
      "ctx": "ctx_s10_mlp_control_sd_int8__Dsp.bin",
      "graph": "mlp_control_sd",
      "precision": "int8",
-     "ctx_bytes": 55528
-    },
-    "cpu": {
-     "ctx": "ctx_s10_mlp_control_sd_fp32__Cpu.bin",
-     "graph": "mlp_control_sd",
-     "precision": "fp32",
-     "ctx_bytes": 188336
+     "from": "base",
+     "measured_us": 523.6
     },
     "gpu": {
      "ctx": "ctx_s10_mlp_control_sd_fp16__Gpu.bin",
      "graph": "mlp_control_sd",
      "precision": "fp16",
-     "ctx_bytes": 239400
+     "from": "base",
+     "measured_us": 445.0
     }
    }
   }
- ]
+ ],
+ "_precision_note": "The CPU lane's precision is chosen per tile on measured evidence, not per network: cpu=int8, dsp=int8, gpu=fp16"
 }

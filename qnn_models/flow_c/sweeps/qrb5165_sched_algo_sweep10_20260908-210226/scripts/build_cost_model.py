@@ -68,6 +68,33 @@ def main():
         if r.get("status") != "ok":
             continue
         by_pair.setdefault((r["cell"], r["backend"]), []).append(r)
+
+    # Phase 1A decided, per (network, lane), WHICH graph and WHICH precision
+    # won on measurement -- base or a numerics-preserving rewrite, fp32 or int8
+    # on the CPU. Those choices are what the schedules are solved against, so
+    # the cost model is assembled through that map rather than from the raw
+    # cells directly. Without it the model would silently carry the base
+    # graph's cells for networks whose adopted manifest names a different
+    # context, and predicted and executed would be different graphs.
+    ap_path = os.path.join(SWEEP, "results", "adoption.json")
+    adopted = json.load(open(ap_path)) if os.path.exists(ap_path) else {}
+    wanted = {}
+    for net, lanes in adopted.items():
+        for lane, w in lanes.items():
+            src_cell = f'{w["source_net"]}/{w["source_net"]}_full'
+            wanted[(f"{net}/{net}_full", lane)] = (src_cell, w["backend_key"], w)
+    if wanted:
+        remapped = {}
+        for (cell, lane), (src_cell, src_be, w) in wanted.items():
+            rs = by_pair.get((src_cell, src_be))
+            if rs:
+                remapped[(cell, lane)] = rs
+        # keep the audit-only int8-CPU cells of the BASE graphs alongside
+        for (cell, be), rs in by_pair.items():
+            if be == "cpu@int8" and "_hta" not in cell:
+                remapped.setdefault((cell, be), rs)
+        by_pair = remapped
+
     for (cell, be), rs in sorted(by_pair.items()):
         gaps = [float(x["gap_median_us"]) for x in rs]
         loops = [float(x["median_us"]) for x in rs]
@@ -78,7 +105,12 @@ def main():
             statistic="gap_median", iters=raw["iters"], gap_us=raw["gap_us"],
             passes=len(rs),
             declared=rs[0].get("declared", True),
-            precision=rs[0].get("precision"),
+            precision=(wanted.get((cell, be)) or (None, None, {}))[2].get("precision")
+            or rs[0].get("precision"),
+            adopted_from=(wanted.get((cell, be)) or (None, None, {}))[2].get("source"),
+            adopted_numerics=(wanted.get((cell, be)) or (None, None, {}))[2].get("numerics"),
+            adopted_rewrite=(wanted.get((cell, be)) or (None, None, {}))[2].get("rewrite_chain"),
+            measured_as=(wanted.get((cell, be)) or (None, None, {}))[0],
             gap_median_us_per_pass=[round(g, 1) for g in gaps],
             pass_spread_us=spread,
             pass_spread_pct=round(spread / v * 100, 2) if v else None,

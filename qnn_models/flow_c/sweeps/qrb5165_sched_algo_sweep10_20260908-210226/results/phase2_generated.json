@@ -1,0 +1,1536 @@
+[
+ {
+  "family": "tight_loop",
+  "config": "hd",
+  "workload": "networks_tight_loop_hd",
+  "status": "ok",
+  "kinds": [
+   "hta",
+   "dsp"
+  ],
+  "est_busy_ms": 14.995,
+  "lane_costs_ms": {
+   "mlp_control_sa": {
+    "dsp": 0.5224
+   },
+   "mlp_control_sb": {
+    "dsp": 0.516
+   },
+   "dronet_sa": {
+    "hta": 2.5929,
+    "dsp": 0.6272
+   }
+  },
+  "periods": {
+   "mlp_control_sa": 1.567,
+   "mlp_control_sb": 2.064,
+   "dronet_sa": 15.557
+  },
+  "instances": {
+   "mlp_control_sa": 16,
+   "mlp_control_sb": 8,
+   "dronet_sa": 4
+  }
+ },
+ {
+  "family": "tight_loop",
+  "config": "dc",
+  "workload": "networks_tight_loop_dc",
+  "status": "ok",
+  "kinds": [
+   "dsp",
+   "cpu"
+  ],
+  "est_busy_ms": 3.991,
+  "lane_costs_ms": {
+   "mlp_control_sa": {
+    "dsp": 0.5224,
+    "cpu": 0.0598
+   },
+   "mlp_control_sb": {
+    "dsp": 0.516,
+    "cpu": 0.0657
+   },
+   "dronet_sa": {
+    "dsp": 0.6272,
+    "cpu": 0.8601
+   }
+  },
+  "periods": {
+   "mlp_control_sa": 1.567,
+   "mlp_control_sb": 2.064,
+   "dronet_sa": 5.161
+  },
+  "instances": {
+   "mlp_control_sa": 16,
+   "mlp_control_sb": 8,
+   "dronet_sa": 4
+  }
+ },
+ {
+  "family": "tight_loop",
+  "config": "cg",
+  "workload": "networks_tight_loop_cg",
+  "status": "ok",
+  "kinds": [
+   "cpu",
+   "gpu"
+  ],
+  "est_busy_ms": 4.923,
+  "lane_costs_ms": {
+   "mlp_control_sa": {
+    "cpu": 0.0598,
+    "gpu": 0.4513
+   },
+   "mlp_control_sb": {
+    "cpu": 0.0657,
+    "gpu": 0.4394
+   },
+   "dronet_sa": {
+    "cpu": 0.8601,
+    "gpu": 1.404
+   }
+  },
+  "periods": {
+   "mlp_control_sa": 1.354,
+   "mlp_control_sb": 1.758,
+   "dronet_sa": 8.424
+  },
+  "instances": {
+   "mlp_control_sa": 16,
+   "mlp_control_sb": 8,
+   "dronet_sa": 4
+  }
+ },
+ {
+  "family": "tight_loop",
+  "config": "quad",
+  "workload": "networks_tight_loop_quad",
+  "status": "ok",
+  "kinds": [
+   "hta",
+   "dsp",
+   "cpu",
+   "gpu"
+  ],
+  "est_busy_ms": 3.991,
+  "lane_costs_ms": {
+   "mlp_control_sa": {
+    "dsp": 0.5224,
+    "cpu": 0.0598,
+    "gpu": 0.4513
+   },
+   "mlp_control_sb": {
+    "dsp": 0.516,
+    "cpu": 0.0657,
+    "gpu": 0.4394
+   },
+   "dronet_sa": {
+    "hta": 2.5929,
+    "dsp": 0.6272,
+    "cpu": 0.8601,
+    "gpu": 1.404
+   }
+  },
+  "periods": {
+   "mlp_control_sa": 1.567,
+   "mlp_control_sb": 2.064,
+   "dronet_sa": 15.557
+  },
+  "instances": {
+   "mlp_control_sa": 16,
+   "mlp_control_sb": 8,
+   "dronet_sa": 4
+  }
+ },
+ {
+  "family": "control_mix",
+  "config": "hd",
+  "workload": "networks_control_mix_hd",
+  "status": "ok",
+  "kinds": [
+   "hta",
+   "dsp"
+  ],
+  "est_busy_ms": 11.003,
+  "lane_costs_ms": {
+   "mlp_control_sd": {
+    "dsp": 0.5236
+   },
+   "dronet_se": {
+    "hta": 2.7877,
+    "dsp": 0.8384
+   },
+   "yolov8_nano_sc": {
+    "hta": 7.9278,
+    "dsp": 3.4608
+   }
+  },
+  "periods": {
+   "mlp_control_sd": 2.094,
+   "dronet_se": 13.938,
+   "yolov8_nano_sc": null
+  },
+  "instances": {
+   "mlp_control_sd": 8,
+   "dronet_se": 4,
+   "yolov8_nano_sc": 1
+  }
+ },
+ {
+  "family": "control_mix",
+  "config": "dc",
+  "workload": "networks_control_mix_dc",
+  "status": "ok",
+  "kinds": [
+   "dsp",
+   "cpu"
+  ],
+  "est_busy_ms": 7.696,
+  "lane_costs_ms": {
+   "mlp_control_sd": {
+    "dsp": 0.5236,
+    "cpu": 0.1102
+   },
+   "dronet_se": {
+    "dsp": 0.8384,
+    "cpu": 1.4525
+   },
+   "yolov8_nano_sc": {
+    "dsp": 3.4608,
+    "cpu": 3.8872
+   }
+  },
+  "periods": {
+   "mlp_control_sd": 2.094,
+   "dronet_se": 7.262,
+   "yolov8_nano_sc": null
+  },
+  "instances": {
+   "mlp_control_sd": 8,
+   "dronet_se": 4,
+   "yolov8_nano_sc": 1
+  }
+ },
+ {
+  "family": "control_mix",
+  "config": "cg",
+  "workload": "networks_control_mix_cg",
+  "status": "ok",
+  "kinds": [
+   "cpu",
+   "gpu"
+  ],
+  "est_busy_ms": 10.579,
+  "lane_costs_ms": {
+   "mlp_control_sd": {
+    "cpu": 0.1102,
+    "gpu": 0.445
+   },
+   "dronet_se": {
+    "cpu": 1.4525,
+    "gpu": 1.6588
+   },
+   "yolov8_nano_sc": {
+    "cpu": 3.8872,
+    "gpu": 14.936
+   }
+  },
+  "periods": {
+   "mlp_control_sd": 1.78,
+   "dronet_se": 8.294,
+   "yolov8_nano_sc": null
+  },
+  "instances": {
+   "mlp_control_sd": 8,
+   "dronet_se": 4,
+   "yolov8_nano_sc": 1
+  }
+ },
+ {
+  "family": "control_mix",
+  "config": "quad",
+  "workload": "networks_control_mix_quad",
+  "status": "ok",
+  "kinds": [
+   "hta",
+   "dsp",
+   "cpu",
+   "gpu"
+  ],
+  "est_busy_ms": 7.696,
+  "lane_costs_ms": {
+   "mlp_control_sd": {
+    "dsp": 0.5236,
+    "cpu": 0.1102,
+    "gpu": 0.445
+   },
+   "dronet_se": {
+    "hta": 2.7877,
+    "dsp": 0.8384,
+    "cpu": 1.4525,
+    "gpu": 1.6588
+   },
+   "yolov8_nano_sc": {
+    "hta": 7.9278,
+    "dsp": 3.4608,
+    "cpu": 3.8872,
+    "gpu": 14.936
+   }
+  },
+  "periods": {
+   "mlp_control_sd": 2.094,
+   "dronet_se": 13.938,
+   "yolov8_nano_sc": null
+  },
+  "instances": {
+   "mlp_control_sd": 8,
+   "dronet_se": 4,
+   "yolov8_nano_sc": 1
+  }
+ },
+ {
+  "family": "perception_heavy",
+  "config": "hd",
+  "workload": "networks_perception_heavy_hd",
+  "status": "ok",
+  "kinds": [
+   "hta",
+   "dsp"
+  ],
+  "est_busy_ms": 8.892,
+  "lane_costs_ms": {
+   "yolov8_nano_sf": {
+    "hta": 8.681,
+    "dsp": 6.7976
+   },
+   "mlp_control_sd": {
+    "dsp": 0.5236
+   }
+  },
+  "periods": {
+   "yolov8_nano_sf": null,
+   "mlp_control_sd": 4.189
+  },
+  "instances": {
+   "yolov8_nano_sf": 1,
+   "mlp_control_sd": 4
+  }
+ },
+ {
+  "family": "perception_heavy",
+  "config": "dc",
+  "workload": "networks_perception_heavy_dc",
+  "status": "ok",
+  "kinds": [
+   "dsp",
+   "cpu"
+  ],
+  "est_busy_ms": 7.238,
+  "lane_costs_ms": {
+   "yolov8_nano_sf": {
+    "dsp": 6.7976,
+    "cpu": 8.6655
+   },
+   "mlp_control_sd": {
+    "dsp": 0.5236,
+    "cpu": 0.1102
+   }
+  },
+  "periods": {
+   "yolov8_nano_sf": null,
+   "mlp_control_sd": 4.189
+  },
+  "instances": {
+   "yolov8_nano_sf": 1,
+   "mlp_control_sd": 4
+  }
+ },
+ {
+  "family": "perception_heavy",
+  "config": "cg",
+  "workload": "networks_perception_heavy_cg",
+  "status": "ok",
+  "kinds": [
+   "cpu",
+   "gpu"
+  ],
+  "est_busy_ms": 9.106,
+  "lane_costs_ms": {
+   "yolov8_nano_sf": {
+    "cpu": 8.6655,
+    "gpu": 26.0673
+   },
+   "mlp_control_sd": {
+    "cpu": 0.1102,
+    "gpu": 0.445
+   }
+  },
+  "periods": {
+   "yolov8_nano_sf": null,
+   "mlp_control_sd": 3.56
+  },
+  "instances": {
+   "yolov8_nano_sf": 1,
+   "mlp_control_sd": 4
+  }
+ },
+ {
+  "family": "perception_heavy",
+  "config": "quad",
+  "workload": "networks_perception_heavy_quad",
+  "status": "ok",
+  "kinds": [
+   "hta",
+   "dsp",
+   "cpu",
+   "gpu"
+  ],
+  "est_busy_ms": 7.238,
+  "lane_costs_ms": {
+   "yolov8_nano_sf": {
+    "hta": 8.681,
+    "dsp": 6.7976,
+    "cpu": 8.6655,
+    "gpu": 26.0673
+   },
+   "mlp_control_sd": {
+    "dsp": 0.5236,
+    "cpu": 0.1102,
+    "gpu": 0.445
+   }
+  },
+  "periods": {
+   "yolov8_nano_sf": null,
+   "mlp_control_sd": 4.189
+  },
+  "instances": {
+   "yolov8_nano_sf": 1,
+   "mlp_control_sd": 4
+  }
+ },
+ {
+  "family": "scale_ladder",
+  "config": "hd",
+  "workload": "networks_scale_ladder_hd",
+  "status": "ok",
+  "kinds": [
+   "hta",
+   "dsp"
+  ],
+  "est_busy_ms": 4.462,
+  "lane_costs_ms": {
+   "dronet_sb": {
+    "hta": 2.6145,
+    "dsp": 0.5923
+   },
+   "dronet_sc": {
+    "hta": 2.6327,
+    "dsp": 0.667
+   },
+   "dronet_sd": {
+    "hta": 2.6666,
+    "dsp": 0.6724
+   },
+   "dronet_se": {
+    "hta": 2.7877,
+    "dsp": 0.8384
+   },
+   "dronet_sf": {
+    "hta": 1.9226,
+    "dsp": 0.81
+   },
+   "dronet_sg": {
+    "hta": 1.9976,
+    "dsp": 0.882
+   }
+  },
+  "periods": {
+   "dronet_sb": null,
+   "dronet_sc": null,
+   "dronet_sd": null,
+   "dronet_se": null,
+   "dronet_sf": null,
+   "dronet_sg": null
+  },
+  "instances": {
+   "dronet_sb": 1,
+   "dronet_sc": 1,
+   "dronet_sd": 1,
+   "dronet_se": 1,
+   "dronet_sf": 1,
+   "dronet_sg": 1
+  }
+ },
+ {
+  "family": "scale_ladder",
+  "config": "dc",
+  "workload": "networks_scale_ladder_dc",
+  "status": "ok",
+  "kinds": [
+   "dsp",
+   "cpu"
+  ],
+  "est_busy_ms": 4.462,
+  "lane_costs_ms": {
+   "dronet_sb": {
+    "dsp": 0.5923,
+    "cpu": 1.3097
+   },
+   "dronet_sc": {
+    "dsp": 0.667,
+    "cpu": 1.2118
+   },
+   "dronet_sd": {
+    "dsp": 0.6724,
+    "cpu": 1.4742
+   },
+   "dronet_se": {
+    "dsp": 0.8384,
+    "cpu": 1.4525
+   },
+   "dronet_sf": {
+    "dsp": 0.81,
+    "cpu": 1.9903
+   },
+   "dronet_sg": {
+    "dsp": 0.882,
+    "cpu": 2.4971
+   }
+  },
+  "periods": {
+   "dronet_sb": null,
+   "dronet_sc": null,
+   "dronet_sd": null,
+   "dronet_se": null,
+   "dronet_sf": null,
+   "dronet_sg": null
+  },
+  "instances": {
+   "dronet_sb": 1,
+   "dronet_sc": 1,
+   "dronet_sd": 1,
+   "dronet_se": 1,
+   "dronet_sf": 1,
+   "dronet_sg": 1
+  }
+ },
+ {
+  "family": "scale_ladder",
+  "config": "cg",
+  "workload": "networks_scale_ladder_cg",
+  "status": "ok",
+  "kinds": [
+   "cpu",
+   "gpu"
+  ],
+  "est_busy_ms": 9.019,
+  "lane_costs_ms": {
+   "dronet_sb": {
+    "cpu": 1.3097,
+    "gpu": 1.4811
+   },
+   "dronet_sc": {
+    "cpu": 1.2118,
+    "gpu": 1.5223
+   },
+   "dronet_sd": {
+    "cpu": 1.4742,
+    "gpu": 1.5303
+   },
+   "dronet_se": {
+    "cpu": 1.4525,
+    "gpu": 1.6588
+   },
+   "dronet_sf": {
+    "cpu": 1.9903,
+    "gpu": 1.6936
+   },
+   "dronet_sg": {
+    "cpu": 2.4971,
+    "gpu": 1.8769
+   }
+  },
+  "periods": {
+   "dronet_sb": null,
+   "dronet_sc": null,
+   "dronet_sd": null,
+   "dronet_se": null,
+   "dronet_sf": null,
+   "dronet_sg": null
+  },
+  "instances": {
+   "dronet_sb": 1,
+   "dronet_sc": 1,
+   "dronet_sd": 1,
+   "dronet_se": 1,
+   "dronet_sf": 1,
+   "dronet_sg": 1
+  }
+ },
+ {
+  "family": "scale_ladder",
+  "config": "quad",
+  "workload": "networks_scale_ladder_quad",
+  "status": "ok",
+  "kinds": [
+   "hta",
+   "dsp",
+   "cpu",
+   "gpu"
+  ],
+  "est_busy_ms": 4.462,
+  "lane_costs_ms": {
+   "dronet_sb": {
+    "hta": 2.6145,
+    "dsp": 0.5923,
+    "cpu": 1.3097,
+    "gpu": 1.4811
+   },
+   "dronet_sc": {
+    "hta": 2.6327,
+    "dsp": 0.667,
+    "cpu": 1.2118,
+    "gpu": 1.5223
+   },
+   "dronet_sd": {
+    "hta": 2.6666,
+    "dsp": 0.6724,
+    "cpu": 1.4742,
+    "gpu": 1.5303
+   },
+   "dronet_se": {
+    "hta": 2.7877,
+    "dsp": 0.8384,
+    "cpu": 1.4525,
+    "gpu": 1.6588
+   },
+   "dronet_sf": {
+    "hta": 1.9226,
+    "dsp": 0.81,
+    "cpu": 1.9903,
+    "gpu": 1.6936
+   },
+   "dronet_sg": {
+    "hta": 1.9976,
+    "dsp": 0.882,
+    "cpu": 2.4971,
+    "gpu": 1.8769
+   }
+  },
+  "periods": {
+   "dronet_sb": null,
+   "dronet_sc": null,
+   "dronet_sd": null,
+   "dronet_se": null,
+   "dronet_sf": null,
+   "dronet_sg": null
+  },
+  "instances": {
+   "dronet_sb": 1,
+   "dronet_sc": 1,
+   "dronet_sd": 1,
+   "dronet_se": 1,
+   "dronet_sf": 1,
+   "dronet_sg": 1
+  }
+ },
+ {
+  "family": "bimodal",
+  "config": "hd",
+  "workload": "networks_bimodal_hd",
+  "status": "ok",
+  "kinds": [
+   "hta",
+   "dsp"
+  ],
+  "est_busy_ms": 25.408,
+  "lane_costs_ms": {
+   "yolov8_nano_sh": {
+    "hta": 10.0011,
+    "dsp": 8.6911
+   },
+   "mlp_control_sa": {
+    "dsp": 0.5224
+   }
+  },
+  "periods": {
+   "yolov8_nano_sh": null,
+   "mlp_control_sa": 1.045
+  },
+  "instances": {
+   "yolov8_nano_sh": 1,
+   "mlp_control_sa": 32
+  }
+ },
+ {
+  "family": "bimodal",
+  "config": "dc",
+  "workload": "networks_bimodal_dc",
+  "status": "ok",
+  "kinds": [
+   "dsp",
+   "cpu"
+  ],
+  "est_busy_ms": 10.605,
+  "lane_costs_ms": {
+   "yolov8_nano_sh": {
+    "dsp": 8.6911,
+    "cpu": 16.6274
+   },
+   "mlp_control_sa": {
+    "dsp": 0.5224,
+    "cpu": 0.0598
+   }
+  },
+  "periods": {
+   "yolov8_nano_sh": null,
+   "mlp_control_sa": 1.045
+  },
+  "instances": {
+   "yolov8_nano_sh": 1,
+   "mlp_control_sa": 32
+  }
+ },
+ {
+  "family": "bimodal",
+  "config": "cg",
+  "workload": "networks_bimodal_cg",
+  "status": "ok",
+  "kinds": [
+   "cpu",
+   "gpu"
+  ],
+  "est_busy_ms": 18.541,
+  "lane_costs_ms": {
+   "yolov8_nano_sh": {
+    "cpu": 16.6274,
+    "gpu": 41.9169
+   },
+   "mlp_control_sa": {
+    "cpu": 0.0598,
+    "gpu": 0.4513
+   }
+  },
+  "periods": {
+   "yolov8_nano_sh": null,
+   "mlp_control_sa": 0.903
+  },
+  "instances": {
+   "yolov8_nano_sh": 1,
+   "mlp_control_sa": 32
+  }
+ },
+ {
+  "family": "bimodal",
+  "config": "quad",
+  "workload": "networks_bimodal_quad",
+  "status": "ok",
+  "kinds": [
+   "hta",
+   "dsp",
+   "cpu",
+   "gpu"
+  ],
+  "est_busy_ms": 10.605,
+  "lane_costs_ms": {
+   "yolov8_nano_sh": {
+    "hta": 10.0011,
+    "dsp": 8.6911,
+    "cpu": 16.6274,
+    "gpu": 41.9169
+   },
+   "mlp_control_sa": {
+    "dsp": 0.5224,
+    "cpu": 0.0598,
+    "gpu": 0.4513
+   }
+  },
+  "periods": {
+   "yolov8_nano_sh": null,
+   "mlp_control_sa": 1.045
+  },
+  "instances": {
+   "yolov8_nano_sh": 1,
+   "mlp_control_sa": 32
+  }
+ },
+ {
+  "family": "vint_intro",
+  "config": "hd",
+  "workload": "networks_vint_intro_hd",
+  "status": "REJECTED",
+  "problems": [
+   "vint: no lane in config hd (hta,dsp) has a measured cell for every tile \u2014 the solver would only ever see exclusion costs"
+  ]
+ },
+ {
+  "family": "vint_intro",
+  "config": "dc",
+  "workload": "networks_vint_intro_dc",
+  "status": "ok",
+  "kinds": [
+   "dsp",
+   "cpu"
+  ],
+  "est_busy_ms": 123.398,
+  "lane_costs_ms": {
+   "vint": {
+    "cpu": 121.989
+   },
+   "mlp_control_sf": {
+    "dsp": 0.5271,
+    "cpu": 0.1761
+   }
+  },
+  "periods": {
+   "vint": null,
+   "mlp_control_sf": 3.163
+  },
+  "instances": {
+   "vint": 1,
+   "mlp_control_sf": 8
+  }
+ },
+ {
+  "family": "vint_intro",
+  "config": "cg",
+  "workload": "networks_vint_intro_cg",
+  "status": "ok",
+  "kinds": [
+   "cpu",
+   "gpu"
+  ],
+  "est_busy_ms": 73.688,
+  "lane_costs_ms": {
+   "vint": {
+    "cpu": 121.989,
+    "gpu": 72.279
+   },
+   "mlp_control_sf": {
+    "cpu": 0.1761,
+    "gpu": 0.4465
+   }
+  },
+  "periods": {
+   "vint": null,
+   "mlp_control_sf": 2.679
+  },
+  "instances": {
+   "vint": 1,
+   "mlp_control_sf": 8
+  }
+ },
+ {
+  "family": "vint_intro",
+  "config": "quad",
+  "workload": "networks_vint_intro_quad",
+  "status": "ok",
+  "kinds": [
+   "hta",
+   "dsp",
+   "cpu",
+   "gpu"
+  ],
+  "est_busy_ms": 73.688,
+  "lane_costs_ms": {
+   "vint": {
+    "cpu": 121.989,
+    "gpu": 72.279
+   },
+   "mlp_control_sf": {
+    "dsp": 0.5271,
+    "cpu": 0.1761,
+    "gpu": 0.4465
+   }
+  },
+  "periods": {
+   "vint": null,
+   "mlp_control_sf": 3.163
+  },
+  "instances": {
+   "vint": 1,
+   "mlp_control_sf": 8
+  }
+ },
+ {
+  "family": "vint_multi",
+  "config": "hd",
+  "workload": "networks_vint_multi_hd",
+  "status": "REJECTED",
+  "problems": [
+   "vint: no lane in config hd (hta,dsp) has a measured cell for every tile \u2014 the solver would only ever see exclusion costs"
+  ]
+ },
+ {
+  "family": "vint_multi",
+  "config": "dc",
+  "workload": "networks_vint_multi_dc",
+  "status": "ok",
+  "kinds": [
+   "dsp",
+   "cpu"
+  ],
+  "est_busy_ms": 126.224,
+  "lane_costs_ms": {
+   "vint": {
+    "cpu": 121.989
+   },
+   "dronet_se": {
+    "dsp": 0.8384,
+    "cpu": 1.4525
+   },
+   "mlp_control_sd": {
+    "dsp": 0.5236,
+    "cpu": 0.1102
+   }
+  },
+  "periods": {
+   "vint": null,
+   "dronet_se": 11.62,
+   "mlp_control_sd": 3.142
+  },
+  "instances": {
+   "vint": 1,
+   "dronet_se": 4,
+   "mlp_control_sd": 8
+  }
+ },
+ {
+  "family": "vint_multi",
+  "config": "cg",
+  "workload": "networks_vint_multi_cg",
+  "status": "ok",
+  "kinds": [
+   "cpu",
+   "gpu"
+  ],
+  "est_busy_ms": 78.971,
+  "lane_costs_ms": {
+   "vint": {
+    "cpu": 121.989,
+    "gpu": 72.279
+   },
+   "dronet_se": {
+    "cpu": 1.4525,
+    "gpu": 1.6588
+   },
+   "mlp_control_sd": {
+    "cpu": 0.1102,
+    "gpu": 0.445
+   }
+  },
+  "periods": {
+   "vint": null,
+   "dronet_se": 13.27,
+   "mlp_control_sd": 2.67
+  },
+  "instances": {
+   "vint": 1,
+   "dronet_se": 4,
+   "mlp_control_sd": 8
+  }
+ },
+ {
+  "family": "vint_multi",
+  "config": "quad",
+  "workload": "networks_vint_multi_quad",
+  "status": "ok",
+  "kinds": [
+   "hta",
+   "dsp",
+   "cpu",
+   "gpu"
+  ],
+  "est_busy_ms": 76.514,
+  "lane_costs_ms": {
+   "vint": {
+    "cpu": 121.989,
+    "gpu": 72.279
+   },
+   "dronet_se": {
+    "hta": 2.7877,
+    "dsp": 0.8384,
+    "cpu": 1.4525,
+    "gpu": 1.6588
+   },
+   "mlp_control_sd": {
+    "dsp": 0.5236,
+    "cpu": 0.1102,
+    "gpu": 0.445
+   }
+  },
+  "periods": {
+   "vint": null,
+   "dronet_se": 22.302,
+   "mlp_control_sd": 3.142
+  },
+  "instances": {
+   "vint": 1,
+   "dronet_se": 4,
+   "mlp_control_sd": 8
+  }
+ },
+ {
+  "family": "saturation",
+  "config": "hd",
+  "workload": "networks_saturation_hd",
+  "status": "ok",
+  "kinds": [
+   "hta",
+   "dsp"
+  ],
+  "est_busy_ms": 23.597,
+  "lane_costs_ms": {
+   "yolov8_nano_se": {
+    "hta": 8.5078,
+    "dsp": 5.1515
+   },
+   "dronet_sf": {
+    "hta": 1.9226,
+    "dsp": 0.81
+   },
+   "mlp_control_sf": {
+    "dsp": 0.5271
+   }
+  },
+  "periods": {
+   "yolov8_nano_se": null,
+   "dronet_sf": 3.845,
+   "mlp_control_sf": 0.791
+  },
+  "instances": {
+   "yolov8_nano_se": 2,
+   "dronet_sf": 6,
+   "mlp_control_sf": 16
+  }
+ },
+ {
+  "family": "saturation",
+  "config": "dc",
+  "workload": "networks_saturation_dc",
+  "status": "ok",
+  "kinds": [
+   "dsp",
+   "cpu"
+  ],
+  "est_busy_ms": 17.981,
+  "lane_costs_ms": {
+   "yolov8_nano_se": {
+    "dsp": 5.1515,
+    "cpu": 6.8051
+   },
+   "dronet_sf": {
+    "dsp": 0.81,
+    "cpu": 1.9903
+   },
+   "mlp_control_sf": {
+    "dsp": 0.5271,
+    "cpu": 0.1761
+   }
+  },
+  "periods": {
+   "yolov8_nano_se": null,
+   "dronet_sf": 3.981,
+   "mlp_control_sf": 0.791
+  },
+  "instances": {
+   "yolov8_nano_se": 2,
+   "dronet_sf": 6,
+   "mlp_control_sf": 16
+  }
+ },
+ {
+  "family": "saturation",
+  "config": "cg",
+  "workload": "networks_saturation_cg",
+  "status": "ok",
+  "kinds": [
+   "cpu",
+   "gpu"
+  ],
+  "est_busy_ms": 26.589,
+  "lane_costs_ms": {
+   "yolov8_nano_se": {
+    "cpu": 6.8051,
+    "gpu": 20.0723
+   },
+   "dronet_sf": {
+    "cpu": 1.9903,
+    "gpu": 1.6936
+   },
+   "mlp_control_sf": {
+    "cpu": 0.1761,
+    "gpu": 0.4465
+   }
+  },
+  "periods": {
+   "yolov8_nano_se": null,
+   "dronet_sf": 3.981,
+   "mlp_control_sf": 0.67
+  },
+  "instances": {
+   "yolov8_nano_se": 2,
+   "dronet_sf": 6,
+   "mlp_control_sf": 16
+  }
+ },
+ {
+  "family": "saturation",
+  "config": "quad",
+  "workload": "networks_saturation_quad",
+  "status": "ok",
+  "kinds": [
+   "hta",
+   "dsp",
+   "cpu",
+   "gpu"
+  ],
+  "est_busy_ms": 17.981,
+  "lane_costs_ms": {
+   "yolov8_nano_se": {
+    "hta": 8.5078,
+    "dsp": 5.1515,
+    "cpu": 6.8051,
+    "gpu": 20.0723
+   },
+   "dronet_sf": {
+    "hta": 1.9226,
+    "dsp": 0.81,
+    "cpu": 1.9903,
+    "gpu": 1.6936
+   },
+   "mlp_control_sf": {
+    "dsp": 0.5271,
+    "cpu": 0.1761,
+    "gpu": 0.4465
+   }
+  },
+  "periods": {
+   "yolov8_nano_se": null,
+   "dronet_sf": 3.981,
+   "mlp_control_sf": 0.791
+  },
+  "instances": {
+   "yolov8_nano_se": 2,
+   "dronet_sf": 6,
+   "mlp_control_sf": 16
+  }
+ },
+ {
+  "family": "depth_chain",
+  "config": "hd",
+  "workload": "networks_depth_chain_hd",
+  "status": "ok",
+  "kinds": [
+   "hta",
+   "dsp"
+  ],
+  "est_busy_ms": 7.264,
+  "lane_costs_ms": {
+   "fastdepth": {
+    "hta": 3.7456,
+    "dsp": 2.8218
+   },
+   "dronet_sf": {
+    "hta": 1.9226,
+    "dsp": 0.81
+   }
+  },
+  "periods": {
+   "fastdepth": 8.502,
+   "dronet_sf": 8.502
+  },
+  "instances": {
+   "fastdepth": 2,
+   "dronet_sf": 2
+  }
+ },
+ {
+  "family": "depth_chain",
+  "config": "dc",
+  "workload": "networks_depth_chain_dc",
+  "status": "ok",
+  "kinds": [
+   "dsp",
+   "cpu"
+  ],
+  "est_busy_ms": 7.264,
+  "lane_costs_ms": {
+   "fastdepth": {
+    "dsp": 2.8218,
+    "cpu": 3.6431
+   },
+   "dronet_sf": {
+    "dsp": 0.81,
+    "cpu": 1.9903
+   }
+  },
+  "periods": {
+   "fastdepth": 8.45,
+   "dronet_sf": 8.45
+  },
+  "instances": {
+   "fastdepth": 2,
+   "dronet_sf": 2
+  }
+ },
+ {
+  "family": "depth_chain",
+  "config": "cg",
+  "workload": "networks_depth_chain_cg",
+  "status": "ok",
+  "kinds": [
+   "cpu",
+   "gpu"
+  ],
+  "est_busy_ms": 10.635,
+  "lane_costs_ms": {
+   "fastdepth": {
+    "cpu": 3.6431,
+    "gpu": 3.6241
+   },
+   "dronet_sf": {
+    "cpu": 1.9903,
+    "gpu": 1.6936
+   }
+  },
+  "periods": {
+   "fastdepth": 8.45,
+   "dronet_sf": 8.45
+  },
+  "instances": {
+   "fastdepth": 2,
+   "dronet_sf": 2
+  }
+ },
+ {
+  "family": "depth_chain",
+  "config": "quad",
+  "workload": "networks_depth_chain_quad",
+  "status": "ok",
+  "kinds": [
+   "hta",
+   "dsp",
+   "cpu",
+   "gpu"
+  ],
+  "est_busy_ms": 7.264,
+  "lane_costs_ms": {
+   "fastdepth": {
+    "hta": 3.7456,
+    "dsp": 2.8218,
+    "cpu": 3.6431,
+    "gpu": 3.6241
+   },
+   "dronet_sf": {
+    "hta": 1.9226,
+    "dsp": 0.81,
+    "cpu": 1.9903,
+    "gpu": 1.6936
+   }
+  },
+  "periods": {
+   "fastdepth": 8.604,
+   "dronet_sf": 8.604
+  },
+  "instances": {
+   "fastdepth": 2,
+   "dronet_sf": 2
+  }
+ },
+ {
+  "family": "depth_nav",
+  "config": "hd",
+  "workload": "networks_depth_nav_hd",
+  "status": "ok",
+  "kinds": [
+   "hta",
+   "dsp"
+  ],
+  "est_busy_ms": 15.641,
+  "lane_costs_ms": {
+   "fastdepth": {
+    "hta": 3.7456,
+    "dsp": 2.8218
+   },
+   "dronet_sf": {
+    "hta": 1.9226,
+    "dsp": 0.81
+   },
+   "mlp_control_sd": {
+    "dsp": 0.5236
+   }
+  },
+  "periods": {
+   "fastdepth": 8.502,
+   "dronet_sf": 8.502,
+   "mlp_control_sd": 2.094
+  },
+  "instances": {
+   "fastdepth": 2,
+   "dronet_sf": 2,
+   "mlp_control_sd": 16
+  }
+ },
+ {
+  "family": "depth_nav",
+  "config": "dc",
+  "workload": "networks_depth_nav_dc",
+  "status": "ok",
+  "kinds": [
+   "dsp",
+   "cpu"
+  ],
+  "est_busy_ms": 9.027,
+  "lane_costs_ms": {
+   "fastdepth": {
+    "dsp": 2.8218,
+    "cpu": 3.6431
+   },
+   "dronet_sf": {
+    "dsp": 0.81,
+    "cpu": 1.9903
+   },
+   "mlp_control_sd": {
+    "dsp": 0.5236,
+    "cpu": 0.1102
+   }
+  },
+  "periods": {
+   "fastdepth": 8.45,
+   "dronet_sf": 8.45,
+   "mlp_control_sd": 2.094
+  },
+  "instances": {
+   "fastdepth": 2,
+   "dronet_sf": 2,
+   "mlp_control_sd": 16
+  }
+ },
+ {
+  "family": "depth_nav",
+  "config": "cg",
+  "workload": "networks_depth_nav_cg",
+  "status": "ok",
+  "kinds": [
+   "cpu",
+   "gpu"
+  ],
+  "est_busy_ms": 12.399,
+  "lane_costs_ms": {
+   "fastdepth": {
+    "cpu": 3.6431,
+    "gpu": 3.6241
+   },
+   "dronet_sf": {
+    "cpu": 1.9903,
+    "gpu": 1.6936
+   },
+   "mlp_control_sd": {
+    "cpu": 0.1102,
+    "gpu": 0.445
+   }
+  },
+  "periods": {
+   "fastdepth": 8.45,
+   "dronet_sf": 8.45,
+   "mlp_control_sd": 1.78
+  },
+  "instances": {
+   "fastdepth": 2,
+   "dronet_sf": 2,
+   "mlp_control_sd": 16
+  }
+ },
+ {
+  "family": "depth_nav",
+  "config": "quad",
+  "workload": "networks_depth_nav_quad",
+  "status": "ok",
+  "kinds": [
+   "hta",
+   "dsp",
+   "cpu",
+   "gpu"
+  ],
+  "est_busy_ms": 9.027,
+  "lane_costs_ms": {
+   "fastdepth": {
+    "hta": 3.7456,
+    "dsp": 2.8218,
+    "cpu": 3.6431,
+    "gpu": 3.6241
+   },
+   "dronet_sf": {
+    "hta": 1.9226,
+    "dsp": 0.81,
+    "cpu": 1.9903,
+    "gpu": 1.6936
+   },
+   "mlp_control_sd": {
+    "dsp": 0.5236,
+    "cpu": 0.1102,
+    "gpu": 0.445
+   }
+  },
+  "periods": {
+   "fastdepth": 8.604,
+   "dronet_sf": 8.604,
+   "mlp_control_sd": 2.094
+  },
+  "instances": {
+   "fastdepth": 2,
+   "dronet_sf": 2,
+   "mlp_control_sd": 16
+  }
+ },
+ {
+  "family": "depth_contended",
+  "config": "hd",
+  "workload": "networks_depth_contended_hd",
+  "status": "ok",
+  "kinds": [
+   "hta",
+   "dsp"
+  ],
+  "est_busy_ms": 10.724,
+  "lane_costs_ms": {
+   "fastdepth": {
+    "hta": 3.7456,
+    "dsp": 2.8218
+   },
+   "dronet_sf": {
+    "hta": 1.9226,
+    "dsp": 0.81
+   },
+   "yolov8_nano_sc": {
+    "hta": 7.9278,
+    "dsp": 3.4608
+   }
+  },
+  "periods": {
+   "fastdepth": 8.502,
+   "dronet_sf": 8.502,
+   "yolov8_nano_sc": null
+  },
+  "instances": {
+   "fastdepth": 2,
+   "dronet_sf": 2,
+   "yolov8_nano_sc": 1
+  }
+ },
+ {
+  "family": "depth_contended",
+  "config": "dc",
+  "workload": "networks_depth_contended_dc",
+  "status": "ok",
+  "kinds": [
+   "dsp",
+   "cpu"
+  ],
+  "est_busy_ms": 10.724,
+  "lane_costs_ms": {
+   "fastdepth": {
+    "dsp": 2.8218,
+    "cpu": 3.6431
+   },
+   "dronet_sf": {
+    "dsp": 0.81,
+    "cpu": 1.9903
+   },
+   "yolov8_nano_sc": {
+    "dsp": 3.4608,
+    "cpu": 3.8872
+   }
+  },
+  "periods": {
+   "fastdepth": 8.45,
+   "dronet_sf": 8.45,
+   "yolov8_nano_sc": null
+  },
+  "instances": {
+   "fastdepth": 2,
+   "dronet_sf": 2,
+   "yolov8_nano_sc": 1
+  }
+ },
+ {
+  "family": "depth_contended",
+  "config": "cg",
+  "workload": "networks_depth_contended_cg",
+  "status": "ok",
+  "kinds": [
+   "cpu",
+   "gpu"
+  ],
+  "est_busy_ms": 14.523,
+  "lane_costs_ms": {
+   "fastdepth": {
+    "cpu": 3.6431,
+    "gpu": 3.6241
+   },
+   "dronet_sf": {
+    "cpu": 1.9903,
+    "gpu": 1.6936
+   },
+   "yolov8_nano_sc": {
+    "cpu": 3.8872,
+    "gpu": 14.936
+   }
+  },
+  "periods": {
+   "fastdepth": 8.45,
+   "dronet_sf": 8.45,
+   "yolov8_nano_sc": null
+  },
+  "instances": {
+   "fastdepth": 2,
+   "dronet_sf": 2,
+   "yolov8_nano_sc": 1
+  }
+ },
+ {
+  "family": "depth_contended",
+  "config": "quad",
+  "workload": "networks_depth_contended_quad",
+  "status": "ok",
+  "kinds": [
+   "hta",
+   "dsp",
+   "cpu",
+   "gpu"
+  ],
+  "est_busy_ms": 10.724,
+  "lane_costs_ms": {
+   "fastdepth": {
+    "hta": 3.7456,
+    "dsp": 2.8218,
+    "cpu": 3.6431,
+    "gpu": 3.6241
+   },
+   "dronet_sf": {
+    "hta": 1.9226,
+    "dsp": 0.81,
+    "cpu": 1.9903,
+    "gpu": 1.6936
+   },
+   "yolov8_nano_sc": {
+    "hta": 7.9278,
+    "dsp": 3.4608,
+    "cpu": 3.8872,
+    "gpu": 14.936
+   }
+  },
+  "periods": {
+   "fastdepth": 8.604,
+   "dronet_sf": 8.604,
+   "yolov8_nano_sc": null
+  },
+  "instances": {
+   "fastdepth": 2,
+   "dronet_sf": 2,
+   "yolov8_nano_sc": 1
+  }
+ }
+]

@@ -1,0 +1,85 @@
+{
+  "name": "s10port_artifacts",
+  "_comment": "Artifacts-only spec for the sched_algo_sweep10 QRB5165 port: names every network and every backend so one `flow_c.py artifacts` pass emits the dispatch graphs and profile CSVs all four lane configs read. The data/toplevel/networks_s10port_artifacts.json it also writes is a by-product and is NOT the taskset any cell is solved from -- those come from scripts/mk_workloads_qrb5165.py.",
+  "target": "qrb5165_flowc",
+  "board": "qrb5165_v66",
+  "registry": "cores/qrb5165_qnn.json",
+  "measurements": "sweeps/qrb5165_sched_algo_sweep10_20260908-210226/cost_model.json",
+  "slots": {
+    "CPU_P": "dsp",
+    "CPU_E": "cpu",
+    "CPU_X": "gpu",
+    "CPU_G": "hta"
+  },
+  "ctx_dir": "/root/qnn_runtime_ctx",
+  "networks": [
+    {
+      "name": "dronet_sa",
+      "bindings": "sweeps/qrb5165_sched_algo_sweep10_20260908-210226/bindings/dronet_sa.json"
+    },
+    {
+      "name": "dronet_sb",
+      "bindings": "sweeps/qrb5165_sched_algo_sweep10_20260908-210226/bindings/dronet_sb.json"
+    },
+    {
+      "name": "dronet_sc",
+      "bindings": "sweeps/qrb5165_sched_algo_sweep10_20260908-210226/bindings/dronet_sc.json"
+    },
+    {
+      "name": "dronet_sd",
+      "bindings": "sweeps/qrb5165_sched_algo_sweep10_20260908-210226/bindings/dronet_sd.json"
+    },
+    {
+      "name": "dronet_se",
+      "bindings": "sweeps/qrb5165_sched_algo_sweep10_20260908-210226/bindings/dronet_se.json"
+    },
+    {
+      "name": "dronet_sf",
+      "bindings": "sweeps/qrb5165_sched_algo_sweep10_20260908-210226/bindings/dronet_sf.json"
+    },
+    {
+      "name": "dronet_sg",
+      "bindings": "sweeps/qrb5165_sched_algo_sweep10_20260908-210226/bindings/dronet_sg.json"
+    },
+    {
+      "name": "fastdepth",
+      "bindings": "sweeps/qrb5165_sched_algo_sweep10_20260908-210226/bindings/fastdepth.json"
+    },
+    {
+      "name": "mlp_control_sa",
+      "bindings": "sweeps/qrb5165_sched_algo_sweep10_20260908-210226/bindings/mlp_control_sa.json"
+    },
+    {
+      "name": "mlp_control_sb",
+      "bindings": "sweeps/qrb5165_sched_algo_sweep10_20260908-210226/bindings/mlp_control_sb.json"
+    },
+    {
+      "name": "mlp_control_sd",
+      "bindings": "sweeps/qrb5165_sched_algo_sweep10_20260908-210226/bindings/mlp_control_sd.json"
+    },
+    {
+      "name": "mlp_control_sf",
+      "bindings": "sweeps/qrb5165_sched_algo_sweep10_20260908-210226/bindings/mlp_control_sf.json"
+    },
+    {
+      "name": "vint",
+      "bindings": "bindings/vint.json"
+    },
+    {
+      "name": "yolov8_nano_sc",
+      "bindings": "sweeps/qrb5165_sched_algo_sweep10_20260908-210226/bindings/yolov8_nano_sc.json"
+    },
+    {
+      "name": "yolov8_nano_se",
+      "bindings": "sweeps/qrb5165_sched_algo_sweep10_20260908-210226/bindings/yolov8_nano_se.json"
+    },
+    {
+      "name": "yolov8_nano_sf",
+      "bindings": "sweeps/qrb5165_sched_algo_sweep10_20260908-210226/bindings/yolov8_nano_sf.json"
+    },
+    {
+      "name": "yolov8_nano_sh",
+      "bindings": "sweeps/qrb5165_sched_algo_sweep10_20260908-210226/bindings/yolov8_nano_sh.json"
+    }
+  ]
+}

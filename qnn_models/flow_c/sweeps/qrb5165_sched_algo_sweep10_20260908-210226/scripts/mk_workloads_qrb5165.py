@@ -16,18 +16,25 @@ else:
    runtime for. What this board offers instead is a CHOICE OF LANES, so the
    config axis becomes which lane subset is available:
 
-       dc    dsp + cpu        two lanes: accelerator + general purpose
-       dg    dsp + gpu        two lanes: two accelerators
-       cg    cpu + gpu        two lanes: general purpose + the slow accelerator
-       dcg   dsp + cpu + gpu  the board's full composing lane set
+       hd     hta + dsp                  two accelerator lanes  (gempair's role)
+       dc     dsp + cpu                  accelerator + general  (hetero's role)
+       cg     cpu + gpu                  general + slow accel   (rvvpair's role)
+       quad   hta + dsp + cpu + gpu      the whole part         (quad's role)
 
-   Three two-lane configs and one full config, which is the same shape as the
-   reference's three two-machine configs plus `quad`. HTA is NOT a lane here:
-   Phase 1 attempted an HTA compose for every network and recorded the result,
-   and the reference's networks as the zoo exports them do not compose there
-   (batchnorm in dronet, elu in mlp_control, transpose in the yolo heads,
-   depthwise conv in fastdepth). Cells that DID compose on HTA are still in
-   the cost model; they are just not offered as a machine.
+   Three two-lane configs -- a fast pair, a mixed pair and a slow pair -- plus
+   one four-lane config, which is the same shape as the reference's three
+   two-machine configs plus `quad`.
+
+   HTA is a lane because Phase 1R MADE it one. Phase 1 measured that the
+   reference's networks, as the zoo exports them, compose on HTA for exactly
+   one of sixteen (fastdepth); the other fifteen were rejected on Batchnorm,
+   Elu or StridedSlice. Eleven of those were then unlocked by numerics-
+   preserving graph rewrites, so the cost model now carries twelve HTA cells
+   instead of one. The four that are not unlocked are the mlp_control rungs,
+   where Elu has no algebraic equivalent and the numerics-CHANGING probe
+   measured 2.186 ms on HTA against 0.176 ms on the CPU -- 12x worse, so
+   there is nothing there to want. A network with no cell on a config's lanes
+   makes that cell fail predicate 5 and it is not generated.
 
    The arms are matched WITHIN THIS TARGET ONLY. No absolute latency in this
    sweep is comparable with the reference's FireSim numbers.
@@ -78,10 +85,15 @@ GEN_ROOT = "gen"
 #: what `build_machine_combinations` keys on and what `install_slot_map`
 #: resolves; CPU_P/CPU_E/CPU_X are the three the ingest already knows.
 CONFIGS = {
-    "dc":  {"CPU_P": "dsp", "CPU_E": "cpu"},
-    "dg":  {"CPU_P": "dsp", "CPU_E": "gpu"},
-    "cg":  {"CPU_P": "cpu", "CPU_E": "gpu"},
-    "dcg": {"CPU_P": "dsp", "CPU_E": "cpu", "CPU_X": "gpu"},
+    # two accelerator lanes -- the "both fast" pair, gempair's role
+    "hd":   {"CPU_P": "hta", "CPU_E": "dsp"},
+    # accelerator + general purpose -- hetero's role
+    "dc":   {"CPU_P": "dsp", "CPU_E": "cpu"},
+    # general purpose + the slow accelerator -- the "both slow" pair,
+    # rvvpair's role
+    "cg":   {"CPU_P": "cpu", "CPU_E": "gpu"},
+    # the whole part -- quad's role
+    "quad": {"CPU_P": "hta", "CPU_E": "dsp", "CPU_X": "cpu", "CPU_G": "gpu"},
 }
 #: registry kind -> the profile_hw label artifacts.py writes profiles under
 HW_LABEL = {"hta": "HTA", "dsp": "DSP", "cpu": "CPU", "gpu": "GPU"}
