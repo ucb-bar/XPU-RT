@@ -48,5 +48,8 @@
    "from": "fastdepth",
    "to": "dronet_sf"
   }
- ]
+ ],
+ "discriminates": false,
+ "discrimination_note": "every network is periodic, so schedule_decoder.evaluate scores (num_instances-1)*period + critical path -- a property of the spec, not of any schedule. Every solver that finds a feasible schedule returns the same objective, so this cell cannot rank a scheduler.",
+ "role": "calibration"
 }
