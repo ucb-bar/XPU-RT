@@ -1,0 +1,11 @@
+# Raw artifacts and measurement data are NOT committed; everything needed to
+# replicate is (scripts, SETUP.md, ANALYSIS.md, model_costs.json, the plans,
+# the expressibility/enumeration tables and measured.json).
+logs/
+plots/
+raw/
+configs/
+__pycache__/
+*.pyc
+results/state.json
+results/staged.json

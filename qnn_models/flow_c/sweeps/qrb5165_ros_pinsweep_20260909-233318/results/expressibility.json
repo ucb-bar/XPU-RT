@@ -1,0 +1,1507 @@
+{
+ "harness_limits": [
+  "L1",
+  "L2",
+  "L3",
+  "L4",
+  "L5"
+ ],
+ "cells": [
+  {
+   "cell": "networks_bimodal_cg",
+   "family": "bimodal",
+   "config": "cg",
+   "lanes": [
+    "cpu",
+    "gpu"
+   ],
+   "pin_lanes": [
+    "cpu"
+   ],
+   "n_networks": 2,
+   "n_legal": 1,
+   "verdict": "DEGENERATE (1-LANE)",
+   "notes": [
+    "gpu-not-a-candidate"
+   ],
+   "legal_per_net": {
+    "yolov8_nano_sh": [
+     "cpu"
+    ],
+    "mlp_control_sa": [
+     "cpu"
+    ]
+   },
+   "blocked": {},
+   "edges": []
+  },
+  {
+   "cell": "networks_bimodal_dc",
+   "family": "bimodal",
+   "config": "dc",
+   "lanes": [
+    "dsp",
+    "cpu"
+   ],
+   "pin_lanes": [
+    "dsp",
+    "cpu"
+   ],
+   "n_networks": 2,
+   "n_legal": 4,
+   "verdict": "OK",
+   "notes": [],
+   "legal_per_net": {
+    "yolov8_nano_sh": [
+     "dsp",
+     "cpu"
+    ],
+    "mlp_control_sa": [
+     "dsp",
+     "cpu"
+    ]
+   },
+   "blocked": {},
+   "edges": []
+  },
+  {
+   "cell": "networks_bimodal_hd",
+   "family": "bimodal",
+   "config": "hd",
+   "lanes": [
+    "hta",
+    "dsp"
+   ],
+   "pin_lanes": [
+    "hta",
+    "dsp"
+   ],
+   "n_networks": 2,
+   "n_legal": 2,
+   "verdict": "OK",
+   "notes": [],
+   "legal_per_net": {
+    "yolov8_nano_sh": [
+     "hta",
+     "dsp"
+    ],
+    "mlp_control_sa": [
+     "dsp"
+    ]
+   },
+   "blocked": {},
+   "edges": []
+  },
+  {
+   "cell": "networks_bimodal_quad",
+   "family": "bimodal",
+   "config": "quad",
+   "lanes": [
+    "hta",
+    "dsp",
+    "cpu",
+    "gpu"
+   ],
+   "pin_lanes": [
+    "hta",
+    "dsp",
+    "cpu"
+   ],
+   "n_networks": 2,
+   "n_legal": 6,
+   "verdict": "OK",
+   "notes": [
+    "gpu-not-a-candidate"
+   ],
+   "legal_per_net": {
+    "yolov8_nano_sh": [
+     "hta",
+     "dsp",
+     "cpu"
+    ],
+    "mlp_control_sa": [
+     "dsp",
+     "cpu"
+    ]
+   },
+   "blocked": {},
+   "edges": []
+  },
+  {
+   "cell": "networks_control_mix_cg",
+   "family": "control_mix",
+   "config": "cg",
+   "lanes": [
+    "cpu",
+    "gpu"
+   ],
+   "pin_lanes": [
+    "cpu"
+   ],
+   "n_networks": 3,
+   "n_legal": 1,
+   "verdict": "DEGENERATE (1-LANE)",
+   "notes": [
+    "gpu-not-a-candidate"
+   ],
+   "legal_per_net": {
+    "mlp_control_sd": [
+     "cpu"
+    ],
+    "dronet_se": [
+     "cpu"
+    ],
+    "yolov8_nano_sc": [
+     "cpu"
+    ]
+   },
+   "blocked": {},
+   "edges": []
+  },
+  {
+   "cell": "networks_control_mix_dc",
+   "family": "control_mix",
+   "config": "dc",
+   "lanes": [
+    "dsp",
+    "cpu"
+   ],
+   "pin_lanes": [
+    "dsp",
+    "cpu"
+   ],
+   "n_networks": 3,
+   "n_legal": 8,
+   "verdict": "OK",
+   "notes": [],
+   "legal_per_net": {
+    "mlp_control_sd": [
+     "dsp",
+     "cpu"
+    ],
+    "dronet_se": [
+     "dsp",
+     "cpu"
+    ],
+    "yolov8_nano_sc": [
+     "dsp",
+     "cpu"
+    ]
+   },
+   "blocked": {},
+   "edges": []
+  },
+  {
+   "cell": "networks_control_mix_hd",
+   "family": "control_mix",
+   "config": "hd",
+   "lanes": [
+    "hta",
+    "dsp"
+   ],
+   "pin_lanes": [
+    "hta",
+    "dsp"
+   ],
+   "n_networks": 3,
+   "n_legal": 4,
+   "verdict": "OK",
+   "notes": [],
+   "legal_per_net": {
+    "mlp_control_sd": [
+     "dsp"
+    ],
+    "dronet_se": [
+     "hta",
+     "dsp"
+    ],
+    "yolov8_nano_sc": [
+     "hta",
+     "dsp"
+    ]
+   },
+   "blocked": {},
+   "edges": []
+  },
+  {
+   "cell": "networks_control_mix_quad",
+   "family": "control_mix",
+   "config": "quad",
+   "lanes": [
+    "hta",
+    "dsp",
+    "cpu",
+    "gpu"
+   ],
+   "pin_lanes": [
+    "hta",
+    "dsp",
+    "cpu"
+   ],
+   "n_networks": 3,
+   "n_legal": 18,
+   "verdict": "OK",
+   "notes": [
+    "gpu-not-a-candidate"
+   ],
+   "legal_per_net": {
+    "mlp_control_sd": [
+     "dsp",
+     "cpu"
+    ],
+    "dronet_se": [
+     "hta",
+     "dsp",
+     "cpu"
+    ],
+    "yolov8_nano_sc": [
+     "hta",
+     "dsp",
+     "cpu"
+    ]
+   },
+   "blocked": {},
+   "edges": []
+  },
+  {
+   "cell": "networks_depth_chain_cg",
+   "family": "depth_chain",
+   "config": "cg",
+   "lanes": [
+    "cpu",
+    "gpu"
+   ],
+   "pin_lanes": [
+    "cpu"
+   ],
+   "n_networks": 2,
+   "n_legal": 1,
+   "verdict": "DEGENERATE (1-LANE)",
+   "notes": [
+    "EDGE-WIRED",
+    "gpu-not-a-candidate"
+   ],
+   "legal_per_net": {
+    "fastdepth": [
+     "cpu"
+    ],
+    "dronet_sf": [
+     "cpu"
+    ]
+   },
+   "blocked": {},
+   "edges": [
+    {
+     "from": "fastdepth",
+     "to": "dronet_sf"
+    }
+   ]
+  },
+  {
+   "cell": "networks_depth_chain_dc",
+   "family": "depth_chain",
+   "config": "dc",
+   "lanes": [
+    "dsp",
+    "cpu"
+   ],
+   "pin_lanes": [
+    "dsp",
+    "cpu"
+   ],
+   "n_networks": 2,
+   "n_legal": 4,
+   "verdict": "OK",
+   "notes": [
+    "EDGE-WIRED"
+   ],
+   "legal_per_net": {
+    "fastdepth": [
+     "dsp",
+     "cpu"
+    ],
+    "dronet_sf": [
+     "dsp",
+     "cpu"
+    ]
+   },
+   "blocked": {},
+   "edges": [
+    {
+     "from": "fastdepth",
+     "to": "dronet_sf"
+    }
+   ]
+  },
+  {
+   "cell": "networks_depth_chain_hd",
+   "family": "depth_chain",
+   "config": "hd",
+   "lanes": [
+    "hta",
+    "dsp"
+   ],
+   "pin_lanes": [
+    "hta",
+    "dsp"
+   ],
+   "n_networks": 2,
+   "n_legal": 4,
+   "verdict": "OK",
+   "notes": [
+    "EDGE-WIRED"
+   ],
+   "legal_per_net": {
+    "fastdepth": [
+     "hta",
+     "dsp"
+    ],
+    "dronet_sf": [
+     "hta",
+     "dsp"
+    ]
+   },
+   "blocked": {},
+   "edges": [
+    {
+     "from": "fastdepth",
+     "to": "dronet_sf"
+    }
+   ]
+  },
+  {
+   "cell": "networks_depth_chain_quad",
+   "family": "depth_chain",
+   "config": "quad",
+   "lanes": [
+    "hta",
+    "dsp",
+    "cpu",
+    "gpu"
+   ],
+   "pin_lanes": [
+    "hta",
+    "dsp",
+    "cpu"
+   ],
+   "n_networks": 2,
+   "n_legal": 9,
+   "verdict": "OK",
+   "notes": [
+    "EDGE-WIRED",
+    "gpu-not-a-candidate"
+   ],
+   "legal_per_net": {
+    "fastdepth": [
+     "hta",
+     "dsp",
+     "cpu"
+    ],
+    "dronet_sf": [
+     "hta",
+     "dsp",
+     "cpu"
+    ]
+   },
+   "blocked": {},
+   "edges": [
+    {
+     "from": "fastdepth",
+     "to": "dronet_sf"
+    }
+   ]
+  },
+  {
+   "cell": "networks_depth_contended_cg",
+   "family": "depth_contended",
+   "config": "cg",
+   "lanes": [
+    "cpu",
+    "gpu"
+   ],
+   "pin_lanes": [
+    "cpu"
+   ],
+   "n_networks": 3,
+   "n_legal": 1,
+   "verdict": "DEGENERATE (1-LANE)",
+   "notes": [
+    "EDGE-WIRED",
+    "gpu-not-a-candidate"
+   ],
+   "legal_per_net": {
+    "fastdepth": [
+     "cpu"
+    ],
+    "dronet_sf": [
+     "cpu"
+    ],
+    "yolov8_nano_sc": [
+     "cpu"
+    ]
+   },
+   "blocked": {},
+   "edges": [
+    {
+     "from": "fastdepth",
+     "to": "dronet_sf"
+    }
+   ]
+  },
+  {
+   "cell": "networks_depth_contended_dc",
+   "family": "depth_contended",
+   "config": "dc",
+   "lanes": [
+    "dsp",
+    "cpu"
+   ],
+   "pin_lanes": [
+    "dsp",
+    "cpu"
+   ],
+   "n_networks": 3,
+   "n_legal": 8,
+   "verdict": "OK",
+   "notes": [
+    "EDGE-WIRED"
+   ],
+   "legal_per_net": {
+    "fastdepth": [
+     "dsp",
+     "cpu"
+    ],
+    "dronet_sf": [
+     "dsp",
+     "cpu"
+    ],
+    "yolov8_nano_sc": [
+     "dsp",
+     "cpu"
+    ]
+   },
+   "blocked": {},
+   "edges": [
+    {
+     "from": "fastdepth",
+     "to": "dronet_sf"
+    }
+   ]
+  },
+  {
+   "cell": "networks_depth_contended_hd",
+   "family": "depth_contended",
+   "config": "hd",
+   "lanes": [
+    "hta",
+    "dsp"
+   ],
+   "pin_lanes": [
+    "hta",
+    "dsp"
+   ],
+   "n_networks": 3,
+   "n_legal": 8,
+   "verdict": "OK",
+   "notes": [
+    "EDGE-WIRED"
+   ],
+   "legal_per_net": {
+    "fastdepth": [
+     "hta",
+     "dsp"
+    ],
+    "dronet_sf": [
+     "hta",
+     "dsp"
+    ],
+    "yolov8_nano_sc": [
+     "hta",
+     "dsp"
+    ]
+   },
+   "blocked": {},
+   "edges": [
+    {
+     "from": "fastdepth",
+     "to": "dronet_sf"
+    }
+   ]
+  },
+  {
+   "cell": "networks_depth_contended_quad",
+   "family": "depth_contended",
+   "config": "quad",
+   "lanes": [
+    "hta",
+    "dsp",
+    "cpu",
+    "gpu"
+   ],
+   "pin_lanes": [
+    "hta",
+    "dsp",
+    "cpu"
+   ],
+   "n_networks": 3,
+   "n_legal": 27,
+   "verdict": "OK",
+   "notes": [
+    "EDGE-WIRED",
+    "gpu-not-a-candidate"
+   ],
+   "legal_per_net": {
+    "fastdepth": [
+     "hta",
+     "dsp",
+     "cpu"
+    ],
+    "dronet_sf": [
+     "hta",
+     "dsp",
+     "cpu"
+    ],
+    "yolov8_nano_sc": [
+     "hta",
+     "dsp",
+     "cpu"
+    ]
+   },
+   "blocked": {},
+   "edges": [
+    {
+     "from": "fastdepth",
+     "to": "dronet_sf"
+    }
+   ]
+  },
+  {
+   "cell": "networks_depth_nav_cg",
+   "family": "depth_nav",
+   "config": "cg",
+   "lanes": [
+    "cpu",
+    "gpu"
+   ],
+   "pin_lanes": [
+    "cpu"
+   ],
+   "n_networks": 3,
+   "n_legal": 1,
+   "verdict": "DEGENERATE (1-LANE)",
+   "notes": [
+    "EDGE-WIRED",
+    "gpu-not-a-candidate"
+   ],
+   "legal_per_net": {
+    "fastdepth": [
+     "cpu"
+    ],
+    "dronet_sf": [
+     "cpu"
+    ],
+    "mlp_control_sd": [
+     "cpu"
+    ]
+   },
+   "blocked": {},
+   "edges": [
+    {
+     "from": "fastdepth",
+     "to": "dronet_sf"
+    }
+   ]
+  },
+  {
+   "cell": "networks_depth_nav_dc",
+   "family": "depth_nav",
+   "config": "dc",
+   "lanes": [
+    "dsp",
+    "cpu"
+   ],
+   "pin_lanes": [
+    "dsp",
+    "cpu"
+   ],
+   "n_networks": 3,
+   "n_legal": 8,
+   "verdict": "OK",
+   "notes": [
+    "EDGE-WIRED"
+   ],
+   "legal_per_net": {
+    "fastdepth": [
+     "dsp",
+     "cpu"
+    ],
+    "dronet_sf": [
+     "dsp",
+     "cpu"
+    ],
+    "mlp_control_sd": [
+     "dsp",
+     "cpu"
+    ]
+   },
+   "blocked": {},
+   "edges": [
+    {
+     "from": "fastdepth",
+     "to": "dronet_sf"
+    }
+   ]
+  },
+  {
+   "cell": "networks_depth_nav_hd",
+   "family": "depth_nav",
+   "config": "hd",
+   "lanes": [
+    "hta",
+    "dsp"
+   ],
+   "pin_lanes": [
+    "hta",
+    "dsp"
+   ],
+   "n_networks": 3,
+   "n_legal": 4,
+   "verdict": "OK",
+   "notes": [
+    "EDGE-WIRED"
+   ],
+   "legal_per_net": {
+    "fastdepth": [
+     "hta",
+     "dsp"
+    ],
+    "dronet_sf": [
+     "hta",
+     "dsp"
+    ],
+    "mlp_control_sd": [
+     "dsp"
+    ]
+   },
+   "blocked": {},
+   "edges": [
+    {
+     "from": "fastdepth",
+     "to": "dronet_sf"
+    }
+   ]
+  },
+  {
+   "cell": "networks_depth_nav_quad",
+   "family": "depth_nav",
+   "config": "quad",
+   "lanes": [
+    "hta",
+    "dsp",
+    "cpu",
+    "gpu"
+   ],
+   "pin_lanes": [
+    "hta",
+    "dsp",
+    "cpu"
+   ],
+   "n_networks": 3,
+   "n_legal": 18,
+   "verdict": "OK",
+   "notes": [
+    "EDGE-WIRED",
+    "gpu-not-a-candidate"
+   ],
+   "legal_per_net": {
+    "fastdepth": [
+     "hta",
+     "dsp",
+     "cpu"
+    ],
+    "dronet_sf": [
+     "hta",
+     "dsp",
+     "cpu"
+    ],
+    "mlp_control_sd": [
+     "dsp",
+     "cpu"
+    ]
+   },
+   "blocked": {},
+   "edges": [
+    {
+     "from": "fastdepth",
+     "to": "dronet_sf"
+    }
+   ]
+  },
+  {
+   "cell": "networks_perception_heavy_cg",
+   "family": "perception_heavy",
+   "config": "cg",
+   "lanes": [
+    "cpu",
+    "gpu"
+   ],
+   "pin_lanes": [
+    "cpu"
+   ],
+   "n_networks": 2,
+   "n_legal": 1,
+   "verdict": "DEGENERATE (1-LANE)",
+   "notes": [
+    "gpu-not-a-candidate"
+   ],
+   "legal_per_net": {
+    "yolov8_nano_sf": [
+     "cpu"
+    ],
+    "mlp_control_sd": [
+     "cpu"
+    ]
+   },
+   "blocked": {},
+   "edges": []
+  },
+  {
+   "cell": "networks_perception_heavy_dc",
+   "family": "perception_heavy",
+   "config": "dc",
+   "lanes": [
+    "dsp",
+    "cpu"
+   ],
+   "pin_lanes": [
+    "dsp",
+    "cpu"
+   ],
+   "n_networks": 2,
+   "n_legal": 4,
+   "verdict": "OK",
+   "notes": [],
+   "legal_per_net": {
+    "yolov8_nano_sf": [
+     "dsp",
+     "cpu"
+    ],
+    "mlp_control_sd": [
+     "dsp",
+     "cpu"
+    ]
+   },
+   "blocked": {},
+   "edges": []
+  },
+  {
+   "cell": "networks_perception_heavy_hd",
+   "family": "perception_heavy",
+   "config": "hd",
+   "lanes": [
+    "hta",
+    "dsp"
+   ],
+   "pin_lanes": [
+    "hta",
+    "dsp"
+   ],
+   "n_networks": 2,
+   "n_legal": 2,
+   "verdict": "OK",
+   "notes": [],
+   "legal_per_net": {
+    "yolov8_nano_sf": [
+     "hta",
+     "dsp"
+    ],
+    "mlp_control_sd": [
+     "dsp"
+    ]
+   },
+   "blocked": {},
+   "edges": []
+  },
+  {
+   "cell": "networks_perception_heavy_quad",
+   "family": "perception_heavy",
+   "config": "quad",
+   "lanes": [
+    "hta",
+    "dsp",
+    "cpu",
+    "gpu"
+   ],
+   "pin_lanes": [
+    "hta",
+    "dsp",
+    "cpu"
+   ],
+   "n_networks": 2,
+   "n_legal": 6,
+   "verdict": "OK",
+   "notes": [
+    "gpu-not-a-candidate"
+   ],
+   "legal_per_net": {
+    "yolov8_nano_sf": [
+     "hta",
+     "dsp",
+     "cpu"
+    ],
+    "mlp_control_sd": [
+     "dsp",
+     "cpu"
+    ]
+   },
+   "blocked": {},
+   "edges": []
+  },
+  {
+   "cell": "networks_saturation_cg",
+   "family": "saturation",
+   "config": "cg",
+   "lanes": [
+    "cpu",
+    "gpu"
+   ],
+   "pin_lanes": [
+    "cpu"
+   ],
+   "n_networks": 3,
+   "n_legal": 1,
+   "verdict": "DEGENERATE (1-LANE)",
+   "notes": [
+    "gpu-not-a-candidate"
+   ],
+   "legal_per_net": {
+    "yolov8_nano_se": [
+     "cpu"
+    ],
+    "dronet_sf": [
+     "cpu"
+    ],
+    "mlp_control_sf": [
+     "cpu"
+    ]
+   },
+   "blocked": {},
+   "edges": []
+  },
+  {
+   "cell": "networks_saturation_dc",
+   "family": "saturation",
+   "config": "dc",
+   "lanes": [
+    "dsp",
+    "cpu"
+   ],
+   "pin_lanes": [
+    "dsp",
+    "cpu"
+   ],
+   "n_networks": 3,
+   "n_legal": 8,
+   "verdict": "OK",
+   "notes": [],
+   "legal_per_net": {
+    "yolov8_nano_se": [
+     "dsp",
+     "cpu"
+    ],
+    "dronet_sf": [
+     "dsp",
+     "cpu"
+    ],
+    "mlp_control_sf": [
+     "dsp",
+     "cpu"
+    ]
+   },
+   "blocked": {},
+   "edges": []
+  },
+  {
+   "cell": "networks_saturation_hd",
+   "family": "saturation",
+   "config": "hd",
+   "lanes": [
+    "hta",
+    "dsp"
+   ],
+   "pin_lanes": [
+    "hta",
+    "dsp"
+   ],
+   "n_networks": 3,
+   "n_legal": 4,
+   "verdict": "OK",
+   "notes": [],
+   "legal_per_net": {
+    "yolov8_nano_se": [
+     "hta",
+     "dsp"
+    ],
+    "dronet_sf": [
+     "hta",
+     "dsp"
+    ],
+    "mlp_control_sf": [
+     "dsp"
+    ]
+   },
+   "blocked": {},
+   "edges": []
+  },
+  {
+   "cell": "networks_saturation_quad",
+   "family": "saturation",
+   "config": "quad",
+   "lanes": [
+    "hta",
+    "dsp",
+    "cpu",
+    "gpu"
+   ],
+   "pin_lanes": [
+    "hta",
+    "dsp",
+    "cpu"
+   ],
+   "n_networks": 3,
+   "n_legal": 18,
+   "verdict": "OK",
+   "notes": [
+    "gpu-not-a-candidate"
+   ],
+   "legal_per_net": {
+    "yolov8_nano_se": [
+     "hta",
+     "dsp",
+     "cpu"
+    ],
+    "dronet_sf": [
+     "hta",
+     "dsp",
+     "cpu"
+    ],
+    "mlp_control_sf": [
+     "dsp",
+     "cpu"
+    ]
+   },
+   "blocked": {},
+   "edges": []
+  },
+  {
+   "cell": "networks_scale_ladder_cg",
+   "family": "scale_ladder",
+   "config": "cg",
+   "lanes": [
+    "cpu",
+    "gpu"
+   ],
+   "pin_lanes": [
+    "cpu"
+   ],
+   "n_networks": 6,
+   "n_legal": 1,
+   "verdict": "DEGENERATE (1-LANE)",
+   "notes": [
+    "gpu-not-a-candidate"
+   ],
+   "legal_per_net": {
+    "dronet_sb": [
+     "cpu"
+    ],
+    "dronet_sc": [
+     "cpu"
+    ],
+    "dronet_sd": [
+     "cpu"
+    ],
+    "dronet_se": [
+     "cpu"
+    ],
+    "dronet_sf": [
+     "cpu"
+    ],
+    "dronet_sg": [
+     "cpu"
+    ]
+   },
+   "blocked": {},
+   "edges": []
+  },
+  {
+   "cell": "networks_scale_ladder_dc",
+   "family": "scale_ladder",
+   "config": "dc",
+   "lanes": [
+    "dsp",
+    "cpu"
+   ],
+   "pin_lanes": [
+    "dsp",
+    "cpu"
+   ],
+   "n_networks": 6,
+   "n_legal": 64,
+   "verdict": "OK",
+   "notes": [],
+   "legal_per_net": {
+    "dronet_sb": [
+     "dsp",
+     "cpu"
+    ],
+    "dronet_sc": [
+     "dsp",
+     "cpu"
+    ],
+    "dronet_sd": [
+     "dsp",
+     "cpu"
+    ],
+    "dronet_se": [
+     "dsp",
+     "cpu"
+    ],
+    "dronet_sf": [
+     "dsp",
+     "cpu"
+    ],
+    "dronet_sg": [
+     "dsp",
+     "cpu"
+    ]
+   },
+   "blocked": {},
+   "edges": []
+  },
+  {
+   "cell": "networks_scale_ladder_hd",
+   "family": "scale_ladder",
+   "config": "hd",
+   "lanes": [
+    "hta",
+    "dsp"
+   ],
+   "pin_lanes": [
+    "hta",
+    "dsp"
+   ],
+   "n_networks": 6,
+   "n_legal": 64,
+   "verdict": "OK",
+   "notes": [],
+   "legal_per_net": {
+    "dronet_sb": [
+     "hta",
+     "dsp"
+    ],
+    "dronet_sc": [
+     "hta",
+     "dsp"
+    ],
+    "dronet_sd": [
+     "hta",
+     "dsp"
+    ],
+    "dronet_se": [
+     "hta",
+     "dsp"
+    ],
+    "dronet_sf": [
+     "hta",
+     "dsp"
+    ],
+    "dronet_sg": [
+     "hta",
+     "dsp"
+    ]
+   },
+   "blocked": {},
+   "edges": []
+  },
+  {
+   "cell": "networks_scale_ladder_quad",
+   "family": "scale_ladder",
+   "config": "quad",
+   "lanes": [
+    "hta",
+    "dsp",
+    "cpu",
+    "gpu"
+   ],
+   "pin_lanes": [
+    "hta",
+    "dsp",
+    "cpu"
+   ],
+   "n_networks": 6,
+   "n_legal": 729,
+   "verdict": "OK",
+   "notes": [
+    "gpu-not-a-candidate"
+   ],
+   "legal_per_net": {
+    "dronet_sb": [
+     "hta",
+     "dsp",
+     "cpu"
+    ],
+    "dronet_sc": [
+     "hta",
+     "dsp",
+     "cpu"
+    ],
+    "dronet_sd": [
+     "hta",
+     "dsp",
+     "cpu"
+    ],
+    "dronet_se": [
+     "hta",
+     "dsp",
+     "cpu"
+    ],
+    "dronet_sf": [
+     "hta",
+     "dsp",
+     "cpu"
+    ],
+    "dronet_sg": [
+     "hta",
+     "dsp",
+     "cpu"
+    ]
+   },
+   "blocked": {},
+   "edges": []
+  },
+  {
+   "cell": "networks_tight_loop_cg",
+   "family": "tight_loop",
+   "config": "cg",
+   "lanes": [
+    "cpu",
+    "gpu"
+   ],
+   "pin_lanes": [
+    "cpu"
+   ],
+   "n_networks": 3,
+   "n_legal": 1,
+   "verdict": "DEGENERATE (1-LANE)",
+   "notes": [
+    "gpu-not-a-candidate"
+   ],
+   "legal_per_net": {
+    "mlp_control_sa": [
+     "cpu"
+    ],
+    "mlp_control_sb": [
+     "cpu"
+    ],
+    "dronet_sa": [
+     "cpu"
+    ]
+   },
+   "blocked": {},
+   "edges": []
+  },
+  {
+   "cell": "networks_tight_loop_dc",
+   "family": "tight_loop",
+   "config": "dc",
+   "lanes": [
+    "dsp",
+    "cpu"
+   ],
+   "pin_lanes": [
+    "dsp",
+    "cpu"
+   ],
+   "n_networks": 3,
+   "n_legal": 8,
+   "verdict": "OK",
+   "notes": [],
+   "legal_per_net": {
+    "mlp_control_sa": [
+     "dsp",
+     "cpu"
+    ],
+    "mlp_control_sb": [
+     "dsp",
+     "cpu"
+    ],
+    "dronet_sa": [
+     "dsp",
+     "cpu"
+    ]
+   },
+   "blocked": {},
+   "edges": []
+  },
+  {
+   "cell": "networks_tight_loop_hd",
+   "family": "tight_loop",
+   "config": "hd",
+   "lanes": [
+    "hta",
+    "dsp"
+   ],
+   "pin_lanes": [
+    "hta",
+    "dsp"
+   ],
+   "n_networks": 3,
+   "n_legal": 2,
+   "verdict": "OK",
+   "notes": [],
+   "legal_per_net": {
+    "mlp_control_sa": [
+     "dsp"
+    ],
+    "mlp_control_sb": [
+     "dsp"
+    ],
+    "dronet_sa": [
+     "hta",
+     "dsp"
+    ]
+   },
+   "blocked": {},
+   "edges": []
+  },
+  {
+   "cell": "networks_tight_loop_quad",
+   "family": "tight_loop",
+   "config": "quad",
+   "lanes": [
+    "hta",
+    "dsp",
+    "cpu",
+    "gpu"
+   ],
+   "pin_lanes": [
+    "hta",
+    "dsp",
+    "cpu"
+   ],
+   "n_networks": 3,
+   "n_legal": 12,
+   "verdict": "OK",
+   "notes": [
+    "gpu-not-a-candidate"
+   ],
+   "legal_per_net": {
+    "mlp_control_sa": [
+     "dsp",
+     "cpu"
+    ],
+    "mlp_control_sb": [
+     "dsp",
+     "cpu"
+    ],
+    "dronet_sa": [
+     "hta",
+     "dsp",
+     "cpu"
+    ]
+   },
+   "blocked": {},
+   "edges": []
+  },
+  {
+   "cell": "networks_vint_intro_cg",
+   "family": "vint_intro",
+   "config": "cg",
+   "lanes": [
+    "cpu",
+    "gpu"
+   ],
+   "pin_lanes": [
+    "cpu"
+   ],
+   "n_networks": 2,
+   "n_legal": 1,
+   "verdict": "DEGENERATE (1-LANE)",
+   "notes": [
+    "gpu-not-a-candidate"
+   ],
+   "legal_per_net": {
+    "vint": [
+     "cpu"
+    ],
+    "mlp_control_sf": [
+     "cpu"
+    ]
+   },
+   "blocked": {},
+   "edges": []
+  },
+  {
+   "cell": "networks_vint_intro_dc",
+   "family": "vint_intro",
+   "config": "dc",
+   "lanes": [
+    "dsp",
+    "cpu"
+   ],
+   "pin_lanes": [
+    "dsp",
+    "cpu"
+   ],
+   "n_networks": 2,
+   "n_legal": 2,
+   "verdict": "OK",
+   "notes": [],
+   "legal_per_net": {
+    "vint": [
+     "cpu"
+    ],
+    "mlp_control_sf": [
+     "dsp",
+     "cpu"
+    ]
+   },
+   "blocked": {},
+   "edges": []
+  },
+  {
+   "cell": "networks_vint_intro_quad",
+   "family": "vint_intro",
+   "config": "quad",
+   "lanes": [
+    "hta",
+    "dsp",
+    "cpu",
+    "gpu"
+   ],
+   "pin_lanes": [
+    "hta",
+    "dsp",
+    "cpu"
+   ],
+   "n_networks": 2,
+   "n_legal": 2,
+   "verdict": "OK",
+   "notes": [
+    "gpu-not-a-candidate"
+   ],
+   "legal_per_net": {
+    "vint": [
+     "cpu"
+    ],
+    "mlp_control_sf": [
+     "dsp",
+     "cpu"
+    ]
+   },
+   "blocked": {},
+   "edges": []
+  },
+  {
+   "cell": "networks_vint_multi_cg",
+   "family": "vint_multi",
+   "config": "cg",
+   "lanes": [
+    "cpu",
+    "gpu"
+   ],
+   "pin_lanes": [
+    "cpu"
+   ],
+   "n_networks": 3,
+   "n_legal": 1,
+   "verdict": "DEGENERATE (1-LANE)",
+   "notes": [
+    "gpu-not-a-candidate"
+   ],
+   "legal_per_net": {
+    "vint": [
+     "cpu"
+    ],
+    "dronet_se": [
+     "cpu"
+    ],
+    "mlp_control_sd": [
+     "cpu"
+    ]
+   },
+   "blocked": {},
+   "edges": []
+  },
+  {
+   "cell": "networks_vint_multi_dc",
+   "family": "vint_multi",
+   "config": "dc",
+   "lanes": [
+    "dsp",
+    "cpu"
+   ],
+   "pin_lanes": [
+    "dsp",
+    "cpu"
+   ],
+   "n_networks": 3,
+   "n_legal": 4,
+   "verdict": "OK",
+   "notes": [],
+   "legal_per_net": {
+    "vint": [
+     "cpu"
+    ],
+    "dronet_se": [
+     "dsp",
+     "cpu"
+    ],
+    "mlp_control_sd": [
+     "dsp",
+     "cpu"
+    ]
+   },
+   "blocked": {},
+   "edges": []
+  },
+  {
+   "cell": "networks_vint_multi_quad",
+   "family": "vint_multi",
+   "config": "quad",
+   "lanes": [
+    "hta",
+    "dsp",
+    "cpu",
+    "gpu"
+   ],
+   "pin_lanes": [
+    "hta",
+    "dsp",
+    "cpu"
+   ],
+   "n_networks": 3,
+   "n_legal": 6,
+   "verdict": "OK",
+   "notes": [
+    "gpu-not-a-candidate"
+   ],
+   "legal_per_net": {
+    "vint": [
+     "cpu"
+    ],
+    "dronet_se": [
+     "hta",
+     "dsp",
+     "cpu"
+    ],
+    "mlp_control_sd": [
+     "dsp",
+     "cpu"
+    ]
+   },
+   "blocked": {},
+   "edges": []
+  }
+ ]
+}

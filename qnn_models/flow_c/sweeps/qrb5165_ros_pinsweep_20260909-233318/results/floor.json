@@ -1,0 +1,38 @@
+{
+ "_comment": "Harness limit L3: measured empty-callback period of one rclcpp SingleThreadedExecutor on this board, so a declared period below the floor is reported per cell rather than silently absorbed. p50/p95/max are of the fire-to-fire gap.",
+ "board": "root@qrb5165",
+ "floors": {
+  "0.5": {
+   "period": 0.5,
+   "n": 1499.0,
+   "min": 0.1971,
+   "p50": 0.5,
+   "p95": 0.503,
+   "max": 3.2471
+  },
+  "1.0": {
+   "period": 1.0,
+   "n": 1499.0,
+   "min": 0.7715,
+   "p50": 1.0,
+   "p95": 1.0224,
+   "max": 1.2359
+  },
+  "2.0": {
+   "period": 2.0,
+   "n": 1499.0,
+   "min": 1.5333,
+   "p50": 2.0002,
+   "p95": 2.0229,
+   "max": 2.4708
+  },
+  "5.0": {
+   "period": 5.0,
+   "n": 1499.0,
+   "min": 3.5716,
+   "p50": 5.0002,
+   "p95": 5.1805,
+   "max": 6.2439
+  }
+ }
+}
