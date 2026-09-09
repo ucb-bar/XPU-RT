@@ -801,11 +801,10 @@
    "cpu",
    "gpu"
   ],
-  "est_busy_ms": 73.688,
+  "est_busy_ms": 123.398,
   "lane_costs_ms": {
    "vint": {
-    "cpu": 121.989,
-    "gpu": 72.279
+    "cpu": 121.989
    },
    "mlp_control_sf": {
     "cpu": 0.1761,
@@ -832,11 +831,10 @@
    "cpu",
    "gpu"
   ],
-  "est_busy_ms": 73.688,
+  "est_busy_ms": 123.398,
   "lane_costs_ms": {
    "vint": {
-    "cpu": 121.989,
-    "gpu": 72.279
+    "cpu": 121.989
    },
    "mlp_control_sf": {
     "dsp": 0.5271,
@@ -905,11 +903,10 @@
    "cpu",
    "gpu"
   ],
-  "est_busy_ms": 78.971,
+  "est_busy_ms": 128.681,
   "lane_costs_ms": {
    "vint": {
-    "cpu": 121.989,
-    "gpu": 72.279
+    "cpu": 121.989
    },
    "dronet_se": {
     "cpu": 1.4525,
@@ -942,11 +939,10 @@
    "cpu",
    "gpu"
   ],
-  "est_busy_ms": 76.514,
+  "est_busy_ms": 126.224,
   "lane_costs_ms": {
    "vint": {
-    "cpu": 121.989,
-    "gpu": 72.279
+    "cpu": 121.989
    },
    "dronet_se": {
     "hta": 2.7877,

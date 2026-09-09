@@ -1,0 +1,1196 @@
+[
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_control_mix_cg",
+  "solver": "greedy"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_control_mix_cg",
+  "solver": "greedy_periodic"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_control_mix_cg",
+  "solver": "greedy_reserved"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_control_mix_cg",
+  "solver": "decomposed"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_control_mix_cg",
+  "solver": "heft"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_control_mix_cg",
+  "solver": "heft_edf"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_control_mix_cg",
+  "solver": "pso"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_control_mix_cg",
+  "solver": "sa"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_control_mix_cg",
+  "solver": "cpsat"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_control_mix_cg",
+  "solver": "cpsat:warm"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_control_mix_cg",
+  "solver": "best-of-fast"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_control_mix_cg",
+  "solver": "cpsat:warmbest"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_saturation_dc",
+  "solver": "greedy"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_saturation_dc",
+  "solver": "greedy_periodic"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_saturation_dc",
+  "solver": "greedy_reserved"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_saturation_dc",
+  "solver": "decomposed"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_saturation_dc",
+  "solver": "heft"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_saturation_dc",
+  "solver": "heft_edf"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_saturation_dc",
+  "solver": "pso"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_saturation_dc",
+  "solver": "sa"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_saturation_dc",
+  "solver": "cpsat"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_saturation_dc",
+  "solver": "cpsat:warm"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_saturation_dc",
+  "solver": "best-of-fast"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_saturation_dc",
+  "solver": "cpsat:warmbest"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_bimodal_cg",
+  "solver": "greedy"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_bimodal_cg",
+  "solver": "greedy_periodic"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_bimodal_cg",
+  "solver": "greedy_reserved"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_bimodal_cg",
+  "solver": "decomposed"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_bimodal_cg",
+  "solver": "heft"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_bimodal_cg",
+  "solver": "heft_edf"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_bimodal_cg",
+  "solver": "pso"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_bimodal_cg",
+  "solver": "sa"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_bimodal_cg",
+  "solver": "cpsat"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_bimodal_cg",
+  "solver": "cpsat:warm"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_bimodal_cg",
+  "solver": "best-of-fast"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_bimodal_cg",
+  "solver": "cpsat:warmbest"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_depth_contended_hd",
+  "solver": "greedy"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_depth_contended_hd",
+  "solver": "greedy_periodic"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_depth_contended_hd",
+  "solver": "greedy_reserved"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_depth_contended_hd",
+  "solver": "decomposed"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_depth_contended_hd",
+  "solver": "heft"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_depth_contended_hd",
+  "solver": "heft_edf"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_depth_contended_hd",
+  "solver": "pso"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_depth_contended_hd",
+  "solver": "sa"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_depth_contended_hd",
+  "solver": "cpsat"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_depth_contended_hd",
+  "solver": "cpsat:warm"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_depth_contended_hd",
+  "solver": "best-of-fast"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_depth_contended_hd",
+  "solver": "cpsat:warmbest"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_vint_multi_dc",
+  "solver": "greedy"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_vint_multi_dc",
+  "solver": "greedy_periodic"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_vint_multi_dc",
+  "solver": "greedy_reserved"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_vint_multi_dc",
+  "solver": "decomposed"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_vint_multi_dc",
+  "solver": "heft"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_vint_multi_dc",
+  "solver": "heft_edf"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_vint_multi_dc",
+  "solver": "pso"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_vint_multi_dc",
+  "solver": "sa"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_vint_multi_dc",
+  "solver": "cpsat"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_vint_multi_dc",
+  "solver": "cpsat:warm"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_vint_multi_dc",
+  "solver": "best-of-fast"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_vint_multi_dc",
+  "solver": "cpsat:warmbest"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_scale_ladder_quad",
+  "solver": "greedy"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_scale_ladder_quad",
+  "solver": "greedy_periodic"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_scale_ladder_quad",
+  "solver": "greedy_reserved"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_scale_ladder_quad",
+  "solver": "decomposed"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_scale_ladder_quad",
+  "solver": "heft"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_scale_ladder_quad",
+  "solver": "heft_edf"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_scale_ladder_quad",
+  "solver": "pso"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_scale_ladder_quad",
+  "solver": "sa"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_scale_ladder_quad",
+  "solver": "cpsat"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_scale_ladder_quad",
+  "solver": "cpsat:warm"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_scale_ladder_quad",
+  "solver": "best-of-fast"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_scale_ladder_quad",
+  "solver": "cpsat:warmbest"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_perception_heavy_cg",
+  "solver": "greedy"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_perception_heavy_cg",
+  "solver": "greedy_periodic"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_perception_heavy_cg",
+  "solver": "greedy_reserved"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_perception_heavy_cg",
+  "solver": "decomposed"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_perception_heavy_cg",
+  "solver": "heft"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_perception_heavy_cg",
+  "solver": "heft_edf"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_perception_heavy_cg",
+  "solver": "pso"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_perception_heavy_cg",
+  "solver": "sa"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_perception_heavy_cg",
+  "solver": "cpsat"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_perception_heavy_cg",
+  "solver": "cpsat:warm"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_perception_heavy_cg",
+  "solver": "best-of-fast"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_perception_heavy_cg",
+  "solver": "cpsat:warmbest"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_vint_intro_dc",
+  "solver": "greedy"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_vint_intro_dc",
+  "solver": "greedy_periodic"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_vint_intro_dc",
+  "solver": "greedy_reserved"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_vint_intro_dc",
+  "solver": "decomposed"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_vint_intro_dc",
+  "solver": "heft"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_vint_intro_dc",
+  "solver": "heft_edf"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_vint_intro_dc",
+  "solver": "pso"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_vint_intro_dc",
+  "solver": "sa"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_vint_intro_dc",
+  "solver": "cpsat"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_vint_intro_dc",
+  "solver": "cpsat:warm"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_vint_intro_dc",
+  "solver": "best-of-fast"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_vint_intro_dc",
+  "solver": "cpsat:warmbest"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_control_mix_dc",
+  "solver": "greedy"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_control_mix_dc",
+  "solver": "greedy_periodic"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_control_mix_dc",
+  "solver": "greedy_reserved"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_control_mix_dc",
+  "solver": "decomposed"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_control_mix_dc",
+  "solver": "heft"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_control_mix_dc",
+  "solver": "heft_edf"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_control_mix_dc",
+  "solver": "pso"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_control_mix_dc",
+  "solver": "sa"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_control_mix_dc",
+  "solver": "cpsat"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_control_mix_dc",
+  "solver": "cpsat:warm"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_control_mix_dc",
+  "solver": "best-of-fast"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_control_mix_dc",
+  "solver": "cpsat:warmbest"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_control_mix_quad",
+  "solver": "greedy"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_control_mix_quad",
+  "solver": "greedy_periodic"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_control_mix_quad",
+  "solver": "greedy_reserved"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_control_mix_quad",
+  "solver": "decomposed"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_control_mix_quad",
+  "solver": "heft"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_control_mix_quad",
+  "solver": "heft_edf"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_control_mix_quad",
+  "solver": "pso"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_control_mix_quad",
+  "solver": "sa"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_control_mix_quad",
+  "solver": "cpsat"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_control_mix_quad",
+  "solver": "cpsat:warm"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_control_mix_quad",
+  "solver": "best-of-fast"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_control_mix_quad",
+  "solver": "cpsat:warmbest"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_saturation_quad",
+  "solver": "greedy"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_saturation_quad",
+  "solver": "greedy_periodic"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_saturation_quad",
+  "solver": "greedy_reserved"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_saturation_quad",
+  "solver": "decomposed"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_saturation_quad",
+  "solver": "heft"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_saturation_quad",
+  "solver": "heft_edf"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_saturation_quad",
+  "solver": "pso"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_saturation_quad",
+  "solver": "sa"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_saturation_quad",
+  "solver": "cpsat"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_saturation_quad",
+  "solver": "cpsat:warm"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_saturation_quad",
+  "solver": "best-of-fast"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_saturation_quad",
+  "solver": "cpsat:warmbest"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_depth_contended_dc",
+  "solver": "greedy"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_depth_contended_dc",
+  "solver": "greedy_periodic"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_depth_contended_dc",
+  "solver": "greedy_reserved"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_depth_contended_dc",
+  "solver": "decomposed"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_depth_contended_dc",
+  "solver": "heft"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_depth_contended_dc",
+  "solver": "heft_edf"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_depth_contended_dc",
+  "solver": "pso"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_depth_contended_dc",
+  "solver": "sa"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_depth_contended_dc",
+  "solver": "cpsat"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_depth_contended_dc",
+  "solver": "cpsat:warm"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_depth_contended_dc",
+  "solver": "best-of-fast"
+ },
+ {
+  "tier": "A",
+  "arm": "s10port",
+  "workload": "networks_depth_contended_dc",
+  "solver": "cpsat:warmbest"
+ },
+ {
+  "tier": "B",
+  "arm": "s10port",
+  "workload": "networks_bimodal_dc",
+  "solver": "greedy"
+ },
+ {
+  "tier": "B",
+  "arm": "s10port",
+  "workload": "networks_bimodal_dc",
+  "solver": "decomposed"
+ },
+ {
+  "tier": "B",
+  "arm": "s10port",
+  "workload": "networks_bimodal_hd",
+  "solver": "greedy"
+ },
+ {
+  "tier": "B",
+  "arm": "s10port",
+  "workload": "networks_bimodal_quad",
+  "solver": "greedy"
+ },
+ {
+  "tier": "B",
+  "arm": "s10port",
+  "workload": "networks_bimodal_quad",
+  "solver": "greedy_periodic"
+ },
+ {
+  "tier": "B",
+  "arm": "s10port",
+  "workload": "networks_control_mix_hd",
+  "solver": "greedy"
+ },
+ {
+  "tier": "B",
+  "arm": "s10port",
+  "workload": "networks_depth_chain_cg",
+  "solver": "greedy"
+ },
+ {
+  "tier": "B",
+  "arm": "s10port",
+  "workload": "networks_depth_chain_cg",
+  "solver": "decomposed"
+ },
+ {
+  "tier": "B",
+  "arm": "s10port",
+  "workload": "networks_depth_chain_dc",
+  "solver": "greedy"
+ },
+ {
+  "tier": "B",
+  "arm": "s10port",
+  "workload": "networks_depth_chain_dc",
+  "solver": "decomposed"
+ },
+ {
+  "tier": "B",
+  "arm": "s10port",
+  "workload": "networks_depth_chain_hd",
+  "solver": "greedy"
+ },
+ {
+  "tier": "B",
+  "arm": "s10port",
+  "workload": "networks_depth_chain_hd",
+  "solver": "decomposed"
+ },
+ {
+  "tier": "B",
+  "arm": "s10port",
+  "workload": "networks_depth_chain_quad",
+  "solver": "greedy"
+ },
+ {
+  "tier": "B",
+  "arm": "s10port",
+  "workload": "networks_depth_chain_quad",
+  "solver": "decomposed"
+ },
+ {
+  "tier": "B",
+  "arm": "s10port",
+  "workload": "networks_depth_contended_cg",
+  "solver": "greedy"
+ },
+ {
+  "tier": "B",
+  "arm": "s10port",
+  "workload": "networks_depth_contended_cg",
+  "solver": "decomposed"
+ },
+ {
+  "tier": "B",
+  "arm": "s10port",
+  "workload": "networks_depth_contended_quad",
+  "solver": "greedy"
+ },
+ {
+  "tier": "B",
+  "arm": "s10port",
+  "workload": "networks_depth_contended_quad",
+  "solver": "greedy_periodic"
+ },
+ {
+  "tier": "B",
+  "arm": "s10port",
+  "workload": "networks_depth_nav_cg",
+  "solver": "greedy"
+ },
+ {
+  "tier": "B",
+  "arm": "s10port",
+  "workload": "networks_depth_nav_cg",
+  "solver": "decomposed"
+ },
+ {
+  "tier": "B",
+  "arm": "s10port",
+  "workload": "networks_depth_nav_dc",
+  "solver": "greedy"
+ },
+ {
+  "tier": "B",
+  "arm": "s10port",
+  "workload": "networks_depth_nav_hd",
+  "solver": "greedy"
+ },
+ {
+  "tier": "B",
+  "arm": "s10port",
+  "workload": "networks_depth_nav_hd",
+  "solver": "decomposed"
+ },
+ {
+  "tier": "B",
+  "arm": "s10port",
+  "workload": "networks_depth_nav_quad",
+  "solver": "greedy"
+ },
+ {
+  "tier": "B",
+  "arm": "s10port",
+  "workload": "networks_depth_nav_quad",
+  "solver": "decomposed"
+ },
+ {
+  "tier": "B",
+  "arm": "s10port",
+  "workload": "networks_perception_heavy_dc",
+  "solver": "greedy"
+ },
+ {
+  "tier": "B",
+  "arm": "s10port",
+  "workload": "networks_perception_heavy_dc",
+  "solver": "decomposed"
+ },
+ {
+  "tier": "B",
+  "arm": "s10port",
+  "workload": "networks_perception_heavy_hd",
+  "solver": "greedy"
+ },
+ {
+  "tier": "B",
+  "arm": "s10port",
+  "workload": "networks_perception_heavy_hd",
+  "solver": "pso"
+ },
+ {
+  "tier": "B",
+  "arm": "s10port",
+  "workload": "networks_perception_heavy_quad",
+  "solver": "greedy"
+ },
+ {
+  "tier": "B",
+  "arm": "s10port",
+  "workload": "networks_perception_heavy_quad",
+  "solver": "decomposed"
+ },
+ {
+  "tier": "B",
+  "arm": "s10port",
+  "workload": "networks_saturation_cg",
+  "solver": "greedy"
+ },
+ {
+  "tier": "B",
+  "arm": "s10port",
+  "workload": "networks_saturation_cg",
+  "solver": "heft_edf"
+ },
+ {
+  "tier": "B",
+  "arm": "s10port",
+  "workload": "networks_saturation_hd",
+  "solver": "greedy"
+ },
+ {
+  "tier": "B",
+  "arm": "s10port",
+  "workload": "networks_saturation_hd",
+  "solver": "heft_edf"
+ },
+ {
+  "tier": "B",
+  "arm": "s10port",
+  "workload": "networks_scale_ladder_cg",
+  "solver": "greedy"
+ },
+ {
+  "tier": "B",
+  "arm": "s10port",
+  "workload": "networks_scale_ladder_cg",
+  "solver": "best-of-fast"
+ },
+ {
+  "tier": "B",
+  "arm": "s10port",
+  "workload": "networks_scale_ladder_dc",
+  "solver": "greedy"
+ },
+ {
+  "tier": "B",
+  "arm": "s10port",
+  "workload": "networks_scale_ladder_dc",
+  "solver": "pso"
+ },
+ {
+  "tier": "B",
+  "arm": "s10port",
+  "workload": "networks_scale_ladder_hd",
+  "solver": "greedy"
+ },
+ {
+  "tier": "B",
+  "arm": "s10port",
+  "workload": "networks_scale_ladder_hd",
+  "solver": "pso"
+ },
+ {
+  "tier": "B",
+  "arm": "s10port",
+  "workload": "networks_tight_loop_cg",
+  "solver": "greedy"
+ },
+ {
+  "tier": "B",
+  "arm": "s10port",
+  "workload": "networks_tight_loop_cg",
+  "solver": "decomposed"
+ },
+ {
+  "tier": "B",
+  "arm": "s10port",
+  "workload": "networks_tight_loop_dc",
+  "solver": "greedy"
+ },
+ {
+  "tier": "B",
+  "arm": "s10port",
+  "workload": "networks_tight_loop_hd",
+  "solver": "greedy"
+ },
+ {
+  "tier": "B",
+  "arm": "s10port",
+  "workload": "networks_tight_loop_quad",
+  "solver": "greedy"
+ },
+ {
+  "tier": "B",
+  "arm": "s10port",
+  "workload": "networks_tight_loop_quad",
+  "solver": "heft"
+ },
+ {
+  "tier": "B",
+  "arm": "s10port",
+  "workload": "networks_vint_intro_cg",
+  "solver": "greedy"
+ },
+ {
+  "tier": "B",
+  "arm": "s10port",
+  "workload": "networks_vint_intro_cg",
+  "solver": "heft"
+ },
+ {
+  "tier": "B",
+  "arm": "s10port",
+  "workload": "networks_vint_intro_quad",
+  "solver": "greedy"
+ },
+ {
+  "tier": "B",
+  "arm": "s10port",
+  "workload": "networks_vint_intro_quad",
+  "solver": "decomposed"
+ },
+ {
+  "tier": "B",
+  "arm": "s10port",
+  "workload": "networks_vint_multi_cg",
+  "solver": "greedy"
+ },
+ {
+  "tier": "B",
+  "arm": "s10port",
+  "workload": "networks_vint_multi_cg",
+  "solver": "heft"
+ },
+ {
+  "tier": "B",
+  "arm": "s10port",
+  "workload": "networks_vint_multi_quad",
+  "solver": "greedy"
+ },
+ {
+  "tier": "B",
+  "arm": "s10port",
+  "workload": "networks_vint_multi_quad",
+  "solver": "heft"
+ }
+]

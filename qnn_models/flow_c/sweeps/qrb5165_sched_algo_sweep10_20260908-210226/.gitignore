@@ -9,3 +9,13 @@ logs/
 measurements/*_raw.json
 __pycache__/
 *.pyc
+results/*.png
+# Regenerable from the frozen cost model by reproduce.py: the per-job solve
+# records and the emitted schedules. results/phase3_all_results.json and
+# results/phase4_results.json carry everything the write-ups and the
+# reproduction check are held against.
+raw/
+schedules/
+results/phase4_state.json
+results/phase1_state.json
+results/phase1r_state.json
