@@ -507,6 +507,35 @@ def cmd_run(args):
 def cmd_results(args):
     st = load(STATE, {})
     plan = {point_id(p): p for p in load(PLAN, [])}
+    # Attribute a representative's measurement back to every point that
+    # deduped onto it. The dedupe key is the schedule's CONTENT hash -- the
+    # op -> (combination, start, duration) map -- so two points sharing it
+    # emit the same dispatch table and execute the same run. Not propagating
+    # would leave a solver with a measured cell only where its schedule
+    # happened to be unique, which is exactly the cells where it disagrees
+    # with the others, and would bias every per-solver aggregate.
+    by_hash = {}
+    for pid, rec in st.items():
+        if rec.get("measured_median_ms") and rec.get("sched_hash"):
+            by_hash.setdefault(rec["sched_hash"], pid)
+    n_prop = 0
+    for pid, rec in st.items():
+        if rec.get("measured_median_ms") or not rec.get("sched_hash"):
+            continue
+        src = by_hash.get(rec["sched_hash"])
+        if not src or src == pid:
+            continue
+        r = st[src]
+        for k in ("measured_median_ms", "measured_spread_ms", "measured_reps_ms",
+                  "measured_np_median_ms", "measured_np_spread_ms",
+                  "measured_np_reps_ms", "n_entries",
+                  "table_predicted_makespan_ms", "lane_entry_counts", "reps"):
+            if k in r:
+                rec[k] = r[k]
+        rec["measured_via"] = src
+        n_prop += 1
+    if n_prop:
+        print(f"  attributed {n_prop} deduped point(s) to their representative")
     rows = []
     for pid, rec in sorted(st.items()):
         r = dict(point=pid, tier=rec.get("tier"), arm=rec.get("arm"),
@@ -521,7 +550,7 @@ def cmd_results(args):
                   "measured_spread_ms", "measured_reps_ms",
                   "measured_np_median_ms", "measured_np_spread_ms",
                   "measured_np_reps_ms", "all_ops", "validation",
-                  "board_df"):
+                  "board_df", "measured_via"):
             if k in rec:
                 r[k] = rec[k]
         if rec.get("reps"):

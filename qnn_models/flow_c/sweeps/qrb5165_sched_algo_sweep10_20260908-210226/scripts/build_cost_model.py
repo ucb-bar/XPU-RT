@@ -133,6 +133,40 @@ def main():
                 captured_at=shipped.get("captured_at"),
                 source=os.path.relpath(SHIPPED, FLOWC), reused=True)
 
+    # A cell the binding manifest cannot execute must not be in the cost model.
+    # The scheduler has no "forbidden" flag -- it will happily place a tile on
+    # the cheapest lane it is offered -- so an undeclared cell becomes a
+    # schedule that `flowc/schedule.py::ingest` then refuses to emit a runtime
+    # for. That is exactly what happened with vint/vint_encoders@gpu: the
+    # shipped measurements carry a gpu number for it, the shipped manifest
+    # declares no gpu context, and two cells solved to a schedule that could
+    # not be built. Drop them here, loudly, rather than discovering it at
+    # runtime emission.
+    undeclared = []
+    for cell in list(cells):
+        net = cell.split("/", 1)[0]
+        man = os.path.join(SWEEP, "bindings", f"{net}.json")
+        if not os.path.exists(man):
+            man = os.path.join(FLOWC, "bindings", f"{net}.json")
+        if not os.path.exists(man):
+            continue
+        doc = json.load(open(man))
+        tile = cell.split("/", 1)[1]
+        b = next((x for x in doc["bindings"] if x["name"] == tile), None)
+        if b is None:
+            continue
+        declared = set(b.get("backends") or {})
+        for be in list(cells[cell]):
+            if "@" in be:
+                continue
+            if be not in declared:
+                undeclared.append(f"{cell}@{be}")
+                del cells[cell][be]
+                prov.pop(f"{cell}@{be}", None)
+    if undeclared:
+        print(f"  dropped {len(undeclared)} cell(s) with no declared context: "
+              f"{undeclared}")
+
     fails = []
     fp = os.path.join(SWEEP, "results", "compose_failures.json")
     if os.path.exists(fp):
@@ -172,6 +206,7 @@ def main():
             "shipped_model_sha256": sha256(SHIPPED),
         },
         "cells": cells,
+        "dropped_undeclared_cells": undeclared,
         "cell_provenance": prov,
         "compose_failures": fails,
     }

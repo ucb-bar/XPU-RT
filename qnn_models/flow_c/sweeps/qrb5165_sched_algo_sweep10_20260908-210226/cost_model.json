@@ -11,7 +11,7 @@
   "governor": "performance on all 8 cores (forced by this script; restored to 'performance' after)",
   "cpu_affinity": "UNMASKED \u2014 the lane exec mask binds only the lane thread, not QnnCpu's own pool"
  },
- "git_rev": "d83a97cd6ed4bbf3b3a275e4bf41ef6d8e4867f3",
+ "git_rev": "e3f594544cfa682cd3d0f0c20dbad1e4dadbbff2",
  "inputs": {
   "raw_measurements": "measurements/qrb5165_v66_s10port_raw.json",
   "raw_measurements_sha256": "9cf945e1cdd46069497d9a96a6f47257d6b0bc49137ee086ac751316ded9ddc6",
@@ -133,10 +133,12 @@
   },
   "vint/vint_encoders": {
    "dsp": 14213.0,
-   "cpu": 84163.0,
-   "gpu": 55854.0
+   "cpu": 84163.0
   }
  },
+ "dropped_undeclared_cells": [
+  "vint/vint_encoders@gpu"
+ ],
  "cell_provenance": {
   "dronet_sa/dronet_sa_full@cpu": {
    "statistic": "gap_median",
@@ -2187,12 +2189,6 @@
    "reused": true
   },
   "vint/vint_encoders@cpu": {
-   "statistic": "in_situ_p50_pooled",
-   "captured_at": "2026-08-30",
-   "source": "measurements/qrb5165_v66.json",
-   "reused": true
-  },
-  "vint/vint_encoders@gpu": {
    "statistic": "in_situ_p50_pooled",
    "captured_at": "2026-08-30",
    "source": "measurements/qrb5165_v66.json",
