@@ -19,3 +19,8 @@ schedules/
 results/phase4_state.json
 results/phase1_state.json
 results/phase1r_state.json
+
+# Derived from the committed results JSONs by analysis/mk_qrb5165_csv.py.
+analysis/results.csv
+analysis/nondiscriminating.json
+analysis/measured/
