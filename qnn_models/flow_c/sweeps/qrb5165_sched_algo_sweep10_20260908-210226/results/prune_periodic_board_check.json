@@ -1,0 +1,118 @@
+[
+ {
+  "cell": "networks_bimodal_dc",
+  "solver": "cpsat:warmbest",
+  "untrimmed_entries": 33,
+  "pruned_entries": 10,
+  "untrimmed_np_median_ms": 7.068,
+  "pruned_np_median_ms": 6.942,
+  "untrimmed_np_reps_ms": [
+   7.068,
+   6.948,
+   7.235
+  ],
+  "pruned_np_reps_ms": [
+   8.44,
+   6.925,
+   6.942
+  ],
+  "untrimmed_wall_median_ms": 32.431,
+  "pruned_wall_median_ms": 8.389,
+  "untrimmed_table_makespan_ms": 32.454,
+  "pruned_table_makespan_ms": 8.691,
+  "reps_ok": true,
+  "np_ratio": 0.9822,
+  "rep_spread_pct": [
+   4.06,
+   21.82
+  ],
+  "untrimmed_measured_via": null
+ },
+ {
+  "cell": "networks_saturation_dc",
+  "solver": "cpsat:warmbest",
+  "untrimmed_entries": 23,
+  "pruned_entries": 11,
+  "untrimmed_np_median_ms": 6.379,
+  "pruned_np_median_ms": 5.403,
+  "untrimmed_np_reps_ms": [
+   4.933,
+   6.379,
+   6.808
+  ],
+  "pruned_np_reps_ms": [
+   4.93,
+   5.403,
+   6.323
+  ],
+  "untrimmed_wall_median_ms": 22.017,
+  "pruned_wall_median_ms": 8.612,
+  "untrimmed_table_makespan_ms": 20.715,
+  "pruned_table_makespan_ms": 6.771,
+  "reps_ok": true,
+  "untrimmed_measured_via": "saturation_dc__cpsat-warm",
+  "np_ratio": 0.847,
+  "rep_spread_pct": [
+   29.39,
+   25.78
+  ]
+ },
+ {
+  "cell": "networks_depth_contended_hd",
+  "solver": "cpsat:warmbest",
+  "untrimmed_entries": 5,
+  "pruned_entries": 3,
+  "untrimmed_np_median_ms": 3.818,
+  "pruned_np_median_ms": 3.456,
+  "untrimmed_np_reps_ms": [
+   3.818,
+   3.827,
+   3.562
+  ],
+  "pruned_np_reps_ms": [
+   3.456,
+   3.358,
+   3.514
+  ],
+  "untrimmed_wall_median_ms": 14.002,
+  "pruned_wall_median_ms": 4.854,
+  "untrimmed_table_makespan_ms": 12.133,
+  "pruned_table_makespan_ms": 4.555,
+  "reps_ok": true,
+  "untrimmed_measured_via": "depth_contended_hd__greedy_periodic",
+  "np_ratio": 0.9052,
+  "rep_spread_pct": [
+   6.94,
+   4.51
+  ]
+ },
+ {
+  "cell": "networks_control_mix_cg",
+  "solver": "cpsat:warmbest",
+  "untrimmed_entries": 13,
+  "pruned_entries": 5,
+  "untrimmed_np_median_ms": 5.883,
+  "pruned_np_median_ms": 6.006,
+  "untrimmed_np_reps_ms": [
+   5.883,
+   5.448,
+   6.081
+  ],
+  "pruned_np_reps_ms": [
+   6.006,
+   5.779,
+   6.147
+  ],
+  "untrimmed_wall_median_ms": 26.344,
+  "pruned_wall_median_ms": 6.338,
+  "untrimmed_table_makespan_ms": 26.334,
+  "pruned_table_makespan_ms": 4.005,
+  "reps_ok": true,
+  "np_ratio": 1.0209,
+  "rep_spread_pct": [
+   10.76,
+   6.13
+  ],
+  "untrimmed_measured_via": null
+ }
+]
