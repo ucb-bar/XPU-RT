@@ -8,6 +8,6 @@ configs/
 __pycache__/
 *.pyc
 results/state.json
-results/staged.json
+results/staged*.json
 results/xpurt3net_state.json
 runtimes3net/
