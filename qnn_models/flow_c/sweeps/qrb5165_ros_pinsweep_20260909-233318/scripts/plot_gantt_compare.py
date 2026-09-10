@@ -221,10 +221,15 @@ def draw(ax, spans, rows, colors, aper, np_end, title, xmax):
                     color=colors[net], edgecolor=SURFACE, linewidth=0.7,
                     zorder=3, hatch="///" if net in aper else None)
     ax.axvline(np_end, color=MARK, lw=1.6, ls="--", zorder=4)
+    # The two panels share an x range, so on a cell where pinning is much
+    # slower its own marker sits at the right edge and a right-flowing label
+    # runs off the figure (vint_multi_cg printed "ape"). Flip the label to the
+    # inside of the marker when it is near the end of the axis.
+    late = np_end > 0.72 * xmax
     ax.annotate(f"aperiodic work done  {np_end:.2f} ms",
-                xy=(np_end, len(rows) - 0.45), xytext=(6, 0),
+                xy=(np_end, len(rows) - 0.45), xytext=(-6 if late else 6, 0),
                 textcoords="offset points", fontsize=8.5, color=MARK,
-                va="center", ha="left", zorder=5)
+                va="center", ha="right" if late else "left", zorder=5)
     ax.set_yticks(range(len(rows)))
     ax.set_yticklabels([f"{l.upper()}  ·  {n}" for l, n in rows],
                        fontsize=8, color=INK2)

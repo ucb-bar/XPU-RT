@@ -160,14 +160,30 @@ def cell_summary(doc):
             xrt_np_best_ms=x.get("best_np_ms"),
             xrt_np_greedy_ms=x.get("greedy_np_ms"),
             xrt_n_solvers=x.get("n_solvers_measured"),
+            # The study's OWN recommendation for the offline/build-time path,
+            # and therefore the right opponent for a fixed-pinning baseline.
+            # Phase 4 tiered by board time -- all 12 solvers on 12 cells,
+            # winner+greedy on the other 30 -- so this was measured on 12 of 42
+            # cells when the first version of this analysis ran, and on the
+            # other 30 the "best measured solver" was really greedy or its
+            # near-tie. That gap is now closed.
+            xrt_np_warmbest_ms=(x.get("solvers", {}).get("cpsat:warmbest")
+                                or {}).get("np_median_ms"),
+            xrt_warmbest_ms=(x.get("solvers", {}).get("cpsat:warmbest")
+                             or {}).get("makespan_median_ms"),
+            xrt_has_warmbest=("cpsat:warmbest" in (x.get("solvers") or {})),
         )
         # ROS / XPU-RT. >1 means the scheduler wins.
         row["ros_over_xrt_best"] = ratio(row["ros_best_ms"], row["xrt_best_ms"])
         row["ros_over_xrt_greedy"] = ratio(row["ros_best_ms"], row["xrt_greedy_ms"])
         row["ros_over_xrt_np_best"] = ratio(row["ros_np_best_ms"],
                                             row["xrt_np_best_ms"])
+        row["ros_over_xrt_np_warmbest"] = ratio(row["ros_np_best_ms"],
+                                                row["xrt_np_warmbest_ms"])
         row["inside_noise_wall"] = inside(row["ros_over_xrt_best"], NOISE_WALL_PCT)
         row["inside_noise_np"] = inside(row["ros_over_xrt_np_best"], NOISE_NP_PCT)
+        row["inside_noise_np_warmbest"] = inside(row["ros_over_xrt_np_warmbest"],
+                                                 NOISE_NP_PCT)
         # did the cost model's ranking survive the board?
         pred_best = min(runs, key=lambda r: (r["rank"],))
         row["predicted_best_id"] = pred_best["assignment"]
@@ -241,9 +257,37 @@ def cmd_tables(args):
     npx = [r for r in rows if r["ros_over_xrt_np_best"] and not r["np_degenerate"]
            and r["np_work_equal"] is False]
     comp = [r for r in rows if r["ros_over_xrt_best"]]
+    # Same 26 cells, scored against cpsat:warmbest specifically rather than
+    # against whichever solver happened to be measured fastest. Both are
+    # reported and each is labelled; neither is allowed to stand in for the
+    # other.
+    npw = [r for r in npc if r["ros_over_xrt_np_warmbest"]]
     res["headline"] = {
         "objective": "non-periodic makespan (primary); wall clock (secondary)",
+        "np_opponent_primary": "cpsat:warmbest (the sweep's own recommendation "
+                               "for the offline/build-time path)",
+        "np_opponent_secondary": "best measured solver per cell (the most "
+                                 "favourable reading for the scheduler)",
         "np_cells_compared": len(npc),
+        "np_cells_with_warmbest": len(npw),
+        "np_cells_without_warmbest": [r["cell"] for r in npc
+                                      if not r["ros_over_xrt_np_warmbest"]],
+        "np_warmbest_ros_over_xrt_median": round(statistics.median(
+            [r["ros_over_xrt_np_warmbest"] for r in npw]), 4) if npw else None,
+        "np_warmbest_ros_faster_cells": sum(
+            1 for r in npw if r["ros_over_xrt_np_warmbest"] < 1),
+        "np_warmbest_xrt_faster_cells": sum(
+            1 for r in npw if r["ros_over_xrt_np_warmbest"] > 1),
+        "np_warmbest_inside_noise_cells": sum(
+            1 for r in npw if r["inside_noise_np_warmbest"]),
+        "np_warmbest_worst_for_ros": max(
+            npw, key=lambda r: r["ros_over_xrt_np_warmbest"])["cell"] if npw else None,
+        "np_warmbest_worst_for_ros_ratio": max(
+            (r["ros_over_xrt_np_warmbest"] for r in npw), default=None),
+        "np_warmbest_best_for_ros": min(
+            npw, key=lambda r: r["ros_over_xrt_np_warmbest"])["cell"] if npw else None,
+        "np_warmbest_best_for_ros_ratio": min(
+            (r["ros_over_xrt_np_warmbest"] for r in npw), default=None),
         "np_cells_excluded_unequal_work": [r["cell"] for r in npx],
         "np_cells_degenerate_no_aperiodic": [r["cell"] for r in rows
                                              if r["np_degenerate"]],
@@ -311,9 +355,9 @@ def cmd_tables(args):
 
     print("PRIMARY: non-periodic makespan (the objective both runtimes are "
           "scored on)\n")
-    print(f'{"cell":32s} {"n":>4s}{"m":>4s} {"ROS np ms":>11s} '
-          f'{"XRT np ms":>11s} {"ROS/XRT":>8s} {"noise?":>7s} {"place":>6s} '
-          f'  note')
+    print(f'{"cell":30s} {"m":>3s} {"ROS np":>9s} | {"warmbest":>9s} '
+          f'{"ratio":>7s} {"noise":>6s} | {"best-of":>9s} {"ratio":>7s} '
+          f'{"noise":>6s} {"solver":>16s}   note')
     for r in rows:
         note = ""
         if r["np_degenerate"]:
@@ -321,12 +365,20 @@ def cmd_tables(args):
         elif r["np_work_equal"] is False:
             note = (f'UNEQUAL np work: declared {r["np_work_declared"]}, '
                     f'XPU-RT ran {r["np_work_xpurt"]}')
-        print(f'{r["cell"][len("networks_"):]:32s} {r["n_legal"]:4d}'
-              f'{r["n_measured"]:4d} {r["ros_np_best_ms"]:11.3f} '
-              f'{(r["xrt_np_best_ms"] or 0):11.3f} '
-              f'{(r["ros_over_xrt_np_best"] or 0):8.3f} '
-              f'{"in" if r["inside_noise_np"] else "OUT":>7s} '
-              f'{ratio(r["ros_np_worst_ms"], r["ros_np_best_ms"]) or 0:6.2f}  {note}')
+        if not r.get("xrt_has_warmbest"):
+            note = (note + "; " if note else "") + "no cpsat:warmbest measured"
+        x = doc["xpurt"].get(r["cell"], {})
+        f3 = lambda v, w: (f"{v:{w}.3f}" if v else "-".rjust(w))
+        nz = lambda v, b: ("in" if b else "OUT").rjust(6) if v else "-".rjust(6)
+        print(f'{r["cell"][len("networks_"):]:30s} {r["n_measured"]:3d} '
+              f'{r["ros_np_best_ms"]:9.3f} | '
+              f'{f3(r["xrt_np_warmbest_ms"], 9)} '
+              f'{f3(r["ros_over_xrt_np_warmbest"], 7)} '
+              f'{nz(r["xrt_np_warmbest_ms"], r["inside_noise_np_warmbest"])} | '
+              f'{f3(r["xrt_np_best_ms"], 9)} '
+              f'{f3(r["ros_over_xrt_np_best"], 7)} '
+              f'{nz(r["xrt_np_best_ms"], r["inside_noise_np"])} '
+              f'{str(x.get("best_np_solver") or "-"):>16s}   {note}')
     print("\nSECONDARY: all-operations wall clock (release-bound on most "
           "cells; periodic instance counts may legitimately differ)\n")
     print(f'{"cell":32s} {"ROS ms":>11s} {"sprd%":>6s} {"XRT ms":>11s} '

@@ -222,7 +222,13 @@ def main():
               sorted(h["np_cells_excluded_unequal_work"]) ==
               sorted(f"networks_saturation_{c}" for c in ("cg", "dc", "hd", "quad")),
               str(h["np_cells_excluded_unequal_work"]))
-        check("headline median ROS/XPU-RT on the objective is 0.9762",
+        check("headline median ROS/XPU-RT against cpsat:warmbest is 0.9281",
+              abs(h["np_warmbest_ros_over_xrt_median"] - 0.9281) < 1e-4,
+              str(h["np_warmbest_ros_over_xrt_median"]))
+        check("cpsat:warmbest is measured on all 26 compared cells",
+              h["np_cells_with_warmbest"] == h["np_cells_compared"] == 26,
+              f'{h["np_cells_with_warmbest"]}/{h["np_cells_compared"]}')
+        check("secondary median against the best measured solver is 0.9762",
               abs(h["np_ros_over_xrt_median"] - 0.9762) < 1e-4,
               str(h["np_ros_over_xrt_median"]))
         check("7 cells where minimum-makespan is not the feasible-first "
@@ -233,21 +239,37 @@ def main():
         check("analysis.json present", False, "run scripts/analyse.py tables")
 
     print("6. the noise floor SETUP.md quotes")
+    # SETUP.md's 7.62% / 9.18% were computed over the XPU-RT sweep's 199-point
+    # Phase 4. That sweep has since been extended with `cpsat:warmbest` on the
+    # 30 tier-B cells (ANALYSIS.md 0.5, 13), so the same statistic over the
+    # 229-point file is a different, tighter number. Both are checked and both
+    # are reported. The band the write-ups actually use stays the 9.18%
+    # SETUP.md pre-registered, because it is the WIDER of the two and a wider
+    # band calls fewer differences results -- narrowing it after the fact would
+    # promote borderline cells into findings, which is exactly the move a
+    # pre-registered floor exists to prevent.
     rows4 = jload(os.path.join(XSWEEP, "results", "phase4_results.json"))
-    uniq = {}
-    for r in rows4:
-        if r.get("measured_median_ms"):
-            uniq[r.get("measured_via") or r["point"]] = r
-    wall = [r["measured_spread_ms"] / r["measured_median_ms"] * 100
-            for r in rows4 if r.get("measured_median_ms")]
-    npv = [r["measured_np_spread_ms"] / r["measured_np_median_ms"] * 100
-           for r in rows4 if r.get("measured_np_median_ms")]
-    check("wall-clock median rep spread is 7.62%",
-          abs(statistics.median(wall) - 7.62) < 0.01,
-          f"{statistics.median(wall):.2f}%")
-    check("non-periodic median rep spread is 9.18%",
-          abs(statistics.median(npv) - 9.18) < 0.01,
-          f"{statistics.median(npv):.2f}%")
+    tiers = {r["point"]: r.get("tier") for r in rows4}
+    def spreads(rows):
+        w = [r["measured_spread_ms"] / r["measured_median_ms"] * 100
+             for r in rows if r.get("measured_median_ms")]
+        n = [r["measured_np_spread_ms"] / r["measured_np_median_ms"] * 100
+             for r in rows if r.get("measured_np_median_ms")]
+        return statistics.median(w), statistics.median(n)
+    # tier D is the extension; the frozen set SETUP.md quoted is everything else
+    frozen = [r for r in rows4 if tiers.get(r["point"]) != "D"]
+    fw, fn = spreads(frozen)
+    aw, an = spreads(rows4)
+    check("wall-clock median rep spread is 7.62% on the 199-point set "
+          "SETUP.md quoted",
+          abs(fw - 7.62) < 0.01, f"{fw:.2f}% ({len(frozen)} points)")
+    check("non-periodic median rep spread is 9.18% on the 199-point set "
+          "SETUP.md quoted",
+          abs(fn - 9.18) < 0.01, f"{fn:.2f}% ({len(frozen)} points)")
+    check("the band the write-ups use is the wider of the two",
+          fn >= an, f"pre-registered {fn:.2f}% >= extended {an:.2f}%")
+    print(f"       over all {len(rows4)} points the same statistic is "
+          f"{aw:.2f}% / {an:.2f}% -- reported, not used")
 
     n_bad = sum(1 for _, ok, _ in results if not ok)
     print(f"\n{len(results) - n_bad}/{len(results)} checks passed")
