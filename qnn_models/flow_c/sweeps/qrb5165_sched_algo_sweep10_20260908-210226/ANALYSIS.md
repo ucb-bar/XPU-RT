@@ -24,6 +24,9 @@ Phase 4   199 planned points -> 97 unique schedules by content hash
           291 board runs (97 x 3 reps), 102 points attributed by dedupe
 Phase 5   12 cells with ALL twelve solvers measured; 42 cells with the
           feasible-first winner and greedy measured
+Phase 4b  tier B coverage extended: cpsat:warmbest on the other 30 cells
+          229 points -> 122 unique schedules; +75 board runs, 5 dedupes
+          42 cells with cpsat:warmbest measured  (see section 9)
 ```
 
 **Everything planned in SETUP.md ran.** Two things it named as possible are
@@ -51,7 +54,9 @@ What did NOT run, and why:
   config the solver would only ever see exclusion costs for it.
 * **Cells beyond the 12 all-solver ones** carry only the winner and greedy.
   30 of the 42 cells therefore contribute to the coverage claim but not to the
-  ranking claim.
+  ranking claim. **Section 9 extends those 30 with `cpsat:warmbest`** — the one
+  entry this document recommends — so the recommendation itself is measured
+  everywhere even though the full ranking is not.
 
 Board discipline held: **597 rep records, all `N/N entries executed`**, zero
 skipped entries, zero predicate-6 or predicate-7 violations, and a board lock
@@ -402,3 +407,85 @@ scheduler or the noise floor at all, but Phase 1: fifteen of sixteen networks
 could not reach the board's fastest lane as exported, and had that been
 recorded rather than fixed, the study would have measured a scheduling problem
 one lane narrower than the silicon actually offers.
+
+---
+
+## 9. Addendum: tier-B coverage extended to `cpsat:warmbest`
+
+Phase 4 tiered by board time (`scripts/drive.py:121`): all twelve solvers on
+twelve cells, winner + greedy on the other thirty. That is the right way to
+spend a board budget on a *ranking* claim, but it left **this study's own
+recommendation measured on 12 of 42 cells** — so anyone comparing another
+runtime against "XPU-RT" on the other thirty was comparing against greedy or
+its near-tie. `qrb5165_ros_pinsweep_20260909-233318` is exactly that consumer,
+so the gap was closed here.
+
+**What was added.** `drive.py plan-extend --solvers cpsat:warmbest` appends 30
+points to the existing plan without renumbering the 199 already measured.
+Emitting them and hashing against those 199 found **5 already on record**
+(`depth_chain_{cg,hd}`, `depth_contended_cg`, `perception_heavy_{dc,quad}`,
+each resolving through a `decomposed` hop onto that cell's `greedy` run) and
+**25 genuinely new**: 75 board runs at 3 reps, all `N/N entries executed`, lock
+wait 0.28 s median / 0.39 s max, non-periodic rep spread 4.67 % median.
+`results/phase4_results.json` now carries 229 points, 122 unique schedules, and
+a measured median for every one.
+
+**What it did to this document's conclusions: nothing, and that is the point.**
+The ranking claim in sections 1–4 is computed over the twelve all-solver cells,
+and those cells are untouched — `analysis/measured/results.csv` regenerates
+byte-identical, so `analysis/plot_pareto_panels.py` and both Pareto figures are
+unchanged. The thirty new cells have three solvers each, not twelve, so they
+still do not enter the ranking. What changes is the **coverage** claim in
+section 0: the recommendation is now measured everywhere.
+
+**Two things the extension exposed.**
+
+1. **The cost model's undeclared-cell exclusion never reaches the solver.**
+   Section 6 records that `build_cost_model.py` drops
+   `vint/vint_encoders@gpu` because the manifest has no context for it. That
+   fix was to the *cost model*; the solver's workload comes from
+   `load_profiled_processing_times` reading `gen/profile/` directly, and still
+   offers the cell. On `vint_{intro,multi}_cg` CP-SAT now proves an **OPTIMAL
+   72.279 ms** that places the encoders on the GPU and cannot be built —
+   `flowc/schedule.py::ingest` refuses it, which is the same loud failure
+   section 6 describes, one layer later than it should be. Phase 3 did not hit
+   it only because of timing: its solves ran 2026-09-08 16:31 and that profile
+   row was not written to disk until 18:21. `fpga/emit_schedule.py
+   --mask-undeclared cost_model.json` now masks
+   `dropped_undeclared_cells` to +inf *before* the search; with it both cells
+   return Phase 3's 100.588 ms, and re-emitting all 30 with the mask leaves the
+   other 28 content-hash identical, including the two `vint_*_quad` cells where
+   the mask applies but the solver never took the bait. **The `cpsat` family's
+   Phase 3 numbers for `vint_{intro,multi}_cg` should be read as masked
+   values**; every other row is unaffected.
+
+2. **`cpsat:warmbest` leads on prediction, not on measurement — over 42 cells
+   as well as over 12.** It is the measured np-best solver on **18 of 42**.
+   Median penalty against the per-cell measured best is 1.0010×, tail 1.5217×
+   (`saturation_dc`: 6.379 ms against `heft`'s 4.192 ms). Against greedy:
+   median 0.9898×, 22 cells faster (best 0.2838× on `saturation_dc`), 10 tied,
+   **10 slower** (worst 1.1632× on `scale_ladder_hd`). Several of the losses are
+   cells whose *predicted* objectives are identical to three decimals
+   (`bimodal_hd`: 10.001 either way) and which only the board separates. This
+   is section 7's caveat 3 restated on four times the cells: the grouping holds,
+   the ordering inside it does not.
+
+**`prune_periodic`, applied and checked.** Every spec written by
+`mk_workloads_qrb5165.py:282` carries `scheduler.prune_periodic: true` and
+nothing in this sweep read it — the trim lives in
+`scripts/run_xpurt_schedule.py`, which this sweep deliberately bypasses. It is
+purely post-hoc: `postprocessing.trim_periodic_after_nonperiodic_makespan`
+drops periodic operations whose window does not overlap
+`[0, non-periodic makespan)`, so it can move neither a placement nor the
+objective. `scripts/prune_periodic_check.py` asserts that rather than assuming
+it — `emit_schedule.py --prune-periodic` re-evaluates on the trimmed workload
+and refuses to write a schedule whose objective moved. **On all 42 cells the
+objective is bit-identical**; the all-operations makespan shortens on 21
+(`bimodal_dc`: 33 operations / 32.454 ms of table down to 10 / 8.691 ms).
+`scripts/prune_periodic_board_check.py` then ran four trimmed schedules on
+hardware, 3 reps each: measured np 0.982× / 0.847× / 0.905× / 1.021× of the
+untrimmed point — unchanged or marginally shorter, never longer, with three of
+the four rep ranges overlapping outright. Where it is shorter it is the
+dispatch loop walking fewer entries inside the interval being timed, not a
+different schedule. The 199 original points remain untrimmed and the measured
+comparisons stay on them; `schedules/pruned/` holds the trimmed artefacts.
