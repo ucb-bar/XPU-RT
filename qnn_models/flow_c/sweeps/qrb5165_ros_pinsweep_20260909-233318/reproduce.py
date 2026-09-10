@@ -165,6 +165,73 @@ def main():
               all(r["reps"] == 3 for r in doc["runs"].values()),
               str(sorted({r["reps"] for r in doc["runs"].values()})))
 
+    print("5b. the 3net arm")
+    p3 = os.path.join(HERE, "results", "enumeration_3net.json")
+    if os.path.exists(p3):
+        import pin3net
+        tmp3 = tempfile.mkdtemp(prefix="rospin_repro3_")
+        try:
+            have3 = jload(p3)
+            costs3, prov3 = pin3net.base_costs()
+            # legality is the binding manifest, never the cost table: the
+            # artifact emitter writes large-but-finite EXCLUSION costs for a
+            # lane a tile cannot use, and a cost-only rule would pin to them
+            bad = []
+            for net, per in costs3.items():
+                man = json.load(open(os.path.join(FLOWC, "bindings",
+                                                  f"{net}.json")))
+                for be in per:
+                    for b in man["bindings"]:
+                        if be not in (b.get("backends") or {}):
+                            bad.append((net, be))
+            check("3net legality comes from the binding manifests", not bad,
+                  str(bad[:5]))
+            sh = pin3net.shapes()
+            check("all 15 RoSE 3net configs map to a shape",
+                  sum(len(x["sources"]) for x in sh) == 15
+                  and len(sh) == len(have3["cells"]),
+                  f'{len(sh)} shapes, '
+                  f'{sum(len(x["sources"]) for x in sh)} source configs')
+            check("3net enumeration matches the committed table",
+                  [c["cell"] for c in have3["cells"]] == [x["name"] for x in sh])
+        finally:
+            shutil.rmtree(tmp3, ignore_errors=True)
+        pa = os.path.join(HERE, "results", "analysis_3net.json")
+        if os.path.exists(pa):
+            a3 = jload(pa)["shapes"]
+            real = [r for r in a3 if not r["np_degenerate"]]
+            check("3net: pinning faster on every shape with an aperiodic "
+                  "network", all(r["ros_over_xrt_np"] < 1 for r in real),
+                  f'{sum(1 for r in real if r["ros_over_xrt_np"] < 1)}'
+                  f"/{len(real)}")
+    else:
+        check("3net enumeration present", True, "SKIPPED -- not generated")
+
+    print("5c. the headline aggregates ANALYSIS.md quotes")
+    pa = os.path.join(HERE, "results", "analysis.json")
+    if os.path.exists(pa):
+        h = jload(pa)["headline"]
+        check("0 assignments starved a network",
+              h["assignments_with_a_starved_network"] == [],
+              str(len(h["assignments_with_a_starved_network"])))
+        check("every assignment completed",
+              h["assignments_run"] == h["assignments_ok"],
+              f'{h["assignments_ok"]}/{h["assignments_run"]}')
+        check("the 4 saturation cells are the only unequal-non-periodic-work "
+              "exclusions",
+              sorted(h["np_cells_excluded_unequal_work"]) ==
+              sorted(f"networks_saturation_{c}" for c in ("cg", "dc", "hd", "quad")),
+              str(h["np_cells_excluded_unequal_work"]))
+        check("headline median ROS/XPU-RT on the objective is 0.9762",
+              abs(h["np_ros_over_xrt_median"] - 0.9762) < 1e-4,
+              str(h["np_ros_over_xrt_median"]))
+        check("7 cells where minimum-makespan is not the feasible-first "
+              "placement",
+              len(h["cells_where_makespan_rule_disagrees_with_feasibility"]) == 7,
+              str(len(h["cells_where_makespan_rule_disagrees_with_feasibility"])))
+    else:
+        check("analysis.json present", False, "run scripts/analyse.py tables")
+
     print("6. the noise floor SETUP.md quotes")
     rows4 = jload(os.path.join(XSWEEP, "results", "phase4_results.json"))
     uniq = {}

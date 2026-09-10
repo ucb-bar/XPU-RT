@@ -1,0 +1,698 @@
+{
+ "_comment": "Measured XPU-RT makespans for the 3net shapes on the same three lanes the pinning baseline gets. Medians of 3 reps with spreads; `flow_c.py run --tuned`, the same mode the sched_algo_sweep10 port used.",
+ "board": "root@qrb5165",
+ "reps": 3,
+ "solvers": [
+  "greedy",
+  "heft_edf",
+  "cpsat"
+ ],
+ "shapes": {
+  "3net_dronet1_mlp2": {
+   "solvers": {
+    "greedy": {
+     "ok": true,
+     "reps_ms": [
+      10.057,
+      10.057,
+      10.057
+     ],
+     "median_ms": 10.057,
+     "spread_ms": 0.0,
+     "predicted_ms": 10.066,
+     "np_reps_ms": [
+      10.056,
+      10.056,
+      10.056
+     ],
+     "np_median_ms": 10.056,
+     "np_spread_ms": 0.0,
+     "np_instances": {}
+    },
+    "heft_edf": {
+     "ok": true,
+     "reps_ms": [
+      10.057,
+      10.057,
+      10.057
+     ],
+     "median_ms": 10.057,
+     "spread_ms": 0.0,
+     "predicted_ms": 10.066,
+     "np_reps_ms": [
+      10.056,
+      10.056,
+      10.056
+     ],
+     "np_median_ms": 10.056,
+     "np_spread_ms": 0.0,
+     "np_instances": {},
+     "measured_via": "3net_dronet1_mlp2__greedy"
+    },
+    "cpsat": {
+     "ok": true,
+     "reps_ms": [
+      10.057,
+      10.057,
+      10.057
+     ],
+     "median_ms": 10.057,
+     "spread_ms": 0.0,
+     "predicted_ms": 10.066,
+     "np_reps_ms": [
+      10.056,
+      10.056,
+      10.056
+     ],
+     "np_median_ms": 10.056,
+     "np_spread_ms": 0.0,
+     "np_instances": {},
+     "measured_via": "3net_dronet1_mlp2__greedy"
+    }
+   },
+   "best_makespan_ms": 10.057,
+   "best_solver": "greedy",
+   "greedy_makespan_ms": 10.057,
+   "best_np_ms": 10.056,
+   "best_np_solver": "greedy",
+   "np_instances": null,
+   "n_solvers_measured": 3
+  },
+  "3net_dronet1_mlp2_yolo1": {
+   "solvers": {
+    "greedy": {
+     "ok": true,
+     "reps_ms": [
+      32.803,
+      31.912,
+      31.629
+     ],
+     "median_ms": 31.912,
+     "spread_ms": 1.174,
+     "predicted_ms": 29.286,
+     "np_reps_ms": [
+      32.802,
+      31.912,
+      31.629
+     ],
+     "np_median_ms": 31.912,
+     "np_spread_ms": 1.173,
+     "np_instances": {
+      "yolov8n": 1
+     }
+    },
+    "heft_edf": {
+     "ok": true,
+     "reps_ms": [
+      32.803,
+      31.912,
+      31.629
+     ],
+     "median_ms": 31.912,
+     "spread_ms": 1.174,
+     "predicted_ms": 29.286,
+     "np_reps_ms": [
+      32.802,
+      31.912,
+      31.629
+     ],
+     "np_median_ms": 31.912,
+     "np_spread_ms": 1.173,
+     "np_instances": {
+      "yolov8n": 1
+     },
+     "measured_via": "3net_dronet1_mlp2_yolo1__greedy"
+    },
+    "cpsat": {
+     "ok": true,
+     "reps_ms": [
+      32.803,
+      31.912,
+      31.629
+     ],
+     "median_ms": 31.912,
+     "spread_ms": 1.174,
+     "predicted_ms": 29.286,
+     "np_reps_ms": [
+      32.802,
+      31.912,
+      31.629
+     ],
+     "np_median_ms": 31.912,
+     "np_spread_ms": 1.173,
+     "np_instances": {
+      "yolov8n": 1
+     },
+     "measured_via": "3net_dronet1_mlp2_yolo1__greedy"
+    }
+   },
+   "best_makespan_ms": 31.912,
+   "best_solver": "greedy",
+   "greedy_makespan_ms": 31.912,
+   "best_np_ms": 31.912,
+   "best_np_solver": "greedy",
+   "np_instances": {
+    "yolov8n": 1
+   },
+   "n_solvers_measured": 3
+  },
+  "3net_dronet2_mlp8_yolo1": {
+   "solvers": {
+    "greedy": {
+     "ok": true,
+     "reps_ms": [
+      31.696,
+      30.873,
+      31.143
+     ],
+     "median_ms": 31.143,
+     "spread_ms": 0.823,
+     "predicted_ms": 29.286,
+     "np_reps_ms": [
+      31.696,
+      30.872,
+      31.143
+     ],
+     "np_median_ms": 31.143,
+     "np_spread_ms": 0.824,
+     "np_instances": {
+      "yolov8n": 1
+     }
+    },
+    "heft_edf": {
+     "ok": true,
+     "reps_ms": [
+      31.696,
+      30.873,
+      31.143
+     ],
+     "median_ms": 31.143,
+     "spread_ms": 0.823,
+     "predicted_ms": 29.286,
+     "np_reps_ms": [
+      31.696,
+      30.872,
+      31.143
+     ],
+     "np_median_ms": 31.143,
+     "np_spread_ms": 0.824,
+     "np_instances": {
+      "yolov8n": 1
+     },
+     "measured_via": "3net_dronet2_mlp8_yolo1__greedy"
+    },
+    "cpsat": {
+     "ok": true,
+     "reps_ms": [
+      31.696,
+      30.873,
+      31.143
+     ],
+     "median_ms": 31.143,
+     "spread_ms": 0.823,
+     "predicted_ms": 29.286,
+     "np_reps_ms": [
+      31.696,
+      30.872,
+      31.143
+     ],
+     "np_median_ms": 31.143,
+     "np_spread_ms": 0.824,
+     "np_instances": {
+      "yolov8n": 1
+     },
+     "measured_via": "3net_dronet2_mlp8_yolo1__greedy"
+    }
+   },
+   "best_makespan_ms": 31.143,
+   "best_solver": "greedy",
+   "greedy_makespan_ms": 31.143,
+   "best_np_ms": 31.143,
+   "best_np_solver": "greedy",
+   "np_instances": {
+    "yolov8n": 1
+   },
+   "n_solvers_measured": 3
+  },
+  "3net_dronet4_mlp4_yolo1": {
+   "solvers": {
+    "greedy": {
+     "ok": true,
+     "reps_ms": [
+      50.151,
+      49.93,
+      47.489
+     ],
+     "median_ms": 49.93,
+     "spread_ms": 2.662,
+     "predicted_ms": 46.022,
+     "np_reps_ms": [
+      50.15,
+      49.929,
+      47.489
+     ],
+     "np_median_ms": 49.929,
+     "np_spread_ms": 2.661,
+     "np_instances": {
+      "yolov8n": 1
+     }
+    },
+    "heft_edf": {
+     "ok": true,
+     "reps_ms": [
+      50.151,
+      49.93,
+      47.489
+     ],
+     "median_ms": 49.93,
+     "spread_ms": 2.662,
+     "predicted_ms": 46.022,
+     "np_reps_ms": [
+      50.15,
+      49.929,
+      47.489
+     ],
+     "np_median_ms": 49.929,
+     "np_spread_ms": 2.661,
+     "np_instances": {
+      "yolov8n": 1
+     },
+     "measured_via": "3net_dronet4_mlp4_yolo1__greedy"
+    },
+    "cpsat": {
+     "ok": true,
+     "reps_ms": [
+      50.151,
+      49.93,
+      47.489
+     ],
+     "median_ms": 49.93,
+     "spread_ms": 2.662,
+     "predicted_ms": 46.022,
+     "np_reps_ms": [
+      50.15,
+      49.929,
+      47.489
+     ],
+     "np_median_ms": 49.929,
+     "np_spread_ms": 2.661,
+     "np_instances": {
+      "yolov8n": 1
+     },
+     "measured_via": "3net_dronet4_mlp4_yolo1__greedy"
+    }
+   },
+   "best_makespan_ms": 49.93,
+   "best_solver": "greedy",
+   "greedy_makespan_ms": 49.93,
+   "best_np_ms": 49.929,
+   "best_np_solver": "greedy",
+   "np_instances": {
+    "yolov8n": 1
+   },
+   "n_solvers_measured": 3
+  },
+  "3net_dronet4_mlp8_yolo1": {
+   "solvers": {
+    "greedy": {
+     "ok": true,
+     "reps_ms": [
+      39.684,
+      37.996,
+      37.119
+     ],
+     "median_ms": 37.996,
+     "spread_ms": 2.565,
+     "predicted_ms": 36.022,
+     "np_reps_ms": [
+      39.683,
+      37.996,
+      37.118
+     ],
+     "np_median_ms": 37.996,
+     "np_spread_ms": 2.565,
+     "np_instances": {
+      "yolov8n": 1
+     }
+    },
+    "heft_edf": {
+     "ok": true,
+     "reps_ms": [
+      39.684,
+      37.996,
+      37.119
+     ],
+     "median_ms": 37.996,
+     "spread_ms": 2.565,
+     "predicted_ms": 36.022,
+     "np_reps_ms": [
+      39.683,
+      37.996,
+      37.118
+     ],
+     "np_median_ms": 37.996,
+     "np_spread_ms": 2.565,
+     "np_instances": {
+      "yolov8n": 1
+     },
+     "measured_via": "3net_dronet4_mlp8_yolo1__greedy"
+    },
+    "cpsat": {
+     "ok": true,
+     "reps_ms": [
+      39.684,
+      37.996,
+      37.119
+     ],
+     "median_ms": 37.996,
+     "spread_ms": 2.565,
+     "predicted_ms": 36.022,
+     "np_reps_ms": [
+      39.683,
+      37.996,
+      37.118
+     ],
+     "np_median_ms": 37.996,
+     "np_spread_ms": 2.565,
+     "np_instances": {
+      "yolov8n": 1
+     },
+     "measured_via": "3net_dronet4_mlp8_yolo1__greedy"
+    }
+   },
+   "best_makespan_ms": 37.996,
+   "best_solver": "greedy",
+   "greedy_makespan_ms": 37.996,
+   "best_np_ms": 37.996,
+   "best_np_solver": "greedy",
+   "np_instances": {
+    "yolov8n": 1
+   },
+   "n_solvers_measured": 3
+  },
+  "3net_dronet8_mlp16_yolo1": {
+   "solvers": {
+    "greedy": {
+     "ok": true,
+     "reps_ms": [
+      37.99,
+      38.763,
+      38.862
+     ],
+     "median_ms": 38.763,
+     "spread_ms": 0.872,
+     "predicted_ms": 36.022,
+     "np_reps_ms": [
+      37.989,
+      38.762,
+      38.862
+     ],
+     "np_median_ms": 38.762,
+     "np_spread_ms": 0.873,
+     "np_instances": {
+      "yolov8n": 1
+     }
+    },
+    "heft_edf": {
+     "ok": true,
+     "reps_ms": [
+      37.99,
+      38.763,
+      38.862
+     ],
+     "median_ms": 38.763,
+     "spread_ms": 0.872,
+     "predicted_ms": 36.022,
+     "np_reps_ms": [
+      37.989,
+      38.762,
+      38.862
+     ],
+     "np_median_ms": 38.762,
+     "np_spread_ms": 0.873,
+     "np_instances": {
+      "yolov8n": 1
+     },
+     "measured_via": "3net_dronet8_mlp16_yolo1__greedy"
+    },
+    "cpsat": {
+     "ok": true,
+     "reps_ms": [
+      37.99,
+      38.763,
+      38.862
+     ],
+     "median_ms": 38.763,
+     "spread_ms": 0.872,
+     "predicted_ms": 36.022,
+     "np_reps_ms": [
+      37.989,
+      38.762,
+      38.862
+     ],
+     "np_median_ms": 38.762,
+     "np_spread_ms": 0.873,
+     "np_instances": {
+      "yolov8n": 1
+     },
+     "measured_via": "3net_dronet8_mlp16_yolo1__greedy"
+    }
+   },
+   "best_makespan_ms": 38.763,
+   "best_solver": "greedy",
+   "greedy_makespan_ms": 38.763,
+   "best_np_ms": 38.762,
+   "best_np_solver": "greedy",
+   "np_instances": {
+    "yolov8n": 1
+   },
+   "n_solvers_measured": 3
+  },
+  "3net_fused2_mlp8_yolo1": {
+   "solvers": {
+    "greedy": {
+     "ok": true,
+     "reps_ms": [
+      30.173,
+      31.705,
+      29.865
+     ],
+     "median_ms": 30.173,
+     "spread_ms": 1.84,
+     "predicted_ms": 28.644,
+     "np_reps_ms": [
+      30.172,
+      31.704,
+      29.865
+     ],
+     "np_median_ms": 30.172,
+     "np_spread_ms": 1.839,
+     "np_instances": {
+      "yolov8n": 1
+     }
+    },
+    "heft_edf": {
+     "ok": true,
+     "reps_ms": [
+      30.173,
+      31.705,
+      29.865
+     ],
+     "median_ms": 30.173,
+     "spread_ms": 1.84,
+     "predicted_ms": 28.644,
+     "np_reps_ms": [
+      30.172,
+      31.704,
+      29.865
+     ],
+     "np_median_ms": 30.172,
+     "np_spread_ms": 1.839,
+     "np_instances": {
+      "yolov8n": 1
+     },
+     "measured_via": "3net_fused2_mlp8_yolo1__greedy"
+    },
+    "cpsat": {
+     "ok": true,
+     "reps_ms": [
+      30.173,
+      31.705,
+      29.865
+     ],
+     "median_ms": 30.173,
+     "spread_ms": 1.84,
+     "predicted_ms": 28.644,
+     "np_reps_ms": [
+      30.172,
+      31.704,
+      29.865
+     ],
+     "np_median_ms": 30.172,
+     "np_spread_ms": 1.839,
+     "np_instances": {
+      "yolov8n": 1
+     },
+     "measured_via": "3net_fused2_mlp8_yolo1__greedy"
+    }
+   },
+   "best_makespan_ms": 30.173,
+   "best_solver": "greedy",
+   "greedy_makespan_ms": 30.173,
+   "best_np_ms": 30.172,
+   "best_np_solver": "greedy",
+   "np_instances": {
+    "yolov8n": 1
+   },
+   "n_solvers_measured": 3
+  },
+  "3net_fused4_mlp4_yolo1": {
+   "solvers": {
+    "greedy": {
+     "ok": true,
+     "reps_ms": [
+      30.816,
+      29.959,
+      30.941
+     ],
+     "median_ms": 30.816,
+     "spread_ms": 0.982,
+     "predicted_ms": 28.644,
+     "np_reps_ms": [
+      30.816,
+      29.959,
+      30.94
+     ],
+     "np_median_ms": 30.816,
+     "np_spread_ms": 0.981,
+     "np_instances": {
+      "yolov8n": 1
+     }
+    },
+    "heft_edf": {
+     "ok": true,
+     "reps_ms": [
+      30.816,
+      29.959,
+      30.941
+     ],
+     "median_ms": 30.816,
+     "spread_ms": 0.982,
+     "predicted_ms": 28.644,
+     "np_reps_ms": [
+      30.816,
+      29.959,
+      30.94
+     ],
+     "np_median_ms": 30.816,
+     "np_spread_ms": 0.981,
+     "np_instances": {
+      "yolov8n": 1
+     },
+     "measured_via": "3net_fused4_mlp4_yolo1__greedy"
+    },
+    "cpsat": {
+     "ok": true,
+     "reps_ms": [
+      30.816,
+      29.959,
+      30.941
+     ],
+     "median_ms": 30.816,
+     "spread_ms": 0.982,
+     "predicted_ms": 28.644,
+     "np_reps_ms": [
+      30.816,
+      29.959,
+      30.94
+     ],
+     "np_median_ms": 30.816,
+     "np_spread_ms": 0.981,
+     "np_instances": {
+      "yolov8n": 1
+     },
+     "measured_via": "3net_fused4_mlp4_yolo1__greedy"
+    }
+   },
+   "best_makespan_ms": 30.816,
+   "best_solver": "greedy",
+   "greedy_makespan_ms": 30.816,
+   "best_np_ms": 30.816,
+   "best_np_solver": "greedy",
+   "np_instances": {
+    "yolov8n": 1
+   },
+   "n_solvers_measured": 3
+  },
+  "3net_mlp2": {
+   "solvers": {
+    "greedy": {
+     "ok": true,
+     "reps_ms": [
+      10.067,
+      10.063,
+      10.105
+     ],
+     "median_ms": 10.067,
+     "spread_ms": 0.042,
+     "predicted_ms": 10.066,
+     "np_reps_ms": [
+      10.067,
+      10.063,
+      10.104
+     ],
+     "np_median_ms": 10.067,
+     "np_spread_ms": 0.041,
+     "np_instances": {}
+    },
+    "heft_edf": {
+     "ok": true,
+     "reps_ms": [
+      10.067,
+      10.063,
+      10.105
+     ],
+     "median_ms": 10.067,
+     "spread_ms": 0.042,
+     "predicted_ms": 10.066,
+     "np_reps_ms": [
+      10.067,
+      10.063,
+      10.104
+     ],
+     "np_median_ms": 10.067,
+     "np_spread_ms": 0.041,
+     "np_instances": {},
+     "measured_via": "3net_mlp2__greedy"
+    },
+    "cpsat": {
+     "ok": true,
+     "reps_ms": [
+      10.067,
+      10.063,
+      10.105
+     ],
+     "median_ms": 10.067,
+     "spread_ms": 0.042,
+     "predicted_ms": 10.066,
+     "np_reps_ms": [
+      10.067,
+      10.063,
+      10.104
+     ],
+     "np_median_ms": 10.067,
+     "np_spread_ms": 0.041,
+     "np_instances": {},
+     "measured_via": "3net_mlp2__greedy"
+    }
+   },
+   "best_makespan_ms": 10.067,
+   "best_solver": "greedy",
+   "greedy_makespan_ms": 10.067,
+   "best_np_ms": 10.067,
+   "best_np_solver": "greedy",
+   "np_instances": null,
+   "n_solvers_measured": 3
+  }
+ }
+}

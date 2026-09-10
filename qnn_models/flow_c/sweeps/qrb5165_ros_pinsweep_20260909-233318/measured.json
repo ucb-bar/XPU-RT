@@ -5,6 +5,6753 @@
  "warm_passes_per_rep": 1,
  "xpurt_sweep": "qnn_models/flow_c/sweeps/qrb5165_sched_algo_sweep10_20260908-210226",
  "runs": {
+  "3net_dronet1_mlp2__a0": {
+   "cell": "3net_dronet1_mlp2",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a0",
+   "label": "mlp_control@cpu_dronet@cpu",
+   "assign": {
+    "mlp_control": "cpu",
+    "dronet": "cpu"
+   },
+   "rank": 0,
+   "np_rank": 0,
+   "n_legal": 6,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 10.066,
+   "predicted_np_makespan_ms": 10.066,
+   "predicted_missed_instances": 0,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 10.2087,
+   "makespan_spread_ms": 0.0132,
+   "makespan_reps_ms": [
+    10.2217,
+    10.2087,
+    10.2085
+   ],
+   "np_median_ms": 10.2087,
+   "np_spread_ms": 0.0132,
+   "np_reps_ms": [
+    10.2217,
+    10.2087,
+    10.2085
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 2,
+     "instances_run": 2,
+     "exec_p50_ms": 0.1244,
+     "exec_max_ms": 0.125,
+     "last_end_ms": 10.2217,
+     "missed": 0.0,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 6
+    },
+    "dronet": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 7.1261,
+     "exec_max_ms": 9.5226,
+     "last_end_ms": 9.562,
+     "missed": 0.0,
+     "period_ms": 20,
+     "window_ms": 20,
+     "n_exec_samples": 3
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 0.0,
+   "missed_nets": [],
+   "lock_wall_s": 7.61,
+   "measured_over_predicted": 1.0142
+  },
+  "3net_dronet1_mlp2__a1": {
+   "cell": "3net_dronet1_mlp2",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a1",
+   "label": "mlp_control@cpu_dronet@dsp",
+   "assign": {
+    "mlp_control": "cpu",
+    "dronet": "dsp"
+   },
+   "rank": 1,
+   "np_rank": 1,
+   "n_legal": 6,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 10.066,
+   "predicted_np_makespan_ms": 10.066,
+   "predicted_missed_instances": 0,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 10.3373,
+   "makespan_spread_ms": 0.1986,
+   "makespan_reps_ms": [
+    10.3373,
+    10.4036,
+    10.205
+   ],
+   "np_median_ms": 10.3373,
+   "np_spread_ms": 0.1986,
+   "np_reps_ms": [
+    10.3373,
+    10.4036,
+    10.205
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 2,
+     "instances_run": 2,
+     "exec_p50_ms": 0.1233,
+     "exec_max_ms": 0.1392,
+     "last_end_ms": 10.4036,
+     "missed": 0.0,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 6
+    },
+    "dronet": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 0.7236,
+     "exec_max_ms": 0.7429,
+     "last_end_ms": 0.8951,
+     "missed": 0.0,
+     "period_ms": 20,
+     "window_ms": 20,
+     "n_exec_samples": 3
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 0.0,
+   "missed_nets": [],
+   "lock_wall_s": 7.61,
+   "measured_over_predicted": 1.027
+  },
+  "3net_dronet1_mlp2__a2": {
+   "cell": "3net_dronet1_mlp2",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a2",
+   "label": "mlp_control@cpu_dronet@hta",
+   "assign": {
+    "mlp_control": "cpu",
+    "dronet": "hta"
+   },
+   "rank": 2,
+   "np_rank": 2,
+   "n_legal": 6,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 10.066,
+   "predicted_np_makespan_ms": 10.066,
+   "predicted_missed_instances": 0,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 10.8407,
+   "makespan_spread_ms": 0.7355,
+   "makespan_reps_ms": [
+    10.1213,
+    10.8407,
+    10.8568
+   ],
+   "np_median_ms": 10.8407,
+   "np_spread_ms": 0.7355,
+   "np_reps_ms": [
+    10.1213,
+    10.8407,
+    10.8568
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 2,
+     "instances_run": 2,
+     "exec_p50_ms": 0.0489,
+     "exec_max_ms": 0.0513,
+     "last_end_ms": 10.8568,
+     "missed": 0.0,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 6
+    },
+    "dronet": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 1.3958,
+     "exec_max_ms": 3.7097,
+     "last_end_ms": 3.9431,
+     "missed": 0.0,
+     "period_ms": 20,
+     "window_ms": 20,
+     "n_exec_samples": 3
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 0.0,
+   "missed_nets": [],
+   "lock_wall_s": 7.61,
+   "measured_over_predicted": 1.077
+  },
+  "3net_dronet1_mlp2__a3": {
+   "cell": "3net_dronet1_mlp2",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a3",
+   "label": "mlp_control@dsp_dronet@cpu",
+   "assign": {
+    "mlp_control": "dsp",
+    "dronet": "cpu"
+   },
+   "rank": 3,
+   "np_rank": 3,
+   "n_legal": 6,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 10.685,
+   "predicted_np_makespan_ms": 10.685,
+   "predicted_missed_instances": 0,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 10.5089,
+   "makespan_spread_ms": 0.0524,
+   "makespan_reps_ms": [
+    10.5564,
+    10.504,
+    10.5089
+   ],
+   "np_median_ms": 10.5089,
+   "np_spread_ms": 0.0524,
+   "np_reps_ms": [
+    10.5564,
+    10.504,
+    10.5089
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 2,
+     "instances_run": 2,
+     "exec_p50_ms": 0.4266,
+     "exec_max_ms": 0.4629,
+     "last_end_ms": 10.5564,
+     "missed": 0.0,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 6
+    },
+    "dronet": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 7.4414,
+     "exec_max_ms": 10.1394,
+     "last_end_ms": 10.1888,
+     "missed": 0.0,
+     "period_ms": 20,
+     "window_ms": 20,
+     "n_exec_samples": 3
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 0.0,
+   "missed_nets": [],
+   "lock_wall_s": 7.61,
+   "measured_over_predicted": 0.9835
+  },
+  "3net_dronet1_mlp2__a4": {
+   "cell": "3net_dronet1_mlp2",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a4",
+   "label": "mlp_control@dsp_dronet@dsp",
+   "assign": {
+    "mlp_control": "dsp",
+    "dronet": "dsp"
+   },
+   "rank": 4,
+   "np_rank": 4,
+   "n_legal": 6,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 10.685,
+   "predicted_np_makespan_ms": 10.685,
+   "predicted_missed_instances": 0,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 10.6267,
+   "makespan_spread_ms": 0.2051,
+   "makespan_reps_ms": [
+    10.7791,
+    10.574,
+    10.6267
+   ],
+   "np_median_ms": 10.6267,
+   "np_spread_ms": 0.2051,
+   "np_reps_ms": [
+    10.7791,
+    10.574,
+    10.6267
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 2,
+     "instances_run": 2,
+     "exec_p50_ms": 0.5113,
+     "exec_max_ms": 0.9002,
+     "last_end_ms": 10.7791,
+     "missed": 0.0,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 6
+    },
+    "dronet": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 0.8486,
+     "exec_max_ms": 0.9486,
+     "last_end_ms": 0.9918,
+     "missed": 0.0,
+     "period_ms": 20,
+     "window_ms": 20,
+     "n_exec_samples": 3
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 0.0,
+   "missed_nets": [],
+   "lock_wall_s": 13.77,
+   "measured_over_predicted": 0.9945
+  },
+  "3net_dronet1_mlp2__a5": {
+   "cell": "3net_dronet1_mlp2",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a5",
+   "label": "mlp_control@dsp_dronet@hta",
+   "assign": {
+    "mlp_control": "dsp",
+    "dronet": "hta"
+   },
+   "rank": 5,
+   "np_rank": 5,
+   "n_legal": 6,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 10.685,
+   "predicted_np_makespan_ms": 10.685,
+   "predicted_missed_instances": 0,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 13.0276,
+   "makespan_spread_ms": 1.28,
+   "makespan_reps_ms": [
+    11.9021,
+    13.1821,
+    13.0276
+   ],
+   "np_median_ms": 13.0276,
+   "np_spread_ms": 1.28,
+   "np_reps_ms": [
+    11.9021,
+    13.1821,
+    13.0276
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 2,
+     "instances_run": 2,
+     "exec_p50_ms": 1.3006,
+     "exec_max_ms": 2.3769,
+     "last_end_ms": 13.1821,
+     "missed": 0.0,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 6
+    },
+    "dronet": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 1.6389,
+     "exec_max_ms": 2.958,
+     "last_end_ms": 2.98,
+     "missed": 0.0,
+     "period_ms": 20,
+     "window_ms": 20,
+     "n_exec_samples": 3
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 0.0,
+   "missed_nets": [],
+   "lock_wall_s": 13.77,
+   "measured_over_predicted": 1.2192
+  },
+  "3net_dronet1_mlp2_yolo1__a0": {
+   "cell": "3net_dronet1_mlp2_yolo1",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a0",
+   "label": "mlp_control@cpu_dronet@cpu_yolov8n@dsp",
+   "assign": {
+    "mlp_control": "cpu",
+    "dronet": "cpu",
+    "yolov8n": "dsp"
+   },
+   "rank": 0,
+   "np_rank": 0,
+   "n_legal": 12,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 28.644,
+   "predicted_np_makespan_ms": 28.644,
+   "predicted_missed_instances": 0,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 26.19,
+   "makespan_spread_ms": 2.9957,
+   "makespan_reps_ms": [
+    28.4847,
+    26.19,
+    25.489
+   ],
+   "np_median_ms": 26.19,
+   "np_spread_ms": 2.9957,
+   "np_reps_ms": [
+    28.4847,
+    26.19,
+    25.489
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 2,
+     "instances_run": 2,
+     "exec_p50_ms": 0.1376,
+     "exec_max_ms": 0.1995,
+     "last_end_ms": 10.2627,
+     "missed": 0.0,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 6
+    },
+    "dronet": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 10.3594,
+     "exec_max_ms": 10.6183,
+     "last_end_ms": 10.9482,
+     "missed": 0.0,
+     "period_ms": 20,
+     "window_ms": 20,
+     "n_exec_samples": 3
+    },
+    "yolov8n": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 26.0252,
+     "exec_max_ms": 28.4439,
+     "last_end_ms": 28.4847,
+     "missed": 0.0,
+     "period_ms": null,
+     "window_ms": null,
+     "n_exec_samples": 3
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 0.0,
+   "missed_nets": [],
+   "lock_wall_s": 13.77,
+   "measured_over_predicted": 0.9143
+  },
+  "3net_dronet1_mlp2_yolo1__a1": {
+   "cell": "3net_dronet1_mlp2_yolo1",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a1",
+   "label": "mlp_control@cpu_dronet@hta_yolov8n@dsp",
+   "assign": {
+    "mlp_control": "cpu",
+    "dronet": "hta",
+    "yolov8n": "dsp"
+   },
+   "rank": 1,
+   "np_rank": 1,
+   "n_legal": 12,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 28.644,
+   "predicted_np_makespan_ms": 28.644,
+   "predicted_missed_instances": 0,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 29.2168,
+   "makespan_spread_ms": 2.1008,
+   "makespan_reps_ms": [
+    29.2943,
+    29.2168,
+    27.1935
+   ],
+   "np_median_ms": 29.2168,
+   "np_spread_ms": 2.1008,
+   "np_reps_ms": [
+    29.2943,
+    29.2168,
+    27.1935
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 2,
+     "instances_run": 2,
+     "exec_p50_ms": 0.0529,
+     "exec_max_ms": 0.0647,
+     "last_end_ms": 10.8581,
+     "missed": 0.0,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 6
+    },
+    "dronet": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 2.0093,
+     "exec_max_ms": 3.5059,
+     "last_end_ms": 3.5259,
+     "missed": 0.0,
+     "period_ms": 20,
+     "window_ms": 20,
+     "n_exec_samples": 3
+    },
+    "yolov8n": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 28.8574,
+     "exec_max_ms": 29.2735,
+     "last_end_ms": 29.2943,
+     "missed": 0.0,
+     "period_ms": null,
+     "window_ms": null,
+     "n_exec_samples": 3
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 0.0,
+   "missed_nets": [],
+   "lock_wall_s": 13.77,
+   "measured_over_predicted": 1.02
+  },
+  "3net_dronet1_mlp2_yolo1__a10": {
+   "cell": "3net_dronet1_mlp2_yolo1",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a10",
+   "label": "mlp_control@dsp_dronet@cpu_yolov8n@cpu",
+   "assign": {
+    "mlp_control": "dsp",
+    "dronet": "cpu",
+    "yolov8n": "cpu"
+   },
+   "rank": 10,
+   "np_rank": 10,
+   "n_legal": 12,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 80.805,
+   "predicted_np_makespan_ms": 80.805,
+   "predicted_missed_instances": 0,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 85.3234,
+   "makespan_spread_ms": 1.8513,
+   "makespan_reps_ms": [
+    85.5227,
+    83.6714,
+    85.3234
+   ],
+   "np_median_ms": 85.3234,
+   "np_spread_ms": 1.8513,
+   "np_reps_ms": [
+    85.5227,
+    83.6714,
+    85.3234
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 2,
+     "instances_run": 2,
+     "exec_p50_ms": 0.5883,
+     "exec_max_ms": 2.9965,
+     "last_end_ms": 10.949,
+     "missed": 0.0,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 6
+    },
+    "dronet": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 10.8644,
+     "exec_max_ms": 14.1664,
+     "last_end_ms": 14.2101,
+     "missed": 0.0,
+     "period_ms": 20,
+     "window_ms": 20,
+     "n_exec_samples": 3
+    },
+    "yolov8n": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 84.7486,
+     "exec_max_ms": 85.3144,
+     "last_end_ms": 85.5227,
+     "missed": 0.0,
+     "period_ms": null,
+     "window_ms": null,
+     "n_exec_samples": 3
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 0.0,
+   "missed_nets": [],
+   "lock_wall_s": 20.4,
+   "measured_over_predicted": 1.0559
+  },
+  "3net_dronet1_mlp2_yolo1__a11": {
+   "cell": "3net_dronet1_mlp2_yolo1",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a11",
+   "label": "mlp_control@cpu_dronet@cpu_yolov8n@cpu",
+   "assign": {
+    "mlp_control": "cpu",
+    "dronet": "cpu",
+    "yolov8n": "cpu"
+   },
+   "rank": 11,
+   "np_rank": 11,
+   "n_legal": 12,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 80.937,
+   "predicted_np_makespan_ms": 80.871,
+   "predicted_missed_instances": 1,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 86.6466,
+   "makespan_spread_ms": 1.6121,
+   "makespan_reps_ms": [
+    85.8352,
+    87.4473,
+    86.6466
+   ],
+   "np_median_ms": 86.6466,
+   "np_spread_ms": 1.6121,
+   "np_reps_ms": [
+    85.8352,
+    87.4473,
+    86.6466
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 2,
+     "instances_run": 2,
+     "exec_p50_ms": 0.2727,
+     "exec_max_ms": 0.4144,
+     "last_end_ms": 10.4166,
+     "missed": 0.0,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 6
+    },
+    "dronet": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 11.4261,
+     "exec_max_ms": 17.9336,
+     "last_end_ms": 17.9949,
+     "missed": 0.0,
+     "period_ms": 20,
+     "window_ms": 20,
+     "n_exec_samples": 3
+    },
+    "yolov8n": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 86.0713,
+     "exec_max_ms": 87.1158,
+     "last_end_ms": 87.4473,
+     "missed": 0.0,
+     "period_ms": null,
+     "window_ms": null,
+     "n_exec_samples": 3
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 0.0,
+   "missed_nets": [],
+   "lock_wall_s": 20.4,
+   "measured_over_predicted": 1.0705
+  },
+  "3net_dronet1_mlp2_yolo1__a2": {
+   "cell": "3net_dronet1_mlp2_yolo1",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a2",
+   "label": "mlp_control@cpu_dronet@dsp_yolov8n@dsp",
+   "assign": {
+    "mlp_control": "cpu",
+    "dronet": "dsp",
+    "yolov8n": "dsp"
+   },
+   "rank": 2,
+   "np_rank": 2,
+   "n_legal": 12,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 29.289,
+   "predicted_np_makespan_ms": 29.289,
+   "predicted_missed_instances": 0,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 26.8508,
+   "makespan_spread_ms": 2.6805,
+   "makespan_reps_ms": [
+    29.1891,
+    26.8508,
+    26.5086
+   ],
+   "np_median_ms": 26.8508,
+   "np_spread_ms": 2.6805,
+   "np_reps_ms": [
+    29.1891,
+    26.8508,
+    26.5086
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 2,
+     "instances_run": 2,
+     "exec_p50_ms": 0.1507,
+     "exec_max_ms": 0.1835,
+     "last_end_ms": 10.3807,
+     "missed": 0.0,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 6
+    },
+    "dronet": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 1.213,
+     "exec_max_ms": 11.0782,
+     "last_end_ms": 11.3977,
+     "missed": 0.0,
+     "period_ms": 20,
+     "window_ms": 20,
+     "n_exec_samples": 3
+    },
+    "yolov8n": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 26.7663,
+     "exec_max_ms": 29.1356,
+     "last_end_ms": 29.1891,
+     "missed": 0.0,
+     "period_ms": null,
+     "window_ms": null,
+     "n_exec_samples": 3
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 0.0,
+   "missed_nets": [],
+   "lock_wall_s": 26.47,
+   "measured_over_predicted": 0.9168
+  },
+  "3net_dronet1_mlp2_yolo1__a3": {
+   "cell": "3net_dronet1_mlp2_yolo1",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a3",
+   "label": "mlp_control@dsp_dronet@cpu_yolov8n@dsp",
+   "assign": {
+    "mlp_control": "dsp",
+    "dronet": "cpu",
+    "yolov8n": "dsp"
+   },
+   "rank": 3,
+   "np_rank": 3,
+   "n_legal": 12,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 30.014,
+   "predicted_np_makespan_ms": 29.329,
+   "predicted_missed_instances": 1,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 26.5091,
+   "makespan_spread_ms": 2.3289,
+   "makespan_reps_ms": [
+    28.628,
+    26.5091,
+    26.2991
+   ],
+   "np_median_ms": 26.5091,
+   "np_spread_ms": 2.3289,
+   "np_reps_ms": [
+    28.628,
+    26.5091,
+    26.2991
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 2,
+     "instances_run": 2,
+     "exec_p50_ms": 0.7961,
+     "exec_max_ms": 1.8922,
+     "last_end_ms": 11.9745,
+     "missed": 0.0,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 6
+    },
+    "dronet": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 10.0376,
+     "exec_max_ms": 20.1054,
+     "last_end_ms": 20.6671,
+     "missed": 0.33,
+     "period_ms": 20,
+     "window_ms": 20,
+     "n_exec_samples": 3
+    },
+    "yolov8n": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 26.4464,
+     "exec_max_ms": 28.5661,
+     "last_end_ms": 28.628,
+     "missed": 0.0,
+     "period_ms": null,
+     "window_ms": null,
+     "n_exec_samples": 3
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 0.33,
+   "missed_nets": [
+    "dronet"
+   ],
+   "lock_wall_s": 26.47,
+   "measured_over_predicted": 0.8832
+  },
+  "3net_dronet1_mlp2_yolo1__a4": {
+   "cell": "3net_dronet1_mlp2_yolo1",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a4",
+   "label": "mlp_control@dsp_dronet@hta_yolov8n@dsp",
+   "assign": {
+    "mlp_control": "dsp",
+    "dronet": "hta",
+    "yolov8n": "dsp"
+   },
+   "rank": 4,
+   "np_rank": 4,
+   "n_legal": 12,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 30.014,
+   "predicted_np_makespan_ms": 29.329,
+   "predicted_missed_instances": 1,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 28.7519,
+   "makespan_spread_ms": 2.9281,
+   "makespan_reps_ms": [
+    30.3732,
+    27.4451,
+    28.7519
+   ],
+   "np_median_ms": 28.7519,
+   "np_spread_ms": 2.9281,
+   "np_reps_ms": [
+    30.3732,
+    27.4451,
+    28.7519
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 2,
+     "instances_run": 2,
+     "exec_p50_ms": 2.4224,
+     "exec_max_ms": 3.3821,
+     "last_end_ms": 13.7383,
+     "missed": 0.0,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 6
+    },
+    "dronet": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 3.561,
+     "exec_max_ms": 3.5849,
+     "last_end_ms": 3.6174,
+     "missed": 0.0,
+     "period_ms": 20,
+     "window_ms": 20,
+     "n_exec_samples": 3
+    },
+    "yolov8n": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 28.4319,
+     "exec_max_ms": 29.9755,
+     "last_end_ms": 30.3732,
+     "missed": 0.0,
+     "period_ms": null,
+     "window_ms": null,
+     "n_exec_samples": 3
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 0.0,
+   "missed_nets": [],
+   "lock_wall_s": 26.47,
+   "measured_over_predicted": 0.9579
+  },
+  "3net_dronet1_mlp2_yolo1__a5": {
+   "cell": "3net_dronet1_mlp2_yolo1",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a5",
+   "label": "mlp_control@dsp_dronet@dsp_yolov8n@dsp",
+   "assign": {
+    "mlp_control": "dsp",
+    "dronet": "dsp",
+    "yolov8n": "dsp"
+   },
+   "rank": 5,
+   "np_rank": 5,
+   "n_legal": 12,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 30.659,
+   "predicted_np_makespan_ms": 29.974,
+   "predicted_missed_instances": 1,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 28.1269,
+   "makespan_spread_ms": 7.4278,
+   "makespan_reps_ms": [
+    34.4398,
+    28.1269,
+    27.012
+   ],
+   "np_median_ms": 28.1269,
+   "np_spread_ms": 7.4278,
+   "np_reps_ms": [
+    34.4398,
+    28.1269,
+    27.012
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 2,
+     "instances_run": 2,
+     "exec_p50_ms": 1.3435,
+     "exec_max_ms": 7.1927,
+     "last_end_ms": 17.2879,
+     "missed": 0.0,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 6
+    },
+    "dronet": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 1.4016,
+     "exec_max_ms": 1.464,
+     "last_end_ms": 1.5831,
+     "missed": 0.0,
+     "period_ms": 20,
+     "window_ms": 20,
+     "n_exec_samples": 3
+    },
+    "yolov8n": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 28.0111,
+     "exec_max_ms": 34.391,
+     "last_end_ms": 34.4398,
+     "missed": 0.0,
+     "period_ms": null,
+     "window_ms": null,
+     "n_exec_samples": 3
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 0.0,
+   "missed_nets": [],
+   "lock_wall_s": 26.47,
+   "measured_over_predicted": 0.9174
+  },
+  "3net_dronet1_mlp2_yolo1__a6": {
+   "cell": "3net_dronet1_mlp2_yolo1",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a6",
+   "label": "mlp_control@dsp_dronet@dsp_yolov8n@cpu",
+   "assign": {
+    "mlp_control": "dsp",
+    "dronet": "dsp",
+    "yolov8n": "cpu"
+   },
+   "rank": 6,
+   "np_rank": 6,
+   "n_legal": 12,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 73.807,
+   "predicted_np_makespan_ms": 73.807,
+   "predicted_missed_instances": 0,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 75.6224,
+   "makespan_spread_ms": 4.9469,
+   "makespan_reps_ms": [
+    80.5,
+    75.5531,
+    75.6224
+   ],
+   "np_median_ms": 75.6224,
+   "np_spread_ms": 4.9469,
+   "np_reps_ms": [
+    80.5,
+    75.5531,
+    75.6224
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 2,
+     "instances_run": 2,
+     "exec_p50_ms": 0.7956,
+     "exec_max_ms": 1.0403,
+     "last_end_ms": 11.3646,
+     "missed": 0.0,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 6
+    },
+    "dronet": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 1.0804,
+     "exec_max_ms": 1.1185,
+     "last_end_ms": 1.1948,
+     "missed": 0.0,
+     "period_ms": 20,
+     "window_ms": 20,
+     "n_exec_samples": 3
+    },
+    "yolov8n": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 75.5136,
+     "exec_max_ms": 80.4676,
+     "last_end_ms": 80.5,
+     "missed": 0.0,
+     "period_ms": null,
+     "window_ms": null,
+     "n_exec_samples": 3
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 0.0,
+   "missed_nets": [],
+   "lock_wall_s": 12.18,
+   "measured_over_predicted": 1.0246
+  },
+  "3net_dronet1_mlp2_yolo1__a7": {
+   "cell": "3net_dronet1_mlp2_yolo1",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a7",
+   "label": "mlp_control@dsp_dronet@hta_yolov8n@cpu",
+   "assign": {
+    "mlp_control": "dsp",
+    "dronet": "hta",
+    "yolov8n": "cpu"
+   },
+   "rank": 7,
+   "np_rank": 7,
+   "n_legal": 12,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 73.807,
+   "predicted_np_makespan_ms": 73.807,
+   "predicted_missed_instances": 0,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 75.1705,
+   "makespan_spread_ms": 0.9929,
+   "makespan_reps_ms": [
+    74.7948,
+    75.7877,
+    75.1705
+   ],
+   "np_median_ms": 75.1705,
+   "np_spread_ms": 0.9929,
+   "np_reps_ms": [
+    74.7948,
+    75.7877,
+    75.1705
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 2,
+     "instances_run": 2,
+     "exec_p50_ms": 0.5525,
+     "exec_max_ms": 0.7005,
+     "last_end_ms": 10.7952,
+     "missed": 0.0,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 6
+    },
+    "dronet": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 4.5973,
+     "exec_max_ms": 4.8631,
+     "last_end_ms": 5.0036,
+     "missed": 0.0,
+     "period_ms": 20,
+     "window_ms": 20,
+     "n_exec_samples": 3
+    },
+    "yolov8n": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 75.0267,
+     "exec_max_ms": 75.7057,
+     "last_end_ms": 75.7877,
+     "missed": 0.0,
+     "period_ms": null,
+     "window_ms": null,
+     "n_exec_samples": 3
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 0.0,
+   "missed_nets": [],
+   "lock_wall_s": 12.18,
+   "measured_over_predicted": 1.0185
+  },
+  "3net_dronet1_mlp2_yolo1__a8": {
+   "cell": "3net_dronet1_mlp2_yolo1",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a8",
+   "label": "mlp_control@cpu_dronet@dsp_yolov8n@cpu",
+   "assign": {
+    "mlp_control": "cpu",
+    "dronet": "dsp",
+    "yolov8n": "cpu"
+   },
+   "rank": 8,
+   "np_rank": 8,
+   "n_legal": 12,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 73.939,
+   "predicted_np_makespan_ms": 73.873,
+   "predicted_missed_instances": 1,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 77.1564,
+   "makespan_spread_ms": 4.4857,
+   "makespan_reps_ms": [
+    79.4198,
+    77.1564,
+    74.9341
+   ],
+   "np_median_ms": 77.1564,
+   "np_spread_ms": 4.4857,
+   "np_reps_ms": [
+    79.4198,
+    77.1564,
+    74.9341
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 2,
+     "instances_run": 2,
+     "exec_p50_ms": 0.2949,
+     "exec_max_ms": 0.3992,
+     "last_end_ms": 10.911,
+     "missed": 0.0,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 6
+    },
+    "dronet": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 0.9734,
+     "exec_max_ms": 1.053,
+     "last_end_ms": 2.9652,
+     "missed": 0.0,
+     "period_ms": 20,
+     "window_ms": 20,
+     "n_exec_samples": 3
+    },
+    "yolov8n": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 75.0721,
+     "exec_max_ms": 79.3968,
+     "last_end_ms": 79.4198,
+     "missed": 0.0,
+     "period_ms": null,
+     "window_ms": null,
+     "n_exec_samples": 3
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 0.0,
+   "missed_nets": [],
+   "lock_wall_s": 12.18,
+   "measured_over_predicted": 1.0435
+  },
+  "3net_dronet1_mlp2_yolo1__a9": {
+   "cell": "3net_dronet1_mlp2_yolo1",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a9",
+   "label": "mlp_control@cpu_dronet@hta_yolov8n@cpu",
+   "assign": {
+    "mlp_control": "cpu",
+    "dronet": "hta",
+    "yolov8n": "cpu"
+   },
+   "rank": 9,
+   "np_rank": 9,
+   "n_legal": 12,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 73.939,
+   "predicted_np_makespan_ms": 73.873,
+   "predicted_missed_instances": 1,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 74.7817,
+   "makespan_spread_ms": 5.5358,
+   "makespan_reps_ms": [
+    73.9106,
+    74.7817,
+    79.4464
+   ],
+   "np_median_ms": 74.7817,
+   "np_spread_ms": 5.5358,
+   "np_reps_ms": [
+    73.9106,
+    74.7817,
+    79.4464
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 2,
+     "instances_run": 2,
+     "exec_p50_ms": 0.074,
+     "exec_max_ms": 0.0809,
+     "last_end_ms": 10.1718,
+     "missed": 0.0,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 6
+    },
+    "dronet": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 4.5117,
+     "exec_max_ms": 4.9278,
+     "last_end_ms": 4.9609,
+     "missed": 0.0,
+     "period_ms": 20,
+     "window_ms": 20,
+     "n_exec_samples": 3
+    },
+    "yolov8n": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 74.7022,
+     "exec_max_ms": 79.3002,
+     "last_end_ms": 79.4464,
+     "missed": 0.0,
+     "period_ms": null,
+     "window_ms": null,
+     "n_exec_samples": 3
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 0.0,
+   "missed_nets": [],
+   "lock_wall_s": 12.18,
+   "measured_over_predicted": 1.0114
+  },
+  "3net_dronet2_mlp8_yolo1__a0": {
+   "cell": "3net_dronet2_mlp8_yolo1",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a0",
+   "label": "mlp_control@cpu_yolov8n@dsp_dronet@dsp",
+   "assign": {
+    "mlp_control": "cpu",
+    "yolov8n": "dsp",
+    "dronet": "dsp"
+   },
+   "rank": 0,
+   "np_rank": 0,
+   "n_legal": 12,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 70.645,
+   "predicted_np_makespan_ms": 28.644,
+   "predicted_missed_instances": 1,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 71.4182,
+   "makespan_spread_ms": 0.1559,
+   "makespan_reps_ms": [
+    71.4182,
+    71.2685,
+    71.4244
+   ],
+   "np_median_ms": 28.6766,
+   "np_spread_ms": 0.1491,
+   "np_reps_ms": [
+    28.75,
+    28.6009,
+    28.6766
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 8,
+     "instances_run": 8,
+     "exec_p50_ms": 0.1284,
+     "exec_max_ms": 0.1366,
+     "last_end_ms": 70.3947,
+     "missed": 0.0,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 24
+    },
+    "yolov8n": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 28.6199,
+     "exec_max_ms": 28.6952,
+     "last_end_ms": 28.75,
+     "missed": 0.0,
+     "period_ms": null,
+     "window_ms": null,
+     "n_exec_samples": 3
+    },
+    "dronet": {
+     "instances_declared": 2,
+     "instances_run": 2,
+     "exec_p50_ms": 0.9805,
+     "exec_max_ms": 1.0744,
+     "last_end_ms": 71.4244,
+     "missed": 0.0,
+     "period_ms": 70,
+     "window_ms": 26,
+     "n_exec_samples": 6
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 0.0,
+   "missed_nets": [],
+   "lock_wall_s": 20.4,
+   "measured_over_predicted": 1.0109
+  },
+  "3net_dronet2_mlp8_yolo1__a1": {
+   "cell": "3net_dronet2_mlp8_yolo1",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a1",
+   "label": "mlp_control@dsp_yolov8n@dsp_dronet@dsp",
+   "assign": {
+    "mlp_control": "dsp",
+    "yolov8n": "dsp",
+    "dronet": "dsp"
+   },
+   "rank": 1,
+   "np_rank": 3,
+   "n_legal": 12,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 71.33,
+   "predicted_np_makespan_ms": 29.329,
+   "predicted_missed_instances": 3,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 71.3911,
+   "makespan_spread_ms": 0.3401,
+   "makespan_reps_ms": [
+    71.6542,
+    71.3911,
+    71.3141
+   ],
+   "np_median_ms": 31.1573,
+   "np_spread_ms": 2.5314,
+   "np_reps_ms": [
+    29.6836,
+    32.215,
+    31.1573
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 8,
+     "instances_run": 8,
+     "exec_p50_ms": 0.7825,
+     "exec_max_ms": 11.8591,
+     "last_end_ms": 71.6542,
+     "missed": 1.0,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 24
+    },
+    "yolov8n": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 31.0048,
+     "exec_max_ms": 32.0584,
+     "last_end_ms": 32.215,
+     "missed": 0.0,
+     "period_ms": null,
+     "window_ms": null,
+     "n_exec_samples": 3
+    },
+    "dronet": {
+     "instances_declared": 2,
+     "instances_run": 2,
+     "exec_p50_ms": 1.0136,
+     "exec_max_ms": 1.1631,
+     "last_end_ms": 71.488,
+     "missed": 0.0,
+     "period_ms": 70,
+     "window_ms": 26,
+     "n_exec_samples": 6
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 1.0,
+   "missed_nets": [
+    "mlp_control"
+   ],
+   "lock_wall_s": 20.4,
+   "measured_over_predicted": 1.0009
+  },
+  "3net_dronet2_mlp8_yolo1__a10": {
+   "cell": "3net_dronet2_mlp8_yolo1",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a10",
+   "label": "mlp_control@dsp_yolov8n@cpu_dronet@cpu",
+   "assign": {
+    "mlp_control": "dsp",
+    "yolov8n": "cpu",
+    "dronet": "cpu"
+   },
+   "rank": 10,
+   "np_rank": 8,
+   "n_legal": 12,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 87.803,
+   "predicted_np_makespan_ms": 73.807,
+   "predicted_missed_instances": 1,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 91.9899,
+   "makespan_spread_ms": 7.8203,
+   "makespan_reps_ms": [
+    91.9899,
+    98.8908,
+    91.0705
+   ],
+   "np_median_ms": 91.9899,
+   "np_spread_ms": 7.8203,
+   "np_reps_ms": [
+    91.9899,
+    98.8908,
+    91.0705
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 8,
+     "instances_run": 8,
+     "exec_p50_ms": 0.5835,
+     "exec_max_ms": 0.8508,
+     "last_end_ms": 70.8772,
+     "missed": 0.0,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 24
+    },
+    "yolov8n": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 91.7615,
+     "exec_max_ms": 98.5985,
+     "last_end_ms": 98.8908,
+     "missed": 0.0,
+     "period_ms": null,
+     "window_ms": null,
+     "n_exec_samples": 3
+    },
+    "dronet": {
+     "instances_declared": 2,
+     "instances_run": 2,
+     "exec_p50_ms": 10.7823,
+     "exec_max_ms": 12.5417,
+     "last_end_ms": 81.3186,
+     "missed": 0.0,
+     "period_ms": 70,
+     "window_ms": 26,
+     "n_exec_samples": 6
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 0.0,
+   "missed_nets": [],
+   "lock_wall_s": 19.3,
+   "measured_over_predicted": 1.0477
+  },
+  "3net_dronet2_mlp8_yolo1__a11": {
+   "cell": "3net_dronet2_mlp8_yolo1",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a11",
+   "label": "mlp_control@cpu_yolov8n@cpu_dronet@cpu",
+   "assign": {
+    "mlp_control": "cpu",
+    "yolov8n": "cpu",
+    "dronet": "cpu"
+   },
+   "rank": 11,
+   "np_rank": 11,
+   "n_legal": 12,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 88.331,
+   "predicted_np_makespan_ms": 73.873,
+   "predicted_missed_instances": 8,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 91.2633,
+   "makespan_spread_ms": 3.6971,
+   "makespan_reps_ms": [
+    94.2661,
+    91.2633,
+    90.569
+   ],
+   "np_median_ms": 91.2633,
+   "np_spread_ms": 3.6971,
+   "np_reps_ms": [
+    94.2661,
+    91.2633,
+    90.569
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 8,
+     "instances_run": 8,
+     "exec_p50_ms": 0.294,
+     "exec_max_ms": 0.3808,
+     "last_end_ms": 70.6499,
+     "missed": 0.0,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 24
+    },
+    "yolov8n": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 91.2062,
+     "exec_max_ms": 94.2246,
+     "last_end_ms": 94.2661,
+     "missed": 0.0,
+     "period_ms": null,
+     "window_ms": null,
+     "n_exec_samples": 3
+    },
+    "dronet": {
+     "instances_declared": 2,
+     "instances_run": 2,
+     "exec_p50_ms": 10.7231,
+     "exec_max_ms": 13.5958,
+     "last_end_ms": 81.242,
+     "missed": 0.0,
+     "period_ms": 70,
+     "window_ms": 26,
+     "n_exec_samples": 6
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 0.0,
+   "missed_nets": [],
+   "lock_wall_s": 19.3,
+   "measured_over_predicted": 1.0332
+  },
+  "3net_dronet2_mlp8_yolo1__a2": {
+   "cell": "3net_dronet2_mlp8_yolo1",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a2",
+   "label": "mlp_control@cpu_yolov8n@dsp_dronet@hta",
+   "assign": {
+    "mlp_control": "cpu",
+    "yolov8n": "dsp",
+    "dronet": "hta"
+   },
+   "rank": 2,
+   "np_rank": 1,
+   "n_legal": 12,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 72.03,
+   "predicted_np_makespan_ms": 28.644,
+   "predicted_missed_instances": 0,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 73.7392,
+   "makespan_spread_ms": 0.3928,
+   "makespan_reps_ms": [
+    73.7193,
+    74.1121,
+    73.7392
+   ],
+   "np_median_ms": 29.5519,
+   "np_spread_ms": 1.4016,
+   "np_reps_ms": [
+    30.3196,
+    29.5519,
+    28.918
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 8,
+     "instances_run": 8,
+     "exec_p50_ms": 0.0504,
+     "exec_max_ms": 0.0556,
+     "last_end_ms": 71.1152,
+     "missed": 0.0,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 24
+    },
+    "yolov8n": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 29.1817,
+     "exec_max_ms": 29.966,
+     "last_end_ms": 30.3196,
+     "missed": 0.0,
+     "period_ms": null,
+     "window_ms": null,
+     "n_exec_samples": 3
+    },
+    "dronet": {
+     "instances_declared": 2,
+     "instances_run": 2,
+     "exec_p50_ms": 2.32,
+     "exec_max_ms": 3.2003,
+     "last_end_ms": 74.1121,
+     "missed": 0.0,
+     "period_ms": 70,
+     "window_ms": 26,
+     "n_exec_samples": 6
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 0.0,
+   "missed_nets": [],
+   "lock_wall_s": 20.52,
+   "measured_over_predicted": 1.0237
+  },
+  "3net_dronet2_mlp8_yolo1__a3": {
+   "cell": "3net_dronet2_mlp8_yolo1",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a3",
+   "label": "mlp_control@dsp_yolov8n@dsp_dronet@hta",
+   "assign": {
+    "mlp_control": "dsp",
+    "yolov8n": "dsp",
+    "dronet": "hta"
+   },
+   "rank": 3,
+   "np_rank": 4,
+   "n_legal": 12,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 72.03,
+   "predicted_np_makespan_ms": 29.329,
+   "predicted_missed_instances": 2,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 72.6802,
+   "makespan_spread_ms": 1.621,
+   "makespan_reps_ms": [
+    72.6449,
+    74.2659,
+    72.6802
+   ],
+   "np_median_ms": 32.4414,
+   "np_spread_ms": 6.6273,
+   "np_reps_ms": [
+    32.1794,
+    38.8067,
+    32.4414
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 8,
+     "instances_run": 8,
+     "exec_p50_ms": 2.2535,
+     "exec_max_ms": 18.6898,
+     "last_end_ms": 71.611,
+     "missed": 2.0,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 24
+    },
+    "yolov8n": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 32.4135,
+     "exec_max_ms": 38.7892,
+     "last_end_ms": 38.8067,
+     "missed": 0.0,
+     "period_ms": null,
+     "window_ms": null,
+     "n_exec_samples": 3
+    },
+    "dronet": {
+     "instances_declared": 2,
+     "instances_run": 2,
+     "exec_p50_ms": 2.5239,
+     "exec_max_ms": 3.4418,
+     "last_end_ms": 74.2659,
+     "missed": 0.0,
+     "period_ms": 70,
+     "window_ms": 26,
+     "n_exec_samples": 6
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 2.0,
+   "missed_nets": [
+    "mlp_control"
+   ],
+   "lock_wall_s": 20.52,
+   "measured_over_predicted": 1.009
+  },
+  "3net_dronet2_mlp8_yolo1__a4": {
+   "cell": "3net_dronet2_mlp8_yolo1",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a4",
+   "label": "mlp_control@dsp_yolov8n@cpu_dronet@dsp",
+   "assign": {
+    "mlp_control": "dsp",
+    "yolov8n": "cpu",
+    "dronet": "dsp"
+   },
+   "rank": 4,
+   "np_rank": 6,
+   "n_legal": 12,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 73.807,
+   "predicted_np_makespan_ms": 73.807,
+   "predicted_missed_instances": 0,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 77.3774,
+   "makespan_spread_ms": 4.4125,
+   "makespan_reps_ms": [
+    80.1587,
+    77.3774,
+    75.7462
+   ],
+   "np_median_ms": 77.3774,
+   "np_spread_ms": 4.4125,
+   "np_reps_ms": [
+    80.1587,
+    77.3774,
+    75.7462
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 8,
+     "instances_run": 8,
+     "exec_p50_ms": 0.6887,
+     "exec_max_ms": 0.8648,
+     "last_end_ms": 71.2373,
+     "missed": 0.0,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 24
+    },
+    "yolov8n": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 75.7007,
+     "exec_max_ms": 80.1223,
+     "last_end_ms": 80.1587,
+     "missed": 0.0,
+     "period_ms": null,
+     "window_ms": null,
+     "n_exec_samples": 3
+    },
+    "dronet": {
+     "instances_declared": 2,
+     "instances_run": 2,
+     "exec_p50_ms": 1.1231,
+     "exec_max_ms": 1.3993,
+     "last_end_ms": 71.9166,
+     "missed": 0.0,
+     "period_ms": 70,
+     "window_ms": 26,
+     "n_exec_samples": 6
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 0.0,
+   "missed_nets": [],
+   "lock_wall_s": 20.52,
+   "measured_over_predicted": 1.0484
+  },
+  "3net_dronet2_mlp8_yolo1__a5": {
+   "cell": "3net_dronet2_mlp8_yolo1",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a5",
+   "label": "mlp_control@dsp_yolov8n@cpu_dronet@hta",
+   "assign": {
+    "mlp_control": "dsp",
+    "yolov8n": "cpu",
+    "dronet": "hta"
+   },
+   "rank": 5,
+   "np_rank": 7,
+   "n_legal": 12,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 73.807,
+   "predicted_np_makespan_ms": 73.807,
+   "predicted_missed_instances": 0,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 77.0569,
+   "makespan_spread_ms": 4.1944,
+   "makespan_reps_ms": [
+    80.352,
+    77.0569,
+    76.1576
+   ],
+   "np_median_ms": 77.0569,
+   "np_spread_ms": 4.1944,
+   "np_reps_ms": [
+    80.352,
+    77.0569,
+    76.1576
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 8,
+     "instances_run": 8,
+     "exec_p50_ms": 0.4748,
+     "exec_max_ms": 0.9196,
+     "last_end_ms": 70.6433,
+     "missed": 0.33,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 24
+    },
+    "yolov8n": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 76.9361,
+     "exec_max_ms": 80.1345,
+     "last_end_ms": 80.352,
+     "missed": 0.0,
+     "period_ms": null,
+     "window_ms": null,
+     "n_exec_samples": 3
+    },
+    "dronet": {
+     "instances_declared": 2,
+     "instances_run": 2,
+     "exec_p50_ms": 1.7441,
+     "exec_max_ms": 4.8674,
+     "last_end_ms": 71.7902,
+     "missed": 0.0,
+     "period_ms": 70,
+     "window_ms": 26,
+     "n_exec_samples": 6
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 0.33,
+   "missed_nets": [
+    "mlp_control"
+   ],
+   "lock_wall_s": 20.52,
+   "measured_over_predicted": 1.044
+  },
+  "3net_dronet2_mlp8_yolo1__a6": {
+   "cell": "3net_dronet2_mlp8_yolo1",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a6",
+   "label": "mlp_control@cpu_yolov8n@cpu_dronet@dsp",
+   "assign": {
+    "mlp_control": "cpu",
+    "yolov8n": "cpu",
+    "dronet": "dsp"
+   },
+   "rank": 6,
+   "np_rank": 9,
+   "n_legal": 12,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 74.335,
+   "predicted_np_makespan_ms": 73.873,
+   "predicted_missed_instances": 6,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 75.5196,
+   "makespan_spread_ms": 4.3332,
+   "makespan_reps_ms": [
+    79.4647,
+    75.5196,
+    75.1315
+   ],
+   "np_median_ms": 75.5196,
+   "np_spread_ms": 4.3332,
+   "np_reps_ms": [
+    79.4647,
+    75.5196,
+    75.1315
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 8,
+     "instances_run": 8,
+     "exec_p50_ms": 0.2859,
+     "exec_max_ms": 0.8961,
+     "last_end_ms": 70.6717,
+     "missed": 0.0,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 24
+    },
+    "yolov8n": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 75.4709,
+     "exec_max_ms": 79.4249,
+     "last_end_ms": 79.4647,
+     "missed": 0.0,
+     "period_ms": null,
+     "window_ms": null,
+     "n_exec_samples": 3
+    },
+    "dronet": {
+     "instances_declared": 2,
+     "instances_run": 2,
+     "exec_p50_ms": 0.8449,
+     "exec_max_ms": 1.0479,
+     "last_end_ms": 71.3464,
+     "missed": 0.0,
+     "period_ms": 70,
+     "window_ms": 26,
+     "n_exec_samples": 6
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 0.0,
+   "missed_nets": [],
+   "lock_wall_s": 18.56,
+   "measured_over_predicted": 1.0159
+  },
+  "3net_dronet2_mlp8_yolo1__a7": {
+   "cell": "3net_dronet2_mlp8_yolo1",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a7",
+   "label": "mlp_control@cpu_yolov8n@cpu_dronet@hta",
+   "assign": {
+    "mlp_control": "cpu",
+    "yolov8n": "cpu",
+    "dronet": "hta"
+   },
+   "rank": 7,
+   "np_rank": 10,
+   "n_legal": 12,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 74.335,
+   "predicted_np_makespan_ms": 73.873,
+   "predicted_missed_instances": 6,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 76.3568,
+   "makespan_spread_ms": 6.1264,
+   "makespan_reps_ms": [
+    82.2491,
+    76.3568,
+    76.1227
+   ],
+   "np_median_ms": 76.3568,
+   "np_spread_ms": 6.1264,
+   "np_reps_ms": [
+    82.2491,
+    76.3568,
+    76.1227
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 8,
+     "instances_run": 8,
+     "exec_p50_ms": 0.0754,
+     "exec_max_ms": 0.0909,
+     "last_end_ms": 70.1839,
+     "missed": 0.67,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 24
+    },
+    "yolov8n": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 76.3336,
+     "exec_max_ms": 82.2145,
+     "last_end_ms": 82.2491,
+     "missed": 0.0,
+     "period_ms": null,
+     "window_ms": null,
+     "n_exec_samples": 3
+    },
+    "dronet": {
+     "instances_declared": 2,
+     "instances_run": 2,
+     "exec_p50_ms": 1.6884,
+     "exec_max_ms": 4.6542,
+     "last_end_ms": 72.1038,
+     "missed": 0.0,
+     "period_ms": 70,
+     "window_ms": 26,
+     "n_exec_samples": 6
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 0.67,
+   "missed_nets": [
+    "mlp_control"
+   ],
+   "lock_wall_s": 18.56,
+   "measured_over_predicted": 1.0272
+  },
+  "3net_dronet2_mlp8_yolo1__a8": {
+   "cell": "3net_dronet2_mlp8_yolo1",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a8",
+   "label": "mlp_control@dsp_yolov8n@dsp_dronet@cpu",
+   "assign": {
+    "mlp_control": "dsp",
+    "yolov8n": "dsp",
+    "dronet": "cpu"
+   },
+   "rank": 8,
+   "np_rank": 5,
+   "n_legal": 12,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 76.998,
+   "predicted_np_makespan_ms": 29.329,
+   "predicted_missed_instances": 2,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 87.8543,
+   "makespan_spread_ms": 8.9453,
+   "makespan_reps_ms": [
+    79.0179,
+    87.8543,
+    87.9632
+   ],
+   "np_median_ms": 30.1606,
+   "np_spread_ms": 2.3006,
+   "np_reps_ms": [
+    30.1606,
+    28.8032,
+    31.1038
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 8,
+     "instances_run": 8,
+     "exec_p50_ms": 0.638,
+     "exec_max_ms": 10.7325,
+     "last_end_ms": 70.7049,
+     "missed": 0.67,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 24
+    },
+    "yolov8n": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 30.1303,
+     "exec_max_ms": 31.0426,
+     "last_end_ms": 31.1038,
+     "missed": 0.0,
+     "period_ms": null,
+     "window_ms": null,
+     "n_exec_samples": 3
+    },
+    "dronet": {
+     "instances_declared": 2,
+     "instances_run": 2,
+     "exec_p50_ms": 10.4971,
+     "exec_max_ms": 17.147,
+     "last_end_ms": 87.9632,
+     "missed": 0.0,
+     "period_ms": 70,
+     "window_ms": 26,
+     "n_exec_samples": 6
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 0.67,
+   "missed_nets": [
+    "mlp_control"
+   ],
+   "lock_wall_s": 18.56,
+   "measured_over_predicted": 1.141
+  },
+  "3net_dronet2_mlp8_yolo1__a9": {
+   "cell": "3net_dronet2_mlp8_yolo1",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a9",
+   "label": "mlp_control@cpu_yolov8n@dsp_dronet@cpu",
+   "assign": {
+    "mlp_control": "cpu",
+    "yolov8n": "dsp",
+    "dronet": "cpu"
+   },
+   "rank": 9,
+   "np_rank": 2,
+   "n_legal": 12,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 77.064,
+   "predicted_np_makespan_ms": 28.644,
+   "predicted_missed_instances": 0,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 78.7538,
+   "makespan_spread_ms": 6.9439,
+   "makespan_reps_ms": [
+    85.2786,
+    78.3347,
+    78.7538
+   ],
+   "np_median_ms": 34.5479,
+   "np_spread_ms": 0.5458,
+   "np_reps_ms": [
+    34.811,
+    34.5479,
+    34.2652
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 8,
+     "instances_run": 8,
+     "exec_p50_ms": 0.123,
+     "exec_max_ms": 0.1506,
+     "last_end_ms": 70.4049,
+     "missed": 0.0,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 24
+    },
+    "yolov8n": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 34.4482,
+     "exec_max_ms": 34.4918,
+     "last_end_ms": 34.811,
+     "missed": 0.0,
+     "period_ms": null,
+     "window_ms": null,
+     "n_exec_samples": 3
+    },
+    "dronet": {
+     "instances_declared": 2,
+     "instances_run": 2,
+     "exec_p50_ms": 8.8476,
+     "exec_max_ms": 14.4514,
+     "last_end_ms": 85.2786,
+     "missed": 0.0,
+     "period_ms": 70,
+     "window_ms": 26,
+     "n_exec_samples": 6
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 0.0,
+   "missed_nets": [],
+   "lock_wall_s": 18.56,
+   "measured_over_predicted": 1.0219
+  },
+  "3net_dronet4_mlp4_yolo1__a0": {
+   "cell": "3net_dronet4_mlp4_yolo1",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a0",
+   "label": "mlp_control@cpu_yolov8n@dsp_dronet@dsp",
+   "assign": {
+    "mlp_control": "cpu",
+    "yolov8n": "dsp",
+    "dronet": "dsp"
+   },
+   "rank": 0,
+   "np_rank": 0,
+   "n_legal": 12,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 31.224,
+   "predicted_np_makespan_ms": 28.644,
+   "predicted_missed_instances": 3,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 31.0743,
+   "makespan_spread_ms": 0.2565,
+   "makespan_reps_ms": [
+    30.8678,
+    31.0743,
+    31.1243
+   ],
+   "np_median_ms": 27.0598,
+   "np_spread_ms": 2.4993,
+   "np_reps_ms": [
+    28.4949,
+    27.0598,
+    25.9956
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 4,
+     "instances_run": 4,
+     "exec_p50_ms": 0.1238,
+     "exec_max_ms": 0.1871,
+     "last_end_ms": 30.3078,
+     "missed": 0.0,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 12
+    },
+    "yolov8n": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 26.8043,
+     "exec_max_ms": 28.3969,
+     "last_end_ms": 28.4949,
+     "missed": 0.0,
+     "period_ms": null,
+     "window_ms": null,
+     "n_exec_samples": 3
+    },
+    "dronet": {
+     "instances_declared": 4,
+     "instances_run": 4,
+     "exec_p50_ms": 1.0252,
+     "exec_max_ms": 8.6361,
+     "last_end_ms": 31.1243,
+     "missed": 0.33,
+     "period_ms": 10,
+     "window_ms": 8,
+     "n_exec_samples": 12
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 0.33,
+   "missed_nets": [
+    "dronet"
+   ],
+   "lock_wall_s": 19.3,
+   "measured_over_predicted": 0.9952
+  },
+  "3net_dronet4_mlp4_yolo1__a1": {
+   "cell": "3net_dronet4_mlp4_yolo1",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a1",
+   "label": "mlp_control@cpu_yolov8n@dsp_dronet@hta",
+   "assign": {
+    "mlp_control": "cpu",
+    "yolov8n": "dsp",
+    "dronet": "hta"
+   },
+   "rank": 1,
+   "np_rank": 1,
+   "n_legal": 12,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 32.03,
+   "predicted_np_makespan_ms": 28.644,
+   "predicted_missed_instances": 0,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 33.1435,
+   "makespan_spread_ms": 1.0732,
+   "makespan_reps_ms": [
+    32.1269,
+    33.2001,
+    33.1435
+   ],
+   "np_median_ms": 29.6577,
+   "np_spread_ms": 1.0821,
+   "np_reps_ms": [
+    29.9482,
+    28.8661,
+    29.6577
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 4,
+     "instances_run": 4,
+     "exec_p50_ms": 0.0475,
+     "exec_max_ms": 0.0502,
+     "last_end_ms": 30.1262,
+     "missed": 0.0,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 12
+    },
+    "yolov8n": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 29.4074,
+     "exec_max_ms": 29.5363,
+     "last_end_ms": 29.9482,
+     "missed": 0.0,
+     "period_ms": null,
+     "window_ms": null,
+     "n_exec_samples": 3
+    },
+    "dronet": {
+     "instances_declared": 4,
+     "instances_run": 4,
+     "exec_p50_ms": 1.9507,
+     "exec_max_ms": 3.5966,
+     "last_end_ms": 33.2001,
+     "missed": 0.0,
+     "period_ms": 10,
+     "window_ms": 8,
+     "n_exec_samples": 12
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 0.0,
+   "missed_nets": [],
+   "lock_wall_s": 19.3,
+   "measured_over_predicted": 1.0348
+  },
+  "3net_dronet4_mlp4_yolo1__a10": {
+   "cell": "3net_dronet4_mlp4_yolo1",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a10",
+   "label": "mlp_control@dsp_yolov8n@cpu_dronet@cpu",
+   "assign": {
+    "mlp_control": "dsp",
+    "yolov8n": "cpu",
+    "dronet": "cpu"
+   },
+   "rank": 10,
+   "np_rank": 8,
+   "n_legal": 12,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 101.799,
+   "predicted_np_makespan_ms": 73.807,
+   "predicted_missed_instances": 4,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 110.1169,
+   "makespan_spread_ms": 4.5903,
+   "makespan_reps_ms": [
+    110.1169,
+    112.3778,
+    107.7875
+   ],
+   "np_median_ms": 110.1169,
+   "np_spread_ms": 4.5903,
+   "np_reps_ms": [
+    110.1169,
+    112.3778,
+    107.7875
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 4,
+     "instances_run": 4,
+     "exec_p50_ms": 0.5811,
+     "exec_max_ms": 0.8236,
+     "last_end_ms": 30.7751,
+     "missed": 0.0,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 12
+    },
+    "yolov8n": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 110.083,
+     "exec_max_ms": 112.0977,
+     "last_end_ms": 112.3778,
+     "missed": 0.0,
+     "period_ms": null,
+     "window_ms": null,
+     "n_exec_samples": 3
+    },
+    "dronet": {
+     "instances_declared": 4,
+     "instances_run": 4,
+     "exec_p50_ms": 13.2628,
+     "exec_max_ms": 18.5781,
+     "last_end_ms": 59.9712,
+     "missed": 4.0,
+     "period_ms": 10,
+     "window_ms": 8,
+     "n_exec_samples": 12
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 4.0,
+   "missed_nets": [
+    "dronet"
+   ],
+   "lock_wall_s": 18.83,
+   "measured_over_predicted": 1.0817
+  },
+  "3net_dronet4_mlp4_yolo1__a11": {
+   "cell": "3net_dronet4_mlp4_yolo1",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a11",
+   "label": "mlp_control@cpu_yolov8n@cpu_dronet@cpu",
+   "assign": {
+    "mlp_control": "cpu",
+    "yolov8n": "cpu",
+    "dronet": "cpu"
+   },
+   "rank": 11,
+   "np_rank": 11,
+   "n_legal": 12,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 102.063,
+   "predicted_np_makespan_ms": 73.873,
+   "predicted_missed_instances": 7,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 104.0654,
+   "makespan_spread_ms": 8.8333,
+   "makespan_reps_ms": [
+    104.0654,
+    101.9113,
+    110.7446
+   ],
+   "np_median_ms": 104.0654,
+   "np_spread_ms": 8.8333,
+   "np_reps_ms": [
+    104.0654,
+    101.9113,
+    110.7446
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 4,
+     "instances_run": 4,
+     "exec_p50_ms": 0.2729,
+     "exec_max_ms": 0.3337,
+     "last_end_ms": 30.4389,
+     "missed": 0.0,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 12
+    },
+    "yolov8n": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 104.0497,
+     "exec_max_ms": 110.5474,
+     "last_end_ms": 110.7446,
+     "missed": 0.0,
+     "period_ms": null,
+     "window_ms": null,
+     "n_exec_samples": 3
+    },
+    "dronet": {
+     "instances_declared": 4,
+     "instances_run": 4,
+     "exec_p50_ms": 10.9952,
+     "exec_max_ms": 22.7198,
+     "last_end_ms": 56.7021,
+     "missed": 4.0,
+     "period_ms": 10,
+     "window_ms": 8,
+     "n_exec_samples": 12
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 4.0,
+   "missed_nets": [
+    "dronet"
+   ],
+   "lock_wall_s": 18.83,
+   "measured_over_predicted": 1.0196
+  },
+  "3net_dronet4_mlp4_yolo1__a2": {
+   "cell": "3net_dronet4_mlp4_yolo1",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a2",
+   "label": "mlp_control@dsp_yolov8n@dsp_dronet@hta",
+   "assign": {
+    "mlp_control": "dsp",
+    "yolov8n": "dsp",
+    "dronet": "hta"
+   },
+   "rank": 2,
+   "np_rank": 3,
+   "n_legal": 12,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 32.03,
+   "predicted_np_makespan_ms": 29.329,
+   "predicted_missed_instances": 2,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 31.8094,
+   "makespan_spread_ms": 1.7037,
+   "makespan_reps_ms": [
+    31.3425,
+    33.0462,
+    31.8094
+   ],
+   "np_median_ms": 29.7538,
+   "np_spread_ms": 2.6815,
+   "np_reps_ms": [
+    30.0885,
+    29.7538,
+    27.407
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 4,
+     "instances_run": 4,
+     "exec_p50_ms": 0.6947,
+     "exec_max_ms": 8.9348,
+     "last_end_ms": 30.6291,
+     "missed": 0.33,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 12
+    },
+    "yolov8n": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 29.4782,
+     "exec_max_ms": 29.8567,
+     "last_end_ms": 30.0885,
+     "missed": 0.0,
+     "period_ms": null,
+     "window_ms": null,
+     "n_exec_samples": 3
+    },
+    "dronet": {
+     "instances_declared": 4,
+     "instances_run": 4,
+     "exec_p50_ms": 1.7691,
+     "exec_max_ms": 3.458,
+     "last_end_ms": 33.0462,
+     "missed": 0.0,
+     "period_ms": 10,
+     "window_ms": 8,
+     "n_exec_samples": 12
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 0.33,
+   "missed_nets": [
+    "mlp_control"
+   ],
+   "lock_wall_s": 21.87,
+   "measured_over_predicted": 0.9931
+  },
+  "3net_dronet4_mlp4_yolo1__a3": {
+   "cell": "3net_dronet4_mlp4_yolo1",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a3",
+   "label": "mlp_control@dsp_yolov8n@dsp_dronet@dsp",
+   "assign": {
+    "mlp_control": "dsp",
+    "yolov8n": "dsp",
+    "dronet": "dsp"
+   },
+   "rank": 3,
+   "np_rank": 4,
+   "n_legal": 12,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 33.964,
+   "predicted_np_makespan_ms": 29.329,
+   "predicted_missed_instances": 5,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 30.9664,
+   "makespan_spread_ms": 0.4874,
+   "makespan_reps_ms": [
+    30.9664,
+    31.445,
+    30.9576
+   ],
+   "np_median_ms": 28.2922,
+   "np_spread_ms": 1.7981,
+   "np_reps_ms": [
+    28.586,
+    28.2922,
+    26.7879
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 4,
+     "instances_run": 4,
+     "exec_p50_ms": 1.1744,
+     "exec_max_ms": 8.4203,
+     "last_end_ms": 30.8983,
+     "missed": 0.0,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 12
+    },
+    "yolov8n": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 28.2291,
+     "exec_max_ms": 28.4406,
+     "last_end_ms": 28.586,
+     "missed": 0.0,
+     "period_ms": null,
+     "window_ms": null,
+     "n_exec_samples": 3
+    },
+    "dronet": {
+     "instances_declared": 4,
+     "instances_run": 4,
+     "exec_p50_ms": 1.2746,
+     "exec_max_ms": 8.968,
+     "last_end_ms": 31.445,
+     "missed": 0.67,
+     "period_ms": 10,
+     "window_ms": 8,
+     "n_exec_samples": 12
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 0.67,
+   "missed_nets": [
+    "dronet"
+   ],
+   "lock_wall_s": 21.87,
+   "measured_over_predicted": 0.9117
+  },
+  "3net_dronet4_mlp4_yolo1__a4": {
+   "cell": "3net_dronet4_mlp4_yolo1",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a4",
+   "label": "mlp_control@dsp_yolov8n@dsp_dronet@cpu",
+   "assign": {
+    "mlp_control": "dsp",
+    "yolov8n": "dsp",
+    "dronet": "cpu"
+   },
+   "rank": 4,
+   "np_rank": 5,
+   "n_legal": 12,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 36.998,
+   "predicted_np_makespan_ms": 29.329,
+   "predicted_missed_instances": 2,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 38.4077,
+   "makespan_spread_ms": 1.9035,
+   "makespan_reps_ms": [
+    38.4077,
+    37.4346,
+    39.3381
+   ],
+   "np_median_ms": 28.5996,
+   "np_spread_ms": 0.1693,
+   "np_reps_ms": [
+    28.7442,
+    28.5996,
+    28.5749
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 4,
+     "instances_run": 4,
+     "exec_p50_ms": 1.2121,
+     "exec_max_ms": 11.2736,
+     "last_end_ms": 30.6326,
+     "missed": 0.33,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 12
+    },
+    "yolov8n": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 28.5464,
+     "exec_max_ms": 28.6938,
+     "last_end_ms": 28.7442,
+     "missed": 0.0,
+     "period_ms": null,
+     "window_ms": null,
+     "n_exec_samples": 3
+    },
+    "dronet": {
+     "instances_declared": 4,
+     "instances_run": 4,
+     "exec_p50_ms": 7.5335,
+     "exec_max_ms": 10.11,
+     "last_end_ms": 39.3381,
+     "missed": 1.33,
+     "period_ms": 10,
+     "window_ms": 8,
+     "n_exec_samples": 12
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 1.6600000000000001,
+   "missed_nets": [
+    "mlp_control",
+    "dronet"
+   ],
+   "lock_wall_s": 21.87,
+   "measured_over_predicted": 1.0381
+  },
+  "3net_dronet4_mlp4_yolo1__a5": {
+   "cell": "3net_dronet4_mlp4_yolo1",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a5",
+   "label": "mlp_control@cpu_yolov8n@dsp_dronet@cpu",
+   "assign": {
+    "mlp_control": "cpu",
+    "yolov8n": "dsp",
+    "dronet": "cpu"
+   },
+   "rank": 5,
+   "np_rank": 2,
+   "n_legal": 12,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 37.064,
+   "predicted_np_makespan_ms": 28.644,
+   "predicted_missed_instances": 0,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 37.0402,
+   "makespan_spread_ms": 1.4543,
+   "makespan_reps_ms": [
+    37.6642,
+    36.2099,
+    37.0402
+   ],
+   "np_median_ms": 28.4446,
+   "np_spread_ms": 0.3734,
+   "np_reps_ms": [
+    28.6891,
+    28.4446,
+    28.3157
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 4,
+     "instances_run": 4,
+     "exec_p50_ms": 0.1327,
+     "exec_max_ms": 0.1396,
+     "last_end_ms": 30.2333,
+     "missed": 0.0,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 12
+    },
+    "yolov8n": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 28.3802,
+     "exec_max_ms": 28.6258,
+     "last_end_ms": 28.6891,
+     "missed": 0.0,
+     "period_ms": null,
+     "window_ms": null,
+     "n_exec_samples": 3
+    },
+    "dronet": {
+     "instances_declared": 4,
+     "instances_run": 4,
+     "exec_p50_ms": 7.4131,
+     "exec_max_ms": 8.9485,
+     "last_end_ms": 37.6642,
+     "missed": 0.67,
+     "period_ms": 10,
+     "window_ms": 8,
+     "n_exec_samples": 12
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 0.67,
+   "missed_nets": [
+    "dronet"
+   ],
+   "lock_wall_s": 21.87,
+   "measured_over_predicted": 0.9994
+  },
+  "3net_dronet4_mlp4_yolo1__a6": {
+   "cell": "3net_dronet4_mlp4_yolo1",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a6",
+   "label": "mlp_control@dsp_yolov8n@cpu_dronet@dsp",
+   "assign": {
+    "mlp_control": "dsp",
+    "yolov8n": "cpu",
+    "dronet": "dsp"
+   },
+   "rank": 6,
+   "np_rank": 6,
+   "n_legal": 12,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 73.807,
+   "predicted_np_makespan_ms": 73.807,
+   "predicted_missed_instances": 0,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 75.8554,
+   "makespan_spread_ms": 5.339,
+   "makespan_reps_ms": [
+    80.8374,
+    75.8554,
+    75.4984
+   ],
+   "np_median_ms": 75.8554,
+   "np_spread_ms": 5.339,
+   "np_reps_ms": [
+    80.8374,
+    75.8554,
+    75.4984
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 4,
+     "instances_run": 4,
+     "exec_p50_ms": 0.7151,
+     "exec_max_ms": 0.8159,
+     "last_end_ms": 31.1064,
+     "missed": 0.0,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 12
+    },
+    "yolov8n": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 75.8303,
+     "exec_max_ms": 80.6093,
+     "last_end_ms": 80.8374,
+     "missed": 0.0,
+     "period_ms": null,
+     "window_ms": null,
+     "n_exec_samples": 3
+    },
+    "dronet": {
+     "instances_declared": 4,
+     "instances_run": 4,
+     "exec_p50_ms": 1.0455,
+     "exec_max_ms": 1.1567,
+     "last_end_ms": 31.1562,
+     "missed": 0.0,
+     "period_ms": 10,
+     "window_ms": 8,
+     "n_exec_samples": 12
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 0.0,
+   "missed_nets": [],
+   "lock_wall_s": 12.26,
+   "measured_over_predicted": 1.0278
+  },
+  "3net_dronet4_mlp4_yolo1__a7": {
+   "cell": "3net_dronet4_mlp4_yolo1",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a7",
+   "label": "mlp_control@dsp_yolov8n@cpu_dronet@hta",
+   "assign": {
+    "mlp_control": "dsp",
+    "yolov8n": "cpu",
+    "dronet": "hta"
+   },
+   "rank": 7,
+   "np_rank": 7,
+   "n_legal": 12,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 73.807,
+   "predicted_np_makespan_ms": 73.807,
+   "predicted_missed_instances": 0,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 79.3888,
+   "makespan_spread_ms": 1.9818,
+   "makespan_reps_ms": [
+    80.033,
+    79.3888,
+    78.0512
+   ],
+   "np_median_ms": 79.3888,
+   "np_spread_ms": 1.9818,
+   "np_reps_ms": [
+    80.033,
+    79.3888,
+    78.0512
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 4,
+     "instances_run": 4,
+     "exec_p50_ms": 0.4943,
+     "exec_max_ms": 1.0055,
+     "last_end_ms": 30.5834,
+     "missed": 0.0,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 12
+    },
+    "yolov8n": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 79.2624,
+     "exec_max_ms": 79.8721,
+     "last_end_ms": 80.033,
+     "missed": 0.0,
+     "period_ms": null,
+     "window_ms": null,
+     "n_exec_samples": 3
+    },
+    "dronet": {
+     "instances_declared": 4,
+     "instances_run": 4,
+     "exec_p50_ms": 1.6025,
+     "exec_max_ms": 5.1188,
+     "last_end_ms": 31.8955,
+     "missed": 0.0,
+     "period_ms": 10,
+     "window_ms": 8,
+     "n_exec_samples": 12
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 0.0,
+   "missed_nets": [],
+   "lock_wall_s": 12.26,
+   "measured_over_predicted": 1.0756
+  },
+  "3net_dronet4_mlp4_yolo1__a8": {
+   "cell": "3net_dronet4_mlp4_yolo1",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a8",
+   "label": "mlp_control@cpu_yolov8n@cpu_dronet@dsp",
+   "assign": {
+    "mlp_control": "cpu",
+    "yolov8n": "cpu",
+    "dronet": "dsp"
+   },
+   "rank": 8,
+   "np_rank": 9,
+   "n_legal": 12,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 74.071,
+   "predicted_np_makespan_ms": 73.873,
+   "predicted_missed_instances": 3,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 74.9652,
+   "makespan_spread_ms": 7.2799,
+   "makespan_reps_ms": [
+    81.5229,
+    74.243,
+    74.9652
+   ],
+   "np_median_ms": 74.9652,
+   "np_spread_ms": 7.2799,
+   "np_reps_ms": [
+    81.5229,
+    74.243,
+    74.9652
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 4,
+     "instances_run": 4,
+     "exec_p50_ms": 0.2917,
+     "exec_max_ms": 0.7017,
+     "last_end_ms": 30.7152,
+     "missed": 0.0,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 12
+    },
+    "yolov8n": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 74.9352,
+     "exec_max_ms": 79.8633,
+     "last_end_ms": 81.5229,
+     "missed": 0.0,
+     "period_ms": null,
+     "window_ms": null,
+     "n_exec_samples": 3
+    },
+    "dronet": {
+     "instances_declared": 4,
+     "instances_run": 4,
+     "exec_p50_ms": 0.8764,
+     "exec_max_ms": 1.253,
+     "last_end_ms": 31.3146,
+     "missed": 0.0,
+     "period_ms": 10,
+     "window_ms": 8,
+     "n_exec_samples": 12
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 0.0,
+   "missed_nets": [],
+   "lock_wall_s": 12.26,
+   "measured_over_predicted": 1.0121
+  },
+  "3net_dronet4_mlp4_yolo1__a9": {
+   "cell": "3net_dronet4_mlp4_yolo1",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a9",
+   "label": "mlp_control@cpu_yolov8n@cpu_dronet@hta",
+   "assign": {
+    "mlp_control": "cpu",
+    "yolov8n": "cpu",
+    "dronet": "hta"
+   },
+   "rank": 9,
+   "np_rank": 10,
+   "n_legal": 12,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 74.071,
+   "predicted_np_makespan_ms": 73.873,
+   "predicted_missed_instances": 3,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 79.152,
+   "makespan_spread_ms": 3.429,
+   "makespan_reps_ms": [
+    80.1043,
+    76.6753,
+    79.152
+   ],
+   "np_median_ms": 79.152,
+   "np_spread_ms": 3.429,
+   "np_reps_ms": [
+    80.1043,
+    76.6753,
+    79.152
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 4,
+     "instances_run": 4,
+     "exec_p50_ms": 0.0746,
+     "exec_max_ms": 0.0878,
+     "last_end_ms": 30.155,
+     "missed": 0.0,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 12
+    },
+    "yolov8n": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 79.015,
+     "exec_max_ms": 80.0317,
+     "last_end_ms": 80.1043,
+     "missed": 0.0,
+     "period_ms": null,
+     "window_ms": null,
+     "n_exec_samples": 3
+    },
+    "dronet": {
+     "instances_declared": 4,
+     "instances_run": 4,
+     "exec_p50_ms": 1.7434,
+     "exec_max_ms": 4.7078,
+     "last_end_ms": 31.8898,
+     "missed": 0.0,
+     "period_ms": 10,
+     "window_ms": 8,
+     "n_exec_samples": 12
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 0.0,
+   "missed_nets": [],
+   "lock_wall_s": 12.26,
+   "measured_over_predicted": 1.0686
+  },
+  "3net_dronet4_mlp8_yolo1__a0": {
+   "cell": "3net_dronet4_mlp8_yolo1",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a0",
+   "label": "mlp_control@cpu_dronet@cpu_yolov8n@dsp",
+   "assign": {
+    "mlp_control": "cpu",
+    "dronet": "cpu",
+    "yolov8n": "dsp"
+   },
+   "rank": 0,
+   "np_rank": 0,
+   "n_legal": 12,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 70.066,
+   "predicted_np_makespan_ms": 28.644,
+   "predicted_missed_instances": 0,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 70.209,
+   "makespan_spread_ms": 0.0056,
+   "makespan_reps_ms": [
+    70.209,
+    70.2133,
+    70.2077
+   ],
+   "np_median_ms": 28.4358,
+   "np_spread_ms": 0.5066,
+   "np_reps_ms": [
+    28.3687,
+    28.4358,
+    28.8753
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 8,
+     "instances_run": 8,
+     "exec_p50_ms": 0.1252,
+     "exec_max_ms": 0.1456,
+     "last_end_ms": 70.2133,
+     "missed": 0.0,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 24
+    },
+    "dronet": {
+     "instances_declared": 4,
+     "instances_run": 4,
+     "exec_p50_ms": 8.6004,
+     "exec_max_ms": 10.0659,
+     "last_end_ms": 70.0853,
+     "missed": 0.0,
+     "period_ms": 20,
+     "window_ms": 20,
+     "n_exec_samples": 12
+    },
+    "yolov8n": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 28.3937,
+     "exec_max_ms": 28.817,
+     "last_end_ms": 28.8753,
+     "missed": 0.0,
+     "period_ms": null,
+     "window_ms": null,
+     "n_exec_samples": 3
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 0.0,
+   "missed_nets": [],
+   "lock_wall_s": 18.83,
+   "measured_over_predicted": 1.002
+  },
+  "3net_dronet4_mlp8_yolo1__a1": {
+   "cell": "3net_dronet4_mlp8_yolo1",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a1",
+   "label": "mlp_control@cpu_dronet@dsp_yolov8n@dsp",
+   "assign": {
+    "mlp_control": "cpu",
+    "dronet": "dsp",
+    "yolov8n": "dsp"
+   },
+   "rank": 1,
+   "np_rank": 2,
+   "n_legal": 12,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 70.066,
+   "predicted_np_makespan_ms": 29.289,
+   "predicted_missed_instances": 0,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 70.3726,
+   "makespan_spread_ms": 0.1814,
+   "makespan_reps_ms": [
+    70.3932,
+    70.2118,
+    70.3726
+   ],
+   "np_median_ms": 28.9498,
+   "np_spread_ms": 6.2691,
+   "np_reps_ms": [
+    28.9498,
+    35.1672,
+    28.8981
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 8,
+     "instances_run": 8,
+     "exec_p50_ms": 0.1226,
+     "exec_max_ms": 0.208,
+     "last_end_ms": 70.3932,
+     "missed": 0.0,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 24
+    },
+    "dronet": {
+     "instances_declared": 4,
+     "instances_run": 4,
+     "exec_p50_ms": 0.903,
+     "exec_max_ms": 15.4067,
+     "last_end_ms": 61.2085,
+     "missed": 0.0,
+     "period_ms": 20,
+     "window_ms": 20,
+     "n_exec_samples": 12
+    },
+    "yolov8n": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 28.9022,
+     "exec_max_ms": 34.953,
+     "last_end_ms": 35.1672,
+     "missed": 0.0,
+     "period_ms": null,
+     "window_ms": null,
+     "n_exec_samples": 3
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 0.0,
+   "missed_nets": [],
+   "lock_wall_s": 18.83,
+   "measured_over_predicted": 1.0044
+  },
+  "3net_dronet4_mlp8_yolo1__a10": {
+   "cell": "3net_dronet4_mlp8_yolo1",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a10",
+   "label": "mlp_control@dsp_dronet@cpu_yolov8n@cpu",
+   "assign": {
+    "mlp_control": "dsp",
+    "dronet": "cpu",
+    "yolov8n": "cpu"
+   },
+   "rank": 10,
+   "np_rank": 10,
+   "n_legal": 12,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 101.799,
+   "predicted_np_makespan_ms": 80.805,
+   "predicted_missed_instances": 3,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 107.3286,
+   "makespan_spread_ms": 4.1269,
+   "makespan_reps_ms": [
+    108.5077,
+    104.3808,
+    107.3286
+   ],
+   "np_median_ms": 107.3286,
+   "np_spread_ms": 4.1269,
+   "np_reps_ms": [
+    108.5077,
+    104.3808,
+    107.3286
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 8,
+     "instances_run": 8,
+     "exec_p50_ms": 0.5663,
+     "exec_max_ms": 0.8036,
+     "last_end_ms": 70.6794,
+     "missed": 0.0,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 24
+    },
+    "dronet": {
+     "instances_declared": 4,
+     "instances_run": 4,
+     "exec_p50_ms": 11.8148,
+     "exec_max_ms": 22.6957,
+     "last_end_ms": 82.8298,
+     "missed": 0.67,
+     "period_ms": 20,
+     "window_ms": 20,
+     "n_exec_samples": 12
+    },
+    "yolov8n": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 107.0902,
+     "exec_max_ms": 108.4691,
+     "last_end_ms": 108.5077,
+     "missed": 0.0,
+     "period_ms": null,
+     "window_ms": null,
+     "n_exec_samples": 3
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 0.67,
+   "missed_nets": [
+    "dronet"
+   ],
+   "lock_wall_s": 14.69,
+   "measured_over_predicted": 1.0543
+  },
+  "3net_dronet4_mlp8_yolo1__a11": {
+   "cell": "3net_dronet4_mlp8_yolo1",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a11",
+   "label": "mlp_control@cpu_dronet@cpu_yolov8n@cpu",
+   "assign": {
+    "mlp_control": "cpu",
+    "dronet": "cpu",
+    "yolov8n": "cpu"
+   },
+   "rank": 11,
+   "np_rank": 11,
+   "n_legal": 12,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 102.327,
+   "predicted_np_makespan_ms": 80.871,
+   "predicted_missed_instances": 10,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 109.1658,
+   "makespan_spread_ms": 0.3725,
+   "makespan_reps_ms": [
+    109.023,
+    109.3955,
+    109.1658
+   ],
+   "np_median_ms": 109.1658,
+   "np_spread_ms": 0.3725,
+   "np_reps_ms": [
+    109.023,
+    109.3955,
+    109.1658
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 8,
+     "instances_run": 8,
+     "exec_p50_ms": 0.266,
+     "exec_max_ms": 0.3277,
+     "last_end_ms": 70.4738,
+     "missed": 0.0,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 24
+    },
+    "dronet": {
+     "instances_declared": 4,
+     "instances_run": 4,
+     "exec_p50_ms": 10.7895,
+     "exec_max_ms": 34.6149,
+     "last_end_ms": 85.1818,
+     "missed": 1.0,
+     "period_ms": 20,
+     "window_ms": 20,
+     "n_exec_samples": 12
+    },
+    "yolov8n": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 109.0051,
+     "exec_max_ms": 109.0979,
+     "last_end_ms": 109.3955,
+     "missed": 0.0,
+     "period_ms": null,
+     "window_ms": null,
+     "n_exec_samples": 3
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 1.0,
+   "missed_nets": [
+    "dronet"
+   ],
+   "lock_wall_s": 14.69,
+   "measured_over_predicted": 1.0668
+  },
+  "3net_dronet4_mlp8_yolo1__a2": {
+   "cell": "3net_dronet4_mlp8_yolo1",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a2",
+   "label": "mlp_control@cpu_dronet@hta_yolov8n@dsp",
+   "assign": {
+    "mlp_control": "cpu",
+    "dronet": "hta",
+    "yolov8n": "dsp"
+   },
+   "rank": 2,
+   "np_rank": 1,
+   "n_legal": 12,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 70.066,
+   "predicted_np_makespan_ms": 28.644,
+   "predicted_missed_instances": 0,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 70.8835,
+   "makespan_spread_ms": 0.2668,
+   "makespan_reps_ms": [
+    70.8502,
+    71.117,
+    70.8835
+   ],
+   "np_median_ms": 30.8325,
+   "np_spread_ms": 2.528,
+   "np_reps_ms": [
+    30.9067,
+    30.8325,
+    28.3787
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 8,
+     "instances_run": 8,
+     "exec_p50_ms": 0.0488,
+     "exec_max_ms": 0.0647,
+     "last_end_ms": 71.117,
+     "missed": 0.0,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 24
+    },
+    "dronet": {
+     "instances_declared": 4,
+     "instances_run": 4,
+     "exec_p50_ms": 3.3336,
+     "exec_max_ms": 3.5761,
+     "last_end_ms": 64.4889,
+     "missed": 0.0,
+     "period_ms": 20,
+     "window_ms": 20,
+     "n_exec_samples": 12
+    },
+    "yolov8n": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 30.6812,
+     "exec_max_ms": 30.6881,
+     "last_end_ms": 30.9067,
+     "missed": 0.0,
+     "period_ms": null,
+     "window_ms": null,
+     "n_exec_samples": 3
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 0.0,
+   "missed_nets": [],
+   "lock_wall_s": 22.73,
+   "measured_over_predicted": 1.0117
+  },
+  "3net_dronet4_mlp8_yolo1__a3": {
+   "cell": "3net_dronet4_mlp8_yolo1",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a3",
+   "label": "mlp_control@dsp_dronet@cpu_yolov8n@dsp",
+   "assign": {
+    "mlp_control": "dsp",
+    "dronet": "cpu",
+    "yolov8n": "dsp"
+   },
+   "rank": 3,
+   "np_rank": 3,
+   "n_legal": 12,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 70.685,
+   "predicted_np_makespan_ms": 29.329,
+   "predicted_missed_instances": 2,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 70.5013,
+   "makespan_spread_ms": 0.0188,
+   "makespan_reps_ms": [
+    70.4968,
+    70.5156,
+    70.5013
+   ],
+   "np_median_ms": 28.7291,
+   "np_spread_ms": 0.1772,
+   "np_reps_ms": [
+    28.8812,
+    28.704,
+    28.7291
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 8,
+     "instances_run": 8,
+     "exec_p50_ms": 0.5287,
+     "exec_max_ms": 8.763,
+     "last_end_ms": 70.5156,
+     "missed": 0.0,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 24
+    },
+    "dronet": {
+     "instances_declared": 4,
+     "instances_run": 4,
+     "exec_p50_ms": 8.7146,
+     "exec_max_ms": 11.5686,
+     "last_end_ms": 70.1375,
+     "missed": 0.0,
+     "period_ms": 20,
+     "window_ms": 20,
+     "n_exec_samples": 12
+    },
+    "yolov8n": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 28.6746,
+     "exec_max_ms": 28.836,
+     "last_end_ms": 28.8812,
+     "missed": 0.0,
+     "period_ms": null,
+     "window_ms": null,
+     "n_exec_samples": 3
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 0.0,
+   "missed_nets": [],
+   "lock_wall_s": 22.73,
+   "measured_over_predicted": 0.9974
+  },
+  "3net_dronet4_mlp8_yolo1__a4": {
+   "cell": "3net_dronet4_mlp8_yolo1",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a4",
+   "label": "mlp_control@dsp_dronet@dsp_yolov8n@dsp",
+   "assign": {
+    "mlp_control": "dsp",
+    "dronet": "dsp",
+    "yolov8n": "dsp"
+   },
+   "rank": 4,
+   "np_rank": 5,
+   "n_legal": 12,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 70.685,
+   "predicted_np_makespan_ms": 29.974,
+   "predicted_missed_instances": 2,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 70.8696,
+   "makespan_spread_ms": 0.4619,
+   "makespan_reps_ms": [
+    71.0646,
+    70.8696,
+    70.6027
+   ],
+   "np_median_ms": 29.1989,
+   "np_spread_ms": 7.0707,
+   "np_reps_ms": [
+    36.0723,
+    29.1989,
+    29.0016
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 8,
+     "instances_run": 8,
+     "exec_p50_ms": 0.7841,
+     "exec_max_ms": 15.8231,
+     "last_end_ms": 71.0646,
+     "missed": 0.33,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 24
+    },
+    "dronet": {
+     "instances_declared": 4,
+     "instances_run": 4,
+     "exec_p50_ms": 0.9888,
+     "exec_max_ms": 16.2829,
+     "last_end_ms": 61.3582,
+     "missed": 0.0,
+     "period_ms": 20,
+     "window_ms": 20,
+     "n_exec_samples": 12
+    },
+    "yolov8n": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 29.1541,
+     "exec_max_ms": 35.9276,
+     "last_end_ms": 36.0723,
+     "missed": 0.0,
+     "period_ms": null,
+     "window_ms": null,
+     "n_exec_samples": 3
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 0.33,
+   "missed_nets": [
+    "mlp_control"
+   ],
+   "lock_wall_s": 22.73,
+   "measured_over_predicted": 1.0026
+  },
+  "3net_dronet4_mlp8_yolo1__a5": {
+   "cell": "3net_dronet4_mlp8_yolo1",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a5",
+   "label": "mlp_control@dsp_dronet@hta_yolov8n@dsp",
+   "assign": {
+    "mlp_control": "dsp",
+    "dronet": "hta",
+    "yolov8n": "dsp"
+   },
+   "rank": 5,
+   "np_rank": 4,
+   "n_legal": 12,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 70.685,
+   "predicted_np_makespan_ms": 29.329,
+   "predicted_missed_instances": 2,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 73.0571,
+   "makespan_spread_ms": 0.9456,
+   "makespan_reps_ms": [
+    73.0854,
+    72.1398,
+    73.0571
+   ],
+   "np_median_ms": 36.3225,
+   "np_spread_ms": 0.2588,
+   "np_reps_ms": [
+    36.3225,
+    36.5797,
+    36.3209
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 8,
+     "instances_run": 8,
+     "exec_p50_ms": 1.3538,
+     "exec_max_ms": 16.3813,
+     "last_end_ms": 73.0854,
+     "missed": 1.0,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 24
+    },
+    "dronet": {
+     "instances_declared": 4,
+     "instances_run": 4,
+     "exec_p50_ms": 2.0704,
+     "exec_max_ms": 3.4385,
+     "last_end_ms": 64.253,
+     "missed": 0.0,
+     "period_ms": 20,
+     "window_ms": 20,
+     "n_exec_samples": 12
+    },
+    "yolov8n": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 36.0346,
+     "exec_max_ms": 36.2931,
+     "last_end_ms": 36.5797,
+     "missed": 0.0,
+     "period_ms": null,
+     "window_ms": null,
+     "n_exec_samples": 3
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 1.0,
+   "missed_nets": [
+    "mlp_control"
+   ],
+   "lock_wall_s": 22.73,
+   "measured_over_predicted": 1.0336
+  },
+  "3net_dronet4_mlp8_yolo1__a6": {
+   "cell": "3net_dronet4_mlp8_yolo1",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a6",
+   "label": "mlp_control@dsp_dronet@dsp_yolov8n@cpu",
+   "assign": {
+    "mlp_control": "dsp",
+    "dronet": "dsp",
+    "yolov8n": "cpu"
+   },
+   "rank": 6,
+   "np_rank": 6,
+   "n_legal": 12,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 73.807,
+   "predicted_np_makespan_ms": 73.807,
+   "predicted_missed_instances": 0,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 75.9818,
+   "makespan_spread_ms": 4.2075,
+   "makespan_reps_ms": [
+    79.3728,
+    75.1653,
+    75.9818
+   ],
+   "np_median_ms": 75.9818,
+   "np_spread_ms": 4.2075,
+   "np_reps_ms": [
+    79.3728,
+    75.1653,
+    75.9818
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 8,
+     "instances_run": 8,
+     "exec_p50_ms": 0.6865,
+     "exec_max_ms": 1.0761,
+     "last_end_ms": 70.8632,
+     "missed": 0.0,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 24
+    },
+    "dronet": {
+     "instances_declared": 4,
+     "instances_run": 4,
+     "exec_p50_ms": 0.9628,
+     "exec_max_ms": 1.1467,
+     "last_end_ms": 61.5635,
+     "missed": 0.0,
+     "period_ms": 20,
+     "window_ms": 20,
+     "n_exec_samples": 12
+    },
+    "yolov8n": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 75.9373,
+     "exec_max_ms": 79.336,
+     "last_end_ms": 79.3728,
+     "missed": 0.0,
+     "period_ms": null,
+     "window_ms": null,
+     "n_exec_samples": 3
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 0.0,
+   "missed_nets": [],
+   "lock_wall_s": 12.32,
+   "measured_over_predicted": 1.0295
+  },
+  "3net_dronet4_mlp8_yolo1__a7": {
+   "cell": "3net_dronet4_mlp8_yolo1",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a7",
+   "label": "mlp_control@dsp_dronet@hta_yolov8n@cpu",
+   "assign": {
+    "mlp_control": "dsp",
+    "dronet": "hta",
+    "yolov8n": "cpu"
+   },
+   "rank": 7,
+   "np_rank": 7,
+   "n_legal": 12,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 73.807,
+   "predicted_np_makespan_ms": 73.807,
+   "predicted_missed_instances": 0,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 76.3768,
+   "makespan_spread_ms": 0.694,
+   "makespan_reps_ms": [
+    76.639,
+    76.3768,
+    75.945
+   ],
+   "np_median_ms": 76.3768,
+   "np_spread_ms": 0.694,
+   "np_reps_ms": [
+    76.639,
+    76.3768,
+    75.945
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 8,
+     "instances_run": 8,
+     "exec_p50_ms": 0.4691,
+     "exec_max_ms": 0.5536,
+     "last_end_ms": 70.6248,
+     "missed": 0.0,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 24
+    },
+    "dronet": {
+     "instances_declared": 4,
+     "instances_run": 4,
+     "exec_p50_ms": 1.6683,
+     "exec_max_ms": 4.8483,
+     "last_end_ms": 61.6277,
+     "missed": 0.0,
+     "period_ms": 20,
+     "window_ms": 20,
+     "n_exec_samples": 12
+    },
+    "yolov8n": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 76.2267,
+     "exec_max_ms": 76.5679,
+     "last_end_ms": 76.639,
+     "missed": 0.0,
+     "period_ms": null,
+     "window_ms": null,
+     "n_exec_samples": 3
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 0.0,
+   "missed_nets": [],
+   "lock_wall_s": 12.32,
+   "measured_over_predicted": 1.0348
+  },
+  "3net_dronet4_mlp8_yolo1__a8": {
+   "cell": "3net_dronet4_mlp8_yolo1",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a8",
+   "label": "mlp_control@cpu_dronet@dsp_yolov8n@cpu",
+   "assign": {
+    "mlp_control": "cpu",
+    "dronet": "dsp",
+    "yolov8n": "cpu"
+   },
+   "rank": 8,
+   "np_rank": 8,
+   "n_legal": 12,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 74.335,
+   "predicted_np_makespan_ms": 73.873,
+   "predicted_missed_instances": 6,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 75.6072,
+   "makespan_spread_ms": 4.3915,
+   "makespan_reps_ms": [
+    79.9724,
+    75.6072,
+    75.5809
+   ],
+   "np_median_ms": 75.6072,
+   "np_spread_ms": 4.3915,
+   "np_reps_ms": [
+    79.9724,
+    75.6072,
+    75.5809
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 8,
+     "instances_run": 8,
+     "exec_p50_ms": 0.2917,
+     "exec_max_ms": 0.4427,
+     "last_end_ms": 70.7338,
+     "missed": 0.0,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 24
+    },
+    "dronet": {
+     "instances_declared": 4,
+     "instances_run": 4,
+     "exec_p50_ms": 0.9666,
+     "exec_max_ms": 1.1394,
+     "last_end_ms": 61.6223,
+     "missed": 0.0,
+     "period_ms": 20,
+     "window_ms": 20,
+     "n_exec_samples": 12
+    },
+    "yolov8n": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 75.5411,
+     "exec_max_ms": 79.9369,
+     "last_end_ms": 79.9724,
+     "missed": 0.0,
+     "period_ms": null,
+     "window_ms": null,
+     "n_exec_samples": 3
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 0.0,
+   "missed_nets": [],
+   "lock_wall_s": 12.32,
+   "measured_over_predicted": 1.0171
+  },
+  "3net_dronet4_mlp8_yolo1__a9": {
+   "cell": "3net_dronet4_mlp8_yolo1",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a9",
+   "label": "mlp_control@cpu_dronet@hta_yolov8n@cpu",
+   "assign": {
+    "mlp_control": "cpu",
+    "dronet": "hta",
+    "yolov8n": "cpu"
+   },
+   "rank": 9,
+   "np_rank": 9,
+   "n_legal": 12,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 74.335,
+   "predicted_np_makespan_ms": 73.873,
+   "predicted_missed_instances": 6,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 76.6929,
+   "makespan_spread_ms": 6.171,
+   "makespan_reps_ms": [
+    82.4815,
+    76.3105,
+    76.6929
+   ],
+   "np_median_ms": 76.6929,
+   "np_spread_ms": 6.171,
+   "np_reps_ms": [
+    82.4815,
+    76.3105,
+    76.6929
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 8,
+     "instances_run": 8,
+     "exec_p50_ms": 0.0764,
+     "exec_max_ms": 0.098,
+     "last_end_ms": 70.1709,
+     "missed": 0.0,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 24
+    },
+    "dronet": {
+     "instances_declared": 4,
+     "instances_run": 4,
+     "exec_p50_ms": 1.6942,
+     "exec_max_ms": 12.5294,
+     "last_end_ms": 61.9291,
+     "missed": 0.0,
+     "period_ms": 20,
+     "window_ms": 20,
+     "n_exec_samples": 12
+    },
+    "yolov8n": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 76.6722,
+     "exec_max_ms": 82.181,
+     "last_end_ms": 82.4815,
+     "missed": 0.0,
+     "period_ms": null,
+     "window_ms": null,
+     "n_exec_samples": 3
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 0.0,
+   "missed_nets": [],
+   "lock_wall_s": 12.32,
+   "measured_over_predicted": 1.0317
+  },
+  "3net_dronet8_mlp16_yolo1__a0": {
+   "cell": "3net_dronet8_mlp16_yolo1",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a0",
+   "label": "mlp_control@cpu_dronet@cpu_yolov8n@cpu",
+   "assign": {
+    "mlp_control": "cpu",
+    "dronet": "cpu",
+    "yolov8n": "cpu"
+   },
+   "rank": 0,
+   "np_rank": 11,
+   "n_legal": 12,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 150.066,
+   "predicted_np_makespan_ms": 80.871,
+   "predicted_missed_instances": 13,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 150.2172,
+   "makespan_spread_ms": 0.0068,
+   "makespan_reps_ms": [
+    150.2156,
+    150.2172,
+    150.2224
+   ],
+   "np_median_ms": 136.1937,
+   "np_spread_ms": 12.1184,
+   "np_reps_ms": [
+    136.1937,
+    131.1438,
+    143.2622
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 16,
+     "instances_run": 16,
+     "exec_p50_ms": 0.2104,
+     "exec_max_ms": 0.3561,
+     "last_end_ms": 150.2224,
+     "missed": 0.0,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 48
+    },
+    "dronet": {
+     "instances_declared": 8,
+     "instances_run": 8,
+     "exec_p50_ms": 13.3633,
+     "exec_max_ms": 27.1773,
+     "last_end_ms": 147.721,
+     "missed": 1.33,
+     "period_ms": 20,
+     "window_ms": 20,
+     "n_exec_samples": 24
+    },
+    "yolov8n": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 136.1277,
+     "exec_max_ms": 143.0773,
+     "last_end_ms": 143.2622,
+     "missed": 0.0,
+     "period_ms": null,
+     "window_ms": null,
+     "n_exec_samples": 3
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 1.33,
+   "missed_nets": [
+    "dronet"
+   ],
+   "lock_wall_s": 14.69,
+   "measured_over_predicted": 1.001
+  },
+  "3net_dronet8_mlp16_yolo1__a1": {
+   "cell": "3net_dronet8_mlp16_yolo1",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a1",
+   "label": "mlp_control@cpu_dronet@cpu_yolov8n@dsp",
+   "assign": {
+    "mlp_control": "cpu",
+    "dronet": "cpu",
+    "yolov8n": "dsp"
+   },
+   "rank": 1,
+   "np_rank": 0,
+   "n_legal": 12,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 150.066,
+   "predicted_np_makespan_ms": 28.644,
+   "predicted_missed_instances": 0,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 150.2165,
+   "makespan_spread_ms": 13.5272,
+   "makespan_reps_ms": [
+    150.2165,
+    163.7115,
+    150.1843
+   ],
+   "np_median_ms": 28.4897,
+   "np_spread_ms": 0.4854,
+   "np_reps_ms": [
+    28.4897,
+    28.2096,
+    28.695
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 16,
+     "instances_run": 16,
+     "exec_p50_ms": 0.1235,
+     "exec_max_ms": 0.1821,
+     "last_end_ms": 150.2165,
+     "missed": 0.0,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 48
+    },
+    "dronet": {
+     "instances_declared": 8,
+     "instances_run": 8,
+     "exec_p50_ms": 8.8518,
+     "exec_max_ms": 22.6757,
+     "last_end_ms": 163.7115,
+     "missed": 0.33,
+     "period_ms": 20,
+     "window_ms": 20,
+     "n_exec_samples": 24
+    },
+    "yolov8n": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 28.4437,
+     "exec_max_ms": 28.5915,
+     "last_end_ms": 28.695,
+     "missed": 0.0,
+     "period_ms": null,
+     "window_ms": null,
+     "n_exec_samples": 3
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 0.33,
+   "missed_nets": [
+    "dronet"
+   ],
+   "lock_wall_s": 14.69,
+   "measured_over_predicted": 1.001
+  },
+  "3net_dronet8_mlp16_yolo1__a10": {
+   "cell": "3net_dronet8_mlp16_yolo1",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a10",
+   "label": "mlp_control@dsp_dronet@hta_yolov8n@cpu",
+   "assign": {
+    "mlp_control": "dsp",
+    "dronet": "hta",
+    "yolov8n": "cpu"
+   },
+   "rank": 10,
+   "np_rank": 7,
+   "n_legal": 12,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 150.685,
+   "predicted_np_makespan_ms": 73.807,
+   "predicted_missed_instances": 0,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 153.0198,
+   "makespan_spread_ms": 0.9153,
+   "makespan_reps_ms": [
+    152.1308,
+    153.0461,
+    153.0198
+   ],
+   "np_median_ms": 76.7918,
+   "np_spread_ms": 7.5248,
+   "np_reps_ms": [
+    83.8172,
+    76.2924,
+    76.7918
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 16,
+     "instances_run": 16,
+     "exec_p50_ms": 0.5137,
+     "exec_max_ms": 11.1696,
+     "last_end_ms": 153.0461,
+     "missed": 0.33,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 48
+    },
+    "dronet": {
+     "instances_declared": 8,
+     "instances_run": 8,
+     "exec_p50_ms": 1.7378,
+     "exec_max_ms": 12.6012,
+     "last_end_ms": 144.1382,
+     "missed": 0.0,
+     "period_ms": 20,
+     "window_ms": 20,
+     "n_exec_samples": 24
+    },
+    "yolov8n": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 76.4908,
+     "exec_max_ms": 83.6558,
+     "last_end_ms": 83.8172,
+     "missed": 0.0,
+     "period_ms": null,
+     "window_ms": null,
+     "n_exec_samples": 3
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 0.33,
+   "missed_nets": [
+    "mlp_control"
+   ],
+   "lock_wall_s": 24.74,
+   "measured_over_predicted": 1.0155
+  },
+  "3net_dronet8_mlp16_yolo1__a11": {
+   "cell": "3net_dronet8_mlp16_yolo1",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a11",
+   "label": "mlp_control@dsp_dronet@hta_yolov8n@dsp",
+   "assign": {
+    "mlp_control": "dsp",
+    "dronet": "hta",
+    "yolov8n": "dsp"
+   },
+   "rank": 11,
+   "np_rank": 4,
+   "n_legal": 12,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 150.685,
+   "predicted_np_makespan_ms": 29.329,
+   "predicted_missed_instances": 2,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 152.1593,
+   "makespan_spread_ms": 0.8752,
+   "makespan_reps_ms": [
+    153.0151,
+    152.1399,
+    152.1593
+   ],
+   "np_median_ms": 36.5097,
+   "np_spread_ms": 0.6833,
+   "np_reps_ms": [
+    36.5544,
+    36.5097,
+    35.8711
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 16,
+     "instances_run": 16,
+     "exec_p50_ms": 2.0795,
+     "exec_max_ms": 16.5258,
+     "last_end_ms": 153.0151,
+     "missed": 1.33,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 48
+    },
+    "dronet": {
+     "instances_declared": 8,
+     "instances_run": 8,
+     "exec_p50_ms": 2.073,
+     "exec_max_ms": 3.3202,
+     "last_end_ms": 143.002,
+     "missed": 0.0,
+     "period_ms": 20,
+     "window_ms": 20,
+     "n_exec_samples": 24
+    },
+    "yolov8n": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 36.1729,
+     "exec_max_ms": 36.45,
+     "last_end_ms": 36.5544,
+     "missed": 0.0,
+     "period_ms": null,
+     "window_ms": null,
+     "n_exec_samples": 3
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 1.33,
+   "missed_nets": [
+    "mlp_control"
+   ],
+   "lock_wall_s": 24.74,
+   "measured_over_predicted": 1.0098
+  },
+  "3net_dronet8_mlp16_yolo1__a2": {
+   "cell": "3net_dronet8_mlp16_yolo1",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a2",
+   "label": "mlp_control@cpu_dronet@dsp_yolov8n@cpu",
+   "assign": {
+    "mlp_control": "cpu",
+    "dronet": "dsp",
+    "yolov8n": "cpu"
+   },
+   "rank": 2,
+   "np_rank": 8,
+   "n_legal": 12,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 150.066,
+   "predicted_np_makespan_ms": 73.873,
+   "predicted_missed_instances": 6,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 160.7754,
+   "makespan_spread_ms": 0.1762,
+   "makespan_reps_ms": [
+    160.7754,
+    160.648,
+    160.8242
+   ],
+   "np_median_ms": 79.8097,
+   "np_spread_ms": 2.9073,
+   "np_reps_ms": [
+    79.8097,
+    78.6539,
+    81.5612
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 16,
+     "instances_run": 16,
+     "exec_p50_ms": 0.2162,
+     "exec_max_ms": 0.3187,
+     "last_end_ms": 160.0887,
+     "missed": 1.0,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 48
+    },
+    "dronet": {
+     "instances_declared": 8,
+     "instances_run": 8,
+     "exec_p50_ms": 0.8237,
+     "exec_max_ms": 1.1819,
+     "last_end_ms": 160.8242,
+     "missed": 1.0,
+     "period_ms": 20,
+     "window_ms": 20,
+     "n_exec_samples": 24
+    },
+    "yolov8n": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 79.5024,
+     "exec_max_ms": 79.5398,
+     "last_end_ms": 81.5612,
+     "missed": 0.0,
+     "period_ms": null,
+     "window_ms": null,
+     "n_exec_samples": 3
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 2.0,
+   "missed_nets": [
+    "mlp_control",
+    "dronet"
+   ],
+   "lock_wall_s": 19.99,
+   "measured_over_predicted": 1.0714
+  },
+  "3net_dronet8_mlp16_yolo1__a3": {
+   "cell": "3net_dronet8_mlp16_yolo1",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a3",
+   "label": "mlp_control@cpu_dronet@dsp_yolov8n@dsp",
+   "assign": {
+    "mlp_control": "cpu",
+    "dronet": "dsp",
+    "yolov8n": "dsp"
+   },
+   "rank": 3,
+   "np_rank": 2,
+   "n_legal": 12,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 150.066,
+   "predicted_np_makespan_ms": 29.289,
+   "predicted_missed_instances": 0,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 150.2228,
+   "makespan_spread_ms": 10.0995,
+   "makespan_reps_ms": [
+    150.1516,
+    150.2228,
+    160.2511
+   ],
+   "np_median_ms": 35.0173,
+   "np_spread_ms": 0.3025,
+   "np_reps_ms": [
+    35.1512,
+    35.0173,
+    34.8487
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 16,
+     "instances_run": 16,
+     "exec_p50_ms": 0.1212,
+     "exec_max_ms": 0.1487,
+     "last_end_ms": 160.2511,
+     "missed": 1.0,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 48
+    },
+    "dronet": {
+     "instances_declared": 8,
+     "instances_run": 8,
+     "exec_p50_ms": 0.837,
+     "exec_max_ms": 15.3154,
+     "last_end_ms": 140.9965,
+     "missed": 0.0,
+     "period_ms": 20,
+     "window_ms": 20,
+     "n_exec_samples": 24
+    },
+    "yolov8n": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 34.9587,
+     "exec_max_ms": 35.0984,
+     "last_end_ms": 35.1512,
+     "missed": 0.0,
+     "period_ms": null,
+     "window_ms": null,
+     "n_exec_samples": 3
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 1.0,
+   "missed_nets": [
+    "mlp_control"
+   ],
+   "lock_wall_s": 19.99,
+   "measured_over_predicted": 1.001
+  },
+  "3net_dronet8_mlp16_yolo1__a4": {
+   "cell": "3net_dronet8_mlp16_yolo1",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a4",
+   "label": "mlp_control@cpu_dronet@hta_yolov8n@cpu",
+   "assign": {
+    "mlp_control": "cpu",
+    "dronet": "hta",
+    "yolov8n": "cpu"
+   },
+   "rank": 4,
+   "np_rank": 9,
+   "n_legal": 12,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 150.066,
+   "predicted_np_makespan_ms": 73.873,
+   "predicted_missed_instances": 6,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 150.787,
+   "makespan_spread_ms": 0.7986,
+   "makespan_reps_ms": [
+    150.0531,
+    150.8517,
+    150.787
+   ],
+   "np_median_ms": 76.2092,
+   "np_spread_ms": 0.3334,
+   "np_reps_ms": [
+    76.2092,
+    76.3844,
+    76.051
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 16,
+     "instances_run": 16,
+     "exec_p50_ms": 0.0578,
+     "exec_max_ms": 0.0889,
+     "last_end_ms": 150.8517,
+     "missed": 0.0,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 48
+    },
+    "dronet": {
+     "instances_declared": 8,
+     "instances_run": 8,
+     "exec_p50_ms": 2.17,
+     "exec_max_ms": 5.1291,
+     "last_end_ms": 143.6457,
+     "missed": 0.0,
+     "period_ms": 20,
+     "window_ms": 20,
+     "n_exec_samples": 24
+    },
+    "yolov8n": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 76.0925,
+     "exec_max_ms": 76.1777,
+     "last_end_ms": 76.3844,
+     "missed": 0.0,
+     "period_ms": null,
+     "window_ms": null,
+     "n_exec_samples": 3
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 0.0,
+   "missed_nets": [],
+   "lock_wall_s": 19.99,
+   "measured_over_predicted": 1.0048
+  },
+  "3net_dronet8_mlp16_yolo1__a5": {
+   "cell": "3net_dronet8_mlp16_yolo1",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a5",
+   "label": "mlp_control@cpu_dronet@hta_yolov8n@dsp",
+   "assign": {
+    "mlp_control": "cpu",
+    "dronet": "hta",
+    "yolov8n": "dsp"
+   },
+   "rank": 5,
+   "np_rank": 1,
+   "n_legal": 12,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 150.066,
+   "predicted_np_makespan_ms": 28.644,
+   "predicted_missed_instances": 0,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 150.7966,
+   "makespan_spread_ms": 0.0169,
+   "makespan_reps_ms": [
+    150.8036,
+    150.7966,
+    150.7867
+   ],
+   "np_median_ms": 30.3021,
+   "np_spread_ms": 1.2677,
+   "np_reps_ms": [
+    30.3021,
+    30.4543,
+    29.1866
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 16,
+     "instances_run": 16,
+     "exec_p50_ms": 0.0496,
+     "exec_max_ms": 0.0607,
+     "last_end_ms": 150.8036,
+     "missed": 0.0,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 48
+    },
+    "dronet": {
+     "instances_declared": 8,
+     "instances_run": 8,
+     "exec_p50_ms": 2.2066,
+     "exec_max_ms": 3.5638,
+     "last_end_ms": 144.3143,
+     "missed": 0.0,
+     "period_ms": 20,
+     "window_ms": 20,
+     "n_exec_samples": 24
+    },
+    "yolov8n": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 30.2372,
+     "exec_max_ms": 30.2372,
+     "last_end_ms": 30.4543,
+     "missed": 0.0,
+     "period_ms": null,
+     "window_ms": null,
+     "n_exec_samples": 3
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 0.0,
+   "missed_nets": [],
+   "lock_wall_s": 19.99,
+   "measured_over_predicted": 1.0049
+  },
+  "3net_dronet8_mlp16_yolo1__a6": {
+   "cell": "3net_dronet8_mlp16_yolo1",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a6",
+   "label": "mlp_control@dsp_dronet@cpu_yolov8n@cpu",
+   "assign": {
+    "mlp_control": "dsp",
+    "dronet": "cpu",
+    "yolov8n": "cpu"
+   },
+   "rank": 6,
+   "np_rank": 10,
+   "n_legal": 12,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 150.685,
+   "predicted_np_makespan_ms": 80.805,
+   "predicted_missed_instances": 4,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 150.5668,
+   "makespan_spread_ms": 0.0322,
+   "makespan_reps_ms": [
+    150.584,
+    150.5668,
+    150.5518
+   ],
+   "np_median_ms": 139.0398,
+   "np_spread_ms": 2.6042,
+   "np_reps_ms": [
+    136.6768,
+    139.0398,
+    139.281
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 16,
+     "instances_run": 16,
+     "exec_p50_ms": 0.562,
+     "exec_max_ms": 0.8583,
+     "last_end_ms": 150.584,
+     "missed": 0.0,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 48
+    },
+    "dronet": {
+     "instances_declared": 8,
+     "instances_run": 8,
+     "exec_p50_ms": 12.9608,
+     "exec_max_ms": 24.9353,
+     "last_end_ms": 147.9583,
+     "missed": 0.33,
+     "period_ms": 20,
+     "window_ms": 20,
+     "n_exec_samples": 24
+    },
+    "yolov8n": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 138.5729,
+     "exec_max_ms": 139.246,
+     "last_end_ms": 139.281,
+     "missed": 0.0,
+     "period_ms": null,
+     "window_ms": null,
+     "n_exec_samples": 3
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 0.33,
+   "missed_nets": [
+    "dronet"
+   ],
+   "lock_wall_s": 23.25,
+   "measured_over_predicted": 0.9992
+  },
+  "3net_dronet8_mlp16_yolo1__a7": {
+   "cell": "3net_dronet8_mlp16_yolo1",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a7",
+   "label": "mlp_control@dsp_dronet@cpu_yolov8n@dsp",
+   "assign": {
+    "mlp_control": "dsp",
+    "dronet": "cpu",
+    "yolov8n": "dsp"
+   },
+   "rank": 7,
+   "np_rank": 3,
+   "n_legal": 12,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 150.685,
+   "predicted_np_makespan_ms": 29.329,
+   "predicted_missed_instances": 2,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 150.5555,
+   "makespan_spread_ms": 0.2228,
+   "makespan_reps_ms": [
+    150.7339,
+    150.5111,
+    150.5555
+   ],
+   "np_median_ms": 35.1186,
+   "np_spread_ms": 0.5089,
+   "np_reps_ms": [
+    34.9313,
+    35.4402,
+    35.1186
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 16,
+     "instances_run": 16,
+     "exec_p50_ms": 0.5204,
+     "exec_max_ms": 15.2888,
+     "last_end_ms": 150.5555,
+     "missed": 1.0,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 48
+    },
+    "dronet": {
+     "instances_declared": 8,
+     "instances_run": 8,
+     "exec_p50_ms": 9.8774,
+     "exec_max_ms": 12.9417,
+     "last_end_ms": 150.7339,
+     "missed": 0.0,
+     "period_ms": 20,
+     "window_ms": 20,
+     "n_exec_samples": 24
+    },
+    "yolov8n": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 35.064,
+     "exec_max_ms": 35.3507,
+     "last_end_ms": 35.4402,
+     "missed": 0.0,
+     "period_ms": null,
+     "window_ms": null,
+     "n_exec_samples": 3
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 1.0,
+   "missed_nets": [
+    "mlp_control"
+   ],
+   "lock_wall_s": 23.25,
+   "measured_over_predicted": 0.9991
+  },
+  "3net_dronet8_mlp16_yolo1__a8": {
+   "cell": "3net_dronet8_mlp16_yolo1",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a8",
+   "label": "mlp_control@dsp_dronet@dsp_yolov8n@cpu",
+   "assign": {
+    "mlp_control": "dsp",
+    "dronet": "dsp",
+    "yolov8n": "cpu"
+   },
+   "rank": 8,
+   "np_rank": 6,
+   "n_legal": 12,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 150.685,
+   "predicted_np_makespan_ms": 73.807,
+   "predicted_missed_instances": 0,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 150.8413,
+   "makespan_spread_ms": 0.2766,
+   "makespan_reps_ms": [
+    150.6464,
+    150.8413,
+    150.923
+   ],
+   "np_median_ms": 80.8957,
+   "np_spread_ms": 2.4334,
+   "np_reps_ms": [
+    80.8957,
+    79.3208,
+    81.7542
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 16,
+     "instances_run": 16,
+     "exec_p50_ms": 0.7284,
+     "exec_max_ms": 1.1237,
+     "last_end_ms": 150.923,
+     "missed": 0.0,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 48
+    },
+    "dronet": {
+     "instances_declared": 8,
+     "instances_run": 8,
+     "exec_p50_ms": 1.0847,
+     "exec_max_ms": 1.6189,
+     "last_end_ms": 141.2009,
+     "missed": 0.0,
+     "period_ms": 20,
+     "window_ms": 20,
+     "n_exec_samples": 24
+    },
+    "yolov8n": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 79.9925,
+     "exec_max_ms": 80.5869,
+     "last_end_ms": 81.7542,
+     "missed": 0.0,
+     "period_ms": null,
+     "window_ms": null,
+     "n_exec_samples": 3
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 0.0,
+   "missed_nets": [],
+   "lock_wall_s": 23.25,
+   "measured_over_predicted": 1.001
+  },
+  "3net_dronet8_mlp16_yolo1__a9": {
+   "cell": "3net_dronet8_mlp16_yolo1",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a9",
+   "label": "mlp_control@dsp_dronet@dsp_yolov8n@dsp",
+   "assign": {
+    "mlp_control": "dsp",
+    "dronet": "dsp",
+    "yolov8n": "dsp"
+   },
+   "rank": 9,
+   "np_rank": 5,
+   "n_legal": 12,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 150.685,
+   "predicted_np_makespan_ms": 29.974,
+   "predicted_missed_instances": 2,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 150.6564,
+   "makespan_spread_ms": 0.0288,
+   "makespan_reps_ms": [
+    150.6564,
+    150.6428,
+    150.6716
+   ],
+   "np_median_ms": 36.5162,
+   "np_spread_ms": 9.1008,
+   "np_reps_ms": [
+    36.5162,
+    38.008,
+    28.9072
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 16,
+     "instances_run": 16,
+     "exec_p50_ms": 0.5913,
+     "exec_max_ms": 17.8454,
+     "last_end_ms": 150.6716,
+     "missed": 0.67,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 48
+    },
+    "dronet": {
+     "instances_declared": 8,
+     "instances_run": 8,
+     "exec_p50_ms": 0.9624,
+     "exec_max_ms": 17.8676,
+     "last_end_ms": 141.1754,
+     "missed": 0.0,
+     "period_ms": 20,
+     "window_ms": 20,
+     "n_exec_samples": 24
+    },
+    "yolov8n": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 36.3445,
+     "exec_max_ms": 37.9461,
+     "last_end_ms": 38.008,
+     "missed": 0.0,
+     "period_ms": null,
+     "window_ms": null,
+     "n_exec_samples": 3
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 0.67,
+   "missed_nets": [
+    "mlp_control"
+   ],
+   "lock_wall_s": 23.25,
+   "measured_over_predicted": 0.9998
+  },
+  "3net_fused2_mlp8_yolo1__a0": {
+   "cell": "3net_fused2_mlp8_yolo1",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a0",
+   "label": "mlp_control@dsp_fused_full@cpu_yolov8n@dsp",
+   "assign": {
+    "mlp_control": "dsp",
+    "fused_full": "cpu",
+    "yolov8n": "dsp"
+   },
+   "rank": 0,
+   "np_rank": 1,
+   "n_legal": 8,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 71.147,
+   "predicted_np_makespan_ms": 29.329,
+   "predicted_missed_instances": 2,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 74.4276,
+   "makespan_spread_ms": 0.1372,
+   "makespan_reps_ms": [
+    74.3517,
+    74.4276,
+    74.4889
+   ],
+   "np_median_ms": 28.9788,
+   "np_spread_ms": 0.3846,
+   "np_reps_ms": [
+    28.7107,
+    29.0953,
+    28.9788
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 8,
+     "instances_run": 8,
+     "exec_p50_ms": 0.5801,
+     "exec_max_ms": 8.9585,
+     "last_end_ms": 70.7349,
+     "missed": 0.0,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 24
+    },
+    "fused_full": {
+     "instances_declared": 2,
+     "instances_run": 2,
+     "exec_p50_ms": 4.0929,
+     "exec_max_ms": 4.7855,
+     "last_end_ms": 74.4889,
+     "missed": 0.0,
+     "period_ms": 70,
+     "window_ms": 26,
+     "n_exec_samples": 6
+    },
+    "yolov8n": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 28.8115,
+     "exec_max_ms": 29.0366,
+     "last_end_ms": 29.0953,
+     "missed": 0.0,
+     "period_ms": null,
+     "window_ms": null,
+     "n_exec_samples": 3
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 0.0,
+   "missed_nets": [],
+   "lock_wall_s": 24.74,
+   "measured_over_predicted": 1.0461
+  },
+  "3net_fused2_mlp8_yolo1__a1": {
+   "cell": "3net_fused2_mlp8_yolo1",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a1",
+   "label": "mlp_control@cpu_fused_full@cpu_yolov8n@dsp",
+   "assign": {
+    "mlp_control": "cpu",
+    "fused_full": "cpu",
+    "yolov8n": "dsp"
+   },
+   "rank": 1,
+   "np_rank": 0,
+   "n_legal": 8,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 71.213,
+   "predicted_np_makespan_ms": 28.644,
+   "predicted_missed_instances": 0,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 74.0616,
+   "makespan_spread_ms": 0.7373,
+   "makespan_reps_ms": [
+    74.009,
+    74.7463,
+    74.0616
+   ],
+   "np_median_ms": 34.8245,
+   "np_spread_ms": 0.4638,
+   "np_reps_ms": [
+    34.674,
+    34.8245,
+    35.1378
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 8,
+     "instances_run": 8,
+     "exec_p50_ms": 0.1267,
+     "exec_max_ms": 0.2688,
+     "last_end_ms": 70.511,
+     "missed": 0.0,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 24
+    },
+    "fused_full": {
+     "instances_declared": 2,
+     "instances_run": 2,
+     "exec_p50_ms": 4.1432,
+     "exec_max_ms": 4.8025,
+     "last_end_ms": 74.7463,
+     "missed": 0.0,
+     "period_ms": 70,
+     "window_ms": 26,
+     "n_exec_samples": 6
+    },
+    "yolov8n": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 34.6763,
+     "exec_max_ms": 35.0804,
+     "last_end_ms": 35.1378,
+     "missed": 0.0,
+     "period_ms": null,
+     "window_ms": null,
+     "n_exec_samples": 3
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 0.0,
+   "missed_nets": [],
+   "lock_wall_s": 24.74,
+   "measured_over_predicted": 1.04
+  },
+  "3net_fused2_mlp8_yolo1__a2": {
+   "cell": "3net_fused2_mlp8_yolo1",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a2",
+   "label": "mlp_control@cpu_fused_full@dsp_yolov8n@cpu",
+   "assign": {
+    "mlp_control": "cpu",
+    "fused_full": "dsp",
+    "yolov8n": "cpu"
+   },
+   "rank": 2,
+   "np_rank": 5,
+   "n_legal": 8,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 74.737,
+   "predicted_np_makespan_ms": 73.873,
+   "predicted_missed_instances": 6,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 75.4384,
+   "makespan_spread_ms": 4.4872,
+   "makespan_reps_ms": [
+    79.6873,
+    75.4384,
+    75.2001
+   ],
+   "np_median_ms": 75.4384,
+   "np_spread_ms": 4.4872,
+   "np_reps_ms": [
+    79.6873,
+    75.4384,
+    75.2001
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 8,
+     "instances_run": 8,
+     "exec_p50_ms": 0.2779,
+     "exec_max_ms": 0.5858,
+     "last_end_ms": 71.0756,
+     "missed": 0.0,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 24
+    },
+    "fused_full": {
+     "instances_declared": 2,
+     "instances_run": 2,
+     "exec_p50_ms": 3.7783,
+     "exec_max_ms": 4.0416,
+     "last_end_ms": 74.4289,
+     "missed": 0.0,
+     "period_ms": 70,
+     "window_ms": 26,
+     "n_exec_samples": 6
+    },
+    "yolov8n": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 75.2034,
+     "exec_max_ms": 79.6563,
+     "last_end_ms": 79.6873,
+     "missed": 0.0,
+     "period_ms": null,
+     "window_ms": null,
+     "n_exec_samples": 3
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 0.0,
+   "missed_nets": [],
+   "lock_wall_s": 16.63,
+   "measured_over_predicted": 1.0094
+  },
+  "3net_fused2_mlp8_yolo1__a3": {
+   "cell": "3net_fused2_mlp8_yolo1",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a3",
+   "label": "mlp_control@cpu_fused_full@dsp_yolov8n@dsp",
+   "assign": {
+    "mlp_control": "cpu",
+    "fused_full": "dsp",
+    "yolov8n": "dsp"
+   },
+   "rank": 3,
+   "np_rank": 2,
+   "n_legal": 8,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 74.737,
+   "predicted_np_makespan_ms": 33.381,
+   "predicted_missed_instances": 0,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 74.1561,
+   "makespan_spread_ms": 0.2822,
+   "makespan_reps_ms": [
+    74.1843,
+    74.1561,
+    73.9021
+   ],
+   "np_median_ms": 31.5342,
+   "np_spread_ms": 0.4253,
+   "np_reps_ms": [
+    31.5342,
+    31.5061,
+    31.9314
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 8,
+     "instances_run": 8,
+     "exec_p50_ms": 0.1224,
+     "exec_max_ms": 0.1658,
+     "last_end_ms": 70.4083,
+     "missed": 0.0,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 24
+    },
+    "fused_full": {
+     "instances_declared": 2,
+     "instances_run": 2,
+     "exec_p50_ms": 3.8071,
+     "exec_max_ms": 3.835,
+     "last_end_ms": 74.1843,
+     "missed": 0.0,
+     "period_ms": 70,
+     "window_ms": 26,
+     "n_exec_samples": 6
+    },
+    "yolov8n": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 31.4754,
+     "exec_max_ms": 31.8696,
+     "last_end_ms": 31.9314,
+     "missed": 0.0,
+     "period_ms": null,
+     "window_ms": null,
+     "n_exec_samples": 3
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 0.0,
+   "missed_nets": [],
+   "lock_wall_s": 16.63,
+   "measured_over_predicted": 0.9922
+  },
+  "3net_fused2_mlp8_yolo1__a4": {
+   "cell": "3net_fused2_mlp8_yolo1",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a4",
+   "label": "mlp_control@dsp_fused_full@dsp_yolov8n@cpu",
+   "assign": {
+    "mlp_control": "dsp",
+    "fused_full": "dsp",
+    "yolov8n": "cpu"
+   },
+   "rank": 4,
+   "np_rank": 4,
+   "n_legal": 8,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 75.422,
+   "predicted_np_makespan_ms": 73.807,
+   "predicted_missed_instances": 0,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 75.9779,
+   "makespan_spread_ms": 4.6552,
+   "makespan_reps_ms": [
+    80.286,
+    75.9779,
+    75.6308
+   ],
+   "np_median_ms": 75.9779,
+   "np_spread_ms": 4.6552,
+   "np_reps_ms": [
+    80.286,
+    75.9779,
+    75.6308
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 8,
+     "instances_run": 8,
+     "exec_p50_ms": 0.6773,
+     "exec_max_ms": 3.9363,
+     "last_end_ms": 74.1845,
+     "missed": 0.0,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 24
+    },
+    "fused_full": {
+     "instances_declared": 2,
+     "instances_run": 2,
+     "exec_p50_ms": 3.7343,
+     "exec_max_ms": 4.0805,
+     "last_end_ms": 73.9872,
+     "missed": 0.0,
+     "period_ms": 70,
+     "window_ms": 26,
+     "n_exec_samples": 6
+    },
+    "yolov8n": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 75.9613,
+     "exec_max_ms": 79.8682,
+     "last_end_ms": 80.286,
+     "missed": 0.0,
+     "period_ms": null,
+     "window_ms": null,
+     "n_exec_samples": 3
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 0.0,
+   "missed_nets": [],
+   "lock_wall_s": 16.63,
+   "measured_over_predicted": 1.0074
+  },
+  "3net_fused2_mlp8_yolo1__a5": {
+   "cell": "3net_fused2_mlp8_yolo1",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a5",
+   "label": "mlp_control@dsp_fused_full@dsp_yolov8n@dsp",
+   "assign": {
+    "mlp_control": "dsp",
+    "fused_full": "dsp",
+    "yolov8n": "dsp"
+   },
+   "rank": 5,
+   "np_rank": 3,
+   "n_legal": 8,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 75.422,
+   "predicted_np_makespan_ms": 34.066,
+   "predicted_missed_instances": 2,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 73.9555,
+   "makespan_spread_ms": 0.4624,
+   "makespan_reps_ms": [
+    74.248,
+    73.7856,
+    73.9555
+   ],
+   "np_median_ms": 37.9372,
+   "np_spread_ms": 11.0724,
+   "np_reps_ms": [
+    45.4358,
+    34.3634,
+    37.9372
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 8,
+     "instances_run": 8,
+     "exec_p50_ms": 0.8556,
+     "exec_max_ms": 22.8884,
+     "last_end_ms": 70.8182,
+     "missed": 2.33,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 24
+    },
+    "fused_full": {
+     "instances_declared": 2,
+     "instances_run": 2,
+     "exec_p50_ms": 3.9207,
+     "exec_max_ms": 5.9316,
+     "last_end_ms": 74.248,
+     "missed": 0.0,
+     "period_ms": 70,
+     "window_ms": 26,
+     "n_exec_samples": 6
+    },
+    "yolov8n": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 37.7879,
+     "exec_max_ms": 45.2766,
+     "last_end_ms": 45.4358,
+     "missed": 0.0,
+     "period_ms": null,
+     "window_ms": null,
+     "n_exec_samples": 3
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 2.33,
+   "missed_nets": [
+    "mlp_control"
+   ],
+   "lock_wall_s": 16.63,
+   "measured_over_predicted": 0.9806
+  },
+  "3net_fused2_mlp8_yolo1__a6": {
+   "cell": "3net_fused2_mlp8_yolo1",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a6",
+   "label": "mlp_control@dsp_fused_full@cpu_yolov8n@cpu",
+   "assign": {
+    "mlp_control": "dsp",
+    "fused_full": "cpu",
+    "yolov8n": "cpu"
+   },
+   "rank": 6,
+   "np_rank": 6,
+   "n_legal": 8,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 76.101,
+   "predicted_np_makespan_ms": 74.954,
+   "predicted_missed_instances": 0,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 87.0221,
+   "makespan_spread_ms": 8.4791,
+   "makespan_reps_ms": [
+    83.0217,
+    87.0221,
+    91.5008
+   ],
+   "np_median_ms": 87.0221,
+   "np_spread_ms": 8.4791,
+   "np_reps_ms": [
+    83.0217,
+    87.0221,
+    91.5008
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 8,
+     "instances_run": 8,
+     "exec_p50_ms": 0.5946,
+     "exec_max_ms": 1.0606,
+     "last_end_ms": 70.8872,
+     "missed": 0.0,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 24
+    },
+    "fused_full": {
+     "instances_declared": 2,
+     "instances_run": 2,
+     "exec_p50_ms": 4.2021,
+     "exec_max_ms": 8.8035,
+     "last_end_ms": 78.9686,
+     "missed": 0.0,
+     "period_ms": 70,
+     "window_ms": 26,
+     "n_exec_samples": 6
+    },
+    "yolov8n": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 82.9909,
+     "exec_max_ms": 85.5754,
+     "last_end_ms": 91.5008,
+     "missed": 0.0,
+     "period_ms": null,
+     "window_ms": null,
+     "n_exec_samples": 3
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 0.0,
+   "missed_nets": [],
+   "lock_wall_s": 18.0,
+   "measured_over_predicted": 1.1435
+  },
+  "3net_fused2_mlp8_yolo1__a7": {
+   "cell": "3net_fused2_mlp8_yolo1",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a7",
+   "label": "mlp_control@cpu_fused_full@cpu_yolov8n@cpu",
+   "assign": {
+    "mlp_control": "cpu",
+    "fused_full": "cpu",
+    "yolov8n": "cpu"
+   },
+   "rank": 7,
+   "np_rank": 7,
+   "n_legal": 8,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 76.629,
+   "predicted_np_makespan_ms": 75.02,
+   "predicted_missed_instances": 6,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 94.5644,
+   "makespan_spread_ms": 5.8535,
+   "makespan_reps_ms": [
+    90.6389,
+    96.4924,
+    94.5644
+   ],
+   "np_median_ms": 94.5644,
+   "np_spread_ms": 5.8535,
+   "np_reps_ms": [
+    90.6389,
+    96.4924,
+    94.5644
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 8,
+     "instances_run": 8,
+     "exec_p50_ms": 0.292,
+     "exec_max_ms": 0.4905,
+     "last_end_ms": 71.206,
+     "missed": 0.0,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 24
+    },
+    "fused_full": {
+     "instances_declared": 2,
+     "instances_run": 2,
+     "exec_p50_ms": 5.9784,
+     "exec_max_ms": 7.4735,
+     "last_end_ms": 77.1834,
+     "missed": 0.0,
+     "period_ms": 70,
+     "window_ms": 26,
+     "n_exec_samples": 6
+    },
+    "yolov8n": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 92.4506,
+     "exec_max_ms": 96.425,
+     "last_end_ms": 96.4924,
+     "missed": 0.0,
+     "period_ms": null,
+     "window_ms": null,
+     "n_exec_samples": 3
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 0.0,
+   "missed_nets": [],
+   "lock_wall_s": 18.0,
+   "measured_over_predicted": 1.2341
+  },
+  "3net_fused4_mlp4_yolo1__a0": {
+   "cell": "3net_fused4_mlp4_yolo1",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a0",
+   "label": "mlp_control@cpu_fused_full@cpu_yolov8n@dsp",
+   "assign": {
+    "mlp_control": "cpu",
+    "fused_full": "cpu",
+    "yolov8n": "dsp"
+   },
+   "rank": 0,
+   "np_rank": 0,
+   "n_legal": 8,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 31.213,
+   "predicted_np_makespan_ms": 28.644,
+   "predicted_missed_instances": 0,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 34.2343,
+   "makespan_spread_ms": 1.6996,
+   "makespan_reps_ms": [
+    33.7288,
+    35.4284,
+    34.2343
+   ],
+   "np_median_ms": 29.002,
+   "np_spread_ms": 0.4404,
+   "np_reps_ms": [
+    28.6888,
+    29.002,
+    29.1292
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 4,
+     "instances_run": 4,
+     "exec_p50_ms": 0.1926,
+     "exec_max_ms": 0.2426,
+     "last_end_ms": 30.372,
+     "missed": 0.0,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 12
+    },
+    "fused_full": {
+     "instances_declared": 4,
+     "instances_run": 4,
+     "exec_p50_ms": 3.8877,
+     "exec_max_ms": 5.4878,
+     "last_end_ms": 35.4284,
+     "missed": 0.0,
+     "period_ms": 10,
+     "window_ms": 8,
+     "n_exec_samples": 12
+    },
+    "yolov8n": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 28.952,
+     "exec_max_ms": 29.0578,
+     "last_end_ms": 29.1292,
+     "missed": 0.0,
+     "period_ms": null,
+     "window_ms": null,
+     "n_exec_samples": 3
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 0.0,
+   "missed_nets": [],
+   "lock_wall_s": 18.0,
+   "measured_over_predicted": 1.0968
+  },
+  "3net_fused4_mlp4_yolo1__a1": {
+   "cell": "3net_fused4_mlp4_yolo1",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a1",
+   "label": "mlp_control@dsp_fused_full@cpu_yolov8n@dsp",
+   "assign": {
+    "mlp_control": "dsp",
+    "fused_full": "cpu",
+    "yolov8n": "dsp"
+   },
+   "rank": 1,
+   "np_rank": 1,
+   "n_legal": 8,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 31.384,
+   "predicted_np_makespan_ms": 29.329,
+   "predicted_missed_instances": 2,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 33.5549,
+   "makespan_spread_ms": 0.8161,
+   "makespan_reps_ms": [
+    33.5549,
+    34.2937,
+    33.4776
+   ],
+   "np_median_ms": 28.6713,
+   "np_spread_ms": 0.162,
+   "np_reps_ms": [
+    28.7294,
+    28.6713,
+    28.5674
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 4,
+     "instances_run": 4,
+     "exec_p50_ms": 1.1422,
+     "exec_max_ms": 8.5708,
+     "last_end_ms": 30.6544,
+     "missed": 0.0,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 12
+    },
+    "fused_full": {
+     "instances_declared": 4,
+     "instances_run": 4,
+     "exec_p50_ms": 3.4037,
+     "exec_max_ms": 4.6682,
+     "last_end_ms": 34.2937,
+     "missed": 0.0,
+     "period_ms": 10,
+     "window_ms": 8,
+     "n_exec_samples": 12
+    },
+    "yolov8n": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 28.6272,
+     "exec_max_ms": 28.6789,
+     "last_end_ms": 28.7294,
+     "missed": 0.0,
+     "period_ms": null,
+     "window_ms": null,
+     "n_exec_samples": 3
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 0.0,
+   "missed_nets": [],
+   "lock_wall_s": 18.0,
+   "measured_over_predicted": 1.0692
+  },
+  "3net_fused4_mlp4_yolo1__a2": {
+   "cell": "3net_fused4_mlp4_yolo1",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a2",
+   "label": "mlp_control@cpu_fused_full@dsp_yolov8n@dsp",
+   "assign": {
+    "mlp_control": "cpu",
+    "fused_full": "dsp",
+    "yolov8n": "dsp"
+   },
+   "rank": 2,
+   "np_rank": 2,
+   "n_legal": 8,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 47.592,
+   "predicted_np_makespan_ms": 33.381,
+   "predicted_missed_instances": 3,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 36.8104,
+   "makespan_spread_ms": 2.7916,
+   "makespan_reps_ms": [
+    38.3462,
+    36.8104,
+    35.5546
+   ],
+   "np_median_ms": 30.6423,
+   "np_spread_ms": 2.6109,
+   "np_reps_ms": [
+    32.3164,
+    30.6423,
+    29.7055
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 4,
+     "instances_run": 4,
+     "exec_p50_ms": 0.1233,
+     "exec_max_ms": 0.1329,
+     "last_end_ms": 30.319,
+     "missed": 0.0,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 12
+    },
+    "fused_full": {
+     "instances_declared": 4,
+     "instances_run": 4,
+     "exec_p50_ms": 4.596,
+     "exec_max_ms": 14.9178,
+     "last_end_ms": 38.3462,
+     "missed": 1.33,
+     "period_ms": 10,
+     "window_ms": 8,
+     "n_exec_samples": 12
+    },
+    "yolov8n": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 30.5884,
+     "exec_max_ms": 32.2609,
+     "last_end_ms": 32.3164,
+     "missed": 0.0,
+     "period_ms": null,
+     "window_ms": null,
+     "n_exec_samples": 3
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 1.33,
+   "missed_nets": [
+    "fused_full"
+   ],
+   "lock_wall_s": 12.69,
+   "measured_over_predicted": 0.7735
+  },
+  "3net_fused4_mlp4_yolo1__a3": {
+   "cell": "3net_fused4_mlp4_yolo1",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a3",
+   "label": "mlp_control@dsp_fused_full@dsp_yolov8n@dsp",
+   "assign": {
+    "mlp_control": "dsp",
+    "fused_full": "dsp",
+    "yolov8n": "dsp"
+   },
+   "rank": 3,
+   "np_rank": 3,
+   "n_legal": 8,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 50.332,
+   "predicted_np_makespan_ms": 34.066,
+   "predicted_missed_instances": 6,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 39.5419,
+   "makespan_spread_ms": 1.1918,
+   "makespan_reps_ms": [
+    39.8527,
+    39.5419,
+    38.6609
+   ],
+   "np_median_ms": 32.8613,
+   "np_spread_ms": 1.8325,
+   "np_reps_ms": [
+    33.0769,
+    32.8613,
+    31.2444
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 4,
+     "instances_run": 4,
+     "exec_p50_ms": 3.6515,
+     "exec_max_ms": 12.9799,
+     "last_end_ms": 36.2829,
+     "missed": 1.0,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 12
+    },
+    "fused_full": {
+     "instances_declared": 4,
+     "instances_run": 4,
+     "exec_p50_ms": 5.1691,
+     "exec_max_ms": 16.1682,
+     "last_end_ms": 39.8527,
+     "missed": 2.0,
+     "period_ms": 10,
+     "window_ms": 8,
+     "n_exec_samples": 12
+    },
+    "yolov8n": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 32.6518,
+     "exec_max_ms": 32.9151,
+     "last_end_ms": 33.0769,
+     "missed": 0.0,
+     "period_ms": null,
+     "window_ms": null,
+     "n_exec_samples": 3
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 3.0,
+   "missed_nets": [
+    "mlp_control",
+    "fused_full"
+   ],
+   "lock_wall_s": 12.69,
+   "measured_over_predicted": 0.7856
+  },
+  "3net_fused4_mlp4_yolo1__a4": {
+   "cell": "3net_fused4_mlp4_yolo1",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a4",
+   "label": "mlp_control@dsp_fused_full@dsp_yolov8n@cpu",
+   "assign": {
+    "mlp_control": "dsp",
+    "fused_full": "dsp",
+    "yolov8n": "cpu"
+   },
+   "rank": 4,
+   "np_rank": 4,
+   "n_legal": 8,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 73.807,
+   "predicted_np_makespan_ms": 73.807,
+   "predicted_missed_instances": 0,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 79.2134,
+   "makespan_spread_ms": 2.3983,
+   "makespan_reps_ms": [
+    81.4829,
+    79.2134,
+    79.0846
+   ],
+   "np_median_ms": 79.2134,
+   "np_spread_ms": 2.3983,
+   "np_reps_ms": [
+    81.4829,
+    79.2134,
+    79.0846
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 4,
+     "instances_run": 4,
+     "exec_p50_ms": 0.8686,
+     "exec_max_ms": 3.6686,
+     "last_end_ms": 33.9644,
+     "missed": 0.0,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 12
+    },
+    "fused_full": {
+     "instances_declared": 4,
+     "instances_run": 4,
+     "exec_p50_ms": 3.8282,
+     "exec_max_ms": 4.0407,
+     "last_end_ms": 34.066,
+     "missed": 0.0,
+     "period_ms": 10,
+     "window_ms": 8,
+     "n_exec_samples": 12
+    },
+    "yolov8n": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 79.0367,
+     "exec_max_ms": 79.7304,
+     "last_end_ms": 81.4829,
+     "missed": 0.0,
+     "period_ms": null,
+     "window_ms": null,
+     "n_exec_samples": 3
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 0.0,
+   "missed_nets": [],
+   "lock_wall_s": 12.69,
+   "measured_over_predicted": 1.0733
+  },
+  "3net_fused4_mlp4_yolo1__a5": {
+   "cell": "3net_fused4_mlp4_yolo1",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a5",
+   "label": "mlp_control@cpu_fused_full@dsp_yolov8n@cpu",
+   "assign": {
+    "mlp_control": "cpu",
+    "fused_full": "dsp",
+    "yolov8n": "cpu"
+   },
+   "rank": 5,
+   "np_rank": 5,
+   "n_legal": 8,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 74.071,
+   "predicted_np_makespan_ms": 73.873,
+   "predicted_missed_instances": 3,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 76.6909,
+   "makespan_spread_ms": 4.6176,
+   "makespan_reps_ms": [
+    80.3621,
+    76.6909,
+    75.7445
+   ],
+   "np_median_ms": 76.6909,
+   "np_spread_ms": 4.6176,
+   "np_reps_ms": [
+    80.3621,
+    76.6909,
+    75.7445
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 4,
+     "instances_run": 4,
+     "exec_p50_ms": 0.2891,
+     "exec_max_ms": 0.3575,
+     "last_end_ms": 30.5714,
+     "missed": 0.0,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 12
+    },
+    "fused_full": {
+     "instances_declared": 4,
+     "instances_run": 4,
+     "exec_p50_ms": 4.0187,
+     "exec_max_ms": 4.3727,
+     "last_end_ms": 33.9883,
+     "missed": 0.0,
+     "period_ms": 10,
+     "window_ms": 8,
+     "n_exec_samples": 12
+    },
+    "yolov8n": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 76.4492,
+     "exec_max_ms": 80.1237,
+     "last_end_ms": 80.3621,
+     "missed": 0.0,
+     "period_ms": null,
+     "window_ms": null,
+     "n_exec_samples": 3
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 0.0,
+   "missed_nets": [],
+   "lock_wall_s": 12.69,
+   "measured_over_predicted": 1.0354
+  },
+  "3net_fused4_mlp4_yolo1__a6": {
+   "cell": "3net_fused4_mlp4_yolo1",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a6",
+   "label": "mlp_control@dsp_fused_full@cpu_yolov8n@cpu",
+   "assign": {
+    "mlp_control": "dsp",
+    "fused_full": "cpu",
+    "yolov8n": "cpu"
+   },
+   "rank": 6,
+   "np_rank": 6,
+   "n_legal": 8,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 78.395,
+   "predicted_np_makespan_ms": 74.954,
+   "predicted_missed_instances": 3,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 96.689,
+   "makespan_spread_ms": 1.68,
+   "makespan_reps_ms": [
+    96.689,
+    95.7068,
+    97.3868
+   ],
+   "np_median_ms": 96.689,
+   "np_spread_ms": 1.68,
+   "np_reps_ms": [
+    96.689,
+    95.7068,
+    97.3868
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 4,
+     "instances_run": 4,
+     "exec_p50_ms": 0.6011,
+     "exec_max_ms": 1.2679,
+     "last_end_ms": 30.9259,
+     "missed": 0.0,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 12
+    },
+    "fused_full": {
+     "instances_declared": 4,
+     "instances_run": 4,
+     "exec_p50_ms": 4.8139,
+     "exec_max_ms": 5.8303,
+     "last_end_ms": 35.5536,
+     "missed": 0.0,
+     "period_ms": 10,
+     "window_ms": 8,
+     "n_exec_samples": 12
+    },
+    "yolov8n": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 91.969,
+     "exec_max_ms": 97.0328,
+     "last_end_ms": 97.3868,
+     "missed": 0.0,
+     "period_ms": null,
+     "window_ms": null,
+     "n_exec_samples": 3
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 0.0,
+   "missed_nets": [],
+   "lock_wall_s": 8.93,
+   "measured_over_predicted": 1.2334
+  },
+  "3net_fused4_mlp4_yolo1__a7": {
+   "cell": "3net_fused4_mlp4_yolo1",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a7",
+   "label": "mlp_control@cpu_fused_full@cpu_yolov8n@cpu",
+   "assign": {
+    "mlp_control": "cpu",
+    "fused_full": "cpu",
+    "yolov8n": "cpu"
+   },
+   "rank": 7,
+   "np_rank": 7,
+   "n_legal": 8,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 78.659,
+   "predicted_np_makespan_ms": 75.02,
+   "predicted_missed_instances": 6,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 99.6311,
+   "makespan_spread_ms": 3.8681,
+   "makespan_reps_ms": [
+    97.3744,
+    99.6311,
+    101.2425
+   ],
+   "np_median_ms": 99.6311,
+   "np_spread_ms": 3.8681,
+   "np_reps_ms": [
+    97.3744,
+    99.6311,
+    101.2425
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 4,
+     "instances_run": 4,
+     "exec_p50_ms": 0.291,
+     "exec_max_ms": 0.3267,
+     "last_end_ms": 30.4399,
+     "missed": 0.0,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 12
+    },
+    "fused_full": {
+     "instances_declared": 4,
+     "instances_run": 4,
+     "exec_p50_ms": 5.1499,
+     "exec_max_ms": 16.6083,
+     "last_end_ms": 39.3749,
+     "missed": 1.33,
+     "period_ms": 10,
+     "window_ms": 8,
+     "n_exec_samples": 12
+    },
+    "yolov8n": {
+     "instances_declared": 1,
+     "instances_run": 1,
+     "exec_p50_ms": 99.5742,
+     "exec_max_ms": 101.0955,
+     "last_end_ms": 101.2425,
+     "missed": 0.0,
+     "period_ms": null,
+     "window_ms": null,
+     "n_exec_samples": 3
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 1.33,
+   "missed_nets": [
+    "fused_full"
+   ],
+   "lock_wall_s": 8.93,
+   "measured_over_predicted": 1.2666
+  },
+  "3net_mlp2__a0": {
+   "cell": "3net_mlp2",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a0",
+   "label": "mlp_control@cpu",
+   "assign": {
+    "mlp_control": "cpu"
+   },
+   "rank": 0,
+   "np_rank": 0,
+   "n_legal": 2,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 10.066,
+   "predicted_np_makespan_ms": 10.066,
+   "predicted_missed_instances": 0,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 10.3155,
+   "makespan_spread_ms": 0.093,
+   "makespan_reps_ms": [
+    10.2872,
+    10.3155,
+    10.3802
+   ],
+   "np_median_ms": 10.3155,
+   "np_spread_ms": 0.093,
+   "np_reps_ms": [
+    10.2872,
+    10.3155,
+    10.3802
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 2,
+     "instances_run": 2,
+     "exec_p50_ms": 0.1219,
+     "exec_max_ms": 0.1651,
+     "last_end_ms": 10.3802,
+     "missed": 0.0,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 6
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 0.0,
+   "missed_nets": [],
+   "lock_wall_s": 8.93,
+   "measured_over_predicted": 1.0248
+  },
+  "3net_mlp2__a1": {
+   "cell": "3net_mlp2",
+   "family": "3net",
+   "config": "qrb5165",
+   "assignment": "a1",
+   "label": "mlp_control@dsp",
+   "assign": {
+    "mlp_control": "dsp"
+   },
+   "rank": 1,
+   "np_rank": 1,
+   "n_legal": 2,
+   "measure_mode": "full",
+   "verdict": "OK",
+   "notes": [
+    "3net-arm",
+    "machine-axis-collapsed"
+   ],
+   "predicted_makespan_ms": 10.685,
+   "predicted_np_makespan_ms": 10.685,
+   "predicted_missed_instances": 0,
+   "ok": true,
+   "reps": 3,
+   "makespan_median_ms": 10.5554,
+   "makespan_spread_ms": 0.1639,
+   "makespan_reps_ms": [
+    10.5554,
+    10.704,
+    10.5401
+   ],
+   "np_median_ms": 10.5554,
+   "np_spread_ms": 0.1639,
+   "np_reps_ms": [
+    10.5554,
+    10.704,
+    10.5401
+   ],
+   "per_net": {
+    "mlp_control": {
+     "instances_declared": 2,
+     "instances_run": 2,
+     "exec_p50_ms": 0.4595,
+     "exec_max_ms": 0.6223,
+     "last_end_ms": 10.704,
+     "missed": 0.0,
+     "period_ms": 10,
+     "window_ms": 10,
+     "n_exec_samples": 6
+    }
+   },
+   "starved": [],
+   "n_starved": 0,
+   "missed_instances": 0.0,
+   "missed_nets": [],
+   "lock_wall_s": 8.93,
+   "measured_over_predicted": 0.9879
+  },
   "networks_bimodal_cg__a0": {
    "cell": "networks_bimodal_cg",
    "family": "bimodal",

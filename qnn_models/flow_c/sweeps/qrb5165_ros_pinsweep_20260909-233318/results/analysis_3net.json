@@ -1,0 +1,224 @@
+{
+ "_comment": "The 3net arm. ROS whole-model pinning vs XPU-RT scheduling on the same three lanes of the same board, both measured in this campaign. Primary objective: the non-periodic makespan. XPU-RT trims periodic instances falling after it -- a better solution to the same problem -- so the wall clock is NOT the comparison except on the two shapes with no aperiodic network, where both sides executed identical entry counts.",
+ "noise_floor_np_pct": 9.18,
+ "shapes": [
+  {
+   "shape": "3net_dronet1_mlp2",
+   "sources": [
+    "3net_pairs/networks_3net_smallb_hetero.json"
+   ],
+   "n_legal": 6,
+   "n_measured": 6,
+   "np_degenerate": true,
+   "ros_np_ms": 10.2087,
+   "ros_np_spread_pct": 0.13,
+   "ros_np_label": "mlp_control@cpu_dronet@cpu",
+   "ros_np_worst_ms": 13.0276,
+   "ros_wall_ms": 10.2087,
+   "xrt_np_ms": 10.056,
+   "xrt_wall_ms": 10.057,
+   "xrt_solver": "greedy",
+   "xrt_np_instances": null,
+   "ros_over_xrt_np": 1.0152,
+   "ros_over_xrt_wall": 1.0151,
+   "placement_spread_np": 1.2761,
+   "inside_noise_np": true
+  },
+  {
+   "shape": "3net_dronet1_mlp2_yolo1",
+   "sources": [
+    "3net_pairs/networks_3net_small_gempair.json",
+    "3net_pairs/networks_3net_small_hetero.json",
+    "3net_pairs/networks_3net_small_rvvpair.json"
+   ],
+   "n_legal": 12,
+   "n_measured": 12,
+   "np_degenerate": false,
+   "ros_np_ms": 26.19,
+   "ros_np_spread_pct": 11.44,
+   "ros_np_label": "mlp_control@cpu_dronet@cpu_yolov8n@dsp",
+   "ros_np_worst_ms": 86.6466,
+   "ros_wall_ms": 26.19,
+   "xrt_np_ms": 31.912,
+   "xrt_wall_ms": 31.912,
+   "xrt_solver": "greedy",
+   "xrt_np_instances": {
+    "yolov8n": 1
+   },
+   "ros_over_xrt_np": 0.8207,
+   "ros_over_xrt_wall": 0.8207,
+   "placement_spread_np": 3.3084,
+   "inside_noise_np": false
+  },
+  {
+   "shape": "3net_dronet2_mlp8_yolo1",
+   "sources": [
+    "networks_3net_dronet_ctl.json"
+   ],
+   "n_legal": 12,
+   "n_measured": 12,
+   "np_degenerate": false,
+   "ros_np_ms": 28.6766,
+   "ros_np_spread_pct": 0.52,
+   "ros_np_label": "mlp_control@cpu_yolov8n@dsp_dronet@dsp",
+   "ros_np_worst_ms": 91.9899,
+   "ros_wall_ms": 71.3911,
+   "xrt_np_ms": 31.143,
+   "xrt_wall_ms": 31.143,
+   "xrt_solver": "greedy",
+   "xrt_np_instances": {
+    "yolov8n": 1
+   },
+   "ros_over_xrt_np": 0.9208,
+   "ros_over_xrt_wall": 2.2924,
+   "placement_spread_np": 3.2078,
+   "inside_noise_np": true
+  },
+  {
+   "shape": "3net_dronet4_mlp4_yolo1",
+   "sources": [
+    "networks_3net_dronet_v2.json"
+   ],
+   "n_legal": 12,
+   "n_measured": 12,
+   "np_degenerate": false,
+   "ros_np_ms": 27.0598,
+   "ros_np_spread_pct": 9.24,
+   "ros_np_label": "mlp_control@cpu_yolov8n@dsp_dronet@dsp",
+   "ros_np_worst_ms": 110.1169,
+   "ros_wall_ms": 30.9664,
+   "xrt_np_ms": 49.929,
+   "xrt_wall_ms": 49.93,
+   "xrt_solver": "greedy",
+   "xrt_np_instances": {
+    "yolov8n": 1
+   },
+   "ros_over_xrt_np": 0.542,
+   "ros_over_xrt_wall": 0.6202,
+   "placement_spread_np": 4.0694,
+   "inside_noise_np": false
+  },
+  {
+   "shape": "3net_dronet4_mlp8_yolo1",
+   "sources": [
+    "3net_pairs/networks_3net_gempair.json",
+    "3net_pairs/networks_3net_hetero.json",
+    "3net_pairs/networks_3net_rvvpair.json",
+    "networks_3net_milpfair.json"
+   ],
+   "n_legal": 12,
+   "n_measured": 12,
+   "np_degenerate": false,
+   "ros_np_ms": 28.4358,
+   "ros_np_spread_pct": 1.78,
+   "ros_np_label": "mlp_control@cpu_dronet@cpu_yolov8n@dsp",
+   "ros_np_worst_ms": 109.1658,
+   "ros_wall_ms": 70.209,
+   "xrt_np_ms": 37.996,
+   "xrt_wall_ms": 37.996,
+   "xrt_solver": "greedy",
+   "xrt_np_instances": {
+    "yolov8n": 1
+   },
+   "ros_over_xrt_np": 0.7484,
+   "ros_over_xrt_wall": 1.8478,
+   "placement_spread_np": 3.839,
+   "inside_noise_np": false
+  },
+  {
+   "shape": "3net_dronet8_mlp16_yolo1",
+   "sources": [
+    "networks_3net_armA.json",
+    "networks_3net_armB.json"
+   ],
+   "n_legal": 12,
+   "n_measured": 12,
+   "np_degenerate": false,
+   "ros_np_ms": 28.4897,
+   "ros_np_spread_pct": 1.7,
+   "ros_np_label": "mlp_control@cpu_dronet@cpu_yolov8n@dsp",
+   "ros_np_worst_ms": 139.0398,
+   "ros_wall_ms": 150.2165,
+   "xrt_np_ms": 38.762,
+   "xrt_wall_ms": 38.763,
+   "xrt_solver": "greedy",
+   "xrt_np_instances": {
+    "yolov8n": 1
+   },
+   "ros_over_xrt_np": 0.735,
+   "ros_over_xrt_wall": 3.8753,
+   "placement_spread_np": 4.8804,
+   "inside_noise_np": false
+  },
+  {
+   "shape": "3net_fused2_mlp8_yolo1",
+   "sources": [
+    "networks_3net_fused.json"
+   ],
+   "n_legal": 8,
+   "n_measured": 8,
+   "np_degenerate": false,
+   "ros_np_ms": 28.9788,
+   "ros_np_spread_pct": 1.33,
+   "ros_np_label": "mlp_control@dsp_fused_full@cpu_yolov8n@dsp",
+   "ros_np_worst_ms": 94.5644,
+   "ros_wall_ms": 73.9555,
+   "xrt_np_ms": 30.172,
+   "xrt_wall_ms": 30.173,
+   "xrt_solver": "greedy",
+   "xrt_np_instances": {
+    "yolov8n": 1
+   },
+   "ros_over_xrt_np": 0.9605,
+   "ros_over_xrt_wall": 2.451,
+   "placement_spread_np": 3.2632,
+   "inside_noise_np": true
+  },
+  {
+   "shape": "3net_fused4_mlp4_yolo1",
+   "sources": [
+    "networks_3net_fused_v2.json"
+   ],
+   "n_legal": 8,
+   "n_measured": 8,
+   "np_degenerate": false,
+   "ros_np_ms": 28.6713,
+   "ros_np_spread_pct": 0.57,
+   "ros_np_label": "mlp_control@dsp_fused_full@cpu_yolov8n@dsp",
+   "ros_np_worst_ms": 99.6311,
+   "ros_wall_ms": 33.5549,
+   "xrt_np_ms": 30.816,
+   "xrt_wall_ms": 30.816,
+   "xrt_solver": "greedy",
+   "xrt_np_instances": {
+    "yolov8n": 1
+   },
+   "ros_over_xrt_np": 0.9304,
+   "ros_over_xrt_wall": 1.0889,
+   "placement_spread_np": 3.4749,
+   "inside_noise_np": true
+  },
+  {
+   "shape": "3net_mlp2",
+   "sources": [
+    "3net_pairs/networks_3net_tiny_hetero.json"
+   ],
+   "n_legal": 2,
+   "n_measured": 2,
+   "np_degenerate": true,
+   "ros_np_ms": 10.3155,
+   "ros_np_spread_pct": 0.9,
+   "ros_np_label": "mlp_control@cpu",
+   "ros_np_worst_ms": 10.5554,
+   "ros_wall_ms": 10.3155,
+   "xrt_np_ms": 10.067,
+   "xrt_wall_ms": 10.067,
+   "xrt_solver": "greedy",
+   "xrt_np_instances": null,
+   "ros_over_xrt_np": 1.0247,
+   "ros_over_xrt_wall": 1.0247,
+   "placement_spread_np": 1.0233,
+   "inside_noise_np": true
+  }
+ ]
+}
