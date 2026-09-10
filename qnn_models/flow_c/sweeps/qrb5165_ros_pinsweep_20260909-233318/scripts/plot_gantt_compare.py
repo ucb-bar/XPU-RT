@@ -86,6 +86,7 @@ FLAT = "#3d7ab8"                                  # ordinal family, unordered
 INK, INK2, MUTED = "#0b0b0b", "#52514e", "#898781"
 GRID, BASELINE = "#e1e0d9", "#c3c2b7"
 MARK = "#d03b3b"                                  # status: critical -- the objective
+DEAD = "#f0efec"   # pre-first-dispatch dead time, the neutral midpoint
 
 NODE_RE = re.compile(r"node\s+(\S+)\s+backend=(\S+)\s+inst=\s*(\d+)\s+period=\s*(\S+)")
 
@@ -281,7 +282,8 @@ def pick_median_rep(gen):
     return min(runs, key=lambda x: abs(x[1] - med))
 
 
-def draw(ax, spans, rows, colors, hatch_nets, np_end, title, xmax):
+def draw(ax, spans, rows, colors, hatch_nets, np_end, title, xmax,
+         first=None):
     """`rows` is a list of (lane, network) -- ONE SUB-ROW PER NETWORK.
 
     A single row per lane hides real overlap: in the ROS trace `end_ms -
@@ -298,16 +300,36 @@ def draw(ax, spans, rows, colors, hatch_nets, np_end, title, xmax):
             ax.barh(yi, max(e - s, 0.02), left=s, height=0.5,
                     color=colors[net], edgecolor=SURFACE, linewidth=0.7,
                     zorder=3, hatch="///" if net in hatch_nets else None)
+    # THE START BARRIER, drawn rather than described. Both runtimes are timed
+    # from their own t0, and on some runs the first dispatch is over a
+    # millisecond later than that -- on the XPU-RT side the wait sits in
+    # `gate_ms`, not in `dep_wait_ms`, so nothing was blocked on a dependency.
+    # Shading it makes the interval the corrected number measures visible as
+    # the part of the panel with work in it, and stops this figure from
+    # illustrating a startup artifact as though it were a scheduling
+    # difference.
+    if first is not None and first > 0.02:
+        ax.axvspan(0.0, first, color=DEAD, zorder=1)
+        ax.axvline(first, color=MUTED, lw=1.0, ls=":", zorder=4)
+        ax.annotate(f"first dispatch {first:.2f} ms", xy=(first, -0.52),
+                    xytext=(4, 0), textcoords="offset points", fontsize=7.8,
+                    color=MUTED, va="center", ha="left", zorder=5)
     ax.axvline(np_end, color=MARK, lw=1.6, ls="--", zorder=4)
     # The two panels share an x range, so on a cell where pinning is much
     # slower its own marker sits at the right edge and a right-flowing label
     # runs off the figure (vint_multi_cg printed "ape"). Flip the label to the
     # inside of the marker when it is near the end of the axis.
     late = np_end > 0.72 * xmax
-    ax.annotate(f"aperiodic work done  {np_end:.2f} ms",
-                xy=(np_end, len(rows) - 0.45), xytext=(-6 if late else 6, 0),
+    corr = (f"  ({np_end - first:.2f} ms from first dispatch)"
+            if first is not None and first > 0.02 else "")
+    # Keep the label INSIDE the axes: at the old y it sat on the axis edge and
+    # ran into the next panel's title on any cell with only two sub-rows.
+    ax.annotate(f"aperiodic work done  {np_end:.2f} ms" + corr,
+                xy=(np_end, len(rows) - 0.72), xytext=(-6 if late else 6, 0),
                 textcoords="offset points", fontsize=8.5, color=MARK,
-                va="center", ha="right" if late else "left", zorder=5)
+                va="center", ha="right" if late else "left", zorder=6,
+                bbox=dict(facecolor=SURFACE, edgecolor="none", pad=1.0,
+                          alpha=0.85))
     ax.set_yticks(range(len(rows)))
     ax.set_yticklabels([f"{l.upper()}  ·  {n}" for l, n in rows],
                        fontsize=8, color=INK2)
@@ -323,11 +345,20 @@ def draw(ax, spans, rows, colors, hatch_nets, np_end, title, xmax):
     ax.set_title(title, fontsize=10, color=INK, loc="left", pad=6)
 
 
-def one_cell(cell_short: str, rec: dict, out_dir: str, prefer: str):
+def one_cell(cell_short: str, rec: dict, out_dir: str, prefer: str,
+             baseline: str = "isolation"):
     cell = rec["cell"]
-    log, place, aper = find_ros_log(cell, rec["ros_np_best_label"])
+    # WHICH PINNING PLACEMENT THE PANEL SHOWS has to be the one the headline
+    # ratio is computed on. `isolation` is the primary baseline -- each
+    # network on the lane it is fastest on alone, which is what a ROS user
+    # deploys; `oracle` is the best of every legal placement measured, which
+    # is an upper bound nobody has. Drawing one beside a ratio computed from
+    # the other would be showing a different experiment.
+    LKEY = "iso_label" if baseline == "isolation" else "ros_np_best_label"
+    label = rec.get(LKEY) or rec["ros_np_best_label"]
+    log, place, aper = find_ros_log(cell, label)
     if log is None:
-        print(f"  {cell_short}: no ROS log matches {rec['ros_np_best_label']}")
+        print(f"  {cell_short}: no ROS log matches {label}")
         return
     rrows, ros_np = ros_trace(log)
     pick = xrt_np_best_run(cell, prefer)
@@ -373,6 +404,10 @@ def one_cell(cell_short: str, rec: dict, out_dir: str, prefer: str):
             (float(r["start_ms"]), float(r["end_ms"]), r["network"]))
     for r in xrows:
         xspan.setdefault(r["backend"].lower(), []).append((r["_s"], r["_e"], r["network"]))
+    # The first dispatch anywhere in each panel's run: the origin the corrected
+    # numbers are measured from.
+    ros_first = min((float(r["start_ms"]) for r in rrows), default=0.0)
+    xrt_first = min((r["_s"] for r in xrows), default=0.0)
     # One sub-row per (lane, network) actually used by either side, so the two
     # panels share a row layout and overlap on a lane stays visible.
     used = {(lane, n) for span in (rspan, xspan)
@@ -380,8 +415,15 @@ def one_cell(cell_short: str, rec: dict, out_dir: str, prefer: str):
     rows_yx = sorted(used, key=lambda t: (t[0], nets.index(t[1])))
     xmax = max([e for v in list(rspan.values()) + list(xspan.values()) for _, e, _ in v])
 
-    fig, (ax, bx) = plt.subplots(2, 1, figsize=(12.4, 1.35 + 0.42 * len(rows_yx) * 2),
-                                 sharex=True, gridspec_kw=dict(hspace=0.34))
+    # The header is three stacked text blocks -- title, the raw-vs-corrected
+    # line, and the legend -- so its height is fixed in INCHES and the axes
+    # get whatever is left. Expressing it as a fraction of the figure (the
+    # earlier `top=0.80`) made the header shrink with the panel and the title
+    # ran into the legend on any cell with only two sub-rows.
+    HEAD_IN = 1.60
+    fig_h = HEAD_IN + 0.30 + 0.42 * len(rows_yx) * 2
+    fig, (ax, bx) = plt.subplots(2, 1, figsize=(12.4, fig_h),
+                                 sharex=True, gridspec_kw=dict(hspace=0.42))
     fig.patch.set_facecolor(SURFACE)
     for a in (ax, bx):
         a.set_facecolor(SURFACE)
@@ -395,14 +437,17 @@ def one_cell(cell_short: str, rec: dict, out_dir: str, prefer: str):
          f"XPU-RT — per-op scheduling, solver `{solver}`"
          + ("" if preferred else
             f"   ({prefer} was not measured on this cell — winner+greedy tier)"),
-         xmax)
+         xmax, first=xrt_first)
     # Render the placement from the parsed pairs. Replacing "_" with a space in
     # the raw label also split the network names ("mlp  control  sd@dsp").
     pretty = ",  ".join(f"{n}→{b}" for n, b in
-                        sorted(parse_label(rec["ros_np_best_label"]),
+                        sorted(parse_label(label),
                                key=lambda t: nets.index(t[0]) if t[0] in nets else 99))
     draw(bx, rspan, rows_yx, colors, hatch_nets, ros_np,
-         f"ROS — whole-network pinning:  {pretty}", xmax)
+         ("ROS — whole-network pinning, each network on its "
+          "isolation-best lane:  " if baseline == "isolation"
+          else "ROS — whole-network pinning, best measured placement "
+               "(oracle):  ") + pretty, xmax, first=ros_first)
     bx.set_xlabel("ms from the start of the run", fontsize=9.5, color=INK2)
 
     # Compute the headline from the two numbers actually drawn. Using the
@@ -411,11 +456,28 @@ def one_cell(cell_short: str, rec: dict, out_dir: str, prefer: str):
     # depth_contended_hd the title claimed 1.02 over a panel showing 3.36 vs
     # 3.82. A title must not be able to disagree with its own figure.
     ratio = ros_np / xrt_np if xrt_np else float("nan")
+    # The headline is the CORRECTED ratio: both panels re-timed from their own
+    # first dispatch, so neither runtime is charged for the other's startup.
+    # The raw ratio is printed beside it and never replaced -- it is what the
+    # earlier write-ups quote, and a reader has to be able to see what the
+    # correction did.
+    cros, cxrt = ros_np - ros_first, xrt_np - xrt_first
+    cratio = cros / cxrt if cxrt else float("nan")
     verb = ("pinning finishes the aperiodic work in "
-            f"{1/ratio:.2f}× less time" if ratio < 1 else
-            f"scheduling finishes the aperiodic work in {ratio:.2f}× less time")
-    fig.suptitle(f"{cell_short} — {verb} ({ros_np:.2f} vs {xrt_np:.2f} ms)",
-                 fontsize=12.5, color=INK, x=0.006, ha="left", y=0.985)
+            f"{1/cratio:.2f}× less time" if cratio < 1 else
+            f"scheduling finishes the aperiodic work in {cratio:.2f}× less time")
+    moved = abs(cratio / ratio - 1) * 100 if ratio else 0.0
+    fig.suptitle(f"{cell_short} — {verb}\n"
+                 f"{cros:.2f} vs {cxrt:.2f} ms, each from its own first dispatch",
+                 fontsize=11.5, color=INK, x=0.006, ha="left",
+                 y=1 - 0.16 / fig_h, va="top", linespacing=1.35)
+    fig.text(0.006, 1 - 0.78 / fig_h,
+             f"Raw, from each runtime's t0: {ros_np:.2f} vs {xrt_np:.2f} ms = "
+             f"{ratio:.2f}×.  Corrected: {cratio:.2f}×"
+             + (f" — the start barrier was worth {moved:.0f} % of this cell's "
+                f"ratio." if moved >= 1 else "; the start barrier moves it by "
+                                             "less than 1 %."),
+             fontsize=8.8, color=MUTED, ha="left", va="top")
     # A ramp has to be decodable, so each rung's legend entry carries its size:
     # the colour says "bigger", the label says how much bigger.
     if lad:
@@ -431,14 +493,22 @@ def one_cell(cell_short: str, rec: dict, out_dir: str, prefer: str):
                              label="every network here is aperiodic — all of "
                                    "it is the timed work"))
     fig.legend(handles=handles, fontsize=8.5, frameon=False, labelcolor=INK2,
-               ncol=min(len(handles), 4),
-               loc="upper left", bbox_to_anchor=(0.006, 0.945))
-    fig.subplots_adjust(left=0.175, right=0.995, top=0.80, bottom=0.115)
+               ncol=min(len(handles), 4), loc="upper left",
+               bbox_to_anchor=(0.006, 1 - 1.10 / fig_h))
+    fig.subplots_adjust(left=0.175, right=0.995,
+                        top=1 - HEAD_IN / fig_h, bottom=0.62 / fig_h)
 
-    p = os.path.join(out_dir, f"gantt_{cell_short}.png")
+    # The primary baseline keeps the plain name; the oracle reading gets its
+    # own file rather than overwriting it, because the two panels show
+    # different placements and a reader must not get one while quoting the
+    # other's number.
+    p = os.path.join(out_dir, f"gantt_{cell_short}"
+                     + ("" if baseline == "isolation" else "_oracle") + ".png")
     fig.savefig(p, dpi=200, facecolor=SURFACE)
     plt.close(fig)
-    print(f"  -> {p}   ros_np={ros_np:.2f}  xrt_np={xrt_np:.2f}  ratio={ratio:.3f}")
+    print(f"  -> {p}   raw {ros_np:.2f}/{xrt_np:.2f} = {ratio:.3f}   "
+          f"corrected {cros:.2f}/{cxrt:.2f} = {cratio:.3f}   "
+          f"(first dispatch ros {ros_first:.3f} / xrt {xrt_first:.3f} ms)")
 
 
 def main() -> int:
@@ -447,6 +517,12 @@ def main() -> int:
     ap.add_argument("--out", default=os.path.join(SWEEP, "plots"))
     ap.add_argument("--prefer", default="cpsat:warmbest",
                     help="solver to compare against when it was measured")
+    ap.add_argument("--baseline", default="isolation",
+                    choices=["isolation", "oracle"],
+                    help="which pinning placement the ROS panel draws: the "
+                         "isolation-best one a user deploys (the default and "
+                         "the headline), or the best measured placement (an "
+                         "oracle, the secondary reading).")
     a = ap.parse_args()
     d = json.load(open(os.path.join(SWEEP, "results", "analysis.json")))
     by = {c["cell"]: c for c in d["cells"]}
@@ -456,7 +532,7 @@ def main() -> int:
         if rec is None:
             print(f"  {short_name}: not in analysis.json")
             continue
-        one_cell(short_name, rec, a.out, a.prefer)
+        one_cell(short_name, rec, a.out, a.prefer, a.baseline)
     return 0
 
 

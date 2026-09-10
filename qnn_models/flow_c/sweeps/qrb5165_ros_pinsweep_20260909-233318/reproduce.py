@@ -121,8 +121,9 @@ def main():
               and sum(ns) == 1078,
               f"min={min(ns)} median={statistics.median(ns)} max={max(ns)} "
               f"total={sum(ns)}")
-        check("SETUP.md's 172 assignments marked for hardware",
-              sum(c.get("measured", 0) for c in got_enum["cells"]) == 172)
+        check("ANALYSIS.md 0.11's 295 assignments marked for hardware",
+              sum(c.get("measured", 0) for c in got_enum["cells"]) == 295,
+              str(sum(c.get("measured", 0) for c in got_enum["cells"])))
         diffs = []
         for fn in sorted(os.listdir(os.path.join(HERE, "plans"))):
             a = jload(os.path.join(HERE, "plans", fn))
@@ -130,6 +131,108 @@ def main():
             if a != b:
                 diffs.append(fn)
         check("every plan re-emits identically", not diffs, str(diffs[:3]))
+
+        # The `quad` column is enumerated; the other three keep SETUP.md's
+        # plan (ANALYSIS.md 0.10, 0.11). Both facts are checked, because
+        # "extended" silently widening the sensitivity study would have cost
+        # 354 board runs on cells that are not the headline.
+        emode = {c["cell"]: c for c in got_enum["cells"]}
+        full = [c for c in got_enum["cells"] if c.get("mode") == "full"]
+        check("39 of 42 cells are enumerated in full", len(full) == 39,
+              f"{len(full)}")
+        sampled = sorted(c["cell"] for c in got_enum["cells"]
+                         if c.get("mode") == "sampled")
+        check("the only sampled cells are the three scale_ladder ones",
+              sampled == ["networks_scale_ladder_dc",
+                          "networks_scale_ladder_hd",
+                          "networks_scale_ladder_quad"], str(sampled))
+        sq = emode["networks_scale_ladder_quad"]
+        check("scale_ladder_quad is 64 of 729 and is reported as SAMPLED, "
+              "never as an enumeration",
+              sq["n_legal"] == 729 and sq["measured"] == 64
+              and sq["mode"] == "sampled",
+              f'{sq["measured"]}/{sq["n_legal"]} {sq["mode"]}')
+        check("64 is n_legal of the two enumerated scale_ladder siblings, so "
+              "the three are comparable at equal effort",
+              emode["networks_scale_ladder_dc"]["n_legal"] ==
+              emode["networks_scale_ladder_hd"]["n_legal"] == 64)
+        for c in got_enum["cells"]:
+            if c["cell"].endswith("_quad") and c["n_legal"] <= 27:
+                if c["measured"] != c["n_legal"]:
+                    diffs.append(c["cell"])
+        check("every quad cell with <=27 legal placements is fully enumerated",
+              not diffs, str(diffs[:3]))
+
+        # SETUP.md is a pre-run contract: its own plan must still re-derive.
+        tmp2 = tempfile.mkdtemp(prefix="rospin_setup_")
+        try:
+            r2 = subprocess.run([sys.executable,
+                                 os.path.join(SCRIPTS, "pinsweep.py"),
+                                 "--out", tmp2, "enumerate",
+                                 "--coverage", "setup"],
+                                capture_output=True, text=True)
+            e2 = jload(os.path.join(tmp2, "results", "enumeration.json"))
+            check("--coverage setup still re-derives SETUP.md 5.4's 172",
+                  r2.returncode == 0
+                  and sum(c.get("measured", 0) for c in e2["cells"]) == 172,
+                  str(sum(c.get("measured", 0) for c in e2["cells"])))
+            # ids, ranks and predicted costs must be identical under both
+            # profiles: only `measure` changes, never the scoring
+            drift = []
+            for fn in sorted(os.listdir(os.path.join(tmp2, "plans"))):
+                a = jload(os.path.join(tmp2, "plans", fn))
+                b = jload(os.path.join(tmp, "plans", fn))
+                ka = [(x["id"], x["rank"], x["np_rank"], x["assign"],
+                       x["predicted_makespan_ms"], x["predicted_np_makespan_ms"])
+                      for x in a["assignments"]]
+                kb = [(x["id"], x["rank"], x["np_rank"], x["assign"],
+                       x["predicted_makespan_ms"], x["predicted_np_makespan_ms"])
+                      for x in b["assignments"]]
+                if ka != kb:
+                    drift.append(fn)
+            check("the coverage profile changes WHAT IS MEASURED and nothing "
+                  "about the scoring", not drift, str(drift[:3]))
+
+            # What the widened coverage actually bought, per cell: the best
+            # measured np under SETUP.md's plan against the best under the
+            # extended one. ANALYSIS.md 0.11 quotes the two cells that moved,
+            # and quoting the reassuring five instead would be the dishonest
+            # half of the same fact.
+            mp = os.path.join(HERE, "measured.json")
+            if os.path.exists(mp):
+                runs = jload(mp)["runs"]
+                bycell = {}
+                for r in runs.values():
+                    bycell.setdefault(r["cell"], []).append(r)
+                gains = {}
+                for fn in sorted(os.listdir(os.path.join(tmp2, "plans"))):
+                    pl = jload(os.path.join(tmp2, "plans", fn))
+                    ids = {a["id"] for a in pl["assignments"] if a.get("measure")}
+                    rr = bycell.get(pl["cell"], [])
+                    old_ = [x for x in rr if x["assignment"] in ids]
+                    if not old_ or len(rr) == len(old_):
+                        continue
+                    o = min(x["np_median_ms"] for x in old_)
+                    n = min(x["np_median_ms"] for x in rr)
+                    if n < o - 1e-9:
+                        gains[pl["cell"]] = round(o / n, 4)
+                check("the widened coverage beat the previous best on exactly "
+                      "two cells", sorted(gains) ==
+                      ["networks_saturation_quad", "networks_scale_ladder_quad"],
+                      str(gains))
+                check("scale_ladder_quad's 64-placement sample found a "
+                      "placement 10.7% better than the old 5-point one -- the "
+                      "honest bound on how wrong the sampled cells could be",
+                      abs(gains.get("networks_scale_ladder_quad", 0) - 1.1067)
+                      < 1e-3, str(gains.get("networks_scale_ladder_quad")))
+                check("saturation_quad's 1.85% gain is inside the noise floor "
+                      "and that cell is out of the headline anyway",
+                      abs(gains.get("networks_saturation_quad", 0) - 1.0185)
+                      < 1e-3
+                      and (gains["networks_saturation_quad"] - 1) * 100 < 9.18,
+                      str(gains.get("networks_saturation_quad")))
+        finally:
+            shutil.rmtree(tmp2, ignore_errors=True)
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
 
@@ -146,7 +249,9 @@ def main():
         doc = jload(mpath)
         bad = []
         for tag, rec in doc["runs"].items():
-            p = os.path.join(logs, tag + ".log")
+            # a content-duplicate has no log of its own by design: it names the
+            # run it was resolved onto, and that run's log is the measurement
+            p = os.path.join(logs, (rec.get("measured_via") or tag) + ".log")
             if not os.path.exists(p):
                 bad.append((tag, "no log"))
                 continue
@@ -164,6 +269,36 @@ def main():
         check("3 reps everywhere, no single-rep result",
               all(r["reps"] == 3 for r in doc["runs"].values()),
               str(sorted({r["reps"] for r in doc["runs"].values()})))
+        check("379 assignments measured, all complete",
+              len(doc["runs"]) == 379
+              and all(r["ok"] for r in doc["runs"].values()),
+              f'{sum(1 for r in doc["runs"].values() if r["ok"])}/{len(doc["runs"])}')
+        # Content-dedupe: a tag whose harness input is byte-identical to
+        # another's reads that run's log and says so (ANALYSIS.md 12).
+        via = {t: r["measured_via"] for t, r in doc["runs"].items()
+               if r.get("measured_via")}
+        check("11 assignments resolved as content-duplicates, each naming its "
+              "source run", len(via) == 11, str(len(via)))
+        import drive as _drive
+        badh = []
+        for t, src in via.items():
+            for d_ in (os.path.join(HERE, "plans"), os.path.join(HERE, "plans3net")):
+                pa = os.path.join(d_, doc["runs"][t]["cell"] + ".json")
+                if not os.path.exists(pa):
+                    continue
+                pl = jload(pa)
+                a = next(x for x in pl["assignments"]
+                         if x["id"] == doc["runs"][t]["assignment"])
+                sp = jload(os.path.join(d_ if os.path.exists(
+                    os.path.join(d_, doc["runs"][src]["cell"] + ".json"))
+                    else os.path.join(HERE, "plans"),
+                    doc["runs"][src]["cell"] + ".json"))
+                sa = next(x for x in sp["assignments"]
+                          if x["id"] == doc["runs"][src]["assignment"])
+                if _drive.cfg_hash(pl, a) != _drive.cfg_hash(sp, sa):
+                    badh.append(t)
+        check("every dedupe really is the same harness input", not badh,
+              str(badh[:3]))
 
     print("5b. the 3net arm")
     p3 = os.path.join(HERE, "results", "enumeration_3net.json")
@@ -225,6 +360,32 @@ def main():
                   "all 9 shapes",
                   len(h3["shapes_deduped_onto_an_existing_run"]) == 9,
                   str(len(h3["shapes_deduped_onto_an_existing_run"])))
+            # the same two changes on this arm (ANALYSIS.md 10.0), which
+            # needed no board time: a re-selection over runs already on record
+            # and a re-read of traces already on disk
+            r3 = h3.get("readings") or {}
+            if r3:
+                check("3net PRIMARY: isolation-best, corrected, vs "
+                      "cpsat:warmbest is 0.9488",
+                      abs(r3["isolation"]["warmbest"]["corrected"]["median"]
+                          - 0.9488) < 1e-4,
+                      str(r3["isolation"]["warmbest"]["corrected"]["median"]))
+                check("3net secondary: the oracle placement, corrected, is "
+                      "0.9311 -- pinning ahead on all 7, unlike the main "
+                      "arm's quad column",
+                      abs(r3["oracle"]["warmbest"]["corrected"]["median"]
+                          - 0.9311) < 1e-4
+                      and r3["oracle"]["warmbest"]["corrected"]["pinning_faster"] == 7,
+                      str(r3["oracle"]["warmbest"]["corrected"]["median"]))
+                check("3net: the naive rule is nearly optimal here -- median "
+                      "gap 1.018x, and it IS the oracle on 2 of 7",
+                      abs(h3["iso_over_oracle"]["median"] - 1.0181) < 1e-3
+                      and len(h3["iso_over_oracle"]
+                              ["shapes_where_naive_is_already_optimal"]) == 2,
+                      str(h3["iso_over_oracle"]["median"]))
+                check("3net: the isolation placement is measured on every shape",
+                      not h3["shapes_where_the_isolation_placement_was_not_measured"],
+                      str(h3["shapes_where_the_isolation_placement_was_not_measured"]))
         pu = os.path.join(HERE, "results", "undeclared_3net.json")
         if os.path.exists(pu):
             u = jload(pu)["dropped_undeclared_cells"]
@@ -256,7 +417,119 @@ def main():
     print("5c. the headline aggregates ANALYSIS.md quotes")
     pa = os.path.join(HERE, "results", "analysis.json")
     if os.path.exists(pa):
-        h = jload(pa)["headline"]
+        doc_a = jload(pa)
+        h = doc_a["headline"]
+        R = doc_a["readings"]
+
+        # -------- the PRIMARY baseline: isolation-best (ANALYSIS.md 0.9) ----
+        import analyse
+        costs_i = analyse.model_costs()
+        # the tie rule is stated but must never fire: check the margin
+        margins = []
+        for net, per in costs_i.items():
+            v = sorted(x["ms"] for x in per.values())
+            if len(v) > 1 and v[0]:
+                margins.append(((v[1] / v[0] - 1) * 100, net))
+        margins.sort()
+        check("no network's lane choice is a coin flip: the smallest "
+              "best-vs-runner-up margin is outside the +/-9.18% band",
+              margins[0][0] > 9.18,
+              f"{margins[0][0]:.1f}% on {margins[0][1]}")
+        check("the smallest margin is 12.3% on yolov8_nano_sc",
+              abs(margins[0][0] - 12.32) < 0.05 and margins[0][1] == "yolov8_nano_sc",
+              f"{margins[0][0]:.2f}% {margins[0][1]}")
+        gpu = [n for n in costs_i if analyse.isolation_best(costs_i, n) == "gpu"]
+        check("GPU never wins an unrestricted isolation argmin, so excluding "
+              "it as a pinning candidate changes no selection", not gpu, str(gpu))
+        cells_a = {c["cell"]: c for c in doc_a["cells"]}
+        check("the isolation placement is measured on every one of the 42 cells",
+              all(c["iso_measured"] for c in doc_a["cells"]),
+              str([c["cell"] for c in doc_a["cells"] if not c["iso_measured"]]))
+        fb = [c["cell"] for c in doc_a["cells"]
+              if c["config"] == "quad" and c["iso_fallbacks"]]
+        check("no quad cell needs a fallback lane -- quad offers every lane",
+              not fb, str(fb))
+        fb_other = sorted({c["config"] for c in doc_a["cells"]
+                           if c["iso_fallbacks"]})
+        check("fallbacks occur only on the lane-scarce configs",
+              fb_other == ["cg", "hd"], str(fb_other))
+
+        # -------- the headline, four ways (ANALYSIS.md 4.0) -----------------
+        q_iso_c = R["quad"]["isolation"]["warmbest"]["corrected"]
+        q_ora_c = R["quad"]["oracle"]["warmbest"]["corrected"]
+        check("PRIMARY: quad, isolation-best, corrected, vs cpsat:warmbest "
+              "is 1.1795 over 7 cells",
+              q_iso_c["n_cells"] == 7
+              and abs(q_iso_c["median"] - 1.1795) < 1e-4,
+              str(q_iso_c["median"]))
+        check("primary split is 1 pinning / 6 scheduler, 2 inside the band",
+              (q_iso_c["pinning_faster"], q_iso_c["scheduler_faster"],
+               q_iso_c["inside_noise"]) == (1, 6, 2),
+              f'{q_iso_c["pinning_faster"]}/{q_iso_c["scheduler_faster"]}/'
+              f'{q_iso_c["inside_noise"]}')
+        check("SECONDARY: the same scope against the placement ORACLE is a "
+              "dead heat at 0.9976",
+              abs(q_ora_c["median"] - 0.9976) < 1e-4, str(q_ora_c["median"]))
+        check("quad, isolation, RAW is 1.1571 -- reported beside the "
+              "corrected number, never instead of it",
+              abs(R["quad"]["isolation"]["warmbest"]["raw"]["median"]
+                  - 1.1571) < 1e-4)
+        check("all-configs, isolation, corrected is 1.0768 over 26 cells",
+              abs(R["all"]["isolation"]["warmbest"]["corrected"]["median"]
+                  - 1.0768) < 1e-4)
+        check("the PREVIOUS headline (all configs, oracle, raw) still "
+              "re-derives at 0.9281, so the move is checkable",
+              abs(R["all"]["oracle"]["warmbest"]["raw"]["median"]
+                  - 0.9281) < 1e-4,
+              str(R["all"]["oracle"]["warmbest"]["raw"]["median"]))
+        check("and its secondary, 0.9762 against the best measured solver",
+              abs(R["all"]["oracle"]["best"]["raw"]["median"] - 0.9762) < 1e-4)
+
+        # -------- what the search is worth (ANALYSIS.md 4.4) ---------------
+        gq = R["quad"]["iso_over_oracle"]
+        check("on quad the naive rule leaves a median 1.172x and a worst "
+              "1.865x on the table",
+              abs(gq["median"] - 1.1723) < 1e-3 and abs(gq["max"] - 1.8649) < 1e-3,
+              f'{gq["median"]} / {gq["max"]}')
+        check("the 1.865x is depth_contended_quad -- three networks on the "
+              "DSP because each prefers it alone",
+              max(((c["iso_over_oracle_np"] or 0), c["cell"])
+                  for c in doc_a["cells"])[1] == "networks_depth_contended_quad")
+
+        # -------- the offset correction (ANALYSIS.md 0.12, 15) -------------
+        off = doc_a["offsets"]
+        check("the XPU-RT first dispatch is a median 0.064 ms over 366 runs "
+              "and passes 1 ms on 30 of them",
+              off["xpurt_main_arm"]["n_runs"] == 366
+              and abs(off["xpurt_main_arm"]["median_ms"] - 0.0635) < 1e-3
+              and off["xpurt_main_arm"]["runs_over_1ms"] == 30,
+              str(off["xpurt_main_arm"]))
+        check("the ROS side has the same delay and it is smaller -- which is "
+              "why the correction is applied to BOTH sides",
+              off["ros_main_arm"]["median_ms"] < off["xpurt_main_arm"]["median_ms"]
+              and off["ros_main_arm"]["runs_over_1ms"]
+              < off["xpurt_main_arm"]["runs_over_1ms"],
+              f'ros {off["ros_main_arm"]["median_ms"]} ms / '
+              f'xrt {off["xpurt_main_arm"]["median_ms"]} ms')
+        moved = R["all"]["correction"]["iso_warmbest"]["cells_moved_more_than_noise"]
+        check("exactly 3 of the 26 comparable cells move more than the "
+              "+/-9.18% band, and all three are perception_heavy",
+              len(moved) == 3
+              and all("perception_heavy" in c for c in moved), str(list(moved)))
+        movedq = R["quad"]["correction"]["iso_warmbest"]["cells_moved_more_than_noise"]
+        check("on the quad scope it is 1 of 7, perception_heavy_quad",
+              list(movedq) == ["networks_perception_heavy_quad"], str(list(movedq)))
+        check("perception_heavy_quad moves +34.2% and changes direction -- "
+              "the cell whose gantt illustrated a startup artifact",
+              abs(cells_a["networks_perception_heavy_quad"]
+                  ["correction_move_pct_iso_warmbest"] - 34.18) < 0.05
+              and cells_a["networks_perception_heavy_quad"]
+                  ["correction_flips_iso_warmbest"])
+        check("its corrected compute agrees with the ROS side to ~4%: "
+              "4.85 ms scheduled against 5.02 ms pinned",
+              abs(cells_a["networks_perception_heavy_quad"]
+                  ["xrt_np_warmbest_corrected_ms"] - 4.847) < 0.01)
+
         check("0 assignments starved a network",
               h["assignments_with_a_starved_network"] == [],
               str(len(h["assignments_with_a_starved_network"])))
@@ -268,15 +541,9 @@ def main():
               sorted(h["np_cells_excluded_unequal_work"]) ==
               sorted(f"networks_saturation_{c}" for c in ("cg", "dc", "hd", "quad")),
               str(h["np_cells_excluded_unequal_work"]))
-        check("headline median ROS/XPU-RT against cpsat:warmbest is 0.9281",
-              abs(h["np_warmbest_ros_over_xrt_median"] - 0.9281) < 1e-4,
-              str(h["np_warmbest_ros_over_xrt_median"]))
         check("cpsat:warmbest is measured on all 26 compared cells",
               h["np_cells_with_warmbest"] == h["np_cells_compared"] == 26,
               f'{h["np_cells_with_warmbest"]}/{h["np_cells_compared"]}')
-        check("secondary median against the best measured solver is 0.9762",
-              abs(h["np_ros_over_xrt_median"] - 0.9762) < 1e-4,
-              str(h["np_ros_over_xrt_median"]))
         check("7 cells where minimum-makespan is not the feasible-first "
               "placement",
               len(h["cells_where_makespan_rule_disagrees_with_feasibility"]) == 7,
