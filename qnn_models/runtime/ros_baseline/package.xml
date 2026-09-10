@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>ros_qnn_baseline</name>
+  <version>0.1.0</version>
+  <description>ROS baseline: per-network nodes calling QNN, contrasted with the MILP-scheduled QNN runtime.</description>
+  <maintainer email="dima@example.com">Dima</maintainer>
+  <license>BSD-3-Clause</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <depend>rclcpp</depend>
+  <depend>std_msgs</depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>
