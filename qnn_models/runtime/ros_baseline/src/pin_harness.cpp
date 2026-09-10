@@ -361,6 +361,20 @@ static std::mutex            g_done_mu;
 static std::condition_variable g_done_cv;
 static std::atomic<bool>     g_running{false};
 
+// Pass barrier. Executor threads are created once and park here between
+// passes, so every pass's timers are created while NOTHING is spinning. That
+// is not a nicety: `create_wall_timer` returns the handle the callback needs
+// to cancel itself, and with a spinning executor the 1 ns kick timer could
+// fire before the assignment landed -- an intermittent null dereference that
+// cost 8 of the first 68 runs before it was found. Parking also releases all
+// nodes within tens of microseconds of one another, which a fresh
+// std::thread per pass would not.
+static std::mutex              g_bar_mu;
+static std::condition_variable g_bar_cv;
+static int                     g_gen = 0;
+static int                     g_parked = 0;
+static bool                    g_quit = false;
+
 class PinnedNode : public rclcpp::Node {
 public:
     PinnedNode(const NetSpec& spec, int index)
@@ -511,6 +525,9 @@ static int measure_floor(double period_ms, int iters) {
 
 // ------------------------------------------------------------------- main
 int main(int argc, char** argv) {
+    // Line-buffer stdout: it is piped through ssh, and a crash in teardown
+    // must not be able to destroy results that were already printed.
+    setvbuf(stdout, nullptr, _IOLBF, 0);
     std::string cfg_path;
     double floor_period = -1;
     int floor_iters = 2000;
@@ -561,9 +578,23 @@ int main(int argc, char** argv) {
     }
     for (auto& e : execs) {
         auto* ep = e.get();
-        threads.emplace_back([ep]() { ep->spin(); });
+        threads.emplace_back([ep]() {
+            int mygen = 0;
+            for (;;) {
+                {
+                    std::unique_lock<std::mutex> lk(g_bar_mu);
+                    ++g_parked;
+                    g_bar_cv.notify_all();
+                    g_bar_cv.wait(lk, [&]() { return g_quit || g_gen != mygen; });
+                    if (g_quit) return;
+                    mygen = g_gen;
+                    --g_parked;
+                }
+                ep->spin();
+            }
+        });
     }
-    // Let discovery settle and every executor reach its wait set before t0.
+    // Let discovery settle before the first pass.
     std::this_thread::sleep_for(std::chrono::milliseconds(800));
 
     std::printf("[main] %zu node(s), %d instance(s) total\n", nodes.size(), total);
@@ -579,13 +610,27 @@ int main(int argc, char** argv) {
     struct PassResult { int rep; bool warm; double makespan, np_makespan; int done; };
     std::vector<PassResult> passes;
 
+    auto wait_parked = [&]() {
+        std::unique_lock<std::mutex> lk(g_bar_mu);
+        g_bar_cv.wait(lk, [&]() { return g_parked == static_cast<int>(nodes.size()); });
+    };
+    auto release = [&]() {
+        {
+            std::lock_guard<std::mutex> lk(g_bar_mu);
+            ++g_gen;
+        }
+        g_bar_cv.notify_all();
+    };
+
     auto run_pass = [&](int rep, bool warm) -> PassResult {
+        wait_parked();                       // nothing is spinning
         for (auto& n : nodes) n->begin_pass(rep, warm);
+        for (auto& n : nodes) n->arm();      // timers created off the executor
         g_pass_done = 0;
         double t0 = now_ms();
         g_t0 = t0;
         g_running = true;
-        for (auto& n : nodes) n->arm();
+        release();                           // every executor starts together
         {
             std::unique_lock<std::mutex> lk(g_done_mu);
             g_done_cv.wait_for(lk,
@@ -593,8 +638,7 @@ int main(int argc, char** argv) {
                 [&]() { return g_pass_done.load() >= total; });
         }
         g_running = false;
-        // let any in-flight callback settle before the next pass rearms
-        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        for (auto& e : execs) e->cancel();   // spin() returns; threads re-park
         double mk = 0, np = 0;
         bool any_np = false;
         for (auto& n : nodes) {
@@ -627,7 +671,12 @@ int main(int argc, char** argv) {
         std::printf("[summary] rep=%d executed=%d/%d makespan=%.4f np_makespan=%.4f\n",
                     p.rep, p.done, total, p.makespan, p.np_makespan);
 
-    for (auto& e : execs) e->cancel();
+    wait_parked();
+    {
+        std::lock_guard<std::mutex> lk(g_bar_mu);
+        g_quit = true;
+    }
+    g_bar_cv.notify_all();
     for (auto& t : threads) if (t.joinable()) t.join();
     rclcpp::shutdown();
     return 0;
