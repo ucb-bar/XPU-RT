@@ -1,0 +1,36 @@
+{
+ "_comment": "Cells the 3net shapes' solver can reach in gen/profile/ but the binding manifests cannot execute. Fed to `emit_schedule.py --mask-undeclared`, which masks them to +inf BEFORE the search instead of letting `flowc/schedule.py::ingest` reject the answer after it. Derived from bindings/<net>.json and the profile tree by `xpurt3net.py undeclared`; the main arm's cost_model.json covers a different network set and says nothing about these.",
+ "lanes": [
+  "CPU",
+  "DSP",
+  "HTA"
+ ],
+ "networks": [
+  "dronet",
+  "fused_full",
+  "mlp_control",
+  "yolov8n"
+ ],
+ "profiled_cells": [
+  "dronet/dronet_full@cpu",
+  "dronet/dronet_full@dsp",
+  "dronet/dronet_full@hta",
+  "fused_full/fused_full_net@cpu",
+  "fused_full/fused_full_net@dsp",
+  "fused_full/fused_full_net@hta",
+  "mlp_control/mlp_control_full@cpu",
+  "mlp_control/mlp_control_full@dsp",
+  "mlp_control/mlp_control_full@hta",
+  "yolov8n/yolov8n_backbone@cpu",
+  "yolov8n/yolov8n_backbone@dsp",
+  "yolov8n/yolov8n_backbone@hta",
+  "yolov8n/yolov8n_head@cpu",
+  "yolov8n/yolov8n_head@dsp",
+  "yolov8n/yolov8n_head@hta"
+ ],
+ "dropped_undeclared_cells": [
+  "fused_full/fused_full_net@hta",
+  "mlp_control/mlp_control_full@hta",
+  "yolov8n/yolov8n_head@hta"
+ ]
+}
