@@ -60,6 +60,10 @@ HW_KIND = {"HTA": "hta", "DSP": "dsp", "CPU": "cpu", "GPU": "gpu"}
 
 CTX_DIR = "/root/qnn_runtime_ctx"
 
+#: where emitted artifacts go. Overridable with --out so reproduce.py can
+#: re-emit into a scratch tree and diff, without touching the committed one.
+OUT = SWEEP
+
 # Full enumeration is measured on the board up to this many legal assignments;
 # above it, only the ranked head plus contrast placements are measured.
 FULL_ENUM_MAX = 8
@@ -99,8 +103,17 @@ def load_cells():
 
 
 def cell_family_config(cell):
-    """`networks_depth_chain_dc` -> ("depth_chain", "dc")."""
+    """`networks_depth_chain_dc` -> ("depth_chain", "dc").
+
+    Names that do not follow the sweep10 `networks_<family>_<config>` form --
+    the 3net arm's shape names -- get their whole name as the family and no
+    config; pin3net.py overrides both anyway.
+    """
+    if not cell.startswith("networks_"):
+        return cell, ""
     base = cell[len("networks_"):]
+    if "_" not in base:
+        return base, ""
     cfg = base.rsplit("_", 1)[1]
     return base[: -(len(cfg) + 1)], cfg
 
@@ -499,7 +512,7 @@ def cmd_costs(args):
         "pin_backends": list(PIN_BACKENDS),
         "networks": costs,
     }
-    p = os.path.join(SWEEP, "model_costs.json")
+    p = os.path.join(OUT, "model_costs.json")
     with open(p, "w") as f:
         json.dump(doc, f, indent=1)
     print(f"wrote {p}")
@@ -522,7 +535,7 @@ def cmd_classify(args):
     cells = load_cells()
     costs = model_costs()
     rows = classify(cells, costs)
-    p = os.path.join(SWEEP, "results", "expressibility.json")
+    p = os.path.join(OUT, "results", "expressibility.json")
     with open(p, "w") as f:
         json.dump({"harness_limits": HARNESS_LIMITS, "cells": rows}, f, indent=1)
     print(f"wrote {p}\n")
@@ -542,7 +555,7 @@ def cmd_enumerate(args):
     cells = load_cells()
     costs = model_costs()
     rows = {r["cell"]: r for r in classify(cells, costs)}
-    os.makedirs(os.path.join(SWEEP, "plans"), exist_ok=True)
+    os.makedirs(os.path.join(OUT, "plans"), exist_ok=True)
     index, n_meas = [], 0
     for cell, wl in sorted(cells.items()):
         row = rows[cell]
@@ -553,7 +566,7 @@ def cmd_enumerate(args):
         scored = enumerate_cell(cell, wl, costs, row)
         measure_ids, mode = pick_to_measure(scored, list(wl["networks"]))
         plan = build_plan(cell, wl, costs, row, scored, set(measure_ids))
-        p = os.path.join(SWEEP, "plans", f"{cell}.json")
+        p = os.path.join(OUT, "plans", f"{cell}.json")
         with open(p, "w") as f:
             json.dump(plan, f, indent=1)
         n_meas += len(measure_ids)
@@ -574,7 +587,7 @@ def cmd_enumerate(args):
                           worst=worst["label"], worst_ms=worst["makespan_ms"],
                           spread=(round(worst["makespan_ms"] / best["makespan_ms"], 4)
                                   if best["makespan_ms"] else None)))
-    p = os.path.join(SWEEP, "results", "enumeration.json")
+    p = os.path.join(OUT, "results", "enumeration.json")
     with open(p, "w") as f:
         json.dump({"full_enum_max": FULL_ENUM_MAX, "sample_head": SAMPLE_HEAD,
                    "cells": index}, f, indent=1)
@@ -609,12 +622,19 @@ def cmd_table(args):
 
 def main():
     ap = argparse.ArgumentParser()
+    ap.add_argument("--out", default=None,
+                    help="emit into this directory instead of the sweep root")
     sub = ap.add_subparsers(dest="cmd", required=True)
     for name, fn in (("classify", cmd_classify), ("costs", cmd_costs),
                      ("enumerate", cmd_enumerate), ("table", cmd_table)):
         s = sub.add_parser(name)
         s.set_defaults(fn=fn)
     args = ap.parse_args()
+    if args.out:
+        global OUT
+        OUT = os.path.abspath(args.out)
+        os.makedirs(os.path.join(OUT, "results"), exist_ok=True)
+        os.makedirs(os.path.join(OUT, "plans"), exist_ok=True)
     return args.fn(args)
 
 

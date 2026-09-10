@@ -44,6 +44,7 @@ SSH_OPTS = ["-o", "ConnectTimeout=15", "-o", "BatchMode=yes",
 CONFIGS = os.path.join(SWEEP, "configs")
 LOGS = os.path.join(SWEEP, "logs")
 PLANS = os.path.join(SWEEP, "plans")
+PLANS3 = os.path.join(SWEEP, "plans3net")   # the 3net arm
 STATE = os.path.join(SWEEP, "results", "state.json")
 
 REPS = 3
@@ -116,12 +117,22 @@ def cfg_text(plan, a):
     return "\n".join(L) + "\n"
 
 
+def plan_dirs(arm="all"):
+    d = []
+    if arm in ("all", "main"):
+        d.append(PLANS)
+    if arm in ("all", "3net") and os.path.isdir(PLANS3):
+        d.append(PLANS3)
+    return d
+
+
 def cmd_stage(args):
     os.makedirs(CONFIGS, exist_ok=True)
     n = 0
     todo = []
-    for fn in sorted(os.listdir(PLANS)):
-        plan = json.load(open(os.path.join(PLANS, fn)))
+    for d in plan_dirs(args.arm):
+      for fn in sorted(os.listdir(d)):
+        plan = json.load(open(os.path.join(d, fn)))
         for a in plan["assignments"]:
             if not a.get("measure"):
                 continue
@@ -138,7 +149,8 @@ def cmd_stage(args):
                         f"\"flock -w {LOCK_WAIT} {LOCK} -c 'mkdir -p {BOARD_DIR} && "
                         f"rm -rf {BOARD_DIR}/configs && tar xzf - -C {BOARD_DIR} && "
                         f"ls {BOARD_DIR}/configs | wc -l'\""], check=True)
-    with open(os.path.join(SWEEP, "results", "staged.json"), "w") as f:
+    name = "staged.json" if args.arm == "all" else f"staged_{args.arm}.json"
+    with open(os.path.join(SWEEP, "results", name), "w") as f:
         json.dump(todo, f, indent=1)
     return 0
 
@@ -193,7 +205,8 @@ def parse_log(txt):
 
 
 def cmd_run(args):
-    todo = json.load(open(os.path.join(SWEEP, "results", "staged.json")))
+    name = "staged.json" if args.arm == "all" else f"staged_{args.arm}.json"
+    todo = json.load(open(os.path.join(SWEEP, "results", name)))
     if args.only:
         pats = args.only.split(",")
         todo = [t for t in todo if any(p in t for p in pats)]
@@ -237,14 +250,23 @@ def cmd_run(args):
 def cmd_collect(args):
     st = json.load(open(STATE)) if os.path.exists(STATE) else {}
     plans = {}
-    for fn in sorted(os.listdir(PLANS)):
-        p = json.load(open(os.path.join(PLANS, fn)))
-        plans[p["cell"]] = p
+    for d in plan_dirs("all"):
+        for fn in sorted(os.listdir(d)):
+            p = json.load(open(os.path.join(d, fn)))
+            plans[p["cell"]] = p
     xrt = load_xpurt()
     out = {}
-    for tag, rec in sorted(st.items()):
+    # Iterate over the LOGS, not the state file: the state is a convenience
+    # index and a crashed or restarted campaign can lose entries from it, while
+    # a log on disk is the measurement.
+    tags = sorted(f[:-len(".log")] for f in os.listdir(LOGS)
+                  if f.endswith(".log") and "__" in f)
+    for tag in tags:
+        rec = st.get(tag, {})
         cell, aid = tag.split("__")
-        plan = plans[cell]
+        plan = plans.get(cell)
+        if plan is None:
+            continue
         a = next(x for x in plan["assignments"] if x["id"] == aid)
         log = os.path.join(LOGS, tag + ".log")
         if not os.path.exists(log):
@@ -387,8 +409,10 @@ def main():
     sub = ap.add_subparsers(dest="cmd", required=True)
     s = sub.add_parser("stage"); s.set_defaults(fn=cmd_stage)
     s.add_argument("--push", action="store_true")
+    s.add_argument("--arm", default="all", choices=["all", "main", "3net"])
     s = sub.add_parser("floor"); s.set_defaults(fn=cmd_floor)
     s = sub.add_parser("run"); s.set_defaults(fn=cmd_run)
+    s.add_argument("--arm", default="all", choices=["all", "main", "3net"])
     s.add_argument("--only", default=None)
     s.add_argument("--force", action="store_true")
     s.add_argument("--timeout", type=int, default=240)
