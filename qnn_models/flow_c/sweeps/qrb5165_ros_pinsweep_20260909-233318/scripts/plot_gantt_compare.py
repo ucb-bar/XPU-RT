@@ -136,9 +136,16 @@ def xrt_trace(tag: str, aper: set[str]):
         yield rows, np_end
 
 
-def xrt_np_best_run(cell: str):
-    """(run-dir tag, solver, recorded np median) for the solver the headline
-    ratio actually uses.
+def xrt_np_best_run(cell: str, prefer: str | None = None):
+    """(run-dir tag, solver, recorded np median, is_preferred).
+
+    `prefer` names the solver the study actually recommends (cpsat:warmbest).
+    Comparing pinning against `greedy` understates XPU-RT badly -- on the
+    all-solver cells greedy is up to 3.5x worse than cpsat:warmbest
+    (saturation_dc 22.48 vs 6.38 ms) -- so a gantt drawn against greedy is not
+    the comparison anyone should draw a conclusion from. Only 12 of 42 cells
+    were measured with all twelve solvers, so on the rest the preferred solver
+    simply does not exist as a measurement; the caller is told which it got.
 
     `xrt_best_solver` in analysis.json is the WALL-CLOCK winner, and the ratio
     is computed on the non-periodic makespan -- on depth_contended_quad those
@@ -149,16 +156,43 @@ def xrt_np_best_run(cell: str):
     """
     p4 = json.load(open(os.path.join(XRT, "results", "phase4_results.json")))
     short = cell[len("networks_"):]
-    best = None
-    for r in p4:
-        if r["workload"] != cell or r.get("measured_np_median_ms") is None:
-            continue
-        tag = r.get("duplicate_of") or f"{short}__{r['solver']}"
-        if not os.path.isdir(os.path.join(XRT, "runs", tag)):
-            continue
-        if best is None or r["measured_np_median_ms"] < best[2]:
-            best = (tag, r["solver"], r["measured_np_median_ms"])
-    return best
+
+    # `duplicate_of` CHAINS, and a tag renders ":" as "-". On
+    # depth_contended_hd, cpsat:warmbest -> best-of-fast -> cpsat-warm ->
+    # greedy_periodic, and only the last is a real run directory. Following a
+    # single hop found no directory and silently dropped the preferred solver,
+    # which then fell back to whichever solver happened to be fastest -- the
+    # exact substitution this function exists to prevent.
+    rows = {r["solver"]: r for r in p4
+            if r["workload"] == cell and r.get("measured_np_median_ms") is not None}
+    tag_of = {f"{short}__{sv.replace(':', '-')}": sv for sv in rows}
+
+    def resolve(sv, seen=()):
+        r = rows.get(sv)
+        if r is None or sv in seen:
+            return None
+        own = f"{short}__{sv.replace(':', '-')}"
+        if os.path.isdir(os.path.join(XRT, "runs", own)):
+            return own
+        nxt = r.get("duplicate_of")
+        if not nxt:
+            return None
+        if os.path.isdir(os.path.join(XRT, "runs", nxt)):
+            return nxt
+        return resolve(tag_of.get(nxt), seen + (sv,))
+
+    cands = []
+    for sv, r in rows.items():
+        tag = resolve(sv)
+        if tag:
+            cands.append((tag, sv, r["measured_np_median_ms"]))
+    if not cands:
+        return None
+    for tag, sv, np_ms in cands:
+        if sv == prefer:
+            return (tag, sv, np_ms, True)
+    tag, sv, np_ms = min(cands, key=lambda c: c[2])
+    return (tag, sv, np_ms, False)
 
 
 def pick_median_rep(gen):
@@ -206,18 +240,18 @@ def draw(ax, spans, rows, colors, aper, np_end, title, xmax):
     ax.set_title(title, fontsize=10, color=INK, loc="left", pad=6)
 
 
-def one_cell(cell_short: str, rec: dict, out_dir: str):
+def one_cell(cell_short: str, rec: dict, out_dir: str, prefer: str):
     cell = rec["cell"]
     log, place, aper = find_ros_log(cell, rec["ros_np_best_label"])
     if log is None:
         print(f"  {cell_short}: no ROS log matches {rec['ros_np_best_label']}")
         return
     rrows, ros_np = ros_trace(log)
-    pick = xrt_np_best_run(cell)
+    pick = xrt_np_best_run(cell, prefer)
     if pick is None:
         print(f"  {cell_short}: no XPU-RT run directory with a measured np makespan")
         return
-    tag, solver, recorded_np = pick
+    tag, solver, recorded_np, preferred = pick
     xr = pick_median_rep(xrt_trace(tag, aper))
     if xr[0] is None:
         print(f"  {cell_short}: no parseable XPU-RT trace in runs/{tag}")
@@ -257,7 +291,10 @@ def one_cell(cell_short: str, rec: dict, out_dir: str):
         a.set_facecolor(SURFACE)
 
     draw(ax, xspan, rows_yx, colors, aper, xrt_np,
-         f"XPU-RT — per-op scheduling, solver `{solver}`", xmax)
+         f"XPU-RT — per-op scheduling, solver `{solver}`"
+         + ("" if preferred else
+            f"   ({prefer} was not measured on this cell — winner+greedy tier)"),
+         xmax)
     # Render the placement from the parsed pairs. Replacing "_" with a space in
     # the raw label also split the network names ("mlp  control  sd@dsp").
     pretty = ",  ".join(f"{n}→{b}" for n, b in
@@ -267,9 +304,16 @@ def one_cell(cell_short: str, rec: dict, out_dir: str):
          f"ROS — whole-network pinning:  {pretty}", xmax)
     bx.set_xlabel("ms from the start of the run", fontsize=9.5, color=INK2)
 
-    ratio = rec["ros_over_xrt_np_best"]
-    fig.suptitle(f"{cell_short} — pinning finishes the aperiodic work in "
-                 f"{1/ratio:.2f}× less time ({ros_np:.2f} vs {xrt_np:.2f} ms)",
+    # Compute the headline from the two numbers actually drawn. Using the
+    # recorded `ros_over_xrt_np_best` is wrong here: that ratio is against the
+    # BEST solver over all twelve, while these panels show a chosen one, so on
+    # depth_contended_hd the title claimed 1.02 over a panel showing 3.36 vs
+    # 3.82. A title must not be able to disagree with its own figure.
+    ratio = ros_np / xrt_np if xrt_np else float("nan")
+    verb = ("pinning finishes the aperiodic work in "
+            f"{1/ratio:.2f}× less time" if ratio < 1 else
+            f"scheduling finishes the aperiodic work in {ratio:.2f}× less time")
+    fig.suptitle(f"{cell_short} — {verb} ({ros_np:.2f} vs {xrt_np:.2f} ms)",
                  fontsize=12.5, color=INK, x=0.006, ha="left", y=0.985)
     fig.legend(handles=[Patch(facecolor=colors[n], label=n) for n in nets]
                + [Patch(facecolor="#ffffff", edgecolor=MUTED, hatch="///",
@@ -288,6 +332,8 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--cells", default="control_mix_hd,bimodal_hd,depth_contended_quad")
     ap.add_argument("--out", default=os.path.join(SWEEP, "plots"))
+    ap.add_argument("--prefer", default="cpsat:warmbest",
+                    help="solver to compare against when it was measured")
     a = ap.parse_args()
     d = json.load(open(os.path.join(SWEEP, "results", "analysis.json")))
     by = {c["cell"]: c for c in d["cells"]}
@@ -297,7 +343,7 @@ def main() -> int:
         if rec is None:
             print(f"  {short_name}: not in analysis.json")
             continue
-        one_cell(short_name, rec, a.out)
+        one_cell(short_name, rec, a.out, a.prefer)
     return 0
 
 
