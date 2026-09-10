@@ -149,8 +149,8 @@
    "predicted_misses": {},
    "overrun_nets": [],
    "backend_util": {
-    "cpu": 0.1718,
-    "dsp": 0.3334
+    "dsp": 0.3334,
+    "cpu": 0.1718
    },
    "measure": true,
    "nodes": [
@@ -229,8 +229,8 @@
    "predicted_misses": {},
    "overrun_nets": [],
    "backend_util": {
-    "cpu": 0.039,
-    "dsp": 0.3012
+    "dsp": 0.3012,
+    "cpu": 0.039
    },
    "measure": true,
    "nodes": [
@@ -309,8 +309,8 @@
    "predicted_misses": {},
    "overrun_nets": [],
    "backend_util": {
-    "cpu": 0.2108,
-    "dsp": 0.1482
+    "dsp": 0.1482,
+    "cpu": 0.2108
    },
    "measure": true,
    "nodes": [
@@ -391,8 +391,8 @@
    },
    "overrun_nets": [],
    "backend_util": {
-    "cpu": 0.25,
-    "dsp": 0.3292
+    "dsp": 0.3292,
+    "cpu": 0.25
    },
    "measure": true,
    "nodes": [
@@ -471,8 +471,8 @@
    "predicted_misses": {},
    "overrun_nets": [],
    "backend_util": {
-    "cpu": 0.4173,
-    "dsp": 0.1803
+    "dsp": 0.1803,
+    "cpu": 0.4173
    },
    "measure": true,
    "nodes": [
@@ -551,8 +551,8 @@
    "predicted_misses": {},
    "overrun_nets": [],
    "backend_util": {
-    "cpu": 0.288,
-    "dsp": 0.1489
+    "dsp": 0.1489,
+    "cpu": 0.288
    },
    "measure": true,
    "nodes": [

@@ -19,7 +19,7 @@
   "gpu-not-a-candidate"
  ],
  "n_legal": 18,
- "measure_mode": "sampled",
+ "measure_mode": "full",
  "edges": [],
  "networks": {
   "mlp_control_sd": {
@@ -75,8 +75,8 @@
    "predicted_misses": {},
    "overrun_nets": [],
    "backend_util": {
-    "hta": 0.1859,
-    "dsp": 0.1768
+    "dsp": 0.1768,
+    "hta": 0.1859
    },
    "measure": true,
    "nodes": [
@@ -236,8 +236,8 @@
    "predicted_misses": {},
    "overrun_nets": [],
    "backend_util": {
-    "cpu": 0.0911,
-    "dsp": 0.1768
+    "dsp": 0.1768,
+    "cpu": 0.0911
    },
    "measure": true,
    "nodes": [
@@ -316,11 +316,67 @@
    "predicted_misses": {},
    "overrun_nets": [],
    "backend_util": {
-    "hta": 0.1859,
+    "dsp": 0.0786,
     "cpu": 0.0207,
-    "dsp": 0.0786
+    "hta": 0.1859
    },
-   "measure": false
+   "measure": true,
+   "nodes": [
+    {
+     "network": "mlp_control_sd",
+     "backend": "cpu",
+     "backend_lib": "/root/qairt/lib/target/libQnnCpu.so",
+     "num_instances": 8,
+     "period_ms": 2.094,
+     "window_ms": 2.094,
+     "whole_model_ms": 0.1102,
+     "tiles": [
+      {
+       "tile": "mlp_control_sd_full",
+       "ctx": "/root/qnn_runtime_ctx/ctx_s10_mlp_control_sd_int8__CpuInt8.bin",
+       "graph": "mlp_control_sd",
+       "precision": "int8",
+       "predicted_ms": 0.1102
+      }
+     ]
+    },
+    {
+     "network": "dronet_se",
+     "backend": "dsp",
+     "backend_lib": "/root/qairt/lib/target/libQnnDsp.so",
+     "num_instances": 4,
+     "period_ms": 13.938,
+     "window_ms": 13.938,
+     "whole_model_ms": 0.8384,
+     "tiles": [
+      {
+       "tile": "dronet_se_full",
+       "ctx": "/root/qnn_runtime_ctx/ctx_s10_dronet_se_int8__Dsp.bin",
+       "graph": "dronet_se",
+       "precision": "int8",
+       "predicted_ms": 0.8384
+      }
+     ]
+    },
+    {
+     "network": "yolov8_nano_sc",
+     "backend": "hta",
+     "backend_lib": "/root/qairt/lib/target/libQnnHta.so",
+     "num_instances": 1,
+     "period_ms": null,
+     "window_ms": null,
+     "whole_model_ms": 7.9278,
+     "tiles": [
+      {
+       "tile": "yolov8_nano_sc_full",
+       "ctx": "/root/qnn_runtime_ctx/ctx_s10_yolov8_nano_sc_hta_int8__Hta.bin",
+       "graph": "yolov8_nano_sc_hta",
+       "precision": "int8",
+       "predicted_ms": 7.9278
+      }
+     ]
+    }
+   ]
   },
   {
    "id": "a4",
@@ -341,10 +397,66 @@
    "predicted_misses": {},
    "overrun_nets": [],
    "backend_util": {
-    "cpu": 0.0207,
-    "dsp": 0.1598
+    "dsp": 0.1598,
+    "cpu": 0.0207
    },
-   "measure": false
+   "measure": true,
+   "nodes": [
+    {
+     "network": "mlp_control_sd",
+     "backend": "cpu",
+     "backend_lib": "/root/qairt/lib/target/libQnnCpu.so",
+     "num_instances": 8,
+     "period_ms": 2.094,
+     "window_ms": 2.094,
+     "whole_model_ms": 0.1102,
+     "tiles": [
+      {
+       "tile": "mlp_control_sd_full",
+       "ctx": "/root/qnn_runtime_ctx/ctx_s10_mlp_control_sd_int8__CpuInt8.bin",
+       "graph": "mlp_control_sd",
+       "precision": "int8",
+       "predicted_ms": 0.1102
+      }
+     ]
+    },
+    {
+     "network": "dronet_se",
+     "backend": "dsp",
+     "backend_lib": "/root/qairt/lib/target/libQnnDsp.so",
+     "num_instances": 4,
+     "period_ms": 13.938,
+     "window_ms": 13.938,
+     "whole_model_ms": 0.8384,
+     "tiles": [
+      {
+       "tile": "dronet_se_full",
+       "ctx": "/root/qnn_runtime_ctx/ctx_s10_dronet_se_int8__Dsp.bin",
+       "graph": "dronet_se",
+       "precision": "int8",
+       "predicted_ms": 0.8384
+      }
+     ]
+    },
+    {
+     "network": "yolov8_nano_sc",
+     "backend": "dsp",
+     "backend_lib": "/root/qairt/lib/target/libQnnDsp.so",
+     "num_instances": 1,
+     "period_ms": null,
+     "window_ms": null,
+     "whole_model_ms": 3.4608,
+     "tiles": [
+      {
+       "tile": "yolov8_nano_sc_full",
+       "ctx": "/root/qnn_runtime_ctx/ctx_s10_yolov8_nano_sc_hta_int8__Dsp.bin",
+       "graph": "yolov8_nano_sc_hta",
+       "precision": "int8",
+       "predicted_ms": 3.4608
+      }
+     ]
+    }
+   ]
   },
   {
    "id": "a5",
@@ -365,10 +477,66 @@
    "predicted_misses": {},
    "overrun_nets": [],
    "backend_util": {
-    "cpu": 0.1118,
-    "dsp": 0.0786
+    "dsp": 0.0786,
+    "cpu": 0.1118
    },
-   "measure": false
+   "measure": true,
+   "nodes": [
+    {
+     "network": "mlp_control_sd",
+     "backend": "cpu",
+     "backend_lib": "/root/qairt/lib/target/libQnnCpu.so",
+     "num_instances": 8,
+     "period_ms": 2.094,
+     "window_ms": 2.094,
+     "whole_model_ms": 0.1102,
+     "tiles": [
+      {
+       "tile": "mlp_control_sd_full",
+       "ctx": "/root/qnn_runtime_ctx/ctx_s10_mlp_control_sd_int8__CpuInt8.bin",
+       "graph": "mlp_control_sd",
+       "precision": "int8",
+       "predicted_ms": 0.1102
+      }
+     ]
+    },
+    {
+     "network": "dronet_se",
+     "backend": "dsp",
+     "backend_lib": "/root/qairt/lib/target/libQnnDsp.so",
+     "num_instances": 4,
+     "period_ms": 13.938,
+     "window_ms": 13.938,
+     "whole_model_ms": 0.8384,
+     "tiles": [
+      {
+       "tile": "dronet_se_full",
+       "ctx": "/root/qnn_runtime_ctx/ctx_s10_dronet_se_int8__Dsp.bin",
+       "graph": "dronet_se",
+       "precision": "int8",
+       "predicted_ms": 0.8384
+      }
+     ]
+    },
+    {
+     "network": "yolov8_nano_sc",
+     "backend": "cpu",
+     "backend_lib": "/root/qairt/lib/target/libQnnCpu.so",
+     "num_instances": 1,
+     "period_ms": null,
+     "window_ms": null,
+     "whole_model_ms": 3.8872,
+     "tiles": [
+      {
+       "tile": "yolov8_nano_sc_full",
+       "ctx": "/root/qnn_runtime_ctx/ctx_s10_yolov8_nano_sc_int8__CpuInt8.bin",
+       "graph": "yolov8_nano_sc",
+       "precision": "int8",
+       "predicted_ms": 3.8872
+      }
+     ]
+    }
+   ]
   },
   {
    "id": "a6",
@@ -389,11 +557,67 @@
    "predicted_misses": {},
    "overrun_nets": [],
    "backend_util": {
-    "hta": 0.1832,
+    "dsp": 0.0968,
     "cpu": 0.1343,
-    "dsp": 0.0968
+    "hta": 0.1832
    },
-   "measure": false
+   "measure": true,
+   "nodes": [
+    {
+     "network": "mlp_control_sd",
+     "backend": "dsp",
+     "backend_lib": "/root/qairt/lib/target/libQnnDsp.so",
+     "num_instances": 8,
+     "period_ms": 2.094,
+     "window_ms": 2.094,
+     "whole_model_ms": 0.5236,
+     "tiles": [
+      {
+       "tile": "mlp_control_sd_full",
+       "ctx": "/root/qnn_runtime_ctx/ctx_s10_mlp_control_sd_int8__Dsp.bin",
+       "graph": "mlp_control_sd",
+       "precision": "int8",
+       "predicted_ms": 0.5236
+      }
+     ]
+    },
+    {
+     "network": "dronet_se",
+     "backend": "cpu",
+     "backend_lib": "/root/qairt/lib/target/libQnnCpu.so",
+     "num_instances": 4,
+     "period_ms": 13.938,
+     "window_ms": 13.938,
+     "whole_model_ms": 1.4525,
+     "tiles": [
+      {
+       "tile": "dronet_se_full",
+       "ctx": "/root/qnn_runtime_ctx/ctx_s10_dronet_se_hta_int8__CpuInt8.bin",
+       "graph": "dronet_se_hta",
+       "precision": "int8",
+       "predicted_ms": 1.4525
+      }
+     ]
+    },
+    {
+     "network": "yolov8_nano_sc",
+     "backend": "hta",
+     "backend_lib": "/root/qairt/lib/target/libQnnHta.so",
+     "num_instances": 1,
+     "period_ms": null,
+     "window_ms": null,
+     "whole_model_ms": 7.9278,
+     "tiles": [
+      {
+       "tile": "yolov8_nano_sc_full",
+       "ctx": "/root/qnn_runtime_ctx/ctx_s10_yolov8_nano_sc_hta_int8__Hta.bin",
+       "graph": "yolov8_nano_sc_hta",
+       "precision": "int8",
+       "predicted_ms": 7.9278
+      }
+     ]
+    }
+   ]
   },
   {
    "id": "a7",
@@ -416,10 +640,66 @@
    },
    "overrun_nets": [],
    "backend_util": {
-    "cpu": 0.1343,
-    "dsp": 0.1768
+    "dsp": 0.1768,
+    "cpu": 0.1343
    },
-   "measure": false
+   "measure": true,
+   "nodes": [
+    {
+     "network": "mlp_control_sd",
+     "backend": "dsp",
+     "backend_lib": "/root/qairt/lib/target/libQnnDsp.so",
+     "num_instances": 8,
+     "period_ms": 2.094,
+     "window_ms": 2.094,
+     "whole_model_ms": 0.5236,
+     "tiles": [
+      {
+       "tile": "mlp_control_sd_full",
+       "ctx": "/root/qnn_runtime_ctx/ctx_s10_mlp_control_sd_int8__Dsp.bin",
+       "graph": "mlp_control_sd",
+       "precision": "int8",
+       "predicted_ms": 0.5236
+      }
+     ]
+    },
+    {
+     "network": "dronet_se",
+     "backend": "cpu",
+     "backend_lib": "/root/qairt/lib/target/libQnnCpu.so",
+     "num_instances": 4,
+     "period_ms": 13.938,
+     "window_ms": 13.938,
+     "whole_model_ms": 1.4525,
+     "tiles": [
+      {
+       "tile": "dronet_se_full",
+       "ctx": "/root/qnn_runtime_ctx/ctx_s10_dronet_se_hta_int8__CpuInt8.bin",
+       "graph": "dronet_se_hta",
+       "precision": "int8",
+       "predicted_ms": 1.4525
+      }
+     ]
+    },
+    {
+     "network": "yolov8_nano_sc",
+     "backend": "dsp",
+     "backend_lib": "/root/qairt/lib/target/libQnnDsp.so",
+     "num_instances": 1,
+     "period_ms": null,
+     "window_ms": null,
+     "whole_model_ms": 3.4608,
+     "tiles": [
+      {
+       "tile": "yolov8_nano_sc_full",
+       "ctx": "/root/qnn_runtime_ctx/ctx_s10_yolov8_nano_sc_hta_int8__Dsp.bin",
+       "graph": "yolov8_nano_sc_hta",
+       "precision": "int8",
+       "predicted_ms": 3.4608
+      }
+     ]
+    }
+   ]
   },
   {
    "id": "a8",
@@ -440,10 +720,66 @@
    "predicted_misses": {},
    "overrun_nets": [],
    "backend_util": {
-    "cpu": 0.2241,
-    "dsp": 0.0968
+    "dsp": 0.0968,
+    "cpu": 0.2241
    },
-   "measure": false
+   "measure": true,
+   "nodes": [
+    {
+     "network": "mlp_control_sd",
+     "backend": "dsp",
+     "backend_lib": "/root/qairt/lib/target/libQnnDsp.so",
+     "num_instances": 8,
+     "period_ms": 2.094,
+     "window_ms": 2.094,
+     "whole_model_ms": 0.5236,
+     "tiles": [
+      {
+       "tile": "mlp_control_sd_full",
+       "ctx": "/root/qnn_runtime_ctx/ctx_s10_mlp_control_sd_int8__Dsp.bin",
+       "graph": "mlp_control_sd",
+       "precision": "int8",
+       "predicted_ms": 0.5236
+      }
+     ]
+    },
+    {
+     "network": "dronet_se",
+     "backend": "cpu",
+     "backend_lib": "/root/qairt/lib/target/libQnnCpu.so",
+     "num_instances": 4,
+     "period_ms": 13.938,
+     "window_ms": 13.938,
+     "whole_model_ms": 1.4525,
+     "tiles": [
+      {
+       "tile": "dronet_se_full",
+       "ctx": "/root/qnn_runtime_ctx/ctx_s10_dronet_se_hta_int8__CpuInt8.bin",
+       "graph": "dronet_se_hta",
+       "precision": "int8",
+       "predicted_ms": 1.4525
+      }
+     ]
+    },
+    {
+     "network": "yolov8_nano_sc",
+     "backend": "cpu",
+     "backend_lib": "/root/qairt/lib/target/libQnnCpu.so",
+     "num_instances": 1,
+     "period_ms": null,
+     "window_ms": null,
+     "whole_model_ms": 3.8872,
+     "tiles": [
+      {
+       "tile": "yolov8_nano_sc_full",
+       "ctx": "/root/qnn_runtime_ctx/ctx_s10_yolov8_nano_sc_int8__CpuInt8.bin",
+       "graph": "yolov8_nano_sc",
+       "precision": "int8",
+       "predicted_ms": 3.8872
+      }
+     ]
+    }
+   ]
   },
   {
    "id": "a9",
@@ -464,10 +800,66 @@
    "predicted_misses": {},
    "overrun_nets": [],
    "backend_util": {
-    "hta": 0.1832,
-    "cpu": 0.1547
+    "cpu": 0.1547,
+    "hta": 0.1832
    },
-   "measure": false
+   "measure": true,
+   "nodes": [
+    {
+     "network": "mlp_control_sd",
+     "backend": "cpu",
+     "backend_lib": "/root/qairt/lib/target/libQnnCpu.so",
+     "num_instances": 8,
+     "period_ms": 2.094,
+     "window_ms": 2.094,
+     "whole_model_ms": 0.1102,
+     "tiles": [
+      {
+       "tile": "mlp_control_sd_full",
+       "ctx": "/root/qnn_runtime_ctx/ctx_s10_mlp_control_sd_int8__CpuInt8.bin",
+       "graph": "mlp_control_sd",
+       "precision": "int8",
+       "predicted_ms": 0.1102
+      }
+     ]
+    },
+    {
+     "network": "dronet_se",
+     "backend": "cpu",
+     "backend_lib": "/root/qairt/lib/target/libQnnCpu.so",
+     "num_instances": 4,
+     "period_ms": 13.938,
+     "window_ms": 13.938,
+     "whole_model_ms": 1.4525,
+     "tiles": [
+      {
+       "tile": "dronet_se_full",
+       "ctx": "/root/qnn_runtime_ctx/ctx_s10_dronet_se_hta_int8__CpuInt8.bin",
+       "graph": "dronet_se_hta",
+       "precision": "int8",
+       "predicted_ms": 1.4525
+      }
+     ]
+    },
+    {
+     "network": "yolov8_nano_sc",
+     "backend": "hta",
+     "backend_lib": "/root/qairt/lib/target/libQnnHta.so",
+     "num_instances": 1,
+     "period_ms": null,
+     "window_ms": null,
+     "whole_model_ms": 7.9278,
+     "tiles": [
+      {
+       "tile": "yolov8_nano_sc_full",
+       "ctx": "/root/qnn_runtime_ctx/ctx_s10_yolov8_nano_sc_hta_int8__Hta.bin",
+       "graph": "yolov8_nano_sc_hta",
+       "precision": "int8",
+       "predicted_ms": 7.9278
+      }
+     ]
+    }
+   ]
   },
   {
    "id": "a10",
@@ -488,8 +880,8 @@
    "predicted_misses": {},
    "overrun_nets": [],
    "backend_util": {
-    "cpu": 0.1547,
-    "dsp": 0.08
+    "dsp": 0.08,
+    "cpu": 0.1547
    },
    "measure": true,
    "nodes": [
@@ -649,10 +1041,66 @@
    "predicted_misses": {},
    "overrun_nets": [],
    "backend_util": {
-    "hta": 0.4278,
-    "dsp": 0.0939
+    "dsp": 0.0939,
+    "hta": 0.4278
    },
-   "measure": false
+   "measure": true,
+   "nodes": [
+    {
+     "network": "mlp_control_sd",
+     "backend": "dsp",
+     "backend_lib": "/root/qairt/lib/target/libQnnDsp.so",
+     "num_instances": 8,
+     "period_ms": 2.094,
+     "window_ms": 2.094,
+     "whole_model_ms": 0.5236,
+     "tiles": [
+      {
+       "tile": "mlp_control_sd_full",
+       "ctx": "/root/qnn_runtime_ctx/ctx_s10_mlp_control_sd_int8__Dsp.bin",
+       "graph": "mlp_control_sd",
+       "precision": "int8",
+       "predicted_ms": 0.5236
+      }
+     ]
+    },
+    {
+     "network": "dronet_se",
+     "backend": "hta",
+     "backend_lib": "/root/qairt/lib/target/libQnnHta.so",
+     "num_instances": 4,
+     "period_ms": 13.938,
+     "window_ms": 13.938,
+     "whole_model_ms": 2.7877,
+     "tiles": [
+      {
+       "tile": "dronet_se_full",
+       "ctx": "/root/qnn_runtime_ctx/ctx_s10_dronet_se_hta_int8__Hta.bin",
+       "graph": "dronet_se_hta",
+       "precision": "int8",
+       "predicted_ms": 2.7877
+      }
+     ]
+    },
+    {
+     "network": "yolov8_nano_sc",
+     "backend": "hta",
+     "backend_lib": "/root/qairt/lib/target/libQnnHta.so",
+     "num_instances": 1,
+     "period_ms": null,
+     "window_ms": null,
+     "whole_model_ms": 7.9278,
+     "tiles": [
+      {
+       "tile": "yolov8_nano_sc_full",
+       "ctx": "/root/qnn_runtime_ctx/ctx_s10_yolov8_nano_sc_hta_int8__Hta.bin",
+       "graph": "yolov8_nano_sc_hta",
+       "precision": "int8",
+       "predicted_ms": 7.9278
+      }
+     ]
+    }
+   ]
   },
   {
    "id": "a13",
@@ -675,10 +1123,66 @@
    },
    "overrun_nets": [],
    "backend_util": {
-    "hta": 0.25,
-    "dsp": 0.1715
+    "dsp": 0.1715,
+    "hta": 0.25
    },
-   "measure": false
+   "measure": true,
+   "nodes": [
+    {
+     "network": "mlp_control_sd",
+     "backend": "dsp",
+     "backend_lib": "/root/qairt/lib/target/libQnnDsp.so",
+     "num_instances": 8,
+     "period_ms": 2.094,
+     "window_ms": 2.094,
+     "whole_model_ms": 0.5236,
+     "tiles": [
+      {
+       "tile": "mlp_control_sd_full",
+       "ctx": "/root/qnn_runtime_ctx/ctx_s10_mlp_control_sd_int8__Dsp.bin",
+       "graph": "mlp_control_sd",
+       "precision": "int8",
+       "predicted_ms": 0.5236
+      }
+     ]
+    },
+    {
+     "network": "dronet_se",
+     "backend": "hta",
+     "backend_lib": "/root/qairt/lib/target/libQnnHta.so",
+     "num_instances": 4,
+     "period_ms": 13.938,
+     "window_ms": 13.938,
+     "whole_model_ms": 2.7877,
+     "tiles": [
+      {
+       "tile": "dronet_se_full",
+       "ctx": "/root/qnn_runtime_ctx/ctx_s10_dronet_se_hta_int8__Hta.bin",
+       "graph": "dronet_se_hta",
+       "precision": "int8",
+       "predicted_ms": 2.7877
+      }
+     ]
+    },
+    {
+     "network": "yolov8_nano_sc",
+     "backend": "dsp",
+     "backend_lib": "/root/qairt/lib/target/libQnnDsp.so",
+     "num_instances": 1,
+     "period_ms": null,
+     "window_ms": null,
+     "whole_model_ms": 3.4608,
+     "tiles": [
+      {
+       "tile": "yolov8_nano_sc_full",
+       "ctx": "/root/qnn_runtime_ctx/ctx_s10_yolov8_nano_sc_hta_int8__Dsp.bin",
+       "graph": "yolov8_nano_sc_hta",
+       "precision": "int8",
+       "predicted_ms": 3.4608
+      }
+     ]
+    }
+   ]
   },
   {
    "id": "a14",
@@ -699,11 +1203,67 @@
    "predicted_misses": {},
    "overrun_nets": [],
    "backend_util": {
-    "hta": 0.25,
+    "dsp": 0.0939,
     "cpu": 0.0872,
-    "dsp": 0.0939
+    "hta": 0.25
    },
-   "measure": false
+   "measure": true,
+   "nodes": [
+    {
+     "network": "mlp_control_sd",
+     "backend": "dsp",
+     "backend_lib": "/root/qairt/lib/target/libQnnDsp.so",
+     "num_instances": 8,
+     "period_ms": 2.094,
+     "window_ms": 2.094,
+     "whole_model_ms": 0.5236,
+     "tiles": [
+      {
+       "tile": "mlp_control_sd_full",
+       "ctx": "/root/qnn_runtime_ctx/ctx_s10_mlp_control_sd_int8__Dsp.bin",
+       "graph": "mlp_control_sd",
+       "precision": "int8",
+       "predicted_ms": 0.5236
+      }
+     ]
+    },
+    {
+     "network": "dronet_se",
+     "backend": "hta",
+     "backend_lib": "/root/qairt/lib/target/libQnnHta.so",
+     "num_instances": 4,
+     "period_ms": 13.938,
+     "window_ms": 13.938,
+     "whole_model_ms": 2.7877,
+     "tiles": [
+      {
+       "tile": "dronet_se_full",
+       "ctx": "/root/qnn_runtime_ctx/ctx_s10_dronet_se_hta_int8__Hta.bin",
+       "graph": "dronet_se_hta",
+       "precision": "int8",
+       "predicted_ms": 2.7877
+      }
+     ]
+    },
+    {
+     "network": "yolov8_nano_sc",
+     "backend": "cpu",
+     "backend_lib": "/root/qairt/lib/target/libQnnCpu.so",
+     "num_instances": 1,
+     "period_ms": null,
+     "window_ms": null,
+     "whole_model_ms": 3.8872,
+     "tiles": [
+      {
+       "tile": "yolov8_nano_sc_full",
+       "ctx": "/root/qnn_runtime_ctx/ctx_s10_yolov8_nano_sc_int8__CpuInt8.bin",
+       "graph": "yolov8_nano_sc",
+       "precision": "int8",
+       "predicted_ms": 3.8872
+      }
+     ]
+    }
+   ]
   },
   {
    "id": "a15",
@@ -724,10 +1284,66 @@
    "predicted_misses": {},
    "overrun_nets": [],
    "backend_util": {
-    "hta": 0.4278,
-    "cpu": 0.0198
+    "cpu": 0.0198,
+    "hta": 0.4278
    },
-   "measure": false
+   "measure": true,
+   "nodes": [
+    {
+     "network": "mlp_control_sd",
+     "backend": "cpu",
+     "backend_lib": "/root/qairt/lib/target/libQnnCpu.so",
+     "num_instances": 8,
+     "period_ms": 2.094,
+     "window_ms": 2.094,
+     "whole_model_ms": 0.1102,
+     "tiles": [
+      {
+       "tile": "mlp_control_sd_full",
+       "ctx": "/root/qnn_runtime_ctx/ctx_s10_mlp_control_sd_int8__CpuInt8.bin",
+       "graph": "mlp_control_sd",
+       "precision": "int8",
+       "predicted_ms": 0.1102
+      }
+     ]
+    },
+    {
+     "network": "dronet_se",
+     "backend": "hta",
+     "backend_lib": "/root/qairt/lib/target/libQnnHta.so",
+     "num_instances": 4,
+     "period_ms": 13.938,
+     "window_ms": 13.938,
+     "whole_model_ms": 2.7877,
+     "tiles": [
+      {
+       "tile": "dronet_se_full",
+       "ctx": "/root/qnn_runtime_ctx/ctx_s10_dronet_se_hta_int8__Hta.bin",
+       "graph": "dronet_se_hta",
+       "precision": "int8",
+       "predicted_ms": 2.7877
+      }
+     ]
+    },
+    {
+     "network": "yolov8_nano_sc",
+     "backend": "hta",
+     "backend_lib": "/root/qairt/lib/target/libQnnHta.so",
+     "num_instances": 1,
+     "period_ms": null,
+     "window_ms": null,
+     "whole_model_ms": 7.9278,
+     "tiles": [
+      {
+       "tile": "yolov8_nano_sc_full",
+       "ctx": "/root/qnn_runtime_ctx/ctx_s10_yolov8_nano_sc_hta_int8__Hta.bin",
+       "graph": "yolov8_nano_sc_hta",
+       "precision": "int8",
+       "predicted_ms": 7.9278
+      }
+     ]
+    }
+   ]
   },
   {
    "id": "a16",
@@ -748,9 +1364,9 @@
    "predicted_misses": {},
    "overrun_nets": [],
    "backend_util": {
-    "hta": 0.25,
+    "dsp": 0.0776,
     "cpu": 0.0198,
-    "dsp": 0.0776
+    "hta": 0.25
    },
    "measure": true,
    "nodes": [
@@ -829,8 +1445,8 @@
    "predicted_misses": {},
    "overrun_nets": [],
    "backend_util": {
-    "hta": 0.25,
-    "cpu": 0.1069
+    "cpu": 0.1069,
+    "hta": 0.25
    },
    "measure": true,
    "nodes": [

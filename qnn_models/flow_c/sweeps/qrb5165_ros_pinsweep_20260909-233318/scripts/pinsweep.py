@@ -27,6 +27,7 @@ import argparse
 import collections
 import itertools
 import json
+import random
 import os
 import statistics
 import sys
@@ -66,9 +67,46 @@ OUT = SWEEP
 
 # Full enumeration is measured on the board up to this many legal assignments;
 # above it, only the ranked head plus contrast placements are measured.
+#
+# Two coverage profiles. `setup` is the one SETUP.md 5.4 pre-registered and is
+# kept verbatim so the contract still re-derives; `extended` is the follow-up
+# campaign of ANALYSIS.md 0.9, which enumerates every `quad` cell small enough
+# to enumerate and puts a stated, budgeted rule on the one that is not.
+#
+# Nothing about SCORING changes between them. `enumerate_cell` is untouched, so
+# every assignment keeps the id and the rank it had under `setup`; the only
+# difference is which assignments carry `measure: true`.
+COVERAGE_DEFAULT = "extended"
+
+#: The `extended` profile applies ONLY to this lane config, and that is the
+#: point of it. The config axis is which lane SUBSET is available -- `hd` is
+#: hta+dsp, `dc` is dsp+cpu, `cg` is cpu+gpu, `quad` is all four -- and only
+#: `quad` describes hardware that exists, because a QRB5165 always has all
+#: four backends. The other three are a labelled lane-scarcity sensitivity
+#: study, so they keep exactly the coverage SETUP.md 5.4 pre-registered and
+#: nothing about them is re-measured or re-planned.
+EXTENDED_CONFIG = "quad"
+
+#: `setup`: full enumeration at or below 8 legal assignments, ranked head above
 FULL_ENUM_MAX = 8
+#: `extended`: full enumeration at or below 27, which is every `quad` cell in
+#: the matrix except `scale_ladder_quad`
+FULL_ENUM_MAX_EXTENDED = 27
 #: how many ranked candidates to measure when the legal set is larger
 SAMPLE_HEAD = 3
+#: `extended` widens the ranked head on the one cell that stays sampled
+SAMPLE_HEAD_EXTENDED = 8
+
+#: `extended` measurement budget for a cell too large to enumerate. 64 is not
+#: a round number picked for its own sake: it is exactly `n_legal` of
+#: `scale_ladder_dc` and `scale_ladder_hd`, both of which ARE enumerated in
+#: full, so the third rung of the same family gets the same number of measured
+#: placements as its two siblings and the three are comparable at equal
+#: measurement effort. It is 8.8 % of `scale_ladder_quad`'s 729.
+SAMPLE_BUDGET = 64
+#: the seed for the stratified fill, fixed so the plan is a pure function of
+#: the frozen cost model and re-emits identically
+SAMPLE_SEED = 20260909
 
 
 # ---------------------------------------------------------------- inputs
@@ -402,7 +440,7 @@ def enumerate_cell(cell, wl, costs, row):
     return scored
 
 
-def pick_to_measure(scored, nets):
+def pick_to_measure(scored, nets, coverage=COVERAGE_DEFAULT, config=None):
     """Which assignments actually go to the board.
 
     Full enumeration where the legal set is small; the ranked head plus
@@ -410,27 +448,121 @@ def pick_to_measure(scored, nets):
     all-on-one-backend placements that bracket the space (best single lane and
     worst single lane) and the bottom-ranked assignment, so the measured set
     always spans the predicted range rather than only its optimistic end.
+
+    `coverage="setup"` is SETUP.md 5.4 verbatim: full at or below 8, ranked
+    head of 3 on both objectives above it.  `coverage="extended"` raises the
+    full-enumeration threshold to 27 -- which takes in every `quad` cell in
+    the matrix except `scale_ladder_quad` -- and gives the cells still above
+    it the budgeted rule in `sample_large` below.
+
+    Returns `(ids, mode)`.  `mode` is `"full"` ONLY when every legal
+    assignment is measured; a capped sample is reported as `"sampled"`
+    however wide the cap, because a sample presented as an enumeration is a
+    claim the data does not support.
     """
-    if len(scored) <= FULL_ENUM_MAX:
+    extended = (coverage == "extended" and config == EXTENDED_CONFIG)
+    full_max = FULL_ENUM_MAX_EXTENDED if extended else FULL_ENUM_MAX
+    if len(scored) <= full_max:
         return [s["id"] for s in scored], "full"
-    want = [s["id"] for s in scored[:SAMPLE_HEAD]]
-    # also the head of the NON-PERIODIC ranking, which is the objective the
-    # XPU-RT sweep ranks solvers on and which the wall clock can hide
-    for s in sorted(scored, key=lambda d: d["np_rank"])[:SAMPLE_HEAD]:
-        if s["id"] not in want:
-            want.append(s["id"])
-    # the uniform placements, which are what a team does when it does not think
-    uniform = [s for s in scored if len(set(s["assign"].values())) == 1]
-    for s in (uniform[:1] + uniform[-1:] if uniform else []):
-        if s["id"] not in want:
-            want.append(s["id"])
-    if scored[-1]["id"] not in want:
-        want.append(scored[-1]["id"])
-    return want, "sampled"
+    if not extended:
+        head = SAMPLE_HEAD
+        want = [s["id"] for s in scored[:head]]
+        # also the head of the NON-PERIODIC ranking, which is the objective the
+        # XPU-RT sweep ranks solvers on and which the wall clock can hide
+        for s in sorted(scored, key=lambda d: d["np_rank"])[:head]:
+            if s["id"] not in want:
+                want.append(s["id"])
+        # the uniform placements, what a team does when it does not think
+        uniform = [s for s in scored if len(set(s["assign"].values())) == 1]
+        for s in (uniform[:1] + uniform[-1:] if uniform else []):
+            if s["id"] not in want:
+                want.append(s["id"])
+        if scored[-1]["id"] not in want:
+            want.append(scored[-1]["id"])
+        return want, "sampled"
+    return sample_large(scored, nets), "sampled"
+
+
+def sample_large(scored, nets):
+    """The `extended` rule for a cell too large to enumerate, in five parts.
+
+    Stated here because it is the whole content of the claim: on a sampled
+    cell the reported "best placement" is the best of THIS set and of nothing
+    else, and a reader has to be able to see what the set was chosen to catch.
+
+      1. **The ranked head of both objectives**, 8 deep each.  The cost model
+         picked the measured best on 93.5 % of cells by the non-periodic
+         objective, so the head is where the answer usually is; 8 rather than
+         SETUP.md's 3 because the budget allows it.
+      2. **Every uniform placement** -- all-CPU, all-DSP, all-HTA.  What a
+         team does when it does not think, and they bracket the space.
+      3. **The bottom-ranked placement**, so the measured span brackets the
+         predicted range at the pessimistic end too and not only at the
+         optimistic one.
+      4. **The complete one-swap neighbourhood of the predicted best**: every
+         placement that differs from rank 0 in exactly one network's lane.
+         This is a full local-optimality test on the incumbent -- if the
+         placement the cost model recommends is beaten by moving a single
+         network, this finds it, and a sample without it could not.
+      5. **A seeded stratified fill to SAMPLE_BUDGET.**  Strata are the number
+         of networks pinned to the DSP, 0..6: every network in this family
+         prefers the DSP by 2.5-4.4x, so DSP occupancy is the contention axis
+         the cell actually turns on, and stratifying on it stops a flat random
+         draw from spending the whole budget in the middle of the binomial.
+         Strata are visited round-robin, each drawing from its own members
+         shuffled by `random.Random(SAMPLE_SEED)`, so the fill is a pure
+         function of the frozen cost model and re-emits identically.
+
+    Parts 1-4 are deterministic; only the fill is seeded.  The result is a
+    SAMPLE and is reported as one.
+    """
+    want, seen = [], set()
+
+    def take(sid):
+        if sid not in seen:
+            seen.add(sid)
+            want.append(sid)
+
+    for s in scored[:SAMPLE_HEAD_EXTENDED]:
+        take(s["id"])
+    for s in sorted(scored, key=lambda d: d["np_rank"])[:SAMPLE_HEAD_EXTENDED]:
+        take(s["id"])
+    for s in scored:
+        if len(set(s["assign"].values())) == 1:
+            take(s["id"])
+    take(scored[-1]["id"])
+    # 4. one-swap neighbourhood of the PREDICTED best (rank 0). The centre is
+    #    the predicted best and not the measured one on purpose: a plan whose
+    #    contents depended on a measurement would stop being re-derivable from
+    #    the frozen inputs, which is the property reproduce.py checks.
+    base = scored[0]["assign"]
+    for s in scored:
+        if sum(1 for n in nets if s["assign"][n] != base[n]) == 1:
+            take(s["id"])
+    # 5. seeded stratified fill
+    rng = random.Random(SAMPLE_SEED)
+    strata = collections.defaultdict(list)
+    for s in scored:
+        strata[sum(1 for v in s["assign"].values() if v == "dsp")].append(s["id"])
+    for k in strata:
+        rng.shuffle(strata[k])
+    keys = sorted(strata)
+    while len(want) < SAMPLE_BUDGET and any(strata[k] for k in keys):
+        for k in keys:
+            if len(want) >= SAMPLE_BUDGET:
+                break
+            while strata[k]:
+                sid = strata[k].pop()
+                if sid not in seen:
+                    take(sid)
+                    break
+    # emit in rank order so the config filenames and the plan agree
+    order = {s["id"]: i for i, s in enumerate(scored)}
+    return sorted(want, key=lambda x: order[x])
 
 
 # ------------------------------------------------------------------ plans
-def build_plan(cell, wl, costs, row, scored, measure_ids):
+def build_plan(cell, wl, costs, row, scored, measure_ids, mode):
     nets = list(wl["networks"])
     fam, cfg = cell_family_config(cell)
     out = {
@@ -443,7 +575,7 @@ def build_plan(cell, wl, costs, row, scored, measure_ids):
         "lanes_declared": row["lanes"], "pin_lanes": row["pin_lanes"],
         "verdict": row["verdict"], "notes": row["notes"],
         "n_legal": row["n_legal"],
-        "measure_mode": "full" if len(scored) <= FULL_ENUM_MAX else "sampled",
+        "measure_mode": mode,
         "edges": row["edges"],
         "networks": {
             n: {"id": wl["networks"][n]["id"],
@@ -564,8 +696,10 @@ def cmd_enumerate(args):
                               measured=0))
             continue
         scored = enumerate_cell(cell, wl, costs, row)
-        measure_ids, mode = pick_to_measure(scored, list(wl["networks"]))
-        plan = build_plan(cell, wl, costs, row, scored, set(measure_ids))
+        measure_ids, mode = pick_to_measure(scored, list(wl["networks"]),
+                                            args.coverage, row["config"])
+        plan = build_plan(cell, wl, costs, row, scored, set(measure_ids),
+                          mode)
         p = os.path.join(OUT, "plans", f"{cell}.json")
         with open(p, "w") as f:
             json.dump(plan, f, indent=1)
@@ -589,7 +723,14 @@ def cmd_enumerate(args):
                                   if best["makespan_ms"] else None)))
     p = os.path.join(OUT, "results", "enumeration.json")
     with open(p, "w") as f:
-        json.dump({"full_enum_max": FULL_ENUM_MAX, "sample_head": SAMPLE_HEAD,
+        json.dump({"coverage": args.coverage,
+                   "extended_config": EXTENDED_CONFIG,
+                   "full_enum_max": FULL_ENUM_MAX,
+                   "sample_head": SAMPLE_HEAD,
+                   "full_enum_max_extended": FULL_ENUM_MAX_EXTENDED,
+                   "sample_head_extended": SAMPLE_HEAD_EXTENDED,
+                   "sample_budget": SAMPLE_BUDGET,
+                   "sample_seed": SAMPLE_SEED,
                    "cells": index}, f, indent=1)
     print(f"wrote {p}")
     print(f"{len(index)} cells, {n_meas} assignments to measure "
@@ -629,6 +770,16 @@ def main():
                      ("enumerate", cmd_enumerate), ("table", cmd_table)):
         s = sub.add_parser(name)
         s.set_defaults(fn=fn)
+        if name == "enumerate":
+            s.add_argument(
+                "--coverage", default=COVERAGE_DEFAULT,
+                choices=["setup", "extended"],
+                help="`setup` is SETUP.md 5.4's pre-registered plan (172 "
+                     "assignments); `extended` (the default, and what the "
+                     "committed plans hold) widens the `quad` column only -- "
+                     "full enumeration up to 27 legal placements and a "
+                     "budgeted sample above it. Scoring, ranks and assignment "
+                     "ids are identical under both.")
     args = ap.parse_args()
     if args.out:
         global OUT
