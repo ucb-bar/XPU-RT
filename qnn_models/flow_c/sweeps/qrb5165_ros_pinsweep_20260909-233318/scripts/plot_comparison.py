@@ -61,7 +61,7 @@ def short(cell: str) -> str:
     return cell[len("networks_"):] if cell.startswith("networks_") else cell
 
 
-def draw(ax, rows, band, *, excluded=False, title=""):
+def draw(ax, rows, band, xlim, *, excluded=False, title=""):
     """Horizontal diverging bars anchored at 1.0 on a log2 axis."""
     y = np.arange(len(rows))[::-1]
     for yi, r in zip(y, rows):
@@ -74,9 +74,15 @@ def draw(ax, rows, band, *, excluded=False, title=""):
     ax.set_yticks(y)
     ax.set_yticklabels([r["label"] for r in rows], fontsize=8, color=INK2)
     ax.set_xscale("log", base=2)
-    ax.set_xticks([0.5, 0.7, 1.0, 1.5, 2.0, 3.0])
-    ax.set_xticklabels(["0.5", "0.7", "1.0", "1.5", "2.0", "3.0"], fontsize=8.5)
-    ax.set_xlim(0.45, 3.9)
+    # Ticks and limits follow the DATA. The limits used to be hardcoded at
+    # (0.45, 3.9), which silently CLIPPED any bar beyond them -- on the quad
+    # panel both `vint` cells run past 3.9 and were drawn ending at the axis
+    # edge, i.e. the figure understated the two largest results on it.
+    ticks = [t for t in (0.5, 0.7, 1.0, 1.5, 2.0, 3.0, 4.0, 5.0)
+             if xlim[0] <= t <= xlim[1]]
+    ax.set_xticks(ticks)
+    ax.set_xticklabels([f"{t:g}" for t in ticks], fontsize=8.5)
+    ax.set_xlim(*xlim)
     ax.set_ylim(-0.8, len(rows) - 0.2)
     # The noise band, drawn over the bars: a bar that ends inside it is not a
     # result, and that has to be visible without consulting a table.
@@ -93,21 +99,60 @@ def draw(ax, rows, band, *, excluded=False, title=""):
 
 # (ratio field, inside-noise field, headline key prefix, output stem,
 #  how the opponent is described on the figure)
-AGAINST = {
-    "warmbest": ("ros_over_xrt_np_warmbest", "inside_noise_np_warmbest",
-                 "np_warmbest_", "ros_vs_xpurt_objective_warmbest",
-                 "cpsat:warmbest — the XPU-RT sweep's own recommendation for "
-                 "the offline/build-time path"),
-    "best": ("ros_over_xrt_np_best", "inside_noise_np", "np_",
-             "ros_vs_xpurt_objective",
-             "the best measured solver per cell — the most favourable reading "
-             "for the scheduler"),
+#: How the opponent is described on the figure.
+OPPONENTS = {
+    "warmbest": "cpsat:warmbest — the XPU-RT sweep's own recommendation for "
+                "the offline/build-time path",
+    "best": "the best measured solver per cell — the most favourable reading "
+            "for the scheduler",
+}
+
+#: (baseline, timing, opponent) -> the per-cell ratio field in analysis.json.
+#: `isolation` is the PRIMARY baseline: each network on the lane it is fastest
+#: on ALONE, chosen from a per-model benchmark with no knowledge of the
+#: co-tenants -- what a ROS user actually deploys. `oracle` is the best of
+#: every legal placement measured, which no user has; it is kept as an upper
+#: bound on what pinning could reach with perfect knowledge, and the gap
+#: between the two is itself a result.
+RATIO = {
+    ("isolation", "raw", "warmbest"): "iso_over_xrt_np_warmbest",
+    ("isolation", "corrected", "warmbest"): "iso_over_xrt_np_warmbest_corrected",
+    ("oracle", "raw", "warmbest"): "ros_over_xrt_np_warmbest",
+    ("oracle", "corrected", "warmbest"): "ros_over_xrt_np_warmbest_corrected",
+    ("isolation", "raw", "best"): "iso_over_xrt_np_best",
+    ("isolation", "corrected", "best"): "iso_over_xrt_np_best_corrected",
+    ("oracle", "raw", "best"): "ros_over_xrt_np_best",
+    ("oracle", "corrected", "best"): "ros_over_xrt_np_best_corrected",
+}
+
+BASELINE_TEXT = {
+    "isolation": "each network pinned to the lane it is fastest on IN "
+                 "ISOLATION — no search, no knowledge of the co-tenants",
+    "oracle": "the best of every legal placement measured — a placement "
+              "oracle, an upper bound on pinning rather than a deployment",
+}
+TIMING_TEXT = {
+    "raw": "measured from each runtime's t0",
+    "corrected": "each runtime re-timed from its OWN first dispatch, so "
+                 "neither is charged for the other's startup",
 }
 
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--against", default="warmbest", choices=sorted(AGAINST))
+    ap.add_argument("--against", default="warmbest", choices=sorted(OPPONENTS))
+    ap.add_argument("--baseline", default="isolation",
+                    choices=["isolation", "oracle"],
+                    help="`isolation` (the default and the headline) pins each "
+                         "network to the lane it is fastest on alone, which is "
+                         "what a ROS user deploys; `oracle` takes the best of "
+                         "every legal placement measured, which is an upper "
+                         "bound nobody has.")
+    ap.add_argument("--timing", default="corrected",
+                    choices=["raw", "corrected"],
+                    help="`corrected` (the default) re-times BOTH runtimes "
+                         "from their own first dispatch; `raw` reproduces the "
+                         "earlier reading, measured from each runtime's t0.")
     ap.add_argument("--config", default=None,
                     help="restrict to one lane config (e.g. quad). The config "
                          "axis is which lane SUBSET is available: hd=hta+dsp, "
@@ -123,7 +168,14 @@ def main() -> int:
     # loop further down, so reading a.config after that point picks up an
     # AxesSubplot instead of the namespace.
     CONFIG = a.config
-    RATIO, INSIDE, HK, STEM, OPPONENT = AGAINST[a.against]
+    BASELINE, TIMING, OPP = a.baseline, a.timing, a.against
+    RKEY = RATIO[(BASELINE, TIMING, OPP)]
+    INSIDE = "inside_noise_" + RKEY
+    OPPONENT = OPPONENTS[OPP]
+    STEM = ("ros_vs_xpurt_objective"
+            + ("" if OPP == "best" else "_warmbest")
+            + ("" if BASELINE == "oracle" else "_iso")
+            + ("" if TIMING == "raw" else "_corrected"))
 
     d = json.load(open(os.path.join(SWEEP, "results", "analysis.json")))
     band = 1.0 + d["noise_floor"]["np_pct"] / 100.0
@@ -132,7 +184,7 @@ def main() -> int:
     for c in d["cells"]:
         if CONFIG and c.get("config") != CONFIG:
             continue
-        ratio = c.get(RATIO)
+        ratio = c.get(RKEY)
         if ratio is None:
             continue
         row = {"label": short(c["cell"]), "ratio": float(ratio),
@@ -150,21 +202,15 @@ def main() -> int:
     # so the figure cannot drift from ANALYSIS.md. `faster` and `slower`
     # partition all 26 cells; `inside` is a SUBSET of those, not a third
     # bucket -- recomputing it as one is how the first draft got 10/8/8.
-    if CONFIG:
-        # The record carries no per-config headline, so these are recomputed.
-        # That loses the cannot-drift property the whole-sweep path has, so the
-        # figure says so rather than looking equally authoritative.
-        import statistics as _st
-        faster = sum(1 for r in head if r["ratio"] < 1)
-        slower = sum(1 for r in head if r["ratio"] > 1)
-        inside = sum(1 for r in head if r["inside"])
-        median = _st.median([r["ratio"] for r in head]) if head else float("nan")
-    else:
-        h = d["headline"]
-        faster, slower = h[HK + "ros_faster_cells"], h[HK + "xrt_faster_cells"]
-        inside = h[HK + "inside_noise_cells"]
-        median = h[HK + "ros_over_xrt_median"]
-        assert faster + slower == len(head), (faster, slower, len(head))
+    # Read the counts from `results/analysis.json`'s own `readings` block
+    # rather than recomputing them here, so the figure cannot drift from
+    # ANALYSIS.md. `faster` and `slower` partition the compared cells;
+    # `inside` is a SUBSET of those, not a third bucket.
+    rec = d["readings"][CONFIG or "all"][BASELINE][OPP][TIMING]
+    faster, slower = rec["pinning_faster"], rec["scheduler_faster"]
+    inside, median = rec["inside_noise"], rec["median"]
+    assert faster + slower == len(head) == rec["n_cells"], \
+        (faster, slower, len(head), rec["n_cells"])
 
     # Two exclusions, two sub-panels. Repeating the reason in all 16 tick
     # labels made them long enough to overrun the neighbouring panel, and a
@@ -180,12 +226,14 @@ def main() -> int:
     for a in (ax, bx, cx):
         a.set_facecolor(SURFACE)
 
-    draw(ax, head, band,
+    allr = [r["ratio"] for r in head + no_ap + uneq]
+    xlim = (min(0.45, min(allr) / 1.12), max(3.9, max(allr) * 1.12))
+    draw(ax, head, band, xlim,
          title=f"The comparison — {len(head)} cells both runtimes express")
-    draw(bx, no_ap, band, excluded=True,
+    draw(bx, no_ap, band, xlim, excluded=True,
          title=f"No aperiodic network ({len(no_ap)})\n"
                f"the objective degenerates to the wall clock")
-    draw(cx, uneq, band, excluded=True,
+    draw(cx, uneq, band, xlim, excluded=True,
          title=f"Fewer aperiodic instances scheduled ({len(uneq)})\n"
                f"different work, so not a comparison")
     for a in (bx, cx):
@@ -198,15 +246,22 @@ def main() -> int:
     # be checked against the cell it lands on -- these are hardcoded prose
     # pinned to whichever cell happens to be extreme, and the extreme cell
     # changes when the figure is filtered. Verify, or say nothing.
+    LABEL = "iso_label" if BASELINE == "isolation" else "ros_np_best_label"
+
     def all_aperiodic_on_dsp(rec):
         aper = list((rec.get("np_work_declared") or {}).keys())
-        lab = rec.get("ros_np_best_label", "")
+        lab = rec.get(LABEL) or ""
         return bool(aper) and all(f"{n}@dsp" in lab for n in aper)
 
     def is_vint(rec):
-        return "vint@" in rec.get("ros_np_best_label", "")
+        return "vint@" in (rec.get(LABEL) or "")
 
-    if head and all_aperiodic_on_dsp(head[0]["rec"]):
+    # The mechanism annotation describes a WIN. On the isolation baseline the
+    # fastest cell can be a tie inside the noise band, and labelling a tie
+    # "the timed work gets the fast lane uninterrupted" would be asserting a
+    # result the bar does not show. Only annotate a cell that is outside the
+    # band.
+    if head and not head[0]["inside"] and all_aperiodic_on_dsp(head[0]["rec"]):
         ax.annotate("every aperiodic network pinned to the DSP — the timed\n"
                     "work gets the fast lane uninterrupted, where the\n"
                     "scheduler pays a gate per entry",
@@ -220,7 +275,7 @@ def main() -> int:
                     "whole network means CPU:\n"
                     "121.99 ms against 14.2 ms\n"
                     "of DSP encoder work",
-                    xy=(head[-1]["ratio"], 0),
+                    xy=(head[-1]["ratio"], 0), annotation_clip=False,
                     xytext=(0.015, 0.030), textcoords="axes fraction",
                     fontsize=8, color=INK2, ha="left", va="bottom", arrowprops=arrow)
 
@@ -239,13 +294,14 @@ def main() -> int:
         f"constraints hold{scope}",
         fontsize=13.5, color=INK, x=0.007, ha="left", y=0.988)
     fig.text(0.007, 0.930,
-             f"ROS whole-network pinning ÷ measured XPU-RT, best legal placement "
-             f"against {OPPONENT}, medians of 3 reps.\n"
-             f"Median {median:.3f} — {faster} cells pinning faster, {slower} scheduler "
-             f"faster; {inside} of the {len(head)} sit inside the noise band."
-             + ("   Counts recomputed for this subset, not read from the record."
-                if CONFIG else ""),
-             fontsize=9.5, color=INK2, ha="left", va="top")
+             f"ROS whole-network pinning ÷ measured XPU-RT against {OPPONENT}, "
+             f"medians of 3 reps.\n"
+             f"Baseline: {BASELINE_TEXT[BASELINE]}.\n"
+             f"Timing: {TIMING_TEXT[TIMING]}.\n"
+             f"Median {median:.3f} — {faster} cell{'' if faster == 1 else 's'} "
+             f"pinning faster, {slower} scheduler faster; {inside} of the "
+             f"{len(head)} sit inside the noise band.",
+             fontsize=9.5, color=INK2, ha="left", va="top", linespacing=1.5)
     fig.text(0.007, 0.020,
              "Log axis: a 2× win and a 2× loss are equidistant from 1.0. Bars are "
              "anchored at 1.0; a bar ending inside the grey band is not a result."
@@ -253,7 +309,7 @@ def main() -> int:
                 "a QRB5165 always has all four backends."
                 if CONFIG == "quad" else ""),
              fontsize=8.5, color=MUTED, ha="left")
-    fig.subplots_adjust(left=0.135, right=0.985, top=0.830, bottom=0.068)
+    fig.subplots_adjust(left=0.135, right=0.985, top=0.795, bottom=0.068)
 
     out = os.path.join(SWEEP, "plots",
                        STEM + (f"_{CONFIG}" if CONFIG else "") + ".png")
