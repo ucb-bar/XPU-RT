@@ -108,7 +108,21 @@ AGAINST = {
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--against", default="warmbest", choices=sorted(AGAINST))
+    ap.add_argument("--config", default=None,
+                    help="restrict to one lane config (e.g. quad). The config "
+                         "axis is which lane SUBSET is available: hd=hta+dsp, "
+                         "dc=dsp+cpu, cg=cpu+gpu, quad=all four. Only `quad` "
+                         "describes a machine that physically exists -- a "
+                         "QRB5165 always has all four backends -- so the other "
+                         "three model hardware you cannot buy, and they distort "
+                         "individual cells badly (in `hd`, mlp_control_sd is "
+                         "forced onto the DSP at 523.6 us because there is no "
+                         "CPU lane, though CPU runs it in 110.2 us).")
     a = ap.parse_args()
+    # Bind the config now: `a` is rebound by the `for a in (ax, bx, cx)` axes
+    # loop further down, so reading a.config after that point picks up an
+    # AxesSubplot instead of the namespace.
+    CONFIG = a.config
     RATIO, INSIDE, HK, STEM, OPPONENT = AGAINST[a.against]
 
     d = json.load(open(os.path.join(SWEEP, "results", "analysis.json")))
@@ -116,11 +130,13 @@ def main() -> int:
 
     head, no_ap, uneq = [], [], []
     for c in d["cells"]:
+        if CONFIG and c.get("config") != CONFIG:
+            continue
         ratio = c.get(RATIO)
         if ratio is None:
             continue
         row = {"label": short(c["cell"]), "ratio": float(ratio),
-               "inside": bool(c.get(INSIDE))}
+               "inside": bool(c.get(INSIDE)), "rec": c}
         if c.get("np_degenerate"):
             no_ap.append(row)
         elif not c.get("np_work_equal", True):
@@ -134,11 +150,21 @@ def main() -> int:
     # so the figure cannot drift from ANALYSIS.md. `faster` and `slower`
     # partition all 26 cells; `inside` is a SUBSET of those, not a third
     # bucket -- recomputing it as one is how the first draft got 10/8/8.
-    h = d["headline"]
-    faster, slower = h[HK + "ros_faster_cells"], h[HK + "xrt_faster_cells"]
-    inside = h[HK + "inside_noise_cells"]
-    median = h[HK + "ros_over_xrt_median"]
-    assert faster + slower == len(head), (faster, slower, len(head))
+    if CONFIG:
+        # The record carries no per-config headline, so these are recomputed.
+        # That loses the cannot-drift property the whole-sweep path has, so the
+        # figure says so rather than looking equally authoritative.
+        import statistics as _st
+        faster = sum(1 for r in head if r["ratio"] < 1)
+        slower = sum(1 for r in head if r["ratio"] > 1)
+        inside = sum(1 for r in head if r["inside"])
+        median = _st.median([r["ratio"] for r in head]) if head else float("nan")
+    else:
+        h = d["headline"]
+        faster, slower = h[HK + "ros_faster_cells"], h[HK + "xrt_faster_cells"]
+        inside = h[HK + "inside_noise_cells"]
+        median = h[HK + "ros_over_xrt_median"]
+        assert faster + slower == len(head), (faster, slower, len(head))
 
     # Two exclusions, two sub-panels. Repeating the reason in all 16 tick
     # labels made them long enough to overrun the neighbouring panel, and a
@@ -167,24 +193,36 @@ def main() -> int:
         a.title.set_color(INK2)
 
     arrow = dict(arrowstyle="-", lw=0.7, color=MUTED, alpha=0.65)
-    # Blue tail is at the TOP (head[0], smallest ratio); its text goes in the
-    # empty top-right quadrant. Red tail is at the BOTTOM; its text goes
-    # bottom-left. Getting these two backwards is what the first render did.
-    ax.annotate("every aperiodic network pinned to the DSP — the timed\n"
-                "work gets the fast lane uninterrupted, where the\n"
-                "scheduler pays a gate per entry",
-                xy=(head[0]["ratio"], len(head) - 1),
-                xytext=(0.44, 0.965), textcoords="axes fraction",
-                fontsize=8.5, color=INK2, ha="left", va="top", arrowprops=arrow)
-    ax.annotate("ViNT's encoder composes on\n"
-                "{DSP, CPU}, its decoder on\n"
-                "{CPU, GPU} — one lane for the\n"
-                "whole network means CPU:\n"
-                "121.99 ms against 14.2 ms\n"
-                "of DSP encoder work",
-                xy=(head[-1]["ratio"], 0),
-                xytext=(0.015, 0.030), textcoords="axes fraction",
-                fontsize=8, color=INK2, ha="left", va="bottom", arrowprops=arrow)
+
+    # The two tail annotations name a MECHANISM, and a mechanism claim has to
+    # be checked against the cell it lands on -- these are hardcoded prose
+    # pinned to whichever cell happens to be extreme, and the extreme cell
+    # changes when the figure is filtered. Verify, or say nothing.
+    def all_aperiodic_on_dsp(rec):
+        aper = list((rec.get("np_work_declared") or {}).keys())
+        lab = rec.get("ros_np_best_label", "")
+        return bool(aper) and all(f"{n}@dsp" in lab for n in aper)
+
+    def is_vint(rec):
+        return "vint@" in rec.get("ros_np_best_label", "")
+
+    if head and all_aperiodic_on_dsp(head[0]["rec"]):
+        ax.annotate("every aperiodic network pinned to the DSP — the timed\n"
+                    "work gets the fast lane uninterrupted, where the\n"
+                    "scheduler pays a gate per entry",
+                    xy=(head[0]["ratio"], len(head) - 1),
+                    xytext=(0.44, 0.965), textcoords="axes fraction",
+                    fontsize=8.5, color=INK2, ha="left", va="top", arrowprops=arrow)
+    if head and is_vint(head[-1]["rec"]):
+        ax.annotate("ViNT's encoder composes on\n"
+                    "{DSP, CPU}, its decoder on\n"
+                    "{CPU, GPU} — one lane for the\n"
+                    "whole network means CPU:\n"
+                    "121.99 ms against 14.2 ms\n"
+                    "of DSP encoder work",
+                    xy=(head[-1]["ratio"], 0),
+                    xytext=(0.015, 0.030), textcoords="axes fraction",
+                    fontsize=8, color=INK2, ha="left", va="bottom", arrowprops=arrow)
 
     ax.legend(handles=[
         Patch(facecolor=COOL, label="pinning faster"),
@@ -194,22 +232,31 @@ def main() -> int:
         bbox_to_anchor=(1.0, 0.40), handletextpad=0.4, borderpad=0.2,
         labelspacing=0.3)
 
+    scope = (f"  —  {CONFIG} only (all four backends available)"
+             if CONFIG == "quad" else f"  —  {CONFIG} only" if CONFIG else "")
     fig.suptitle(
         "How long the non-periodic work takes while the periodic tasks' "
-        "constraints hold", fontsize=13.5, color=INK, x=0.007, ha="left", y=0.988)
+        f"constraints hold{scope}",
+        fontsize=13.5, color=INK, x=0.007, ha="left", y=0.988)
     fig.text(0.007, 0.930,
              f"ROS whole-network pinning ÷ measured XPU-RT, best legal placement "
              f"against {OPPONENT}, medians of 3 reps.\n"
              f"Median {median:.3f} — {faster} cells pinning faster, {slower} scheduler "
-             f"faster; {inside} of the {len(head)} sit inside the noise band.",
+             f"faster; {inside} of the {len(head)} sit inside the noise band."
+             + ("   Counts recomputed for this subset, not read from the record."
+                if CONFIG else ""),
              fontsize=9.5, color=INK2, ha="left", va="top")
     fig.text(0.007, 0.020,
              "Log axis: a 2× win and a 2× loss are equidistant from 1.0. Bars are "
-             "anchored at 1.0; a bar ending inside the grey band is not a result.",
+             "anchored at 1.0; a bar ending inside the grey band is not a result."
+             + ("   `quad` is the only config that describes a machine that exists: "
+                "a QRB5165 always has all four backends."
+                if CONFIG == "quad" else ""),
              fontsize=8.5, color=MUTED, ha="left")
     fig.subplots_adjust(left=0.135, right=0.985, top=0.830, bottom=0.068)
 
-    out = os.path.join(SWEEP, "plots", STEM + ".png")
+    out = os.path.join(SWEEP, "plots",
+                       STEM + (f"_{CONFIG}" if CONFIG else "") + ".png")
     fig.savefig(out, dpi=200, facecolor=SURFACE)
     plt.close(fig)
     print(f"  -> {out}")
