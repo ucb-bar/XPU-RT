@@ -411,3 +411,4 @@ own `phase4_results.json`. It needs no hardware.
 | `plots/placement_value.png` | worst ÷ best measured legal placement, per cell |
 | `plots/costmodel.png` | predicted vs measured, split on whether two networks share a backend |
 | `plots/ros_vs_xpurt_3net.png` | the 3net arm |
+| `plots/gantt_<cell>.png` | XPU-RT vs ROS execution traces for three cells where pinning wins, both drawn from the measured trace blocks, with the aperiodic-completion marker that the ratio is computed on (`scripts/plot_gantt_compare.py`) |
