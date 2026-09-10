@@ -50,7 +50,10 @@ harness. Nothing in this document comes from before the fix.
 list did not include `plans3net/`, `specs3net/`, `data/toplevel/rospin3net/`,
 `results/xpurt3net.json` or `scripts/{pin3net,xpurt3net}.py`. RoSE's fifteen
 3-network configs had no measured XPU-RT number on this board, so this campaign
-emitted, solved and ran them here too (§10).
+emitted, solved and ran them here too (§10). The follow-up in §0.8 added
+`results/undeclared_3net.json`, `results/verify3net.json` and three
+`xpurt3net.py` subcommands (`undeclared`, `verify`, and a `--solvers` flag on
+the rest) — none of them in SETUP.md either.
 
 **0.5 — The opponent is now the *recommended* solver, and it makes XPU-RT look
 WORSE, not better.** The first version of §4 scored pinning against
@@ -121,6 +124,66 @@ and gantts should be read from.
 `n_legal` distribution, the harness limits, the 172-assignment measurement plan
 and the noise floor are as written, and `reproduce.py` re-derives all of them
 from the frozen inputs.
+
+**0.8 — The 3net arm's comparator was wrong twice over, and fixing it moves
+that arm's headline from 0.82× to 0.93×.** §10 originally scored pinning
+against cold `cpsat` — not `cpsat:warmbest`, the solver the sweep10 study
+recommends and the one §4 is now scored against — so the two arms were not
+comparable. Closing that gap turned up a second and larger defect.
+
+*The dedupe key hashed a field that does not exist.* `xpurt3net.py`'s
+`cmd_run` deduped identical schedules on
+`sha256(json.dumps(json.load(sched).get("schedule")))`, and
+`postprocessing.output_scheduled_json` emits no `"schedule"` key — it emits
+`dot_file` / `dispatches` / `metadata`. Every schedule therefore hashed to
+`sha256("null")`, every solver after the first was recorded as a duplicate of
+it, and **`heft_edf` and `cpsat` were never run on this arm at all**: all three
+columns of the old §10 table were `greedy`. The note that "all three solvers
+produced identical schedules on every shape" was an artefact of that constant.
+They do not: on **7 of the 9 shapes the three disagree**, and on three of
+those `heft_edf` predicts 28.644 ms where `greedy` predicts 36.022–46.022 ms. The key is now
+the one Phase 4 uses — op → (combination, start, duration) — so two solvers
+share board time only when they really produced the same table.
+
+*What that costs the arm's claim.* Measuring the schedules the broken key had
+hidden gives **median 0.9305 against `cpsat:warmbest`, 7 of 7 shapes still
+pinning-faster, but only 2 of the 7 outside the ±9.18% noise floor** — against
+the old **0.82× with four outside**. The direction survives the change of
+opponent; the margin does not, and it was never a margin against the
+recommended solver in the first place. Details and the per-shape table are
+in §10.
+
+*The `--mask-undeclared` fix applies here too, and this arm has its own
+undeclared cells.* §13's defect is a property of the pipeline, not of the two
+`vint` cells, so it was checked rather than assumed. This arm has **three**
+cells the profile tree prices and the binding manifests forbid —
+`mlp_control/mlp_control_full@hta`, `yolov8n/yolov8n_head@hta` and
+`fused_full/fused_full_net@hta` (`results/undeclared_3net.json`, derived by
+`xpurt3net.py undeclared` from the bindings and `gen/profile/`, not from the
+main arm's cost model, which covers a different network set). **No solver took
+the bait**: across the 36 schedules this arm measured, 149 operations match an
+undeclared cell and **none is placed on the forbidden lane**, and the same
+holds for all 72 emitted under `verify` masked and unmasked. Nothing subtle is
+going on — on each of those three tiles the HTA is **257× to 1038× slower**
+than that tile's best declared lane (`mlp_control` 68.500 ms against 0.066 on
+the CPU, `yolov8n_head` 3946.462 against 15.377 on the DSP, `fused_full`
+473.700 against 1.147 on the CPU). The mask is applied anyway, because it is a constraint and not a tuning
+knob; it changes no objective and no `greedy`, `heft_edf` or `cpsat:warmbest`
+schedule on any shape.
+
+*And the two solve paths were checked against each other before any of this was
+believed.* `cpsat:warmbest` is not one of the ten solvers
+`scripts/run_xpurt_schedule.py` exposes, so it has to come from
+`sched_algo_sweep10`'s `fpga/emit_schedule.py`, while every 3net schedule
+already measured came from `run_xpurt_schedule.py`. Comparing across builders
+would be a harness difference dressed as a solver difference.
+`xpurt3net.py verify` re-emits every expressible solver both ways:
+**`greedy` and `heft_edf` are byte-identical on all 9 shapes**, so the emitter
+route is the same experiment. Cold `cpsat` is the one exception — it differs
+from its own on-disk schedule on 4 of 9 and from itself masked-vs-unmasked on
+4 — **with an identical objective every time** (28.644 or 10.066), i.e. an
+arbitrary draw from a set of tied optima under a different time budget, not a
+different answer. `results/verify3net.json` records all of it.
 
 ## 1. The noise floor, and this baseline's own
 
@@ -420,38 +483,133 @@ dropped.
 
 Both sides were measured **in this campaign, on the same three lanes**: 84
 pinning assignments (full enumeration everywhere) and XPU-RT schedules emitted,
-solved and run here. All three solvers (`greedy`, `heft_edf`, `cpsat`) produced
-**identical schedules on every shape** — these are 2–3 network problems with
-one tile each, so there is nothing for a better solver to find.
+solved and run here.
 
-| shape | n | ROS np | XPU-RT np | ROS ÷ XPU-RT | placement spread |
-|---|---|---|---|---|---|
-| `3net_dronet4_mlp4_yolo1` | 12 | 27.060 | 49.929 | **0.542** | 4.07× |
-| `3net_dronet8_mlp16_yolo1` | 12 | 28.490 | 38.762 | **0.735** | 4.88× |
-| `3net_dronet4_mlp8_yolo1` | 12 | 28.436 | 37.996 | **0.748** | 3.84× |
-| `3net_dronet1_mlp2_yolo1` | 12 | 26.190 | 31.912 | **0.821** | 3.31× |
-| `3net_dronet2_mlp8_yolo1` | 12 | 28.677 | 31.143 | 0.921 | 3.21× |
-| `3net_fused4_mlp4_yolo1` | 8 | 28.671 | 30.816 | 0.930 | 3.47× |
-| `3net_fused2_mlp8_yolo1` | 8 | 28.979 | 30.172 | 0.961 | 3.26× |
-| `3net_dronet1_mlp2` † | 6 | 10.209 | 10.056 | 1.015 | 1.28× |
-| `3net_mlp2` † | 2 | 10.316 | 10.067 | 1.025 | 1.02× |
+**The noise floor first.** The comparison band is the XPU-RT sweep's own
+measured rep spread on the objective, **±9.18%** (§1). This arm's own new runs
+sit inside it at the median: non-periodic rep spread **4.08% median, 19.47%
+max** over the 11 schedules measured here, the max on
+`3net_dronet8_mlp16_yolo1__cpsat`. The pinning side's np spread is 0.1–11.4%
+per shape, and the one shape above the band —
+`3net_dronet1_mlp2_yolo1` at 11.4% — is also the shape with the largest
+apparent win, which is the reason the band is quoted before the ratios and not
+after them.
+
+**Four solvers, on all nine shapes, scored against the recommended one.**
+`greedy`, `heft_edf`, `cpsat` and **`cpsat:warmbest`** — the last being what
+§4 scores the main arm against, so the two arms now face the same opponent.
+The primary column is `cpsat:warmbest`; the secondary is the best measured
+solver per shape, an oracle over those four. Neither stands in for the other.
+
+| shape | n | ROS np | `cpsat:warmbest` | **ROS ÷ warmbest** | best-of-4 | *greedy alone* | placement spread |
+|---|---|---|---|---|---|---|---|
+| `3net_dronet1_mlp2_yolo1` | 12 | 26.190 | 30.270 | **0.865** | 30.270 | *31.912* | 3.31× |
+| `3net_dronet4_mlp4_yolo1` | 12 | 27.060 | 31.182 | **0.868** | 31.182 | *49.929* | 4.07× |
+| `3net_fused4_mlp4_yolo1` | 8 | 28.671 | 30.816 | 0.930 | 30.410 | *30.816* | 3.47× |
+| `3net_dronet8_mlp16_yolo1` | 12 | 28.490 | 30.617 | 0.930 | 30.617 | *38.762* | 4.88× |
+| `3net_dronet4_mlp8_yolo1` | 12 | 28.436 | 30.531 | 0.931 | 30.531 | *37.996* | 3.84× |
+| `3net_dronet2_mlp8_yolo1` | 12 | 28.677 | 30.221 | 0.949 | 30.221 | *31.143* | 3.21× |
+| `3net_fused2_mlp8_yolo1` | 8 | 28.979 | 30.172 | 0.961 | 30.172 | *30.172* | 3.26× |
+| `3net_dronet1_mlp2` † | 6 | 10.209 | 10.056 | 1.015 | 10.056 | *10.056* | 1.28× |
+| `3net_mlp2` † | 2 | 10.316 | 10.067 | 1.025 | 10.067 | *10.067* | 1.02× |
 
 † no aperiodic network; the objective degenerates to the wall clock, quoted
-only because both sides executed identical entry counts.
+only because both sides executed identical entry counts. Bold = outside the
+noise band.
 
-**Pinning wins all seven shapes that have an aperiodic network, median 0.82×,
-four of them outside the noise floor.** The mechanism is §4.2's, in its purest
-form: the objective is one `yolov8n` completion, pinning gives it the DSP to
-itself (28.6 ms whole-model) and sends the periodic `mlp_control` and `dronet`
-to the CPU and HTA, and there is nothing left for a scheduler to improve. The
-placement decision, meanwhile, is worth **3.2–4.9×** on every one of them —
-which is the same point as §6: the baseline is only fair because the placement
+| opponent | median ROS ÷ XPU-RT | pinning / scheduler | outside ±9.18% |
+|---|---|---|---|
+| **`cpsat:warmbest`** — the recommendation | **0.9305** | 7 / 0 | 2 |
+| best measured solver over the four — an oracle | 0.9314 | 7 / 0 | 2 |
+| *greedy alone* — what the old §10 actually measured | *0.821* | *7 / 0* | *4* |
+
+**The conclusion survives in direction and not in magnitude.** Pinning is still
+faster on all seven shapes with an aperiodic network, against the recommended
+solver and against the oracle alike — that part holds. But the median moves
+from **0.82× to 0.9305×**, and the number of shapes outside the noise floor
+falls from four to **two** (`3net_dronet1_mlp2_yolo1` 0.865,
+`3net_dronet4_mlp4_yolo1` 0.868). **Five of the seven are inside the band, so
+on those five this arm shows a direction and not a result.** "Pinning wins all
+seven shapes, median 0.82×, four outside the noise floor" is no longer a
+supportable sentence; "pinning is ahead on all seven, by a margin that is
+inside the noise on five of them" is.
+
+**Almost none of that move is the change of opponent.** It is §0.8's dedupe
+defect: the old table's "XPU-RT" column was `greedy` on every shape, because
+`heft_edf` and `cpsat` had been recorded as duplicates of it without ever
+running. `cpsat:warmbest` turns out to emit the **same schedule as `heft_edf`
+on five of the nine shapes and the same as `greedy` on the other four**, and it
+is `heft_edf`'s schedule that closes most of the gap — on
+`3net_dronet4_mlp4_yolo1` from 49.929 ms to 31.182 ms. Comparing against
+greedy really would have understated XPU-RT here, exactly as §0.5 warned for
+the main arm, and on this arm that is what the old number did.
+
+**The mechanism is unchanged and is still §4.2's, in its purest form.** The
+objective is one `yolov8n` completion, and on all seven shapes the np-best
+pinning puts `yolov8n` on the **DSP** (13.267 + 15.377 = 28.644 ms whole-model)
+and the periodic work where it interferes least — `mlp_control` on the CPU at
+0.066 ms on five shapes, `dronet` on the CPU at 6.998 ms on three. The HTA is
+never used by the winning placement on any of them.
+
+What a better solver recovers is a *lane assignment* the greedy one gets
+backwards, and `3net_dronet4_mlp4_yolo1` shows it exactly. `yolov8n` is two
+tiles and only the backbone has an HTA context; the head composes on
+`{dsp, cpu}` alone. Greedy puts the backbone on the HTA (13.909 ms) and the
+periodic `dronet` instances on the DSP, so the head — which now has nowhere
+else to go — waits behind `dronet3`'s 30 ms release and starts at 30.645 ms.
+`heft_edf`, and `cpsat:warmbest` with it, puts the whole of `yolov8n` on the
+DSP back to back and the `dronet` instances on the HTA at 2.030 ms each: the
+objective falls from a predicted 46.022 ms to 28.644 ms and a measured
+49.929 ms to 31.182 ms. So the scheduler ends up at the placement pinning was
+already at, and what it does not recover is the last ~7% — the per-entry
+dispatch gate XPU-RT pays and a pinned thread does not.
+
+The placement decision, meanwhile, is worth **3.2–4.9×** on every one of these
+shapes — the same point as §6: the baseline is only fair because the placement
 was ranked.
+
+**`cpsat:warmbest` is the measured np-best on 8 of the 9 shapes**, not all of
+them. On `3net_fused4_mlp4_yolo1` it emits greedy's schedule (30.816 ms) while
+`heft_edf` measures 30.410 ms, which is why the oracle column is 0.943 there
+against warmbest's 0.930. Same finding as §13's Defect 2, on a second arm.
+
+**Cold `cpsat` is where the cost model breaks worst on this arm.** It proves the
+same 28.644 ms objective as everyone else and then measures **64.275 ms on
+`3net_dronet4_mlp8_yolo1` and 73.537 ms on `3net_dronet8_mlp16_yolo1`** —
+2.2–2.6× its own prediction, and 1.7–1.9× worse than the greedy schedule it
+was supposed to improve on. It is also the only solver whose schedule is not
+reproducible across the two solve paths (§0.8), for the same underlying reason:
+these problems have many tied optima and a cold search returns an arbitrary one,
+which the cost model cannot distinguish and the board can.
+
+**What it cost.** Emitting `cpsat:warmbest` on all 9 shapes and hashing against
+the schedules already measured found that **all 9 dedupe onto another
+schedule** — 4 onto that shape's `greedy` run, which was already on record and
+consumed no board time, and 5 onto a `heft_edf` schedule that the broken key
+had hidden and that therefore had to be measured. **Nine warmbest points, zero
+of them needing a board run of their own; five needing the board because what
+they dedupe onto had never been run.** Measuring every distinct schedule the
+four solvers produce came to **11 unique tables and 33 board runs at 3 reps
+each**, all `N/N entries executed`, none discarded, against 16 points resolved
+as dedupes. Lock wait **0.27 s median / 0.34 s max** over 33 probes.
 
 XPU-RT's schedules trim periodic instances that fall after the non-periodic
 makespan (8 entries against 25 declared on `3net_dronet8_mlp16_yolo1`). That is
 a better solution to the same problem, not a different workload, and it is why
 only the non-periodic column is compared.
+
+**No shape reversed direction**, so no 3net gantt was drawn: the one drawn for
+a reversal would have nothing to show that the bar chart does not. The largest
+single move is `3net_dronet4_mlp4_yolo1`, 0.542 → 0.868, and it is a change of
+margin rather than of sign.
+
+One artefact to know about when reading these schedules by hand: every
+`dispatches[*].module_name` says `_HTA_` regardless of the lane, because
+`output_scheduled_json`'s legacy p/e bucketing has no name for a third machine
+kind. `hardware_target` and `duration` are correct and are what the codegen and
+the dedupe hash read; it is identical on both solve paths and on every schedule
+this arm ever measured, so it moves nothing here. It is noted only so the next
+reader does not take it for a placement bug.
 
 ## 11. What was skipped, and why
 
@@ -475,6 +633,11 @@ only the non-periodic column is compared.
   that sweep recommends; the twelve-solver oracle is still only available on
   twelve cells and is reported as the secondary column. On the other 30 cells
   the oracle is a best-of-three, not a best-of-twelve, and is quoted as such.
+* **Solvers beyond four on the 3net arm.** That arm now measures `greedy`,
+  `heft_edf`, `cpsat` and `cpsat:warmbest` on all 9 shapes (§10), which is
+  enough to name the recommendation and an oracle over it. The remaining eight
+  are not measured there, so its secondary column is a best-of-four and is
+  labelled that way — the same honesty the main arm's best-of-three gets.
 
 ## 12. Board discipline and provenance
 
@@ -494,6 +657,19 @@ accumulated across this and the preceding sessions. Clearing them returned the
 filesystem to 36 % / 63 G before any new run started. They regrow: 1.9 G
 accumulated again over the 87 runs of §13, so this is a per-session chore and
 not a one-off.
+
+The 3net follow-up in §0.8 is a third session on the same discipline. It does
+not take an outer `flock`: `flow_c.py run` acquires `/tmp/qnn_board.lock`
+itself inside `qnn_models/runtime/deploy_and_run.sh`, so wrapping it would make
+its own lock wait out its own 900 s. The lock is instead **probed with the same
+flock on the same path immediately before every rep** —
+`xpurt3net.py::lock_wait_s`, verbatim `sched_algo_sweep10`'s, so the two arms'
+recorded waits mean the same thing. **33 runs, 33 probes, 0.27 s median /
+0.34 s max**; no contention. The governor was read (`performance`), forced to
+`performance` on all 8 cores, and restored to `performance` after. The board
+started at **36% / 63 G free** and finished at **39% / 61 G**, with
+`/data/tombstones/cdsp` regrown from 4 K to **2.4 G** over the 33 runs —
+the same per-session chore §13 found, at the same rate.
 
 `reproduce.py` re-derives `model_costs.json`, the expressibility verdicts, the
 enumeration, every plan and every median in `measured.json` from the frozen
@@ -562,5 +738,56 @@ honest one to quote.
 | `plots/ros_vs_xpurt.png` | the same on the all-operations wall clock |
 | `plots/placement_value.png` | worst ÷ best measured legal placement, per cell |
 | `plots/costmodel.png` | predicted vs measured, split on whether two networks share a backend |
-| `plots/ros_vs_xpurt_3net.png` | the 3net arm |
+| `plots/ros_vs_xpurt_3net.png` | **the 3net arm, both readings on one figure**: bars are ROS ÷ XPU-RT against `cpsat:warmbest`, open markers the same against the best measured solver per shape, so the gap between the recommendation and the oracle is the visible thing rather than a second file a reader might quote instead. Log ratio axis with reciprocal limits (0.78, 1/0.78) — this arm spans 0.865–1.025 and the main arm's wide axis would compress every bar into a smear at 1.0. The two shapes with no aperiodic network are a separate panel, not greyed rows (`scripts/analyse.py plots`) |
 | `plots/gantt_<cell>.png` | XPU-RT vs ROS execution traces, both from the measured trace blocks, with the aperiodic-completion marker the ratio is computed on (`scripts/plot_gantt_compare.py --prefer cpsat:warmbest`). Six cells across **both** directions: `control_mix_hd` (0.59×), `perception_heavy_hd` (0.64×) and `bimodal_hd` (0.69×) where pinning wins; `depth_contended_cg` (1.43×), `vint_multi_cg` (1.46×) and `vint_intro_dc` (2.45×) where scheduling wins. Every one now draws `cpsat:warmbest`, so the "not measured on this cell" caveat the script prints no longer fires |
+| `plots/gantt_scale_ladder_{hd,dc}.png` | the same, for the two cells the 3-slot palette used to refuse. See below |
+
+**Why `scale_ladder_{hd,dc}` are drawn differently.** `SLOTS` is a
+**categorical** palette of three, and three is where it stops: that is how far
+the reference palette is validated on the all-pairs list, and a gantt places
+colours at arbitrary spatial positions, so the adjacent-pair rule does not buy
+a fourth slot. `scale_ladder_hd` and `scale_ladder_dc` have six networks each
+and were skipped outright, which threw away the interesting part of the cell.
+
+Those six are not six unrelated networks. `dronet_sb` … `dronet_sg` are **one
+architecture at six sizes** — 23 IR ops each; 2.64, 3.98, 6.86, 13.06, 15.94
+and 21.26 M MACs — so they are **ordinal, not categorical**, and a categorical
+palette was the wrong tool rather than a palette one slot too short. They get a
+**single-hue light-to-dark ramp keyed to size**, which encodes the ladder
+truthfully and sidesteps the cap by not being a categorical encoding at all.
+Faceting by rung was the alternative and is half-applied anyway (there is
+already one sub-row per network), but it would have left the ladder — the thing
+this cell is about — carried by nothing but the reading order of the y labels.
+
+The ramp is not applied on faith. `ladder()` requires that every network share
+one base name, that each carry a MAC count in its binding manifest (written
+there by `phase1_bindings.py` from the board's own compose verdict, so it is a
+property of the model that ran and not an inference from the name), and that
+**sorting by MACs reproduce sorting by rung letter**. If a family is recognised
+but not monotone the ramp would assert an order the data does not have, so it
+falls back to one flat colour; a >3-network cell that is not a ladder at all is
+still skipped. **Identity is never carried by colour alone on any path** —
+every bar sits in a sub-row labelled `<LANE> · <network>` and each legend entry
+spells out its rung and size, so the ramp is redundant encoding rather than the
+encoding. On these two cells every network is aperiodic, so the
+aperiodic hatch would separate nothing and six hatched bars would fight the
+ramp; it is dropped and the legend says so instead.
+
+What the figures show. Both cells are the same six networks on a different lane
+pair — `hd` is HTA + DSP, `dc` is DSP + CPU — and pinning answers both the same
+way: all six on the DSP, overlapping, aperiodic work done at **3.46 ms**. The
+scheduler's answer differs by cell and loses in both. On `hd` it sends
+`dronet_sg`, the largest rung, to the HTA for a measured 1.5 ms and serialises
+the other five on the DSP, ending at **6.48 ms** — the DSP queue, not the HTA
+excursion, is what it is paying for. On `dc` it moves `dronet_sd` and
+`dronet_se` to the CPU, and `dronet_sd` alone runs **6.1 ms there — the entire
+makespan**, four times the 1.474 ms the cost model prices it at, while the DSP
+sits idle from 3.8 ms onward. Ending at **6.14 ms**, it is a placement the
+model could not have known was bad.
+
+The ramp also makes visible something the ladder does not predict: **the size
+order is not the cost order** — `dronet_sf` is 15.9 M MACs against
+`dronet_se`'s 13.1 M and is *cheaper* on the DSP, 0.810 ms against 0.838 ms,
+and on the `hd` pinning panel it finishes first. A flat palette would have
+hidden that; a categorical one would have made it look like a coincidence
+between two unrelated networks.

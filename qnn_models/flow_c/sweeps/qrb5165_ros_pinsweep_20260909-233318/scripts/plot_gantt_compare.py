@@ -26,6 +26,34 @@ Two things this has to get right, and both are easy to get wrong:
     cells look like ties.
 
     python3 plot_gantt_compare.py [--cells control_mix_hd,bimodal_hd,...]
+
+WHY SOME CELLS DO NOT GET THREE COLOURS
+---------------------------------------
+`SLOTS` is a CATEGORICAL palette of three, and three is where it stops because
+that is how far the reference palette is validated on the all-pairs list. A
+gantt places colours at arbitrary spatial positions, so the adjacent-pair rule
+does not rescue a fourth slot, and a cell with more networks than slots used to
+be skipped outright.
+
+`scale_ladder_{hd,dc}` has six -- `dronet_sb` .. `dronet_sg` -- and skipping it
+threw away the interesting part of the cell. Those six are NOT six unrelated
+networks: they are ONE architecture at six sizes (23 IR ops each; 2.64, 3.98,
+6.86, 13.06, 15.94, 21.26 M MACs), so they are ORDINAL, not categorical, and a
+categorical palette was the wrong tool rather than a palette one slot too
+short. They get a single-hue light-to-dark ramp keyed to size, which encodes
+the ladder truthfully and needs no cap.
+
+The ramp is not applied on faith. `ladder()` requires that every network in the
+cell share one base name, that each carry a MAC count in its binding manifest,
+and that **sorting by MACs reproduce sorting by rung letter**; if the family is
+not monotone the ramp would assert an order the data does not have, so it falls
+back to one flat colour and lets the y labels carry identity alone (they always
+do -- see below). A cell with >3 networks that is not a ladder at all is still
+skipped.
+
+Identity is NEVER carried by colour alone, on any path: every bar sits in a
+sub-row labelled `<LANE> · <network>`, and the legend spells out each rung with
+its size. The ramp is redundant encoding, not the encoding.
 """
 from __future__ import annotations
 
@@ -49,11 +77,61 @@ XRT = os.path.join(SWEEPS, "qrb5165_sched_algo_sweep10_20260908-210226")
 
 SURFACE = "#fcfcfb"
 SLOTS = ["#2a78d6", "#eb6834", "#1baf7a"]        # categorical 1-3, fixed order
+# Sequential, one hue, light -> dark. For an ORDINAL family only (see the
+# module docstring): six rungs of one architecture, ordered by size. Starts
+# light enough to read as a series and dark enough that the first step is not
+# lost against SURFACE.
+RAMP = ["#d3e3f8", "#a9c7ee", "#7fa9e2", "#5589d4", "#2f68bd", "#123f8f"]
+FLAT = "#3d7ab8"                                  # ordinal family, unordered
 INK, INK2, MUTED = "#0b0b0b", "#52514e", "#898781"
 GRID, BASELINE = "#e1e0d9", "#c3c2b7"
 MARK = "#d03b3b"                                  # status: critical -- the objective
 
 NODE_RE = re.compile(r"node\s+(\S+)\s+backend=(\S+)\s+inst=\s*(\d+)\s+period=\s*(\S+)")
+
+RUNG_RE = re.compile(r"^(?P<base>.+)_s(?P<rung>[a-z])$")
+MACS_RE = re.compile(r"([\d,]+)\s+MACs")
+
+
+def macs(net):
+    """The network's MAC count, from the binding manifest phase1 wrote it into.
+
+    That manifest is generated from the board's own compose verdict, so the
+    number is a property of the model that actually ran -- not a guess from the
+    name, which is what a ramp keyed to `sb..sg` alone would be.
+    """
+    p = os.path.join(XRT, "bindings", f"{net}.json")
+    if not os.path.exists(p):
+        return None
+    m = MACS_RE.search(json.load(open(p)).get("_comment") or "")
+    return int(m.group(1).replace(",", "")) if m else None
+
+
+def ladder(nets):
+    """-> {net: rank} over an ORDINAL family, or None.
+
+    Returns a rank per network when all of `nets` are rungs of one ladder
+    (same base, distinct rung letters, every rung carrying a MAC count) AND the
+    MAC order agrees with the rung order. The agreement check is the point: the
+    ramp asserts "darker is bigger", and asserting that over a family whose
+    sizes do not follow its own names would be a figure that lies. When the
+    family is recognised but not monotone the caller is told (rank None), and
+    falls back to one flat colour with the labels carrying identity.
+    """
+    ms = [RUNG_RE.match(n) for n in nets]
+    if not all(ms) or len({m.group("base") for m in ms}) != 1:
+        return None
+    rungs = [m.group("rung") for m in ms]
+    if len(set(rungs)) != len(rungs) or len(nets) > len(RAMP):
+        return None
+    sizes = {n: macs(n) for n in nets}
+    if any(v is None for v in sizes.values()):
+        return None
+    by_rung = [n for _, n in sorted(zip(rungs, nets))]
+    by_size = sorted(nets, key=lambda n: sizes[n])
+    if by_rung != by_size:
+        return {"order": by_rung, "sizes": sizes, "monotone": False}
+    return {"order": by_size, "sizes": sizes, "monotone": True}
 
 
 def block(text: str, begin: str, end: str) -> str:
@@ -203,7 +281,7 @@ def pick_median_rep(gen):
     return min(runs, key=lambda x: abs(x[1] - med))
 
 
-def draw(ax, spans, rows, colors, aper, np_end, title, xmax):
+def draw(ax, spans, rows, colors, hatch_nets, np_end, title, xmax):
     """`rows` is a list of (lane, network) -- ONE SUB-ROW PER NETWORK.
 
     A single row per lane hides real overlap: in the ROS trace `end_ms -
@@ -219,7 +297,7 @@ def draw(ax, spans, rows, colors, aper, np_end, title, xmax):
                 continue
             ax.barh(yi, max(e - s, 0.02), left=s, height=0.5,
                     color=colors[net], edgecolor=SURFACE, linewidth=0.7,
-                    zorder=3, hatch="///" if net in aper else None)
+                    zorder=3, hatch="///" if net in hatch_nets else None)
     ax.axvline(np_end, color=MARK, lw=1.6, ls="--", zorder=4)
     # The two panels share an x range, so on a cell where pinning is much
     # slower its own marker sits at the right edge and a right-flowing label
@@ -270,11 +348,24 @@ def one_cell(cell_short: str, rec: dict, out_dir: str, prefer: str):
     for r in rrows:
         if r["network"] not in nets:
             nets.append(r["network"])
+    lad = None
     if len(nets) > len(SLOTS):
-        print(f"  {cell_short}: {len(nets)} networks exceeds the validated "
-              f"3-slot all-pairs cap; skipping")
-        return
-    colors = {n: SLOTS[i] for i, n in enumerate(nets)}
+        lad = ladder(nets)
+        if lad is None:
+            print(f"  {cell_short}: {len(nets)} networks exceeds the validated "
+                  f"3-slot all-pairs cap and they are not one ordinal family; "
+                  f"skipping")
+            return
+    if lad and lad["monotone"]:
+        nets = lad["order"]                       # draw the ladder in size order
+        colors = {n: RAMP[i] for i, n in enumerate(nets)}
+    elif lad:
+        nets = lad["order"]
+        colors = {n: FLAT for n in nets}
+        print(f"  {cell_short}: rung order and size order disagree; one flat "
+              f"colour, labels carry identity")
+    else:
+        colors = {n: SLOTS[i] for i, n in enumerate(nets)}
 
     rspan, xspan = {}, {}
     for r in rrows:
@@ -295,7 +386,12 @@ def one_cell(cell_short: str, rec: dict, out_dir: str, prefer: str):
     for a in (ax, bx):
         a.set_facecolor(SURFACE)
 
-    draw(ax, xspan, rows_yx, colors, aper, xrt_np,
+    # The hatch separates the timed work from the rest. On a cell where EVERY
+    # network is aperiodic it separates nothing, and six hatched bars fight the
+    # ramp for the eye, so it is dropped and the caption says so instead.
+    all_aper = set(nets) <= set(aper)
+    hatch_nets = set() if all_aper else set(aper)
+    draw(ax, xspan, rows_yx, colors, hatch_nets, xrt_np,
          f"XPU-RT — per-op scheduling, solver `{solver}`"
          + ("" if preferred else
             f"   ({prefer} was not measured on this cell — winner+greedy tier)"),
@@ -305,7 +401,7 @@ def one_cell(cell_short: str, rec: dict, out_dir: str, prefer: str):
     pretty = ",  ".join(f"{n}→{b}" for n, b in
                         sorted(parse_label(rec["ros_np_best_label"]),
                                key=lambda t: nets.index(t[0]) if t[0] in nets else 99))
-    draw(bx, rspan, rows_yx, colors, aper, ros_np,
+    draw(bx, rspan, rows_yx, colors, hatch_nets, ros_np,
          f"ROS — whole-network pinning:  {pretty}", xmax)
     bx.set_xlabel("ms from the start of the run", fontsize=9.5, color=INK2)
 
@@ -320,10 +416,22 @@ def one_cell(cell_short: str, rec: dict, out_dir: str, prefer: str):
             f"scheduling finishes the aperiodic work in {ratio:.2f}× less time")
     fig.suptitle(f"{cell_short} — {verb} ({ros_np:.2f} vs {xrt_np:.2f} ms)",
                  fontsize=12.5, color=INK, x=0.006, ha="left", y=0.985)
-    fig.legend(handles=[Patch(facecolor=colors[n], label=n) for n in nets]
-               + [Patch(facecolor="#ffffff", edgecolor=MUTED, hatch="///",
-                        label="aperiodic (the timed work)")],
-               fontsize=8.5, frameon=False, labelcolor=INK2, ncol=len(nets) + 1,
+    # A ramp has to be decodable, so each rung's legend entry carries its size:
+    # the colour says "bigger", the label says how much bigger.
+    if lad:
+        labels = [f'{n}  ({lad["sizes"][n] / 1e6:.1f} M MACs)' for n in nets]
+    else:
+        labels = list(nets)
+    handles = [Patch(facecolor=colors[n], label=l) for n, l in zip(nets, labels)]
+    if not all_aper:
+        handles.append(Patch(facecolor="#ffffff", edgecolor=MUTED, hatch="///",
+                             label="aperiodic (the timed work)"))
+    else:
+        handles.append(Patch(facecolor=SURFACE, edgecolor=SURFACE,
+                             label="every network here is aperiodic — all of "
+                                   "it is the timed work"))
+    fig.legend(handles=handles, fontsize=8.5, frameon=False, labelcolor=INK2,
+               ncol=min(len(handles), 4),
                loc="upper left", bbox_to_anchor=(0.006, 0.945))
     fig.subplots_adjust(left=0.175, right=0.995, top=0.80, bottom=0.115)
 
