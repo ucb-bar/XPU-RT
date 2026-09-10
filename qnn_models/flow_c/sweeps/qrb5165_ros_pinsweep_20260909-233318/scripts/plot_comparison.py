@@ -22,10 +22,20 @@ neutral grey midpoint), used unmodified. The skill's validator is a node
 script and this host has no node, so inventing or re-stepping hexes here
 would mean shipping unvalidated ones; the shipped pair is pre-validated.
 
-    python3 plot_comparison.py
+  4. THE OPPONENT IS NAMED. The first version scored pinning against
+     "the best measured solver", which sounds like the strongest possible
+     opponent and on 30 of 42 cells was really greedy -- phase 4 of the XPU-RT
+     sweep tiered by board time and only ran all twelve solvers on twelve
+     cells. `--against warmbest` (the default) scores against cpsat:warmbest,
+     which is what that study recommends for the offline path;
+     `--against best` reproduces the older reading. Each writes its own file
+     and says on the figure which one it is.
+
+    python3 plot_comparison.py [--against warmbest|best]
 """
 from __future__ import annotations
 
+import argparse
 import json
 import os
 
@@ -81,17 +91,36 @@ def draw(ax, rows, band, *, excluded=False, title=""):
     ax.set_title(title, fontsize=10.5, color=INK, loc="left", pad=8)
 
 
+# (ratio field, inside-noise field, headline key prefix, output stem,
+#  how the opponent is described on the figure)
+AGAINST = {
+    "warmbest": ("ros_over_xrt_np_warmbest", "inside_noise_np_warmbest",
+                 "np_warmbest_", "ros_vs_xpurt_objective_warmbest",
+                 "cpsat:warmbest — the XPU-RT sweep's own recommendation for "
+                 "the offline/build-time path"),
+    "best": ("ros_over_xrt_np_best", "inside_noise_np", "np_",
+             "ros_vs_xpurt_objective",
+             "the best measured solver per cell — the most favourable reading "
+             "for the scheduler"),
+}
+
+
 def main() -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--against", default="warmbest", choices=sorted(AGAINST))
+    a = ap.parse_args()
+    RATIO, INSIDE, HK, STEM, OPPONENT = AGAINST[a.against]
+
     d = json.load(open(os.path.join(SWEEP, "results", "analysis.json")))
     band = 1.0 + d["noise_floor"]["np_pct"] / 100.0
 
     head, no_ap, uneq = [], [], []
     for c in d["cells"]:
-        ratio = c.get("ros_over_xrt_np_best")
+        ratio = c.get(RATIO)
         if ratio is None:
             continue
         row = {"label": short(c["cell"]), "ratio": float(ratio),
-               "inside": bool(c.get("inside_noise_np"))}
+               "inside": bool(c.get(INSIDE))}
         if c.get("np_degenerate"):
             no_ap.append(row)
         elif not c.get("np_work_equal", True):
@@ -106,8 +135,9 @@ def main() -> int:
     # partition all 26 cells; `inside` is a SUBSET of those, not a third
     # bucket -- recomputing it as one is how the first draft got 10/8/8.
     h = d["headline"]
-    faster, slower = h["np_ros_faster_cells"], h["np_xrt_faster_cells"]
-    inside, median = h["np_inside_noise_cells"], h["np_ros_over_xrt_median"]
+    faster, slower = h[HK + "ros_faster_cells"], h[HK + "xrt_faster_cells"]
+    inside = h[HK + "inside_noise_cells"]
+    median = h[HK + "ros_over_xrt_median"]
     assert faster + slower == len(head), (faster, slower, len(head))
 
     # Two exclusions, two sub-panels. Repeating the reason in all 16 tick
@@ -169,7 +199,7 @@ def main() -> int:
         "constraints hold", fontsize=13.5, color=INK, x=0.007, ha="left", y=0.988)
     fig.text(0.007, 0.930,
              f"ROS whole-network pinning ÷ measured XPU-RT, best legal placement "
-             f"vs best measured solver, medians of 3 reps.\n"
+             f"against {OPPONENT}, medians of 3 reps.\n"
              f"Median {median:.3f} — {faster} cells pinning faster, {slower} scheduler "
              f"faster; {inside} of the {len(head)} sit inside the noise band.",
              fontsize=9.5, color=INK2, ha="left", va="top")
@@ -179,7 +209,7 @@ def main() -> int:
              fontsize=8.5, color=MUTED, ha="left")
     fig.subplots_adjust(left=0.135, right=0.985, top=0.830, bottom=0.068)
 
-    out = os.path.join(SWEEP, "plots", "ros_vs_xpurt_objective.png")
+    out = os.path.join(SWEEP, "plots", STEM + ".png")
     fig.savefig(out, dpi=200, facecolor=SURFACE)
     plt.close(fig)
     print(f"  -> {out}")

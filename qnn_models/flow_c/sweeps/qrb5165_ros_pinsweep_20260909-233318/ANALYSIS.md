@@ -52,7 +52,72 @@ list did not include `plans3net/`, `specs3net/`, `data/toplevel/rospin3net/`,
 3-network configs had no measured XPU-RT number on this board, so this campaign
 emitted, solved and ran them here too (§10).
 
-**0.5 — Everything else in SETUP.md held.** The expressibility verdicts, the
+**0.5 — The opponent is now the *recommended* solver, and it makes XPU-RT look
+WORSE, not better.** The first version of §4 scored pinning against
+`xrt_np_best_ms` — the best *measured* solver per cell. Phase 4 of the XPU-RT
+sweep was tiered by board time (`scripts/drive.py:121`): tier A ran all twelve
+solvers on twelve cells, tier B ran only winner+greedy on the other thirty. So
+on thirty cells "the best measured solver" was chosen from two candidates, and
+on five of them (`bimodal_hd`, `control_mix_hd`, `depth_nav_dc`,
+`tight_loop_{dc,hd}`) from greedy alone. **`cpsat:warmbest` has now been
+measured on all 42 cells** (§13), so the comparison can be stated against the
+solver that sweep actually recommends for the offline/build-time path. Both
+readings are reported, and each is labelled:
+
+| opponent | median ROS ÷ XPU-RT | pinning / scheduler | inside ±9.18% |
+|---|---|---|---|
+| **`cpsat:warmbest`** — the recommendation | **0.9281** | 17 / 9 | 6 |
+| best measured solver over all twelve — an oracle | 0.9762 | 15 / 11 | 8 |
+| *greedy alone* — what the tiering left on 5 cells | *0.7651* | *19 / 7* | — |
+
+**The premise this campaign was launched on turned out to be wrong, and that is
+the result.** Comparing against greedy really would have understated XPU-RT
+badly — 0.7651 against 0.9281 — but §4 was never against greedy; it was against
+an oracle over every solver that happened to be measured, which is the most
+favourable reading available. Naming the actual recommendation moves the median
+the other way, from **0.9762 to 0.9281**, because on this board
+**`cpsat:warmbest` is the best measured solver on only 18 of 42 cells** despite
+being ranked first by predicted objective. Its median penalty against the
+per-cell measured best is 1.0010×, but its tail is 1.5217× (`saturation_dc`:
+6.379 ms against `heft`'s 4.192 ms). Against greedy specifically it is a median
+0.9898× — 22 cells faster (down to 0.2838× on `saturation_dc`), 10 tied and
+**10 slower** (up to 1.1632× on `scale_ladder_hd`). That is the sweep's own §7.3
+caveat — "60% of pairwise solver comparisons are inside the noise" — showing up
+as a headline number rather than as a footnote.
+
+Two cells change direction against the previous headline, both because the
+opponent changed rather than because new data contradicted old:
+`depth_contended_hd` 1.0235 → **0.8812** and `control_mix_dc` 1.0054 →
+**0.9847** (the latter inside the band on both readings). One cell moved
+materially in XPU-RT's favour on *new data*: `control_mix_hd`, whose only
+XPU-RT measurement had been greedy at 8.861 ms, now has `cpsat:warmbest` at
+7.879 ms, so **0.5246 → 0.5899**. The all-operations wall clock moves from
+1.0042 to **1.0048** (15 → 13 cells pinning faster) as the new schedules enter
+the "best measured" pool.
+
+**0.6 — `prune_periodic` is applied to the reported schedules, and it does not
+move the objective.** Every ported spec carries `scheduler.prune_periodic: true`
+(`mk_workloads_qrb5165.py:282`) and nothing in the XPU-RT sweep read it: the
+trim lives in `scripts/run_xpurt_schedule.py`, which that sweep bypasses in
+favour of `sweep10_runner.make_solver`, so all 199 measured schedules are
+untrimmed. `postprocessing.trim_periodic_after_nonperiodic_makespan` is purely
+post-hoc — it takes an already-computed `(t, alpha)` and drops periodic
+operations whose window does not overlap `[0, non-periodic makespan)` — so it
+cannot move a placement and cannot move the non-periodic makespan. **Asserted,
+not assumed: on all 42 cells the objective is bit-identical before and after,**
+while the all-operations makespan shortens on 21 of them (`bimodal_dc`: 33
+operations and 32.454 ms of table down to 10 and 8.691 ms). The board agrees:
+four trimmed schedules were built and run for 3 reps each and the measured
+non-periodic makespan is unchanged or marginally *shorter*, never longer
+(0.982×, 0.847×, 0.905×, 1.021×; three of the four rep ranges overlap the
+untrimmed ones outright). Where it is shorter it is a runtime effect — a
+dispatch table with fewer entries walks fewer gates during the interval being
+timed — not a scheduling one. The comparison in §4 stays on the untrimmed
+measurements, because that is what the other 199 points measured; the trimmed
+schedules are emitted alongside (`schedules/pruned/`) and are what the traces
+and gantts should be read from.
+
+**0.7 — Everything else in SETUP.md held.** The expressibility verdicts, the
 `n_legal` distribution, the harness limits, the 172-assignment measurement plan
 and the noise floor are as written, and `reproduce.py` re-derives all of them
 from the frozen inputs.
@@ -60,9 +125,16 @@ from the frozen inputs.
 ## 1. The noise floor, and this baseline's own
 
 SETUP.md §8 quoted the XPU-RT sweep's measured rep spread before using it:
-**7.62 %** median on the wall clock, **9.18 %** on the non-periodic objective.
-Those bands are drawn on every figure and every "inside/outside" verdict below
-is against them.
+**7.62 %** median on the wall clock, **9.18 %** on the non-periodic objective,
+over that sweep's 199 Phase-4 points. Those bands are drawn on every figure and
+every "inside/outside" verdict below is against them.
+
+Extending that sweep by 30 points (§13) makes the same statistic **6.83 % /
+7.93 %** over 229. **The pre-registered 9.18 % is kept**, because it is the
+wider of the two and a wider band calls fewer differences results; narrowing it
+after the fact would promote borderline cells into findings, which is what a
+pre-registered floor exists to prevent. `reproduce.py` checks both and says
+which is used.
 
 This campaign's own spread is much tighter: **2.46 % median** over 256
 assignments. It is not uniformly tight — the maximum is 110 %
@@ -120,34 +192,49 @@ its optimistic end. Every cell records which it got.
 
 ## 4. The headline: pinning vs scheduling on the objective
 
-**26 cells, best legal placement against the best measured solver, medians of
-3 reps.**
+**26 cells, best legal placement against XPU-RT, medians of 3 reps.** Two
+opponents, both reported, each named (§0.5). The noise floor is quoted first:
+the XPU-RT sweep's own measured rep spread is **9.18 % median on this
+objective**, and every "inside/outside" verdict below is against that band.
 
-| | |
-|---|---|
-| median ROS ÷ XPU-RT | **0.9762** |
-| pinning faster | 15 cells |
-| scheduler faster | 11 cells |
-| inside the ±9.18 % noise floor | 8 cells |
-| worst for pinning | `vint_intro_quad`, **3.54×** |
-| best for pinning | `control_mix_hd`, **0.52×** |
+| | vs `cpsat:warmbest` (the recommendation) | vs best measured over 12 solvers (an oracle) |
+|---|---|---|
+| median ROS ÷ XPU-RT | **0.9281** | 0.9762 |
+| pinning faster | 17 cells | 15 cells |
+| scheduler faster | 9 cells | 11 cells |
+| inside the ±9.18 % noise floor | 6 cells | 8 cells |
+| worst for pinning | `vint_intro_quad`, **3.51×** | `vint_intro_quad`, 3.54× |
+| best for pinning | `scale_ladder_hd`, **0.53×** | `control_mix_hd`, 0.59× |
 
-**At the median, whole-model pinning and per-op scheduling are the same speed
-on this board's own workload matrix — and the median hides everything
+**`cpsat:warmbest` is the number to quote**, because it is what a team would
+actually run at build time; the oracle column needs twelve solvers measured on
+hardware per cell to be available at all, and this campaign is the only reason
+it exists on twelve of the 42.
+
+**Inside the band on 6 of 26** — `bimodal_{cg,dc,quad}` (0.919 / 0.961 / 0.937),
+`control_mix_{dc,quad}` (0.985 / 0.987) and `depth_contended_dc` (1.068). Those
+six are not results in either direction. Of the remaining twenty, **twelve are
+outside the band with pinning faster** and **eight outside with the scheduler
+faster**; the two tails are §4.1 and §4.2 and both keep their mechanism.
+
+**At the median, whole-model pinning is about 7 % ahead of the recommended
+scheduler on this board's own workload matrix — and the median hides everything
 interesting.** The distribution is bimodal, and both tails have a mechanism.
 
 ### 4.1 Where the scheduler wins, and why
 
+Against `cpsat:warmbest`, all eight outside the noise band:
+
 | cell | ROS ÷ XPU-RT | mechanism |
 |---|---|---|
-| `vint_intro_quad` | **3.54×** | per-tile placement |
-| `vint_multi_quad` | 3.10× | per-tile placement |
+| `vint_intro_quad` | **3.51×** | per-tile placement |
+| `vint_multi_quad` | 3.13× | per-tile placement |
+| `scale_ladder_cg` | 2.52× | GPU excluded → one lane for six networks |
 | `vint_intro_dc` | 2.45× | per-tile placement |
 | `vint_multi_dc` | 2.41× | per-tile placement |
-| `scale_ladder_cg` | 2.73× | GPU excluded → one lane for six networks |
+| `vint_multi_cg` | 1.46× | per-tile placement + one lane |
 | `depth_contended_cg` | 1.43× | one lane for three networks |
-| `vint_multi_cg` | 1.43× | per-tile placement + one lane |
-| `vint_intro_cg` | 1.25× | per-tile placement |
+| `vint_intro_cg` | 1.26× | per-tile placement |
 
 **Five of the eight are `vint`, and `vint` is the cleanest forfeiture in the
 matrix.** Its encoder tile composes on {dsp, cpu}, its decoder on {cpu, gpu};
@@ -164,16 +251,18 @@ lane, six `scale_ladder` networks serialise on one CPU.
 
 ### 4.2 Where pinning wins, and why
 
+Against `cpsat:warmbest`; twelve are outside the noise band, the eight largest:
+
 | cell | ROS ÷ XPU-RT | best placement |
 |---|---|---|
-| `control_mix_hd` | **0.52×** | everything on DSP |
-| `scale_ladder_hd` | 0.62× | all six on DSP |
-| `scale_ladder_dc` | 0.63× | all six on DSP |
-| `bimodal_hd` | 0.72× | both on DSP |
+| `scale_ladder_hd` | **0.53×** | all six on DSP |
+| `scale_ladder_dc` | 0.56× | all six on DSP |
+| `control_mix_hd` | 0.59× | everything on DSP |
+| `perception_heavy_hd` | 0.64× | both on DSP |
+| `bimodal_hd` | 0.69× | both on DSP |
 | `perception_heavy_quad` | 0.74× | both on DSP |
 | `depth_contended_quad` | 0.76× | fastdepth@cpu, dronet_sf@hta, yolo@dsp |
 | `perception_heavy_dc` | 0.78× | yolo@dsp, mlp@cpu |
-| `control_mix_cg` | 0.80× | everything on CPU |
 
 **On eleven of the fifteen wins, every aperiodic network is pinned to the DSP
 — "give the timed work the fast lane to itself and keep out of its way".** The
@@ -186,9 +275,11 @@ placement decision alone captures most of what there is to capture, and the
 scheduler's extra freedom buys less than its extra overhead costs.
 
 This is the result the brief asked not to be advocated away, so it is stated
-plainly: **on 15 of 26 cells a team writing ordinary ROS nodes and choosing the
-right lane per network beats the measured scheduler**, and on 7 of those the
-margin is outside the noise floor.
+plainly: **on 17 of 26 cells a team writing ordinary ROS nodes and choosing the
+right lane per network beats the scheduler running its recommended solver**,
+and on 12 of those the margin is outside the noise floor. Against the
+twelve-solver oracle it is 15 of 26 with 7 outside — better for XPU-RT, but
+only available to someone willing to run twelve board campaigns per cell.
 
 ### 4.3 The twelve cells with no aperiodic network
 
@@ -378,10 +469,12 @@ only the non-periodic column is compared.
   those 9 cells, which would only make the baseline stronger.
 * **GPU as a pinning lane.** Excluded by design (SETUP.md §1). Its cost is
   concentrated and reported: it is what makes all 11 `cg` cells degenerate.
-* **Per-solver XPU-RT numbers on the main arm** are whatever the XPU-RT sweep
-  measured — 12 solvers on 12 cells, 1–2 on the rest. The comparison uses each
-  cell's best measured solver, which is the most favourable reading for the
-  scheduler.
+* **Per-solver XPU-RT numbers on the main arm.** The XPU-RT sweep measured 12
+  solvers on 12 cells and winner+greedy on the other 30. This campaign added
+  **`cpsat:warmbest` on all 42** (§13), so the headline is against the solver
+  that sweep recommends; the twelve-solver oracle is still only available on
+  twelve cells and is reported as the secondary column. On the other 30 cells
+  the oracle is a best-of-three, not a best-of-twelve, and is quoted as such.
 
 ## 12. Board discipline and provenance
 
@@ -394,21 +487,80 @@ on all 8 cores, and restored to `performance` after, matching the conditions
 `cost_model.json` was captured under and the conditions the XPU-RT runs used.
 The board's root filesystem went from 32 G free to **19 G free** over the
 session; this campaign's own footprint is 1.1 M of configs, and its runtime
-directories were removed afterwards. Host `/scratch2` is at 96 %.
+directories were removed afterwards. Host `/scratch2` is at 96 %. The follow-up
+campaign in §13 found the board at 81 % / 19 G and **45 G of it in
+`/data/tombstones/cdsp/pd_dump_`** — 881 CDSP process-domain core dumps
+accumulated across this and the preceding sessions. Clearing them returned the
+filesystem to 36 % / 63 G before any new run started. They regrow: 1.9 G
+accumulated again over the 87 runs of §13, so this is a per-session chore and
+not a one-off.
 
 `reproduce.py` re-derives `model_costs.json`, the expressibility verdicts, the
 enumeration, every plan and every median in `measured.json` from the frozen
 inputs, and re-checks the two noise-floor figures against the XPU-RT sweep's
 own `phase4_results.json`. It needs no hardware.
 
-## 13. Figures
+## 13. The `cpsat:warmbest` campaign, and two defects it exposed
+
+`sched_algo_sweep10`'s Phase 4 was tiered by board time, which left its own
+recommended solver measured on 12 of 42 cells. This campaign closed that gap so
+§4 could be stated against the recommendation rather than against a best-of-two.
+
+**What it cost.** 30 cells lacked `cpsat:warmbest`. Emitting all 30 and hashing
+them against the 199 schedules already measured (the sweep's own Phase 4 dedupe,
+on the op → (combination, start, duration) map) found **5 that were byte-identical
+to a schedule already on record** — `depth_chain_{cg,hd}`,
+`depth_contended_cg`, `perception_heavy_{dc,quad}`, every one of them resolving
+through a `decomposed` hop onto that cell's `greedy` run. Those five consumed no
+board time and are reported as dedupes, not as measurements. The other **25
+needed board runs: 75 runs at 3 reps each**, all `N/N entries executed`, none
+discarded. Lock wait 0.28 s median / 0.39 s max. Their non-periodic rep spread
+is **4.67 % median, 37.8 % max** — inside the 9.18 % band the comparison uses,
+at the median. A further 12 runs went to §0.6's prune check, for **87 in total**;
+one of those waited 228 s on the board lock because another tenant held it, which
+is the only contention this campaign saw.
+
+**Defect 1 — the cost model's own exclusion never reaches the solver.**
+`build_cost_model.py` drops any cell the binding manifest cannot execute, and
+says exactly why: *"The scheduler has no `forbidden` flag — it will happily
+place a tile on the cheapest lane it is offered."* It drops one:
+`vint/vint_encoders@gpu`. But the **solver's** workload is built by
+`load_profiled_processing_times` straight out of `gen/profile/`, which never
+sees that decision — the two paths meet only at `flowc/schedule.py::ingest`,
+i.e. *after* the solve. Re-solving `vint_intro_cg` and `vint_multi_cg` today,
+CP-SAT proves an **OPTIMAL 72.279 ms** that puts the ViNT encoders on the GPU at
+a measured-but-unbuildable 55.854 ms, and codegen refuses it. Phase 3 missed
+this by two hours of luck: its solves ran 2026-09-08 16:31 and
+`gen/profile/GPU/qrb5165_flowc/vint/.../results.csv` was not written until
+18:21, so the cell was invisible to the solver then and is visible now. The fix
+is `emit_schedule.py --mask-undeclared`, which masks the cost model's own
+`dropped_undeclared_cells` to +inf **before** the search rather than rejecting
+them after it. With it, both cells return Phase 3's 100.588 ms. Re-emitting all
+30 cells with the mask changes **nothing on the other 28** (identical content
+hashes), including the two `vint_*_quad` cells where the mask applies but the
+solver had not taken the bait — so the mask is a constraint, not a tuning knob.
+
+**Defect 2 — `cpsat:warmbest` leads on prediction and not on measurement.**
+It is the measured np-best solver on **18 of 42 cells**. Median penalty against
+the per-cell measured best is 1.0010×; the tail is 1.5217× (`saturation_dc`,
+6.379 ms against `heft`'s 4.192 ms). Against greedy it is a median 0.9898× —
+22 cells faster, 10 tied, **10 slower**, worst 1.1632× on `scale_ladder_hd`.
+Several of those losses are cells where the two solvers' *predicted* objectives
+are identical to three decimals (`bimodal_hd`: 10.001 both ways) and only the
+board separates them. This is not new — it is `sched_algo_sweep10`'s own §7.3,
+"60 % of pairwise solver comparisons are inside the noise" — but it is the
+reason §4's two columns differ, and it is why the recommendation column is the
+honest one to quote.
+
+## 14. Figures
 
 | file | what |
 |---|---|
-| `plots/ros_vs_xpurt_objective.png` | **the headline, and the one to report**: ROS ÷ XPU-RT on the objective, log ratio axis, the 26 compared cells separated from the 16 excluded, both tails' mechanisms on the figure (`scripts/plot_comparison.py`) |
+| `plots/ros_vs_xpurt_objective_warmbest.png` | **the headline, and the one to report**: ROS ÷ XPU-RT on the objective against `cpsat:warmbest`, log ratio axis, the 26 compared cells separated from the 16 excluded, both tails' mechanisms on the figure (`scripts/plot_comparison.py --against warmbest`) |
+| `plots/ros_vs_xpurt_objective.png` | the same against the best measured solver over all twelve — the secondary reading (`--against best`). The two files are produced by one script from one `results/analysis.json`, and each states its opponent on the figure |
 | `plots/ros_vs_xpurt_nonperiodic.png` | the same data, first draft — linear axis and all 42 cells in one ranking with the excluded greyed. Superseded; kept because §4's cell-by-cell text was written against it |
 | `plots/ros_vs_xpurt.png` | the same on the all-operations wall clock |
 | `plots/placement_value.png` | worst ÷ best measured legal placement, per cell |
 | `plots/costmodel.png` | predicted vs measured, split on whether two networks share a backend |
 | `plots/ros_vs_xpurt_3net.png` | the 3net arm |
-| `plots/gantt_<cell>.png` | XPU-RT vs ROS execution traces for three cells where pinning wins, both drawn from the measured trace blocks, with the aperiodic-completion marker that the ratio is computed on (`scripts/plot_gantt_compare.py`) |
+| `plots/gantt_<cell>.png` | XPU-RT vs ROS execution traces, both from the measured trace blocks, with the aperiodic-completion marker the ratio is computed on (`scripts/plot_gantt_compare.py --prefer cpsat:warmbest`). Six cells across **both** directions: `control_mix_hd` (0.59×), `perception_heavy_hd` (0.64×) and `bimodal_hd` (0.69×) where pinning wins; `depth_contended_cg` (1.43×), `vint_multi_cg` (1.46×) and `vint_intro_dc` (2.45×) where scheduling wins. Every one now draws `cpsat:warmbest`, so the "not measured on this cell" caveat the script prints no longer fires |
