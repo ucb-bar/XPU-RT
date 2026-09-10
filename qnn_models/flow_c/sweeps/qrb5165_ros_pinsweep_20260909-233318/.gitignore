@@ -11,3 +11,4 @@ results/state.json
 results/staged*.json
 results/xpurt3net_state.json
 runtimes3net/
+results/verify3net_tmp/
