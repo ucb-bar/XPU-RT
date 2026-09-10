@@ -66,6 +66,8 @@ import sys
 import time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, HERE)
+import offsets  # noqa: E402
 SWEEP = os.path.abspath(os.path.join(HERE, ".."))
 FLOWC = os.path.abspath(os.path.join(SWEEP, "..", ".."))
 REPO = os.path.abspath(os.path.join(FLOWC, "..", ".."))
@@ -579,7 +581,13 @@ def cmd_run(args):
 
 
 def cmd_rescan(args):
-    """Recompute the non-periodic makespan from run logs already on disk."""
+    """Recompute the non-periodic makespan from run logs already on disk.
+
+    Also derives the START-BARRIER CORRECTION on this arm, by the same rule
+    the main arm uses (scripts/offsets.py): per rep, the end of the last
+    aperiodic operation minus the start of that run's first dispatch. Needs no
+    board time -- the traces are already on disk.
+    """
     st = json.load(open(STATE))
     shapes = {s["name"]: s for s in pin3net.shapes()}
     for key, rec in st.items():
@@ -588,18 +596,31 @@ def cmd_rescan(args):
         name = key.rsplit("__", 1)[0]
         aperiodic = {n for n, v in shapes[name]["networks"].items()
                      if not v.get("period")}
-        nps, npc = [], None
+        nps, npc, oreps = [], None, []
         for rep in range(1, REPS + 1):
             log = os.path.join(RUNLOGS, run_key(key), f"rep{rep}", "run.log")
             npm, c = np_makespan_from_log(log, aperiodic)
             if npm is not None:
                 nps.append(npm)
                 npc = c
+            o = offsets.xpurt_rep(log, aperiodic)
+            if o:
+                oreps.append(o)
         rec["np_reps_ms"] = nps
         rec["np_median_ms"] = round(statistics.median(nps), 4) if nps else None
         rec["np_spread_ms"] = round(max(nps) - min(nps), 4) if nps else None
         rec["np_instances"] = npc
-        print(f'  {key:40s} np={rec["np_median_ms"]}  {npc}')
+        c_med, c_spr, c_v = offsets.summarize(oreps, "corrected_ms")
+        o_med, o_spr, o_v = offsets.summarize(oreps, "offset_ms")
+        rec["np_corrected_median_ms"] = c_med
+        rec["np_corrected_spread_ms"] = c_spr
+        rec["np_corrected_reps_ms"] = c_v
+        rec["offset_median_ms"] = o_med
+        rec["offset_reps_ms"] = o_v
+        rec["release_bound_reps"] = sum(1 for r in oreps if r["release_bound"])
+        print(f'  {key:40s} np={rec["np_median_ms"]} '
+              f'corrected={rec["np_corrected_median_ms"]} '
+              f'offset={rec["offset_median_ms"]}  {npc}')
     with open(STATE, "w") as f:
         json.dump(st, f, indent=1)
     return 0
@@ -647,6 +668,13 @@ def cmd_collect(args):
         if nps:
             e["best_np_ms"] = min(nps.values())
             e["best_np_solver"] = min(nps, key=nps.get)
+        e["warmbest_np_corrected_ms"] = (
+            s.get("cpsat:warmbest") or {}).get("np_corrected_median_ms")
+        cnp = {k: v["np_corrected_median_ms"] for k, v in s.items()
+               if v.get("np_corrected_median_ms")}
+        if cnp:
+            e["best_np_corrected_ms"] = min(cnp.values())
+            e["best_np_corrected_solver"] = min(cnp, key=cnp.get)
         e["np_instances"] = next((v.get("np_instances") for v in s.values()
                                   if v.get("np_instances")), None)
         e["n_solvers_measured"] = len(s)

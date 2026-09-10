@@ -29,7 +29,21 @@
      "np_median_ms": 10.056,
      "np_spread_ms": 0.0,
      "np_instances": {},
-     "sched_hash": "daf061a1762710da4ae8dfeeae633e707612c4d353cfbc2b2b337ff8486202e8"
+     "sched_hash": "daf061a1762710da4ae8dfeeae633e707612c4d353cfbc2b2b337ff8486202e8",
+     "np_corrected_median_ms": 9.978,
+     "np_corrected_spread_ms": 0.142,
+     "np_corrected_reps_ms": [
+      9.988,
+      9.978,
+      9.846
+     ],
+     "offset_median_ms": 0.078,
+     "offset_reps_ms": [
+      0.068,
+      0.078,
+      0.21
+     ],
+     "release_bound_reps": 0
     },
     "heft_edf": {
      "ok": true,
@@ -50,6 +64,20 @@
      "np_spread_ms": 0.0,
      "np_instances": {},
      "sched_hash": "daf061a1762710da4ae8dfeeae633e707612c4d353cfbc2b2b337ff8486202e8",
+     "np_corrected_median_ms": 9.978,
+     "np_corrected_spread_ms": 0.142,
+     "np_corrected_reps_ms": [
+      9.988,
+      9.978,
+      9.846
+     ],
+     "offset_median_ms": 0.078,
+     "offset_reps_ms": [
+      0.068,
+      0.078,
+      0.21
+     ],
+     "release_bound_reps": 0,
      "measured_via": "3net_dronet1_mlp2__greedy"
     },
     "cpsat": {
@@ -75,7 +103,21 @@
       0.26,
       0.26
      ],
-     "predicted_ms": 10.066
+     "predicted_ms": 10.066,
+     "np_corrected_median_ms": 10.046,
+     "np_corrected_spread_ms": 0.015,
+     "np_corrected_reps_ms": [
+      10.046,
+      10.057,
+      10.042
+     ],
+     "offset_median_ms": 0.03,
+     "offset_reps_ms": [
+      0.03,
+      0.017,
+      0.032
+     ],
+     "release_bound_reps": 0
     },
     "cpsat:warmbest": {
      "ok": true,
@@ -96,6 +138,20 @@
      "np_spread_ms": 0.0,
      "np_instances": {},
      "sched_hash": "daf061a1762710da4ae8dfeeae633e707612c4d353cfbc2b2b337ff8486202e8",
+     "np_corrected_median_ms": 9.978,
+     "np_corrected_spread_ms": 0.142,
+     "np_corrected_reps_ms": [
+      9.988,
+      9.978,
+      9.846
+     ],
+     "offset_median_ms": 0.078,
+     "offset_reps_ms": [
+      0.068,
+      0.078,
+      0.21
+     ],
+     "release_bound_reps": 0,
      "measured_via": "3net_dronet1_mlp2__greedy"
     }
    },
@@ -108,6 +164,9 @@
    "greedy_makespan_ms": 10.057,
    "best_np_ms": 10.056,
    "best_np_solver": "greedy",
+   "warmbest_np_corrected_ms": 9.978,
+   "best_np_corrected_ms": 9.978,
+   "best_np_corrected_solver": "greedy",
    "np_instances": null,
    "n_solvers_measured": 4
   },
@@ -133,7 +192,21 @@
      "np_instances": {
       "yolov8n": 1
      },
-     "sched_hash": "242196582cfe7b9a8b5f05390bea292856a17f4ff2b258d7a1a964028b8af278"
+     "sched_hash": "242196582cfe7b9a8b5f05390bea292856a17f4ff2b258d7a1a964028b8af278",
+     "np_corrected_median_ms": 31.901,
+     "np_corrected_spread_ms": 1.169,
+     "np_corrected_reps_ms": [
+      32.784,
+      31.901,
+      31.615
+     ],
+     "offset_median_ms": 0.014,
+     "offset_reps_ms": [
+      0.018,
+      0.011,
+      0.014
+     ],
+     "release_bound_reps": 0
     },
     "heft_edf": {
      "ok": true,
@@ -160,7 +233,21 @@
       0.27,
       0.27
      ],
-     "predicted_ms": 28.644
+     "predicted_ms": 28.644,
+     "np_corrected_median_ms": 30.225,
+     "np_corrected_spread_ms": 3.315,
+     "np_corrected_reps_ms": [
+      32.619,
+      29.304,
+      30.225
+     ],
+     "offset_median_ms": 0.043,
+     "offset_reps_ms": [
+      0.018,
+      0.043,
+      0.045
+     ],
+     "release_bound_reps": 0
     },
     "cpsat": {
      "ok": true,
@@ -188,6 +275,20 @@
       0.27
      ],
      "predicted_ms": 28.644,
+     "np_corrected_median_ms": 30.225,
+     "np_corrected_spread_ms": 3.315,
+     "np_corrected_reps_ms": [
+      32.619,
+      29.304,
+      30.225
+     ],
+     "offset_median_ms": 0.043,
+     "offset_reps_ms": [
+      0.018,
+      0.043,
+      0.045
+     ],
+     "release_bound_reps": 0,
      "measured_via": "3net_dronet1_mlp2_yolo1__heft_edf"
     },
     "cpsat:warmbest": {
@@ -216,6 +317,20 @@
       0.27
      ],
      "predicted_ms": 28.644,
+     "np_corrected_median_ms": 30.225,
+     "np_corrected_spread_ms": 3.315,
+     "np_corrected_reps_ms": [
+      32.619,
+      29.304,
+      30.225
+     ],
+     "offset_median_ms": 0.043,
+     "offset_reps_ms": [
+      0.018,
+      0.043,
+      0.045
+     ],
+     "release_bound_reps": 0,
      "measured_via": "3net_dronet1_mlp2_yolo1__heft_edf"
     }
    },
@@ -228,6 +343,9 @@
    "greedy_makespan_ms": 31.912,
    "best_np_ms": 30.27,
    "best_np_solver": "heft_edf",
+   "warmbest_np_corrected_ms": 30.225,
+   "best_np_corrected_ms": 30.225,
+   "best_np_corrected_solver": "heft_edf",
    "np_instances": {
     "yolov8n": 1
    },
@@ -255,7 +373,21 @@
      "np_instances": {
       "yolov8n": 1
      },
-     "sched_hash": "c00d6cc403c63b4c3b1980bd9fe3aabd32a7dede9146ee276f9c647a5523838b"
+     "sched_hash": "c00d6cc403c63b4c3b1980bd9fe3aabd32a7dede9146ee276f9c647a5523838b",
+     "np_corrected_median_ms": 31.132,
+     "np_corrected_spread_ms": 0.825,
+     "np_corrected_reps_ms": [
+      31.685,
+      30.86,
+      31.132
+     ],
+     "offset_median_ms": 0.011,
+     "offset_reps_ms": [
+      0.011,
+      0.012,
+      0.011
+     ],
+     "release_bound_reps": 0
     },
     "heft_edf": {
      "ok": true,
@@ -282,7 +414,21 @@
       0.26,
       0.26
      ],
-     "predicted_ms": 28.644
+     "predicted_ms": 28.644,
+     "np_corrected_median_ms": 30.176,
+     "np_corrected_spread_ms": 1.104,
+     "np_corrected_reps_ms": [
+      29.247,
+      30.176,
+      30.351
+     ],
+     "offset_median_ms": 0.032,
+     "offset_reps_ms": [
+      0.031,
+      0.045,
+      0.032
+     ],
+     "release_bound_reps": 0
     },
     "cpsat": {
      "ok": true,
@@ -309,7 +455,21 @@
       0.26,
       0.28
      ],
-     "predicted_ms": 29.289
+     "predicted_ms": 29.289,
+     "np_corrected_median_ms": 30.564,
+     "np_corrected_spread_ms": 1.91,
+     "np_corrected_reps_ms": [
+      31.249,
+      29.339,
+      30.564
+     ],
+     "offset_median_ms": 1.673,
+     "offset_reps_ms": [
+      1.214,
+      1.673,
+      1.73
+     ],
+     "release_bound_reps": 1
     },
     "cpsat:warmbest": {
      "ok": true,
@@ -337,6 +497,20 @@
       0.26
      ],
      "predicted_ms": 28.644,
+     "np_corrected_median_ms": 30.176,
+     "np_corrected_spread_ms": 1.104,
+     "np_corrected_reps_ms": [
+      29.247,
+      30.176,
+      30.351
+     ],
+     "offset_median_ms": 0.032,
+     "offset_reps_ms": [
+      0.031,
+      0.045,
+      0.032
+     ],
+     "release_bound_reps": 0,
      "measured_via": "3net_dronet2_mlp8_yolo1__heft_edf"
     }
    },
@@ -349,6 +523,9 @@
    "greedy_makespan_ms": 31.143,
    "best_np_ms": 30.221,
    "best_np_solver": "heft_edf",
+   "warmbest_np_corrected_ms": 30.176,
+   "best_np_corrected_ms": 30.176,
+   "best_np_corrected_solver": "heft_edf",
    "np_instances": {
     "yolov8n": 1
    },
@@ -376,7 +553,21 @@
      "np_instances": {
       "yolov8n": 1
      },
-     "sched_hash": "01bffa21c660da65857517f78b7abbe8332a6087cc2229f287fde37b6fe984d1"
+     "sched_hash": "01bffa21c660da65857517f78b7abbe8332a6087cc2229f287fde37b6fe984d1",
+     "np_corrected_median_ms": 49.918,
+     "np_corrected_spread_ms": 2.661,
+     "np_corrected_reps_ms": [
+      50.135,
+      49.918,
+      47.474
+     ],
+     "offset_median_ms": 0.015,
+     "offset_reps_ms": [
+      0.015,
+      0.011,
+      0.015
+     ],
+     "release_bound_reps": 0
     },
     "heft_edf": {
      "ok": true,
@@ -403,7 +594,21 @@
       0.26,
       0.27
      ],
-     "predicted_ms": 28.644
+     "predicted_ms": 28.644,
+     "np_corrected_median_ms": 31.142,
+     "np_corrected_spread_ms": 1.626,
+     "np_corrected_reps_ms": [
+      31.142,
+      30.085,
+      31.711
+     ],
+     "offset_median_ms": 0.021,
+     "offset_reps_ms": [
+      0.04,
+      0.02,
+      0.021
+     ],
+     "release_bound_reps": 0
     },
     "cpsat": {
      "ok": true,
@@ -430,7 +635,21 @@
       0.26,
       0.27
      ],
-     "predicted_ms": 29.934
+     "predicted_ms": 29.934,
+     "np_corrected_median_ms": 33.755,
+     "np_corrected_spread_ms": 1.381,
+     "np_corrected_reps_ms": [
+      33.755,
+      34.515,
+      33.134
+     ],
+     "offset_median_ms": 0.033,
+     "offset_reps_ms": [
+      0.032,
+      0.033,
+      0.035
+     ],
+     "release_bound_reps": 0
     },
     "cpsat:warmbest": {
      "ok": true,
@@ -458,6 +677,20 @@
       0.27
      ],
      "predicted_ms": 28.644,
+     "np_corrected_median_ms": 31.142,
+     "np_corrected_spread_ms": 1.626,
+     "np_corrected_reps_ms": [
+      31.142,
+      30.085,
+      31.711
+     ],
+     "offset_median_ms": 0.021,
+     "offset_reps_ms": [
+      0.04,
+      0.02,
+      0.021
+     ],
+     "release_bound_reps": 0,
      "measured_via": "3net_dronet4_mlp4_yolo1__heft_edf"
     }
    },
@@ -470,6 +703,9 @@
    "greedy_makespan_ms": 49.93,
    "best_np_ms": 31.182,
    "best_np_solver": "heft_edf",
+   "warmbest_np_corrected_ms": 31.142,
+   "best_np_corrected_ms": 31.142,
+   "best_np_corrected_solver": "heft_edf",
    "np_instances": {
     "yolov8n": 1
    },
@@ -497,7 +733,21 @@
      "np_instances": {
       "yolov8n": 1
      },
-     "sched_hash": "c8830fd2a6915132550a8fbb3528c4421a27a0d36532752e6fbe8d55960ac485"
+     "sched_hash": "c8830fd2a6915132550a8fbb3528c4421a27a0d36532752e6fbe8d55960ac485",
+     "np_corrected_median_ms": 37.985,
+     "np_corrected_spread_ms": 2.566,
+     "np_corrected_reps_ms": [
+      39.671,
+      37.985,
+      37.105
+     ],
+     "offset_median_ms": 0.012,
+     "offset_reps_ms": [
+      0.012,
+      0.011,
+      0.013
+     ],
+     "release_bound_reps": 0
     },
     "heft_edf": {
      "ok": true,
@@ -524,7 +774,21 @@
       0.28,
       0.26
      ],
-     "predicted_ms": 28.644
+     "predicted_ms": 28.644,
+     "np_corrected_median_ms": 30.496,
+     "np_corrected_spread_ms": 0.868,
+     "np_corrected_reps_ms": [
+      30.68,
+      30.496,
+      29.812
+     ],
+     "offset_median_ms": 0.033,
+     "offset_reps_ms": [
+      0.033,
+      0.035,
+      0.032
+     ],
+     "release_bound_reps": 0
     },
     "cpsat": {
      "ok": true,
@@ -551,7 +815,21 @@
       0.26,
       0.27
      ],
-     "predicted_ms": 52.731
+     "predicted_ms": 52.731,
+     "np_corrected_median_ms": 64.232,
+     "np_corrected_spread_ms": 9.101,
+     "np_corrected_reps_ms": [
+      72.854,
+      64.232,
+      63.753
+     ],
+     "offset_median_ms": 0.04,
+     "offset_reps_ms": [
+      0.04,
+      0.043,
+      0.031
+     ],
+     "release_bound_reps": 0
     },
     "cpsat:warmbest": {
      "ok": true,
@@ -579,6 +857,20 @@
       0.26
      ],
      "predicted_ms": 28.644,
+     "np_corrected_median_ms": 30.496,
+     "np_corrected_spread_ms": 0.868,
+     "np_corrected_reps_ms": [
+      30.68,
+      30.496,
+      29.812
+     ],
+     "offset_median_ms": 0.033,
+     "offset_reps_ms": [
+      0.033,
+      0.035,
+      0.032
+     ],
+     "release_bound_reps": 0,
      "measured_via": "3net_dronet4_mlp8_yolo1__heft_edf"
     }
    },
@@ -591,6 +883,9 @@
    "greedy_makespan_ms": 37.996,
    "best_np_ms": 30.531,
    "best_np_solver": "heft_edf",
+   "warmbest_np_corrected_ms": 30.496,
+   "best_np_corrected_ms": 30.496,
+   "best_np_corrected_solver": "heft_edf",
    "np_instances": {
     "yolov8n": 1
    },
@@ -618,7 +913,21 @@
      "np_instances": {
       "yolov8n": 1
      },
-     "sched_hash": "c8830fd2a6915132550a8fbb3528c4421a27a0d36532752e6fbe8d55960ac485"
+     "sched_hash": "c8830fd2a6915132550a8fbb3528c4421a27a0d36532752e6fbe8d55960ac485",
+     "np_corrected_median_ms": 38.75,
+     "np_corrected_spread_ms": 0.878,
+     "np_corrected_reps_ms": [
+      37.974,
+      38.75,
+      38.852
+     ],
+     "offset_median_ms": 0.012,
+     "offset_reps_ms": [
+      0.015,
+      0.012,
+      0.01
+     ],
+     "release_bound_reps": 0
     },
     "heft_edf": {
      "ok": true,
@@ -645,7 +954,21 @@
       0.26,
       0.26
      ],
-     "predicted_ms": 28.644
+     "predicted_ms": 28.644,
+     "np_corrected_median_ms": 30.575,
+     "np_corrected_spread_ms": 1.1,
+     "np_corrected_reps_ms": [
+      31.469,
+      30.369,
+      30.575
+     ],
+     "offset_median_ms": 0.035,
+     "offset_reps_ms": [
+      0.032,
+      0.035,
+      0.042
+     ],
+     "release_bound_reps": 0
     },
     "cpsat": {
      "ok": true,
@@ -672,7 +995,21 @@
       0.29,
       0.26
      ],
-     "predicted_ms": 53.373
+     "predicted_ms": 53.373,
+     "np_corrected_median_ms": 73.521,
+     "np_corrected_spread_ms": 14.32,
+     "np_corrected_reps_ms": [
+      61.32,
+      75.64,
+      73.521
+     ],
+     "offset_median_ms": 0.016,
+     "offset_reps_ms": [
+      0.017,
+      0.016,
+      0.016
+     ],
+     "release_bound_reps": 0
     },
     "cpsat:warmbest": {
      "ok": true,
@@ -700,6 +1037,20 @@
       0.26
      ],
      "predicted_ms": 28.644,
+     "np_corrected_median_ms": 30.575,
+     "np_corrected_spread_ms": 1.1,
+     "np_corrected_reps_ms": [
+      31.469,
+      30.369,
+      30.575
+     ],
+     "offset_median_ms": 0.035,
+     "offset_reps_ms": [
+      0.032,
+      0.035,
+      0.042
+     ],
+     "release_bound_reps": 0,
      "measured_via": "3net_dronet8_mlp16_yolo1__heft_edf"
     }
    },
@@ -712,6 +1063,9 @@
    "greedy_makespan_ms": 38.763,
    "best_np_ms": 30.617,
    "best_np_solver": "heft_edf",
+   "warmbest_np_corrected_ms": 30.575,
+   "best_np_corrected_ms": 30.575,
+   "best_np_corrected_solver": "heft_edf",
    "np_instances": {
     "yolov8n": 1
    },
@@ -739,7 +1093,21 @@
      "np_instances": {
       "yolov8n": 1
      },
-     "sched_hash": "d1201503dd3574a8cb350840cca0f308a7b2ac568e635c2844c22c2f22c68c93"
+     "sched_hash": "d1201503dd3574a8cb350840cca0f308a7b2ac568e635c2844c22c2f22c68c93",
+     "np_corrected_median_ms": 29.81,
+     "np_corrected_spread_ms": 1.315,
+     "np_corrected_reps_ms": [
+      28.88,
+      30.195,
+      29.81
+     ],
+     "offset_median_ms": 1.292,
+     "offset_reps_ms": [
+      1.292,
+      1.509,
+      0.055
+     ],
+     "release_bound_reps": 1
     },
     "heft_edf": {
      "ok": true,
@@ -762,6 +1130,20 @@
       "yolov8n": 1
      },
      "sched_hash": "d1201503dd3574a8cb350840cca0f308a7b2ac568e635c2844c22c2f22c68c93",
+     "np_corrected_median_ms": 29.81,
+     "np_corrected_spread_ms": 1.315,
+     "np_corrected_reps_ms": [
+      28.88,
+      30.195,
+      29.81
+     ],
+     "offset_median_ms": 1.292,
+     "offset_reps_ms": [
+      1.292,
+      1.509,
+      0.055
+     ],
+     "release_bound_reps": 1,
      "measured_via": "3net_fused2_mlp8_yolo1__greedy"
     },
     "cpsat": {
@@ -785,6 +1167,20 @@
       "yolov8n": 1
      },
      "sched_hash": "d1201503dd3574a8cb350840cca0f308a7b2ac568e635c2844c22c2f22c68c93",
+     "np_corrected_median_ms": 29.81,
+     "np_corrected_spread_ms": 1.315,
+     "np_corrected_reps_ms": [
+      28.88,
+      30.195,
+      29.81
+     ],
+     "offset_median_ms": 1.292,
+     "offset_reps_ms": [
+      1.292,
+      1.509,
+      0.055
+     ],
+     "release_bound_reps": 1,
      "measured_via": "3net_fused2_mlp8_yolo1__greedy"
     },
     "cpsat:warmbest": {
@@ -808,6 +1204,20 @@
       "yolov8n": 1
      },
      "sched_hash": "d1201503dd3574a8cb350840cca0f308a7b2ac568e635c2844c22c2f22c68c93",
+     "np_corrected_median_ms": 29.81,
+     "np_corrected_spread_ms": 1.315,
+     "np_corrected_reps_ms": [
+      28.88,
+      30.195,
+      29.81
+     ],
+     "offset_median_ms": 1.292,
+     "offset_reps_ms": [
+      1.292,
+      1.509,
+      0.055
+     ],
+     "release_bound_reps": 1,
      "measured_via": "3net_fused2_mlp8_yolo1__greedy"
     }
    },
@@ -820,6 +1230,9 @@
    "greedy_makespan_ms": 30.173,
    "best_np_ms": 30.172,
    "best_np_solver": "greedy",
+   "warmbest_np_corrected_ms": 29.81,
+   "best_np_corrected_ms": 29.81,
+   "best_np_corrected_solver": "greedy",
    "np_instances": {
     "yolov8n": 1
    },
@@ -847,7 +1260,21 @@
      "np_instances": {
       "yolov8n": 1
      },
-     "sched_hash": "d1e89b84dc0778227473c8603105ce761f4236c0d06e6f19db8a42665b89acaf"
+     "sched_hash": "d1e89b84dc0778227473c8603105ce761f4236c0d06e6f19db8a42665b89acaf",
+     "np_corrected_median_ms": 29.366,
+     "np_corrected_spread_ms": 0.864,
+     "np_corrected_reps_ms": [
+      29.469,
+      28.605,
+      29.366
+     ],
+     "offset_median_ms": 1.354,
+     "offset_reps_ms": [
+      1.347,
+      1.354,
+      1.574
+     ],
+     "release_bound_reps": 3
     },
     "heft_edf": {
      "ok": true,
@@ -874,7 +1301,21 @@
       0.26,
       0.27
      ],
-     "predicted_ms": 28.644
+     "predicted_ms": 28.644,
+     "np_corrected_median_ms": 30.193,
+     "np_corrected_spread_ms": 2.142,
+     "np_corrected_reps_ms": [
+      30.193,
+      30.687,
+      28.545
+     ],
+     "offset_median_ms": 0.217,
+     "offset_reps_ms": [
+      0.217,
+      0.019,
+      1.215
+     ],
+     "release_bound_reps": 1
     },
     "cpsat": {
      "ok": true,
@@ -897,6 +1338,20 @@
       "yolov8n": 1
      },
      "sched_hash": "d1e89b84dc0778227473c8603105ce761f4236c0d06e6f19db8a42665b89acaf",
+     "np_corrected_median_ms": 29.366,
+     "np_corrected_spread_ms": 0.864,
+     "np_corrected_reps_ms": [
+      29.469,
+      28.605,
+      29.366
+     ],
+     "offset_median_ms": 1.354,
+     "offset_reps_ms": [
+      1.347,
+      1.354,
+      1.574
+     ],
+     "release_bound_reps": 3,
      "measured_via": "3net_fused4_mlp4_yolo1__greedy"
     },
     "cpsat:warmbest": {
@@ -920,6 +1375,20 @@
       "yolov8n": 1
      },
      "sched_hash": "d1e89b84dc0778227473c8603105ce761f4236c0d06e6f19db8a42665b89acaf",
+     "np_corrected_median_ms": 29.366,
+     "np_corrected_spread_ms": 0.864,
+     "np_corrected_reps_ms": [
+      29.469,
+      28.605,
+      29.366
+     ],
+     "offset_median_ms": 1.354,
+     "offset_reps_ms": [
+      1.347,
+      1.354,
+      1.574
+     ],
+     "release_bound_reps": 3,
      "measured_via": "3net_fused4_mlp4_yolo1__greedy"
     }
    },
@@ -932,6 +1401,9 @@
    "greedy_makespan_ms": 30.816,
    "best_np_ms": 30.41,
    "best_np_solver": "heft_edf",
+   "warmbest_np_corrected_ms": 29.366,
+   "best_np_corrected_ms": 29.366,
+   "best_np_corrected_solver": "greedy",
    "np_instances": {
     "yolov8n": 1
    },
@@ -957,7 +1429,21 @@
      "np_median_ms": 10.067,
      "np_spread_ms": 0.041,
      "np_instances": {},
-     "sched_hash": "8e51ab02cd987741c830672d7962b815c988f5fdc12e11f37f3e2cea66a126b9"
+     "sched_hash": "8e51ab02cd987741c830672d7962b815c988f5fdc12e11f37f3e2cea66a126b9",
+     "np_corrected_median_ms": 8.087,
+     "np_corrected_spread_ms": 1.972,
+     "np_corrected_reps_ms": [
+      7.909,
+      8.087,
+      9.881
+     ],
+     "offset_median_ms": 1.976,
+     "offset_reps_ms": [
+      2.158,
+      1.976,
+      0.223
+     ],
+     "release_bound_reps": 2
     },
     "heft_edf": {
      "ok": true,
@@ -978,6 +1464,20 @@
      "np_spread_ms": 0.041,
      "np_instances": {},
      "sched_hash": "8e51ab02cd987741c830672d7962b815c988f5fdc12e11f37f3e2cea66a126b9",
+     "np_corrected_median_ms": 8.087,
+     "np_corrected_spread_ms": 1.972,
+     "np_corrected_reps_ms": [
+      7.909,
+      8.087,
+      9.881
+     ],
+     "offset_median_ms": 1.976,
+     "offset_reps_ms": [
+      2.158,
+      1.976,
+      0.223
+     ],
+     "release_bound_reps": 2,
      "measured_via": "3net_mlp2__greedy"
     },
     "cpsat": {
@@ -999,6 +1499,20 @@
      "np_spread_ms": 0.041,
      "np_instances": {},
      "sched_hash": "8e51ab02cd987741c830672d7962b815c988f5fdc12e11f37f3e2cea66a126b9",
+     "np_corrected_median_ms": 8.087,
+     "np_corrected_spread_ms": 1.972,
+     "np_corrected_reps_ms": [
+      7.909,
+      8.087,
+      9.881
+     ],
+     "offset_median_ms": 1.976,
+     "offset_reps_ms": [
+      2.158,
+      1.976,
+      0.223
+     ],
+     "release_bound_reps": 2,
      "measured_via": "3net_mlp2__greedy"
     },
     "cpsat:warmbest": {
@@ -1020,6 +1534,20 @@
      "np_spread_ms": 0.041,
      "np_instances": {},
      "sched_hash": "8e51ab02cd987741c830672d7962b815c988f5fdc12e11f37f3e2cea66a126b9",
+     "np_corrected_median_ms": 8.087,
+     "np_corrected_spread_ms": 1.972,
+     "np_corrected_reps_ms": [
+      7.909,
+      8.087,
+      9.881
+     ],
+     "offset_median_ms": 1.976,
+     "offset_reps_ms": [
+      2.158,
+      1.976,
+      0.223
+     ],
+     "release_bound_reps": 2,
      "measured_via": "3net_mlp2__greedy"
     }
    },
@@ -1032,6 +1560,9 @@
    "greedy_makespan_ms": 10.067,
    "best_np_ms": 10.067,
    "best_np_solver": "greedy",
+   "warmbest_np_corrected_ms": 8.087,
+   "best_np_corrected_ms": 8.087,
+   "best_np_corrected_solver": "greedy",
    "np_instances": null,
    "n_solvers_measured": 4
   }
