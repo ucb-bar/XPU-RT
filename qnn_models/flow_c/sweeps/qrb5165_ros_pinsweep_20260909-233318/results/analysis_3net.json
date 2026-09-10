@@ -1,6 +1,51 @@
 {
- "_comment": "The 3net arm. ROS whole-model pinning vs XPU-RT scheduling on the same three lanes of the same board, both measured in this campaign. Primary objective: the non-periodic makespan. XPU-RT trims periodic instances falling after it -- a better solution to the same problem -- so the wall clock is NOT the comparison except on the two shapes with no aperiodic network, where both sides executed identical entry counts.",
+ "_comment": "The 3net arm. ROS whole-model pinning vs XPU-RT scheduling on the same three lanes of the same board, both measured in this campaign. Primary objective: the non-periodic makespan, scored against `cpsat:warmbest` -- the solver the sweep10 study recommends -- with the best measured solver reported second as an oracle. XPU-RT trims periodic instances falling after the objective; that is a better solution to the same problem, so the wall clock is NOT the comparison except on the two shapes with no aperiodic network, where both sides executed identical entry counts.",
  "noise_floor_np_pct": 9.18,
+ "headline": {
+  "np_opponent_primary": "cpsat:warmbest (the sweep10 study's own recommendation for the offline/build-time path)",
+  "np_opponent_secondary": "best measured solver per shape (an oracle over the solvers measured here)",
+  "shapes_with_an_aperiodic_network": 7,
+  "shapes_with_warmbest": 7,
+  "warmbest_median": 0.9305,
+  "warmbest_ros_faster": 7,
+  "warmbest_xrt_faster": 0,
+  "warmbest_inside_noise": [
+   "3net_dronet2_mlp8_yolo1",
+   "3net_dronet4_mlp8_yolo1",
+   "3net_dronet8_mlp16_yolo1",
+   "3net_fused2_mlp8_yolo1",
+   "3net_fused4_mlp4_yolo1"
+  ],
+  "warmbest_worst_for_ros": "3net_fused2_mlp8_yolo1",
+  "warmbest_worst_for_ros_ratio": 0.9605,
+  "warmbest_best_for_ros": "3net_dronet1_mlp2_yolo1",
+  "warmbest_best_for_ros_ratio": 0.8652,
+  "best_median": 0.9314,
+  "best_ros_faster": 7,
+  "best_xrt_faster": 0,
+  "best_inside_noise": [
+   "3net_dronet2_mlp8_yolo1",
+   "3net_dronet4_mlp8_yolo1",
+   "3net_dronet8_mlp16_yolo1",
+   "3net_fused2_mlp8_yolo1",
+   "3net_fused4_mlp4_yolo1"
+  ],
+  "shapes_deduped_onto_an_existing_run": {
+   "3net_dronet1_mlp2": "3net_dronet1_mlp2__greedy",
+   "3net_dronet1_mlp2_yolo1": "3net_dronet1_mlp2_yolo1__heft_edf",
+   "3net_dronet2_mlp8_yolo1": "3net_dronet2_mlp8_yolo1__heft_edf",
+   "3net_dronet4_mlp4_yolo1": "3net_dronet4_mlp4_yolo1__heft_edf",
+   "3net_dronet4_mlp8_yolo1": "3net_dronet4_mlp8_yolo1__heft_edf",
+   "3net_dronet8_mlp16_yolo1": "3net_dronet8_mlp16_yolo1__heft_edf",
+   "3net_fused2_mlp8_yolo1": "3net_fused2_mlp8_yolo1__greedy",
+   "3net_fused4_mlp4_yolo1": "3net_fused4_mlp4_yolo1__greedy",
+   "3net_mlp2": "3net_mlp2__greedy"
+  },
+  "np_degenerate_shapes": [
+   "3net_dronet1_mlp2",
+   "3net_mlp2"
+  ]
+ },
  "shapes": [
   {
    "shape": "3net_dronet1_mlp2",
@@ -18,11 +63,25 @@
    "xrt_np_ms": 10.056,
    "xrt_wall_ms": 10.057,
    "xrt_solver": "greedy",
+   "xrt_np_solver": "greedy",
    "xrt_np_instances": null,
+   "xrt_np_warmbest_ms": 10.056,
+   "xrt_warmbest_ms": 10.057,
+   "xrt_warmbest_spread_pct": 0.0,
+   "xrt_warmbest_via": "3net_dronet1_mlp2__greedy",
+   "xrt_solvers_measured": [
+    "cpsat",
+    "cpsat:warmbest",
+    "greedy",
+    "heft_edf"
+   ],
+   "xrt_n_unique_schedules": 2,
    "ros_over_xrt_np": 1.0152,
+   "ros_over_xrt_np_warmbest": 1.0152,
    "ros_over_xrt_wall": 1.0151,
    "placement_spread_np": 1.2761,
-   "inside_noise_np": true
+   "inside_noise_np": true,
+   "inside_noise_np_warmbest": true
   },
   {
    "shape": "3net_dronet1_mlp2_yolo1",
@@ -39,16 +98,30 @@
    "ros_np_label": "mlp_control@cpu_dronet@cpu_yolov8n@dsp",
    "ros_np_worst_ms": 86.6466,
    "ros_wall_ms": 26.19,
-   "xrt_np_ms": 31.912,
-   "xrt_wall_ms": 31.912,
-   "xrt_solver": "greedy",
+   "xrt_np_ms": 30.27,
+   "xrt_wall_ms": 30.27,
+   "xrt_solver": "heft_edf",
+   "xrt_np_solver": "heft_edf",
    "xrt_np_instances": {
     "yolov8n": 1
    },
-   "ros_over_xrt_np": 0.8207,
-   "ros_over_xrt_wall": 0.8207,
+   "xrt_np_warmbest_ms": 30.27,
+   "xrt_warmbest_ms": 30.27,
+   "xrt_warmbest_spread_pct": 10.87,
+   "xrt_warmbest_via": "3net_dronet1_mlp2_yolo1__heft_edf",
+   "xrt_solvers_measured": [
+    "cpsat",
+    "cpsat:warmbest",
+    "greedy",
+    "heft_edf"
+   ],
+   "xrt_n_unique_schedules": 2,
+   "ros_over_xrt_np": 0.8652,
+   "ros_over_xrt_np_warmbest": 0.8652,
+   "ros_over_xrt_wall": 0.8652,
    "placement_spread_np": 3.3084,
-   "inside_noise_np": false
+   "inside_noise_np": false,
+   "inside_noise_np_warmbest": false
   },
   {
    "shape": "3net_dronet2_mlp8_yolo1",
@@ -63,16 +136,30 @@
    "ros_np_label": "mlp_control@cpu_yolov8n@dsp_dronet@dsp",
    "ros_np_worst_ms": 91.9899,
    "ros_wall_ms": 71.3911,
-   "xrt_np_ms": 31.143,
-   "xrt_wall_ms": 31.143,
-   "xrt_solver": "greedy",
+   "xrt_np_ms": 30.221,
+   "xrt_wall_ms": 30.221,
+   "xrt_solver": "heft_edf",
+   "xrt_np_solver": "heft_edf",
    "xrt_np_instances": {
     "yolov8n": 1
    },
-   "ros_over_xrt_np": 0.9208,
-   "ros_over_xrt_wall": 2.2924,
+   "xrt_np_warmbest_ms": 30.221,
+   "xrt_warmbest_ms": 30.221,
+   "xrt_warmbest_spread_pct": 3.66,
+   "xrt_warmbest_via": "3net_dronet2_mlp8_yolo1__heft_edf",
+   "xrt_solvers_measured": [
+    "cpsat",
+    "cpsat:warmbest",
+    "greedy",
+    "heft_edf"
+   ],
+   "xrt_n_unique_schedules": 3,
+   "ros_over_xrt_np": 0.9489,
+   "ros_over_xrt_np_warmbest": 0.9489,
+   "ros_over_xrt_wall": 2.3623,
    "placement_spread_np": 3.2078,
-   "inside_noise_np": true
+   "inside_noise_np": true,
+   "inside_noise_np_warmbest": true
   },
   {
    "shape": "3net_dronet4_mlp4_yolo1",
@@ -87,16 +174,30 @@
    "ros_np_label": "mlp_control@cpu_yolov8n@dsp_dronet@dsp",
    "ros_np_worst_ms": 110.1169,
    "ros_wall_ms": 30.9664,
-   "xrt_np_ms": 49.929,
-   "xrt_wall_ms": 49.93,
-   "xrt_solver": "greedy",
+   "xrt_np_ms": 31.182,
+   "xrt_wall_ms": 31.183,
+   "xrt_solver": "heft_edf",
+   "xrt_np_solver": "heft_edf",
    "xrt_np_instances": {
     "yolov8n": 1
    },
-   "ros_over_xrt_np": 0.542,
-   "ros_over_xrt_wall": 0.6202,
+   "xrt_np_warmbest_ms": 31.182,
+   "xrt_warmbest_ms": 31.183,
+   "xrt_warmbest_spread_pct": 5.22,
+   "xrt_warmbest_via": "3net_dronet4_mlp4_yolo1__heft_edf",
+   "xrt_solvers_measured": [
+    "cpsat",
+    "cpsat:warmbest",
+    "greedy",
+    "heft_edf"
+   ],
+   "xrt_n_unique_schedules": 3,
+   "ros_over_xrt_np": 0.8678,
+   "ros_over_xrt_np_warmbest": 0.8678,
+   "ros_over_xrt_wall": 0.9931,
    "placement_spread_np": 4.0694,
-   "inside_noise_np": false
+   "inside_noise_np": false,
+   "inside_noise_np_warmbest": false
   },
   {
    "shape": "3net_dronet4_mlp8_yolo1",
@@ -114,16 +215,30 @@
    "ros_np_label": "mlp_control@cpu_dronet@cpu_yolov8n@dsp",
    "ros_np_worst_ms": 109.1658,
    "ros_wall_ms": 70.209,
-   "xrt_np_ms": 37.996,
-   "xrt_wall_ms": 37.996,
-   "xrt_solver": "greedy",
+   "xrt_np_ms": 30.531,
+   "xrt_wall_ms": 30.531,
+   "xrt_solver": "heft_edf",
+   "xrt_np_solver": "heft_edf",
    "xrt_np_instances": {
     "yolov8n": 1
    },
-   "ros_over_xrt_np": 0.7484,
-   "ros_over_xrt_wall": 1.8478,
+   "xrt_np_warmbest_ms": 30.531,
+   "xrt_warmbest_ms": 30.531,
+   "xrt_warmbest_spread_pct": 2.85,
+   "xrt_warmbest_via": "3net_dronet4_mlp8_yolo1__heft_edf",
+   "xrt_solvers_measured": [
+    "cpsat",
+    "cpsat:warmbest",
+    "greedy",
+    "heft_edf"
+   ],
+   "xrt_n_unique_schedules": 3,
+   "ros_over_xrt_np": 0.9314,
+   "ros_over_xrt_np_warmbest": 0.9314,
+   "ros_over_xrt_wall": 2.2996,
    "placement_spread_np": 3.839,
-   "inside_noise_np": false
+   "inside_noise_np": true,
+   "inside_noise_np_warmbest": true
   },
   {
    "shape": "3net_dronet8_mlp16_yolo1",
@@ -139,16 +254,30 @@
    "ros_np_label": "mlp_control@cpu_dronet@cpu_yolov8n@dsp",
    "ros_np_worst_ms": 139.0398,
    "ros_wall_ms": 150.2165,
-   "xrt_np_ms": 38.762,
-   "xrt_wall_ms": 38.763,
-   "xrt_solver": "greedy",
+   "xrt_np_ms": 30.617,
+   "xrt_wall_ms": 30.617,
+   "xrt_solver": "heft_edf",
+   "xrt_np_solver": "heft_edf",
    "xrt_np_instances": {
     "yolov8n": 1
    },
-   "ros_over_xrt_np": 0.735,
-   "ros_over_xrt_wall": 3.8753,
+   "xrt_np_warmbest_ms": 30.617,
+   "xrt_warmbest_ms": 30.617,
+   "xrt_warmbest_spread_pct": 3.58,
+   "xrt_warmbest_via": "3net_dronet8_mlp16_yolo1__heft_edf",
+   "xrt_solvers_measured": [
+    "cpsat",
+    "cpsat:warmbest",
+    "greedy",
+    "heft_edf"
+   ],
+   "xrt_n_unique_schedules": 3,
+   "ros_over_xrt_np": 0.9305,
+   "ros_over_xrt_np_warmbest": 0.9305,
+   "ros_over_xrt_wall": 4.9063,
    "placement_spread_np": 4.8804,
-   "inside_noise_np": false
+   "inside_noise_np": true,
+   "inside_noise_np_warmbest": true
   },
   {
    "shape": "3net_fused2_mlp8_yolo1",
@@ -166,13 +295,27 @@
    "xrt_np_ms": 30.172,
    "xrt_wall_ms": 30.173,
    "xrt_solver": "greedy",
+   "xrt_np_solver": "greedy",
    "xrt_np_instances": {
     "yolov8n": 1
    },
+   "xrt_np_warmbest_ms": 30.172,
+   "xrt_warmbest_ms": 30.173,
+   "xrt_warmbest_spread_pct": 6.1,
+   "xrt_warmbest_via": "3net_fused2_mlp8_yolo1__greedy",
+   "xrt_solvers_measured": [
+    "cpsat",
+    "cpsat:warmbest",
+    "greedy",
+    "heft_edf"
+   ],
+   "xrt_n_unique_schedules": 1,
    "ros_over_xrt_np": 0.9605,
+   "ros_over_xrt_np_warmbest": 0.9605,
    "ros_over_xrt_wall": 2.451,
    "placement_spread_np": 3.2632,
-   "inside_noise_np": true
+   "inside_noise_np": true,
+   "inside_noise_np_warmbest": true
   },
   {
    "shape": "3net_fused4_mlp4_yolo1",
@@ -187,16 +330,30 @@
    "ros_np_label": "mlp_control@dsp_fused_full@cpu_yolov8n@dsp",
    "ros_np_worst_ms": 99.6311,
    "ros_wall_ms": 33.5549,
-   "xrt_np_ms": 30.816,
-   "xrt_wall_ms": 30.816,
-   "xrt_solver": "greedy",
+   "xrt_np_ms": 30.41,
+   "xrt_wall_ms": 30.411,
+   "xrt_solver": "heft_edf",
+   "xrt_np_solver": "heft_edf",
    "xrt_np_instances": {
     "yolov8n": 1
    },
-   "ros_over_xrt_np": 0.9304,
-   "ros_over_xrt_wall": 1.0889,
+   "xrt_np_warmbest_ms": 30.816,
+   "xrt_warmbest_ms": 30.816,
+   "xrt_warmbest_spread_pct": 3.18,
+   "xrt_warmbest_via": "3net_fused4_mlp4_yolo1__greedy",
+   "xrt_solvers_measured": [
+    "cpsat",
+    "cpsat:warmbest",
+    "greedy",
+    "heft_edf"
+   ],
+   "xrt_n_unique_schedules": 2,
+   "ros_over_xrt_np": 0.9428,
+   "ros_over_xrt_np_warmbest": 0.9304,
+   "ros_over_xrt_wall": 1.1034,
    "placement_spread_np": 3.4749,
-   "inside_noise_np": true
+   "inside_noise_np": true,
+   "inside_noise_np_warmbest": true
   },
   {
    "shape": "3net_mlp2",
@@ -214,11 +371,25 @@
    "xrt_np_ms": 10.067,
    "xrt_wall_ms": 10.067,
    "xrt_solver": "greedy",
+   "xrt_np_solver": "greedy",
    "xrt_np_instances": null,
+   "xrt_np_warmbest_ms": 10.067,
+   "xrt_warmbest_ms": 10.067,
+   "xrt_warmbest_spread_pct": 0.41,
+   "xrt_warmbest_via": "3net_mlp2__greedy",
+   "xrt_solvers_measured": [
+    "cpsat",
+    "cpsat:warmbest",
+    "greedy",
+    "heft_edf"
+   ],
+   "xrt_n_unique_schedules": 1,
    "ros_over_xrt_np": 1.0247,
+   "ros_over_xrt_np_warmbest": 1.0247,
    "ros_over_xrt_wall": 1.0247,
    "placement_spread_np": 1.0233,
-   "inside_noise_np": true
+   "inside_noise_np": true,
+   "inside_noise_np_warmbest": true
   }
  ]
 }

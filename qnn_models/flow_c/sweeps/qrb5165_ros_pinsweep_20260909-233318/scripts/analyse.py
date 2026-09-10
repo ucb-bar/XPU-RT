@@ -404,6 +404,21 @@ def cmd_tables3net(args):
     problem, not a different workload. Two shapes carry no aperiodic network
     at all -- there the objective degenerates to the wall clock, and it is
     quoted only because both sides happened to execute identical entry counts.
+
+    TWO OPPONENTS, BOTH REPORTED, NEITHER STANDING IN FOR THE OTHER -- exactly
+    as §4 does for the main arm:
+
+      primary    `cpsat:warmbest`, the sweep10 study's own recommendation for
+                 the offline/build-time path. This is the number to quote,
+                 because it is the one a user following that study would get.
+      secondary  the best measured solver on that shape, an oracle over the
+                 four measured here. The most favourable reading available to
+                 the scheduler.
+
+    The first version of this arm had neither: it scored against cold `cpsat`
+    and, because the driver's dedupe key hashed a JSON field that does not
+    exist, against a `cpsat` that had never actually been run -- every solver
+    was recorded as a duplicate of `greedy`, so all three columns were greedy.
     """
     doc = load()
     xrt = json.load(open(os.path.join(SWEEP, "results", "xpurt3net.json")))["shapes"]
@@ -422,6 +437,8 @@ def cmd_tables3net(args):
         np_best = min(rr, key=np_rank_key)
         aper = [n for n, v in plans[cell]["networks"].items()
                 if v["period_ms"] is None]
+        sv = x.get("solvers") or {}
+        wb = sv.get("cpsat:warmbest") or {}
         rows.append(dict(
             shape=cell, sources=plans[cell]["sources"],
             n_legal=plans[cell]["n_legal"], n_measured=len(rr),
@@ -433,8 +450,21 @@ def cmd_tables3net(args):
             ros_wall_ms=best["makespan_median_ms"],
             xrt_np_ms=x.get("best_np_ms"), xrt_wall_ms=x.get("best_makespan_ms"),
             xrt_solver=x.get("best_solver"),
+            xrt_np_solver=x.get("best_np_solver"),
             xrt_np_instances=x.get("np_instances"),
+            # the recommended solver, and how it was obtained: a shape whose
+            # warmbest schedule was byte-identical to one already measured
+            # carries `measured_via` and consumed no board time.
+            xrt_np_warmbest_ms=wb.get("np_median_ms"),
+            xrt_warmbest_ms=wb.get("median_ms"),
+            xrt_warmbest_spread_pct=pct(wb.get("np_spread_ms"),
+                                        wb.get("np_median_ms")),
+            xrt_warmbest_via=wb.get("measured_via"),
+            xrt_solvers_measured=sorted(sv),
+            xrt_n_unique_schedules=x.get("n_unique_schedules"),
             ros_over_xrt_np=ratio(np_best["np_median_ms"], x.get("best_np_ms")),
+            ros_over_xrt_np_warmbest=ratio(np_best["np_median_ms"],
+                                           wb.get("np_median_ms")),
             ros_over_xrt_wall=ratio(best["makespan_median_ms"],
                                     x.get("best_makespan_ms")),
             placement_spread_np=ratio(max(r["np_median_ms"] for r in rr),
@@ -442,33 +472,81 @@ def cmd_tables3net(args):
         ))
         rows[-1]["inside_noise_np"] = inside(rows[-1]["ros_over_xrt_np"],
                                              NOISE_NP_PCT)
+        rows[-1]["inside_noise_np_warmbest"] = inside(
+            rows[-1]["ros_over_xrt_np_warmbest"], NOISE_NP_PCT)
+    real = [r for r in rows if not r["np_degenerate"]]
+    wbr = [r for r in real if r["ros_over_xrt_np_warmbest"]]
+    head = {
+        "np_opponent_primary": "cpsat:warmbest (the sweep10 study's own "
+                               "recommendation for the offline/build-time path)",
+        "np_opponent_secondary": "best measured solver per shape (an oracle "
+                                 "over the solvers measured here)",
+        "shapes_with_an_aperiodic_network": len(real),
+        "shapes_with_warmbest": len(wbr),
+        "warmbest_median": round(statistics.median(
+            [r["ros_over_xrt_np_warmbest"] for r in wbr]), 4) if wbr else None,
+        "warmbest_ros_faster": sum(1 for r in wbr
+                                   if r["ros_over_xrt_np_warmbest"] < 1),
+        "warmbest_xrt_faster": sum(1 for r in wbr
+                                   if r["ros_over_xrt_np_warmbest"] > 1),
+        "warmbest_inside_noise": [r["shape"] for r in wbr
+                                  if r["inside_noise_np_warmbest"]],
+        "warmbest_worst_for_ros": max(
+            wbr, key=lambda r: r["ros_over_xrt_np_warmbest"])["shape"] if wbr else None,
+        "warmbest_worst_for_ros_ratio": max(
+            (r["ros_over_xrt_np_warmbest"] for r in wbr), default=None),
+        "warmbest_best_for_ros": min(
+            wbr, key=lambda r: r["ros_over_xrt_np_warmbest"])["shape"] if wbr else None,
+        "warmbest_best_for_ros_ratio": min(
+            (r["ros_over_xrt_np_warmbest"] for r in wbr), default=None),
+        "best_median": round(statistics.median(
+            [r["ros_over_xrt_np"] for r in real]), 4) if real else None,
+        "best_ros_faster": sum(1 for r in real if r["ros_over_xrt_np"] < 1),
+        "best_xrt_faster": sum(1 for r in real if r["ros_over_xrt_np"] > 1),
+        "best_inside_noise": [r["shape"] for r in real if r["inside_noise_np"]],
+        "shapes_deduped_onto_an_existing_run": {
+            r["shape"]: r["xrt_warmbest_via"] for r in rows
+            if r["xrt_warmbest_via"]},
+        "np_degenerate_shapes": [r["shape"] for r in rows if r["np_degenerate"]],
+    }
     out = {"_comment":
            "The 3net arm. ROS whole-model pinning vs XPU-RT scheduling on the "
            "same three lanes of the same board, both measured in this "
-           "campaign. Primary objective: the non-periodic makespan. XPU-RT "
-           "trims periodic instances falling after it -- a better solution to "
-           "the same problem -- so the wall clock is NOT the comparison except "
-           "on the two shapes with no aperiodic network, where both sides "
-           "executed identical entry counts.",
-           "noise_floor_np_pct": NOISE_NP_PCT, "shapes": rows}
+           "campaign. Primary objective: the non-periodic makespan, scored "
+           "against `cpsat:warmbest` -- the solver the sweep10 study "
+           "recommends -- with the best measured solver reported second as an "
+           "oracle. XPU-RT trims periodic instances falling after the "
+           "objective; that is a better solution to the same problem, so the "
+           "wall clock is NOT the comparison except on the two shapes with no "
+           "aperiodic network, where both sides executed identical entry "
+           "counts.",
+           "noise_floor_np_pct": NOISE_NP_PCT,
+           "headline": head, "shapes": rows}
     p = os.path.join(SWEEP, "results", "analysis_3net.json")
     with open(p, "w") as f:
         json.dump(out, f, indent=1)
     print(f"wrote {p}\n")
-    print(f'{"shape":30s} {"n":>3s}{"m":>3s} {"ROS np":>9s} {"sprd%":>6s} '
-          f'{"XRT np":>9s} {"ROS/XRT":>8s} {"noise?":>7s} {"place":>6s}  note')
+    print(f'noise floor on the objective: +/-{NOISE_NP_PCT}% '
+          f'(the XPU-RT sweep\'s own measured rep spread)\n')
+    print(f'{"shape":26s} {"n":>3s}{"m":>3s} {"ROS np":>9s} {"sprd%":>6s} | '
+          f'{"warmbest":>9s} {"ratio":>7s} {"noise":>6s} | '
+          f'{"best-of":>9s} {"ratio":>7s} {"noise":>6s} {"solver":>10s}  note')
     for r in rows:
         note = "no aperiodic net -- np == wall" if r["np_degenerate"] else ""
-        print(f'{r["shape"]:30s} {r["n_legal"]:3d}{r["n_measured"]:3d} '
-              f'{r["ros_np_ms"]:9.3f} {(r["ros_np_spread_pct"] or 0):6.1f} '
-              f'{(r["xrt_np_ms"] or 0):9.3f} {(r["ros_over_xrt_np"] or 0):8.3f} '
-              f'{"in" if r["inside_noise_np"] else "OUT":>7s} '
-              f'{(r["placement_spread_np"] or 0):6.2f}  {note}')
-    real = [r for r in rows if not r["np_degenerate"]]
-    print(f'\n3net median ROS/XPU-RT on the objective: '
-          f'{statistics.median([r["ros_over_xrt_np"] for r in real]):.4f} '
-          f'over {len(real)} shapes with an aperiodic network '
-          f'({sum(1 for r in real if r["ros_over_xrt_np"] < 1)} ROS faster)')
+        if r["xrt_warmbest_via"]:
+            note = (note + "; " if note else "") + \
+                   f'warmbest == {r["xrt_warmbest_via"].split("__")[-1]} (dedupe)'
+        f3 = lambda v, w: (f"{v:{w}.3f}" if v else "-".rjust(w))
+        nz = lambda v, b: ("in" if b else "OUT").rjust(6) if v else "-".rjust(6)
+        print(f'{r["shape"]:26s} {r["n_legal"]:3d}{r["n_measured"]:3d} '
+              f'{r["ros_np_ms"]:9.3f} {(r["ros_np_spread_pct"] or 0):6.1f} | '
+              f'{f3(r["xrt_np_warmbest_ms"], 9)} '
+              f'{f3(r["ros_over_xrt_np_warmbest"], 7)} '
+              f'{nz(r["xrt_np_warmbest_ms"], r["inside_noise_np_warmbest"])} | '
+              f'{f3(r["xrt_np_ms"], 9)} {f3(r["ros_over_xrt_np"], 7)} '
+              f'{nz(r["xrt_np_ms"], r["inside_noise_np"])} '
+              f'{str(r["xrt_np_solver"] or "-"):>10s}  {note}')
+    print("\nheadline:", json.dumps(head, indent=1))
     return 0
 
 
@@ -477,6 +555,7 @@ def cmd_plots(args):
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
     import numpy as np
+    from matplotlib.patches import Patch
 
     doc = load()
     with open(os.path.join(SWEEP, "results", "analysis.json")) as f:
@@ -584,32 +663,124 @@ def cmd_plots(args):
     plt.close(fig)
 
     # ---- 5. the 3net arm ----------------------------------------------
+    #
+    # Same discipline as `plot_comparison.py`, for the same reasons: log2 ratio
+    # axis so a 2x win and a 2x loss are equidistant from 1.0; the noise band
+    # drawn OVER the bars so a bar that ends inside it cannot be read as a
+    # result; the two shapes with no aperiodic network in their own panel
+    # rather than greyed inside the ranking.
+    #
+    # BOTH OPPONENTS ON ONE FIGURE. The bar is `cpsat:warmbest` -- the solver
+    # the sweep10 study recommends, and the number to quote. The open marker is
+    # the best measured solver on that shape, an oracle over the four measured
+    # here. Two files would let a reader quote whichever they saw first; one
+    # figure with both marks makes the gap between them the visible thing,
+    # because on this arm that gap IS the finding.
     p3 = os.path.join(SWEEP, "results", "analysis_3net.json")
     if os.path.exists(p3):
-        r3 = json.load(open(p3))["shapes"]
-        r3 = sorted(r3, key=lambda r: r["ros_over_xrt_np"] or 9)
-        fig, ax = plt.subplots(figsize=(9, 0.34 * len(r3) + 2.4))
-        y = np.arange(len(r3))
-        vals = [r["ros_over_xrt_np"] or 0 for r in r3]
-        cols = ["#9aa5b1" if r["np_degenerate"]
-                else ("#3b7dd8" if (r["ros_over_xrt_np"] or 9) < 1 else "#d1495b")
-                for r in r3]
-        ax.barh(y, vals, color=cols, height=0.7)
-        ax.axvline(1.0, color="k", lw=1)
-        ax.axvspan(1 - NOISE_NP_PCT / 100, 1 + NOISE_NP_PCT / 100, color="k",
-                   alpha=0.10, lw=0, label=f"noise floor ±{NOISE_NP_PCT}%")
-        ax.set_yticks(y)
-        ax.set_yticklabels([r["shape"] + ("  (no aperiodic net)"
-                                          if r["np_degenerate"] else "")
-                            for r in r3], fontsize=8)
-        ax.set_xlabel("ROS ÷ XPU-RT, non-periodic makespan")
-        ax.set_title("3net arm: RoSE's 3-network shapes, both sides measured "
-                     "here on the same three lanes", fontsize=10)
-        ax.legend(fontsize=8, loc="lower right")
-        ax.grid(axis="x", alpha=0.3)
-        fig.tight_layout()
-        fig.savefig(os.path.join(SWEEP, "plots", "ros_vs_xpurt_3net.png"), dpi=150)
+        d3 = json.load(open(p3))
+        r3, h3 = d3["shapes"], d3["headline"]
+        band = 1.0 + NOISE_NP_PCT / 100.0
+        COOL, WARM = "#2a78d6", "#e34948"
+        NEUTRAL, EXCLUDED = "#f0efec", "#c3c2b7"
+        SURFACE = "#fcfcfb"
+        INK, INK2, MUTED = "#0b0b0b", "#52514e", "#898781"
+        GRID, BASELINE = "#e1e0d9", "#c3c2b7"
+
+        real = sorted([r for r in r3 if not r["np_degenerate"]],
+                      key=lambda r: r["ros_over_xrt_np_warmbest"] or 9)
+        degen = sorted([r for r in r3 if r["np_degenerate"]],
+                       key=lambda r: r["ros_over_xrt_np_warmbest"] or 9)
+
+        def panel(ax, rows, excluded, title):
+            y = np.arange(len(rows))[::-1]
+            for yi, r in zip(y, rows):
+                v = r["ros_over_xrt_np_warmbest"]
+                col = EXCLUDED if excluded else (WARM if v > 1.0 else COOL)
+                lo, hi = min(1.0, v), max(1.0, v)
+                ax.barh(yi, hi - lo, left=lo, height=0.60, color=col,
+                        edgecolor=SURFACE, linewidth=0.8, zorder=3)
+                b = r["ros_over_xrt_np"]
+                if b:
+                    ax.plot([b], [yi], marker="D", ms=5.2, mfc="none",
+                            mec=INK2, mew=1.2, zorder=5, linestyle="none")
+            ax.set_yticks(y)
+            ax.set_yticklabels([r["shape"][len("3net_"):] for r in rows],
+                               fontsize=8.5, color=INK2)
+            ax.set_xscale("log", base=2)
+            # The main arm spans 0.52-2.45 and needs a wide axis; this arm
+            # spans 0.865-1.025 and a wide one would compress every bar into a
+            # smear at 1.0. The limits are kept RECIPROCAL (0.78 and 1/0.78)
+            # so the log axis stays symmetric about 1.0 -- a win and a loss of
+            # equal magnitude are still equidistant, which is the whole reason
+            # the axis is log.
+            ax.set_xticks([0.8, 0.9, 1.0, 1.1, 1.25])
+            ax.set_xticklabels(["0.80", "0.90", "1.00", "1.10", "1.25"],
+                               fontsize=8.5)
+            ax.set_xlim(0.78, 1 / 0.78)
+            ax.set_ylim(-0.75, len(rows) - 0.25)
+            ax.axvspan(1 / band, band, color=NEUTRAL, alpha=0.85, zorder=1)
+            ax.axvline(1.0, color=BASELINE, lw=1.2, zorder=2)
+            ax.grid(axis="x", color=GRID, lw=0.6, zorder=0)
+            ax.set_axisbelow(False)
+            for sp in ("top", "right", "left"):
+                ax.spines[sp].set_visible(False)
+            ax.spines["bottom"].set_color(BASELINE)
+            ax.tick_params(colors=MUTED, labelsize=8.5, length=2)
+            ax.set_title(title, fontsize=10.0, color=INK, loc="left", pad=7)
+
+        fig = plt.figure(figsize=(11.4, 5.9))
+        fig.patch.set_facecolor(SURFACE)
+        gs = fig.add_gridspec(2, 1, height_ratios=[len(real), max(len(degen), 1)],
+                              hspace=0.42)
+        ax = fig.add_subplot(gs[0]); bx = fig.add_subplot(gs[1])
+        for a in (ax, bx):
+            a.set_facecolor(SURFACE)
+        panel(ax, real, False,
+              f"The comparison — {len(real)} shapes with an aperiodic network")
+        panel(bx, degen, True,
+              f"No aperiodic network ({len(degen)}) — the objective degenerates "
+              f"to the wall clock")
+        bx.title.set_fontsize(9.0); bx.title.set_color(INK2)
+
+        from matplotlib.lines import Line2D
+        ax.legend(handles=[
+            Patch(facecolor=COOL, label="pinning faster"),
+            Patch(facecolor=WARM, label="scheduler faster"),
+            Patch(facecolor=NEUTRAL, label=f"±{NOISE_NP_PCT}% noise floor"),
+            Line2D([], [], marker="D", ms=5.2, mfc="none", mec=INK2, mew=1.2,
+                   linestyle="none", label="vs best measured solver (oracle)"),
+        ], fontsize=8.2, frameon=False, labelcolor=INK2, loc="center right",
+            bbox_to_anchor=(1.0, 0.30), handletextpad=0.5, borderpad=0.2,
+            labelspacing=0.32)
+
+        fig.suptitle("3net arm — RoSE's 3-network shapes, both sides measured "
+                     "here on the same three lanes",
+                     fontsize=13.0, color=INK, x=0.007, ha="left", y=0.988)
+        fig.text(0.007, 0.922,
+                 f"ROS whole-network pinning ÷ measured XPU-RT on the "
+                 f"non-periodic makespan, medians of 3 reps.\n"
+                 f"Bars — against `cpsat:warmbest`, the sweep10 study's own "
+                 f"recommendation: median {h3['warmbest_median']:.3f}, "
+                 f"{h3['warmbest_ros_faster']} pinning / "
+                 f"{h3['warmbest_xrt_faster']} scheduler faster, "
+                 f"{len(h3['warmbest_inside_noise'])} of {len(real)} inside "
+                 f"the band.\n"
+                 f"Markers — against the best measured solver per shape, an "
+                 f"oracle over the four measured here: median "
+                 f"{h3['best_median']:.3f}.  Both are reported; neither "
+                 f"stands in for the other.",
+                 fontsize=9.0, color=INK2, ha="left", va="top", linespacing=1.5)
+        fig.text(0.007, 0.020,
+                 "Log axis, reciprocal limits: a win and a loss of equal "
+                 "magnitude are equidistant from 1.0. Bars anchored at 1.0; a "
+                 "bar ending inside the grey band is not a result.",
+                 fontsize=8.5, color=MUTED, ha="left")
+        fig.subplots_adjust(left=0.215, right=0.985, top=0.745, bottom=0.100)
+        out = os.path.join(SWEEP, "plots", "ros_vs_xpurt_3net.png")
+        fig.savefig(out, dpi=200, facecolor=SURFACE)
         plt.close(fig)
+        print(f"  -> {out}")
     print("wrote figures to", os.path.join(SWEEP, "plots"))
     return 0
 

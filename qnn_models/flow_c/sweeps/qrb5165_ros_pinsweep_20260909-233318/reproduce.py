@@ -198,12 +198,58 @@ def main():
             shutil.rmtree(tmp3, ignore_errors=True)
         pa = os.path.join(HERE, "results", "analysis_3net.json")
         if os.path.exists(pa):
-            a3 = jload(pa)["shapes"]
+            d3 = jload(pa)
+            a3, h3 = d3["shapes"], d3["headline"]
             real = [r for r in a3 if not r["np_degenerate"]]
+            # The direction is what survives the change of opponent; the
+            # magnitude is not, so both readings are pinned here and the
+            # noise-floor count with them (ANALYSIS.md 0.8, 10).
             check("3net: pinning faster on every shape with an aperiodic "
-                  "network", all(r["ros_over_xrt_np"] < 1 for r in real),
-                  f'{sum(1 for r in real if r["ros_over_xrt_np"] < 1)}'
-                  f"/{len(real)}")
+                  "network, against the RECOMMENDED solver",
+                  all(r["ros_over_xrt_np_warmbest"] < 1 for r in real),
+                  f'{h3["warmbest_ros_faster"]}/{len(real)}')
+            check("3net: pinning faster on every shape against the "
+                  "best-measured oracle too",
+                  all(r["ros_over_xrt_np"] < 1 for r in real),
+                  f'{h3["best_ros_faster"]}/{len(real)}')
+            check("3net median against cpsat:warmbest is 0.9305",
+                  abs(h3["warmbest_median"] - 0.9305) < 1e-4,
+                  str(h3["warmbest_median"]))
+            check("3net median against the best measured solver is 0.9314",
+                  abs(h3["best_median"] - 0.9314) < 1e-4,
+                  str(h3["best_median"]))
+            check("3net: only 2 of the 7 are outside the +/-9.18% noise floor",
+                  len(h3["warmbest_inside_noise"]) == len(real) - 2,
+                  f'{len(real) - len(h3["warmbest_inside_noise"])} outside')
+            check("3net: cpsat:warmbest deduped onto an existing schedule on "
+                  "all 9 shapes",
+                  len(h3["shapes_deduped_onto_an_existing_run"]) == 9,
+                  str(len(h3["shapes_deduped_onto_an_existing_run"])))
+        pu = os.path.join(HERE, "results", "undeclared_3net.json")
+        if os.path.exists(pu):
+            u = jload(pu)["dropped_undeclared_cells"]
+            check("3net: the binding manifests forbid exactly 3 profiled cells",
+                  u == ["fused_full/fused_full_net@hta",
+                        "mlp_control/mlp_control_full@hta",
+                        "yolov8n/yolov8n_head@hta"], str(u))
+        pv = os.path.join(HERE, "results", "verify3net.json")
+        if os.path.exists(pv):
+            v = jload(pv)["rows"]
+            # `cpsat:warmbest` can only come from sched_algo_sweep10's emitter,
+            # so it is only a valid comparator if that emitter reproduces the
+            # schedules the other solvers were measured from. It does, for
+            # every deterministic solver. Cold cpsat draws an arbitrary member
+            # of a tied-optimum set and is excluded by name, not silently.
+            det = [r for r in v if r["solver"] in ("greedy", "heft_edf")]
+            check("3net: the two solve paths agree on every deterministic "
+                  "solver", all(r["paths_agree"] for r in det),
+                  f'{sum(1 for r in det if r["paths_agree"])}/{len(det)}')
+            check("3net: masking the undeclared cells moves no greedy, "
+                  "heft_edf or cpsat:warmbest schedule",
+                  not any(r["mask_changes_schedule"] for r in v
+                          if r["solver"] != "cpsat"),
+                  str([r["shape"] for r in v
+                       if r["mask_changes_schedule"] and r["solver"] != "cpsat"]))
     else:
         check("3net enumeration present", True, "SKIPPED -- not generated")
 
