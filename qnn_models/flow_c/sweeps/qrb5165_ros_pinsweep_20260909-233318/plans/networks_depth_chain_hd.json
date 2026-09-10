@@ -124,8 +124,8 @@
    "predicted_misses": {},
    "overrun_nets": [],
    "backend_util": {
-    "hta": 0.5737,
-    "dsp": 0.1241
+    "dsp": 0.1241,
+    "hta": 0.5737
    },
    "measure": true,
    "nodes": [
@@ -185,8 +185,8 @@
    "predicted_misses": {},
    "overrun_nets": [],
    "backend_util": {
-    "hta": 0.2903,
-    "dsp": 0.426
+    "dsp": 0.426,
+    "hta": 0.2903
    },
    "measure": true,
    "nodes": [

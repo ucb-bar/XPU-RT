@@ -124,8 +124,8 @@
    "predicted_misses": {},
    "overrun_nets": [],
    "backend_util": {
-    "cpu": 0.5647,
-    "dsp": 0.1256
+    "dsp": 0.1256,
+    "cpu": 0.5647
    },
    "measure": true,
    "nodes": [
@@ -185,8 +185,8 @@
    "predicted_misses": {},
    "overrun_nets": [],
    "backend_util": {
-    "cpu": 0.3001,
-    "dsp": 0.4255
+    "dsp": 0.4255,
+    "cpu": 0.3001
    },
    "measure": true,
    "nodes": [

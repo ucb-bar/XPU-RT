@@ -69,8 +69,8 @@
    },
    "overrun_nets": [],
    "backend_util": {
-    "hta": 0.8493,
-    "dsp": 0.6635
+    "dsp": 0.6635,
+    "hta": 0.8493
    },
    "measure": true,
    "nodes": [
@@ -151,8 +151,8 @@
    },
    "overrun_nets": [],
    "backend_util": {
-    "hta": 0.5455,
-    "dsp": 0.886
+    "dsp": 0.886,
+    "hta": 0.5455
    },
    "measure": true,
    "nodes": [
@@ -315,8 +315,8 @@
    },
    "overrun_nets": [],
    "backend_util": {
-    "hta": 1.0,
-    "dsp": 0.2954
+    "dsp": 0.2954,
+    "hta": 1.0
    },
    "measure": true,
    "nodes": [
