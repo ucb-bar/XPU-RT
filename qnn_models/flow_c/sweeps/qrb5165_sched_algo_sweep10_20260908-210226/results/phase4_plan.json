@@ -1192,5 +1192,185 @@
   "arm": "s10port",
   "workload": "networks_vint_multi_quad",
   "solver": "heft"
+ },
+ {
+  "tier": "D",
+  "arm": "s10port",
+  "workload": "networks_bimodal_dc",
+  "solver": "cpsat:warmbest"
+ },
+ {
+  "tier": "D",
+  "arm": "s10port",
+  "workload": "networks_bimodal_hd",
+  "solver": "cpsat:warmbest"
+ },
+ {
+  "tier": "D",
+  "arm": "s10port",
+  "workload": "networks_bimodal_quad",
+  "solver": "cpsat:warmbest"
+ },
+ {
+  "tier": "D",
+  "arm": "s10port",
+  "workload": "networks_control_mix_hd",
+  "solver": "cpsat:warmbest"
+ },
+ {
+  "tier": "D",
+  "arm": "s10port",
+  "workload": "networks_depth_chain_cg",
+  "solver": "cpsat:warmbest"
+ },
+ {
+  "tier": "D",
+  "arm": "s10port",
+  "workload": "networks_depth_chain_dc",
+  "solver": "cpsat:warmbest"
+ },
+ {
+  "tier": "D",
+  "arm": "s10port",
+  "workload": "networks_depth_chain_hd",
+  "solver": "cpsat:warmbest"
+ },
+ {
+  "tier": "D",
+  "arm": "s10port",
+  "workload": "networks_depth_chain_quad",
+  "solver": "cpsat:warmbest"
+ },
+ {
+  "tier": "D",
+  "arm": "s10port",
+  "workload": "networks_depth_contended_cg",
+  "solver": "cpsat:warmbest"
+ },
+ {
+  "tier": "D",
+  "arm": "s10port",
+  "workload": "networks_depth_contended_quad",
+  "solver": "cpsat:warmbest"
+ },
+ {
+  "tier": "D",
+  "arm": "s10port",
+  "workload": "networks_depth_nav_cg",
+  "solver": "cpsat:warmbest"
+ },
+ {
+  "tier": "D",
+  "arm": "s10port",
+  "workload": "networks_depth_nav_dc",
+  "solver": "cpsat:warmbest"
+ },
+ {
+  "tier": "D",
+  "arm": "s10port",
+  "workload": "networks_depth_nav_hd",
+  "solver": "cpsat:warmbest"
+ },
+ {
+  "tier": "D",
+  "arm": "s10port",
+  "workload": "networks_depth_nav_quad",
+  "solver": "cpsat:warmbest"
+ },
+ {
+  "tier": "D",
+  "arm": "s10port",
+  "workload": "networks_perception_heavy_dc",
+  "solver": "cpsat:warmbest"
+ },
+ {
+  "tier": "D",
+  "arm": "s10port",
+  "workload": "networks_perception_heavy_hd",
+  "solver": "cpsat:warmbest"
+ },
+ {
+  "tier": "D",
+  "arm": "s10port",
+  "workload": "networks_perception_heavy_quad",
+  "solver": "cpsat:warmbest"
+ },
+ {
+  "tier": "D",
+  "arm": "s10port",
+  "workload": "networks_saturation_cg",
+  "solver": "cpsat:warmbest"
+ },
+ {
+  "tier": "D",
+  "arm": "s10port",
+  "workload": "networks_saturation_hd",
+  "solver": "cpsat:warmbest"
+ },
+ {
+  "tier": "D",
+  "arm": "s10port",
+  "workload": "networks_scale_ladder_cg",
+  "solver": "cpsat:warmbest"
+ },
+ {
+  "tier": "D",
+  "arm": "s10port",
+  "workload": "networks_scale_ladder_dc",
+  "solver": "cpsat:warmbest"
+ },
+ {
+  "tier": "D",
+  "arm": "s10port",
+  "workload": "networks_scale_ladder_hd",
+  "solver": "cpsat:warmbest"
+ },
+ {
+  "tier": "D",
+  "arm": "s10port",
+  "workload": "networks_tight_loop_cg",
+  "solver": "cpsat:warmbest"
+ },
+ {
+  "tier": "D",
+  "arm": "s10port",
+  "workload": "networks_tight_loop_dc",
+  "solver": "cpsat:warmbest"
+ },
+ {
+  "tier": "D",
+  "arm": "s10port",
+  "workload": "networks_tight_loop_hd",
+  "solver": "cpsat:warmbest"
+ },
+ {
+  "tier": "D",
+  "arm": "s10port",
+  "workload": "networks_tight_loop_quad",
+  "solver": "cpsat:warmbest"
+ },
+ {
+  "tier": "D",
+  "arm": "s10port",
+  "workload": "networks_vint_intro_cg",
+  "solver": "cpsat:warmbest"
+ },
+ {
+  "tier": "D",
+  "arm": "s10port",
+  "workload": "networks_vint_intro_quad",
+  "solver": "cpsat:warmbest"
+ },
+ {
+  "tier": "D",
+  "arm": "s10port",
+  "workload": "networks_vint_multi_cg",
+  "solver": "cpsat:warmbest"
+ },
+ {
+  "tier": "D",
+  "arm": "s10port",
+  "workload": "networks_vint_multi_quad",
+  "solver": "cpsat:warmbest"
  }
 ]

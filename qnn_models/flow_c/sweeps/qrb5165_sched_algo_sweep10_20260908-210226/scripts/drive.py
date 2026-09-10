@@ -156,6 +156,37 @@ def cmd_plan(args):
     return 0
 
 
+def cmd_plan_extend(args):
+    """Append points to an EXISTING plan without rewriting it.
+
+    Phase 4 was tiered by board time: tier A ran all 12 solvers on 12 cells,
+    tier B only winner+greedy on the other 30. That left `cpsat:warmbest` --
+    this study's own recommendation for the offline/build-time path -- measured
+    on 12 cells out of 42, so any comparison against "XPU-RT" on the other 30
+    was really a comparison against greedy. This closes that gap.
+
+    Append-only on purpose: `cmd_plan` regenerates the plan from scratch, and
+    rerunning it would renumber tiers under 199 already-measured points.
+    """
+    res = json.load(open(os.path.join(SWEEP, "results", "all_results.json")))
+    cells = sorted({r["workload"] for r in res})
+    plan = load(PLAN, [])
+    have = {(p["workload"], p["solver"]) for p in plan}
+    solvers = [x.strip() for x in args.solvers.split(",") if x.strip()]
+    added = []
+    for wl in cells:
+        for s in solvers:
+            if (wl, s) in have:
+                continue
+            plan.append(dict(tier=args.tier_label, arm=ARM, workload=wl, solver=s))
+            added.append(f"{wl}::{s}")
+    save(PLAN, plan)
+    print(f"  +{len(added)} point(s) at tier {args.tier_label}; plan now {len(plan)}")
+    for a in added:
+        print(f"    {a}")
+    return 0
+
+
 def points(args):
     plan = load(PLAN, [])
     if args.tier:
@@ -175,6 +206,26 @@ def point_id(p):
 # emit
 # --------------------------------------------------------------------------
 
+def _emit_one(args, p, sdir, emitter):
+    """Run the emitter for one point. Pure subprocess work, no state writes --
+    the caller serialises those, so this is safe to run in a pool."""
+    pid = point_id(p)
+    out = os.path.join(sdir, f"scheduled_{pid}.json")
+    meta = os.path.join(sdir, f"scheduled_{pid}.meta.json")
+    cmd = [sys.executable, emitter, "--arm", p["arm"], "--name", p["workload"],
+           "--solver", p["solver"], "--out", out, "--meta-out", meta,
+           "--cpsat-time", str(args.cpsat_time),
+           "--cpsat-workers", str(args.cpsat_workers)]
+    if getattr(args, "mask_undeclared", False):
+        cmd += ["--mask-undeclared", COST_MODEL]
+    try:
+        q, dt = sh(cmd, log=os.path.join(SWEEP, "logs", "emit", pid + ".log"),
+                   timeout=args.cpsat_time + 900, env=solve_env())
+    except subprocess.TimeoutExpired:
+        return pid, None, None, out, meta
+    return pid, q, dt, out, meta
+
+
 def cmd_emit(args):
     st = load(STATE, {})
     emitter = os.path.join(SWEEP, "fpga", "emit_schedule.py")
@@ -182,22 +233,37 @@ def cmd_emit(args):
     os.makedirs(sdir, exist_ok=True)
     seen_hash = {pid: r["sched_hash"] for pid, r in st.items()
                  if r.get("sched_hash")}
+    todo = []
     for p in points(args):
         pid = point_id(p)
         rec = st.setdefault(pid, dict(p))
         if rec.get("sched_hash") and not args.force:
             print(f"  {pid:<46} already emitted ({rec['sched_hash'][:12]})")
             continue
-        out = os.path.join(sdir, f"scheduled_{pid}.json")
-        meta = os.path.join(sdir, f"scheduled_{pid}.meta.json")
-        cmd = [sys.executable, emitter, "--arm", p["arm"], "--name", p["workload"],
-               "--solver", p["solver"], "--out", out, "--meta-out", meta,
-               "--cpsat-time", str(args.cpsat_time),
-               "--cpsat-workers", str(args.cpsat_workers)]
-        try:
-            q, dt = sh(cmd, log=os.path.join(SWEEP, "logs", "emit", pid + ".log"),
-                       timeout=args.cpsat_time + 900, env=solve_env())
-        except subprocess.TimeoutExpired:
+        todo.append(p)
+    # Two pools, for the same reason `sweep10_dispatch.py` and `fpga/emit_all.py`
+    # have two: CP-SAT asks for `--cpsat-workers` search threads inside its own
+    # process, every other solver is single-threaded. One pool at either width
+    # starves the heuristics or oversubscribes the box 8x.
+    results = []
+    if todo:
+        import concurrent.futures as cf
+        cheap = [p for p in todo if not p["solver"].startswith("cpsat")]
+        heavy = [p for p in todo if p["solver"].startswith("cpsat")]
+        with cf.ThreadPoolExecutor(max(1, args.cheap_workers)) as ex1, \
+             cf.ThreadPoolExecutor(max(1, args.cpsat_parallel)) as ex2:
+            futs = [ex1.submit(_emit_one, args, p, sdir, emitter) for p in cheap] \
+                 + [ex2.submit(_emit_one, args, p, sdir, emitter) for p in heavy]
+            for f in cf.as_completed(futs):
+                results.append(f.result())
+    # State is written here, serially and in a deterministic order, so the
+    # dedupe identity does not depend on which future finished first.
+    by_pid = {r[0]: r[1:] for r in results}
+    for p in todo:
+        pid = point_id(p)
+        rec = st.setdefault(pid, dict(p))
+        q, dt, out, meta = by_pid[pid]
+        if q is None:
             rec["status"] = "emit_timeout"; save(STATE, st)
             print(f"  {pid:<46} EMIT TIMEOUT"); continue
         if q.returncode != 0 or not os.path.exists(meta):
@@ -211,6 +277,8 @@ def cmd_emit(args):
                     ("ops", "periodic_ops", "combos", "wall_s", "objective",
                      "all_ops", "misses", "validation", "dispatches",
                      "json_makespan", "sched_hash", "picked")})
+        if m.get("masked_cells"):
+            rec["masked_cells"] = m["masked_cells"]
         rec["schedule"] = os.path.relpath(out, SWEEP)
         rec["emit_s"] = dt
         # dedupe: identical assignment -> reuse the earlier point's runtime
@@ -582,7 +650,8 @@ def cmd_results(args):
 def main():
     ap = argparse.ArgumentParser()
     sub = ap.add_subparsers(dest="cmd", required=True)
-    for name, fn in (("plan", cmd_plan), ("emit", cmd_emit),
+    for name, fn in (("plan", cmd_plan), ("plan-extend", cmd_plan_extend),
+                     ("emit", cmd_emit),
                      ("runtime", cmd_runtime), ("stage", cmd_stage),
                      ("run", cmd_run), ("results", cmd_results)):
         s = sub.add_parser(name)
@@ -592,9 +661,15 @@ def main():
         s.add_argument("--force", action="store_true")
         if name == "plan":
             s.add_argument("--tier-a", default="")
+        if name == "plan-extend":
+            s.add_argument("--solvers", required=True)
+            s.add_argument("--tier-label", default="D")
         if name == "emit":
             s.add_argument("--cpsat-time", type=float, default=60.0)
             s.add_argument("--cpsat-workers", type=int, default=8)
+            s.add_argument("--cheap-workers", type=int, default=12)
+            s.add_argument("--cpsat-parallel", type=int, default=5)
+            s.add_argument("--mask-undeclared", action="store_true")
         if name == "runtime":
             s.add_argument("--no-dedupe", action="store_true")
         if name == "run":

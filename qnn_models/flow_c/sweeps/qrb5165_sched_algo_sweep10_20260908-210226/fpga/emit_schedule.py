@@ -29,7 +29,7 @@ Usage:
   emit_schedule.py --arm wl_sweep --name networks_bimodal_gempair \
                    --solver pso --out /path/scheduled_x.json
 """
-import argparse, hashlib, json, os, sys, time
+import argparse, hashlib, json, os, re, sys, time
 import numpy as np
 
 CODE = os.environ["XPURT_CODE_ROOT"]
@@ -39,7 +39,8 @@ sys.path.insert(0, os.path.join(CODE, "xpu-rt"))
 
 from workload_factory import create_workload_from_network_hierarchy, build_machine_combinations
 from profile_loader import load_profiled_processing_times
-from postprocessing import output_scheduled_json
+from postprocessing import (output_scheduled_json,
+                            trim_periodic_after_nonperiodic_makespan)
 from schedule_decoder import DecoderContext, evaluate
 
 _RUNNER = os.path.join(os.path.dirname(os.path.abspath(__file__)),
@@ -111,6 +112,64 @@ def _best_of_fast(w):
     return cands[0][2], cands[0][1]
 
 
+def _mask_undeclared(w, nd, cost_model_path):
+    """Forbid the cells the binding manifest cannot execute.
+
+    `build_cost_model.py` already drops these from the cost model, and says why:
+    "A cell the binding manifest cannot execute must not be in the cost model.
+    The scheduler has no `forbidden` flag -- it will happily place a tile on the
+    cheapest lane it is offered." But that decision never reaches the SOLVER,
+    because the solver's workload is built straight out of `gen/profile/` by
+    `load_profiled_processing_times`, which knows nothing about bindings. The
+    two paths only meet at `flowc/schedule.py::ingest`, which refuses to emit a
+    runtime -- i.e. after the solve, and only if the solver happened to take the
+    bait.
+
+    It did. `vint/vint_encoders@gpu` has a measured 55.854 ms in
+    `gen/profile/GPU/qrb5165_flowc/vint/` and no GPU context in
+    `bindings/vint.json`, so on `vint_{intro,multi}_cg` CP-SAT proves an OPTIMAL
+    72.279 ms that cannot be built. Phase 3 missed it only by accident of
+    timing: its solves ran 2026-09-08 16:31 and that profile row was not written
+    until 18:21, so the cell was invisible to the solver then and is visible now.
+
+    Masking to +inf here makes the constraint the cost model asserts an actual
+    constraint on the search, rather than a post-hoc rejection.
+    """
+    cm = json.load(open(cost_model_path))
+    dropped = cm.get("dropped_undeclared_cells") or []
+    if not dropped:
+        return []
+    phw = {k.lower(): v for k, v in nd["hardware"]["profile_hw"].items()}
+    combos = w.get_machine_combinations()
+    combo_be = [phw[c[0].split("#")[0].lower()].lower() for c in combos]
+    here = os.path.dirname(os.path.abspath(__file__))
+    masked = []
+    for entry in dropped:
+        cell, _, be = entry.partition("@")
+        net, _, tile = cell.partition("/")
+        man = os.path.join(here, "..", "bindings", f"{net}.json")
+        if not os.path.exists(man):
+            man = os.path.join(here, "..", "..", "..", "bindings", f"{net}.json")
+        if not os.path.exists(man):
+            continue
+        names = [b["name"] for b in json.load(open(man))["bindings"]]
+        if tile not in names:
+            continue
+        k = names.index(tile)                       # k-th binding == dispatch_k
+        pat = re.compile(rf"^{re.escape(net)}\d*_dispatch_{k}$")
+        cs = [i for i, b in enumerate(combo_be) if b == be]
+        if not cs:
+            continue
+        for op in w.operations:
+            if not pat.match(str(getattr(op, "operation_name", "") or "")):
+                continue
+            for c in cs:
+                if np.isfinite(op.processing_times[c]):
+                    masked.append(f"{op.operation_name}@{be}")
+                    op.processing_times[c] = float("inf")
+    return sorted(set(masked))
+
+
 def _sched_hash(doc):
     """Dedupe key = the op -> (combination, start, duration) assignment, i.e.
     everything the codegen reads out of the schedule. NOT the objective: two
@@ -139,11 +198,19 @@ def main():
     ap.add_argument("--cpsat-time", type=float, default=60.0)
     ap.add_argument("--cpsat-workers", type=int, default=8)
     ap.add_argument("--seed", type=int, default=0)
+    ap.add_argument("--prune-periodic", action="store_true",
+                    help="apply postprocessing.trim_periodic_after_nonperiodic_makespan "
+                         "to the solved schedule before emitting it, as the specs\' "
+                         "scheduler.prune_periodic asks for")
+    ap.add_argument("--mask-undeclared", default=None,
+                    help="cost_model.json whose dropped_undeclared_cells "
+                         "are masked out of the solver's workload")
     a = ap.parse_args()
 
     runner = _load_runner()
     spec = os.path.join(DATA, "data", "toplevel", a.arm, a.name + ".json")
     w, nd, prof_p, prof_e, prof_by_net = build(spec)
+    masked = _mask_undeclared(w, nd, a.mask_undeclared) if a.mask_undeclared else []
     ctx = DecoderContext(w)
 
     picked = None
@@ -156,6 +223,36 @@ def main():
     wall = round(time.perf_counter() - t0, 3)
     obj, misses, all_end = evaluate(ctx, t, alpha, True)
     val = runner.validate(ctx, t, alpha)
+
+    # `prune_periodic` is written into every ported spec by
+    # `mk_workloads_qrb5165.py:282` and nothing in this tree ever read it: the
+    # trim lives in `scripts/run_xpurt_schedule.py`, which sweep10 deliberately
+    # bypasses. It is purely post-hoc -- it takes an already-computed (t, alpha)
+    # and drops periodic operations whose window does not overlap
+    # [0, non-periodic makespan). It cannot move placement, and because every
+    # dropped op starts at or after the cut it cannot move the non-periodic
+    # makespan either. That is asserted here rather than assumed: the objective
+    # is re-evaluated on the trimmed workload and has to come back bit-identical.
+    pruned = None
+    if a.prune_periodic:
+        pre = dict(objective=float(obj), all_ops=float(all_end),
+                   misses=int(misses), ops=int(ctx.n))
+        w, t, alpha = trim_periodic_after_nonperiodic_makespan(
+            w, t, alpha, horizon_ms=nd.get("horizon_ms"))
+        ctx = DecoderContext(w)
+        obj, misses, all_end = evaluate(ctx, t, alpha, True)
+        val = runner.validate(ctx, t, alpha)
+        pruned = dict(pre_objective=round(pre["objective"], 6),
+                      pre_all_ops=round(pre["all_ops"], 6),
+                      pre_misses=pre["misses"], pre_ops=pre["ops"],
+                      post_ops=int(ctx.n),
+                      dropped_ops=pre["ops"] - int(ctx.n),
+                      objective_unchanged=abs(float(obj) - pre["objective"]) <= 1e-9)
+        if not pruned["objective_unchanged"]:
+            raise SystemExit(
+                f"prune_periodic moved the non-periodic objective: "
+                f"{pre['objective']} -> {float(obj)}. The trim is post-hoc and "
+                f"cannot do that; this is a bug, not a result.")
 
     phw = {k.upper(): v for k, v in nd["hardware"]["profile_hw"].items()}
     os.makedirs(os.path.dirname(os.path.abspath(a.out)), exist_ok=True)
@@ -175,6 +272,7 @@ def main():
                dispatches=len(vals),
                json_makespan=round(max(x["start_time"] + x["duration"] for x in vals), 6),
                sched_hash=_sched_hash(doc), picked=picked,
+               masked_cells=masked, pruned=pruned,
                schedule=os.path.abspath(a.out))
     print(json.dumps(rec))
     if a.meta_out:
