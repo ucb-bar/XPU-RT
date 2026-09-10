@@ -405,7 +405,8 @@ own `phase4_results.json`. It needs no hardware.
 
 | file | what |
 |---|---|
-| `plots/ros_vs_xpurt_nonperiodic.png` | the headline: ROS ÷ XPU-RT on the objective, per cell, with the noise band and the non-headline cells greyed |
+| `plots/ros_vs_xpurt_objective.png` | **the headline, and the one to report**: ROS ÷ XPU-RT on the objective, log ratio axis, the 26 compared cells separated from the 16 excluded, both tails' mechanisms on the figure (`scripts/plot_comparison.py`) |
+| `plots/ros_vs_xpurt_nonperiodic.png` | the same data, first draft — linear axis and all 42 cells in one ranking with the excluded greyed. Superseded; kept because §4's cell-by-cell text was written against it |
 | `plots/ros_vs_xpurt.png` | the same on the all-operations wall clock |
 | `plots/placement_value.png` | worst ÷ best measured legal placement, per cell |
 | `plots/costmodel.png` | predicted vs measured, split on whether two networks share a backend |
