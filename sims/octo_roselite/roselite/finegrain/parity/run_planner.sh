@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+# SIM-ONLY: raise the planner limits so a 37 ms period can complete its plan, keeping
+# SIMPLER's REGISTERED controller structure. The pair (native, fine27) must be run at the
+# SAME limits -- the native run is the control that says whether refinement is neutral.
+set -u
+HERE=$(cd "$(dirname "$0")/.." && pwd)
+source /scratch2/dima/misc_sw/octo_work/sim_eval/roselite/env.sh
+cd "$HERE"; source parity/configs.sh
+N=${N:-12}
+for T in google_robot_pick_coke_can google_robot_close_drawer; do
+  short=$(echo "$T" | sed 's/google_robot_//')
+  for K in 16 32; do
+    for spec in "native:3" "fine:27"; do
+      act=${spec%%:*}; tick=${spec##*:}
+      key="${short}_K${K}_${act}${tick}_n${N}"
+      [ -f "parity/runs/$key/summary.json" ] && { echo "skip $key"; continue; }
+      python finegrain_eval.py --task "$T" --latency-ms 0 --init-rng 80 --n "$N" \
+          --actuation "$act" --tick-hz "$tick" --planner-limit-scale "$K" --allow-lag-discard \
+          --out "parity/runs/$key" > "parity/logs/${key}.log" 2>&1
+      echo "$key : $(grep -h 'SUCCESS RATE' parity/logs/${key}.log | tail -1)"
+    done
+  done
+done
+echo PLANNER_SWEEP_DONE
