@@ -1,0 +1,23 @@
+% Caption for cand_d3_cascade_to_behaviour.png -- every number verified against
+% videos_ladder/spoon_{pipe110,cpu685}/ep21 and the QRB5165 board dispatch logs.
+
+\caption{\textbf{The schedule decides the rollout.}
+The two strips at the top show the same task from the same starting scene; the
+only thing that differs is the schedule behind them. XPU-RT places the spoon on
+the towel in 7.0\,s, acting on 60 commands that are 158\,ms old on average. The
+baseline gets 18 commands, each roughly a second stale, and never finishes ---
+the episode simply times out at 12.0\,s. The lower half shows where that comes
+from, measured on the QRB5165 across a single 700\,ms window: spreading the
+network over the three engines cuts latency from 677\,ms to 283\,ms and lets an
+action go out every 144\,ms rather than every 677, so three arrive in the time
+the baseline needs for one. Where two shades alternate within a lane, two
+inferences are in flight at once. The halves run on different clocks --- seconds
+of robot above, milliseconds of silicon below.}
+
+% ---- shorter, if space is tight (~55 words) ---------------------------------
+% \caption{\textbf{The schedule decides the rollout.} Same task, same starting
+% scene, different schedules: XPU-RT places the spoon in 7.0\,s while the
+% baseline times out at 12.0\,s (top). Measured on the QRB5165, pipelining the
+% network across the three engines cuts latency from 677\,ms to 283\,ms and
+% issues an action every 144\,ms instead of every 677 --- three per 700\,ms
+% window where the baseline manages one (bottom).}

@@ -1,0 +1,50 @@
+% Caption for cand_c21_three.png.
+% Every number verified against traces_torque3/ (curated, n=30) and
+% g5grid/plane3_runs/ (plane, n=10); calibration in calib/ENERGY_CALIBRATION.md.
+
+\caption{\textbf{Schedule choice decides task success on the two widowx scenes
+and does nothing on the actuator-saturated one.}
+%
+\textbf{(A) The curated ladder.} Six schedules per workload, each at 30 seeds of
+24 episodes, ordered reference-first and then by release period; ticks give the
+schedule name over its measured release period in ms. Boxes are quartiles over
+seeds, dots individual seeds, diamonds the mean; panel titles carry the units.
+Across the ladder eggplant falls 54.9\%\,$\rightarrow$\,1.7\% and spoon
+47.8\%\,$\rightarrow$\,1.4\% while their energy rises 1.71$\times$ and
+1.42$\times$. Close drawer moves from 40.0\% to 36.8\% and its energy not at all
+(1.00$\times$): \emph{no schedule differs significantly from the zero-latency
+reference on a paired test over shared seeds} (every $p > 0.06$), so the flat
+panel is a well-powered null rather than an absent measurement.
+%
+\textbf{(B) The full plane.} All 44 CP-SAT operating points at 10 seeds each.
+Left: success against energy, normalised to each workload's own cheapest
+schedule---the absolute figures sit in disjoint bands (spoon $\sim$90\,J,
+eggplant $\sim$150\,J, close drawer $\sim$2.4\,kJ), so on a shared absolute axis
+each series collapses to a vertical line and the within-workload ladder, which is
+what is being compared, becomes unreadable. Right: success on the
+(release period, deadline window) grid, one panel per workload on its own
+gradient, with a rollout pair above it---success left, failure right. Stars mark
+each workload's best schedule by success rate. Hatched cells are propagated from
+a twin whose CP-SAT schedule is identical to within 0.04\,ms of latency and
+0\,ms of cadence, so the simulator receives the same command; $\times$ and ?
+mark cells that were infeasible and cells the solver did not resolve inside its
+budget.
+%
+\textbf{Energy.} The raw $\int\!\sum\tau^2\mathrm{d}t$ channel is a real PD
+drive-torque integral but cannot be converted to joules at face value: the
+simulated torque runs about 76$\times$ what the same trajectory physically
+requires (148\,N\,m rms against 1.94\,N\,m of gravity and Coriolis, saturating
+20\% of substeps under a 200\,N\,m limit on a shoulder whose two XM430-W350
+servos stall at 8.2\,N\,m combined). Plotted instead is the quasi-static lower
+bound, $E = c\int\!\sum\tau_{\mathrm{grav}}^2\mathrm{d}t + P_{\mathrm{idle}}T$,
+applied per episode and reduced as elsewhere (median over an arm's 24 episodes,
+mean over seeds). For widowx, $c = 0.827\,\mathrm{W/(N\,m)^2}$ and
+$P_{\mathrm{idle}} = 4.61$\,W follow from ROBOTIS' published stall torque and
+current for the Dynamixel XM430-W350. \emph{Every constant here is a model rather
+than a measurement}: the widowx values are derived from datasheets rather than
+measured on the arm, and the Everyday Robots arm publishes no actuator data, so
+its constant is set to give that arm the same dynamic/idle balance as the widowx
+(0.810) at a literature-anchored 40\,W idle. Scaling a constant scales every
+schedule within its workload equally, so the ratios in (A) and the normalised
+axis in (B) are invariant to those choices; only absolute joules depend on them.
+Derivation in \texttt{calib/ENERGY\_CALIBRATION.md}.}

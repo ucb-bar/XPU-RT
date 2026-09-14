@@ -1,0 +1,22 @@
+% Caption for cand_c19_all_tasks_calibrated.png.
+
+\caption{\textbf{Success against calibrated actuator energy, and where the
+schedules sit on the plane.} Left: every operating point of all four workloads,
+energy converted to joules per episode and plotted on a log axis. Calibration is
+global and applied per episode, $E = c\,\int\!\sum\tau_{\mathrm{grav}}^2\,dt +
+P_{\mathrm{idle}}T$, reduced as elsewhere (median over an arm's 24 episodes, mean
+over seeds). For widowx, $c=0.827\,\mathrm{W/(N\,m)^2}$ and
+$P_{\mathrm{idle}}=4.61$\,W are derived from ROBOTIS' published stall torque and
+current for the Dynamixel XM430-W350. \emph{The two google series are hollow
+because their constants are a proxy}---Everyday Robots published no actuator
+data, $P_{\mathrm{idle}}$ accounts for roughly 92\% of their result, and
+calibration does not preserve their ordering (Spearman between the raw $\tau^2$
+channel and calibrated energy is $+0.26$ on coke and $-0.04$ on drawer, against
+$+0.92$ and $+0.77$ on widowx); they are indicative only. Stars mark each
+workload's best schedule by success rate. Right: success rate on the
+(period, window) grid, one small multiple per workload, each on its own
+gradient; hatched cells are propagated from a twin with an identical schedule,
+$\times$ and ? mark infeasible and unsolved within the CP-SAT budget. Plotted
+energy is the quasi-static lower bound; the raw $\tau^2$ proxy cannot be
+converted at face value because the simulated PD torque runs about 76$\times$ the
+physical requirement. Derivation in \texttt{calib/ENERGY\_CALIBRATION.md}.}

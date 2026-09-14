@@ -1,0 +1,144 @@
+% =====================================================================
+%  Models and workloads.  Generated 2026-09-08 from
+%    XPU-RT/data/toplevel/networks_*.json      (workload definitions)
+%    XPU-RT/qnn_models/octo/e2e/data/arms.tsv  (measured schedules)
+%  Every number below is either read from those files or MEASURED on the
+%  QRB5165; none is estimated.  Requires \usepackage{booktabs,siunitx}.
+% =====================================================================
+
+% ---------------------------------------------------------------------
+% TABLE 1 -- the policies under test
+% ---------------------------------------------------------------------
+\begin{table}[t]
+\centering
+\caption{Vision--language--action policies deployed on the QRB5165.  Both are
+INT8; Octo is the closed-loop vehicle (its schedule is swept against task
+success), SmolVLA is a scheduling-only study.  \emph{Backends} are the
+heterogeneous units a partition may target: Kryo CPU, Hexagon DSP, and the
+Hexagon tensor accelerator (HTA).}
+\label{tab:models}
+\small
+\begin{tabular}{llcccl}
+\toprule
+Policy & Variant & Prec. & Backends & Segments & Role \\
+\midrule
+Octo-small-1.5 & \texttt{mono}  & INT8 & 1 & 1  & single-backend reference \\
+Octo-small-1.5 & \texttt{mix2}  & INT8 & 2 & -- & two-way partition \\
+Octo-small-1.5 & \texttt{mix3}  & INT8 & 3 & 52 & \textbf{three-way partition (default)} \\
+Octo-small-1.5 & \texttt{num2/3}& INT8 & 2/3 & -- & numeric-parity variants \\
+\addlinespace
+SmolVLA        & prefix + denoise & INT8 & 3 & 9 & flow-matching, schedule study only \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ---------------------------------------------------------------------
+% TABLE 2 -- workload families
+% ---------------------------------------------------------------------
+\begin{table}[t]
+\centering
+\caption{Workload families.  A workload fixes a policy partition, a release
+\emph{period} and a deadline \emph{window}; the scheduler then decides
+placement and start times.  $n$ is the number of periodic instances the
+solver is asked to cover.}
+\label{tab:workloads}
+\small
+\begin{tabular}{llccc l}
+\toprule
+Family & Partition & Period (\si{\milli\second}) & Window (\si{\milli\second}) & $n$ & Purpose \\
+\midrule
+\texttt{octo\_mono}       & \texttt{mono}  & --      & --      & --  & backend-feasibility probe \\
+\texttt{octo\_mix2/3}     & \texttt{mix2/3}& --      & --      & --  & partition comparison \\
+\texttt{octo\_pipe}       & \texttt{mix3}  & 200     & 400     & 5   & first pipelined schedule \\
+\texttt{octo\_pipe3fast}  & \texttt{mix3}  & 110     & 600     & 5   & lane-busy floor \\
+\texttt{octo\_pipe3fast10}& \texttt{mix3}  & 110     & 800     & 10  & \textbf{sustained-throughput vehicle} \\
+\texttt{octo\_pareto\_*}  & \texttt{mix3}  & 95--283 & 240--700& 10  & the schedule plane (below) \\
+\addlinespace
+\texttt{smolvla}          & prefix+denoise & --      & --      & --  & one inference cycle \\
+\texttt{smolvla\_loop10}  & prefix+denoise & 170     & 170     & 10  & 10-step denoise loop \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ---------------------------------------------------------------------
+% TABLE 3 -- the schedule plane actually swept
+% ---------------------------------------------------------------------
+\begin{table}[t]
+\centering
+\caption{The schedule plane.  Every cell is one CP-SAT problem: a requested
+release period against a deadline window, warm-started from \textsc{heft-edf}.
+Only CP-SAT treats the window as a hard constraint, so its three-way outcome
+is what the plane reports.  \textsc{unknown} is budget exhaustion, \emph{not}
+a proof of infeasibility.}
+\label{tab:plane}
+\small
+\begin{tabular}{lr l}
+\toprule
+Quantity & Value & Note \\
+\midrule
+Release periods            & 12  & 100--\SI{283}{\milli\second} \\
+Deadline windows           & 9   & 240--\SI{450}{\milli\second} \\
+Cells                      & 108 & $12\times9$ \\
+\midrule
+\textsc{optimal}/\textsc{feasible} & 71 & a schedule exists \\
+\textsc{infeasible}        & 25  & proven impossible \\
+\textsc{unknown}           & 12  & undecided at \SI{3600}{\second} \\
+\midrule
+Distinct operating points  & \textbf{44} & the 71 solved cells collapse to 44 \\
+\quad duplicates           & 27  & identical latency \emph{and} cadence \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ---------------------------------------------------------------------
+% TABLE 4 -- the curated schedules
+% ---------------------------------------------------------------------
+\begin{table}[t]
+\centering
+\caption{The nine curated schedules used for the closed-loop and energy
+studies.  Latency is the per-inference span (camera frame in to action out)
+and cadence the interval between successive actions; both \textbf{measured on
+the QRB5165, ungated}.  Pipelining decouples the two: \texttt{p105/w300}
+delivers an action every \SI{125}{\milli\second} despite a
+\SI{259}{\milli\second} latency, which no serial schedule can do.}
+\label{tab:arms}
+\small
+\begin{tabular}{lrrl}
+\toprule
+Schedule & Latency (\si{\milli\second}) & Cadence (\si{\milli\second}) & Family \\
+\midrule
+\texttt{lat0}       &   0.0 &     -- & ideal (zero-latency oracle) \\
+\texttt{pipe110}    & 385.1 &  111.4 & pipelined \\
+\texttt{p105/w300}  & 258.7 &  124.8 & pipelined \\
+\texttt{p130/w275}  & 272.3 &  130.1 & pipelined \\
+\texttt{p150/w300}  & 281.6 &  150.4 & pipelined \\
+\texttt{pipe200}    & 260.5 &  219.2 & pipelined \\
+\texttt{serial283}  & 283.4 &  283.4 & 3-way serial \\
+\texttt{fp32\_555}  & 555.0 &  555.0 & CPU-only, FP32 \\
+\texttt{cpu685}     & 684.8 &  684.8 & CPU-only, INT8 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ---------------------------------------------------------------------
+% TABLE 5 -- closed-loop evaluation
+% ---------------------------------------------------------------------
+\begin{table}[t]
+\centering
+\caption{Closed-loop evaluation in SIMPLER.  Each schedule is replayed against
+the simulator's own control grid, so a stale action is held rather than
+discarded.  Actuation rate is the embodiment's native control frequency; it
+determines whether a faster schedule can be consumed at all.}
+\label{tab:tasks}
+\small
+\begin{tabular}{llrrr}
+\toprule
+Task & Embodiment & Actuation (\si{\milli\second}) & Horizon & Episodes/cell \\
+\midrule
+\texttt{put\_eggplant\_in\_basket} & WidowX       &  40 & 120 & 24 \\
+\texttt{spoon\_on\_towel}          & WidowX       &  40 &  60 & 24 \\
+\texttt{pick\_coke\_can}           & Google Robot & 333 &  80 & 24 \\
+\texttt{close\_drawer}             & Google Robot & 333 & 113 & 24 \\
+\bottomrule
+\end{tabular}
+\end{table}
