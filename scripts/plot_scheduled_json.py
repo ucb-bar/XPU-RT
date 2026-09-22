@@ -22,9 +22,19 @@ import plot_k1_evolution as gantt  # noqa: E402
 import schedule_trace  # noqa: E402
 
 
+# The x-axis used to say "Predicted time from K1 profiles (ms)" for every
+# schedule this renders, K1 or not -- so a PYNQ-Z1 Rocket schedule came out
+# labelled with a SpacemiT X60's profile basis.  `--xlabel` (and `--title`)
+# make the two strings that name what is being shown settable; both default to
+# the previous behaviour exactly, so every existing caller is unchanged.
+DEFAULT_XLABEL = "Predicted time from K1 profiles (ms)"
+
+
 def load_and_plot(json_path: str, save_path: str | None = None,
                   window_ms: float | None = None,
-                  deadline_model: str | None = None):
+                  deadline_model: str | None = None,
+                  xlabel: str | None = None,
+                  title: str | None = None):
     with open(json_path) as f:
         schedule = json.load(f)
 
@@ -43,12 +53,13 @@ def load_and_plot(json_path: str, save_path: str | None = None,
         save_path = os.path.splitext(save_path)[0]
     os.makedirs(os.path.dirname(os.path.abspath(save_path)), exist_ok=True)
 
-    title = os.path.splitext(os.path.basename(json_path))[0]
+    if title is None:
+        title = os.path.splitext(os.path.basename(json_path))[0]
     png, pdf = gantt.render_gantt_panels(
         [{"title": title, "rows": rows, "sched": dispatches}], save_path,
         periods=periods, cores=gantt.cores_from_schedule(dispatches),
         window_ms=window_ms, deadline_model=deadline_model,
-        xlabel="Predicted time from K1 profiles (ms)", panel_labels=False,
+        xlabel=xlabel or DEFAULT_XLABEL, panel_labels=False,
         panel_height_mm=42.0)
     print(f"Done. Plot saved to {png} and {pdf}")
     return png, pdf
@@ -61,6 +72,12 @@ if __name__ == "__main__":
                         help="output stem or .png path")
     parser.add_argument("--window-ms", type=float, default=None)
     parser.add_argument("--deadline-model", default=None)
+    parser.add_argument("--xlabel", default=None,
+                        help="x-axis label; default names the K1 profile "
+                             "basis, which is wrong for any other target")
+    parser.add_argument("--title", default=None,
+                        help="panel title; default is the schedule's filename "
+                             "stem")
     args = parser.parse_args()
     load_and_plot(args.json_path, args.save, args.window_ms,
-                  args.deadline_model)
+                  args.deadline_model, args.xlabel, args.title)
