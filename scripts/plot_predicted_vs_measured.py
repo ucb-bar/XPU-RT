@@ -73,7 +73,7 @@ def pairs(schedule, trace_rows):
     return out
 
 
-def panel(ax, data, title, mark_mismatch):
+def panel(ax, data, title, mark_mismatch, measured_label="measured on the K1 (ms)"):
     lo, hi = 1e9, 0.0
     for model, pts in sorted(data.items()):
         for subset, alpha, edge in (
@@ -97,7 +97,7 @@ def panel(ax, data, title, mark_mismatch):
     ax.set_xscale("log"); ax.set_yscale("log")
     ax.set_xlim(*span); ax.set_ylim(*span)
     ax.set_xlabel("predicted service time (ms)")
-    ax.set_ylabel("measured on the K1 (ms)")
+    ax.set_ylabel(measured_label)
     ax.set_title(title, fontsize=6)
     figstyle.despine(ax)
 
@@ -114,6 +114,12 @@ def main() -> int:
     ap.add_argument("--ir", action="append", default=[])
     ap.add_argument("--out-dir", default=None)
     ap.add_argument("--stem", default="k1_predicted_vs_measured")
+    # THE AXIS SAID "K1" ON EVERY TARGET.  Same defect, and the same fix, as
+    # 228c4450 ("plot_scheduled_json: the x-axis said 'K1 profiles' on every
+    # target"): this renderer is not K1-specific, only its first caller was.
+    # The default is the old string, so every existing invocation is unchanged.
+    ap.add_argument("--measured-label", default="measured on the K1 (ms)",
+                    help="y-axis label; name the target that was measured")
     a = ap.parse_args()
 
     schedule = json.load(open(a.schedule))
@@ -127,11 +133,13 @@ def main() -> int:
     n_bad = sum(1 for p in flat_r if not p[2])
     panel(axes[0], aligned,
           f"a  joined on the IR dispatch id\n"
-          f"median error {_median_rel(flat_a):+.1f}%  (n={len(flat_a)})", False)
+          f"median error {_median_rel(flat_a):+.1f}%  (n={len(flat_a)})", False,
+          a.measured_label)
     panel(axes[1], raw,
           f"b  joined on the trace's raw id\n"
           f"median error {_median_rel(flat_r):+.1f}%  "
-          f"({n_bad} of {len(flat_r)} name a different op)", True)
+          f"({n_bad} of {len(flat_r)} name a different op)", True,
+          a.measured_label)
     axes[0].legend(loc="upper left", frameon=False, handletextpad=0.3,
                    borderpad=0.2)
     axes[1].scatter([], [], s=3.0, color="none",

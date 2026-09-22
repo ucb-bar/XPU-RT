@@ -63,6 +63,12 @@ MODEL_ALIASES = ("yolov8_nano_64x96", "yolov8_nano_128x192",
                  "yolov8_nano_320", "yolov8_nano_64")
 MODEL_COLOR.update({a: BLUE for a in MODEL_ALIASES})
 
+#: The PYNQ-Z1 Rocket SoC's two co-located networks. Added because without a key
+#: here BOTH render in C_MUTED and the legend lists two entries in one colour --
+#: a two-model co-location figure in which the two models are indistinguishable
+#: is not readable at all. Additive: every model above keeps the colour it had.
+MODEL_COLOR.update({"moonshine": SKY, "signnetlite": ORANGE})
+
 #: Roles, not models. A deadline is always vermillion, whatever it belongs to.
 C_DEADLINE = VERMILLION
 C_MUTED = "#999999"

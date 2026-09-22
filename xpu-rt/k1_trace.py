@@ -20,9 +20,13 @@ project had taken. Keeping the column names after retiring the producer that
 coined them is the same trade as `results.csv`: renaming would touch every
 reader to change nothing measurable.
 
-CYCLES ARE rdtime TICKS AT 24 MHz. Not the 1.6 GHz core clock and not 1 MHz:
-the device-tree `timebase-frequency` is 24000000. `rdcycle` SIGILLs from
-userspace on this board, so `rdtime` is what the harness reads.
+CYCLES ARE rdtime TICKS AT 24 MHz ON THE K1, AND THAT IS NOW THE DEFAULT RATHER
+THAN THE RULE. Not the 1.6 GHz core clock and not 1 MHz: the device-tree
+`timebase-frequency` is 24000000. `rdcycle` SIGILLs from userspace on this
+board, so `rdtime` is what the harness reads. A trace from another target may
+carry a `timebase_hz` column saying what its own cycle columns are counted in;
+`normalise` reads it when present and falls back to K1_RDTIME_HZ when absent, so
+every trace written before that column existed reads exactly as it did.
 """
 
 from __future__ import annotations
@@ -135,15 +139,33 @@ def normalise(rows: List[Dict[str, Any]],
     """
     if not is_modelblaster(rows):
         return rows
+    # THE TIMEBASE IS THE TRACE'S TO DECLARE, AND K1_RDTIME_HZ IS ONLY ITS DEFAULT.
+    #
+    # 24 MHz is the K1's rdtime and was the only producer when this module was written, so
+    # it could be a constant. It is not a property of the SCHEMA: the same columns come off
+    # the PYNQ-Z1 Rocket SoC, where the guest's own k_cycle_get_64 is mtime at
+    # CONFIG_SYS_CLOCK_HW_CYCLES_PER_SEC = 40_000 Hz -- 25 us per tick, about 1000 core
+    # cycles, which quantises most of that target's dispatches to 0 or 1 tick -- so its
+    # harness stamps these columns with `rdcycle` at 40 MHz instead, and says so in a
+    # `timebase_hz` column.
+    #
+    # Read when the column is present, ignored when it is absent, so every trace already on
+    # disk normalises to exactly what it did before. Without this a 40 MHz trace reads
+    # 1.667x long and NOTHING IN THE FILE SAYS IT IS WRONG -- the same silent unit error
+    # this module's own docstring warns about ("NEVER pass 60").
+    hz = K1_RDTIME_HZ
+    declared = rows[0].get("timebase_hz") if rows else None
+    if declared not in (None, ""):
+        hz = float(declared)
     t0 = min(int(r["actual_start_cycles"]) for r in rows)
     out = []
     for r in rows:
         s, e = int(r["actual_start_cycles"]), int(r["actual_end_cycles"])
         d = dict(r)
-        start_us = (s - t0) / K1_RDTIME_HZ * 1e6
+        start_us = (s - t0) / hz * 1e6
         d["start_us"] = start_us
-        d["end_us"] = (e - t0) / K1_RDTIME_HZ * 1e6
-        d["run_us"] = max(e - s, 0) / K1_RDTIME_HZ * 1e6
+        d["end_us"] = (e - t0) / hz * 1e6
+        d["run_us"] = max(e - s, 0) / hz * 1e6
         d["job_name"] = f'{r.get("network", "")}{r.get("instance", "")}'
         # `dispatch_id` in the file is a record SLOT. With the model's IR
         # available it is translated to the IR id everything else uses; without
