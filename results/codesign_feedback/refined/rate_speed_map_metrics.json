@@ -1,0 +1,272 @@
+{
+ "XPU-RT \u00b7 CP-SAT@45Hz_c1.0": [
+  4,
+  24
+ ],
+ "XPU-RT \u00b7 CP-SAT@45Hz_c1.2": [
+  3,
+  12
+ ],
+ "XPU-RT \u00b7 CP-SAT@45Hz_c1.4": [
+  0,
+  12
+ ],
+ "XPU-RT \u00b7 CP-SAT@45Hz_c1.6": [
+  0,
+  12
+ ],
+ "XPU-RT \u00b7 CP-SAT@45Hz_c1.8": [
+  1,
+  12
+ ],
+ "XPU-RT \u00b7 CP-SAT@90Hz_c1.0": [
+  3,
+  12
+ ],
+ "XPU-RT \u00b7 CP-SAT@90Hz_c1.2": [
+  0,
+  12
+ ],
+ "XPU-RT \u00b7 CP-SAT@90Hz_c1.4": [
+  1,
+  12
+ ],
+ "XPU-RT \u00b7 CP-SAT@90Hz_c1.6": [
+  2,
+  12
+ ],
+ "XPU-RT \u00b7 CP-SAT@90Hz_c1.8": [
+  1,
+  12
+ ],
+ "XPU-RT \u00b7 CP-SAT@120Hz_c1.0": [
+  1,
+  12
+ ],
+ "XPU-RT \u00b7 CP-SAT@120Hz_c1.2": [
+  5,
+  12
+ ],
+ "XPU-RT \u00b7 CP-SAT@120Hz_c1.4": [
+  1,
+  12
+ ],
+ "XPU-RT \u00b7 CP-SAT@120Hz_c1.6": [
+  0,
+  12
+ ],
+ "XPU-RT \u00b7 CP-SAT@120Hz_c1.8": [
+  3,
+  12
+ ],
+ "XPU-RT \u00b7 greedy@45Hz_c1.0": [
+  0,
+  12
+ ],
+ "XPU-RT \u00b7 greedy@45Hz_c1.2": [
+  0,
+  12
+ ],
+ "XPU-RT \u00b7 greedy@45Hz_c1.4": [
+  0,
+  12
+ ],
+ "XPU-RT \u00b7 greedy@45Hz_c1.6": [
+  0,
+  12
+ ],
+ "XPU-RT \u00b7 greedy@45Hz_c1.8": [
+  0,
+  12
+ ],
+ "XPU-RT \u00b7 greedy@90Hz_c1.0": [
+  0,
+  12
+ ],
+ "XPU-RT \u00b7 greedy@90Hz_c1.2": [
+  0,
+  12
+ ],
+ "XPU-RT \u00b7 greedy@90Hz_c1.4": [
+  0,
+  12
+ ],
+ "XPU-RT \u00b7 greedy@90Hz_c1.6": [
+  0,
+  12
+ ],
+ "XPU-RT \u00b7 greedy@90Hz_c1.8": [
+  0,
+  12
+ ],
+ "ROS 2 vanilla (4-hart YOLO)@45Hz_c1.0": [
+  0,
+  24
+ ],
+ "ROS 2 vanilla (4-hart YOLO)@45Hz_c1.2": [
+  0,
+  12
+ ],
+ "ROS 2 vanilla (4-hart YOLO)@45Hz_c1.4": [
+  2,
+  12
+ ],
+ "ROS 2 vanilla (4-hart YOLO)@45Hz_c1.6": [
+  1,
+  12
+ ],
+ "ROS 2 vanilla (4-hart YOLO)@45Hz_c1.8": [
+  1,
+  12
+ ],
+ "ROS 2 vanilla, control timer@45Hz_c1.0": [
+  0,
+  12
+ ],
+ "ROS 2 vanilla, control timer@45Hz_c1.2": [
+  0,
+  12
+ ],
+ "ROS 2 vanilla, control timer@45Hz_c1.4": [
+  2,
+  12
+ ],
+ "ROS 2 vanilla, control timer@45Hz_c1.6": [
+  3,
+  12
+ ],
+ "ROS 2 vanilla, control timer@45Hz_c1.8": [
+  1,
+  12
+ ],
+ "ROS 2 vanilla, control timer@90Hz_c1.0": [
+  1,
+  12
+ ],
+ "ROS 2 vanilla, control timer@90Hz_c1.2": [
+  1,
+  12
+ ],
+ "ROS 2 vanilla, control timer@90Hz_c1.4": [
+  0,
+  12
+ ],
+ "ROS 2 vanilla, control timer@90Hz_c1.6": [
+  0,
+  12
+ ],
+ "ROS 2 vanilla, control timer@90Hz_c1.8": [
+  1,
+  12
+ ],
+ "ROS 2 hand-tuned (pinned)@45Hz_c1.0": [
+  2,
+  12
+ ],
+ "ROS 2 hand-tuned (pinned)@45Hz_c1.2": [
+  3,
+  12
+ ],
+ "ROS 2 hand-tuned (pinned)@45Hz_c1.4": [
+  1,
+  12
+ ],
+ "ROS 2 hand-tuned (pinned)@45Hz_c1.6": [
+  1,
+  12
+ ],
+ "ROS 2 hand-tuned (pinned)@45Hz_c1.8": [
+  3,
+  12
+ ],
+ "ROS 2 hand-tuned (pinned)@90Hz_c1.0": [
+  0,
+  12
+ ],
+ "ROS 2 hand-tuned (pinned)@90Hz_c1.2": [
+  1,
+  12
+ ],
+ "ROS 2 hand-tuned (pinned)@90Hz_c1.4": [
+  1,
+  12
+ ],
+ "ROS 2 hand-tuned (pinned)@90Hz_c1.6": [
+  0,
+  12
+ ],
+ "ROS 2 hand-tuned (pinned)@90Hz_c1.8": [
+  1,
+  12
+ ],
+ "ROS 2 two YOLO nodes, 8 cores@45Hz_c1.0": [
+  0,
+  12
+ ],
+ "ROS 2 two YOLO nodes, 8 cores@45Hz_c1.2": [
+  1,
+  12
+ ],
+ "ROS 2 two YOLO nodes, 8 cores@45Hz_c1.4": [
+  0,
+  12
+ ],
+ "ROS 2 two YOLO nodes, 8 cores@45Hz_c1.6": [
+  0,
+  12
+ ],
+ "ROS 2 two YOLO nodes, 8 cores@45Hz_c1.8": [
+  1,
+  12
+ ],
+ "ROS 2 two YOLO nodes, 8 cores@90Hz_c1.0": [
+  1,
+  12
+ ],
+ "ROS 2 two YOLO nodes, 8 cores@90Hz_c1.2": [
+  1,
+  12
+ ],
+ "ROS 2 two YOLO nodes, 8 cores@90Hz_c1.4": [
+  2,
+  12
+ ],
+ "ROS 2 two YOLO nodes, 8 cores@90Hz_c1.6": [
+  3,
+  12
+ ],
+ "ROS 2 two YOLO nodes, 8 cores@90Hz_c1.8": [
+  0,
+  12
+ ],
+ "ROS 2 multi-threaded executor@45Hz_c1.0": [
+  0,
+  12
+ ],
+ "ROS 2 multi-threaded executor@45Hz_c1.2": [
+  0,
+  12
+ ],
+ "ROS 2 multi-threaded executor@45Hz_c1.4": [
+  1,
+  12
+ ],
+ "ROS 2 multi-threaded executor@45Hz_c1.8": [
+  1,
+  12
+ ],
+ "script": "story_figures:rate_speed_map",
+ "inputs": {
+  "results/codesign_feedback/campaign_break/campaign.csv": "128f7a46419ca5aa1cb568f35ea3efb61610ad080b35a5897903e47fd6e68345",
+  "results/codesign_feedback/campaign_courseC/campaign.csv": "a0a4b730bbe7b959d462bcfb69a6ebdd54ab95ad8600c8141842c395765c8cca",
+  "results/codesign_feedback/campaign_cross/campaign.csv": "fff461f4a94b7f0fc5d6516f13ac672f1ded6ab8e987772fe4115982e7fc643b",
+  "results/codesign_feedback/campaign_percep/campaign.csv": "874cba27e988ed1709ad40352d6a1db5555812261bf62777c080f68fb52f7dc3",
+  "results/codesign_feedback/campaign_qos1/campaign.csv": "f53eaf89c969added3141fc72a42495f0ec33e00241273f84583c478b5a2c89d",
+  "results/codesign_feedback/campaign_rich/campaign.csv": "957e5a475c5610579463b6df70f68edc54c06578d7773cc5a8f45d3d3a821174",
+  "results/codesign_feedback/campaign_seeds24/campaign.csv": "4ee968293048c26b729ec3211cdeabfe5ac4ccb4256e7f7f89ed87cd00b68756",
+  "results/codesign_feedback/campaign_tallcal/campaign.csv": "a4455c1d304e421d146034a6b0d55d2aae2f8f6e401f957d5f29076636c14d44",
+  "results/codesign_feedback/campaign_tallnet/campaign.csv": "f0e636330e842d9eb21db22b62207de82af5ef02488f030c9e19d92d77dfb9b4",
+  "results/codesign_feedback/campaign_walk/campaign.csv": "b7621815bfa95943b58cbb4db1326311887538fdaadb3b66912d289b54527bbe"
+ },
+ "fallbacks_used": []
+}

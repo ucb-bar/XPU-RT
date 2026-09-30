@@ -1,0 +1,13 @@
+# source=results/codesign_feedback/xpurt_long/trace_a120hcpsat_hardr1_other_run1.csv
+# warmup_ms=100.0 outputs=9 span_ms=140.3
+# gap_mean_ms=9.933 gap_p95_ms=10.065 gap_max_ms=10.065 eff_hz=100.67
+t_ms
+8.772
+18.264
+28.236
+38.276
+48.264
+58.281
+68.259
+78.324
+88.239

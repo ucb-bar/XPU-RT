@@ -1,0 +1,42 @@
+=== 00:02:48 clamp + feasibility greedy
+schedules/fig_fba120er1_greedy_clamped.json: 1032 dispatch targets narrowed; width histogram {1: 2180, 2: 408, 4: 264}
+
+FEASIBLE: no double-booking, no dependency violation, no forward edge, every target on the board, every implementation available where it was placed.
+  feasibility rc=0
+=== 00:02:51 clamp + feasibility cpsat_hard
+schedules/fig_fba120er1_cpsat_hard_clamped.json: 70 dispatch targets narrowed; width histogram {1: 2852}
+
+FEASIBLE: no double-booking, no dependency violation, no forward edge, every target on the board, every implementation available where it was placed.
+  feasibility rc=0
+=== 00:02:53 clamp + feasibility cpsat_soft
+schedules/fig_fba120er1_cpsat_soft_clamped.json: 960 dispatch targets narrowed; width histogram {1: 2252, 2: 336, 4: 264}
+
+FEASIBLE: no double-booking, no dependency violation, no forward edge, every target on the board, every implementation available where it was placed.
+  feasibility rc=0
+=== 00:02:57 board fba120er1_greedy run 1
+  re-pulled the board's stdout: 2852 of 2852 rows (pull 1)
+  trace rows: 2852  hart_acc: 8  policy: SCHED_OTHER  exit: 0  verify: ['MODELBLASTER_VERIFY [yolov8_nano_64x96] === max_abs_err=0 max_rel_err=0 n=8316 instance=0 ready=1']
+=== 00:03:31 board fba120er1_cpsat_hard run 1
+  trace rows: 2852  hart_acc: 8  policy: SCHED_OTHER  exit: 0  verify: ['MODELBLASTER_VERIFY [yolov8_nano_64x96] === max_abs_err=0 max_rel_err=0 n=8316 instance=0 ready=1']
+=== 00:04:03 board fba120er1_cpsat_soft run 1
+  re-pulled the board's stdout: 2852 of 2852 rows (pull 1)
+  trace rows: 2852  hart_acc: 8  policy: SCHED_OTHER  exit: 0  verify: ['MODELBLASTER_VERIFY [yolov8_nano_64x96] === max_abs_err=0 max_rel_err=0 n=8316 instance=0 ready=1']
+=== 00:04:39 board fba120er1_greedy run 2
+  re-pulled the board's stdout: 2852 of 2852 rows (pull 1)
+  trace rows: 2852  hart_acc: 8  policy: SCHED_OTHER  exit: 0  verify: ['MODELBLASTER_VERIFY [yolov8_nano_64x96] === max_abs_err=0 max_rel_err=0 n=8316 instance=0 ready=1']
+=== 00:05:13 board fba120er1_cpsat_hard run 2
+  re-pulled the board's stdout: 2852 of 2852 rows (pull 1)
+  trace rows: 2852  hart_acc: 8  policy: SCHED_OTHER  exit: 0  verify: ['MODELBLASTER_VERIFY [yolov8_nano_64x96] === max_abs_err=0 max_rel_err=0 n=8316 instance=0 ready=1']
+=== 00:05:50 board fba120er1_cpsat_soft run 2
+  trace rows: 2852  hart_acc: 8  policy: SCHED_OTHER  exit: 0  verify: ['MODELBLASTER_VERIFY [yolov8_nano_64x96] === max_abs_err=0 max_rel_err=0 n=8316 instance=0 ready=1']
+=== 00:06:25 board fba120er1_greedy run 3
+  trace rows: 2852  hart_acc: 8  policy: SCHED_OTHER  exit: 0  verify: ['MODELBLASTER_VERIFY [yolov8_nano_64x96] === max_abs_err=0 max_rel_err=0 n=8316 instance=0 ready=1']
+=== 00:06:56 board fba120er1_cpsat_hard run 3
+  trace rows: 2852  hart_acc: 8  policy: SCHED_OTHER  exit: 0  verify: ['MODELBLASTER_VERIFY [yolov8_nano_64x96] === max_abs_err=0 max_rel_err=0 n=8316 instance=0 ready=1']
+=== 00:07:26 board fba120er1_cpsat_soft run 3
+  re-pulled the board's stdout: -1 of 2852 rows (pull 1)
+  re-pulled the board's stdout: -1 of 2852 rows (pull 2)
+  re-pulled the board's stdout: -1 of 2852 rows (pull 3)
+  re-pulled the board's stdout: 2852 of 2852 rows (pull 4)
+  trace rows: 2852  hart_acc: 8  policy: SCHED_OTHER  exit: 0  verify: ['MODELBLASTER_VERIFY [yolov8_nano_64x96] === max_abs_err=0 max_rel_err=0 n=8316 instance=0 ready=1']
+=== 00:08:10 BOARD_STAGE2_DONE fba120er1

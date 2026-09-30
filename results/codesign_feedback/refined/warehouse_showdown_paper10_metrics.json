@@ -1,0 +1,843 @@
+{
+ "figure": "/scratch/agustin/xpurt-dev-sync/results/codesign_feedback/refined/warehouse_showdown_paper10.pdf",
+ "size_in": [
+  7.0,
+  5.1
+ ],
+ "base_pt": 6.0,
+ "written": "2026-09-15T16:50:25",
+ "A": {
+  "xpu_gates": 4,
+  "ros_gates": 1,
+  "hit": "crate",
+  "xpu_eff_hz": 96.2,
+  "ros_eff_hz": 39.1,
+  "backdrop": "median of 7 overhead frames (t \u2265 2 s)"
+ },
+ "B": {
+  "XPU-RT \u00b7 CP-SAT": {
+   "c0.8": [
+    11,
+    17
+   ],
+   "c1.0": [
+    9,
+    22
+   ],
+   "c1.2": [
+    13,
+    24
+   ],
+   "c1.4": [
+    7,
+    23
+   ],
+   "c1.6": [
+    9,
+    24
+   ],
+   "c1.8": [
+    8,
+    24
+   ],
+   "c2.0": [
+    6,
+    24
+   ]
+  },
+  "ROS 2 vanilla (4-hart YOLO)": {
+   "c0.8": [
+    0,
+    17
+   ],
+   "c1.0": [
+    0,
+    22
+   ],
+   "c1.2": [
+    0,
+    24
+   ],
+   "c1.4": [
+    3,
+    23
+   ],
+   "c1.6": [
+    7,
+    24
+   ],
+   "c1.8": [
+    4,
+    24
+   ],
+   "c2.0": [
+    0,
+    24
+   ]
+  },
+  "XPU-RT \u00b7 greedy": {
+   "c1.0": [
+    0,
+    12
+   ],
+   "c1.2": [
+    0,
+    12
+   ],
+   "c1.6": [
+    0,
+    12
+   ]
+  },
+  "ROS 2 hand-tuned (pinned)": {
+   "c0.8": [
+    0,
+    6
+   ],
+   "c1.0": [
+    4,
+    12
+   ],
+   "c1.2": [
+    2,
+    10
+   ],
+   "c1.4": [
+    5,
+    12
+   ],
+   "c1.6": [
+    4,
+    12
+   ],
+   "c1.8": [
+    6,
+    12
+   ],
+   "c2.0": [
+    2,
+    12
+   ]
+  },
+  "zones": {
+   "both": [
+    1.6
+   ],
+   "baseline_breaks": [
+    0.8,
+    1.0,
+    1.2,
+    1.4,
+    2.0
+   ],
+   "both_fail": []
+  },
+  "airborne_at_horizon_left_out": 20
+ },
+ "C": {
+  "XPURTCPSAT": {
+   "30": {
+    "lat": 55.156,
+    "deliv": 23.278,
+    "late": 0,
+    "checked": 42,
+    "gap": 9.982,
+    "n": 3,
+    "tags": [
+     "a30cpsat_hardr1",
+     "a30cpsat_hardr2",
+     "a30cpsat_hardr3"
+    ],
+    "cam": 30.0
+   },
+   "45": {
+    "lat": 56.323,
+    "deliv": 40.897,
+    "late": 0,
+    "checked": 132,
+    "gap": 10.0,
+    "n": 3,
+    "tags": [
+     "acpsat_hardr1",
+     "acpsat_hardr2",
+     "acpsat_hardr3"
+    ],
+    "cam": 45.0
+   },
+   "60": {
+    "lat": 58.783,
+    "deliv": 46.951,
+    "late": 0,
+    "checked": 87,
+    "gap": 10.055,
+    "n": 3,
+    "tags": [
+     "a60cpsat_hardr1",
+     "a60cpsat_hardr2",
+     "a60cpsat_hardr3"
+    ],
+    "cam": 59.999
+   },
+   "90": {
+    "lat": 55.642,
+    "deliv": 72.438,
+    "late": 0,
+    "checked": 132,
+    "gap": 10.0,
+    "n": 3,
+    "tags": [
+     "a90cpsat_hardr1",
+     "a90cpsat_hardr2",
+     "a90cpsat_hardr3"
+    ],
+    "cam": 90.001
+   },
+   "120": {
+    "lat": 59.792,
+    "deliv": 66.187,
+    "late": 0,
+    "checked": 69,
+    "gap": 9.996,
+    "n": 3,
+    "tags": [
+     "a120hcpsat_hardr1",
+     "a120hcpsat_hardr2",
+     "a120hcpsat_hardr3"
+    ],
+    "cam": 120.005
+   }
+  },
+  "XPURTgreedy": {
+   "30": {
+    "lat": 70.088,
+    "deliv": 22.871,
+    "late": 0,
+    "checked": 42,
+    "gap": 9.997,
+    "n": 3,
+    "tags": [
+     "a30greedyr1",
+     "a30greedyr2",
+     "a30greedyr3"
+    ],
+    "cam": 30.0
+   },
+   "45": {
+    "lat": 747.959,
+    "deliv": 31.016,
+    "late": 132,
+    "checked": 132,
+    "gap": 13.249,
+    "n": 3,
+    "tags": [
+     "agreedyr1",
+     "agreedyr2",
+     "agreedyr3"
+    ],
+    "cam": 45.0
+   },
+   "60": {
+    "lat": 583.533,
+    "deliv": 27.55,
+    "late": 87,
+    "checked": 87,
+    "gap": 17.476,
+    "n": 3,
+    "tags": [
+     "a60greedyr1",
+     "a60greedyr2",
+     "a60greedyr3"
+    ],
+    "cam": 59.999
+   },
+   "90": {
+    "lat": 947.452,
+    "deliv": 29.036,
+    "late": 132,
+    "checked": 132,
+    "gap": 25.669,
+    "n": 3,
+    "tags": [
+     "a90greedyr1",
+     "a90greedyr2",
+     "a90greedyr3"
+    ],
+    "cam": 90.001
+   },
+   "120": {
+    "lat": 566.298,
+    "deliv": 18.594,
+    "late": 69,
+    "checked": 69,
+    "gap": 35.759,
+    "n": 3,
+    "tags": [
+     "a120hgreedyr1",
+     "a120hgreedyr2",
+     "a120hgreedyr3"
+    ],
+    "cam": 120.005
+   }
+  },
+  "ROSvanillahartYOLO": {
+   "15": {
+    "lat": 31.035,
+    "deliv": 14.98,
+    "deliv_full": 12.733,
+    "gap": 66.667,
+    "n": 3,
+    "tags": [
+     "15_vanilla4_r1",
+     "15_vanilla4_r2",
+     "15_vanilla4_r3"
+    ],
+    "cam": 15
+   },
+   "25": {
+    "lat": 30.989,
+    "deliv": 24.941,
+    "deliv_full": 21.2,
+    "gap": 39.999,
+    "n": 3,
+    "tags": [
+     "25_vanilla4_r1",
+     "25_vanilla4_r2",
+     "25_vanilla4_r3"
+    ],
+    "cam": 25
+   },
+   "30": {
+    "lat": 31.093,
+    "deliv": 29.941,
+    "deliv_full": 25.45,
+    "gap": 33.332,
+    "n": 3,
+    "tags": [
+     "30_vanilla4_r1",
+     "30_vanilla4_r2",
+     "30_vanilla4_r3"
+    ],
+    "cam": 30
+   },
+   "45": {
+    "lat": 242.333,
+    "deliv": 38.373,
+    "deliv_full": 32.617,
+    "gap": 25.681,
+    "n": 3,
+    "tags": [
+     "45_vanilla4_r1",
+     "45_vanilla4_r2",
+     "45_vanilla4_r3"
+    ],
+    "cam": 45
+   },
+   "60": {
+    "lat": 189.391,
+    "deliv": 38.549,
+    "deliv_full": 32.767,
+    "gap": 25.662,
+    "n": 3,
+    "tags": [
+     "60_vanilla4_r1",
+     "60_vanilla4_r2",
+     "60_vanilla4_r3"
+    ],
+    "cam": 60
+   },
+   "90": {
+    "lat": 136.863,
+    "deliv": 38.725,
+    "deliv_full": 32.917,
+    "gap": 25.636,
+    "n": 3,
+    "tags": [
+     "90_vanilla4_r1",
+     "90_vanilla4_r2",
+     "90_vanilla4_r3"
+    ],
+    "cam": 90
+   }
+  },
+  "ROSonallcores": {
+   "45": {
+    "lat": 454.637,
+    "deliv": 40.765,
+    "deliv_full": 34.65,
+    "gap": 16.639,
+    "n": 3,
+    "tags": [
+     "45_vanilla4x2_r1",
+     "45_vanilla4x2_r2",
+     "45_vanilla4x2_r3"
+    ],
+    "cam": 45
+   },
+   "60": {
+    "lat": 359.821,
+    "deliv": 45.549,
+    "deliv_full": 38.717,
+    "gap": 15.964,
+    "n": 3,
+    "tags": [
+     "60_vanilla4x2_r1",
+     "60_vanilla4x2_r2",
+     "60_vanilla4x2_r3"
+    ],
+    "cam": 60
+   },
+   "90": {
+    "lat": 254.263,
+    "deliv": 50.961,
+    "deliv_full": 43.317,
+    "gap": 16.264,
+    "n": 3,
+    "tags": [
+     "90_vanilla4x2_r1",
+     "90_vanilla4x2_r2",
+     "90_vanilla4x2_r3"
+    ],
+    "cam": 90
+   }
+  },
+  "ROSvanillaserialYOLO": {
+   "15": {
+    "lat": 53.82,
+    "deliv": 14.961,
+    "deliv_full": 12.717,
+    "gap": 66.665,
+    "n": 3,
+    "tags": [
+     "15_vanilla_r1",
+     "15_vanilla_r2",
+     "15_vanilla_r3"
+    ],
+    "cam": 15
+   },
+   "25": {
+    "lat": 433.292,
+    "deliv": 20.216,
+    "deliv_full": 17.183,
+    "gap": 48.211,
+    "n": 3,
+    "tags": [
+     "25_vanilla_r1",
+     "25_vanilla_r2",
+     "25_vanilla_r3"
+    ],
+    "cam": 25
+   },
+   "30": {
+    "lat": 370.549,
+    "deliv": 20.216,
+    "deliv_full": 17.183,
+    "gap": 48.391,
+    "n": 3,
+    "tags": [
+     "30_vanilla_r1",
+     "30_vanilla_r2",
+     "30_vanilla_r3"
+    ],
+    "cam": 30
+   },
+   "45": {
+    "lat": 264.773,
+    "deliv": 20.392,
+    "deliv_full": 17.333,
+    "gap": 48.241,
+    "n": 3,
+    "tags": [
+     "45_vanilla_r1",
+     "45_vanilla_r2",
+     "45_vanilla_r3"
+    ],
+    "cam": 45
+   },
+   "60": {
+    "lat": 212.052,
+    "deliv": 20.412,
+    "deliv_full": 17.35,
+    "gap": 48.391,
+    "n": 3,
+    "tags": [
+     "60_vanilla_r1",
+     "60_vanilla_r2",
+     "60_vanilla_r3"
+    ],
+    "cam": 60
+   },
+   "90": {
+    "lat": 159.248,
+    "deliv": 20.471,
+    "deliv_full": 17.4,
+    "gap": 48.375,
+    "n": 3,
+    "tags": [
+     "90_vanilla_r1",
+     "90_vanilla_r2",
+     "90_vanilla_r3"
+    ],
+    "cam": 90
+   }
+  },
+  "ROShandtunedpinned": {
+   "10": {
+    "lat": 30.533,
+    "deliv": 10.0,
+    "deliv_full": 8.5,
+    "gap": 10.0,
+    "n": 1,
+    "tags": [
+     "10_p3_r1"
+    ],
+    "cam": 10
+   },
+   "12": {
+    "lat": 30.506,
+    "deliv": 12.0,
+    "deliv_full": 10.2,
+    "gap": 10.0,
+    "n": 1,
+    "tags": [
+     "12_p3_r1"
+    ],
+    "cam": 12
+   },
+   "15": {
+    "lat": 30.506,
+    "deliv": 14.941,
+    "deliv_full": 12.7,
+    "gap": 10.0,
+    "n": 3,
+    "tags": [
+     "15_p3_r1",
+     "15_p3_r2",
+     "15_p3_r3"
+    ],
+    "cam": 15
+   },
+   "20": {
+    "lat": 30.478,
+    "deliv": 19.941,
+    "deliv_full": 16.95,
+    "gap": 10.0,
+    "n": 1,
+    "tags": [
+     "20_p3_r1"
+    ],
+    "cam": 20
+   },
+   "25": {
+    "lat": 30.47,
+    "deliv": 24.961,
+    "deliv_full": 21.217,
+    "gap": 10.0,
+    "n": 3,
+    "tags": [
+     "25_p3_r1",
+     "25_p3_r2",
+     "25_p3_r3"
+    ],
+    "cam": 25
+   },
+   "30": {
+    "lat": 30.398,
+    "deliv": 29.941,
+    "deliv_full": 25.45,
+    "gap": 10.0,
+    "n": 1,
+    "tags": [
+     "30_p3_r1"
+    ],
+    "cam": 30
+   },
+   "45": {
+    "lat": 55.823,
+    "deliv": 38.863,
+    "deliv_full": 33.033,
+    "gap": 10.0,
+    "n": 3,
+    "tags": [
+     "45_p3_r1",
+     "45_p3_r2",
+     "45_p3_r3"
+    ],
+    "cam": 45
+   },
+   "5": {
+    "lat": 30.441,
+    "deliv": 5.0,
+    "deliv_full": 4.25,
+    "gap": 10.0,
+    "n": 1,
+    "tags": [
+     "5_p3_r1"
+    ],
+    "cam": 5
+   },
+   "60": {
+    "lat": 55.849,
+    "deliv": 39.118,
+    "deliv_full": 33.25,
+    "gap": 10.0,
+    "n": 1,
+    "tags": [
+     "60_p3_r1"
+    ],
+    "cam": 60
+   },
+   "75": {
+    "lat": 56.079,
+    "deliv": 38.941,
+    "deliv_full": 33.1,
+    "gap": 10.0,
+    "n": 1,
+    "tags": [
+     "75_p3_r1"
+    ],
+    "cam": 75
+   },
+   "8": {
+    "lat": 30.463,
+    "deliv": 8.0,
+    "deliv_full": 6.8,
+    "gap": 10.0,
+    "n": 1,
+    "tags": [
+     "8_p3_r1"
+    ],
+    "cam": 8
+   },
+   "90": {
+    "lat": 56.194,
+    "deliv": 38.824,
+    "deliv_full": 33.0,
+    "gap": 10.0,
+    "n": 1,
+    "tags": [
+     "90_p3_r1"
+    ],
+    "cam": 90
+   }
+  }
+ },
+ "S": {
+  "cruise": 1.4,
+  "records": "/scratch/agustin/xpurt-dev-sync/results/codesign_feedback/campaign_scene/tall1000s",
+  "counts": {
+   "XPU-RT \u00b7 CP-SAT": {
+    "completed": 4,
+    "n": 12
+   },
+   "ROS 2 vanilla": {
+    "completed": 0,
+    "n": 12
+   },
+   "XPU-RT \u00b7 greedy": {
+    "completed": 0,
+    "n": 12
+   }
+  },
+  "ros_gates": 2
+ },
+ "F": {
+  "scene_1.7": {
+   "xpu": 120,
+   "tie": 27,
+   "ros": 21
+  },
+  "scene_2.4": {
+   "xpu": 49,
+   "tie": 20,
+   "ros": 15
+  },
+  "per_speed_1.7": {
+   "c0.8": {
+    "xpu": 24
+   },
+   "c1.0": {
+    "xpu": 20,
+    "tie": 4
+   },
+   "c1.2": {
+    "xpu": 18,
+    "ros": 1,
+    "tie": 5
+   },
+   "c1.4": {
+    "xpu": 16,
+    "tie": 4,
+    "ros": 4
+   },
+   "c1.6": {
+    "ros": 7,
+    "xpu": 13,
+    "tie": 4
+   },
+   "c1.8": {
+    "tie": 4,
+    "xpu": 14,
+    "ros": 6
+   },
+   "c2.0": {
+    "tie": 6,
+    "xpu": 15,
+    "ros": 3
+   }
+  }
+ },
+ "G": {
+  "xpu_mean_w": 0.436,
+  "ros_mean_w": 1.498,
+  "xpu_mean_speed": 1.017,
+  "ros_mean_speed": 0.997
+ },
+ "D": [
+  "/scratch/agustin/xpurt-dev-sync/schedules/measured_gantt_v3_xpu.json",
+  "/scratch/agustin/xpurt-dev-sync/schedules/measured_gantt_v3_xpu2.json",
+  "/scratch/agustin/xpurt-dev-sync/schedules/measured_gantt_v3_ros8.json",
+  "/scratch/agustin/xpurt-dev-sync/schedules/measured_gantt_v3_ros.json"
+ ],
+ "E": {
+  "XPU-RT \u00b7 CP-SAT": {
+   "parts_ms": [
+    0.0,
+    45.3,
+    4.7,
+    4.7
+   ],
+   "sum_of_part_medians_ms": 54.7,
+   "chain_median_ms": 56.8,
+   "frames": 126
+  },
+  "XPU-RT \u00b7 greedy": {
+   "parts_ms": [
+    0.0,
+    740.3,
+    6.2,
+    0.1
+   ],
+   "sum_of_part_medians_ms": 746.7,
+   "chain_median_ms": 748.0,
+   "frames": 123
+  },
+  "ROS 2 hand-pinned": {
+   "parts_ms": [
+    25.5,
+    24.6,
+    4.9,
+    5.0
+   ],
+   "sum_of_part_medians_ms": 60.0,
+   "chain_median_ms": 57.9,
+   "frames": 2202
+  },
+  "ROS 2 vanilla, 4-hart YOLO": {
+   "parts_ms": [
+    210.7,
+    25.1,
+    4.8,
+    0.8
+   ],
+   "sum_of_part_medians_ms": 241.4,
+   "chain_median_ms": 241.4,
+   "frames": 2230
+  },
+  "ROS 2 two YOLO nodes, 8 cores": {
+   "parts_ms": [
+    0.8,
+    439.9,
+    5.4,
+    0.9
+   ],
+   "sum_of_part_medians_ms": 446.9,
+   "chain_median_ms": 447.8,
+   "frames": 1291
+  },
+  "ROS 2 vanilla, serial YOLO": {
+   "parts_ms": [
+    211.3,
+    47.7,
+    4.8,
+    0.8
+   ],
+   "sum_of_part_medians_ms": 264.6,
+   "chain_median_ms": 264.5,
+   "frames": 1184
+  }
+ },
+ "audit": [],
+ "sources": {
+  "xpu_dir": "/scratch/agustin/xpurt-dev-sync/results/codesign_feedback/campaign_v2/display_same/xpu_s1005_figdata",
+  "ros_dir": "/scratch/agustin/xpurt-dev-sync/results/codesign_feedback/campaign_v2/display_same/ros_s1005_figdata",
+  "scene2_xpu_dir": "/scratch/agustin/xpurt-dev-sync/results/codesign_feedback/campaign_v2/display_v3s_c1.4/xpu_s1000_figdata",
+  "scene2_ros_dir": "/scratch/agustin/xpurt-dev-sync/results/codesign_feedback/campaign_v2/display_v3s_c1.4/ros_s1000_figdata",
+  "scene2_records": "/scratch/agustin/xpurt-dev-sync/results/codesign_feedback/campaign_scene/tall1000s",
+  "gantt_sidecars": [
+   "/scratch/agustin/xpurt-dev-sync/schedules/measured_gantt_v3_xpu_metrics.json",
+   "/scratch/agustin/xpurt-dev-sync/schedules/measured_gantt_v3_xpu2_metrics.json",
+   "/scratch/agustin/xpurt-dev-sync/schedules/measured_gantt_v3_ros8_metrics.json",
+   "/scratch/agustin/xpurt-dev-sync/schedules/measured_gantt_v3_ros_metrics.json"
+  ],
+  "campaigns": [
+   "campaign_break",
+   "campaign_courseC",
+   "campaign_cross",
+   "campaign_env",
+   "campaign_percep",
+   "campaign_qos1",
+   "campaign_rich",
+   "campaign_seeds24",
+   "campaign_tallcal",
+   "campaign_tallnet",
+   "campaign_v1",
+   "campaign_v2",
+   "campaign_v2_courseB",
+   "campaign_walk"
+  ]
+ },
+ "script": "showdown_paper10_figure",
+ "inputs": {
+  "results/codesign_feedback/campaign/campaign.csv": "716faf4d4d051579171b9bbd6dd48acc3d694e2a90c3741c9aa21165806c46ef",
+  "results/codesign_feedback/campaign_break/campaign.csv": "128f7a46419ca5aa1cb568f35ea3efb61610ad080b35a5897903e47fd6e68345",
+  "results/codesign_feedback/campaign_courseC/campaign.csv": "a0a4b730bbe7b959d462bcfb69a6ebdd54ab95ad8600c8141842c395765c8cca",
+  "results/codesign_feedback/campaign_cross/campaign.csv": "fff461f4a94b7f0fc5d6516f13ac672f1ded6ab8e987772fe4115982e7fc643b",
+  "results/codesign_feedback/campaign_env/env_sweep.csv": "37cd9b097b9d3c6a134112b457719f820937ed76516c5c1aeac80cb287f422ea",
+  "results/codesign_feedback/campaign_percep/campaign.csv": "874cba27e988ed1709ad40352d6a1db5555812261bf62777c080f68fb52f7dc3",
+  "results/codesign_feedback/campaign_qos1/campaign.csv": "f53eaf89c969added3141fc72a42495f0ec33e00241273f84583c478b5a2c89d",
+  "results/codesign_feedback/campaign_rich/campaign.csv": "957e5a475c5610579463b6df70f68edc54c06578d7773cc5a8f45d3d3a821174",
+  "results/codesign_feedback/campaign_seeds24/campaign.csv": "4ee968293048c26b729ec3211cdeabfe5ac4ccb4256e7f7f89ed87cd00b68756",
+  "results/codesign_feedback/campaign_tallcal/campaign.csv": "a4455c1d304e421d146034a6b0d55d2aae2f8f6e401f957d5f29076636c14d44",
+  "results/codesign_feedback/campaign_tallnet/campaign.csv": "f0e636330e842d9eb21db22b62207de82af5ef02488f030c9e19d92d77dfb9b4",
+  "results/codesign_feedback/campaign_v2/campaign_v2.csv": "7c6dc6a648f5f72a8d2f0e3efef987d2ef23fb81810e697fc0c367cc10dc4487",
+  "results/codesign_feedback/campaign_v2_courseB/campaign_v2.csv": "781f77ad0ef201981c6fc950e258911c1b7f28e7aedf76576318d76a8a81c152",
+  "results/codesign_feedback/campaign_walk/campaign.csv": "b7621815bfa95943b58cbb4db1326311887538fdaadb3b66912d289b54527bbe",
+  "results/codesign_feedback/gain_controlled/gain_controlled.csv": "8811805bd798c574e1a577fbd3b21a63c4404f892e9ba6368816dffe130ef9e1",
+  "results/codesign_feedback/hil_ablation.csv": "7cab7e9b37c8f36de5408e2b20a32ef2bae072e232290f6ef97a0dc78674393d",
+  "results/codesign_feedback/hil_ablation_courseB.csv": "3f5089f43d645d3da96a22a2ea6961104f257a4150542403a5587e78101e0af2",
+  "results/codesign_feedback/ros_traced/45_p3_r1/trace.csv": "8df51b7a4a097489cd049dcbbaf813f2788e87b1b9f3d30f79bb47a67a283adf",
+  "results/codesign_feedback/ros_traced/45_p3_r2/trace.csv": "fa7d1134095ae4fc98491a9b39f01dde9ce4472d23cf15c524f07fb17fb35c12",
+  "results/codesign_feedback/ros_traced/45_p3_r3/trace.csv": "fb70a281d9b750863f48e184bbd4f5f6c6f0ae1537e5d94ba253973dd5571ca8",
+  "results/codesign_feedback/ros_traced/45_vanilla4_r1/trace.csv": "1c65666135c84a2f7ecae919b485e2a0130f375e26ac7c9bc4b76917cf40f482",
+  "results/codesign_feedback/ros_traced/45_vanilla4_r2/trace.csv": "37c322819de7780980e74b28b21101ee1558a8ca59daa1484d2ec6a950c94660",
+  "results/codesign_feedback/ros_traced/45_vanilla4_r3/trace.csv": "388eeefd62c4750089f4db53cb50694d9a2b7b97e6ac768cf93fdfec90f3c198",
+  "results/codesign_feedback/ros_traced/45_vanilla4x2_r1/trace.csv": "470bde0d0fe9749ad524186806f3d61970ba7e058e9505f360be9246e57e9f08",
+  "results/codesign_feedback/ros_traced/45_vanilla4x2_r2/trace.csv": "83dcc66ba9e544b9595bff8d9e3cc552821a991c9cf08c4b6a66e7abf51c09db",
+  "results/codesign_feedback/ros_traced/45_vanilla4x2_r3/trace.csv": "db3069e1a57566e995d1e1b5e3974f711d07cedde3bb369952e3613f348a1f42",
+  "results/codesign_feedback/ros_traced/45_vanilla_r1/trace.csv": "636bf796ec92172cb082009c648b8633d3d5fc275b6407023d21f268d559641f",
+  "results/codesign_feedback/ros_traced/45_vanilla_r2/trace.csv": "a7a480161e3a74e0f994a9095d60a50904471e4d5543c7fd21b9f54523e628fa",
+  "results/codesign_feedback/ros_traced/45_vanilla_r3/trace.csv": "c264d37387b38b33f75369d620b0ebc9d183d36f2c2a4641d2957f58759e54e3",
+  "results/codesign_feedback/ros_traced/summary.csv": "50b02b05cd10751ce257a94dd78d66b100e3c109885257fdd973b36c12571b11",
+  "results/codesign_feedback/xpurt_long/trace_acpsat_hardr1_other_run1.csv": "fb16ca7138ba6984b9586b709db47ed924c8d9f52ed18790d8005655388bac06",
+  "results/codesign_feedback/xpurt_long/trace_acpsat_hardr2_other_run1.csv": "6569e6b60a654da23c459005d9d45ea45e0c9d7482999be6838c804b867a4ffc",
+  "results/codesign_feedback/xpurt_long/trace_acpsat_hardr3_other_run1.csv": "a55c2c445896a72497b285e02978c36a65ef6d0f57a24308d78c4ce0292bc9b1",
+  "results/codesign_feedback/xpurt_long/trace_agreedyr1_other_run1.csv": "31ab57ab4cdb128fa43e27b2238bc5608f9288009dd292df319388e991de2715",
+  "results/codesign_feedback/xpurt_long/trace_agreedyr2_other_run1.csv": "436a7876670d8efb603077fe3122d71c444bc4a357614f27668bc8835c948dd1",
+  "results/codesign_feedback/xpurt_long/trace_agreedyr3_other_run1.csv": "ac2a950d9922d2b6b5e417c06d60a73cebf4b3e4cdde86fd996ed9322cff8c3c",
+  "schedules/measured_gantt_v3_ros8_metrics.json": "5987b8d7ee8198f06d7891502cddef8e849404afb71bd30fb55918a41e668a15",
+  "schedules/measured_gantt_v3_ros_metrics.json": "65822d8e2be3212c335aa5b00962ed6aa2a4e73f19d6dbcd421dc9bcd948309d",
+  "schedules/measured_gantt_v3_xpu2_metrics.json": "e87ac7d11cbda83bff3198b2d456953f375f4ee780fc94a7abace0df6444c6e1",
+  "schedules/measured_gantt_v3_xpu_metrics.json": "366b582977afc6def6b74a9a1ac8a1a3689c807875a332f8ac80fec8a0a9cac4"
+ },
+ "fallbacks_used": []
+}

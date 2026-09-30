@@ -1,0 +1,15 @@
+{
+  "tag": "75_vanilla4x2tm_r2", "nodes": "perception",
+  "rate_hz": 75, "ctrl_hz": 100, "seconds": 20,
+  "executor": "single", "executor_threads": 1, "ctrl_mode": "timer",
+  "callback_groups": "mutually_exclusive_per_node; both cameras' YOLO in one group", "qos_depth": 10,
+  "alternate": false,
+  "rmw": "rmw_fastrtps_cpp",
+  "yolo_pool": 4, "pool_harts": "0,1,2,3", "pin_main": -1, "extra": "", "cameras": 1,
+  "t0_rdtime": 121516967991755, "run_t0_ticks": 33997434, "run_end_ticks": 515145881,
+  "wall_start_epoch_ms": 1789617842006, "wall_end_epoch_ms": 1789617862054,
+  "n_released": 0, "n_goals": 0, "n_ctrl_fires": 0, "n_consumed": 0,
+  "affinity_mask": "0xff", "sched_policy": "SCHED_OTHER", "rt_priority": 0,
+  "instance_meaning": "perception/nav: camera frame seq; control: timer fire index",
+  "kernels_sha": "36b326c8 ir=0c783539626c", "hostname": "k1", "kernel": "6.6.63"
+}

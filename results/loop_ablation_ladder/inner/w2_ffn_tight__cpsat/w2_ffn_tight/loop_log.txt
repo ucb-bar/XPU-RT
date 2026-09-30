@@ -1,0 +1,27 @@
+replay: XPURT_CPSAT_WORKERS=1 (deterministic; the published numbers use 0/6, which is faster and not reproducible)
+== co-design loop: w2_ffn_tight ==
+round 0 · baseline: makespan 74.613 (makespan 74.6 ms), 20 instance-miss
+accept rule: candidate_objective.accept() · critical=['mlp_control', 'ffn_block'] heavy=ffn_block
+      ime: built ime_x60 profiles for (none new; existing reused)
+round 1 · try ime: makespan 74.613 -> 62.601 (-16.1%), 10 instance-miss -> ACCEPTABLE
+round 1 · try ime: accepted -- max deadline lateness: ime=4.6 beats baseline=16.61 (tolerance 0.5)
+round 1 · try shard: makespan 74.613 -> 55.852 (-25.1%), 0 instance-miss -> ACCEPTABLE
+round 1 · try shard: accepted -- hard deadline misses: shard=0 beats baseline=5 (tolerance 1.36)
+      unfuse: adopted ModelBlaster unfused dispatch graph for (none — no fused net with an unfused build on disk)
+round 1 · try unfuse: lever changed nothing on this spec (inapplicable here) — not a candidate
+round 1: ACCEPT +shard  makespan 74.613 -> 55.852 (-25.1%)
+      ime: built ime_x60 profiles for (none new; existing reused)
+round 2 · try ime: makespan 55.852 -> 55.850 (-0.0%), 0 instance-miss -> ACCEPTABLE
+round 2 · try ime: accepted -- p99 response of critical tasks: ime=8.04 beats shard=9.04 (tolerance 0.5)
+      unfuse: adopted ModelBlaster unfused dispatch graph for (none — no fused net with an unfused build on disk)
+round 2 · try unfuse: lever changed nothing on this spec (inapplicable here) — not a candidate
+round 2: ACCEPT +ime  makespan 55.852 -> 55.850 (-0.0%)
+      unfuse: adopted ModelBlaster unfused dispatch graph for (none — no fused net with an unfused build on disk)
+round 3 · try unfuse: lever changed nothing on this spec (inapplicable here) — not a candidate
+round 3: no lever is accepted by the nine-term objective rule — CONVERGED
+fuse: NOT applied — roofline decision-aid says the stack is compute-bound (max fusible-epilogue ceiling 16% on dronet); fusion collapses dispatches (scheduling) but is measured ~+0.85% on cycles, so the loop does not credit a makespan gain it cannot measure.
+
+CONVERGED: hard deadline misses (instances) 5 -> 0; makespan 74.613 -> 55.850 ms (-25.1%), levers applied: ['shard', 'ime']
+  decided by: shard (hard deadline misses: shard=0 beats baseline=5 (tolerance 1.36))
+  decided by: ime (p99 response of critical tasks: ime=8.04 beats shard=9.04 (tolerance 0.5))
+artifacts in /scratch/agustin/xpurt-dev-sync/results/loop_ablation_ladder/inner/w2_ffn_tight__cpsat/w2_ffn_tight

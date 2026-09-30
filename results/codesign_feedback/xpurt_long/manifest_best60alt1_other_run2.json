@@ -1,0 +1,15 @@
+{
+  "tag": "best60alt1_other_run2",
+  "schedule": "/scratch/agustin/xpurt-dev-sync/schedules/best60_alt1.json",
+  "schedule_sha256": "34c89e5a9edb482a",
+  "solver": "explicit alt1 placement, camera 60 Hz",
+  "board_recost": null,
+  "ir_sha256_yolo": "0c783539626cf1627ae801d997ddc3f8c82316ab1ec10bb488cd9b4418180456",
+  "sched_policy": "SCHED_OTHER",
+  "run_t0_rdtime": 108879240017848,
+  "wall_start_epoch_ms": 1789091247357,
+  "exit_code": 0,
+  "verify_lines": [],
+  "rdtime_hz": 24000000,
+  "note": "numeric verification covers instance 0 only"
+}

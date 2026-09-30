@@ -1,0 +1,275 @@
+{
+ "figure": "results/codesign_feedback/refined/warehouse_showdown_cam30_solver_placed_rate_gain.png",
+ "written": "2026-09-19T15:00:05",
+ "sources": {
+  "xpu_dir": "results/codesign_feedback/campaign_free30/display/search_c1.4/xpu_s1007_figdata",
+  "ros_dir": "results/codesign_feedback/campaign_free30/display/search_c1.4/ros_s1007_figdata",
+  "scene_records": "results/codesign_feedback/campaign_scene/free30pr_l1007",
+  "gantt_sidecars": [
+   "results/codesign_feedback/refined/free30d/measured_gantt_free30d_xpu_metrics.json",
+   "results/codesign_feedback/refined/free30d/measured_gantt_free30d_ros8_metrics.json"
+  ],
+  "envelope_csv": "/scratch/agustin/xpurt-dev-sync/results/codesign_feedback/hil_ablation.csv",
+  "courseB_csv": "/scratch/agustin/xpurt-dev-sync/results/codesign_feedback/hil_ablation_courseB.csv",
+  "energy_csv": "results/codesign_feedback/flight_energy_free30_perrate.csv"
+ },
+ "A": {
+  "gain_xpu": 0.005,
+  "gain_ros": 0.01667,
+  "xpu_gates": 4,
+  "ros_gates": 0,
+  "hit": "time limit",
+  "ros_failure": "before_first_gate",
+  "xpu_eff_hz": 100.2,
+  "ros_eff_hz": 30.0,
+  "backdrop": "median of 5 overhead frames (t \u2265 2 s)",
+  "plate_std": 51.6,
+  "clearance_m": 0.618,
+  "clearance_measured": true,
+  "moments": [
+   {
+    "arm": "ROS",
+    "step": 450,
+    "label": "ROS 2 30 Hz \u00b7 has not reached G1",
+    "t_s": 4.5
+   },
+   {
+    "arm": "ROS",
+    "step": 1799,
+    "label": "ROS 2 30 Hz \u00b7 short of G1 at the time limit",
+    "t_s": 17.99
+   },
+   {
+    "arm": "XPU",
+    "step": 976,
+    "label": "XPU-RT 100 Hz \u00b7 clears crate 0.62 m",
+    "t_s": 9.76
+   },
+   {
+    "arm": "XPU",
+    "step": 1087,
+    "label": "XPU-RT 100 Hz \u00b7 reaches gate",
+    "t_s": 10.87
+   }
+  ],
+  "layout_seed": {
+   "xpu": 1007,
+   "ros": 1007
+  },
+  "episode_seed": {
+   "xpu": 1007,
+   "ros": 1007
+  },
+  "scene_completed": {
+   "xpu": [
+    0,
+    12
+   ],
+   "ros": [
+    0,
+    12
+   ]
+  },
+  "scene_mean_gates": {
+   "xpu": 1.75,
+   "ros": 0.08
+  },
+  "ros_outcome": "timeout",
+  "display_cruise": 1.4,
+  "xpu_trace": "xpu_p30free.csv",
+  "ros_trace": "ros_cp3n430.csv",
+  "ros_label": "ROS 2 \u00b7 4-hart YOLO pool, 4-wide nav, all 8 cores",
+  "xpu_label": "XPU-RT \u00b7 solver-placed CP-SAT schedule",
+  "camera_hz": 30.0
+ },
+ "B": {
+  "rates": [
+   20.0,
+   25.0,
+   33.33,
+   50.0,
+   100.0
+  ],
+  "xpu_hz": 100.22331811138152,
+  "ros_hz": 29.999500008333193,
+  "flights": 300,
+  "k_n_per_hz": {
+   "20": [
+    0,
+    60
+   ],
+   "25": [
+    1,
+    60
+   ],
+   "33": [
+    13,
+    60
+   ],
+   "50": [
+    23,
+    60
+   ],
+   "100": [
+    21,
+    60
+   ]
+  }
+ },
+ "C": {
+  "courseB_k_n_per_hz": {
+   "25": [
+    2,
+    30
+   ],
+   "33": [
+    1,
+    30
+   ],
+   "50": [
+    9,
+    30
+   ],
+   "100": [
+    10,
+    30
+   ]
+  }
+ },
+ "D": {
+  "energy_csv": "results/codesign_feedback/flight_energy_free30_perrate.csv",
+  "xpu_condition": "xpu_free30",
+  "conditions": {
+   "ros_cp3n4_30": {
+    "n": 6,
+    "moment_x": 60.67,
+    "power_x": 118.96
+   },
+   "xpu_free30": {
+    "n": 6,
+    "moment_x": 1.0,
+    "power_x": 1.0
+   }
+  }
+ },
+ "telemetry": {
+  "xpu_mean_w": 0.374,
+  "ros_mean_w": 15.13,
+  "xpu_mean_speed": 1.401,
+  "ros_mean_speed": 1.027
+ },
+ "I": {
+  "xpu": {
+   "chain_ms_median": 26.751,
+   "ctrl_gap_mean_ms": 9.999,
+   "frames_late": 0,
+   "frames_checked": 14,
+   "placement_note": "8 harts \u00b7 scheduled",
+   "busy_source": "sampler_rdtime",
+   "harts_per_net": {
+    "YOLO": [
+     "CPU_E#0",
+     "CPU_E#2",
+     "CPU_E#3",
+     "CPU_P#0",
+     "CPU_P#2"
+    ],
+    "control": [
+     "CPU_E#3"
+    ],
+    "nav": [
+     "CPU_E#0",
+     "CPU_E#3",
+     "CPU_P#0"
+    ]
+   },
+   "drawn_harts_per_net": {
+    "YOLO": [
+     "CPU_E#0",
+     "CPU_E#1",
+     "CPU_E#2",
+     "CPU_E#3",
+     "CPU_P#0",
+     "CPU_P#1",
+     "CPU_P#2",
+     "CPU_P#3"
+    ],
+    "control": [
+     "CPU_E#3"
+    ],
+    "nav": [
+     "CPU_E#0",
+     "CPU_E#1",
+     "CPU_E#2",
+     "CPU_E#3",
+     "CPU_P#0",
+     "CPU_P#1",
+     "CPU_P#2",
+     "CPU_P#3"
+    ]
+   }
+  },
+  "ros8": {
+   "chain_ms_median": 30.128,
+   "ctrl_gap_mean_ms": 33.38,
+   "frames_late": 0,
+   "frames_checked": 598,
+   "placement_note": "3 processes pinned \u00b7 YOLO on 4 harts",
+   "busy_source": "sampler_epoch",
+   "harts_per_net": {
+    "YOLO": [
+     "CPU_P#0",
+     "CPU_P#1",
+     "CPU_P#2",
+     "CPU_P#3"
+    ],
+    "nav": [
+     "CPU_E#0"
+    ],
+    "control": [
+     "CPU_E#2"
+    ]
+   },
+   "drawn_harts_per_net": {
+    "YOLO": [
+     "CPU_P#0",
+     "CPU_P#1",
+     "CPU_P#2",
+     "CPU_P#3"
+    ],
+    "nav": [
+     "CPU_E#0",
+     "CPU_E#1",
+     "CPU_E#2",
+     "CPU_E#3"
+    ],
+    "control": [
+     "CPU_E#2"
+    ]
+   }
+  },
+  "bars": {
+   "XPU-RT": {
+    "dispatches": 544,
+    "drawn": 544
+   },
+   "ROS 2 \u00b7 all 8 cores": {
+    "dispatches": 1126,
+    "drawn": 1126
+   }
+  },
+  "merged_per_hart_and_frame": false
+ },
+ "script": "showdown_paper_figure",
+ "inputs": {
+  "results/codesign_feedback/campaign_free30/display/search_c1.4/ros_s1007_figdata/figure_data.npz": "c8ca50f2b7a1723b96d9e1274567d218acd4fbd77cfa65b179388701a566e698",
+  "results/codesign_feedback/campaign_free30/display/search_c1.4/xpu_s1007_figdata/figure_data.npz": "def59b775e2b2abdc1a025215655e758f46c490b2df9b460011d99a121e9eafb",
+  "results/codesign_feedback/campaign_scene/free30pr_l1007/campaign.csv": "1fd00f9bf6600d7f20726ec20833101d79924087362a87dda9b573a16336bcd6",
+  "results/codesign_feedback/flight_energy_free30_perrate.csv": "d2975f89e081fed475bc18976d7a3abaffe3c5e4321b54d68d2d880ac3c7715e",
+  "results/codesign_feedback/hil_ablation.csv": "7cab7e9b37c8f36de5408e2b20a32ef2bae072e232290f6ef97a0dc78674393d",
+  "results/codesign_feedback/hil_ablation_courseB.csv": "3f5089f43d645d3da96a22a2ea6961104f257a4150542403a5587e78101e0af2",
+  "results/codesign_feedback/refined/free30d/measured_gantt_free30d_ros8_metrics.json": "c7337a00299df03bc1b00c3432b8c4754fb81f28802f6a1d2538e2584e30a011",
+  "results/codesign_feedback/refined/free30d/measured_gantt_free30d_xpu_metrics.json": "f585afd74b33c8645dabdfe97a22bc576aac048dc38f1ac94b7b7dc84e98193c"
+ },
+ "fallbacks_used": []
+}

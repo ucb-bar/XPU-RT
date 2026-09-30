@@ -1,0 +1,47 @@
+{
+ "contract": "modelblaster.split_hints/v1",
+ "reason": "dispatch 1 (linear_s8) 14125us vs 13270us slot -> M 128 in 2",
+ "networks": [
+  {
+   "network": "ffn_block",
+   "split_ops": [
+    {
+     "op": 1,
+     "n_splits": 2,
+     "axis": "M"
+    }
+   ]
+  }
+ ],
+ "_provenance": {
+  "from_advice": "scheduled__4w_networks_k1_sensor_sharded_rich_shard_ime_s4.0_r0_baseline_greedy_profiled.json",
+  "max_splits": 4,
+  "refused": 0,
+  "derivation": [
+   {
+    "dispatch_id": 1,
+    "op": "linear_s8",
+    "axis": "M",
+    "M": 128,
+    "service_time_us": 14125.33,
+    "max_target_piece_us": 13270.29,
+    "n_needed": 2,
+    "n_splits": 2,
+    "reaches_target": true,
+    "piece_us_estimate": 7062.66,
+    "identity_caveat": null
+   }
+  ],
+  "evidence": [
+   {
+    "service_time_us": 14125.33,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 13270.29,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": true,
+    "op": "ffn_block$dispatch_1_rvv_x60_linear_s8_M128xK256xN1024",
+    "overrun_factor": 1.06
+   }
+  ]
+ }
+}

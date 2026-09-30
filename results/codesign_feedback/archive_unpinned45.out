@@ -1,0 +1,21 @@
+=== 22:03:13 waiting for the display pairs to finish
+=== 22:21:13 9 dump dir(s)
+   results/codesign_feedback/campaign_free45/display/pairs45/ros_s1003_figdata
+   results/codesign_feedback/campaign_free45/display/pairs45/ros_s1006_figdata
+   results/codesign_feedback/campaign_free45/display/pairs45/ros_s1007_figdata
+   results/codesign_feedback/campaign_free45/display/pairs45/ros_s1009_figdata
+   results/codesign_feedback/campaign_free45/display/pairs45/xpu_s1003_figdata
+   results/codesign_feedback/campaign_free45/display/pairs45/xpu_s1006_figdata
+   results/codesign_feedback/campaign_free45/display/pairs45/xpu_s1007_figdata
+   results/codesign_feedback/campaign_free45/display/pairs45/xpu_s1009_figdata
+   results/codesign_feedback/campaign_free45/display/pin_l1000_e1000/xpu_s1000_figdata
+=== 22:21:13 packing results/codesign_feedback/archive_v3/display_dumps_unpinned45.tar
+=== 22:21:15 display_dumps_unpinned45.tar 725555200 bytes, sha256 2bc23ebc8e081e7b
+=== 22:21:15 verifying every untracked figure input is archived and matches
+PASS  warehouse_showdown_paper_r36: ros_s1000_figdata/figure_data.npz in display_dumps_r36.tar, sha256 matches the render
+PASS  warehouse_showdown_paper_r36: xpu_s1000_figdata/figure_data.npz in display_dumps_r36.tar, sha256 matches the render
+PASS  warehouse_showdown_paper_submitted: ros_s1000_figdata/figure_data.npz in display_dumps_submitted.tar, sha256 matches the render
+PASS  warehouse_showdown_paper_submitted: xpu_s1000_figdata/figure_data.npz in display_dumps_submitted.tar, sha256 matches the render
+
+36 archived and matching, 0 failed, 0 skipped
+=== 22:21:23 ARCHIVE_UNPINNED45_DONE

@@ -1,0 +1,169 @@
+skipping networks_k1_mlp_dronet: its dispatch graphs point at a tree that no longer exists; it cannot be solved by any arm
+[1/24] _4w_networks_k1_sensor_sharded_rich_shard_ime_s4.0
+  -- greedy --
+    inner (AOT) search: levers ['ime']
+    A neither                                    misses=1   worst_late=   2.287 ms  makespan=  31.44 ms
+    B inner only (levers, deployed blind)        misses=0   worst_late=   0.000 ms  makespan=  45.64 ms
+    C outer only (measured re-solve, no levers)  misses=1   worst_late=   9.022 ms  makespan=  37.02 ms
+    D both                                       misses=0   worst_late=   0.000 ms  makespan=  47.01 ms
+[2/24] _4w_networks_k1_sensor_sharded_rich_shard_ime_s5.0
+  -- greedy --
+    inner (AOT) search: levers ['ime']
+    A neither                                    misses=3   worst_late=  11.607 ms  makespan=  34.63 ms
+    B inner only (levers, deployed blind)        misses=3   worst_late=   2.210 ms  makespan=  40.30 ms
+    C outer only (measured re-solve, no levers)  misses=5   worst_late=   8.451 ms  makespan=  36.29 ms
+    D both                                       misses=5   worst_late=   4.652 ms  makespan=  43.59 ms
+[3/24] _4w_networks_k1_sensor_tight_vision_head
+  -- greedy --
+    inner (AOT) search: levers ['ime']
+    A neither                                    misses=1   worst_late=   8.617 ms  makespan=  29.96 ms
+    B inner only (levers, deployed blind)        misses=1   worst_late=   2.129 ms  makespan=  38.98 ms
+    C outer only (measured re-solve, no levers)  misses=1   worst_late=  12.834 ms  makespan=  36.98 ms
+    D both                                       misses=1   worst_late=   4.570 ms  makespan=  43.59 ms
+[4/24] networks_k1_deployed_rich_vithead
+  -- greedy --
+    inner (AOT) search: levers ['shard']
+    A neither                                    misses=8   worst_late=  10.318 ms  makespan= 120.21 ms
+    B inner only (levers, deployed blind)        misses=8   worst_late=  10.316 ms  makespan= 120.21 ms
+    C outer only (measured re-solve, no levers)  misses=5   worst_late=   9.874 ms  makespan= 119.87 ms
+    D both                                       misses=5   worst_late=   9.874 ms  makespan= 119.87 ms
+[5/24] networks_k1_deployed_rich_vithead_noime
+  -- greedy --
+    inner (AOT) search: levers ['shard']
+    A neither                                    misses=8   worst_late=  10.316 ms  makespan= 120.21 ms
+    B inner only (levers, deployed blind)        misses=8   worst_late=  10.316 ms  makespan= 120.21 ms
+    C outer only (measured re-solve, no levers)  misses=5   worst_late=   9.874 ms  makespan= 119.87 ms
+    D both                                       misses=5   worst_late=   9.874 ms  makespan= 119.87 ms
+[6/24] networks_k1_ffn_ime
+  -- greedy --
+    inner (AOT) search: levers ['ime', 'shard']
+    A neither                                    misses=0   worst_late=   0.000 ms  makespan= 150.08 ms
+    B inner only (levers, deployed blind)        misses=0   worst_late=   0.000 ms  makespan= 150.08 ms
+    C outer only (measured re-solve, no levers)  misses=0   worst_late=   0.000 ms  makespan= 150.08 ms
+    D both                                       misses=0   worst_late=   0.000 ms  makespan= 150.08 ms
+[7/24] networks_k1_flight_deployed
+  -- greedy --
+    inner (AOT) search: levers ['shard']
+    A neither                                    misses=7   worst_late=   9.959 ms  makespan= 119.85 ms
+    B inner only (levers, deployed blind)        misses=7   worst_late=   9.959 ms  makespan= 119.85 ms
+    C outer only (measured re-solve, no levers)  misses=5   worst_late=   9.960 ms  makespan= 119.96 ms
+    D both                                       misses=5   worst_late=   9.960 ms  makespan= 119.96 ms
+[8/24] networks_k1_flight_deployed_noshard
+  -- greedy --
+    inner (AOT) search: levers ['shard']
+    A neither                                    misses=5   worst_late=  14.803 ms  makespan= 124.80 ms
+    B inner only (levers, deployed blind)        misses=7   worst_late=   9.959 ms  makespan= 119.85 ms
+    C outer only (measured re-solve, no levers)  misses=5   worst_late=  22.384 ms  makespan= 131.60 ms
+    D both                                       misses=5   worst_late=   9.960 ms  makespan= 119.96 ms
+[9/24] networks_k1_flight_deployed_singletons
+  -- greedy --
+    inner (AOT) search: levers ['shard']
+    A neither                                    misses=5   worst_late=  14.803 ms  makespan= 124.80 ms
+    B inner only (levers, deployed blind)        misses=7   worst_late=   9.959 ms  makespan= 119.85 ms
+    C outer only (measured re-solve, no levers)  misses=5   worst_late=  22.384 ms  makespan= 131.60 ms
+    D both                                       misses=5   worst_late=   9.960 ms  makespan= 119.96 ms
+[10/24] networks_k1_mb
+  -- greedy --
+    inner (AOT) search: levers ['shard']
+    A neither                                    misses=0   worst_late=   0.000 ms  makespan=   7.37 ms
+    B inner only (levers, deployed blind)        misses=0   worst_late=   0.000 ms  makespan=   4.80 ms
+    C outer only (measured re-solve, no levers)  misses=0   worst_late=   0.000 ms  makespan=   9.68 ms
+    D both                                       misses=0   worst_late=   0.000 ms  makespan=   5.90 ms
+[11/24] networks_k1_mb_3model_12hz
+  -- greedy --
+    inner (AOT) search: levers ['ime']
+    A neither                                    misses=12  worst_late=  75.794 ms  makespan=1066.41 ms
+    B inner only (levers, deployed blind)        misses=12  worst_late=  75.794 ms  makespan=1063.79 ms
+    C outer only (measured re-solve, no levers)  misses=12  worst_late= 134.626 ms  makespan=1108.90 ms
+    D both                                       misses=12  worst_late= 132.288 ms  makespan=1107.88 ms
+[12/24] networks_k1_mb_3model_4hz
+  -- greedy --
+    inner (AOT) search: levers ['ime']
+    A neither                                    misses=0   worst_late=   0.000 ms  makespan= 935.98 ms
+    B inner only (levers, deployed blind)        misses=0   worst_late=   0.000 ms  makespan= 934.67 ms
+    C outer only (measured re-solve, no levers)  misses=0   worst_late=   0.000 ms  makespan= 942.23 ms
+    D both                                       misses=0   worst_late=   0.000 ms  makespan= 941.21 ms
+[13/24] networks_k1_mb_3model_4hz_yolo_ctrl
+  -- greedy --
+    inner (AOT) search: levers ['unfuse', 'ime']
+    A neither                                    misses=0   worst_late=   0.000 ms  makespan= 929.00 ms
+    B inner only (levers, deployed blind)        misses=0   worst_late=   0.000 ms  makespan= 858.27 ms
+    C outer only (measured re-solve, no levers)  misses=0   worst_late=   0.000 ms  makespan= 936.27 ms
+    D both                                       misses=0   worst_late=   0.000 ms  makespan= 873.47 ms
+[14/24] networks_k1_mb_B1
+  -- greedy --
+    inner (AOT) search: levers ['shard']
+    A neither                                    misses=0   worst_late=   0.000 ms  makespan= 310.08 ms
+    B inner only (levers, deployed blind)        misses=0   worst_late=   0.000 ms  makespan= 310.08 ms
+    C outer only (measured re-solve, no levers)  misses=0   worst_late=   0.000 ms  makespan= 310.08 ms
+    D both                                       misses=0   worst_late=   0.000 ms  makespan= 310.08 ms
+[15/24] networks_k1_multicore_shard
+  -- greedy --
+    inner (AOT) search: levers ['shard']
+    A neither                                    misses=0   worst_late=   0.000 ms  makespan= 104.73 ms
+    B inner only (levers, deployed blind)        misses=0   worst_late=   0.000 ms  makespan= 104.73 ms
+    C outer only (measured re-solve, no levers)  misses=0   worst_late=   0.000 ms  makespan= 105.83 ms
+    D both                                       misses=0   worst_late=   0.000 ms  makespan= 105.83 ms
+[16/24] networks_k1_sensor_sharded_rich
+  -- greedy --
+    inner (AOT) search: levers ['shard']
+    A neither                                    misses=0   worst_late=   0.000 ms  makespan= 109.16 ms
+    B inner only (levers, deployed blind)        misses=0   worst_late=   0.000 ms  makespan= 109.16 ms
+    C outer only (measured re-solve, no levers)  misses=0   worst_late=   0.000 ms  makespan= 109.16 ms
+    D both                                       misses=0   worst_late=   0.000 ms  makespan= 109.16 ms
+[17/24] networks_k1_tri_exact_100ms
+  -- greedy --
+    inner (AOT) search: levers ['shard']
+    A neither                                    misses=0   worst_late=   0.000 ms  makespan=  84.13 ms
+    B inner only (levers, deployed blind)        misses=0   worst_late=   0.000 ms  makespan=  84.13 ms
+    C outer only (measured re-solve, no levers)  misses=0   worst_late=   0.000 ms  makespan=  84.62 ms
+    D both                                       misses=0   worst_late=   0.000 ms  makespan=  84.62 ms
+[18/24] networks_k1_tri_exact_100ms_feedback
+  -- greedy --
+    inner (AOT) search: levers ['shard']
+    A neither                                    misses=0   worst_late=   0.000 ms  makespan=  84.13 ms
+    B inner only (levers, deployed blind)        misses=0   worst_late=   0.000 ms  makespan=  84.13 ms
+    C outer only (measured re-solve, no levers)  misses=0   worst_late=   0.000 ms  makespan=  84.62 ms
+    D both                                       misses=0   worst_late=   0.000 ms  makespan=  84.62 ms
+[19/24] networks_k1_tri_small
+  -- greedy --
+    inner (AOT) search: levers ['ime', 'shard']
+    A neither                                    misses=0   worst_late=   0.000 ms  makespan=  20.08 ms
+    B inner only (levers, deployed blind)        misses=0   worst_late=   0.000 ms  makespan=  20.08 ms
+    C outer only (measured re-solve, no levers)  misses=0   worst_late=   0.000 ms  makespan=  20.08 ms
+    D both                                       misses=0   worst_late=   0.000 ms  makespan=  20.08 ms
+[20/24] networks_k1_tri_small_feedback
+  -- greedy --
+    inner (AOT) search: levers ['ime', 'shard']
+    A neither                                    misses=0   worst_late=   0.000 ms  makespan=  20.08 ms
+    B inner only (levers, deployed blind)        misses=0   worst_late=   0.000 ms  makespan=  20.08 ms
+    C outer only (measured re-solve, no levers)  misses=0   worst_late=   0.000 ms  makespan=  20.08 ms
+    D both                                       misses=0   worst_late=   0.000 ms  makespan=  20.08 ms
+[21/24] _evo_og
+  -- greedy --
+    inner (AOT) search: levers ['unfuse', 'ime']
+    A neither                                    misses=0   worst_late=   0.000 ms  makespan= 929.00 ms
+    B inner only (levers, deployed blind)        misses=0   worst_late=   0.000 ms  makespan= 858.27 ms
+    C outer only (measured re-solve, no levers)  misses=0   worst_late=   0.000 ms  makespan= 936.27 ms
+    D both                                       misses=0   worst_late=   0.000 ms  makespan= 873.47 ms
+[22/24] _evo_sen_og
+  -- greedy --
+    inner (AOT) search: levers ['ime']
+    A neither                                    misses=2   worst_late=   3.142 ms  makespan=  50.54 ms
+    B inner only (levers, deployed blind)        misses=0   worst_late=   0.000 ms  makespan=  45.64 ms
+    C outer only (measured re-solve, no levers)  misses=2   worst_late=   4.948 ms  makespan=  54.95 ms
+    D both                                       misses=0   worst_late=   0.000 ms  makespan=  47.01 ms
+[23/24] _flight_deployed_2frame
+  -- greedy --
+    inner (AOT) search: levers ['shard']
+    A neither                                    misses=2   worst_late=   3.808 ms  makespan=  47.81 ms
+    B inner only (levers, deployed blind)        misses=2   worst_late=   3.808 ms  makespan=  47.81 ms
+    C outer only (measured re-solve, no levers)  misses=2   worst_late=   5.271 ms  makespan=  49.27 ms
+    D both                                       misses=2   worst_late=   5.271 ms  makespan=  49.27 ms
+[24/24] _flight_deployed_matched_board
+  -- greedy --
+    inner (AOT) search: levers ['shard']
+    A neither                                    misses=4   worst_late=   4.964 ms  makespan= 119.57 ms
+    B inner only (levers, deployed blind)        misses=4   worst_late=   4.964 ms  makespan= 119.57 ms
+    C outer only (measured re-solve, no levers)  misses=5   worst_late=   6.002 ms  makespan= 121.00 ms
+    D both                                       misses=5   worst_late=   6.002 ms  makespan= 121.00 ms

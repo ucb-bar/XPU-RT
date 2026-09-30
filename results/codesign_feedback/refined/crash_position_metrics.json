@@ -1,0 +1,133 @@
+{
+ "xpu_cpsat_c0.8": {
+  "n": 12,
+  "median_along_m": 11.8,
+  "completed": 1
+ },
+ "ros_vanilla4_c0.8": {
+  "n": 12,
+  "median_along_m": 3.76,
+  "completed": 0
+ },
+ "xpu_cpsat_c1.0": {
+  "n": 24,
+  "median_along_m": 7.91,
+  "completed": 4
+ },
+ "xpu_greedy_c1.0": {
+  "n": 12,
+  "median_along_m": 0.54,
+  "completed": 0
+ },
+ "ros_vanilla4_c1.0": {
+  "n": 24,
+  "median_along_m": 4.12,
+  "completed": 0
+ },
+ "ros_p3_c1.0": {
+  "n": 12,
+  "median_along_m": 8.74,
+  "completed": 2
+ },
+ "ros_vanilla4x2_c1.0": {
+  "n": 12,
+  "median_along_m": 6.85,
+  "completed": 0
+ },
+ "xpu_cpsat_c1.2": {
+  "n": 12,
+  "median_along_m": 12.1,
+  "completed": 3
+ },
+ "ros_vanilla4_c1.2": {
+  "n": 12,
+  "median_along_m": 6.39,
+  "completed": 0
+ },
+ "ros_p3_c1.2": {
+  "n": 12,
+  "median_along_m": 6.34,
+  "completed": 2
+ },
+ "ros_vanilla4x2_c1.2": {
+  "n": 12,
+  "median_along_m": 5.56,
+  "completed": 1
+ },
+ "xpu_cpsat_c1.4": {
+  "n": 12,
+  "median_along_m": 9.32,
+  "completed": 0
+ },
+ "xpu_greedy_c1.4": {
+  "n": 12,
+  "median_along_m": 1.04,
+  "completed": 0
+ },
+ "ros_vanilla4_c1.4": {
+  "n": 12,
+  "median_along_m": 8.87,
+  "completed": 2
+ },
+ "ros_p3_c1.4": {
+  "n": 12,
+  "median_along_m": 9.33,
+  "completed": 1
+ },
+ "ros_vanilla4x2_c1.4": {
+  "n": 12,
+  "median_along_m": 6.65,
+  "completed": 0
+ },
+ "xpu_cpsat_c1.6": {
+  "n": 12,
+  "median_along_m": 9.33,
+  "completed": 0
+ },
+ "ros_vanilla4_c1.6": {
+  "n": 12,
+  "median_along_m": 8.79,
+  "completed": 1
+ },
+ "ros_p3_c1.6": {
+  "n": 12,
+  "median_along_m": 7.93,
+  "completed": 2
+ },
+ "ros_vanilla4x2_c1.6": {
+  "n": 12,
+  "median_along_m": 7.94,
+  "completed": 0
+ },
+ "xpu_cpsat_c1.8": {
+  "n": 12,
+  "median_along_m": 7.35,
+  "completed": 1
+ },
+ "xpu_greedy_c1.8": {
+  "n": 12,
+  "median_along_m": 1.41,
+  "completed": 0
+ },
+ "ros_vanilla4_c1.8": {
+  "n": 12,
+  "median_along_m": 7.11,
+  "completed": 1
+ },
+ "ros_p3_c1.8": {
+  "n": 12,
+  "median_along_m": 9.45,
+  "completed": 3
+ },
+ "ros_vanilla4x2_c1.8": {
+  "n": 12,
+  "median_along_m": 5.11,
+  "completed": 1
+ },
+ "script": "story_figures:crash_position",
+ "inputs": {
+  "results/codesign_feedback/campaign_percep/campaign.csv": "874cba27e988ed1709ad40352d6a1db5555812261bf62777c080f68fb52f7dc3",
+  "results/codesign_feedback/campaign_seeds24/campaign.csv": "4ee968293048c26b729ec3211cdeabfe5ac4ccb4256e7f7f89ed87cd00b68756"
+ },
+ "fallbacks_used": []
+}

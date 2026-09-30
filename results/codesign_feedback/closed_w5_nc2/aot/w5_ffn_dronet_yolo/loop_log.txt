@@ -1,0 +1,21 @@
+== co-design loop: w5_ffn_dronet_yolo ==
+round 0 · baseline: total-lateness 109.805 (makespan 74.6 ms), 11 instance-miss
+accept rule: candidate_objective.accept() · critical=['mlp_control', 'fused_full', 'ffn_block', 'dronet', 'yolov8_nano_64x96'] heavy=yolov8_nano_64x96
+      ime: built ime_x60 profiles for (none new; existing reused)
+round 1 · try ime: total-lateness 109.805 -> 99.024 (-9.8%), 11 instance-miss -> ACCEPTABLE
+round 1 · try ime: accepted -- frequency compliance: ime=0.137526 beats baseline=0.195848 (tolerance 0.02)
+round 1 · try shard: NOT BUILDABLE (4 contract violations): REFUSE uniform_width_across_instances: dronet dispatch 0 (conv2d_s8) -- instances take widths [2, 4]; one generated model cannot encode two packed weight layouts for one dispatch
+round 1 · try shard: rejected -- the schedule is valid for the runtime and cannot be code-generated; not a candidate
+      unfuse: adopted ModelBlaster unfused dispatch graph for (none — no fused net with an unfused build on disk)
+round 1 · try unfuse: lever changed nothing on this spec (inapplicable here) — not a candidate
+round 1: ACCEPT +ime  total-lateness 109.805 -> 99.024 (-9.8%)
+round 2 · try shard: NOT BUILDABLE (4 contract violations): REFUSE uniform_width_across_instances: dronet dispatch 0 (conv2d_s8) -- instances take widths [2, 4]; one generated model cannot encode two packed weight layouts for one dispatch
+round 2 · try shard: rejected -- the schedule is valid for the runtime and cannot be code-generated; not a candidate
+      unfuse: adopted ModelBlaster unfused dispatch graph for (none — no fused net with an unfused build on disk)
+round 2 · try unfuse: lever changed nothing on this spec (inapplicable here) — not a candidate
+round 2: no lever is accepted by the nine-term objective rule — CONVERGED
+fuse: NOT applied — roofline decision-aid says the stack is compute-bound (max fusible-epilogue ceiling 16% on dronet); fusion collapses dispatches (scheduling) but is measured ~+0.85% on cycles, so the loop does not credit a makespan gain it cannot measure.
+
+CONVERGED: hard deadline misses (instances) 11 -> 11; total-lateness 109.805 -> 99.024 ms (-9.8%), levers applied: ['ime']
+  decided by: ime (frequency compliance: ime=0.137526 beats baseline=0.195848 (tolerance 0.02))
+artifacts in /scratch/agustin/xpurt-dev-sync/results/codesign_feedback/closed_w5_nc2/aot/w5_ffn_dronet_yolo

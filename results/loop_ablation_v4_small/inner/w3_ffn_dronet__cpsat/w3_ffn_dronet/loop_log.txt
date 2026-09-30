@@ -1,0 +1,22 @@
+== co-design loop: w3_ffn_dronet ==
+round 0 · baseline: makespan 74.613 (makespan 74.6 ms), 50 dispatch-miss
+accept rule: candidate_objective.accept() · critical=['mlp_control', 'ffn_block', 'dronet'] heavy=ffn_block
+      ime: built ime_x60 profiles for (none new; existing reused)
+round 1 · try ime: makespan 74.613 -> 62.601 (-16.1%), 40 dispatch-miss -> reject
+round 1 · try ime: rejected -- max deadline lateness: baseline=16.61 beats ime=25.24 (tolerance 0.5)
+round 1 · try shard: makespan 74.613 -> 66.071 (-11.4%), 11 dispatch-miss -> ACCEPTABLE
+round 1 · try shard: accepted -- hard deadline misses: shard=5 beats baseline=10 (tolerance 1.76)
+      unfuse: adopted ModelBlaster unfused dispatch graph for (none — no fused net with an unfused build on disk)
+round 1 · try unfuse: lever changed nothing on this spec (inapplicable here) — not a candidate
+round 1: ACCEPT +shard  makespan 74.613 -> 66.071 (-11.4%)
+      ime: built ime_x60 profiles for (none new; existing reused)
+round 2 · try ime: NOT BUILDABLE (5 contract violations): REFUSE uniform_width_across_instances: dronet dispatch 3 (conv2d_batchnorm2d_s8) -- instances take widths [1, 2, 4]; one generated model cannot encode two packed weight layouts for one dispatch
+round 2 · try ime: rejected -- the schedule is valid for the runtime and cannot be code-generated; not a candidate
+      unfuse: adopted ModelBlaster unfused dispatch graph for (none — no fused net with an unfused build on disk)
+round 2 · try unfuse: lever changed nothing on this spec (inapplicable here) — not a candidate
+round 2: no lever is accepted by the nine-term objective rule — CONVERGED
+fuse: NOT applied — roofline decision-aid says the stack is compute-bound (max fusible-epilogue ceiling 16% on dronet); fusion collapses dispatches (scheduling) but is measured ~+0.85% on cycles, so the loop does not credit a makespan gain it cannot measure.
+
+CONVERGED: hard deadline misses (instances) 10 -> 5; makespan 74.613 -> 66.071 ms (-11.4%), levers applied: ['shard']
+  decided by: shard (hard deadline misses: shard=5 beats baseline=10 (tolerance 1.76))
+artifacts in /scratch/agustin/xpurt-dev-sync/results/loop_ablation_v4_small/inner/w3_ffn_dronet__cpsat/w3_ffn_dronet

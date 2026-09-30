@@ -1,0 +1,4 @@
+csv,ctrl_trace,percep_latency_ms,percep_hold_ms,course,prop_density,person_h,walk_speed,cruise_speed,moment_scale,expected_n,reason,evidence_log,evidence_line
+campaign_shardcells/campaign.csv,xpu_shard45.csv,36.0,0.0,a,0.2,2.4,0.0,1.2,0.0055,12,simulator GPU fault; physics frozen for the rest of the batch,campaign_shardcells/xpu_shard_lat36.0_h0_a_d0.20_w0.0_g0.0055_c1.2.log,315
+campaign_x2tmcells/campaign.csv,ros_vanilla4x2tm45.csv,37.8,0.0,a,0.3,2.4,0.0,1.0,0.0055,12,simulator GPU fault; physics frozen for the rest of the batch,campaign_x2tmcells/ros_vanilla4x2tm_lat37.8_h0_a_d0.30_w0.0_g0.0055_c1.0.log,848425
+campaign_v2/campaign_v2.csv,xpu_a_cpsat_hard.csv,0.0,0.0,,,,0.0,2.0,0.0055,12,simulator GPU fault; physics frozen for the rest of the batch,campaign_v2/xpu_cpsat_hard_c2.0.log,315

@@ -1,0 +1,3961 @@
+{
+ "dot_file": "combined_schedule_periodic.json",
+ "dispatches": {
+  "mlp_control0_dispatch_0": {
+   "id": 0,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [],
+   "hardware_target": "CPU_E#3",
+   "start_time": 0.0,
+   "duration": 0.0225523289,
+   "job_name": "mlp_control0",
+   "module_name": "mlp_control$dispatch_0_rvv_x60_linear_s8_M1xK16xN256",
+   "release_policy": "phase_locked",
+   "release_us": 0.0,
+   "time_dep_mode": "soft",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control0_dispatch_1": {
+   "id": 1,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "mlp_control0_dispatch_0"
+   ],
+   "hardware_target": "CPU_E#2",
+   "start_time": 0.0,
+   "duration": 0.0157950375,
+   "job_name": "mlp_control0",
+   "module_name": "mlp_control$dispatch_1_rvv_x60_elu_s8_n256",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control0_dispatch_2": {
+   "id": 2,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "mlp_control0_dispatch_1"
+   ],
+   "hardware_target": "CPU_P#0",
+   "start_time": 1.095570168,
+   "duration": 0.018055615599999998,
+   "job_name": "mlp_control0",
+   "module_name": "mlp_control$dispatch_2_rvv_x60_linear_s8_M1xK256xN128",
+   "time_dependency": "ffn_block0_dispatch_0",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control0_dispatch_3": {
+   "id": 3,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "mlp_control0_dispatch_2"
+   ],
+   "hardware_target": "CPU_E#1",
+   "start_time": 2.3891297156,
+   "duration": 0.008838225,
+   "job_name": "mlp_control0",
+   "module_name": "mlp_control$dispatch_3_rvv_x60_elu_s8_n128",
+   "time_dependency": "dronet0_dispatch_0",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control0_dispatch_4": {
+   "id": 4,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "mlp_control0_dispatch_3"
+   ],
+   "hardware_target": "CPU_P#0",
+   "start_time": 1.1136257836,
+   "duration": 0.007797500000000001,
+   "job_name": "mlp_control0",
+   "module_name": "mlp_control$dispatch_4_rvv_x60_linear_s8_M1xK128xN64",
+   "time_dependency": "mlp_control0_dispatch_2",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control0_dispatch_5": {
+   "id": 5,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "mlp_control0_dispatch_4"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 0.0225523289,
+   "duration": 0.0058296875,
+   "job_name": "mlp_control0",
+   "module_name": "mlp_control$dispatch_5_rvv_x60_elu_s8_n64",
+   "time_dependency": "mlp_control0_dispatch_0",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control0_dispatch_6": {
+   "id": 6,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "mlp_control0_dispatch_5"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 0.0283820164,
+   "duration": 0.0017737875,
+   "job_name": "mlp_control0",
+   "module_name": "mlp_control$dispatch_6_rvv_x60_linear_s8_M1xK64xN4",
+   "time_dependency": "mlp_control0_dispatch_5",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control1_dispatch_0": {
+   "id": 0,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [],
+   "hardware_target": "CPU_E#3",
+   "start_time": 5.1901979661999995,
+   "duration": 0.0225523289,
+   "job_name": "mlp_control1",
+   "module_name": "mlp_control$dispatch_0_rvv_x60_linear_s8_M1xK16xN256",
+   "time_dependency": "dronet0_dispatch_13",
+   "release_policy": "phase_locked",
+   "release_us": 5000.0,
+   "time_dep_mode": "soft",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control1_dispatch_1": {
+   "id": 1,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "mlp_control1_dispatch_0"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 5.212750295099999,
+   "duration": 0.0157950375,
+   "job_name": "mlp_control1",
+   "module_name": "mlp_control$dispatch_1_rvv_x60_elu_s8_n256",
+   "time_dependency": "mlp_control1_dispatch_0",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control1_dispatch_2": {
+   "id": 2,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "mlp_control1_dispatch_1"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 5.2285453325999995,
+   "duration": 0.018055615599999998,
+   "job_name": "mlp_control1",
+   "module_name": "mlp_control$dispatch_2_rvv_x60_linear_s8_M1xK256xN128",
+   "time_dependency": "mlp_control1_dispatch_1",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control1_dispatch_3": {
+   "id": 3,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "mlp_control1_dispatch_2"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 5.246600948199999,
+   "duration": 0.008838225,
+   "job_name": "mlp_control1",
+   "module_name": "mlp_control$dispatch_3_rvv_x60_elu_s8_n128",
+   "time_dependency": "mlp_control1_dispatch_2",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control1_dispatch_4": {
+   "id": 4,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "mlp_control1_dispatch_3"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 5.255439173199999,
+   "duration": 0.007797500000000001,
+   "job_name": "mlp_control1",
+   "module_name": "mlp_control$dispatch_4_rvv_x60_linear_s8_M1xK128xN64",
+   "time_dependency": "mlp_control1_dispatch_3",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control1_dispatch_5": {
+   "id": 5,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "mlp_control1_dispatch_4"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 5.263236673199999,
+   "duration": 0.0058296875,
+   "job_name": "mlp_control1",
+   "module_name": "mlp_control$dispatch_5_rvv_x60_elu_s8_n64",
+   "time_dependency": "mlp_control1_dispatch_4",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control1_dispatch_6": {
+   "id": 6,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "mlp_control1_dispatch_5"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 5.269066360699999,
+   "duration": 0.0017737875,
+   "job_name": "mlp_control1",
+   "module_name": "mlp_control$dispatch_6_rvv_x60_linear_s8_M1xK64xN4",
+   "time_dependency": "mlp_control1_dispatch_5",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control2_dispatch_0": {
+   "id": 0,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [],
+   "hardware_target": "CPU_E#3",
+   "start_time": 10.0,
+   "duration": 0.0225523289,
+   "job_name": "mlp_control2",
+   "module_name": "mlp_control$dispatch_0_rvv_x60_linear_s8_M1xK16xN256",
+   "time_dependency": "dronet0_dispatch_19",
+   "release_policy": "phase_locked",
+   "release_us": 10000.0,
+   "time_dep_mode": "soft",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control2_dispatch_1": {
+   "id": 1,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "mlp_control2_dispatch_0"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 10.0225523289,
+   "duration": 0.0157950375,
+   "job_name": "mlp_control2",
+   "module_name": "mlp_control$dispatch_1_rvv_x60_elu_s8_n256",
+   "time_dependency": "mlp_control2_dispatch_0",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control2_dispatch_2": {
+   "id": 2,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "mlp_control2_dispatch_1"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 10.0383473664,
+   "duration": 0.018055615599999998,
+   "job_name": "mlp_control2",
+   "module_name": "mlp_control$dispatch_2_rvv_x60_linear_s8_M1xK256xN128",
+   "time_dependency": "mlp_control2_dispatch_1",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control2_dispatch_3": {
+   "id": 3,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "mlp_control2_dispatch_2"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 10.056402982,
+   "duration": 0.008838225,
+   "job_name": "mlp_control2",
+   "module_name": "mlp_control$dispatch_3_rvv_x60_elu_s8_n128",
+   "time_dependency": "mlp_control2_dispatch_2",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control2_dispatch_4": {
+   "id": 4,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "mlp_control2_dispatch_3"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 10.065241207,
+   "duration": 0.007797500000000001,
+   "job_name": "mlp_control2",
+   "module_name": "mlp_control$dispatch_4_rvv_x60_linear_s8_M1xK128xN64",
+   "time_dependency": "mlp_control2_dispatch_3",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control2_dispatch_5": {
+   "id": 5,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "mlp_control2_dispatch_4"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 10.073038707,
+   "duration": 0.0058296875,
+   "job_name": "mlp_control2",
+   "module_name": "mlp_control$dispatch_5_rvv_x60_elu_s8_n64",
+   "time_dependency": "mlp_control2_dispatch_4",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control2_dispatch_6": {
+   "id": 6,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "mlp_control2_dispatch_5"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 10.0788683945,
+   "duration": 0.0017737875,
+   "job_name": "mlp_control2",
+   "module_name": "mlp_control$dispatch_6_rvv_x60_linear_s8_M1xK64xN4",
+   "time_dependency": "mlp_control2_dispatch_5",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control3_dispatch_0": {
+   "id": 0,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [],
+   "hardware_target": "CPU_E#3",
+   "start_time": 15.9802916257,
+   "duration": 0.0225523289,
+   "job_name": "mlp_control3",
+   "module_name": "mlp_control$dispatch_0_rvv_x60_linear_s8_M1xK16xN256",
+   "time_dependency": "dronet1_dispatch_13",
+   "release_policy": "phase_locked",
+   "release_us": 15000.0,
+   "time_dep_mode": "soft",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control3_dispatch_1": {
+   "id": 1,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "mlp_control3_dispatch_0"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 16.0028439546,
+   "duration": 0.0157950375,
+   "job_name": "mlp_control3",
+   "module_name": "mlp_control$dispatch_1_rvv_x60_elu_s8_n256",
+   "time_dependency": "mlp_control3_dispatch_0",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control3_dispatch_2": {
+   "id": 2,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "mlp_control3_dispatch_1"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 16.018638992099998,
+   "duration": 0.018055615599999998,
+   "job_name": "mlp_control3",
+   "module_name": "mlp_control$dispatch_2_rvv_x60_linear_s8_M1xK256xN128",
+   "time_dependency": "mlp_control3_dispatch_1",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control3_dispatch_3": {
+   "id": 3,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "mlp_control3_dispatch_2"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 16.0366946077,
+   "duration": 0.008838225,
+   "job_name": "mlp_control3",
+   "module_name": "mlp_control$dispatch_3_rvv_x60_elu_s8_n128",
+   "time_dependency": "mlp_control3_dispatch_2",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control3_dispatch_4": {
+   "id": 4,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "mlp_control3_dispatch_3"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 16.0455328327,
+   "duration": 0.007797500000000001,
+   "job_name": "mlp_control3",
+   "module_name": "mlp_control$dispatch_4_rvv_x60_linear_s8_M1xK128xN64",
+   "time_dependency": "mlp_control3_dispatch_3",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control3_dispatch_5": {
+   "id": 5,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "mlp_control3_dispatch_4"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 16.0533303327,
+   "duration": 0.0058296875,
+   "job_name": "mlp_control3",
+   "module_name": "mlp_control$dispatch_5_rvv_x60_elu_s8_n64",
+   "time_dependency": "mlp_control3_dispatch_4",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control3_dispatch_6": {
+   "id": 6,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "mlp_control3_dispatch_5"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 16.0591600202,
+   "duration": 0.0017737875,
+   "job_name": "mlp_control3",
+   "module_name": "mlp_control$dispatch_6_rvv_x60_linear_s8_M1xK64xN4",
+   "time_dependency": "mlp_control3_dispatch_5",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control4_dispatch_0": {
+   "id": 0,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [],
+   "hardware_target": "CPU_E#2",
+   "start_time": 20.0,
+   "duration": 0.0225523289,
+   "job_name": "mlp_control4",
+   "module_name": "mlp_control$dispatch_0_rvv_x60_linear_s8_M1xK16xN256",
+   "time_dependency": "dronet1_dispatch_14",
+   "release_policy": "phase_locked",
+   "release_us": 20000.0,
+   "time_dep_mode": "soft",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control4_dispatch_1": {
+   "id": 1,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "mlp_control4_dispatch_0"
+   ],
+   "hardware_target": "CPU_E#2",
+   "start_time": 20.0225523289,
+   "duration": 0.0157950375,
+   "job_name": "mlp_control4",
+   "module_name": "mlp_control$dispatch_1_rvv_x60_elu_s8_n256",
+   "time_dependency": "mlp_control4_dispatch_0",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control4_dispatch_2": {
+   "id": 2,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "mlp_control4_dispatch_1"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 20.0,
+   "duration": 0.018055615599999998,
+   "job_name": "mlp_control4",
+   "module_name": "mlp_control$dispatch_2_rvv_x60_linear_s8_M1xK256xN128",
+   "time_dependency": "dronet1_dispatch_16",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control4_dispatch_3": {
+   "id": 3,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "mlp_control4_dispatch_2"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 20.0180556156,
+   "duration": 0.008838225,
+   "job_name": "mlp_control4",
+   "module_name": "mlp_control$dispatch_3_rvv_x60_elu_s8_n128",
+   "time_dependency": "mlp_control4_dispatch_2",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control4_dispatch_4": {
+   "id": 4,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "mlp_control4_dispatch_3"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 20.026893840600003,
+   "duration": 0.007797500000000001,
+   "job_name": "mlp_control4",
+   "module_name": "mlp_control$dispatch_4_rvv_x60_linear_s8_M1xK128xN64",
+   "time_dependency": "mlp_control4_dispatch_3",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control4_dispatch_5": {
+   "id": 5,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "mlp_control4_dispatch_4"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 20.034691340600002,
+   "duration": 0.0058296875,
+   "job_name": "mlp_control4",
+   "module_name": "mlp_control$dispatch_5_rvv_x60_elu_s8_n64",
+   "time_dependency": "mlp_control4_dispatch_4",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control4_dispatch_6": {
+   "id": 6,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "mlp_control4_dispatch_5"
+   ],
+   "hardware_target": "CPU_P#0",
+   "start_time": 20.0,
+   "duration": 0.0017737875,
+   "job_name": "mlp_control4",
+   "module_name": "mlp_control$dispatch_6_rvv_x60_linear_s8_M1xK64xN4",
+   "time_dependency": "dronet1_dispatch_15",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control5_dispatch_0": {
+   "id": 0,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [],
+   "hardware_target": "CPU_E#3",
+   "start_time": 25.0,
+   "duration": 0.0225523289,
+   "job_name": "mlp_control5",
+   "module_name": "mlp_control$dispatch_0_rvv_x60_linear_s8_M1xK16xN256",
+   "time_dependency": "dronet1_dispatch_18",
+   "release_policy": "phase_locked",
+   "release_us": 25000.0,
+   "time_dep_mode": "soft",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control5_dispatch_1": {
+   "id": 1,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "mlp_control5_dispatch_0"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 25.0225523289,
+   "duration": 0.0157950375,
+   "job_name": "mlp_control5",
+   "module_name": "mlp_control$dispatch_1_rvv_x60_elu_s8_n256",
+   "time_dependency": "mlp_control5_dispatch_0",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control5_dispatch_2": {
+   "id": 2,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "mlp_control5_dispatch_1"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 25.0383473664,
+   "duration": 0.018055615599999998,
+   "job_name": "mlp_control5",
+   "module_name": "mlp_control$dispatch_2_rvv_x60_linear_s8_M1xK256xN128",
+   "time_dependency": "mlp_control5_dispatch_1",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control5_dispatch_3": {
+   "id": 3,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "mlp_control5_dispatch_2"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 25.056402982,
+   "duration": 0.008838225,
+   "job_name": "mlp_control5",
+   "module_name": "mlp_control$dispatch_3_rvv_x60_elu_s8_n128",
+   "time_dependency": "mlp_control5_dispatch_2",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control5_dispatch_4": {
+   "id": 4,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "mlp_control5_dispatch_3"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 25.065241207000003,
+   "duration": 0.007797500000000001,
+   "job_name": "mlp_control5",
+   "module_name": "mlp_control$dispatch_4_rvv_x60_linear_s8_M1xK128xN64",
+   "time_dependency": "mlp_control5_dispatch_3",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control5_dispatch_5": {
+   "id": 5,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "mlp_control5_dispatch_4"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 25.073038707000002,
+   "duration": 0.0058296875,
+   "job_name": "mlp_control5",
+   "module_name": "mlp_control$dispatch_5_rvv_x60_elu_s8_n64",
+   "time_dependency": "mlp_control5_dispatch_4",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control5_dispatch_6": {
+   "id": 6,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "mlp_control5_dispatch_5"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 25.078868394500002,
+   "duration": 0.0017737875,
+   "job_name": "mlp_control5",
+   "module_name": "mlp_control$dispatch_6_rvv_x60_linear_s8_M1xK64xN4",
+   "time_dependency": "mlp_control5_dispatch_5",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control6_dispatch_0": {
+   "id": 0,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [],
+   "hardware_target": "CPU_E#3",
+   "start_time": 30.0,
+   "duration": 0.0225523289,
+   "job_name": "mlp_control6",
+   "module_name": "mlp_control$dispatch_0_rvv_x60_linear_s8_M1xK16xN256",
+   "time_dependency": "dronet2_dispatch_10",
+   "release_policy": "phase_locked",
+   "release_us": 30000.0,
+   "time_dep_mode": "soft",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control6_dispatch_1": {
+   "id": 1,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "mlp_control6_dispatch_0"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 30.0225523289,
+   "duration": 0.0157950375,
+   "job_name": "mlp_control6",
+   "module_name": "mlp_control$dispatch_1_rvv_x60_elu_s8_n256",
+   "time_dependency": "mlp_control6_dispatch_0",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control6_dispatch_2": {
+   "id": 2,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "mlp_control6_dispatch_1"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 31.160548625500002,
+   "duration": 0.018055615599999998,
+   "job_name": "mlp_control6",
+   "module_name": "mlp_control$dispatch_2_rvv_x60_linear_s8_M1xK256xN128",
+   "time_dependency": "dronet2_dispatch_15",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control6_dispatch_3": {
+   "id": 3,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "mlp_control6_dispatch_2"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 31.178604241100004,
+   "duration": 0.008838225,
+   "job_name": "mlp_control6",
+   "module_name": "mlp_control$dispatch_3_rvv_x60_elu_s8_n128",
+   "time_dependency": "mlp_control6_dispatch_2",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control6_dispatch_4": {
+   "id": 4,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "mlp_control6_dispatch_3"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 31.187442466100006,
+   "duration": 0.007797500000000001,
+   "job_name": "mlp_control6",
+   "module_name": "mlp_control$dispatch_4_rvv_x60_linear_s8_M1xK128xN64",
+   "time_dependency": "mlp_control6_dispatch_3",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control6_dispatch_5": {
+   "id": 5,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "mlp_control6_dispatch_4"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 31.195239966100004,
+   "duration": 0.0058296875,
+   "job_name": "mlp_control6",
+   "module_name": "mlp_control$dispatch_5_rvv_x60_elu_s8_n64",
+   "time_dependency": "mlp_control6_dispatch_4",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control6_dispatch_6": {
+   "id": 6,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "mlp_control6_dispatch_5"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 31.201069653600005,
+   "duration": 0.0017737875,
+   "job_name": "mlp_control6",
+   "module_name": "mlp_control$dispatch_6_rvv_x60_linear_s8_M1xK64xN4",
+   "time_dependency": "mlp_control6_dispatch_5",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control7_dispatch_0": {
+   "id": 0,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [],
+   "hardware_target": "CPU_E#3",
+   "start_time": 35.0,
+   "duration": 0.0225523289,
+   "job_name": "mlp_control7",
+   "module_name": "mlp_control$dispatch_0_rvv_x60_linear_s8_M1xK16xN256",
+   "time_dependency": "dronet2_dispatch_18",
+   "release_policy": "phase_locked",
+   "release_us": 35000.0,
+   "time_dep_mode": "soft",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control7_dispatch_1": {
+   "id": 1,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "mlp_control7_dispatch_0"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 35.0225523289,
+   "duration": 0.0157950375,
+   "job_name": "mlp_control7",
+   "module_name": "mlp_control$dispatch_1_rvv_x60_elu_s8_n256",
+   "time_dependency": "mlp_control7_dispatch_0",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control7_dispatch_2": {
+   "id": 2,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "mlp_control7_dispatch_1"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 35.0383473664,
+   "duration": 0.018055615599999998,
+   "job_name": "mlp_control7",
+   "module_name": "mlp_control$dispatch_2_rvv_x60_linear_s8_M1xK256xN128",
+   "time_dependency": "mlp_control7_dispatch_1",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control7_dispatch_3": {
+   "id": 3,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "mlp_control7_dispatch_2"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 35.056402981999994,
+   "duration": 0.008838225,
+   "job_name": "mlp_control7",
+   "module_name": "mlp_control$dispatch_3_rvv_x60_elu_s8_n128",
+   "time_dependency": "mlp_control7_dispatch_2",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control7_dispatch_4": {
+   "id": 4,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "mlp_control7_dispatch_3"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 35.06524120699999,
+   "duration": 0.007797500000000001,
+   "job_name": "mlp_control7",
+   "module_name": "mlp_control$dispatch_4_rvv_x60_linear_s8_M1xK128xN64",
+   "time_dependency": "mlp_control7_dispatch_3",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control7_dispatch_5": {
+   "id": 5,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "mlp_control7_dispatch_4"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 35.073038706999995,
+   "duration": 0.0058296875,
+   "job_name": "mlp_control7",
+   "module_name": "mlp_control$dispatch_5_rvv_x60_elu_s8_n64",
+   "time_dependency": "mlp_control7_dispatch_4",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control7_dispatch_6": {
+   "id": 6,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "mlp_control7_dispatch_5"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 35.07886839449999,
+   "duration": 0.0017737875,
+   "job_name": "mlp_control7",
+   "module_name": "mlp_control$dispatch_6_rvv_x60_linear_s8_M1xK64xN4",
+   "time_dependency": "mlp_control7_dispatch_5",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control8_dispatch_0": {
+   "id": 0,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [],
+   "hardware_target": "CPU_E#3",
+   "start_time": 40.0,
+   "duration": 0.0225523289,
+   "job_name": "mlp_control8",
+   "module_name": "mlp_control$dispatch_0_rvv_x60_linear_s8_M1xK16xN256",
+   "time_dependency": "ffn_block1_dispatch_4",
+   "release_policy": "phase_locked",
+   "release_us": 40000.0,
+   "time_dep_mode": "soft",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control8_dispatch_1": {
+   "id": 1,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "mlp_control8_dispatch_0"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 40.0225523289,
+   "duration": 0.0157950375,
+   "job_name": "mlp_control8",
+   "module_name": "mlp_control$dispatch_1_rvv_x60_elu_s8_n256",
+   "time_dependency": "mlp_control8_dispatch_0",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control8_dispatch_2": {
+   "id": 2,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "mlp_control8_dispatch_1"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 40.0383473664,
+   "duration": 0.018055615599999998,
+   "job_name": "mlp_control8",
+   "module_name": "mlp_control$dispatch_2_rvv_x60_linear_s8_M1xK256xN128",
+   "time_dependency": "mlp_control8_dispatch_1",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control8_dispatch_3": {
+   "id": 3,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "mlp_control8_dispatch_2"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 40.056402981999994,
+   "duration": 0.008838225,
+   "job_name": "mlp_control8",
+   "module_name": "mlp_control$dispatch_3_rvv_x60_elu_s8_n128",
+   "time_dependency": "mlp_control8_dispatch_2",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control8_dispatch_4": {
+   "id": 4,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "mlp_control8_dispatch_3"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 40.06524120699999,
+   "duration": 0.007797500000000001,
+   "job_name": "mlp_control8",
+   "module_name": "mlp_control$dispatch_4_rvv_x60_linear_s8_M1xK128xN64",
+   "time_dependency": "mlp_control8_dispatch_3",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control8_dispatch_5": {
+   "id": 5,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "mlp_control8_dispatch_4"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 40.073038706999995,
+   "duration": 0.0058296875,
+   "job_name": "mlp_control8",
+   "module_name": "mlp_control$dispatch_5_rvv_x60_elu_s8_n64",
+   "time_dependency": "mlp_control8_dispatch_4",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control8_dispatch_6": {
+   "id": 6,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "mlp_control8_dispatch_5"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 40.07886839449999,
+   "duration": 0.0017737875,
+   "job_name": "mlp_control8",
+   "module_name": "mlp_control$dispatch_6_rvv_x60_linear_s8_M1xK64xN4",
+   "time_dependency": "mlp_control8_dispatch_5",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control9_dispatch_0": {
+   "id": 0,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [],
+   "hardware_target": "CPU_E#2",
+   "start_time": 45.0,
+   "duration": 0.0225523289,
+   "job_name": "mlp_control9",
+   "module_name": "mlp_control$dispatch_0_rvv_x60_linear_s8_M1xK16xN256",
+   "time_dependency": "dronet3_dispatch_18",
+   "release_policy": "phase_locked",
+   "release_us": 45000.0,
+   "time_dep_mode": "soft",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control9_dispatch_1": {
+   "id": 1,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "mlp_control9_dispatch_0"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 45.0,
+   "duration": 0.0157950375,
+   "job_name": "mlp_control9",
+   "module_name": "mlp_control$dispatch_1_rvv_x60_elu_s8_n256",
+   "time_dependency": "dronet3_dispatch_17",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control9_dispatch_2": {
+   "id": 2,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "mlp_control9_dispatch_1"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 45.0157950375,
+   "duration": 0.018055615599999998,
+   "job_name": "mlp_control9",
+   "module_name": "mlp_control$dispatch_2_rvv_x60_linear_s8_M1xK256xN128",
+   "time_dependency": "mlp_control9_dispatch_1",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control9_dispatch_3": {
+   "id": 3,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "mlp_control9_dispatch_2"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 45.0338506531,
+   "duration": 0.008838225,
+   "job_name": "mlp_control9",
+   "module_name": "mlp_control$dispatch_3_rvv_x60_elu_s8_n128",
+   "time_dependency": "mlp_control9_dispatch_2",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control9_dispatch_4": {
+   "id": 4,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "mlp_control9_dispatch_3"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 45.042688878099995,
+   "duration": 0.007797500000000001,
+   "job_name": "mlp_control9",
+   "module_name": "mlp_control$dispatch_4_rvv_x60_linear_s8_M1xK128xN64",
+   "time_dependency": "mlp_control9_dispatch_3",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control9_dispatch_5": {
+   "id": 5,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "mlp_control9_dispatch_4"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 45.0504863781,
+   "duration": 0.0058296875,
+   "job_name": "mlp_control9",
+   "module_name": "mlp_control$dispatch_5_rvv_x60_elu_s8_n64",
+   "time_dependency": "mlp_control9_dispatch_4",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control9_dispatch_6": {
+   "id": 6,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "mlp_control9_dispatch_5"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 45.056316065599994,
+   "duration": 0.0017737875,
+   "job_name": "mlp_control9",
+   "module_name": "mlp_control$dispatch_6_rvv_x60_linear_s8_M1xK64xN4",
+   "time_dependency": "mlp_control9_dispatch_5",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control10_dispatch_0": {
+   "id": 0,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [],
+   "hardware_target": "CPU_E#2",
+   "start_time": 50.0,
+   "duration": 0.0225523289,
+   "job_name": "mlp_control10",
+   "module_name": "mlp_control$dispatch_0_rvv_x60_linear_s8_M1xK16xN256",
+   "time_dependency": "mlp_control9_dispatch_0",
+   "release_policy": "phase_locked",
+   "release_us": 50000.0,
+   "time_dep_mode": "soft",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control10_dispatch_1": {
+   "id": 1,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "mlp_control10_dispatch_0"
+   ],
+   "hardware_target": "CPU_E#2",
+   "start_time": 50.0225523289,
+   "duration": 0.0157950375,
+   "job_name": "mlp_control10",
+   "module_name": "mlp_control$dispatch_1_rvv_x60_elu_s8_n256",
+   "time_dependency": "mlp_control10_dispatch_0",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control10_dispatch_2": {
+   "id": 2,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "mlp_control10_dispatch_1"
+   ],
+   "hardware_target": "CPU_E#2",
+   "start_time": 50.0383473664,
+   "duration": 0.018055615599999998,
+   "job_name": "mlp_control10",
+   "module_name": "mlp_control$dispatch_2_rvv_x60_linear_s8_M1xK256xN128",
+   "time_dependency": "mlp_control10_dispatch_1",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control10_dispatch_3": {
+   "id": 3,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "mlp_control10_dispatch_2"
+   ],
+   "hardware_target": "CPU_E#2",
+   "start_time": 50.056402981999994,
+   "duration": 0.008838225,
+   "job_name": "mlp_control10",
+   "module_name": "mlp_control$dispatch_3_rvv_x60_elu_s8_n128",
+   "time_dependency": "mlp_control10_dispatch_2",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control10_dispatch_4": {
+   "id": 4,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "mlp_control10_dispatch_3"
+   ],
+   "hardware_target": "CPU_E#2",
+   "start_time": 50.06524120699999,
+   "duration": 0.007797500000000001,
+   "job_name": "mlp_control10",
+   "module_name": "mlp_control$dispatch_4_rvv_x60_linear_s8_M1xK128xN64",
+   "time_dependency": "mlp_control10_dispatch_3",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control10_dispatch_5": {
+   "id": 5,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "mlp_control10_dispatch_4"
+   ],
+   "hardware_target": "CPU_E#2",
+   "start_time": 50.073038706999995,
+   "duration": 0.0058296875,
+   "job_name": "mlp_control10",
+   "module_name": "mlp_control$dispatch_5_rvv_x60_elu_s8_n64",
+   "time_dependency": "mlp_control10_dispatch_4",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control10_dispatch_6": {
+   "id": 6,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "mlp_control10_dispatch_5"
+   ],
+   "hardware_target": "CPU_E#2",
+   "start_time": 50.07886839449999,
+   "duration": 0.0017737875,
+   "job_name": "mlp_control10",
+   "module_name": "mlp_control$dispatch_6_rvv_x60_linear_s8_M1xK64xN4",
+   "time_dependency": "mlp_control10_dispatch_5",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control11_dispatch_0": {
+   "id": 0,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [],
+   "hardware_target": "CPU_P#0",
+   "start_time": 55.0,
+   "duration": 0.0225523289,
+   "job_name": "mlp_control11",
+   "module_name": "mlp_control$dispatch_0_rvv_x60_linear_s8_M1xK16xN256",
+   "time_dependency": "dronet4_dispatch_15",
+   "release_policy": "phase_locked",
+   "release_us": 55000.0,
+   "time_dep_mode": "soft",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control11_dispatch_1": {
+   "id": 1,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "mlp_control11_dispatch_0"
+   ],
+   "hardware_target": "CPU_P#0",
+   "start_time": 55.0225523289,
+   "duration": 0.0157950375,
+   "job_name": "mlp_control11",
+   "module_name": "mlp_control$dispatch_1_rvv_x60_elu_s8_n256",
+   "time_dependency": "mlp_control11_dispatch_0",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control11_dispatch_2": {
+   "id": 2,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "mlp_control11_dispatch_1"
+   ],
+   "hardware_target": "CPU_P#0",
+   "start_time": 55.0383473664,
+   "duration": 0.018055615599999998,
+   "job_name": "mlp_control11",
+   "module_name": "mlp_control$dispatch_2_rvv_x60_linear_s8_M1xK256xN128",
+   "time_dependency": "mlp_control11_dispatch_1",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control11_dispatch_3": {
+   "id": 3,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "mlp_control11_dispatch_2"
+   ],
+   "hardware_target": "CPU_P#0",
+   "start_time": 55.056402981999994,
+   "duration": 0.008838225,
+   "job_name": "mlp_control11",
+   "module_name": "mlp_control$dispatch_3_rvv_x60_elu_s8_n128",
+   "time_dependency": "mlp_control11_dispatch_2",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control11_dispatch_4": {
+   "id": 4,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "mlp_control11_dispatch_3"
+   ],
+   "hardware_target": "CPU_P#0",
+   "start_time": 55.06524120699999,
+   "duration": 0.007797500000000001,
+   "job_name": "mlp_control11",
+   "module_name": "mlp_control$dispatch_4_rvv_x60_linear_s8_M1xK128xN64",
+   "time_dependency": "mlp_control11_dispatch_3",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control11_dispatch_5": {
+   "id": 5,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "mlp_control11_dispatch_4"
+   ],
+   "hardware_target": "CPU_P#0",
+   "start_time": 55.073038706999995,
+   "duration": 0.0058296875,
+   "job_name": "mlp_control11",
+   "module_name": "mlp_control$dispatch_5_rvv_x60_elu_s8_n64",
+   "time_dependency": "mlp_control11_dispatch_4",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "mlp_control11_dispatch_6": {
+   "id": 6,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "mlp_control11_dispatch_5"
+   ],
+   "hardware_target": "CPU_E#0",
+   "start_time": 55.0,
+   "duration": 0.0017737875,
+   "job_name": "mlp_control11",
+   "module_name": "mlp_control$dispatch_6_rvv_x60_linear_s8_M1xK64xN4",
+   "time_dependency": "dronet4_dispatch_19",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "ffn_block0_dispatch_0": {
+   "id": 0,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [],
+   "hardware_target": "CPU_P#0",
+   "start_time": 0.0,
+   "duration": 1.095570168,
+   "job_name": "ffn_block0",
+   "module_name": "ffn_block$dispatch_0_rvv_x60_layernorm_s8_M128xK256",
+   "release_policy": "phase_locked",
+   "release_us": 0.0,
+   "time_dep_mode": "soft",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "ffn_block0_dispatch_1": {
+   "id": 1,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "ffn_block0_dispatch_0"
+   ],
+   "hardware_target": "CPU_P#1",
+   "start_time": 0.0,
+   "duration": 16.0816916205,
+   "job_name": "ffn_block0",
+   "module_name": "ffn_block$dispatch_1_rvv_x60_linear_s8_M128xK256xN1024",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": true,
+   "deadline_overrun_us": 6081.691620499999
+  },
+  "ffn_block0_dispatch_2": {
+   "id": 2,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "ffn_block0_dispatch_1"
+   ],
+   "hardware_target": "CPU_P#3",
+   "start_time": 0.0,
+   "duration": 0.6650066250000001,
+   "job_name": "ffn_block0",
+   "module_name": "ffn_block$dispatch_2_rvv_x60_gelu_s8_n131072",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "ffn_block0_dispatch_3": {
+   "id": 3,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "ffn_block0_dispatch_2"
+   ],
+   "hardware_target": "CPU_E#0",
+   "start_time": 0.0,
+   "duration": 11.871200102,
+   "job_name": "ffn_block0",
+   "module_name": "ffn_block$dispatch_3_rvv_x60_linear_s8_M128xK1024xN256",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": true,
+   "deadline_overrun_us": 1871.2001019999996
+  },
+  "ffn_block0_dispatch_4": {
+   "id": 4,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "ffn_block0_dispatch_3"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 25.080642182000002,
+   "duration": 0.2346950022,
+   "job_name": "ffn_block0",
+   "module_name": "ffn_block$dispatch_4_rvv_x60_add_s8_n32768",
+   "time_dependency": "mlp_control5_dispatch_6",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": true,
+   "deadline_overrun_us": 15315.3371842
+  },
+  "ffn_block1_dispatch_0": {
+   "id": 0,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [],
+   "hardware_target": "CPU_P#0",
+   "start_time": 12.0,
+   "duration": 1.095570168,
+   "job_name": "ffn_block1",
+   "module_name": "ffn_block$dispatch_0_rvv_x60_layernorm_s8_M128xK256",
+   "time_dependency": "dronet0_dispatch_20",
+   "release_policy": "phase_locked",
+   "release_us": 12000.0,
+   "time_dep_mode": "soft",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "ffn_block1_dispatch_1": {
+   "id": 1,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "ffn_block1_dispatch_0"
+   ],
+   "hardware_target": "CPU_P#2",
+   "start_time": 12.0,
+   "duration": 16.0816916205,
+   "job_name": "ffn_block1",
+   "module_name": "ffn_block$dispatch_1_rvv_x60_linear_s8_M128xK256xN1024",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": true,
+   "deadline_overrun_us": 6081.691620499999
+  },
+  "ffn_block1_dispatch_2": {
+   "id": 2,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "ffn_block1_dispatch_1"
+   ],
+   "hardware_target": "CPU_P#3",
+   "start_time": 12.0,
+   "duration": 0.6650066250000001,
+   "job_name": "ffn_block1",
+   "module_name": "ffn_block$dispatch_2_rvv_x60_gelu_s8_n131072",
+   "time_dependency": "ffn_block0_dispatch_2",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "ffn_block1_dispatch_3": {
+   "id": 3,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "ffn_block1_dispatch_2"
+   ],
+   "hardware_target": "CPU_P#2",
+   "start_time": 28.0816916205,
+   "duration": 11.871200102,
+   "job_name": "ffn_block1",
+   "module_name": "ffn_block$dispatch_3_rvv_x60_linear_s8_M128xK1024xN256",
+   "time_dependency": "ffn_block1_dispatch_1",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": true,
+   "deadline_overrun_us": 17952.891722499997
+  },
+  "ffn_block1_dispatch_4": {
+   "id": 4,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "ffn_block1_dispatch_3"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 35.08064218199999,
+   "duration": 0.2346950022,
+   "job_name": "ffn_block1",
+   "module_name": "ffn_block$dispatch_4_rvv_x60_add_s8_n32768",
+   "time_dependency": "mlp_control7_dispatch_6",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": true,
+   "deadline_overrun_us": 13315.33718419999
+  },
+  "ffn_block2_dispatch_0": {
+   "id": 0,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [],
+   "hardware_target": "CPU_P#0",
+   "start_time": 24.0,
+   "duration": 1.095570168,
+   "job_name": "ffn_block2",
+   "module_name": "ffn_block$dispatch_0_rvv_x60_layernorm_s8_M128xK256",
+   "time_dependency": "mlp_control4_dispatch_6",
+   "release_policy": "phase_locked",
+   "release_us": 24000.0,
+   "time_dep_mode": "soft",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "ffn_block2_dispatch_1": {
+   "id": 1,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "ffn_block2_dispatch_0"
+   ],
+   "hardware_target": "CPU_P#1",
+   "start_time": 24.0,
+   "duration": 16.0816916205,
+   "job_name": "ffn_block2",
+   "module_name": "ffn_block$dispatch_1_rvv_x60_linear_s8_M128xK256xN1024",
+   "time_dependency": "ffn_block0_dispatch_1",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": true,
+   "deadline_overrun_us": 6081.691620499995
+  },
+  "ffn_block2_dispatch_2": {
+   "id": 2,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "ffn_block2_dispatch_1"
+   ],
+   "hardware_target": "CPU_P#1",
+   "start_time": 40.081691620499996,
+   "duration": 0.6650066250000001,
+   "job_name": "ffn_block2",
+   "module_name": "ffn_block$dispatch_2_rvv_x60_gelu_s8_n131072",
+   "time_dependency": "ffn_block2_dispatch_1",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": true,
+   "deadline_overrun_us": 6746.6982454999925
+  },
+  "ffn_block2_dispatch_3": {
+   "id": 3,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "ffn_block2_dispatch_2"
+   ],
+   "hardware_target": "CPU_E#0",
+   "start_time": 38.3891297156,
+   "duration": 11.871200102,
+   "job_name": "ffn_block2",
+   "module_name": "ffn_block$dispatch_3_rvv_x60_linear_s8_M128xK1024xN256",
+   "time_dependency": "dronet3_dispatch_0",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": true,
+   "deadline_overrun_us": 16260.329817599995
+  },
+  "ffn_block2_dispatch_4": {
+   "id": 4,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "ffn_block2_dispatch_3"
+   ],
+   "hardware_target": "CPU_E#1",
+   "start_time": 43.2674111445,
+   "duration": 0.2346950022,
+   "job_name": "ffn_block2",
+   "module_name": "ffn_block$dispatch_4_rvv_x60_add_s8_n32768",
+   "time_dependency": "dronet3_dispatch_14",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": true,
+   "deadline_overrun_us": 9502.106146700002
+  },
+  "ffn_block3_dispatch_0": {
+   "id": 0,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [],
+   "hardware_target": "CPU_P#0",
+   "start_time": 36.0,
+   "duration": 1.095570168,
+   "job_name": "ffn_block3",
+   "module_name": "ffn_block$dispatch_0_rvv_x60_layernorm_s8_M128xK256",
+   "time_dependency": "dronet2_dispatch_9",
+   "release_policy": "phase_locked",
+   "release_us": 36000.0,
+   "time_dep_mode": "soft",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "ffn_block3_dispatch_1": {
+   "id": 1,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "ffn_block3_dispatch_0"
+   ],
+   "hardware_target": "CPU_P#3",
+   "start_time": 36.0,
+   "duration": 16.0816916205,
+   "job_name": "ffn_block3",
+   "module_name": "ffn_block$dispatch_1_rvv_x60_linear_s8_M128xK256xN1024",
+   "time_dependency": "ffn_block1_dispatch_2",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": true,
+   "deadline_overrun_us": 6081.691620499995
+  },
+  "ffn_block3_dispatch_2": {
+   "id": 2,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "ffn_block3_dispatch_1"
+   ],
+   "hardware_target": "CPU_P#1",
+   "start_time": 49.095570168,
+   "duration": 0.6650066250000001,
+   "job_name": "ffn_block3",
+   "module_name": "ffn_block$dispatch_2_rvv_x60_gelu_s8_n131072",
+   "time_dependency": "ffn_block4_dispatch_0",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": true,
+   "deadline_overrun_us": 3760.5767929999984
+  },
+  "ffn_block3_dispatch_3": {
+   "id": 3,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "ffn_block3_dispatch_2"
+   ],
+   "hardware_target": "CPU_P#3",
+   "start_time": 52.081691620499996,
+   "duration": 11.871200102,
+   "job_name": "ffn_block3",
+   "module_name": "ffn_block$dispatch_3_rvv_x60_linear_s8_M128xK1024xN256",
+   "time_dependency": "ffn_block3_dispatch_1",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": true,
+   "deadline_overrun_us": 17952.891722499997
+  },
+  "ffn_block3_dispatch_4": {
+   "id": 4,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "ffn_block3_dispatch_3"
+   ],
+   "hardware_target": "CPU_P#1",
+   "start_time": 53.104389992099996,
+   "duration": 0.2346950022,
+   "job_name": "ffn_block3",
+   "module_name": "ffn_block$dispatch_4_rvv_x60_add_s8_n32768",
+   "time_dependency": "dronet4_dispatch_14",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": true,
+   "deadline_overrun_us": 7339.084994299995
+  },
+  "ffn_block4_dispatch_0": {
+   "id": 0,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [],
+   "hardware_target": "CPU_P#1",
+   "start_time": 48.0,
+   "duration": 1.095570168,
+   "job_name": "ffn_block4",
+   "module_name": "ffn_block$dispatch_0_rvv_x60_layernorm_s8_M128xK256",
+   "time_dependency": "ffn_block2_dispatch_2",
+   "release_policy": "phase_locked",
+   "release_us": 48000.0,
+   "time_dep_mode": "soft",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "ffn_block4_dispatch_1": {
+   "id": 1,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "ffn_block4_dispatch_0"
+   ],
+   "hardware_target": "CPU_P#2",
+   "start_time": 48.0,
+   "duration": 16.0816916205,
+   "job_name": "ffn_block4",
+   "module_name": "ffn_block$dispatch_1_rvv_x60_linear_s8_M128xK256xN1024",
+   "time_dependency": "ffn_block1_dispatch_3",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": true,
+   "deadline_overrun_us": 6081.691620499995
+  },
+  "ffn_block4_dispatch_2": {
+   "id": 2,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "ffn_block4_dispatch_1"
+   ],
+   "hardware_target": "CPU_P#0",
+   "start_time": 55.09893569699999,
+   "duration": 0.6650066250000001,
+   "job_name": "ffn_block4",
+   "module_name": "ffn_block$dispatch_2_rvv_x60_gelu_s8_n131072",
+   "time_dependency": "dronet4_dispatch_18",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "ffn_block4_dispatch_3": {
+   "id": 3,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "ffn_block4_dispatch_2"
+   ],
+   "hardware_target": "CPU_P#0",
+   "start_time": 55.763942321999984,
+   "duration": 11.871200102,
+   "job_name": "ffn_block4",
+   "module_name": "ffn_block$dispatch_3_rvv_x60_linear_s8_M128xK1024xN256",
+   "time_dependency": "ffn_block4_dispatch_2",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": true,
+   "deadline_overrun_us": 9635.14242399998
+  },
+  "ffn_block4_dispatch_4": {
+   "id": 4,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "ffn_block4_dispatch_3"
+   ],
+   "hardware_target": "CPU_P#0",
+   "start_time": 67.63514242399998,
+   "duration": 0.2346950022,
+   "job_name": "ffn_block4",
+   "module_name": "ffn_block$dispatch_4_rvv_x60_add_s8_n32768",
+   "time_dependency": "ffn_block4_dispatch_3",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": true,
+   "deadline_overrun_us": 9869.837426199978
+  },
+  "dronet0_dispatch_0": {
+   "id": 0,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [],
+   "hardware_target": "CPU_E#1",
+   "start_time": 0.0,
+   "duration": 2.3891297156,
+   "job_name": "dronet0",
+   "module_name": "dronet$dispatch_0_rvv_x60_conv2d_s8_N1xIC3xIH112xIW112xOC32xOH56xOW56xKH3xKW3xSH2xSW2xPH1xPW1",
+   "release_policy": "phase_locked",
+   "release_us": 0.0,
+   "time_dep_mode": "soft",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet0_dispatch_1": {
+   "id": 1,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet0_dispatch_0"
+   ],
+   "hardware_target": "CPU_E#2",
+   "start_time": 0.0157950375,
+   "duration": 0.75275625,
+   "job_name": "dronet0",
+   "module_name": "dronet$dispatch_1_rvv_x60_maxpool2d_s8_N1xC32xIH56xIW56xOH27xOW27xKH3xKW3xSH2xSW2xPH0xPW0xDH1xDW1",
+   "time_dependency": "mlp_control0_dispatch_1",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet0_dispatch_2": {
+   "id": 2,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet0_dispatch_1"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 0.0301558039,
+   "duration": 0.0567739596,
+   "job_name": "dronet0",
+   "module_name": "dronet$dispatch_2_rvv_x60_batchnorm2d_s8_N1xC32xH27xW27",
+   "time_dependency": "mlp_control0_dispatch_6",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet0_dispatch_3": {
+   "id": 3,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet0_dispatch_2"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 0.0869297635,
+   "duration": 1.358388,
+   "job_name": "dronet0",
+   "module_name": "dronet$dispatch_3_rvv_x60_conv2d_batchnorm2d_s8_N1xIC32xIH27xIW27xOC32xOH14xOW14xKH3xKW3xSH2xSW2xPH1xPW1",
+   "time_dependency": "dronet0_dispatch_2",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet0_dispatch_4": {
+   "id": 4,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet0_dispatch_3"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 1.4453177634999999,
+   "duration": 0.8777570268,
+   "job_name": "dronet0",
+   "module_name": "dronet$dispatch_4_rvv_x60_conv2d_s8_N1xIC32xIH14xIW14xOC32xOH14xOW14xKH3xKW3xSH1xSW1xPH1xPW1",
+   "time_dependency": "dronet0_dispatch_2",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet0_dispatch_5": {
+   "id": 5,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet0_dispatch_1"
+   ],
+   "hardware_target": "CPU_P#0",
+   "start_time": 1.1214232836,
+   "duration": 0.235411423,
+   "job_name": "dronet0",
+   "module_name": "dronet$dispatch_5_rvv_x60_conv2d_s8_N1xIC32xIH27xIW27xOC32xOH14xOW14xKH1xKW1xSH2xSW2xPH0xPW0",
+   "time_dependency": "mlp_control0_dispatch_4",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet0_dispatch_6": {
+   "id": 6,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet0_dispatch_4",
+    "dronet0_dispatch_5"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 2.3230747902999997,
+   "duration": 0.0451063125,
+   "job_name": "dronet0",
+   "module_name": "dronet$dispatch_6_rvv_x60_add_s8_n6272",
+   "time_dependency": "dronet0_dispatch_4",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet0_dispatch_7": {
+   "id": 7,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet0_dispatch_6"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 2.3681811028,
+   "duration": 0.0199867377,
+   "job_name": "dronet0",
+   "module_name": "dronet$dispatch_7_rvv_x60_batchnorm2d_s8_N1xC32xH14xW14",
+   "time_dependency": "dronet0_dispatch_6",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet0_dispatch_8": {
+   "id": 8,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet0_dispatch_7"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 2.3881678405,
+   "duration": 0.7946973875,
+   "job_name": "dronet0",
+   "module_name": "dronet$dispatch_8_rvv_x60_conv2d_batchnorm2d_s8_N1xIC32xIH14xIW14xOC64xOH7xOW7xKH3xKW3xSH2xSW2xPH1xPW1",
+   "time_dependency": "dronet0_dispatch_7",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet0_dispatch_9": {
+   "id": 9,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet0_dispatch_8"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 3.182865228,
+   "duration": 1.1114434401,
+   "job_name": "dronet0",
+   "module_name": "dronet$dispatch_9_rvv_x60_conv2d_s8_N1xIC64xIH7xIW7xOC64xOH7xOW7xKH3xKW3xSH1xSW1xPH1xPW1",
+   "time_dependency": "dronet0_dispatch_8",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet0_dispatch_10": {
+   "id": 10,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet0_dispatch_6"
+   ],
+   "hardware_target": "CPU_P#0",
+   "start_time": 1.3568347066,
+   "duration": 0.1931191024,
+   "job_name": "dronet0",
+   "module_name": "dronet$dispatch_10_rvv_x60_conv2d_s8_N1xIC32xIH14xIW14xOC64xOH7xOW7xKH1xKW1xSH2xSW2xPH0xPW0",
+   "time_dependency": "dronet0_dispatch_5",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet0_dispatch_11": {
+   "id": 11,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet0_dispatch_9",
+    "dronet0_dispatch_10"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 4.294308668099999,
+   "duration": 0.0238822038,
+   "job_name": "dronet0",
+   "module_name": "dronet$dispatch_11_rvv_x60_add_s8_n3136",
+   "time_dependency": "dronet0_dispatch_9",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet0_dispatch_12": {
+   "id": 12,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet0_dispatch_11"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 4.3181908719,
+   "duration": 0.0101714313,
+   "job_name": "dronet0",
+   "module_name": "dronet$dispatch_12_rvv_x60_batchnorm2d_s8_N1xC64xH7xW7",
+   "time_dependency": "dronet0_dispatch_11",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet0_dispatch_13": {
+   "id": 13,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet0_dispatch_12"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 4.3283623032,
+   "duration": 0.8618356630000001,
+   "job_name": "dronet0",
+   "module_name": "dronet$dispatch_13_rvv_x60_conv2d_batchnorm2d_s8_N1xIC64xIH7xIW7xOC128xOH4xOW4xKH3xKW3xSH2xSW2xPH1xPW1",
+   "time_dependency": "dronet0_dispatch_12",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet0_dispatch_14": {
+   "id": 14,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet0_dispatch_13"
+   ],
+   "hardware_target": "CPU_E#2",
+   "start_time": 0.9948632485,
+   "duration": 1.3546127322000001,
+   "job_name": "dronet0",
+   "module_name": "dronet$dispatch_14_rvv_x60_conv2d_s8_N1xIC128xIH4xIW4xOC128xOH4xOW4xKH3xKW3xSH1xSW1xPH1xPW1",
+   "time_dependency": "dronet0_dispatch_15",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet0_dispatch_15": {
+   "id": 15,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet0_dispatch_11"
+   ],
+   "hardware_target": "CPU_E#2",
+   "start_time": 0.7685512875,
+   "duration": 0.22631196099999998,
+   "job_name": "dronet0",
+   "module_name": "dronet$dispatch_15_rvv_x60_conv2d_s8_N1xIC64xIH7xIW7xOC128xOH4xOW4xKH1xKW1xSH2xSW2xPH0xPW0",
+   "time_dependency": "dronet0_dispatch_1",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet0_dispatch_16": {
+   "id": 16,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet0_dispatch_14",
+    "dronet0_dispatch_15"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 5.2708401482,
+   "duration": 0.015173624999999998,
+   "job_name": "dronet0",
+   "module_name": "dronet$dispatch_16_rvv_x60_add_s8_n2048",
+   "time_dependency": "mlp_control1_dispatch_6",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet0_dispatch_17": {
+   "id": 17,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet0_dispatch_16"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 5.2860137732,
+   "duration": 0.0014964145,
+   "job_name": "dronet0",
+   "module_name": "dronet$dispatch_17_rvv_x60_relu_s8_n2048",
+   "time_dependency": "dronet0_dispatch_16",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet0_dispatch_18": {
+   "id": 18,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet0_dispatch_17"
+   ],
+   "hardware_target": "CPU_E#2",
+   "start_time": 2.3494759807000003,
+   "duration": 0.003397263,
+   "job_name": "dronet0",
+   "module_name": "dronet$dispatch_18_rvv_x60_linear_s8_M1xK2048xN1",
+   "time_dependency": "dronet0_dispatch_14",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet0_dispatch_19": {
+   "id": 19,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet0_dispatch_17"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 5.2875101877,
+   "duration": 0.005522300000000001,
+   "job_name": "dronet0",
+   "module_name": "dronet$dispatch_19_rvv_x60_linear_s8_M1xK2048xN1",
+   "time_dependency": "dronet0_dispatch_17",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet0_dispatch_20": {
+   "id": 20,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet0_dispatch_19"
+   ],
+   "hardware_target": "CPU_P#0",
+   "start_time": 1.549953809,
+   "duration": 0.0027231906,
+   "job_name": "dronet0",
+   "module_name": "dronet$dispatch_20_rvv_x60_sigmoid_s8_n1",
+   "time_dependency": "dronet0_dispatch_10",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet1_dispatch_0": {
+   "id": 0,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [],
+   "hardware_target": "CPU_E#1",
+   "start_time": 12.0,
+   "duration": 2.3891297156,
+   "job_name": "dronet1",
+   "module_name": "dronet$dispatch_0_rvv_x60_conv2d_s8_N1xIC3xIH112xIW112xOC32xOH56xOW56xKH3xKW3xSH2xSW2xPH1xPW1",
+   "time_dependency": "mlp_control0_dispatch_3",
+   "release_policy": "phase_locked",
+   "release_us": 12000.0,
+   "time_dep_mode": "soft",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet1_dispatch_1": {
+   "id": 1,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet1_dispatch_0"
+   ],
+   "hardware_target": "CPU_E#2",
+   "start_time": 12.0,
+   "duration": 0.75275625,
+   "job_name": "dronet1",
+   "module_name": "dronet$dispatch_1_rvv_x60_maxpool2d_s8_N1xC32xIH56xIW56xOH27xOW27xKH3xKW3xSH2xSW2xPH0xPW0xDH1xDW1",
+   "time_dependency": "dronet0_dispatch_18",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet1_dispatch_2": {
+   "id": 2,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet1_dispatch_1"
+   ],
+   "hardware_target": "CPU_E#2",
+   "start_time": 12.752756250000001,
+   "duration": 0.0567739596,
+   "job_name": "dronet1",
+   "module_name": "dronet$dispatch_2_rvv_x60_batchnorm2d_s8_N1xC32xH27xW27",
+   "time_dependency": "dronet1_dispatch_1",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet1_dispatch_3": {
+   "id": 3,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet1_dispatch_2"
+   ],
+   "hardware_target": "CPU_E#2",
+   "start_time": 12.8095302096,
+   "duration": 1.358388,
+   "job_name": "dronet1",
+   "module_name": "dronet$dispatch_3_rvv_x60_conv2d_batchnorm2d_s8_N1xIC32xIH27xIW27xOC32xOH14xOW14xKH3xKW3xSH2xSW2xPH1xPW1",
+   "time_dependency": "dronet1_dispatch_2",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet1_dispatch_4": {
+   "id": 4,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet1_dispatch_3"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 12.235411423,
+   "duration": 0.8777570268,
+   "job_name": "dronet1",
+   "module_name": "dronet$dispatch_4_rvv_x60_conv2d_s8_N1xIC32xIH14xIW14xOC32xOH14xOW14xKH3xKW3xSH1xSW1xPH1xPW1",
+   "time_dependency": "dronet1_dispatch_5",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet1_dispatch_5": {
+   "id": 5,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet1_dispatch_1"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 12.0,
+   "duration": 0.235411423,
+   "job_name": "dronet1",
+   "module_name": "dronet$dispatch_5_rvv_x60_conv2d_s8_N1xIC32xIH27xIW27xOC32xOH14xOW14xKH1xKW1xSH2xSW2xPH0xPW0",
+   "time_dependency": "mlp_control2_dispatch_6",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet1_dispatch_6": {
+   "id": 6,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet1_dispatch_4",
+    "dronet1_dispatch_5"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 13.1131684498,
+   "duration": 0.0451063125,
+   "job_name": "dronet1",
+   "module_name": "dronet$dispatch_6_rvv_x60_add_s8_n6272",
+   "time_dependency": "dronet1_dispatch_4",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet1_dispatch_7": {
+   "id": 7,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet1_dispatch_6"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 13.1582747623,
+   "duration": 0.0199867377,
+   "job_name": "dronet1",
+   "module_name": "dronet$dispatch_7_rvv_x60_batchnorm2d_s8_N1xC32xH14xW14",
+   "time_dependency": "dronet1_dispatch_6",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet1_dispatch_8": {
+   "id": 8,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet1_dispatch_7"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 13.1782615,
+   "duration": 0.7946973875,
+   "job_name": "dronet1",
+   "module_name": "dronet$dispatch_8_rvv_x60_conv2d_batchnorm2d_s8_N1xIC32xIH14xIW14xOC64xOH7xOW7xKH3xKW3xSH2xSW2xPH1xPW1",
+   "time_dependency": "dronet1_dispatch_7",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet1_dispatch_9": {
+   "id": 9,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet1_dispatch_8"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 13.972958887499999,
+   "duration": 1.1114434401,
+   "job_name": "dronet1",
+   "module_name": "dronet$dispatch_9_rvv_x60_conv2d_s8_N1xIC64xIH7xIW7xOC64xOH7xOW7xKH3xKW3xSH1xSW1xPH1xPW1",
+   "time_dependency": "dronet1_dispatch_8",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet1_dispatch_10": {
+   "id": 10,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet1_dispatch_6"
+   ],
+   "hardware_target": "CPU_P#0",
+   "start_time": 13.095570168,
+   "duration": 0.1931191024,
+   "job_name": "dronet1",
+   "module_name": "dronet$dispatch_10_rvv_x60_conv2d_s8_N1xIC32xIH14xIW14xOC64xOH7xOW7xKH1xKW1xSH2xSW2xPH0xPW0",
+   "time_dependency": "ffn_block1_dispatch_0",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet1_dispatch_11": {
+   "id": 11,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet1_dispatch_9",
+    "dronet1_dispatch_10"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 15.0844023276,
+   "duration": 0.0238822038,
+   "job_name": "dronet1",
+   "module_name": "dronet$dispatch_11_rvv_x60_add_s8_n3136",
+   "time_dependency": "dronet1_dispatch_9",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet1_dispatch_12": {
+   "id": 12,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet1_dispatch_11"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 15.108284531399999,
+   "duration": 0.0101714313,
+   "job_name": "dronet1",
+   "module_name": "dronet$dispatch_12_rvv_x60_batchnorm2d_s8_N1xC64xH7xW7",
+   "time_dependency": "dronet1_dispatch_11",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet1_dispatch_13": {
+   "id": 13,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet1_dispatch_12"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 15.118455962699999,
+   "duration": 0.8618356630000001,
+   "job_name": "dronet1",
+   "module_name": "dronet$dispatch_13_rvv_x60_conv2d_batchnorm2d_s8_N1xIC64xIH7xIW7xOC128xOH4xOW4xKH3xKW3xSH2xSW2xPH1xPW1",
+   "time_dependency": "dronet1_dispatch_12",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet1_dispatch_14": {
+   "id": 14,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet1_dispatch_13"
+   ],
+   "hardware_target": "CPU_E#2",
+   "start_time": 14.1679182096,
+   "duration": 1.3546127322000001,
+   "job_name": "dronet1",
+   "module_name": "dronet$dispatch_14_rvv_x60_conv2d_s8_N1xIC128xIH4xIW4xOC128xOH4xOW4xKH3xKW3xSH1xSW1xPH1xPW1",
+   "time_dependency": "dronet1_dispatch_3",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet1_dispatch_15": {
+   "id": 15,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet1_dispatch_11"
+   ],
+   "hardware_target": "CPU_P#0",
+   "start_time": 13.2886892704,
+   "duration": 0.22631196099999998,
+   "job_name": "dronet1",
+   "module_name": "dronet$dispatch_15_rvv_x60_conv2d_s8_N1xIC64xIH7xIW7xOC128xOH4xOW4xKH1xKW1xSH2xSW2xPH0xPW0",
+   "time_dependency": "dronet1_dispatch_10",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet1_dispatch_16": {
+   "id": 16,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet1_dispatch_14",
+    "dronet1_dispatch_15"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 16.0609338077,
+   "duration": 0.015173624999999998,
+   "job_name": "dronet1",
+   "module_name": "dronet$dispatch_16_rvv_x60_add_s8_n2048",
+   "time_dependency": "mlp_control3_dispatch_6",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet1_dispatch_17": {
+   "id": 17,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet1_dispatch_16"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 20.040521028100002,
+   "duration": 0.0014964145,
+   "job_name": "dronet1",
+   "module_name": "dronet$dispatch_17_rvv_x60_relu_s8_n2048",
+   "time_dependency": "mlp_control4_dispatch_5",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": true,
+   "deadline_overrun_us": 1042.0174426000024
+  },
+  "dronet1_dispatch_18": {
+   "id": 18,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet1_dispatch_17"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 20.042017442600002,
+   "duration": 0.003397263,
+   "job_name": "dronet1",
+   "module_name": "dronet$dispatch_18_rvv_x60_linear_s8_M1xK2048xN1",
+   "time_dependency": "dronet1_dispatch_17",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": true,
+   "deadline_overrun_us": 1045.4147056000024
+  },
+  "dronet1_dispatch_19": {
+   "id": 19,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet1_dispatch_17"
+   ],
+   "hardware_target": "CPU_E#2",
+   "start_time": 20.0383473664,
+   "duration": 0.005522300000000001,
+   "job_name": "dronet1",
+   "module_name": "dronet$dispatch_19_rvv_x60_linear_s8_M1xK2048xN1",
+   "time_dependency": "mlp_control4_dispatch_1",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": true,
+   "deadline_overrun_us": 1043.869666399999
+  },
+  "dronet1_dispatch_20": {
+   "id": 20,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet1_dispatch_19"
+   ],
+   "hardware_target": "CPU_E#2",
+   "start_time": 20.0438696664,
+   "duration": 0.0027231906,
+   "job_name": "dronet1",
+   "module_name": "dronet$dispatch_20_rvv_x60_sigmoid_s8_n1",
+   "time_dependency": "dronet1_dispatch_19",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": true,
+   "deadline_overrun_us": 1046.5928570000003
+  },
+  "dronet2_dispatch_0": {
+   "id": 0,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [],
+   "hardware_target": "CPU_E#1",
+   "start_time": 24.0,
+   "duration": 2.3891297156,
+   "job_name": "dronet2",
+   "module_name": "dronet$dispatch_0_rvv_x60_conv2d_s8_N1xIC3xIH112xIW112xOC32xOH56xOW56xKH3xKW3xSH2xSW2xPH1xPW1",
+   "time_dependency": "dronet1_dispatch_0",
+   "release_policy": "phase_locked",
+   "release_us": 24000.0,
+   "time_dep_mode": "soft",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet2_dispatch_1": {
+   "id": 1,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet2_dispatch_0"
+   ],
+   "hardware_target": "CPU_E#1",
+   "start_time": 26.3891297156,
+   "duration": 0.75275625,
+   "job_name": "dronet2",
+   "module_name": "dronet$dispatch_1_rvv_x60_maxpool2d_s8_N1xC32xIH56xIW56xOH27xOW27xKH3xKW3xSH2xSW2xPH0xPW0xDH1xDW1",
+   "time_dependency": "dronet2_dispatch_0",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet2_dispatch_2": {
+   "id": 2,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet2_dispatch_1"
+   ],
+   "hardware_target": "CPU_E#2",
+   "start_time": 24.0,
+   "duration": 0.0567739596,
+   "job_name": "dronet2",
+   "module_name": "dronet$dispatch_2_rvv_x60_batchnorm2d_s8_N1xC32xH27xW27",
+   "time_dependency": "dronet1_dispatch_20",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet2_dispatch_3": {
+   "id": 3,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet2_dispatch_2"
+   ],
+   "hardware_target": "CPU_E#2",
+   "start_time": 24.0567739596,
+   "duration": 1.358388,
+   "job_name": "dronet2",
+   "module_name": "dronet$dispatch_3_rvv_x60_conv2d_batchnorm2d_s8_N1xIC32xIH27xIW27xOC32xOH14xOW14xKH3xKW3xSH2xSW2xPH1xPW1",
+   "time_dependency": "dronet2_dispatch_2",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet2_dispatch_4": {
+   "id": 4,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet2_dispatch_3"
+   ],
+   "hardware_target": "CPU_E#2",
+   "start_time": 25.415161959600002,
+   "duration": 0.8777570268,
+   "job_name": "dronet2",
+   "module_name": "dronet$dispatch_4_rvv_x60_conv2d_s8_N1xIC32xIH14xIW14xOC32xOH14xOW14xKH3xKW3xSH1xSW1xPH1xPW1",
+   "time_dependency": "dronet2_dispatch_2",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet2_dispatch_5": {
+   "id": 5,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet2_dispatch_1"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 25.3153371842,
+   "duration": 0.235411423,
+   "job_name": "dronet2",
+   "module_name": "dronet$dispatch_5_rvv_x60_conv2d_s8_N1xIC32xIH27xIW27xOC32xOH14xOW14xKH1xKW1xSH2xSW2xPH0xPW0",
+   "time_dependency": "ffn_block0_dispatch_4",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet2_dispatch_6": {
+   "id": 6,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet2_dispatch_4",
+    "dronet2_dispatch_5"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 25.5507486072,
+   "duration": 0.0451063125,
+   "job_name": "dronet2",
+   "module_name": "dronet$dispatch_6_rvv_x60_add_s8_n6272",
+   "time_dependency": "dronet2_dispatch_5",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet2_dispatch_7": {
+   "id": 7,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet2_dispatch_6"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 25.5958549197,
+   "duration": 0.0199867377,
+   "job_name": "dronet2",
+   "module_name": "dronet$dispatch_7_rvv_x60_batchnorm2d_s8_N1xC32xH14xW14",
+   "time_dependency": "dronet2_dispatch_6",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet2_dispatch_8": {
+   "id": 8,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet2_dispatch_7"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 25.615841657399997,
+   "duration": 0.7946973875,
+   "job_name": "dronet2",
+   "module_name": "dronet$dispatch_8_rvv_x60_conv2d_batchnorm2d_s8_N1xIC32xIH14xIW14xOC64xOH7xOW7xKH3xKW3xSH2xSW2xPH1xPW1",
+   "time_dependency": "dronet2_dispatch_7",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet2_dispatch_9": {
+   "id": 9,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet2_dispatch_8"
+   ],
+   "hardware_target": "CPU_P#0",
+   "start_time": 25.095570168000002,
+   "duration": 1.1114434401,
+   "job_name": "dronet2",
+   "module_name": "dronet$dispatch_9_rvv_x60_conv2d_s8_N1xIC64xIH7xIW7xOC64xOH7xOW7xKH3xKW3xSH1xSW1xPH1xPW1",
+   "time_dependency": "ffn_block2_dispatch_0",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet2_dispatch_10": {
+   "id": 10,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet2_dispatch_6"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 26.4105390449,
+   "duration": 0.1931191024,
+   "job_name": "dronet2",
+   "module_name": "dronet$dispatch_10_rvv_x60_conv2d_s8_N1xIC32xIH14xIW14xOC64xOH7xOW7xKH1xKW1xSH2xSW2xPH0xPW0",
+   "time_dependency": "dronet2_dispatch_8",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet2_dispatch_11": {
+   "id": 11,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet2_dispatch_9",
+    "dronet2_dispatch_10"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 30.0383473664,
+   "duration": 0.0238822038,
+   "job_name": "dronet2",
+   "module_name": "dronet$dispatch_11_rvv_x60_add_s8_n3136",
+   "time_dependency": "mlp_control6_dispatch_1",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet2_dispatch_12": {
+   "id": 12,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet2_dispatch_11"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 30.0622295702,
+   "duration": 0.0101714313,
+   "job_name": "dronet2",
+   "module_name": "dronet$dispatch_12_rvv_x60_batchnorm2d_s8_N1xC64xH7xW7",
+   "time_dependency": "dronet2_dispatch_11",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet2_dispatch_13": {
+   "id": 13,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet2_dispatch_12"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 30.0724010015,
+   "duration": 0.8618356630000001,
+   "job_name": "dronet2",
+   "module_name": "dronet$dispatch_13_rvv_x60_conv2d_batchnorm2d_s8_N1xIC64xIH7xIW7xOC128xOH4xOW4xKH3xKW3xSH2xSW2xPH1xPW1",
+   "time_dependency": "dronet2_dispatch_12",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet2_dispatch_14": {
+   "id": 14,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet2_dispatch_13"
+   ],
+   "hardware_target": "CPU_E#2",
+   "start_time": 26.292918986400004,
+   "duration": 1.3546127322000001,
+   "job_name": "dronet2",
+   "module_name": "dronet$dispatch_14_rvv_x60_conv2d_s8_N1xIC128xIH4xIW4xOC128xOH4xOW4xKH3xKW3xSH1xSW1xPH1xPW1",
+   "time_dependency": "dronet2_dispatch_4",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet2_dispatch_15": {
+   "id": 15,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet2_dispatch_11"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 30.934236664500002,
+   "duration": 0.22631196099999998,
+   "job_name": "dronet2",
+   "module_name": "dronet$dispatch_15_rvv_x60_conv2d_s8_N1xIC64xIH7xIW7xOC128xOH4xOW4xKH1xKW1xSH2xSW2xPH0xPW0",
+   "time_dependency": "dronet2_dispatch_13",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": true,
+   "deadline_overrun_us": 160.54862550000237
+  },
+  "dronet2_dispatch_16": {
+   "id": 16,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet2_dispatch_14",
+    "dronet2_dispatch_15"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 31.202843441100004,
+   "duration": 0.015173624999999998,
+   "job_name": "dronet2",
+   "module_name": "dronet$dispatch_16_rvv_x60_add_s8_n2048",
+   "time_dependency": "mlp_control6_dispatch_6",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": true,
+   "deadline_overrun_us": 218.01706610000338
+  },
+  "dronet2_dispatch_17": {
+   "id": 17,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet2_dispatch_16"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 31.218017066100003,
+   "duration": 0.0014964145,
+   "job_name": "dronet2",
+   "module_name": "dronet$dispatch_17_rvv_x60_relu_s8_n2048",
+   "time_dependency": "dronet2_dispatch_16",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": true,
+   "deadline_overrun_us": 219.51348060000342
+  },
+  "dronet2_dispatch_18": {
+   "id": 18,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet2_dispatch_17"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 31.219513480600003,
+   "duration": 0.003397263,
+   "job_name": "dronet2",
+   "module_name": "dronet$dispatch_18_rvv_x60_linear_s8_M1xK2048xN1",
+   "time_dependency": "dronet2_dispatch_17",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": true,
+   "deadline_overrun_us": 222.9107436000035
+  },
+  "dronet2_dispatch_19": {
+   "id": 19,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet2_dispatch_17"
+   ],
+   "hardware_target": "CPU_E#2",
+   "start_time": 27.647531718600003,
+   "duration": 0.005522300000000001,
+   "job_name": "dronet2",
+   "module_name": "dronet$dispatch_19_rvv_x60_linear_s8_M1xK2048xN1",
+   "time_dependency": "dronet2_dispatch_14",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet2_dispatch_20": {
+   "id": 20,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet2_dispatch_19"
+   ],
+   "hardware_target": "CPU_E#2",
+   "start_time": 27.653054018600002,
+   "duration": 0.0027231906,
+   "job_name": "dronet2",
+   "module_name": "dronet$dispatch_20_rvv_x60_sigmoid_s8_n1",
+   "time_dependency": "dronet2_dispatch_19",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet3_dispatch_0": {
+   "id": 0,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [],
+   "hardware_target": "CPU_E#0",
+   "start_time": 36.0,
+   "duration": 2.3891297156,
+   "job_name": "dronet3",
+   "module_name": "dronet$dispatch_0_rvv_x60_conv2d_s8_N1xIC3xIH112xIW112xOC32xOH56xOW56xKH3xKW3xSH2xSW2xPH1xPW1",
+   "time_dependency": "ffn_block0_dispatch_3",
+   "release_policy": "phase_locked",
+   "release_us": 36000.0,
+   "time_dep_mode": "soft",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet3_dispatch_1": {
+   "id": 1,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet3_dispatch_0"
+   ],
+   "hardware_target": "CPU_E#1",
+   "start_time": 36.0,
+   "duration": 0.75275625,
+   "job_name": "dronet3",
+   "module_name": "dronet$dispatch_1_rvv_x60_maxpool2d_s8_N1xC32xIH56xIW56xOH27xOW27xKH3xKW3xSH2xSW2xPH0xPW0xDH1xDW1",
+   "time_dependency": "dronet2_dispatch_1",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet3_dispatch_2": {
+   "id": 2,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet3_dispatch_1"
+   ],
+   "hardware_target": "CPU_E#1",
+   "start_time": 36.75275625,
+   "duration": 0.0567739596,
+   "job_name": "dronet3",
+   "module_name": "dronet$dispatch_2_rvv_x60_batchnorm2d_s8_N1xC32xH27xW27",
+   "time_dependency": "dronet3_dispatch_1",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet3_dispatch_3": {
+   "id": 3,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet3_dispatch_2"
+   ],
+   "hardware_target": "CPU_E#1",
+   "start_time": 36.8095302096,
+   "duration": 1.358388,
+   "job_name": "dronet3",
+   "module_name": "dronet$dispatch_3_rvv_x60_conv2d_batchnorm2d_s8_N1xIC32xIH27xIW27xOC32xOH14xOW14xKH3xKW3xSH2xSW2xPH1xPW1",
+   "time_dependency": "dronet3_dispatch_2",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet3_dispatch_4": {
+   "id": 4,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet3_dispatch_3"
+   ],
+   "hardware_target": "CPU_E#1",
+   "start_time": 38.167918209599996,
+   "duration": 0.8777570268,
+   "job_name": "dronet3",
+   "module_name": "dronet$dispatch_4_rvv_x60_conv2d_s8_N1xIC32xIH14xIW14xOC32xOH14xOW14xKH3xKW3xSH1xSW1xPH1xPW1",
+   "time_dependency": "dronet3_dispatch_2",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet3_dispatch_5": {
+   "id": 5,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet3_dispatch_1"
+   ],
+   "hardware_target": "CPU_E#2",
+   "start_time": 36.0,
+   "duration": 0.235411423,
+   "job_name": "dronet3",
+   "module_name": "dronet$dispatch_5_rvv_x60_conv2d_s8_N1xIC32xIH27xIW27xOC32xOH14xOW14xKH1xKW1xSH2xSW2xPH0xPW0",
+   "time_dependency": "dronet2_dispatch_20",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet3_dispatch_6": {
+   "id": 6,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet3_dispatch_4",
+    "dronet3_dispatch_5"
+   ],
+   "hardware_target": "CPU_E#1",
+   "start_time": 39.045675236399994,
+   "duration": 0.0451063125,
+   "job_name": "dronet3",
+   "module_name": "dronet$dispatch_6_rvv_x60_add_s8_n6272",
+   "time_dependency": "dronet3_dispatch_4",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet3_dispatch_7": {
+   "id": 7,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet3_dispatch_6"
+   ],
+   "hardware_target": "CPU_E#1",
+   "start_time": 39.0907815489,
+   "duration": 0.0199867377,
+   "job_name": "dronet3",
+   "module_name": "dronet$dispatch_7_rvv_x60_batchnorm2d_s8_N1xC32xH14xW14",
+   "time_dependency": "dronet3_dispatch_6",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet3_dispatch_8": {
+   "id": 8,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet3_dispatch_7"
+   ],
+   "hardware_target": "CPU_E#1",
+   "start_time": 39.1107682866,
+   "duration": 0.7946973875,
+   "job_name": "dronet3",
+   "module_name": "dronet$dispatch_8_rvv_x60_conv2d_batchnorm2d_s8_N1xIC32xIH14xIW14xOC64xOH7xOW7xKH3xKW3xSH2xSW2xPH1xPW1",
+   "time_dependency": "dronet3_dispatch_7",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet3_dispatch_9": {
+   "id": 9,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet3_dispatch_8"
+   ],
+   "hardware_target": "CPU_E#1",
+   "start_time": 39.9054656741,
+   "duration": 1.1114434401,
+   "job_name": "dronet3",
+   "module_name": "dronet$dispatch_9_rvv_x60_conv2d_s8_N1xIC64xIH7xIW7xOC64xOH7xOW7xKH3xKW3xSH1xSW1xPH1xPW1",
+   "time_dependency": "dronet3_dispatch_8",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet3_dispatch_10": {
+   "id": 10,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet3_dispatch_6"
+   ],
+   "hardware_target": "CPU_E#2",
+   "start_time": 36.235411423,
+   "duration": 0.1931191024,
+   "job_name": "dronet3",
+   "module_name": "dronet$dispatch_10_rvv_x60_conv2d_s8_N1xIC32xIH14xIW14xOC64xOH7xOW7xKH1xKW1xSH2xSW2xPH0xPW0",
+   "time_dependency": "dronet3_dispatch_5",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet3_dispatch_11": {
+   "id": 11,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet3_dispatch_9",
+    "dronet3_dispatch_10"
+   ],
+   "hardware_target": "CPU_E#1",
+   "start_time": 41.0169091142,
+   "duration": 0.0238822038,
+   "job_name": "dronet3",
+   "module_name": "dronet$dispatch_11_rvv_x60_add_s8_n3136",
+   "time_dependency": "dronet3_dispatch_9",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet3_dispatch_12": {
+   "id": 12,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet3_dispatch_11"
+   ],
+   "hardware_target": "CPU_E#1",
+   "start_time": 41.040791318,
+   "duration": 0.0101714313,
+   "job_name": "dronet3",
+   "module_name": "dronet$dispatch_12_rvv_x60_batchnorm2d_s8_N1xC64xH7xW7",
+   "time_dependency": "dronet3_dispatch_11",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet3_dispatch_13": {
+   "id": 13,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet3_dispatch_12"
+   ],
+   "hardware_target": "CPU_E#1",
+   "start_time": 41.0509627493,
+   "duration": 0.8618356630000001,
+   "job_name": "dronet3",
+   "module_name": "dronet$dispatch_13_rvv_x60_conv2d_batchnorm2d_s8_N1xIC64xIH7xIW7xOC128xOH4xOW4xKH3xKW3xSH2xSW2xPH1xPW1",
+   "time_dependency": "dronet3_dispatch_12",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet3_dispatch_14": {
+   "id": 14,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet3_dispatch_13"
+   ],
+   "hardware_target": "CPU_E#1",
+   "start_time": 41.9127984123,
+   "duration": 1.3546127322000001,
+   "job_name": "dronet3",
+   "module_name": "dronet$dispatch_14_rvv_x60_conv2d_s8_N1xIC128xIH4xIW4xOC128xOH4xOW4xKH3xKW3xSH1xSW1xPH1xPW1",
+   "time_dependency": "dronet3_dispatch_13",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": true,
+   "deadline_overrun_us": 267.41114450000225
+  },
+  "dronet3_dispatch_15": {
+   "id": 15,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet3_dispatch_11"
+   ],
+   "hardware_target": "CPU_E#2",
+   "start_time": 36.4285305254,
+   "duration": 0.22631196099999998,
+   "job_name": "dronet3",
+   "module_name": "dronet$dispatch_15_rvv_x60_conv2d_s8_N1xIC64xIH7xIW7xOC128xOH4xOW4xKH1xKW1xSH2xSW2xPH0xPW0",
+   "time_dependency": "dronet3_dispatch_10",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet3_dispatch_16": {
+   "id": 16,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet3_dispatch_14",
+    "dronet3_dispatch_15"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 40.08064218199999,
+   "duration": 0.015173624999999998,
+   "job_name": "dronet3",
+   "module_name": "dronet$dispatch_16_rvv_x60_add_s8_n2048",
+   "time_dependency": "mlp_control8_dispatch_6",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet3_dispatch_17": {
+   "id": 17,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet3_dispatch_16"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 40.095815806999994,
+   "duration": 0.0014964145,
+   "job_name": "dronet3",
+   "module_name": "dronet$dispatch_17_rvv_x60_relu_s8_n2048",
+   "time_dependency": "dronet3_dispatch_16",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet3_dispatch_18": {
+   "id": 18,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet3_dispatch_17"
+   ],
+   "hardware_target": "CPU_E#2",
+   "start_time": 36.6548424864,
+   "duration": 0.003397263,
+   "job_name": "dronet3",
+   "module_name": "dronet$dispatch_18_rvv_x60_linear_s8_M1xK2048xN1",
+   "time_dependency": "dronet3_dispatch_15",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet3_dispatch_19": {
+   "id": 19,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet3_dispatch_17"
+   ],
+   "hardware_target": "CPU_P#0",
+   "start_time": 37.095570168,
+   "duration": 0.005522300000000001,
+   "job_name": "dronet3",
+   "module_name": "dronet$dispatch_19_rvv_x60_linear_s8_M1xK2048xN1",
+   "time_dependency": "ffn_block3_dispatch_0",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet3_dispatch_20": {
+   "id": 20,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet3_dispatch_19"
+   ],
+   "hardware_target": "CPU_P#0",
+   "start_time": 37.101092468000004,
+   "duration": 0.0027231906,
+   "job_name": "dronet3",
+   "module_name": "dronet$dispatch_20_rvv_x60_sigmoid_s8_n1",
+   "time_dependency": "dronet3_dispatch_19",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet4_dispatch_0": {
+   "id": 0,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [],
+   "hardware_target": "CPU_P#0",
+   "start_time": 48.0,
+   "duration": 2.3891297156,
+   "job_name": "dronet4",
+   "module_name": "dronet$dispatch_0_rvv_x60_conv2d_s8_N1xIC3xIH112xIW112xOC32xOH56xOW56xKH3xKW3xSH2xSW2xPH1xPW1",
+   "time_dependency": "dronet3_dispatch_20",
+   "release_policy": "phase_locked",
+   "release_us": 48000.0,
+   "time_dep_mode": "soft",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet4_dispatch_1": {
+   "id": 1,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet4_dispatch_0"
+   ],
+   "hardware_target": "CPU_P#0",
+   "start_time": 50.3891297156,
+   "duration": 0.75275625,
+   "job_name": "dronet4",
+   "module_name": "dronet$dispatch_1_rvv_x60_maxpool2d_s8_N1xC32xIH56xIW56xOH27xOW27xKH3xKW3xSH2xSW2xPH0xPW0xDH1xDW1",
+   "time_dependency": "dronet4_dispatch_0",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet4_dispatch_2": {
+   "id": 2,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet4_dispatch_1"
+   ],
+   "hardware_target": "CPU_P#0",
+   "start_time": 51.1418859656,
+   "duration": 0.0567739596,
+   "job_name": "dronet4",
+   "module_name": "dronet$dispatch_2_rvv_x60_batchnorm2d_s8_N1xC32xH27xW27",
+   "time_dependency": "dronet4_dispatch_1",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet4_dispatch_3": {
+   "id": 3,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet4_dispatch_2"
+   ],
+   "hardware_target": "CPU_P#0",
+   "start_time": 51.1986599252,
+   "duration": 1.358388,
+   "job_name": "dronet4",
+   "module_name": "dronet$dispatch_3_rvv_x60_conv2d_batchnorm2d_s8_N1xIC32xIH27xIW27xOC32xOH14xOW14xKH3xKW3xSH2xSW2xPH1xPW1",
+   "time_dependency": "dronet4_dispatch_2",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet4_dispatch_4": {
+   "id": 4,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet4_dispatch_3"
+   ],
+   "hardware_target": "CPU_P#1",
+   "start_time": 49.760576793,
+   "duration": 0.8777570268,
+   "job_name": "dronet4",
+   "module_name": "dronet$dispatch_4_rvv_x60_conv2d_s8_N1xIC32xIH14xIW14xOC32xOH14xOW14xKH3xKW3xSH1xSW1xPH1xPW1",
+   "time_dependency": "ffn_block3_dispatch_2",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet4_dispatch_5": {
+   "id": 5,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet4_dispatch_1"
+   ],
+   "hardware_target": "CPU_P#0",
+   "start_time": 52.557047925199996,
+   "duration": 0.235411423,
+   "job_name": "dronet4",
+   "module_name": "dronet$dispatch_5_rvv_x60_conv2d_s8_N1xIC32xIH27xIW27xOC32xOH14xOW14xKH1xKW1xSH2xSW2xPH0xPW0",
+   "time_dependency": "dronet4_dispatch_3",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet4_dispatch_6": {
+   "id": 6,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet4_dispatch_4",
+    "dronet4_dispatch_5"
+   ],
+   "hardware_target": "CPU_P#0",
+   "start_time": 52.7924593482,
+   "duration": 0.0451063125,
+   "job_name": "dronet4",
+   "module_name": "dronet$dispatch_6_rvv_x60_add_s8_n6272",
+   "time_dependency": "dronet4_dispatch_5",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet4_dispatch_7": {
+   "id": 7,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet4_dispatch_6"
+   ],
+   "hardware_target": "CPU_P#0",
+   "start_time": 52.8375656607,
+   "duration": 0.0199867377,
+   "job_name": "dronet4",
+   "module_name": "dronet$dispatch_7_rvv_x60_batchnorm2d_s8_N1xC32xH14xW14",
+   "time_dependency": "dronet4_dispatch_6",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet4_dispatch_8": {
+   "id": 8,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet4_dispatch_7"
+   ],
+   "hardware_target": "CPU_P#0",
+   "start_time": 52.8575523984,
+   "duration": 0.7946973875,
+   "job_name": "dronet4",
+   "module_name": "dronet$dispatch_8_rvv_x60_conv2d_batchnorm2d_s8_N1xIC32xIH14xIW14xOC64xOH7xOW7xKH3xKW3xSH2xSW2xPH1xPW1",
+   "time_dependency": "dronet4_dispatch_7",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet4_dispatch_9": {
+   "id": 9,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet4_dispatch_8"
+   ],
+   "hardware_target": "CPU_P#1",
+   "start_time": 50.638333819799996,
+   "duration": 1.1114434401,
+   "job_name": "dronet4",
+   "module_name": "dronet$dispatch_9_rvv_x60_conv2d_s8_N1xIC64xIH7xIW7xOC64xOH7xOW7xKH3xKW3xSH1xSW1xPH1xPW1",
+   "time_dependency": "dronet4_dispatch_4",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet4_dispatch_10": {
+   "id": 10,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet4_dispatch_6"
+   ],
+   "hardware_target": "CPU_P#0",
+   "start_time": 53.652249785900004,
+   "duration": 0.1931191024,
+   "job_name": "dronet4",
+   "module_name": "dronet$dispatch_10_rvv_x60_conv2d_s8_N1xIC32xIH14xIW14xOC64xOH7xOW7xKH1xKW1xSH2xSW2xPH0xPW0",
+   "time_dependency": "dronet4_dispatch_8",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet4_dispatch_11": {
+   "id": 11,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet4_dispatch_9",
+    "dronet4_dispatch_10"
+   ],
+   "hardware_target": "CPU_P#0",
+   "start_time": 53.8453688883,
+   "duration": 0.0238822038,
+   "job_name": "dronet4",
+   "module_name": "dronet$dispatch_11_rvv_x60_add_s8_n3136",
+   "time_dependency": "dronet4_dispatch_10",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet4_dispatch_12": {
+   "id": 12,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet4_dispatch_11"
+   ],
+   "hardware_target": "CPU_P#0",
+   "start_time": 53.8692510921,
+   "duration": 0.0101714313,
+   "job_name": "dronet4",
+   "module_name": "dronet$dispatch_12_rvv_x60_batchnorm2d_s8_N1xC64xH7xW7",
+   "time_dependency": "dronet4_dispatch_11",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet4_dispatch_13": {
+   "id": 13,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet4_dispatch_12"
+   ],
+   "hardware_target": "CPU_P#0",
+   "start_time": 53.8794225234,
+   "duration": 0.8618356630000001,
+   "job_name": "dronet4",
+   "module_name": "dronet$dispatch_13_rvv_x60_conv2d_batchnorm2d_s8_N1xIC64xIH7xIW7xOC128xOH4xOW4xKH3xKW3xSH2xSW2xPH1xPW1",
+   "time_dependency": "dronet4_dispatch_12",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet4_dispatch_14": {
+   "id": 14,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet4_dispatch_13"
+   ],
+   "hardware_target": "CPU_P#1",
+   "start_time": 51.74977725989999,
+   "duration": 1.3546127322000001,
+   "job_name": "dronet4",
+   "module_name": "dronet$dispatch_14_rvv_x60_conv2d_s8_N1xIC128xIH4xIW4xOC128xOH4xOW4xKH3xKW3xSH1xSW1xPH1xPW1",
+   "time_dependency": "dronet4_dispatch_9",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet4_dispatch_15": {
+   "id": 15,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet4_dispatch_11"
+   ],
+   "hardware_target": "CPU_P#0",
+   "start_time": 54.7412581864,
+   "duration": 0.22631196099999998,
+   "job_name": "dronet4",
+   "module_name": "dronet$dispatch_15_rvv_x60_conv2d_s8_N1xIC64xIH7xIW7xOC128xOH4xOW4xKH1xKW1xSH2xSW2xPH0xPW0",
+   "time_dependency": "dronet4_dispatch_13",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet4_dispatch_16": {
+   "id": 16,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet4_dispatch_14",
+    "dronet4_dispatch_15"
+   ],
+   "hardware_target": "CPU_P#0",
+   "start_time": 55.07886839449999,
+   "duration": 0.015173624999999998,
+   "job_name": "dronet4",
+   "module_name": "dronet$dispatch_16_rvv_x60_add_s8_n2048",
+   "time_dependency": "mlp_control11_dispatch_5",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": true,
+   "deadline_overrun_us": 94.04201949999447
+  },
+  "dronet4_dispatch_17": {
+   "id": 17,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet4_dispatch_16"
+   ],
+   "hardware_target": "CPU_P#0",
+   "start_time": 55.094042019499994,
+   "duration": 0.0014964145,
+   "job_name": "dronet4",
+   "module_name": "dronet$dispatch_17_rvv_x60_relu_s8_n2048",
+   "time_dependency": "dronet4_dispatch_16",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": true,
+   "deadline_overrun_us": 95.53843399999096
+  },
+  "dronet4_dispatch_18": {
+   "id": 18,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet4_dispatch_17"
+   ],
+   "hardware_target": "CPU_P#0",
+   "start_time": 55.09553843399999,
+   "duration": 0.003397263,
+   "job_name": "dronet4",
+   "module_name": "dronet$dispatch_18_rvv_x60_linear_s8_M1xK2048xN1",
+   "time_dependency": "dronet4_dispatch_17",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": true,
+   "deadline_overrun_us": 98.9356969999875
+  },
+  "dronet4_dispatch_19": {
+   "id": 19,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet4_dispatch_17"
+   ],
+   "hardware_target": "CPU_E#0",
+   "start_time": 50.260329817599995,
+   "duration": 0.005522300000000001,
+   "job_name": "dronet4",
+   "module_name": "dronet$dispatch_19_rvv_x60_linear_s8_M1xK2048xN1",
+   "time_dependency": "ffn_block2_dispatch_3",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  },
+  "dronet4_dispatch_20": {
+   "id": 20,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet4_dispatch_19"
+   ],
+   "hardware_target": "CPU_E#3",
+   "start_time": 48.0,
+   "duration": 0.0027231906,
+   "job_name": "dronet4",
+   "module_name": "dronet$dispatch_20_rvv_x60_sigmoid_s8_n1",
+   "time_dependency": "mlp_control9_dispatch_6",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "deadline_miss": false,
+   "deadline_overrun_us": 0.0
+  }
+ },
+ "metadata": {
+  "makespan": 67.86983742619998,
+  "num_operations": 214,
+  "machines": [
+   "CPU_P#0",
+   "CPU_P#1",
+   "CPU_P#2",
+   "CPU_P#3",
+   "CPU_E#0",
+   "CPU_E#1",
+   "CPU_E#2",
+   "CPU_E#3"
+  ],
+  "machine_combinations": [
+   [
+    "CPU_P#0"
+   ],
+   [
+    "CPU_P#1"
+   ],
+   [
+    "CPU_P#2"
+   ],
+   [
+    "CPU_P#3"
+   ],
+   [
+    "CPU_E#0"
+   ],
+   [
+    "CPU_E#1"
+   ],
+   [
+    "CPU_E#2"
+   ],
+   [
+    "CPU_E#3"
+   ]
+  ],
+  "profile_hw": {
+   "CPU_P": "rvv_x60",
+   "CPU_E": "rvv_x60"
+  },
+  "periodic_networks": {
+   "mlp_control": 5.0,
+   "ffn_block": 12.0,
+   "dronet": 12.0
+  },
+  "pdb_hash": "a9b891f783a7c719f9797ef48f3b1978cc51202c56e2fc52c9b4f7bea31081f4",
+  "pdb_files": [
+   "gen_mb/profile/rvv_x60/spacemit_x60/dronet/dronet.int8/dronet_spacemit_x60_rvv_x60_dronet.int8/topo_0/results.csv",
+   "gen_mb/profile/rvv_x60/spacemit_x60/ffn_block/ffn_block.int8/ffn_block_spacemit_x60_rvv_x60_ffn_block.int8/topo_0/results.csv",
+   "gen_mb/profile/rvv_x60/spacemit_x60/mlp_control/mlp_control.int8/mlp_control_spacemit_x60_rvv_x60_mlp_control.int8/topo_0/results.csv"
+  ],
+  "solve_hash": "a317a8b204b399d9230d68e654fa290e1e12f88c9dd5c8ff78e5d9b6b6597c82",
+  "solve_env": {
+   "solver": "milp",
+   "scheduler": "cpsat",
+   "time_limit": 90.0,
+   "max_periodic_iters": 1,
+   "env": {
+    "XPURT_CPSAT_WORKERS": "4",
+    "XPURT_NO_COMPACT": "1"
+   },
+   "board_calibration": {
+    "loaded": false,
+    "path": null
+   }
+  },
+  "solver_certificate": {
+   "schema_version": 1,
+   "solver": "cpsat",
+   "objective_mode": "legacy",
+   "time_unit": "microseconds",
+   "critical_models": [],
+   "heavy_model": null,
+   "jobs_modeled": null,
+   "stop_after": null,
+   "phases": [
+    {
+     "name": "dispatch_deadline_misses",
+     "unit": "dispatches",
+     "status": "FEASIBLE",
+     "objective": 50.0,
+     "best_bound": 20.0,
+     "wall_s": 90.047379551
+    },
+    {
+     "name": "total_dispatch_lateness",
+     "unit": "us",
+     "status": "FEASIBLE",
+     "objective": 246697.0,
+     "best_bound": 8648.0,
+     "wall_s": 45.086957506000005
+    },
+    {
+     "name": "makespan_plus_transfer",
+     "unit": "us",
+     "status": "OPTIMAL",
+     "objective": 74613.0,
+     "best_bound": 74613.0,
+     "wall_s": 9.050147791
+    }
+   ],
+   "certified": false,
+   "certified_through": "makespan_plus_transfer",
+   "bounded_not_proven": [
+    "dispatch_deadline_misses",
+    "total_dispatch_lateness"
+   ],
+   "phase_budget_s": {
+    "top": 90.0,
+    "each_lower": 45.0
+   }
+  },
+  "board_recost": true,
+  "deadline_miss_count": 29,
+  "total_lateness_ms": 165.4847037475999
+ }
+}

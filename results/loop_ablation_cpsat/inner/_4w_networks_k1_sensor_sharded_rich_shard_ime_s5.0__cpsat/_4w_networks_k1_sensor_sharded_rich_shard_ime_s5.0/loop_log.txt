@@ -1,0 +1,22 @@
+replay: XPURT_CPSAT_WORKERS=1 (deterministic; the published numbers use 0/6, which is faster and not reproducible)
+== co-design loop: _4w_networks_k1_sensor_sharded_rich_shard_ime_s5.0 ==
+round 0 · baseline: makespan 46.613 (makespan 46.6 ms), 4 instance-miss
+accept rule: candidate_objective.accept() · critical=['mlp_control', 'fused_full', 'yolov8_nano_64x96', 'ffn_block', 'attn_block'] heavy=yolov8_nano_64x96
+      ime: built ime_x60 profiles for (none new; existing reused)
+round 1 · try ime: makespan 46.613 -> 35.567 (-23.7%), 0 instance-miss -> ACCEPTABLE
+round 1 · try ime: accepted -- hard deadline misses: ime=0 beats baseline=2 (tolerance 1.04)
+round 1 · try shard: makespan 46.613 -> 32.671 (-29.9%), 1 instance-miss -> ACCEPTABLE
+round 1 · try shard: accepted -- max deadline lateness: shard=0.67 beats baseline=6.61 (tolerance 0.5)
+      unfuse: adopted ModelBlaster unfused dispatch graph for (none — no fused net with an unfused build on disk)
+round 1 · try unfuse: lever changed nothing on this spec (inapplicable here) — not a candidate
+round 1: ACCEPT +shard  makespan 46.613 -> 32.671 (-29.9%)
+      ime: built ime_x60 profiles for (none new; existing reused)
+round 2 · try ime: makespan 32.671 -> 38.454 (+17.7%), 10 instance-miss -> reject
+round 2 · try ime: rejected -- hard deadline misses: shard=1 beats ime=3 (tolerance 1.04)
+      unfuse: adopted ModelBlaster unfused dispatch graph for (none — no fused net with an unfused build on disk)
+round 2 · try unfuse: lever changed nothing on this spec (inapplicable here) — not a candidate
+round 2: no lever is accepted by the nine-term objective rule — CONVERGED
+fuse: NOT applied — roofline decision-aid says the stack is compute-bound (max fusible-epilogue ceiling 16% on dronet); fusion collapses dispatches (scheduling) but is measured ~+0.85% on cycles, so the loop does not credit a makespan gain it cannot measure.
+
+CONVERGED [makespan]: 46.613 -> 32.671 ms (-29.9%), levers applied: ['shard']
+artifacts in /scratch/agustin/xpurt-dev-sync/results/loop_ablation_cpsat/inner/_4w_networks_k1_sensor_sharded_rich_shard_ime_s5.0__cpsat/_4w_networks_k1_sensor_sharded_rich_shard_ime_s5.0

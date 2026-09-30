@@ -1,6 +1,1 @@
-[
- "Baseline \u2014 RVV, 1 net per core|none|results/codesign_feedback/sensor_evo/p1_og.json|feedback \u2192 hint: idle gaps",
- "AOT optimize \u2014 + Shard + IME|shard|results/codesign_feedback/sensor_evo/p2_aot.json|auto-applies SHARD",
- "Run on the K1 board (+31% slower)|none|results/codesign_feedback/sensor_evo/p3_feedback.json|measure vs the Gantt",
- "Re-schedule on measured board costs|none|results/codesign_feedback/sensor_evo/p4_fix.json|CP-SAT re-solves on board costs"
-]
+["Baseline · RVV singletons|none|results/codesign_feedback/sensor_evo/p1_og.json|AOT baseline", "AOT optimize — Shard + IME|shard+ime|results/codesign_feedback/sensor_evo/p2_aot.json|both scheduling levers enabled", "K1-calibrated replay|none|results/codesign_feedback/sensor_evo/p3_feedback.json|same assignment, calibrated durations", "K1-calibrated re-solve|none|results/codesign_feedback/sensor_evo/p4_fix.json|new assignment, calibrated durations"]

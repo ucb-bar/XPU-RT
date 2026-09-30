@@ -1,0 +1,992 @@
+{
+ "schema": "loop_ablation/v3",
+ "population": {
+  "families": {
+   "sensor_rich": [
+    "networks_k1_sensor_sharded_rich",
+    "_4w_networks_k1_sensor_sharded_rich_shard_ime_s4.0",
+    "_evo_sen_og",
+    "_4w_networks_k1_sensor_tight_vision_head",
+    "_4w_networks_k1_sensor_sharded_rich_shard_ime_s5.0",
+    "networks_k1_deployed_rich_vithead",
+    "networks_k1_deployed_rich_vithead_noime"
+   ],
+   "flight_deployed": [
+    "networks_k1_flight_deployed",
+    "networks_k1_flight_deployed_noshard",
+    "networks_k1_flight_deployed_singletons",
+    "_flight_deployed_matched_board",
+    "_flight_deployed_2frame"
+   ],
+   "mb_3model": [
+    "networks_k1_mb_3model_4hz",
+    "networks_k1_mb_3model_4hz_yolo_ctrl",
+    "_evo_og",
+    "networks_k1_mb_3model_12hz"
+   ],
+   "mlp_dronet": [
+    "networks_k1_mb",
+    "networks_k1_mb_B1"
+   ],
+   "tri": [
+    "networks_k1_tri_exact_100ms",
+    "networks_k1_tri_exact_100ms_feedback",
+    "networks_k1_tri_small",
+    "networks_k1_tri_small_feedback"
+   ],
+   "ffn_ime": [
+    "networks_k1_ffn_ime"
+   ],
+   "multicore_shard": [
+    "networks_k1_multicore_shard"
+   ]
+  },
+  "unrunnable": [
+   "networks_k1_mlp_dronet"
+  ],
+  "one_per_family": false,
+  "strata": {
+   "w2_ffn_tight.json": "at_stake",
+   "w3_ffn_dronet.json": "at_stake"
+  },
+  "at_stake": [
+   "w2_ffn_tight.json",
+   "w3_ffn_dronet.json"
+  ],
+  "note": "the 25 K1 specs contain byte-identical duplicates and variants that return bit-identical results; the family is the unit"
+ },
+ "aggregate_at_stake_only": {
+  "cpsat": {
+   "A": {
+    "label": "neither",
+    "n": 2,
+    "workloads_with_zero_misses": 0,
+    "total_instance_misses": 14,
+    "median_instance_misses": 7.0,
+    "median_worst_lateness_ms": 17.42107372005
+   },
+   "B": {
+    "label": "inner only (levers, deployed blind)",
+    "n": 2,
+    "workloads_with_zero_misses": 1,
+    "total_instance_misses": 5,
+    "median_instance_misses": 2.5,
+    "median_worst_lateness_ms": 13.01263775975
+   },
+   "C": {
+    "label": "outer only (measured re-solve, no levers)",
+    "n": 2,
+    "workloads_with_zero_misses": 0,
+    "total_instance_misses": 15,
+    "median_instance_misses": 7.5,
+    "median_worst_lateness_ms": 19.9506950022
+   },
+   "D": {
+    "label": "both",
+    "n": 2,
+    "workloads_with_zero_misses": 1,
+    "total_instance_misses": 5,
+    "median_instance_misses": 2.5,
+    "median_worst_lateness_ms": 13.0152085
+   }
+  },
+  "greedy": {
+   "A": {
+    "label": "neither",
+    "n": 2,
+    "workloads_with_zero_misses": 0,
+    "total_instance_misses": 15,
+    "median_instance_misses": 7.5,
+    "median_worst_lateness_ms": 18.833180118999998
+   },
+   "B": {
+    "label": "inner only (levers, deployed blind)",
+    "n": 2,
+    "workloads_with_zero_misses": 1,
+    "total_instance_misses": 5,
+    "median_instance_misses": 2.5,
+    "median_worst_lateness_ms": 1.000468467100001
+   },
+   "C": {
+    "label": "outer only (measured re-solve, no levers)",
+    "n": 2,
+    "workloads_with_zero_misses": 0,
+    "total_instance_misses": 15,
+    "median_instance_misses": 7.5,
+    "median_worst_lateness_ms": 19.94816351770001
+   },
+   "D": {
+    "label": "both",
+    "n": 2,
+    "workloads_with_zero_misses": 1,
+    "total_instance_misses": 5,
+    "median_instance_misses": 2.5,
+    "median_worst_lateness_ms": 5.4510653497499995
+   }
+  }
+ },
+ "aggregate_achievable_only": {
+  "cpsat": {
+   "A": {
+    "label": "neither",
+    "n": 2,
+    "total_achievable_misses": 15,
+    "total_infeasible_misses": 0,
+    "workloads_with_zero_achievable_misses": 0
+   },
+   "B": {
+    "label": "inner only (levers, deployed blind)",
+    "n": 2,
+    "total_achievable_misses": 8,
+    "total_infeasible_misses": 0,
+    "workloads_with_zero_achievable_misses": 1
+   },
+   "C": {
+    "label": "outer only (measured re-solve, no levers)",
+    "n": 2,
+    "total_achievable_misses": 15,
+    "total_infeasible_misses": 0,
+    "workloads_with_zero_achievable_misses": 0
+   },
+   "D": {
+    "label": "both",
+    "n": 2,
+    "total_achievable_misses": 5,
+    "total_infeasible_misses": 0,
+    "workloads_with_zero_achievable_misses": 1
+   }
+  },
+  "greedy": {
+   "A": {
+    "label": "neither",
+    "n": 2,
+    "total_achievable_misses": 15,
+    "total_infeasible_misses": 0,
+    "workloads_with_zero_achievable_misses": 0
+   },
+   "B": {
+    "label": "inner only (levers, deployed blind)",
+    "n": 2,
+    "total_achievable_misses": 5,
+    "total_infeasible_misses": 0,
+    "workloads_with_zero_achievable_misses": 1
+   },
+   "C": {
+    "label": "outer only (measured re-solve, no levers)",
+    "n": 2,
+    "total_achievable_misses": 15,
+    "total_infeasible_misses": 0,
+    "workloads_with_zero_achievable_misses": 0
+   },
+   "D": {
+    "label": "both",
+    "n": 2,
+    "total_achievable_misses": 5,
+    "total_infeasible_misses": 0,
+    "workloads_with_zero_achievable_misses": 1
+   }
+  }
+ },
+ "achievable_means": "a miss is ACHIEVABLE when the net's fastest measured implementation fits its window; otherwise no schedule can meet that deadline and the miss is a compiler gap, not a scheduling one",
+ "cpsat_time_limit_s": 180.0,
+ "repeats_policy": "repeat only a CP-SAT solve that did not prove optimality; greedy is deterministic",
+ "solve_env": {
+  "XPURT_NO_COMPACT": "1",
+  "XPURT_CPSAT_WORKERS": "4"
+ },
+ "cpsat_workers": {
+  "cells": "4",
+  "inner_search": "4",
+  "why_recorded": "these were once different -- 1 for the inner search under --replay, 4 for the cells -- which made cell B and cells C/D two different CP-SAT configurations inside one row"
+ },
+ "codegen_contract": "cpsat shard solves add XPURT_UNIFORM_PACKED_WIDTH=1 so a packed-weight dispatch takes one width across its instances; greedy cannot be constrained that way and its unbuildable candidates are rejected by the inner search instead",
+ "inner_means": "AOT co-design with ModelBlaster: graph rewrites and the per-dispatch implementation choice, decided offline against isolated per-dispatch profiles",
+ "outer_means": "HIL: measured multipliers from real-time runs of the whole schedule, returned and re-solved against",
+ "cells": {
+  "A": "neither",
+  "B": "inner only (levers, deployed blind)",
+  "C": "outer only (measured re-solve, no levers)",
+  "D": "both"
+ },
+ "scoring": "instance-level misses on BOARD costs for every cell; A/B are solved on predicted costs then re-cost with the assignment fixed, C/D are solved with --board-calibration",
+ "solvers": [
+  "cpsat",
+  "greedy"
+ ],
+ "rewrite_arm": false,
+ "calibration": "results/codesign_feedback/k1_board_calibration.json",
+ "n_workloads": 2,
+ "aggregate": {
+  "cpsat": {
+   "A": {
+    "label": "neither",
+    "n": 2,
+    "workloads_with_zero_misses": 0,
+    "total_instance_misses": 14,
+    "median_instance_misses": 7.0,
+    "median_worst_lateness_ms": 17.42107372005,
+    "median_makespan_ms": 68.67842183244998
+   },
+   "B": {
+    "label": "inner only (levers, deployed blind)",
+    "n": 2,
+    "workloads_with_zero_misses": 1,
+    "total_instance_misses": 5,
+    "median_instance_misses": 2.5,
+    "median_worst_lateness_ms": 13.01263775975,
+    "median_makespan_ms": 55.920802020749996
+   },
+   "C": {
+    "label": "outer only (measured re-solve, no levers)",
+    "n": 2,
+    "workloads_with_zero_misses": 0,
+    "total_instance_misses": 15,
+    "median_instance_misses": 7.5,
+    "median_worst_lateness_ms": 19.9506950022,
+    "median_makespan_ms": 77.95069500219999
+   },
+   "D": {
+    "label": "both",
+    "n": 2,
+    "workloads_with_zero_misses": 1,
+    "total_instance_misses": 5,
+    "median_instance_misses": 2.5,
+    "median_worst_lateness_ms": 13.0152085,
+    "median_makespan_ms": 57.0885560011
+   }
+  },
+  "greedy": {
+   "A": {
+    "label": "neither",
+    "n": 2,
+    "workloads_with_zero_misses": 0,
+    "total_instance_misses": 15,
+    "median_instance_misses": 7.5,
+    "median_worst_lateness_ms": 18.833180118999998,
+    "median_makespan_ms": 68.09869667844998
+   },
+   "B": {
+    "label": "inner only (levers, deployed blind)",
+    "n": 2,
+    "workloads_with_zero_misses": 1,
+    "total_instance_misses": 5,
+    "median_instance_misses": 2.5,
+    "median_worst_lateness_ms": 1.000468467100001,
+    "median_makespan_ms": 57.15813705919999
+   },
+   "C": {
+    "label": "outer only (measured re-solve, no levers)",
+    "n": 2,
+    "workloads_with_zero_misses": 0,
+    "total_instance_misses": 15,
+    "median_instance_misses": 7.5,
+    "median_worst_lateness_ms": 19.94816351770001,
+    "median_makespan_ms": 77.94816351770001
+   },
+   "D": {
+    "label": "both",
+    "n": 2,
+    "workloads_with_zero_misses": 1,
+    "total_instance_misses": 5,
+    "median_instance_misses": 2.5,
+    "median_worst_lateness_ms": 5.4510653497499995,
+    "median_makespan_ms": 60.95049168484999
+   }
+  }
+ },
+ "workloads_only_both_clears": {
+  "cpsat": [],
+  "greedy": []
+ },
+ "exact_vs_greedy_per_cell": {
+  "cpsat": {
+   "A": {
+    "wins": 2,
+    "ties": 0,
+    "losses": 0
+   },
+   "B": {
+    "wins": 0,
+    "ties": 1,
+    "losses": 1
+   },
+   "C": {
+    "wins": 0,
+    "ties": 0,
+    "losses": 2
+   },
+   "D": {
+    "wins": 0,
+    "ties": 1,
+    "losses": 1
+   }
+  }
+ },
+ "runs": [
+  {
+   "workload": "data/toplevel/scaling/w2_ffn_tight.json",
+   "family": "unclassified",
+   "feasibility": {
+    "mlp_control": {
+     "window_ms": 5.0,
+     "best_ms": 0.083,
+     "best_cores": 1,
+     "singleton_ms": 0.083,
+     "verdict": "achievable",
+     "needs_ratio": 0.017
+    },
+    "ffn_block": {
+     "window_ms": 10.0,
+     "best_ms": 7.715,
+     "best_cores": 8,
+     "singleton_ms": 14.601,
+     "verdict": "achievable",
+     "needs_ratio": 0.772
+    }
+   },
+   "solvers": {
+    "cpsat": {
+     "status": "ok",
+     "levers": [
+      "shard"
+     ],
+     "cells": {
+      "A": {
+       "label": "neither",
+       "inner": false,
+       "outer": false,
+       "spec": "data/toplevel/scaling/w2_ffn_tight.json",
+       "solver_status": "feasible",
+       "solve_wall_s": 49.303154188004555,
+       "repeated": true,
+       "scored_how": "solved on predicted costs, then re-cost on measured with the assignment fixed",
+       "schedule": "results/loop_ablation_v4_small/w2_ffn_tight__cpsat_A_recost.json",
+       "instance_misses": 5,
+       "misses_by_network": {
+        "mlp_control": 1,
+        "ffn_block": 5
+       },
+       "total_lateness_ms": 71.67991035349998,
+       "worst_lateness_ms": 16.8892557176,
+       "makespan_ms": 69.48700623869999,
+       "instances": {
+        "ffn_block": 5,
+        "mlp_control": 12
+       },
+       "achievable_misses": 6,
+       "infeasible_misses": 0,
+       "unknown_misses": 0,
+       "instance_misses_runs": [
+        6,
+        5,
+        5
+       ],
+       "instance_misses_spread": 1,
+       "worst_lateness_runs": [
+        16.889,
+        16.889,
+        19.105
+       ],
+       "worst_lateness_spread_ms": 2.216
+      },
+      "B": {
+       "label": "inner only (levers, deployed blind)",
+       "inner": true,
+       "outer": false,
+       "spec": "results/loop_ablation_v4_small/inner/w2_ffn_tight__cpsat/w2_ffn_tight/specs/w2_ffn_tight_r1_shard.json",
+       "solver_status": "optimal",
+       "solve_wall_s": 6.338377803011099,
+       "repeated": false,
+       "scored_how": "solved on predicted costs, then re-cost on measured with the assignment fixed",
+       "schedule": "results/loop_ablation_v4_small/w2_ffn_tight__cpsat_B_recost.json",
+       "instance_misses": 0,
+       "misses_by_network": {},
+       "total_lateness_ms": 0.0,
+       "worst_lateness_ms": 0.0,
+       "makespan_ms": 55.073038706999995,
+       "instances": {
+        "ffn_block": 5,
+        "mlp_control": 12
+       },
+       "achievable_misses": 0,
+       "infeasible_misses": 0,
+       "unknown_misses": 0
+      },
+      "C": {
+       "label": "outer only (measured re-solve, no levers)",
+       "inner": false,
+       "outer": true,
+       "spec": "data/toplevel/scaling/w2_ffn_tight.json",
+       "solver_status": "feasible",
+       "solve_wall_s": 49.01937011600239,
+       "repeated": true,
+       "scored_how": "solved on measured costs",
+       "schedule": "schedules/scheduled_w2_ffn_tight_cpsat_profiled.json",
+       "instance_misses": 5,
+       "misses_by_network": {
+        "ffn_block": 5
+       },
+       "total_lateness_ms": 99.75347501099999,
+       "worst_lateness_ms": 19.9506950022,
+       "makespan_ms": 77.95069500219999,
+       "instances": {
+        "ffn_block": 5,
+        "mlp_control": 12
+       },
+       "achievable_misses": 5,
+       "infeasible_misses": 0,
+       "unknown_misses": 0,
+       "instance_misses_runs": [
+        5,
+        5,
+        5
+       ],
+       "instance_misses_spread": 0,
+       "worst_lateness_runs": [
+        19.951,
+        19.951,
+        19.951
+       ],
+       "worst_lateness_spread_ms": 0.0
+      },
+      "D": {
+       "label": "both",
+       "inner": true,
+       "outer": true,
+       "spec": "results/loop_ablation_v4_small/inner/w2_ffn_tight__cpsat/w2_ffn_tight/specs/w2_ffn_tight_r1_shard.json",
+       "solver_status": "optimal",
+       "solve_wall_s": 6.622931960999267,
+       "repeated": false,
+       "scored_how": "solved on measured costs",
+       "schedule": "schedules/scheduled_w2_ffn_tight_r1_shard_cpsat_profiled.json",
+       "instance_misses": 0,
+       "misses_by_network": {},
+       "total_lateness_ms": 0.0,
+       "worst_lateness_ms": 0.0,
+       "makespan_ms": 57.1666950022,
+       "instances": {
+        "ffn_block": 5,
+        "mlp_control": 12
+       },
+       "achievable_misses": 0,
+       "infeasible_misses": 0,
+       "unknown_misses": 0
+      }
+     },
+     "seconds": 400.4,
+     "comparability": {
+      "status": "ok",
+      "per_cell": {
+       "A": {
+        "ffn_block": 5,
+        "mlp_control": 12
+       },
+       "B": {
+        "ffn_block": 5,
+        "mlp_control": 12
+       },
+       "C": {
+        "ffn_block": 5,
+        "mlp_control": 12
+       },
+       "D": {
+        "ffn_block": 5,
+        "mlp_control": 12
+       }
+      }
+     }
+    },
+    "greedy": {
+     "status": "ok",
+     "levers": [
+      "shard"
+     ],
+     "cells": {
+      "A": {
+       "label": "neither",
+       "inner": false,
+       "outer": false,
+       "spec": "data/toplevel/scaling/w2_ffn_tight.json",
+       "solver_status": "feasible",
+       "solve_wall_s": 0.010004690993810073,
+       "repeated": false,
+       "scored_how": "solved on predicted costs, then re-cost on measured with the assignment fixed",
+       "schedule": "results/loop_ablation_v4_small/w2_ffn_tight__greedy_A_recost.json",
+       "instance_misses": 5,
+       "misses_by_network": {
+        "ffn_block": 5
+       },
+       "total_lateness_ms": 88.16731358739999,
+       "worst_lateness_ms": 19.713468515499997,
+       "makespan_ms": 68.08623891339998,
+       "instances": {
+        "ffn_block": 5,
+        "mlp_control": 12
+       },
+       "achievable_misses": 5,
+       "infeasible_misses": 0,
+       "unknown_misses": 0
+      },
+      "B": {
+       "label": "inner only (levers, deployed blind)",
+       "inner": true,
+       "outer": false,
+       "spec": "results/loop_ablation_v4_small/inner/w2_ffn_tight__greedy/w2_ffn_tight/specs/w2_ffn_tight_r1_shard.json",
+       "solver_status": "feasible",
+       "solve_wall_s": 0.012409714981913567,
+       "repeated": false,
+       "scored_how": "solved on predicted costs, then re-cost on measured with the assignment fixed",
+       "schedule": "results/loop_ablation_v4_small/w2_ffn_tight__greedy_B_recost.json",
+       "instance_misses": 0,
+       "misses_by_network": {},
+       "total_lateness_ms": 0.0,
+       "worst_lateness_ms": 0.0,
+       "makespan_ms": 55.31533718419999,
+       "instances": {
+        "ffn_block": 5,
+        "mlp_control": 12
+       },
+       "achievable_misses": 0,
+       "infeasible_misses": 0,
+       "unknown_misses": 0
+      },
+      "C": {
+       "label": "outer only (measured re-solve, no levers)",
+       "inner": false,
+       "outer": true,
+       "spec": "data/toplevel/scaling/w2_ffn_tight.json",
+       "solver_status": "feasible",
+       "solve_wall_s": 0.011021415994036943,
+       "repeated": false,
+       "scored_how": "solved on measured costs",
+       "schedule": "schedules/scheduled_w2_ffn_tight_greedy_profiled.json",
+       "instance_misses": 5,
+       "misses_by_network": {
+        "ffn_block": 5
+       },
+       "total_lateness_ms": 99.7408175885,
+       "worst_lateness_ms": 19.94816351770001,
+       "makespan_ms": 77.94816351770001,
+       "instances": {
+        "ffn_block": 5,
+        "mlp_control": 12
+       },
+       "achievable_misses": 5,
+       "infeasible_misses": 0,
+       "unknown_misses": 0
+      },
+      "D": {
+       "label": "both",
+       "inner": true,
+       "outer": true,
+       "spec": "results/loop_ablation_v4_small/inner/w2_ffn_tight__greedy/w2_ffn_tight/specs/w2_ffn_tight_r1_shard.json",
+       "solver_status": "feasible",
+       "solve_wall_s": 0.012933736987179145,
+       "repeated": false,
+       "scored_how": "solved on measured costs",
+       "schedule": "schedules/scheduled_w2_ffn_tight_r1_shard_greedy_profiled.json",
+       "instance_misses": 0,
+       "misses_by_network": {},
+       "total_lateness_ms": 0.0,
+       "worst_lateness_ms": 0.0,
+       "makespan_ms": 57.164558920199994,
+       "instances": {
+        "ffn_block": 5,
+        "mlp_control": 12
+       },
+       "achievable_misses": 0,
+       "infeasible_misses": 0,
+       "unknown_misses": 0
+      }
+     },
+     "seconds": 12.7,
+     "comparability": {
+      "status": "ok",
+      "per_cell": {
+       "A": {
+        "ffn_block": 5,
+        "mlp_control": 12
+       },
+       "B": {
+        "ffn_block": 5,
+        "mlp_control": 12
+       },
+       "C": {
+        "ffn_block": 5,
+        "mlp_control": 12
+       },
+       "D": {
+        "ffn_block": 5,
+        "mlp_control": 12
+       }
+      }
+     }
+    }
+   }
+  },
+  {
+   "workload": "data/toplevel/scaling/w3_ffn_dronet.json",
+   "family": "unclassified",
+   "feasibility": {
+    "mlp_control": {
+     "window_ms": 5.0,
+     "best_ms": 0.083,
+     "best_cores": 1,
+     "singleton_ms": 0.083,
+     "verdict": "achievable",
+     "needs_ratio": 0.017
+    },
+    "ffn_block": {
+     "window_ms": 10.0,
+     "best_ms": 7.715,
+     "best_cores": 8,
+     "singleton_ms": 14.601,
+     "verdict": "achievable",
+     "needs_ratio": 0.772
+    },
+    "dronet": {
+     "window_ms": 7.0,
+     "best_ms": 5.247,
+     "best_cores": 4,
+     "singleton_ms": 8.325,
+     "verdict": "achievable",
+     "needs_ratio": 0.75
+    }
+   },
+   "solvers": {
+    "cpsat": {
+     "status": "ok",
+     "levers": [
+      "shard"
+     ],
+     "cells": {
+      "A": {
+       "label": "neither",
+       "inner": false,
+       "outer": false,
+       "spec": "data/toplevel/scaling/w3_ffn_dronet.json",
+       "solver_status": "feasible",
+       "solve_wall_s": 144.8998089939996,
+       "repeated": true,
+       "scored_how": "solved on predicted costs, then re-cost on measured with the assignment fixed",
+       "schedule": "results/loop_ablation_v4_small/w3_ffn_dronet__cpsat_A_recost.json",
+       "instance_misses": 9,
+       "misses_by_network": {
+        "ffn_block": 5,
+        "dronet": 4
+       },
+       "total_lateness_ms": 78.98713831509997,
+       "worst_lateness_ms": 17.9528917225,
+       "makespan_ms": 67.86983742619998,
+       "instances": {
+        "dronet": 5,
+        "ffn_block": 5,
+        "mlp_control": 12
+       },
+       "achievable_misses": 9,
+       "infeasible_misses": 0,
+       "unknown_misses": 0,
+       "instance_misses_runs": [
+        9,
+        8,
+        9
+       ],
+       "instance_misses_spread": 1,
+       "worst_lateness_runs": [
+        17.953,
+        16.873,
+        17.953
+       ],
+       "worst_lateness_spread_ms": 1.08
+      },
+      "B": {
+       "label": "inner only (levers, deployed blind)",
+       "inner": true,
+       "outer": false,
+       "spec": "results/loop_ablation_v4_small/inner/w3_ffn_dronet__cpsat/w3_ffn_dronet/specs/w3_ffn_dronet_r1_shard.json",
+       "solver_status": "feasible",
+       "solve_wall_s": 175.78405851099524,
+       "repeated": true,
+       "scored_how": "solved on predicted costs, then re-cost on measured with the assignment fixed",
+       "schedule": "results/loop_ablation_v4_small/w3_ffn_dronet__cpsat_B_recost.json",
+       "instance_misses": 5,
+       "misses_by_network": {
+        "mlp_control": 1,
+        "ffn_block": 3,
+        "dronet": 4
+       },
+       "total_lateness_ms": 83.86326827749998,
+       "worst_lateness_ms": 26.0252755195,
+       "makespan_ms": 56.768565334499996,
+       "instances": {
+        "dronet": 5,
+        "ffn_block": 5,
+        "mlp_control": 12
+       },
+       "achievable_misses": 8,
+       "infeasible_misses": 0,
+       "unknown_misses": 0,
+       "instance_misses_runs": [
+        8,
+        4,
+        5
+       ],
+       "instance_misses_spread": 4,
+       "worst_lateness_runs": [
+        49.573,
+        1.907,
+        26.025
+       ],
+       "worst_lateness_spread_ms": 47.666
+      },
+      "C": {
+       "label": "outer only (measured re-solve, no levers)",
+       "inner": false,
+       "outer": true,
+       "spec": "data/toplevel/scaling/w3_ffn_dronet.json",
+       "solver_status": "feasible",
+       "solve_wall_s": 143.56589327199617,
+       "repeated": true,
+       "scored_how": "solved on measured costs",
+       "schedule": "schedules/scheduled_w3_ffn_dronet_cpsat_profiled.json",
+       "instance_misses": 10,
+       "misses_by_network": {
+        "ffn_block": 5,
+        "dronet": 5
+       },
+       "total_lateness_ms": 146.96509096399998,
+       "worst_lateness_ms": 19.9506950022,
+       "makespan_ms": 77.95069500219999,
+       "instances": {
+        "dronet": 5,
+        "ffn_block": 5,
+        "mlp_control": 12
+       },
+       "achievable_misses": 10,
+       "infeasible_misses": 0,
+       "unknown_misses": 0,
+       "instance_misses_runs": [
+        10,
+        10,
+        10
+       ],
+       "instance_misses_spread": 0,
+       "worst_lateness_runs": [
+        28.108,
+        19.951,
+        19.951
+       ],
+       "worst_lateness_spread_ms": 8.157
+      },
+      "D": {
+       "label": "both",
+       "inner": true,
+       "outer": true,
+       "spec": "results/loop_ablation_v4_small/inner/w3_ffn_dronet__cpsat/w3_ffn_dronet/specs/w3_ffn_dronet_r1_shard.json",
+       "solver_status": "feasible",
+       "solve_wall_s": 180.8340592989989,
+       "repeated": true,
+       "scored_how": "solved on measured costs",
+       "schedule": "schedules/scheduled_w3_ffn_dronet_r1_shard_cpsat_profiled.json",
+       "instance_misses": 5,
+       "misses_by_network": {
+        "mlp_control": 1,
+        "ffn_block": 1,
+        "dronet": 3
+       },
+       "total_lateness_ms": 44.995875,
+       "worst_lateness_ms": 26.030417,
+       "makespan_ms": 57.010417,
+       "instances": {
+        "dronet": 5,
+        "ffn_block": 5,
+        "mlp_control": 12
+       },
+       "achievable_misses": 5,
+       "infeasible_misses": 0,
+       "unknown_misses": 0,
+       "instance_misses_runs": [
+        5,
+        5,
+        5
+       ],
+       "instance_misses_spread": 0,
+       "worst_lateness_runs": [
+        26.03,
+        26.03,
+        26.03
+       ],
+       "worst_lateness_spread_ms": 0.0
+      }
+     },
+     "seconds": 1974.3,
+     "comparability": {
+      "status": "ok",
+      "per_cell": {
+       "A": {
+        "dronet": 5,
+        "ffn_block": 5,
+        "mlp_control": 12
+       },
+       "B": {
+        "dronet": 5,
+        "ffn_block": 5,
+        "mlp_control": 12
+       },
+       "C": {
+        "dronet": 5,
+        "ffn_block": 5,
+        "mlp_control": 12
+       },
+       "D": {
+        "dronet": 5,
+        "ffn_block": 5,
+        "mlp_control": 12
+       }
+      }
+     }
+    },
+    "greedy": {
+     "status": "ok",
+     "levers": [
+      "shard"
+     ],
+     "cells": {
+      "A": {
+       "label": "neither",
+       "inner": false,
+       "outer": false,
+       "spec": "data/toplevel/scaling/w3_ffn_dronet.json",
+       "solver_status": "feasible",
+       "solve_wall_s": 0.025736253010109067,
+       "repeated": false,
+       "scored_how": "solved on predicted costs, then re-cost on measured with the assignment fixed",
+       "schedule": "results/loop_ablation_v4_small/w3_ffn_dronet__greedy_A_recost.json",
+       "instance_misses": 10,
+       "misses_by_network": {
+        "ffn_block": 5,
+        "dronet": 5
+       },
+       "total_lateness_ms": 80.98227383079998,
+       "worst_lateness_ms": 17.9528917225,
+       "makespan_ms": 68.11115444349998,
+       "instances": {
+        "dronet": 5,
+        "ffn_block": 5,
+        "mlp_control": 12
+       },
+       "achievable_misses": 10,
+       "infeasible_misses": 0,
+       "unknown_misses": 0
+      },
+      "B": {
+       "label": "inner only (levers, deployed blind)",
+       "inner": true,
+       "outer": false,
+       "spec": "results/loop_ablation_v4_small/inner/w3_ffn_dronet__greedy/w3_ffn_dronet/specs/w3_ffn_dronet_r1_shard.json",
+       "solver_status": "feasible",
+       "solve_wall_s": 0.03299560901359655,
+       "repeated": false,
+       "scored_how": "solved on predicted costs, then re-cost on measured with the assignment fixed",
+       "schedule": "results/loop_ablation_v4_small/w3_ffn_dronet__greedy_B_recost.json",
+       "instance_misses": 5,
+       "misses_by_network": {
+        "ffn_block": 5
+       },
+       "total_lateness_ms": 5.334423760099973,
+       "worst_lateness_ms": 2.000936934200002,
+       "makespan_ms": 59.000936934199984,
+       "instances": {
+        "dronet": 5,
+        "ffn_block": 5,
+        "mlp_control": 12
+       },
+       "achievable_misses": 5,
+       "infeasible_misses": 0,
+       "unknown_misses": 0
+      },
+      "C": {
+       "label": "outer only (measured re-solve, no levers)",
+       "inner": false,
+       "outer": true,
+       "spec": "data/toplevel/scaling/w3_ffn_dronet.json",
+       "solver_status": "feasible",
+       "solve_wall_s": 0.028184691997012123,
+       "repeated": false,
+       "scored_how": "solved on measured costs",
+       "schedule": "schedules/scheduled_w3_ffn_dronet_greedy_profiled.json",
+       "instance_misses": 10,
+       "misses_by_network": {
+        "ffn_block": 5,
+        "dronet": 5
+       },
+       "total_lateness_ms": 113.14809953950001,
+       "worst_lateness_ms": 19.94816351770001,
+       "makespan_ms": 77.94816351770001,
+       "instances": {
+        "dronet": 5,
+        "ffn_block": 5,
+        "mlp_control": 12
+       },
+       "achievable_misses": 10,
+       "infeasible_misses": 0,
+       "unknown_misses": 0
+      },
+      "D": {
+       "label": "both",
+       "inner": true,
+       "outer": true,
+       "spec": "results/loop_ablation_v4_small/inner/w3_ffn_dronet__greedy/w3_ffn_dronet/specs/w3_ffn_dronet_r1_shard.json",
+       "solver_status": "feasible",
+       "solve_wall_s": 0.036148584011243656,
+       "repeated": false,
+       "scored_how": "solved on measured costs",
+       "schedule": "schedules/scheduled_w3_ffn_dronet_r1_shard_greedy_profiled.json",
+       "instance_misses": 5,
+       "misses_by_network": {
+        "ffn_block": 5
+       },
+       "total_lateness_ms": 35.63956167869999,
+       "worst_lateness_ms": 10.902130699499999,
+       "makespan_ms": 64.73642444949999,
+       "instances": {
+        "dronet": 5,
+        "ffn_block": 5,
+        "mlp_control": 12
+       },
+       "achievable_misses": 5,
+       "infeasible_misses": 0,
+       "unknown_misses": 0
+      }
+     },
+     "seconds": 14.5,
+     "comparability": {
+      "status": "ok",
+      "per_cell": {
+       "A": {
+        "dronet": 5,
+        "ffn_block": 5,
+        "mlp_control": 12
+       },
+       "B": {
+        "dronet": 5,
+        "ffn_block": 5,
+        "mlp_control": 12
+       },
+       "C": {
+        "dronet": 5,
+        "ffn_block": 5,
+        "mlp_control": 12
+       },
+       "D": {
+        "dronet": 5,
+        "ffn_block": 5,
+        "mlp_control": 12
+       }
+      }
+     }
+    }
+   }
+  }
+ ]
+}

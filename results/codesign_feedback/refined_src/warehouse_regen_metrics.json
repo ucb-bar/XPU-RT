@@ -1,0 +1,19 @@
+{
+  "comparison_unit": "control-command rate under each schedule's worst-response",
+  "xpu_worst_response_ms": 4.89,
+  "xpu_control_rate_hz": 100.0,
+  "ros_worst_response_ms": 12.4,
+  "ros_control_rate_hz": 50.0,
+  "control_period_ms": 10.0,
+  "flyable_cliff_hz": 65,
+  "flight_result": "XPU-RT 100 Hz completes 4/4 (6/12 seeds); ROS 50 Hz crashes (0/12)",
+  "xpu_schedule": "/scratch/agustin/xpurt-dev-sync/schedules/scheduled__flight_deployed_matched_board_cpsat_profiled.json",
+  "ros_schedule": "/scratch/agustin/xpurt-dev-sync/schedules/scheduled_ros_partition_deployed_matched_board.json",
+  "duration_provenance": "K1 per-dispatch calibration where available; aggregate fallback otherwise",
+  "intended_use": "two-column full-page overview",
+  "authored_figure_size_in": [
+    7.08,
+    8.35
+  ],
+  "minimum_font_size_pt": 7.0
+}

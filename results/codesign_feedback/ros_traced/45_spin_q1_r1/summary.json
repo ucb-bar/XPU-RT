@@ -1,0 +1,33 @@
+{
+  "tag": "45_spin_q1_r1",
+  "rate_hz": 45,
+  "executor": "single",
+  "nodes": "camera,perception,nav,control",
+  "affinity_mask": "0x1",
+  "sched_policy": "SCHED_OTHER",
+  "yolo_pool": 4,
+  "warmup_ms": 3000.0,
+  "n_gaps": 796,
+  "gap_mean_ms": 21.370790816582915,
+  "gap_p95_ms": 30.6543,
+  "gap_max_ms": 39.416,
+  "n_frames": 682,
+  "n_goals": 557,
+  "n_consumed": 557,
+  "e2e_goal_med_ms": 60.079,
+  "e2e_goal_p95_ms": 61.016,
+  "e2e_med_ms": 60.415,
+  "e2e_p95_ms": 61.348,
+  "busy_pct": {
+    "0": 99.0,
+    "1": 73.2,
+    "2": 72.7,
+    "3": 71.7,
+    "4": 0.1,
+    "5": 0.3,
+    "6": 0.1,
+    "7": 0.5
+  },
+  "rmw": "rmw_fastrtps_cpp",
+  "kernels_sha": "6fbda91 ir=0c783539626c"
+}

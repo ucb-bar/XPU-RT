@@ -1,0 +1,90 @@
+{
+ "XPU-RT \u00b7 CP-SAT": {
+  "parts_ms": [
+   0.0,
+   45.3,
+   4.7,
+   4.7
+  ],
+  "sum_of_part_medians_ms": 54.7,
+  "chain_median_ms": 56.8,
+  "frames": 126
+ },
+ "XPU-RT \u00b7 greedy": {
+  "parts_ms": [
+   0.0,
+   740.3,
+   6.2,
+   0.1
+  ],
+  "sum_of_part_medians_ms": 746.7,
+  "chain_median_ms": 748.0,
+  "frames": 123
+ },
+ "ROS 2 hand-pinned": {
+  "parts_ms": [
+   25.5,
+   24.6,
+   4.9,
+   5.0
+  ],
+  "sum_of_part_medians_ms": 60.0,
+  "chain_median_ms": 57.9,
+  "frames": 2202
+ },
+ "ROS 2 vanilla, 4-hart YOLO": {
+  "parts_ms": [
+   210.7,
+   25.1,
+   4.8,
+   0.8
+  ],
+  "sum_of_part_medians_ms": 241.4,
+  "chain_median_ms": 241.4,
+  "frames": 2230
+ },
+ "ROS 2 two YOLO nodes, 8 cores": {
+  "parts_ms": [
+   0.8,
+   439.9,
+   5.4,
+   0.9
+  ],
+  "sum_of_part_medians_ms": 446.9,
+  "chain_median_ms": 447.8,
+  "frames": 1291
+ },
+ "ROS 2 vanilla, serial YOLO": {
+  "parts_ms": [
+   211.3,
+   47.7,
+   4.8,
+   0.8
+  ],
+  "sum_of_part_medians_ms": 264.6,
+  "chain_median_ms": 264.5,
+  "frames": 1184
+ },
+ "script": "story_figures:latency_waterfall",
+ "inputs": {
+  "results/codesign_feedback/ros_traced/45_p3_r1/trace.csv": "8df51b7a4a097489cd049dcbbaf813f2788e87b1b9f3d30f79bb47a67a283adf",
+  "results/codesign_feedback/ros_traced/45_p3_r2/trace.csv": "fa7d1134095ae4fc98491a9b39f01dde9ce4472d23cf15c524f07fb17fb35c12",
+  "results/codesign_feedback/ros_traced/45_p3_r3/trace.csv": "fb70a281d9b750863f48e184bbd4f5f6c6f0ae1537e5d94ba253973dd5571ca8",
+  "results/codesign_feedback/ros_traced/45_vanilla4_r1/trace.csv": "1c65666135c84a2f7ecae919b485e2a0130f375e26ac7c9bc4b76917cf40f482",
+  "results/codesign_feedback/ros_traced/45_vanilla4_r2/trace.csv": "37c322819de7780980e74b28b21101ee1558a8ca59daa1484d2ec6a950c94660",
+  "results/codesign_feedback/ros_traced/45_vanilla4_r3/trace.csv": "388eeefd62c4750089f4db53cb50694d9a2b7b97e6ac768cf93fdfec90f3c198",
+  "results/codesign_feedback/ros_traced/45_vanilla4x2_r1/trace.csv": "470bde0d0fe9749ad524186806f3d61970ba7e058e9505f360be9246e57e9f08",
+  "results/codesign_feedback/ros_traced/45_vanilla4x2_r2/trace.csv": "83dcc66ba9e544b9595bff8d9e3cc552821a991c9cf08c4b6a66e7abf51c09db",
+  "results/codesign_feedback/ros_traced/45_vanilla4x2_r3/trace.csv": "db3069e1a57566e995d1e1b5e3974f711d07cedde3bb369952e3613f348a1f42",
+  "results/codesign_feedback/ros_traced/45_vanilla_r1/trace.csv": "636bf796ec92172cb082009c648b8633d3d5fc275b6407023d21f268d559641f",
+  "results/codesign_feedback/ros_traced/45_vanilla_r2/trace.csv": "a7a480161e3a74e0f994a9095d60a50904471e4d5543c7fd21b9f54523e628fa",
+  "results/codesign_feedback/ros_traced/45_vanilla_r3/trace.csv": "c264d37387b38b33f75369d620b0ebc9d183d36f2c2a4641d2957f58759e54e3",
+  "results/codesign_feedback/xpurt_long/trace_acpsat_hardr1_other_run1.csv": "fb16ca7138ba6984b9586b709db47ed924c8d9f52ed18790d8005655388bac06",
+  "results/codesign_feedback/xpurt_long/trace_acpsat_hardr2_other_run1.csv": "6569e6b60a654da23c459005d9d45ea45e0c9d7482999be6838c804b867a4ffc",
+  "results/codesign_feedback/xpurt_long/trace_acpsat_hardr3_other_run1.csv": "a55c2c445896a72497b285e02978c36a65ef6d0f57a24308d78c4ce0292bc9b1",
+  "results/codesign_feedback/xpurt_long/trace_agreedyr1_other_run1.csv": "31ab57ab4cdb128fa43e27b2238bc5608f9288009dd292df319388e991de2715",
+  "results/codesign_feedback/xpurt_long/trace_agreedyr2_other_run1.csv": "436a7876670d8efb603077fe3122d71c444bc4a357614f27668bc8835c948dd1",
+  "results/codesign_feedback/xpurt_long/trace_agreedyr3_other_run1.csv": "ac2a950d9922d2b6b5e417c06d60a73cebf4b3e4cdde86fd996ed9322cff8c3c"
+ },
+ "fallbacks_used": []
+}

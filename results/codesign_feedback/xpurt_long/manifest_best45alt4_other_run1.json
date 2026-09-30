@@ -1,0 +1,15 @@
+{
+  "tag": "best45alt4_other_run1",
+  "schedule": "/scratch/agustin/xpurt-dev-sync/schedules/best45_alt4.json",
+  "schedule_sha256": "16eb6ba3a85091cb",
+  "solver": "explicit alt4 placement, camera 45 Hz",
+  "board_recost": null,
+  "ir_sha256_yolo": "0c783539626cf1627ae801d997ddc3f8c82316ab1ec10bb488cd9b4418180456",
+  "sched_policy": "SCHED_OTHER",
+  "run_t0_rdtime": 108753194448196,
+  "wall_start_epoch_ms": 1789085993171,
+  "exit_code": 0,
+  "verify_lines": [],
+  "rdtime_hz": 24000000,
+  "note": "numeric verification covers instance 0 only"
+}

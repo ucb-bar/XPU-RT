@@ -1,0 +1,384 @@
+{
+ "figure": "ros_effort_ladder_v2",
+ "cell": {
+  "course": "a",
+  "density": 0.3,
+  "person_h": 2.4,
+  "gain": 0.0055,
+  "walk_speed": 0.0,
+  "walk_cross": 0,
+  "latency_replayed": true,
+  "cruise_speeds": [
+   1.0,
+   1.2,
+   1.4,
+   1.6,
+   1.8
+  ],
+  "seeds": [
+   1000,
+   1001,
+   1002,
+   1003,
+   1004,
+   1005,
+   1006,
+   1007,
+   1008,
+   1009,
+   1010,
+   1011
+  ]
+ },
+ "rungs": [
+  {
+   "arm": "vanilla@45",
+   "rung": "ROS 2 as it ships: serial YOLO, one process, unpinned",
+   "ctrl_trace": "ros_vanilla45.csv",
+   "cores_busy_ge20pct": 1,
+   "cores_per_replicate": [
+    1,
+    1,
+    1
+   ],
+   "cores_carrying_work": null,
+   "control_hz": 20.7,
+   "camera_to_goal_ms": 264.8,
+   "latency_source": "e2e_goal_med_pooled",
+   "flights_matched": {
+    "completed": 0,
+    "flown": 0,
+    "fraction": null,
+    "wilson95": null
+   },
+   "flights_pooled_all_campaigns": {
+    "completed": 0,
+    "flown": 48
+   }
+  },
+  {
+   "arm": "vanilla4@45",
+   "rung": "+ a 4-hart worker pool for YOLO",
+   "ctrl_trace": "ros_vanilla445.csv",
+   "cores_busy_ge20pct": 4,
+   "cores_per_replicate": [
+    4,
+    4,
+    5
+   ],
+   "cores_carrying_work": null,
+   "control_hz": 38.6,
+   "camera_to_goal_ms": 242.4,
+   "latency_source": "e2e_goal_med_pooled",
+   "flights_matched": {
+    "completed": 5,
+    "flown": 180,
+    "fraction": 0.0278,
+    "wilson95": [
+     0.0119,
+     0.0634
+    ]
+   },
+   "flights_pooled_all_campaigns": {
+    "completed": 86,
+    "flown": 1068
+   }
+  },
+  {
+   "arm": "vanilla8@45",
+   "rung": "+ the pool widened to all 8 harts",
+   "ctrl_trace": "ros_vanilla845.csv",
+   "cores_busy_ge20pct": 5,
+   "cores_per_replicate": [
+    4,
+    5,
+    6
+   ],
+   "cores_carrying_work": null,
+   "control_hz": 38.5,
+   "camera_to_goal_ms": 242.5,
+   "latency_source": "e2e_goal_med_pooled",
+   "flights_matched": {
+    "completed": 0,
+    "flown": 0,
+    "fraction": null,
+    "wilson95": null
+   },
+   "flights_pooled_all_campaigns": {
+    "completed": 0,
+    "flown": 0
+   }
+  },
+  {
+   "arm": "vanilla4_q1@45",
+   "rung": "+ keep-last-1 queues (one QoS argument)",
+   "ctrl_trace": "ros_vanilla4_q145.csv",
+   "cores_busy_ge20pct": 4,
+   "cores_per_replicate": [
+    4,
+    4,
+    5
+   ],
+   "cores_carrying_work": null,
+   "control_hz": 39.1,
+   "camera_to_goal_ms": 42.0,
+   "latency_source": "e2e_goal_med_pooled",
+   "flights_matched": {
+    "completed": 10,
+    "flown": 96,
+    "fraction": 0.1042,
+    "wilson95": [
+     0.0576,
+     0.1812
+    ]
+   },
+   "flights_pooled_all_campaigns": {
+    "completed": 20,
+    "flown": 156
+   }
+  },
+  {
+   "arm": "vanilla4tm@45",
+   "rung": "+ control on its own 100 Hz timer",
+   "ctrl_trace": "ros_vanilla4tm45.csv",
+   "cores_busy_ge20pct": 4,
+   "cores_per_replicate": [
+    4,
+    4,
+    4
+   ],
+   "cores_carrying_work": null,
+   "control_hz": 100.0,
+   "camera_to_goal_ms": 242.5,
+   "latency_source": "e2e_goal_med_pooled",
+   "flights_matched": {
+    "completed": 11,
+    "flown": 120,
+    "fraction": 0.0917,
+    "wilson95": [
+     0.052,
+     0.1567
+    ]
+   },
+   "flights_pooled_all_campaigns": {
+    "completed": 47,
+    "flown": 540
+   }
+  },
+  {
+   "arm": "p3@45",
+   "rung": "hand-pinned: 3 processes over 6 cores",
+   "ctrl_trace": "ros_p345.csv",
+   "cores_busy_ge20pct": 5.0,
+   "cores_per_replicate": [
+    5,
+    5,
+    5,
+    5,
+    5,
+    5
+   ],
+   "cores_carrying_work": null,
+   "control_hz": 100.0,
+   "camera_to_goal_ms": 56.4,
+   "latency_source": "e2e_goal_med_pooled",
+   "flights_matched": {
+    "completed": 19,
+    "flown": 144,
+    "fraction": 0.1319,
+    "wilson95": [
+     0.0861,
+     0.1969
+    ]
+   },
+   "flights_pooled_all_campaigns": {
+    "completed": 109,
+    "flown": 636
+   }
+  },
+  {
+   "arm": "p3_q1@45",
+   "rung": "hand-pinned + keep-last-1",
+   "ctrl_trace": "ros_p3_q145.csv",
+   "cores_busy_ge20pct": 5,
+   "cores_per_replicate": [
+    5
+   ],
+   "cores_carrying_work": null,
+   "control_hz": 100.0,
+   "camera_to_goal_ms": 31.1,
+   "latency_source": "e2e_goal_med_pooled",
+   "flights_matched": {
+    "completed": 16,
+    "flown": 120,
+    "fraction": 0.1333,
+    "wilson95": [
+     0.0838,
+     0.2056
+    ]
+   },
+   "flights_pooled_all_campaigns": {
+    "completed": 81,
+    "flown": 528
+   }
+  },
+  {
+   "arm": "vanilla4x2@45",
+   "rung": "two model instances across both clusters (all 8 cores)",
+   "ctrl_trace": "ros_vanilla4x245.csv",
+   "cores_busy_ge20pct": 8,
+   "cores_per_replicate": [
+    8,
+    8,
+    8
+   ],
+   "cores_carrying_work": null,
+   "control_hz": 45.0,
+   "camera_to_goal_ms": 37.0,
+   "latency_source": "e2e_goal_med_pooled",
+   "flights_matched": {
+    "completed": 16,
+    "flown": 120,
+    "fraction": 0.1333,
+    "wilson95": [
+     0.0838,
+     0.2056
+    ]
+   },
+   "flights_pooled_all_campaigns": {
+    "completed": 35,
+    "flown": 228
+   }
+  },
+  {
+   "arm": "vanilla4x2@36",
+   "rung": "two instances at the 36 Hz camera the figure draws",
+   "ctrl_trace": "ros_vanilla4x236.csv",
+   "cores_busy_ge20pct": 8,
+   "cores_per_replicate": [
+    8,
+    8,
+    8
+   ],
+   "cores_carrying_work": null,
+   "control_hz": 36.0,
+   "camera_to_goal_ms": 32.2,
+   "latency_source": "e2e_goal_med_pooled",
+   "flights_matched": {
+    "completed": 1,
+    "flown": 60,
+    "fraction": 0.0167,
+    "wilson95": [
+     0.0029,
+     0.0886
+    ]
+   },
+   "flights_pooled_all_campaigns": {
+    "completed": 1,
+    "flown": 60
+   }
+  },
+  {
+   "arm": "vanilla4x2tm@45",
+   "rung": "two instances + control on its own timer",
+   "ctrl_trace": "ros_vanilla4x2tm45.csv",
+   "cores_busy_ge20pct": 8,
+   "cores_per_replicate": [
+    8,
+    8,
+    8
+   ],
+   "cores_carrying_work": null,
+   "control_hz": 100.0,
+   "camera_to_goal_ms": 37.8,
+   "latency_source": "e2e_goal_med_pooled",
+   "flights_matched": {
+    "completed": 0,
+    "flown": 0,
+    "fraction": null,
+    "wilson95": null
+   },
+   "flights_pooled_all_campaigns": {
+    "completed": 0,
+    "flown": 0
+   }
+  },
+  {
+   "arm": "xpu_a_cpsat_hard",
+   "rung": "XPU-RT \u00b7 CP-SAT, the same chain, solved",
+   "ctrl_trace": "xpu_a_cpsat_hard.csv",
+   "cores_busy_ge20pct": 7,
+   "cores_per_replicate": [],
+   "cores_carrying_work": 8,
+   "control_hz": 100.0,
+   "camera_to_goal_ms": 56.8,
+   "latency_source": "SOLVER_ARMS.chain_ms",
+   "flights_matched": {
+    "completed": 44,
+    "flown": 300,
+    "fraction": 0.1467,
+    "wilson95": [
+     0.1111,
+     0.1912
+    ]
+   },
+   "flights_pooled_all_campaigns": {
+    "completed": 389,
+    "flown": 1908
+   }
+  }
+ ],
+ "notes": [
+  "Rungs, hart counts, board timing and the flight tally all come from scripts/ros_effort_ladder.py (measured_timing + results/codesign_feedback/ros_traced/summary.csv); CELL, in_cell and matched_cells are imported, not reimplemented, so this figure and the table print the same flight column by construction.",
+  "flights_matched is the drawn column, and is what ros_effort_ladder.py prints: one scene cell, at the (cruise, seed) cells every drawn arm flew. flights_pooled_all_campaigns mixes courses, densities, gains, people placed across the aisle (walk_cross) and cadence-only campaigns; it is NOT comparable across rungs and is recorded only for provenance.",
+  "walk_cross is part of the cell although these flights have walk_speed == 0: the flag moves the people onto the aisle centre line rather than scattering them across it (sims/isaaclab_tasks/warehouse_nav/mdp_obstacles.py), so a crossing run is a different obstacle field. Excluding it is what took ros_vanilla4 from 6/216 to 5/180.",
+  "Rung 1 (vanilla@45) has 48 pooled flights, all from a cadence-only campaign that replays no perception latency, so it has no flights in the matched cell and is drawn as not flown.",
+  "XPU-RT hart count is dispatch duty in its own board trace (a lower bound: dispatch cycles only); the ROS rows are OS per-core busy fractions."
+ ],
+ "script": "ros_ladder_figure",
+ "inputs": {
+  "results/codesign_feedback/campaign/campaign.csv": "716faf4d4d051579171b9bbd6dd48acc3d694e2a90c3741c9aa21165806c46ef",
+  "results/codesign_feedback/campaign_break/campaign.csv": "128f7a46419ca5aa1cb568f35ea3efb61610ad080b35a5897903e47fd6e68345",
+  "results/codesign_feedback/campaign_compose/campaign.csv": "eced6ca98c17e391440539d14025df20b750e80f03f21d2912657a85d87ded19",
+  "results/codesign_feedback/campaign_courseC/campaign.csv": "a0a4b730bbe7b959d462bcfb69a6ebdd54ab95ad8600c8141842c395765c8cca",
+  "results/codesign_feedback/campaign_cp3_ladder/campaign.csv": "e98155d19f5a9c623fa2a32f6aa364e6d93cf3d376fdb12a22a96ed72e7adf3a",
+  "results/codesign_feedback/campaign_cross/campaign.csv": "fff461f4a94b7f0fc5d6516f13ac672f1ded6ab8e987772fe4115982e7fc643b",
+  "results/codesign_feedback/campaign_free30/campaign.csv": "0f4c6a073c12f163a5399c94e8c596b1c0b51a8090f9a76dcc2a8c7376934671",
+  "results/codesign_feedback/campaign_free30_eq/campaign.csv": "9511fa4afa11889ef27067c93a29faede17f627fd3c248e6465b72aa3eadbc0e",
+  "results/codesign_feedback/campaign_free45/campaign.csv": "adc375e9eba26dea2c270141081a5def6df899a738c302b849c28dfb4ab398e5",
+  "results/codesign_feedback/campaign_gainfair/campaign.csv": "4121eebdae3ee6cb069697fae655629598117a57a9dd239a26badee1edd7e9cd",
+  "results/codesign_feedback/campaign_p3_30/campaign.csv": "65d1162685f06a0b11ece2614f9e6bd7b9ef7e9de985753bbdba8075266cc165",
+  "results/codesign_feedback/campaign_percep/campaign.csv": "252a9f2de72809b03bab11d52c7278b884080fcff784978778d959757e220afd",
+  "results/codesign_feedback/campaign_q1cells/campaign.csv": "6935d1e85a8897ea5e2cdf8008fae8c1942de5cc552855500f4e7fc462dc6bce",
+  "results/codesign_feedback/campaign_qos1/campaign.csv": "f53eaf89c969added3141fc72a42495f0ec33e00241273f84583c478b5a2c89d",
+  "results/codesign_feedback/campaign_rate30/campaign.csv": "c72e9b351062a59d8146d131d0e86738b97010a9c97b6b695977273eee659bbf",
+  "results/codesign_feedback/campaign_rate30_gain/campaign.csv": "1a20793a8759d79b5a265bbcfa1f45c51795c7c58e6508a823f455e9262a1b5e",
+  "results/codesign_feedback/campaign_rate3640/campaign.csv": "539e8b0a5d0f4c5abac071379fa582f1be8eb26b04ead89bcef8da35b177ddf8",
+  "results/codesign_feedback/campaign_rate90/campaign.csv": "0316062a61963b7721ca7f56038af2dbca3745eba48a2f6778faeba4cb23cdf5",
+  "results/codesign_feedback/campaign_rich/campaign.csv": "957e5a475c5610579463b6df70f68edc54c06578d7773cc5a8f45d3d3a821174",
+  "results/codesign_feedback/campaign_richtuned/campaign.csv": "5bcc7b1ff5534d507cb2e8da8da78450b84837635c6c4e56301808e157d9152a",
+  "results/codesign_feedback/campaign_rosgain/campaign.csv": "73bfcc1dde5af9047993c865e4abd8d5e80502c979c74cc3a1750fee7e7c929b",
+  "results/codesign_feedback/campaign_seeds24/campaign.csv": "4ee968293048c26b729ec3211cdeabfe5ac4ccb4256e7f7f89ed87cd00b68756",
+  "results/codesign_feedback/campaign_shardcells/campaign.csv": "d6713164f31a95576e29a4b3b4f57d726241af66fca1b29ca27cbe8b051a5747",
+  "results/codesign_feedback/campaign_static6/campaign.csv": "ab10e14a8fe7998a7f362c74268ba9ea8180dda0113507bc71242fb9a6764648",
+  "results/codesign_feedback/campaign_static6_45/campaign.csv": "ea410d15e00118b8a1ef95041250013698f5ffa313b91dd185df723df7047d1d",
+  "results/codesign_feedback/campaign_submitted/campaign.csv": "cff34cef9d05b2ded743bd14e4e112a6495633bc462409834f4b8447d4a7bc94",
+  "results/codesign_feedback/campaign_tallcal/campaign.csv": "a4455c1d304e421d146034a6b0d55d2aae2f8f6e401f957d5f29076636c14d44",
+  "results/codesign_feedback/campaign_tallnet/campaign.csv": "f0e636330e842d9eb21db22b62207de82af5ef02488f030c9e19d92d77dfb9b4",
+  "results/codesign_feedback/campaign_tuned/campaign.csv": "8794844a73edd82c800115f6b9c8ea43c25ab3236f5b6155b0adb24ce4b5d0b0",
+  "results/codesign_feedback/campaign_v2/campaign_v2.csv": "7c6dc6a648f5f72a8d2f0e3efef987d2ef23fb81810e697fc0c367cc10dc4487",
+  "results/codesign_feedback/campaign_v2_courseB/campaign_v2.csv": "781f77ad0ef201981c6fc950e258911c1b7f28e7aedf76576318d76a8a81c152",
+  "results/codesign_feedback/campaign_v8tmcells/campaign.csv": "0974b9b9bff857ba91720f0ca681b77c48480389e412f53fb24d4ba0322d590b",
+  "results/codesign_feedback/campaign_walk/campaign.csv": "b7621815bfa95943b58cbb4db1326311887538fdaadb3b66912d289b54527bbe",
+  "results/codesign_feedback/campaign_x2cells/campaign.csv": "90a252a06a759c1d7cf9862089a3ed3411b0accc99fea3500f9b7cd72003f471",
+  "results/codesign_feedback/campaign_x2fix/campaign.csv": "2d3aeef9fb142226680417f6528ee14fa02d7085f8ffe5be1e8778523d1ff3a2",
+  "results/codesign_feedback/campaign_x2fix90/campaign.csv": "a2d6a1493a4901aa08688ae06b72ab9c8ab50bd6e49a8964ae7062e5324175ac",
+  "results/codesign_feedback/campaign_x2tmcells/campaign.csv": "398909144003dc838e88b1084ee8e330e9ee5d6f121a5cf27db008a81fca6d59",
+  "results/codesign_feedback/flight_quarantine.csv": "7cbd16bab0a08748d95a166bede154e6f885e26b6df8ae8475083789872a2dba",
+  "results/codesign_feedback/ros_traced/summary.csv": "8a061d85c1cc9d32a4ceeeb141cfc331c8d8cd7bfbd0b8be6680517de493edc1",
+  "results/codesign_feedback/xpurt_long/trace_acpsat_hardr1_other_run1.csv": "fb16ca7138ba6984b9586b709db47ed924c8d9f52ed18790d8005655388bac06",
+  "results/codesign_feedback/xpurt_long/trace_acpsat_hardr2_other_run1.csv": "6569e6b60a654da23c459005d9d45ea45e0c9d7482999be6838c804b867a4ffc",
+  "results/codesign_feedback/xpurt_long/trace_acpsat_hardr3_other_run1.csv": "a55c2c445896a72497b285e02978c36a65ef6d0f57a24308d78c4ce0292bc9b1"
+ },
+ "fallbacks_used": []
+}

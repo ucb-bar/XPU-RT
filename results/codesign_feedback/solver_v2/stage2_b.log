@@ -1,0 +1,7 @@
+=== 21:52:05 wh_chain90_rich_solve greedy
+    greedy_periodic: makespan=1170.43 ms (all ops 1170.43 ms), periodic window misses=2795, converged
+=== 21:53:14 wh_chain90_rich_solve cpsat hard (background) + cpsat soft
+  soft rc=1 
+  hard rc=1 cpsat status=UNKNOWN wall=2124.0s
+HARD_DONE
+=== 22:28:51 STAGE2_DONE wh_chain90_rich_solve

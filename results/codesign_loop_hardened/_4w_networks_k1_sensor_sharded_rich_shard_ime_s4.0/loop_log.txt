@@ -1,0 +1,29 @@
+== co-design loop: _4w_networks_k1_sensor_sharded_rich_shard_ime_s4.0 ==
+round 0 · baseline: total-lateness 3.226 (makespan 51.6 ms), 2 instance-miss
+accept rule: candidate_objective.accept() · critical=['mlp_control', 'fused_full', 'yolov8_nano_64x96', 'ffn_block', 'attn_block'] heavy=yolov8_nano_64x96
+      ime: built ime_x60 profiles for ['fused_full.int8', 'yolov8_nano_64x96.int8']
+round 1 · try ime: total-lateness 3.226 -> 0.000 (-100.0%), 0 instance-miss -> ACCEPTABLE
+round 1 · try ime: accepted -- hard deadline misses: ime=0 beats baseline=2 (tolerance 1.04)
+round 1 · try shard: total-lateness 3.226 -> 0.000 (-100.0%), 0 instance-miss -> ACCEPTABLE
+round 1 · try shard: accepted -- hard deadline misses: shard=0 beats baseline=2 (tolerance 1.04)
+      unfuse: adopted ModelBlaster unfused dispatch graph for (none — no fused net with an unfused build on disk)
+round 1 · try unfuse: lever changed nothing on this spec (inapplicable here) — not a candidate
+round 1: ACCEPT +shard  total-lateness 3.226 -> 0.000 (-100.0%)
+      ime: built ime_x60 profiles for (none new; existing reused)
+round 2 · try ime: total-lateness 0.000 -> 11.295 (+0.0%), 1 instance-miss -> reject
+round 2 · try ime: rejected -- max deadline lateness: shard=0 beats ime=11.29 (tolerance 0.5)
+      unfuse: adopted ModelBlaster unfused dispatch graph for (none — no fused net with an unfused build on disk)
+round 2 · try unfuse: lever changed nothing on this spec (inapplicable here) — not a candidate
+round 2: no lever is accepted by the nine-term objective rule — CONVERGED
+fuse: NOT applied — roofline decision-aid says the stack is compute-bound (max fusible-epilogue ceiling 16% on dronet); fusion collapses dispatches (scheduling) but is measured ~+0.85% on cycles, so the loop does not credit a makespan gain it cannot measure.
+
+== board-feedback arm ==  (calibration results/codesign_feedback/k1_board_calibration.json)
+board arm · re-solved converged AOT spec at full budget (cpsat, 200s): makespan 32.85 ms
+board arm · stage1 baseline (AOT costs): 2 instance-miss
+board arm · stage2 AOT-optimized (AOT costs): 0 instance-miss  [levers: ['shard']]
+board arm · stage3 board re-cost of the AOT schedule: 2 instance-miss {'mlp_control': 1, 'ffn_block': 1}  <- the run-honest reveal
+board arm · re-solve iter 1 (--board-calibration, cpsat): 2 -> 0 instance-miss {} -> ACCEPT
+board arm: instance-miss arc  baseline->AOT->board-recost->board-resolve = 2 -> 0 -> 2 -> 0
+
+CONVERGED [total-lateness]: 3.226 -> 0.000 ms (-100.0%), levers applied: ['shard']
+artifacts in /scratch/agustin/xpurt-dev-sync/results/codesign_loop_hardened/_4w_networks_k1_sensor_sharded_rich_shard_ime_s4.0

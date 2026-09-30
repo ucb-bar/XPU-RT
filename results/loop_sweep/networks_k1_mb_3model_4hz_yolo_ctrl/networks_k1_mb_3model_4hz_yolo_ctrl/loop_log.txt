@@ -1,0 +1,33 @@
+== co-design loop: networks_k1_mb_3model_4hz_yolo_ctrl ==
+round 0 · baseline: makespan 898.097 (makespan 898.1 ms), 0 instance-miss
+accept rule: candidate_objective.accept() · critical=['mlp_control', 'dronet', 'yolov8_nano'] heavy=yolov8_nano
+      ime: built ime_x60 profiles for ['yolov8_nano.ctrl.int8']
+round 1 · try ime: makespan 898.097 -> 873.791 (-2.7%), 0 instance-miss -> ACCEPTABLE
+round 1 · try ime: accepted -- p99 response of critical tasks: ime=126.9 beats baseline=148.1 (tolerance 0.5)
+round 1 · try shard: makespan 898.097 -> 898.097 (-0.0%), 0 instance-miss -> reject
+round 1 · try shard: rejected -- p99 response of critical tasks: baseline=148.1 beats shard=173.31 (tolerance 0.5)
+      unfuse: adopted ModelBlaster unfused dispatch graph for ['yolov8_nano']
+round 1 · try unfuse: makespan 898.097 -> 866.421 (-3.5%), 0 instance-miss -> ACCEPTABLE
+round 1 · try unfuse: accepted -- p99 response of critical tasks: unfuse=116.42 beats baseline=148.1 (tolerance 0.5)
+round 1: ACCEPT +unfuse  makespan 898.097 -> 866.421 (-3.5%)
+      ime: built ime_x60 profiles for ['yolov8_nano.unfused.int8']
+round 2 · try ime: makespan 866.421 -> 847.890 (-2.1%), 0 instance-miss -> ACCEPTABLE
+round 2 · try ime: accepted -- p99 response of critical tasks: ime=99.82 beats unfuse=116.42 (tolerance 0.5)
+round 2 · try shard: makespan 866.421 -> 866.421 (-0.0%), 0 instance-miss -> reject
+round 2 · try shard: rejected -- p99 response of critical tasks: unfuse=116.42 beats shard=132.86 (tolerance 0.5)
+round 2: ACCEPT +ime  makespan 866.421 -> 847.890 (-2.1%)
+round 3 · try shard: makespan 847.890 -> 847.890 (-0.0%), 0 instance-miss -> reject
+round 3 · try shard: rejected -- p99 response of critical tasks: ime=99.82 beats shard=117.77 (tolerance 0.5)
+round 3: no lever is accepted by the nine-term objective rule — CONVERGED
+fuse: NOT applied — roofline decision-aid says the stack is compute-bound (max fusible-epilogue ceiling 16% on dronet); fusion collapses dispatches (scheduling) but is measured ~+0.85% on cycles, so the loop does not credit a makespan gain it cannot measure.
+
+== board-feedback arm ==  (calibration results/codesign_feedback/k1_board_calibration.json)
+board arm · re-solved converged AOT spec at full budget (greedy, 120s): makespan 847.89 ms
+board arm · stage1 baseline (AOT costs): 0 instance-miss
+board arm · stage2 AOT-optimized (AOT costs): 0 instance-miss  [levers: ['unfuse', 'ime']]
+board arm · stage3 board re-cost of the AOT schedule: 0 instance-miss {}  <- the run-honest reveal
+board arm · AOT schedule already meets every deadline on the board — no re-solve needed.
+board arm: instance-miss arc  baseline->AOT->board-recost->board-resolve = 0 -> 0 -> 0 -> 0
+
+CONVERGED [makespan]: 898.097 -> 847.890 ms (-5.6%), levers applied: ['unfuse', 'ime']
+artifacts in /scratch/agustin/xpurt-dev-sync/results/loop_sweep/networks_k1_mb_3model_4hz_yolo_ctrl/networks_k1_mb_3model_4hz_yolo_ctrl

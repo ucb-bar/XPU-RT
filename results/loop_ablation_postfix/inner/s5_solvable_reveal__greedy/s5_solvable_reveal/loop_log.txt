@@ -1,0 +1,53 @@
+== co-design loop: s5_solvable_reveal ==
+round 0 · baseline: makespan 51.611 (makespan 51.6 ms), 32 dispatch-miss
+accept rule: candidate_objective.accept() · critical=['mlp_control', 'fused_full', 'ffn_block', 'dronet', 'yolov8_nano_64x96'] heavy=yolov8_nano_64x96
+levers: shard expanded per network -> ['shard:mlp_control', 'shard:fused_full', 'shard:ffn_block', 'shard:dronet', 'shard:yolov8_nano_64x96'] (+ shard = all networks)
+      ime: built ime_x60 profiles for (none new; existing reused)
+round 1 · try ime: makespan 51.611 -> 46.547 (-9.8%), 32 dispatch-miss -> ACCEPTABLE
+round 1 · try ime: accepted -- frequency compliance: ime=0 beats baseline=0.03125 (tolerance 0.02)
+      unfuse: adopted ModelBlaster unfused dispatch graph for (none — no fused net with an unfused build on disk)
+round 1 · try unfuse: lever changed nothing on this spec (inapplicable here) — not a candidate
+      shard:mlp_control: widen mlp_control, hold fused_full+ffn_block+dronet+yolov8_nano_64x96 at one core
+round 1 · try shard:mlp_control: makespan 51.611 -> 51.611 (-0.0%), 32 dispatch-miss -> reject
+round 1 · try shard:mlp_control: rejected -- indistinguishable on every term; a tie is not an improvement
+      shard:fused_full: widen fused_full, hold mlp_control+ffn_block+dronet+yolov8_nano_64x96 at one core
+round 1 · try shard:fused_full: makespan 51.611 -> 51.611 (-0.0%), 32 dispatch-miss -> reject
+round 1 · try shard:fused_full: rejected -- indistinguishable on every term; a tie is not an improvement
+      shard:ffn_block: widen ffn_block, hold mlp_control+fused_full+dronet+yolov8_nano_64x96 at one core
+round 1 · try shard:ffn_block: makespan 51.611 -> 35.391 (-31.4%), 32 dispatch-miss -> ACCEPTABLE
+round 1 · try shard:ffn_block: accepted -- frequency compliance: shard:ffn_block=0 beats baseline=0.03125 (tolerance 0.02)
+      shard:dronet: widen dronet, hold mlp_control+fused_full+ffn_block+yolov8_nano_64x96 at one core
+round 1 · try shard:dronet: makespan 51.611 -> 51.611 (-0.0%), 44 dispatch-miss -> reject
+round 1 · try shard:dronet: rejected -- hard deadline misses: baseline=1 beats shard:dronet=2 (tolerance 0)
+      shard:yolov8_nano_64x96: widen yolov8_nano_64x96, hold mlp_control+fused_full+ffn_block+dronet at one core
+round 1 · try shard:yolov8_nano_64x96: makespan 51.611 -> 51.611 (-0.0%), 2 dispatch-miss -> reject
+round 1 · try shard:yolov8_nano_64x96: rejected -- max deadline lateness: baseline=4.6 beats shard:yolov8_nano_64x96=11.14 (tolerance 0.5)
+round 1 · try shard: makespan 51.611 -> 33.091 (-35.9%), 0 dispatch-miss -> ACCEPTABLE
+round 1 · try shard: accepted -- hard deadline misses: shard=0 beats baseline=1 (tolerance 0)
+round 1: ACCEPT +shard  makespan 51.611 -> 33.091 (-35.9%)
+      ime: built ime_x60 profiles for (none new; existing reused)
+round 2 · try ime: makespan 33.091 -> 33.091 (-0.0%), 0 dispatch-miss -> reject
+round 2 · try ime: rejected -- indistinguishable on every term; a tie is not an improvement
+      unfuse: adopted ModelBlaster unfused dispatch graph for (none — no fused net with an unfused build on disk)
+round 2 · try unfuse: lever changed nothing on this spec (inapplicable here) — not a candidate
+      shard:mlp_control: widen mlp_control, hold fused_full+ffn_block+dronet+yolov8_nano_64x96 at one core
+round 2 · try shard:mlp_control: makespan 33.091 -> 51.611 (+56.0%), 32 dispatch-miss -> reject
+round 2 · try shard:mlp_control: rejected -- hard deadline misses: shard=0 beats shard:mlp_control=1 (tolerance 0)
+      shard:fused_full: widen fused_full, hold mlp_control+ffn_block+dronet+yolov8_nano_64x96 at one core
+round 2 · try shard:fused_full: makespan 33.091 -> 51.611 (+56.0%), 32 dispatch-miss -> reject
+round 2 · try shard:fused_full: rejected -- hard deadline misses: shard=0 beats shard:fused_full=1 (tolerance 0)
+      shard:ffn_block: widen ffn_block, hold mlp_control+fused_full+dronet+yolov8_nano_64x96 at one core
+round 2 · try shard:ffn_block: makespan 33.091 -> 35.391 (+7.0%), 32 dispatch-miss -> reject
+round 2 · try shard:ffn_block: rejected -- hard deadline misses: shard=0 beats shard:ffn_block=1 (tolerance 0)
+      shard:dronet: widen dronet, hold mlp_control+fused_full+ffn_block+yolov8_nano_64x96 at one core
+round 2 · try shard:dronet: makespan 33.091 -> 51.611 (+56.0%), 44 dispatch-miss -> reject
+round 2 · try shard:dronet: rejected -- hard deadline misses: shard=0 beats shard:dronet=2 (tolerance 0)
+      shard:yolov8_nano_64x96: widen yolov8_nano_64x96, hold mlp_control+fused_full+ffn_block+dronet at one core
+round 2 · try shard:yolov8_nano_64x96: makespan 33.091 -> 51.611 (+56.0%), 2 dispatch-miss -> reject
+round 2 · try shard:yolov8_nano_64x96: rejected -- hard deadline misses: shard=0 beats shard:yolov8_nano_64x96=1 (tolerance 0)
+round 2: no lever is accepted by the nine-term objective rule — CONVERGED
+fuse: NOT applied — roofline decision-aid says the stack is compute-bound (max fusible-epilogue ceiling 16% on dronet); fusion collapses dispatches (scheduling) but is measured ~+0.85% on cycles, so the loop does not credit a makespan gain it cannot measure.
+
+CONVERGED: hard deadline misses (instances) 1 -> 0; makespan 51.611 -> 33.091 ms (-35.9%), levers applied: ['shard']
+  decided by: shard (hard deadline misses: shard=0 beats baseline=1 (tolerance 0))
+artifacts in /scratch/agustin/xpurt-dev-sync/results/loop_ablation_postfix/inner/s5_solvable_reveal__greedy/s5_solvable_reveal

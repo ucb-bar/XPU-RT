@@ -1,0 +1,29 @@
+== co-design loop: networks_k1_mb ==
+round 0 · baseline: makespan 8.001 (makespan 8.0 ms), 0 instance-miss
+accept rule: candidate_objective.accept() · critical=['mlp_control', 'dronet'] heavy=dronet
+      ime: built ime_x60 profiles for ['dronet.int8']
+round 1 · try ime: makespan 8.001 -> 8.001 (-0.0%), 0 instance-miss -> reject
+round 1 · try ime: rejected -- indistinguishable on every term; a tie is not an improvement
+round 1 · try shard: makespan 8.001 -> 4.867 (-39.2%), 0 instance-miss -> ACCEPTABLE
+round 1 · try shard: accepted -- p99 response of critical tasks: shard=4.87 beats baseline=8 (tolerance 0.5)
+      unfuse: adopted ModelBlaster unfused dispatch graph for (none — no fused net with an unfused build on disk)
+round 1 · try unfuse: lever changed nothing on this spec (inapplicable here) — not a candidate
+round 1: ACCEPT +shard  makespan 8.001 -> 4.867 (-39.2%)
+      ime: built ime_x60 profiles for (none new; existing reused)
+round 2 · try ime: makespan 4.867 -> 4.867 (-0.0%), 0 instance-miss -> reject
+round 2 · try ime: rejected -- indistinguishable on every term; a tie is not an improvement
+      unfuse: adopted ModelBlaster unfused dispatch graph for (none — no fused net with an unfused build on disk)
+round 2 · try unfuse: lever changed nothing on this spec (inapplicable here) — not a candidate
+round 2: no lever is accepted by the nine-term objective rule — CONVERGED
+fuse: NOT applied — roofline decision-aid says the stack is compute-bound (max fusible-epilogue ceiling 16% on dronet); fusion collapses dispatches (scheduling) but is measured ~+0.85% on cycles, so the loop does not credit a makespan gain it cannot measure.
+
+== board-feedback arm ==  (calibration results/codesign_feedback/k1_board_calibration.json)
+board arm · re-solved converged AOT spec at full budget (greedy, 120s): makespan 4.87 ms
+board arm · stage1 baseline (AOT costs): 0 instance-miss
+board arm · stage2 AOT-optimized (AOT costs): 0 instance-miss  [levers: ['shard']]
+board arm · stage3 board re-cost of the AOT schedule: 0 instance-miss {}  <- the run-honest reveal
+board arm · AOT schedule already meets every deadline on the board — no re-solve needed.
+board arm: instance-miss arc  baseline->AOT->board-recost->board-resolve = 0 -> 0 -> 0 -> 0
+
+CONVERGED [makespan]: 8.001 -> 4.867 ms (-39.2%), levers applied: ['shard']
+artifacts in /scratch/agustin/xpurt-dev-sync/results/loop_sweep/networks_k1_mb/networks_k1_mb

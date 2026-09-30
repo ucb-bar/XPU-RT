@@ -1,0 +1,6 @@
+[
+ "Baseline \u00b7 RVV singletons|none|results/codesign_feedback/evo_w2/a1_baseline.json|loop baseline (levers stripped)",
+ "Auto-loop optimize \u2014 Shard + IME|shard+ime|results/codesign_feedback/evo_w2/a2_aot.json|levers from the loop's measured search",
+ "K1-calibrated replay|none|results/codesign_feedback/evo_w2/a3_board_recost.json|same assignment, board durations",
+ "K1-calibrated re-solve|none|results/codesign_feedback/evo_w2/a4_board_resolve.json|re-optimized on board costs"
+]

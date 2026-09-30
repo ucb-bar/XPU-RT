@@ -1,0 +1,8 @@
+{
+ "log": "campaign_v2/xpu_cpsat_hard_c2.0.log",
+ "log_sha256": "f30a5a3a6dbd17c8be0f68aa9597f693d16494502e9ad7fb131245e53cc2309d",
+ "log_bytes": 33111433,
+ "lines": {
+  "315": "2026-09-11T08:10:00Z [314,482ms] [Error] [omni.physx.plugin] PhysX error: PhysX Internal CUDA error. Simulation cannot continue! Error code 2!"
+ }
+}

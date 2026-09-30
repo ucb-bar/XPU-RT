@@ -1,0 +1,14 @@
+{
+  "tag": "25_yproc_r3", "nodes": "nav,control",
+  "rate_hz": 25, "ctrl_hz": 100, "seconds": 20,
+  "executor": "single", "executor_threads": 1, "ctrl_mode": "timer",
+  "callback_groups": "mutually_exclusive_per_node", "qos_depth": 10,
+  "rmw": "rmw_fastrtps_cpp",
+  "yolo_pool": 0, "pool_harts": "", "pin_main": -1,
+  "t0_rdtime": 108790838892441, "run_t0_ticks": 35089726, "run_end_ticks": 515180327,
+  "wall_start_epoch_ms": 1789087580716, "wall_end_epoch_ms": 1789087600720,
+  "n_released": 0, "n_goals": 499, "n_ctrl_fires": 2002, "n_consumed": 499,
+  "affinity_mask": "0x10", "sched_policy": "SCHED_OTHER", "rt_priority": 0,
+  "instance_meaning": "perception/nav: camera frame seq; control: timer fire index",
+  "kernels_sha": "3b71363 ir=0c783539626c", "hostname": "k1", "kernel": "6.6.63"
+}

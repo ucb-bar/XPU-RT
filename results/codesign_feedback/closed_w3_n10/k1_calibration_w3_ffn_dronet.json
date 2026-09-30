@@ -1,0 +1,99 @@
+{
+ "schema": "k1_board_calibration/v2",
+ "source": "10 board trace(s), real SpaceMiT K1; actual=(end-start)ticks/24MHz vs the predicted_duration_ms the runner stamped from the schedule",
+ "workload": "w3 ladder rung: mlp_control+ffn_block+dronet",
+ "generated_by": "scripts/emit_board_calibration.py",
+ "generated_at": "2026-09-08T22:06:27",
+ "measures": "EXECUTION inflation only. Queue delay is carried separately by the trace and excluded: a dispatch that waited is not a dispatch that ran slowly, and folding queueing in would charge the scheduler twice for its own placement.",
+ "statistic": "mean of per-sample ratios; pooled op tier and aggregate floored at predicted >= 0.1 ms (2400 rdtime ticks) so timer granularity cannot inflate a pooled multiplier",
+ "n_dispatch_samples": 2140,
+ "n_pooled_samples": 700,
+ "aggregate_multiplier": 1.2032,
+ "aggregate_median": 1.105,
+ "aggregate_mean": 1.2032,
+ "primary_key": "network/dispatch_id (exact, for the measured workload)",
+ "fallback_key": "op (generalizing; EXTRAPOLATED for nets not in coverage.nets_exact)",
+ "alignment": {
+  "schedule": "results/codesign_feedback/closed_w3_n10/scheduled_w3_ffn_dronet_r1_shard_greedy_profiled.json",
+  "verified": true,
+  "networks_aligned": [
+   "dronet",
+   "ffn_block",
+   "mlp_control"
+  ],
+  "networks_omitted_from_exact_tier": {},
+  "note": "the runner records zero-cost ops with dispatch_id -1 and numbers the rest from zero, while the schedule numbers all of them, so on a network with zero-cost ops the two numberings diverge. Ratios are computed within a row and are always right; only the KEY can be wrong, which is invisible in the emitted table -- hence the check, and hence dropping a misaligned network's per-dispatch keys rather than keeping plausible-looking wrong ones."
+ },
+ "coverage": {
+  "nets_exact": [
+   "dronet",
+   "ffn_block",
+   "mlp_control"
+  ],
+  "nets_measured": [
+   "dronet",
+   "ffn_block",
+   "mlp_control"
+  ],
+  "n_exact_dispatch_keys": 33,
+  "n_op_kind_keys": 7,
+  "note": "a net absent from nets_exact is costed by its op kinds or by the aggregate, which is a prediction about that net, not a measurement of it"
+ },
+ "traces": [
+  "results/codesign_feedback/closed_w3_n10/board_0_trace.csv",
+  "results/codesign_feedback/closed_w3_n10/board_1_trace.csv",
+  "results/codesign_feedback/closed_w3_n10/board_2_trace.csv",
+  "results/codesign_feedback/closed_w3_n10/board_3_trace.csv",
+  "results/codesign_feedback/closed_w3_n10/board_4_trace.csv",
+  "results/codesign_feedback/closed_w3_n10/board_5_trace.csv",
+  "results/codesign_feedback/closed_w3_n10/board_6_trace.csv",
+  "results/codesign_feedback/closed_w3_n10/board_7_trace.csv",
+  "results/codesign_feedback/closed_w3_n10/board_8_trace.csv",
+  "results/codesign_feedback/closed_w3_n10/board_9_trace.csv"
+ ],
+ "traces_skipped": [],
+ "per_dispatch_multiplier": {
+  "dronet/0": 1.2321,
+  "dronet/1": 1.0429,
+  "dronet/10": 1.8968,
+  "dronet/11": 1.1563,
+  "dronet/12": 1.6463,
+  "dronet/13": 1.4103,
+  "dronet/14": 1.5762,
+  "dronet/15": 2.4133,
+  "dronet/16": 1.3115,
+  "dronet/17": 2.036,
+  "dronet/18": 2.514,
+  "dronet/19": 3.8067,
+  "dronet/2": 1.4994,
+  "dronet/20": 1.8348,
+  "dronet/3": 1.0097,
+  "dronet/4": 1.2297,
+  "dronet/5": 1.3807,
+  "dronet/6": 1.1294,
+  "dronet/7": 1.3709,
+  "dronet/8": 1.1152,
+  "dronet/9": 1.2228,
+  "ffn_block/0": 1.2063,
+  "ffn_block/1": 1.1197,
+  "ffn_block/2": 1.0809,
+  "ffn_block/3": 1.1046,
+  "ffn_block/4": 1.1132,
+  "mlp_control/0": 0.7635,
+  "mlp_control/1": 1.0332,
+  "mlp_control/2": 0.8792,
+  "mlp_control/3": 1.0566,
+  "mlp_control/4": 1.0829,
+  "mlp_control/5": 1.103,
+  "mlp_control/6": 1.0583
+ },
+ "per_op_multiplier": {
+  "add_s8": 1.1132,
+  "conv2d_batchnorm2d_s8": 1.1784,
+  "conv2d_s8": 1.3283,
+  "gelu_s8": 1.0809,
+  "layernorm_s8": 1.2063,
+  "linear_s8": 1.1122,
+  "maxpool2d_s8": 1.0429
+ }
+}

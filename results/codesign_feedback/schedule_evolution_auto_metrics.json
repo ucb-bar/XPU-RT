@@ -1,9 +1,10 @@
 {
   "layout": "grid",
-  "authored_figure_size_in": [
+  "figure_size_in": [
     7.16,
-    4.35
+    3.7
   ],
+  "height_arg": 3.7,
   "panels": [
     {
       "stage": 1,

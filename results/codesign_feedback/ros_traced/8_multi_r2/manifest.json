@@ -1,0 +1,14 @@
+{
+  "tag": "8_multi_r2", "nodes": "camera,perception,nav,control",
+  "rate_hz": 8, "ctrl_hz": 100, "seconds": 20,
+  "executor": "multi", "executor_threads": 8,
+  "callback_groups": "mutually_exclusive_per_node", "qos_depth": 10,
+  "rmw": "rmw_fastrtps_cpp",
+  "yolo_pool": 0, "pool_harts": "", "pin_main": -1,
+  "t0_rdtime": 108717113294016, "run_t0_ticks": 6893065, "run_end_ticks": 486926849,
+  "wall_start_epoch_ms": 1789084507605, "wall_end_epoch_ms": 1789084527606,
+  "n_released": 160, "n_goals": 159, "n_ctrl_fires": 2000, "n_consumed": 159,
+  "affinity_mask": "0xff", "sched_policy": "SCHED_OTHER", "rt_priority": 0,
+  "instance_meaning": "perception/nav: camera frame seq; control: timer fire index",
+  "kernels_sha": "2b8233d ir=0c783539626c", "hostname": "k1", "kernel": "6.6.63"
+}

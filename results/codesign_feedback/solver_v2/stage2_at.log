@@ -1,0 +1,7 @@
+=== 11:17:19 wh_chain45_tight greedy
+    greedy_periodic: makespan=1322.30 ms (all ops 1322.30 ms), periodic window misses=4554, converged
+=== 11:17:45 wh_chain45_tight cpsat hard (limit 1800 s)
+  hard rc=1 cpsat status=INFEASIBLE wall=1.8s
+  table cpsat_hard: none
+  table cpsat_soft: none
+=== 11:17:54 STAGE2_DONE wh_chain45_tight

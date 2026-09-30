@@ -1,0 +1,52 @@
+{
+ "contract": "modelblaster.shard_hints/v1",
+ "reason": "dispatch 1 (linear_s8) OC=1024 across 8 cores, measured 6.377x at 0.797 efficiency",
+ "networks": [
+  {
+   "network": "ffn_block",
+   "shard_ops": [
+    {
+     "op": 1,
+     "n_shards": 8
+    }
+   ]
+  }
+ ],
+ "_provenance": {
+  "from_advice": "scheduled__4w_networks_k1_sensor_sharded_rich_shard_ime_s4.0_r0_baseline_greedy_profiled.json",
+  "min_efficiency": 0.5,
+  "max_shards": 8,
+  "refused": 0,
+  "derivation": [
+   {
+    "dispatch_id": 1,
+    "op": "linear_s8",
+    "oc": 1024,
+    "n_advised": 8,
+    "n_shards": 8,
+    "divides": true,
+    "cost_1core_ms": 14.1253,
+    "cost_ncore_ms": 2.2151,
+    "measured_speedup": 6.377,
+    "parallel_efficiency": 0.797,
+    "sync_overhead_us": 3595.3
+   }
+  ],
+  "evidence": [
+   {
+    "service_time_us": 14125.332999999999,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 13270.28501025447,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": true,
+    "cost_1core_ms": 14.1253,
+    "cost_8core_ms": 2.2151,
+    "n_cores": 8,
+    "measured_speedup": 6.377,
+    "parallel_efficiency": 0.797,
+    "sync_overhead_us": 3595.3,
+    "fits_slot_after": true
+   }
+  ]
+ }
+}

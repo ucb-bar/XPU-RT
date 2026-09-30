@@ -1,0 +1,166 @@
+{
+ "workload": "networks_k1_mb_3model_12hz",
+ "objective": "makespan",
+ "accept_rule": "candidate_objective.accept (nine lexicographic terms)",
+ "critical_models": [
+  "mlp_control",
+  "dronet",
+  "yolov8_nano"
+ ],
+ "heavy_model": "yolov8_nano",
+ "baseline_terms": {
+  "label": "baseline",
+  "ineligible": null,
+  "01_hard_deadline_misses": 12.0,
+  "02_max_deadline_lateness": 75.36,
+  "03_frequency_compliance": 0.06499999999999995,
+  "04_p99_response_of_critical_tasks": 158.7,
+  "05_heavy_model_max_latency": 158.7,
+  "06_heavy_model_throughput": 11.22,
+  "07_makespan": 1069.3187,
+  "08_utilization": 32.8,
+  "09_standalone_kernel_cycles": 2808366.0,
+  "total_instances": 54
+ },
+ "final_terms": {
+  "label": "ime",
+  "ineligible": null,
+  "01_hard_deadline_misses": 12.0,
+  "02_max_deadline_lateness": 74.55,
+  "03_frequency_compliance": 0.06416666666666664,
+  "04_p99_response_of_critical_tasks": 157.89,
+  "05_heavy_model_max_latency": 157.89,
+  "06_heavy_model_throughput": 11.23,
+  "07_makespan": 1068.5078,
+  "08_utilization": 32.7,
+  "09_standalone_kernel_cycles": 2795817.0,
+  "total_instances": 54
+ },
+ "baseline_score_ms": 1069.319,
+ "final_score_ms": 1068.508,
+ "total_reduction_pct": 0.1,
+ "baseline_makespan_ms": 1069.3,
+ "final_makespan_ms": 1068.5,
+ "levers_available": [
+  "ime",
+  "shard",
+  "unfuse"
+ ],
+ "levers_applied": [
+  "ime"
+ ],
+ "levers_inapplicable": [
+  {
+   "round": 1,
+   "lever": "unfuse",
+   "reason": "lever left the spec unchanged"
+  },
+  {
+   "round": 2,
+   "lever": "unfuse",
+   "reason": "lever left the spec unchanged"
+  }
+ ],
+ "rounds": [
+  {
+   "round": 1,
+   "lever": "ime",
+   "metric": "makespan",
+   "score_before_ms": 1069.319,
+   "score_after_ms": 1068.508,
+   "makespan_before_ms": 1069.3,
+   "makespan_after_ms": 1068.5,
+   "pct": -0.1,
+   "accepted": true,
+   "deadline_miss": 684,
+   "accept_rule": "objective",
+   "why": "accepted -- max deadline lateness: ime=74.55 beats baseline=75.36 (tolerance 0.5)",
+   "rejected": [
+    {
+     "lever": "shard",
+     "why": "rejected -- max deadline lateness: baseline=75.36 beats shard=107.67 (tolerance 0.5)",
+     "score_ms": 1069.319,
+     "misses": 716
+    }
+   ],
+   "terms": {
+    "label": "ime",
+    "ineligible": null,
+    "01_hard_deadline_misses": 12.0,
+    "02_max_deadline_lateness": 74.55,
+    "03_frequency_compliance": 0.06416666666666664,
+    "04_p99_response_of_critical_tasks": 157.89,
+    "05_heavy_model_max_latency": 157.89,
+    "06_heavy_model_throughput": 11.23,
+    "07_makespan": 1068.5078,
+    "08_utilization": 32.7,
+    "09_standalone_kernel_cycles": 2795817.0,
+    "total_instances": 54
+   }
+  }
+ ],
+ "trajectory": [
+  {
+   "round": 0,
+   "lever": "baseline",
+   "score_ms": 1069.319,
+   "makespan_ms": 1069.3,
+   "misses": 684
+  },
+  {
+   "round": 1,
+   "lever": "+ime",
+   "score_ms": 1068.508,
+   "makespan_ms": 1068.5,
+   "misses": 684
+  },
+  {
+   "round": "board-recost",
+   "lever": "recost(board)",
+   "makespan_ms": 1063.8,
+   "misses": 12
+  }
+ ],
+ "fusion": "fuse: NOT applied \u2014 roofline decision-aid says the stack is compute-bound (max fusible-epilogue ceiling 16% on dronet); fusion collapses dispatches (scheduling) but is measured ~+0.85% on cycles, so the loop does not credit a makespan gain it cannot measure.",
+ "converged": true,
+ "board_feedback": {
+  "enabled": true,
+  "calibration": "results/codesign_feedback/k1_board_calibration.json",
+  "board_solver": "greedy",
+  "spec": "results/loop_sweep/networks_k1_mb_3model_12hz/networks_k1_mb_3model_12hz/specs/networks_k1_mb_3model_12hz_r1_ime.json",
+  "baseline_instance_misses": 12,
+  "aot_instance_misses": 12,
+  "board_recost_instance_misses": 12,
+  "board_resolve_instance_misses": null,
+  "recovered": false,
+  "residual_misses": 12,
+  "stages": [
+   {
+    "stage": "baseline",
+    "cost": "AOT",
+    "sched": "results/loop_sweep/networks_k1_mb_3model_12hz/networks_k1_mb_3model_12hz/panels/stage1_baseline.json",
+    "instance_misses": 12,
+    "makespan_ms": 1069.32
+   },
+   {
+    "stage": "aot-optimized",
+    "cost": "AOT",
+    "sched": "results/loop_sweep/networks_k1_mb_3model_12hz/networks_k1_mb_3model_12hz/panels/stage2_aot.json",
+    "instance_misses": 12,
+    "makespan_ms": 1068.51,
+    "levers": [
+     "ime"
+    ]
+   },
+   {
+    "stage": "board-recost",
+    "cost": "board",
+    "sched": "results/loop_sweep/networks_k1_mb_3model_12hz/networks_k1_mb_3model_12hz/panels/stage3_board_recost.json",
+    "instance_misses": 12,
+    "missed_by": {
+     "yolov8_nano": 12
+    }
+   }
+  ]
+ }
+}

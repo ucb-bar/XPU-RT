@@ -1,0 +1,15 @@
+=== 00:30:52 clamp + feasibility schedules/fig_p30w4force_cpsat_hard.json
+schedules/fig_p30w4force_cpsat_hard_clamped.json: 45 dispatch targets narrowed; width histogram {1: 575, 2: 45, 4: 1425}
+
+FEASIBLE: no double-booking, no dependency violation, no forward edge, every target on the board, every implementation available where it was placed.
+  feasibility rc=0
+=== 00:30:54 945 dispatch(es) on the IME: BACKENDS=rvv_x60,rvv_x60,ime_x60 MB_IME_FORCE=1
+=== 00:30:54 board p30w4forcer1
+  re-pulled the board's stdout: 2045 of 2045 rows (pull 1)
+  trace rows: 2045  hart_acc: 3  policy: SCHED_OTHER  exit: 0  verify: ['MODELBLASTER_VERIFY [yolov8_nano_64x96] === max_abs_err=0 max_rel_err=0 n=8316 instance=0 ready=1']
+=== 00:31:27 board p30w4forcer2
+  trace rows: 2045  hart_acc: 3  policy: SCHED_OTHER  exit: 0  verify: ['MODELBLASTER_VERIFY [yolov8_nano_64x96] === max_abs_err=0 max_rel_err=0 n=8316 instance=0 ready=1']
+=== 00:31:57 board p30w4forcer3
+  re-pulled the board's stdout: 2045 of 2045 rows (pull 1)
+  trace rows: 2045  hart_acc: 3  policy: SCHED_OTHER  exit: 0  verify: ['MODELBLASTER_VERIFY [yolov8_nano_64x96] === max_abs_err=0 max_rel_err=0 n=8316 instance=0 ready=1']
+=== 00:32:30 BOARD_PARTITIONED_DONE p30w4force

@@ -1,0 +1,15 @@
+{
+  "tag": "long_other_run3",
+  "schedule": "schedules/scheduled_wh_coupled_chain_long_greedy_periodic_profiled.json",
+  "schedule_sha256": "e8ecd2ab73ff7757",
+  "solver": "scheduled_wh_coupled_chain_long_greedy_periodic_profiled.json",
+  "board_recost": null,
+  "ir_sha256_yolo": "0c783539626cf1627ae801d997ddc3f8c82316ab1ec10bb488cd9b4418180456",
+  "sched_policy": null,
+  "run_t0_rdtime": null,
+  "wall_start_epoch_ms": 1789082513437,
+  "exit_code": 2,
+  "verify_lines": [],
+  "rdtime_hz": 24000000,
+  "note": "numeric verification covers instance 0 only"
+}

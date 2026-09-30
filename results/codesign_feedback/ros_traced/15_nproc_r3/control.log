@@ -1,0 +1,1 @@
+ROS_TRACED tag=15_nproc_r3 exec=single rate=15 released=300 goals=299 fires=1505 gap_mean=13.29 gap_max=36.30

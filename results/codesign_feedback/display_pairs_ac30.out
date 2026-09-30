@@ -1,0 +1,15 @@
+=== 21:52:41 waiting for the census to name the separating seeds ===
+=== 22:04:41 separating seeds: 1001 1003 1007 ===
+=== 22:05:22 xpu_s1001 ===
+  xpu_s1001 [ep00] outcome=crash     gates=3/4 steps=802
+=== 22:16:04 ros_s1001 ===
+  ros_s1001 [ep00] outcome=crash     gates=1/4 steps=354
+=== 22:22:21 xpu_s1003 ===
+  xpu_s1003 [ep00] outcome=success   gates=4/4 steps=1149
+=== 22:33:10 ros_s1003 ===
+  ros_s1003 [ep00] outcome=crash     gates=0/4 steps=200
+=== 22:38:38 xpu_s1007 ===
+  xpu_s1007 [ep00] outcome=success   gates=4/4 steps=1131
+=== 22:49:49 ros_s1007 ===
+  ros_s1007 [ep00] outcome=crash     gates=0/4 steps=204
+=== 22:55:17 DISPLAY_PAIRS_AC30_DONE ===

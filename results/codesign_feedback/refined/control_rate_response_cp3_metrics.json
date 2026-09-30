@@ -1,0 +1,469 @@
+{
+  "figure": "results/codesign_feedback/refined/control_rate_response_cp3.png",
+  "written": "2026-09-21T21:07:42",
+  "script": "control_rate_response",
+  "inputs": {
+    "results/codesign_feedback/campaign_break/campaign.csv": "128f7a46419ca5aa1cb568f35ea3efb61610ad080b35a5897903e47fd6e68345",
+    "results/codesign_feedback/campaign_compose/campaign.csv": "eced6ca98c17e391440539d14025df20b750e80f03f21d2912657a85d87ded19",
+    "results/codesign_feedback/campaign_courseC/campaign.csv": "a0a4b730bbe7b959d462bcfb69a6ebdd54ab95ad8600c8141842c395765c8cca",
+    "results/codesign_feedback/campaign_cp3_ladder/campaign.csv": "e98155d19f5a9c623fa2a32f6aa364e6d93cf3d376fdb12a22a96ed72e7adf3a",
+    "results/codesign_feedback/campaign_cross/campaign.csv": "fff461f4a94b7f0fc5d6516f13ac672f1ded6ab8e987772fe4115982e7fc643b",
+    "results/codesign_feedback/campaign_free30/campaign.csv": "0f4c6a073c12f163a5399c94e8c596b1c0b51a8090f9a76dcc2a8c7376934671",
+    "results/codesign_feedback/campaign_free30_eq/campaign.csv": "9511fa4afa11889ef27067c93a29faede17f627fd3c248e6465b72aa3eadbc0e",
+    "results/codesign_feedback/campaign_free45/campaign.csv": "adc375e9eba26dea2c270141081a5def6df899a738c302b849c28dfb4ab398e5",
+    "results/codesign_feedback/campaign_gainfair/campaign.csv": "4121eebdae3ee6cb069697fae655629598117a57a9dd239a26badee1edd7e9cd",
+    "results/codesign_feedback/campaign_p3_30/campaign.csv": "65d1162685f06a0b11ece2614f9e6bd7b9ef7e9de985753bbdba8075266cc165",
+    "results/codesign_feedback/campaign_percep/campaign.csv": "252a9f2de72809b03bab11d52c7278b884080fcff784978778d959757e220afd",
+    "results/codesign_feedback/campaign_q1cells/campaign.csv": "6935d1e85a8897ea5e2cdf8008fae8c1942de5cc552855500f4e7fc462dc6bce",
+    "results/codesign_feedback/campaign_qos1/campaign.csv": "f53eaf89c969added3141fc72a42495f0ec33e00241273f84583c478b5a2c89d",
+    "results/codesign_feedback/campaign_rate30/campaign.csv": "c72e9b351062a59d8146d131d0e86738b97010a9c97b6b695977273eee659bbf",
+    "results/codesign_feedback/campaign_rate30_gain/campaign.csv": "1a20793a8759d79b5a265bbcfa1f45c51795c7c58e6508a823f455e9262a1b5e",
+    "results/codesign_feedback/campaign_rate3640/campaign.csv": "539e8b0a5d0f4c5abac071379fa582f1be8eb26b04ead89bcef8da35b177ddf8",
+    "results/codesign_feedback/campaign_rate90/campaign.csv": "0316062a61963b7721ca7f56038af2dbca3745eba48a2f6778faeba4cb23cdf5",
+    "results/codesign_feedback/campaign_rich/campaign.csv": "957e5a475c5610579463b6df70f68edc54c06578d7773cc5a8f45d3d3a821174",
+    "results/codesign_feedback/campaign_richtuned/campaign.csv": "5bcc7b1ff5534d507cb2e8da8da78450b84837635c6c4e56301808e157d9152a",
+    "results/codesign_feedback/campaign_rosgain/campaign.csv": "73bfcc1dde5af9047993c865e4abd8d5e80502c979c74cc3a1750fee7e7c929b",
+    "results/codesign_feedback/campaign_seeds24/campaign.csv": "4ee968293048c26b729ec3211cdeabfe5ac4ccb4256e7f7f89ed87cd00b68756",
+    "results/codesign_feedback/campaign_shardcells/campaign.csv": "d6713164f31a95576e29a4b3b4f57d726241af66fca1b29ca27cbe8b051a5747",
+    "results/codesign_feedback/campaign_static6/campaign.csv": "ab10e14a8fe7998a7f362c74268ba9ea8180dda0113507bc71242fb9a6764648",
+    "results/codesign_feedback/campaign_static6_45/campaign.csv": "ea410d15e00118b8a1ef95041250013698f5ffa313b91dd185df723df7047d1d",
+    "results/codesign_feedback/campaign_submitted/campaign.csv": "cff34cef9d05b2ded743bd14e4e112a6495633bc462409834f4b8447d4a7bc94",
+    "results/codesign_feedback/campaign_tallcal/campaign.csv": "a4455c1d304e421d146034a6b0d55d2aae2f8f6e401f957d5f29076636c14d44",
+    "results/codesign_feedback/campaign_tallnet/campaign.csv": "f0e636330e842d9eb21db22b62207de82af5ef02488f030c9e19d92d77dfb9b4",
+    "results/codesign_feedback/campaign_tuned/campaign.csv": "8794844a73edd82c800115f6b9c8ea43c25ab3236f5b6155b0adb24ce4b5d0b0",
+    "results/codesign_feedback/campaign_v8tmcells/campaign.csv": "0974b9b9bff857ba91720f0ca681b77c48480389e412f53fb24d4ba0322d590b",
+    "results/codesign_feedback/campaign_walk/campaign.csv": "b7621815bfa95943b58cbb4db1326311887538fdaadb3b66912d289b54527bbe",
+    "results/codesign_feedback/campaign_x2cells/campaign.csv": "90a252a06a759c1d7cf9862089a3ed3411b0accc99fea3500f9b7cd72003f471",
+    "results/codesign_feedback/campaign_x2fix/campaign.csv": "2d3aeef9fb142226680417f6528ee14fa02d7085f8ffe5be1e8778523d1ff3a2",
+    "results/codesign_feedback/campaign_x2fix90/campaign.csv": "a2d6a1493a4901aa08688ae06b72ab9c8ab50bd6e49a8964ae7062e5324175ac"
+  },
+  "fallbacks_used": [],
+  "gain": "0.0055",
+  "min_n": 36,
+  "flights_total": 8328,
+  "controlled_sweep_arm": "cp3",
+  "controlled_sweep_label": "pinned ROS 2, camera 15\u219245 Hz",
+  "xpu_mean_gates": 1.9678,
+  "points": [
+    {
+      "trace": "ros_cp315.csv",
+      "hold_ms": 66.7,
+      "n": 60,
+      "completed": 0,
+      "hz": 15.0,
+      "mean_gates": 0.0,
+      "kind": "ros"
+    },
+    {
+      "trace": "ros_vanilla_c5045.csv",
+      "hold_ms": 0.0,
+      "n": 60,
+      "completed": 0,
+      "hz": 20.18,
+      "mean_gates": 0.2333,
+      "kind": "ros"
+    },
+    {
+      "trace": "ros_cp325.csv",
+      "hold_ms": 40.0,
+      "n": 60,
+      "completed": 0,
+      "hz": 25.01,
+      "mean_gates": 0.1833,
+      "kind": "ros"
+    },
+    {
+      "trace": "ros_cp330.csv",
+      "hold_ms": 33.3,
+      "n": 60,
+      "completed": 0,
+      "hz": 30.0,
+      "mean_gates": 0.3833,
+      "kind": "ros"
+    },
+    {
+      "trace": "ros_vanilla4x230.csv",
+      "hold_ms": 33.3,
+      "n": 84,
+      "completed": 0,
+      "hz": 30.01,
+      "mean_gates": 0.3333,
+      "kind": "ros"
+    },
+    {
+      "trace": "ros_vanilla4t45.csv",
+      "hold_ms": 0.0,
+      "n": 60,
+      "completed": 0,
+      "hz": 32.83,
+      "mean_gates": 0.8833,
+      "kind": "ros"
+    },
+    {
+      "trace": "ros_spin45_r1.csv",
+      "hold_ms": 0.0,
+      "n": 60,
+      "completed": 0,
+      "hz": 33.56,
+      "mean_gates": 1.0333,
+      "kind": "ros"
+    },
+    {
+      "trace": "xpu_a90_greedy.csv",
+      "hold_ms": 0.0,
+      "n": 420,
+      "completed": 0,
+      "hz": 35.78,
+      "mean_gates": 0.0,
+      "kind": "greedy"
+    },
+    {
+      "trace": "ros_vanilla4x236.csv",
+      "hold_ms": 27.8,
+      "n": 60,
+      "completed": 1,
+      "hz": 36.14,
+      "mean_gates": 1.0167,
+      "kind": "ros"
+    },
+    {
+      "trace": "ros_rvanilla490.csv",
+      "hold_ms": 26.1,
+      "n": 60,
+      "completed": 0,
+      "hz": 36.85,
+      "mean_gates": 0.9833,
+      "kind": "ros"
+    },
+    {
+      "trace": "ros_rvanilla445.csv",
+      "hold_ms": 26.7,
+      "n": 60,
+      "completed": 0,
+      "hz": 37.29,
+      "mean_gates": 0.7667,
+      "kind": "ros"
+    },
+    {
+      "trace": "ros_rvanilla445.csv",
+      "hold_ms": 0.0,
+      "n": 60,
+      "completed": 9,
+      "hz": 37.29,
+      "mean_gates": 1.7833,
+      "kind": "ros"
+    },
+    {
+      "trace": "ros_cp345.csv",
+      "hold_ms": 22.2,
+      "n": 60,
+      "completed": 5,
+      "hz": 38.47,
+      "mean_gates": 1.35,
+      "kind": "ros"
+    },
+    {
+      "trace": "ros_cp345.csv",
+      "hold_ms": 0.0,
+      "n": 120,
+      "completed": 16,
+      "hz": 38.47,
+      "mean_gates": 1.9667,
+      "kind": "ros"
+    },
+    {
+      "trace": "ros_vanilla4_q145.csv",
+      "hold_ms": 0.0,
+      "n": 156,
+      "completed": 20,
+      "hz": 39.06,
+      "mean_gates": 1.7564,
+      "kind": "ros"
+    },
+    {
+      "trace": "ros_vanilla445.csv",
+      "hold_ms": 0.0,
+      "n": 756,
+      "completed": 52,
+      "hz": 39.15,
+      "mean_gates": 1.2659,
+      "kind": "ros"
+    },
+    {
+      "trace": "ros_vanilla4x240.csv",
+      "hold_ms": 25.0,
+      "n": 60,
+      "completed": 7,
+      "hz": 39.96,
+      "mean_gates": 1.7333,
+      "kind": "ros"
+    },
+    {
+      "trace": "ros_vanilla4x245.csv",
+      "hold_ms": 0.0,
+      "n": 228,
+      "completed": 35,
+      "hz": 48.7468,
+      "mean_gates": 1.8684,
+      "kind": "ros"
+    },
+    {
+      "trace": "ros_vanilla4x290.csv",
+      "hold_ms": 19.6,
+      "n": 120,
+      "completed": 12,
+      "hz": 61.34,
+      "mean_gates": 1.5167,
+      "kind": "ros"
+    },
+    {
+      "trace": "xpu_a_greedy.csv",
+      "hold_ms": 0.0,
+      "n": 228,
+      "completed": 0,
+      "hz": 75.31,
+      "mean_gates": 0.0,
+      "kind": "greedy"
+    },
+    {
+      "trace": "xpu_b5_greedy.csv",
+      "hold_ms": 11.1,
+      "n": 60,
+      "completed": 7,
+      "hz": 76.98,
+      "mean_gates": 1.8333,
+      "kind": "greedy"
+    },
+    {
+      "trace": "xpu_a90_cpsat.csv",
+      "hold_ms": 11.1,
+      "n": 540,
+      "completed": 89,
+      "hz": 89.29,
+      "mean_gates": 2.0111,
+      "kind": "xpu"
+    },
+    {
+      "trace": "xpu_b5_cpsat.csv",
+      "hold_ms": 11.1,
+      "n": 60,
+      "completed": 13,
+      "hz": 91.43,
+      "mean_gates": 2.0667,
+      "kind": "xpu"
+    },
+    {
+      "trace": "xpu_b5_cpsat.csv",
+      "hold_ms": 0.0,
+      "n": 60,
+      "completed": 8,
+      "hz": 91.43,
+      "mean_gates": 1.9333,
+      "kind": "xpu"
+    },
+    {
+      "trace": "xpu_a30_cpsat.csv",
+      "hold_ms": 33.3,
+      "n": 60,
+      "completed": 6,
+      "hz": 94.64,
+      "mean_gates": 1.8667,
+      "kind": "xpu"
+    },
+    {
+      "trace": "xpu_a_cpsat_hard.csv",
+      "hold_ms": 0.0,
+      "n": 1140,
+      "completed": 213,
+      "hz": 96.24,
+      "mean_gates": 2.0447,
+      "kind": "xpu"
+    },
+    {
+      "trace": "xpu_a_cpsat_hard.csv",
+      "hold_ms": 8.3,
+      "n": 444,
+      "completed": 71,
+      "hz": 96.24,
+      "mean_gates": 2.0383,
+      "kind": "xpu"
+    },
+    {
+      "trace": "xpu_a_cpsat_hard.csv",
+      "hold_ms": 22.2,
+      "n": 60,
+      "completed": 10,
+      "hz": 96.24,
+      "mean_gates": 1.9,
+      "kind": "xpu"
+    },
+    {
+      "trace": "xpu_rich45.csv",
+      "hold_ms": 0.0,
+      "n": 36,
+      "completed": 3,
+      "hz": 97.83,
+      "mean_gates": 1.9444,
+      "kind": "xpu"
+    },
+    {
+      "trace": "xpu_shard45.csv",
+      "hold_ms": 0.0,
+      "n": 84,
+      "completed": 10,
+      "hz": 98.79,
+      "mean_gates": 2.0595,
+      "kind": "xpu"
+    },
+    {
+      "trace": "xpu_fb30r1.csv",
+      "hold_ms": 33.3,
+      "n": 60,
+      "completed": 6,
+      "hz": 99.85,
+      "mean_gates": 2.0667,
+      "kind": "xpu"
+    },
+    {
+      "trace": "ros_p345.csv",
+      "hold_ms": 0.0,
+      "n": 576,
+      "completed": 104,
+      "hz": 100.0,
+      "mean_gates": 2.0642,
+      "kind": "ros"
+    },
+    {
+      "trace": "ros_vanilla4tm45.csv",
+      "hold_ms": 0.0,
+      "n": 480,
+      "completed": 42,
+      "hz": 100.0,
+      "mean_gates": 1.6354,
+      "kind": "ros"
+    },
+    {
+      "trace": "ros_p3_q145.csv",
+      "hold_ms": 0.0,
+      "n": 528,
+      "completed": 81,
+      "hz": 100.0,
+      "mean_gates": 1.9811,
+      "kind": "ros"
+    },
+    {
+      "trace": "ros_p390.csv",
+      "hold_ms": 30.3,
+      "n": 480,
+      "completed": 74,
+      "hz": 100.0,
+      "mean_gates": 2.0,
+      "kind": "ros"
+    },
+    {
+      "trace": "ros_vanilla4tm90.csv",
+      "hold_ms": 30.3,
+      "n": 480,
+      "completed": 62,
+      "hz": 100.0,
+      "mean_gates": 1.8396,
+      "kind": "ros"
+    },
+    {
+      "trace": "ros_p345.csv",
+      "hold_ms": 30.3,
+      "n": 60,
+      "completed": 5,
+      "hz": 100.0,
+      "mean_gates": 1.8833,
+      "kind": "ros"
+    },
+    {
+      "trace": "ros_vanilla4tm45.csv",
+      "hold_ms": 30.3,
+      "n": 60,
+      "completed": 5,
+      "hz": 100.0,
+      "mean_gates": 1.55,
+      "kind": "ros"
+    },
+    {
+      "trace": "ros_multi45.csv",
+      "hold_ms": 50.1,
+      "n": 48,
+      "completed": 2,
+      "hz": 100.0,
+      "mean_gates": 1.4167,
+      "kind": "ros"
+    },
+    {
+      "trace": "xpu_w2pg36.csv",
+      "hold_ms": 27.8,
+      "n": 60,
+      "completed": 7,
+      "hz": 100.31,
+      "mean_gates": 1.9,
+      "kind": "xpu"
+    },
+    {
+      "trace": "xpu_w2pg40.csv",
+      "hold_ms": 25.0,
+      "n": 60,
+      "completed": 5,
+      "hz": 100.53,
+      "mean_gates": 1.85,
+      "kind": "xpu"
+    },
+    {
+      "trace": "xpu_p45free.csv",
+      "hold_ms": 0.0,
+      "n": 60,
+      "completed": 7,
+      "hz": 103.46,
+      "mean_gates": 1.9,
+      "kind": "xpu"
+    }
+  ],
+  "controlled_sweep": [
+    {
+      "trace": "ros_cp315.csv",
+      "hold_ms": 66.7,
+      "n": 60,
+      "completed": 0,
+      "hz": 15.0,
+      "mean_gates": 0.0,
+      "kind": "ros",
+      "camera_hz": 15
+    },
+    {
+      "trace": "ros_cp325.csv",
+      "hold_ms": 40.0,
+      "n": 60,
+      "completed": 0,
+      "hz": 25.01,
+      "mean_gates": 0.1833,
+      "kind": "ros",
+      "camera_hz": 25
+    },
+    {
+      "trace": "ros_cp330.csv",
+      "hold_ms": 33.3,
+      "n": 60,
+      "completed": 0,
+      "hz": 30.0,
+      "mean_gates": 0.3833,
+      "kind": "ros",
+      "camera_hz": 30
+    },
+    {
+      "trace": "ros_cp345.csv",
+      "hold_ms": 22.2,
+      "n": 60,
+      "completed": 5,
+      "hz": 38.47,
+      "mean_gates": 1.35,
+      "kind": "ros",
+      "camera_hz": 45
+    }
+  ]
+}

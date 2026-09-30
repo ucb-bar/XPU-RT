@@ -1,0 +1,855 @@
+{
+ "figure": "results/codesign_feedback/refined/warehouse_showdown_v3_paper_tall1005_inb.png",
+ "written": "2026-09-15T16:49:39",
+ "form": "paper",
+ "variant": {
+  "cell": "tall1005",
+  "tuned": "inb",
+  "display_cruise": 1.0,
+  "gain": 0.0055,
+  "n_rule": "equal replicates per seed across the arms drawn",
+  "flights_set_aside": 468,
+  "rich_flights_set_aside": 0
+ },
+ "canvas": {
+  "width_in": 26.0,
+  "height_in": 20.8,
+  "dpi": 300,
+  "min_print_pt": 3.6,
+  "base_pt": 13.18
+ },
+ "sources": {
+  "xpu_dir": "results/codesign_feedback/campaign_v2/display_same/xpu_s1005_figdata",
+  "ros_dir": "results/codesign_feedback/campaign_v2/display_same/ros_s1005_figdata",
+  "campaigns": [
+   "campaign_break",
+   "campaign_courseC",
+   "campaign_cross",
+   "campaign_percep",
+   "campaign_qos1",
+   "campaign_rich",
+   "campaign_seeds24",
+   "campaign_tallcal",
+   "campaign_tallnet",
+   "campaign_walk"
+  ],
+  "gantt_sidecars": [
+   "/scratch/agustin/xpurt-dev-sync/schedules/measured_gantt_v3_xpu_metrics.json",
+   "/scratch/agustin/xpurt-dev-sync/schedules/measured_gantt_v3_xpu2_metrics.json",
+   "/scratch/agustin/xpurt-dev-sync/schedules/measured_gantt_v3_ros8_metrics.json",
+   "/scratch/agustin/xpurt-dev-sync/schedules/measured_gantt_v3_ros_metrics.json"
+  ],
+  "energy_csv": "/scratch/agustin/xpurt-dev-sync/results/codesign_feedback/flight_energy_v2.csv",
+  "scene_records": "results/codesign_feedback/campaign_scene/tall1005s"
+ },
+ "A": {
+  "backdrop": "median of 7 overhead frames (t \u2265 2 s)",
+  "plate_std": 51.5,
+  "xpu_eff_hz": 96.2370242214533,
+  "ros_eff_hz": 39.149145193472066,
+  "xpu_gates": 4,
+  "ros_gates": 1,
+  "ros_hit": "crate",
+  "ros_outcome": "crash"
+ },
+ "B": {
+  "XPURTCPSAT": {
+   "CruiseZeroPointEight": [
+    1,
+    12
+   ],
+   "CruiseOne": [
+    4,
+    24
+   ],
+   "CruiseOnePointTwo": [
+    3,
+    12
+   ],
+   "CruiseOnePointFour": [
+    0,
+    12
+   ],
+   "CruiseOnePointSix": [
+    0,
+    12
+   ],
+   "CruiseOnePointEight": [
+    1,
+    12
+   ]
+  },
+  "XPURTgreedy": {
+   "CruiseZeroPointEight": [
+    0,
+    12
+   ],
+   "CruiseOne": [
+    0,
+    12
+   ],
+   "CruiseOnePointTwo": [
+    0,
+    12
+   ],
+   "CruiseOnePointFour": [
+    0,
+    12
+   ],
+   "CruiseOnePointSix": [
+    0,
+    12
+   ],
+   "CruiseOnePointEight": [
+    0,
+    12
+   ]
+  },
+  "ROSvanillahartYOLO": {
+   "CruiseZeroPointEight": [
+    0,
+    12
+   ],
+   "CruiseOne": [
+    0,
+    24
+   ],
+   "CruiseOnePointTwo": [
+    0,
+    12
+   ],
+   "CruiseOnePointFour": [
+    2,
+    12
+   ],
+   "CruiseOnePointSix": [
+    1,
+    12
+   ],
+   "CruiseOnePointEight": [
+    1,
+    12
+   ]
+  },
+  "ROSvanillaheavierstack": {
+   "CruiseOne": [
+    0,
+    12
+   ],
+   "CruiseOnePointTwo": [
+    0,
+    12
+   ],
+   "CruiseOnePointFour": [
+    0,
+    12
+   ],
+   "CruiseOnePointSix": [
+    0,
+    12
+   ],
+   "CruiseOnePointEight": [
+    0,
+    12
+   ]
+  },
+  "ROSonallcorestwoYOLOnodes": {
+   "CruiseOne": [
+    0,
+    12
+   ],
+   "CruiseOnePointTwo": [
+    1,
+    12
+   ],
+   "CruiseOnePointFour": [
+    0,
+    12
+   ],
+   "CruiseOnePointSix": [
+    0,
+    12
+   ],
+   "CruiseOnePointEight": [
+    1,
+    12
+   ]
+  },
+  "ROShandtunedpinned": {
+   "CruiseOne": [
+    2,
+    12
+   ],
+   "CruiseOnePointTwo": [
+    3,
+    12
+   ],
+   "CruiseOnePointFour": [
+    1,
+    12
+   ],
+   "CruiseOnePointSix": [
+    1,
+    12
+   ],
+   "CruiseOnePointEight": [
+    3,
+    12
+   ]
+  }
+ },
+ "C": {},
+ "Dprime": {
+  "envs": [
+   "a_d0.20",
+   "a_d0.30",
+   "a_d0.40",
+   "b_d0.20",
+   "b_d0.30",
+   "b_d0.40"
+  ],
+  "families": [
+   "xpu",
+   "ros",
+   "p3"
+  ],
+  "k": [
+   [
+    8,
+    7,
+    5,
+    6,
+    7,
+    8
+   ],
+   [
+    3,
+    2,
+    2,
+    7,
+    5,
+    0
+   ],
+   [
+    7,
+    6,
+    8,
+    7,
+    4,
+    6
+   ]
+  ],
+  "n": [
+   [
+    36,
+    48,
+    36,
+    36,
+    36,
+    36
+   ],
+   [
+    36,
+    48,
+    36,
+    36,
+    36,
+    36
+   ],
+   [
+    36,
+    36,
+    36,
+    36,
+    24,
+    36
+   ]
+  ],
+  "person_h": 2.4
+ },
+ "F": {
+  "XPURTCPSAT": {
+   "HzThreeZero": {
+    "lat": 55.156,
+    "deliv": 23.278,
+    "late": 0,
+    "checked": 42,
+    "gap": 9.982,
+    "n": 3,
+    "tags": [
+     "a30cpsat_hardr1",
+     "a30cpsat_hardr2",
+     "a30cpsat_hardr3"
+    ],
+    "cam": 30.0
+   },
+   "HzFourFive": {
+    "lat": 56.323,
+    "deliv": 40.897,
+    "late": 0,
+    "checked": 132,
+    "gap": 10.0,
+    "n": 3,
+    "tags": [
+     "acpsat_hardr1",
+     "acpsat_hardr2",
+     "acpsat_hardr3"
+    ],
+    "cam": 45.0
+   },
+   "HzSixZero": {
+    "lat": 58.783,
+    "deliv": 46.951,
+    "late": 0,
+    "checked": 87,
+    "gap": 10.055,
+    "n": 3,
+    "tags": [
+     "a60cpsat_hardr1",
+     "a60cpsat_hardr2",
+     "a60cpsat_hardr3"
+    ],
+    "cam": 59.999
+   },
+   "HzNineZero": {
+    "lat": 55.642,
+    "deliv": 72.438,
+    "late": 0,
+    "checked": 132,
+    "gap": 10.0,
+    "n": 3,
+    "tags": [
+     "a90cpsat_hardr1",
+     "a90cpsat_hardr2",
+     "a90cpsat_hardr3"
+    ],
+    "cam": 90.001
+   },
+   "HzOneTwoZero": {
+    "lat": 59.792,
+    "deliv": 66.187,
+    "late": 0,
+    "checked": 69,
+    "gap": 9.996,
+    "n": 3,
+    "tags": [
+     "a120hcpsat_hardr1",
+     "a120hcpsat_hardr2",
+     "a120hcpsat_hardr3"
+    ],
+    "cam": 120.005
+   }
+  },
+  "XPURTgreedy": {
+   "HzThreeZero": {
+    "lat": 70.088,
+    "deliv": 22.871,
+    "late": 0,
+    "checked": 42,
+    "gap": 9.997,
+    "n": 3,
+    "tags": [
+     "a30greedyr1",
+     "a30greedyr2",
+     "a30greedyr3"
+    ],
+    "cam": 30.0
+   },
+   "HzFourFive": {
+    "lat": 747.959,
+    "deliv": 31.016,
+    "late": 132,
+    "checked": 132,
+    "gap": 13.249,
+    "n": 3,
+    "tags": [
+     "agreedyr1",
+     "agreedyr2",
+     "agreedyr3"
+    ],
+    "cam": 45.0
+   },
+   "HzSixZero": {
+    "lat": 583.533,
+    "deliv": 27.55,
+    "late": 87,
+    "checked": 87,
+    "gap": 17.476,
+    "n": 3,
+    "tags": [
+     "a60greedyr1",
+     "a60greedyr2",
+     "a60greedyr3"
+    ],
+    "cam": 59.999
+   },
+   "HzNineZero": {
+    "lat": 947.452,
+    "deliv": 29.036,
+    "late": 132,
+    "checked": 132,
+    "gap": 25.669,
+    "n": 3,
+    "tags": [
+     "a90greedyr1",
+     "a90greedyr2",
+     "a90greedyr3"
+    ],
+    "cam": 90.001
+   },
+   "HzOneTwoZero": {
+    "lat": 566.298,
+    "deliv": 18.594,
+    "late": 69,
+    "checked": 69,
+    "gap": 35.759,
+    "n": 3,
+    "tags": [
+     "a120hgreedyr1",
+     "a120hgreedyr2",
+     "a120hgreedyr3"
+    ],
+    "cam": 120.005
+   }
+  },
+  "ROSvanillahartYOLO": {
+   "HzOneFive": {
+    "lat": 31.035,
+    "deliv": 14.98,
+    "deliv_full": 12.733,
+    "gap": 66.667,
+    "n": 3,
+    "tags": [
+     "15_vanilla4_r1",
+     "15_vanilla4_r2",
+     "15_vanilla4_r3"
+    ],
+    "cam": 15
+   },
+   "HzTwoFive": {
+    "lat": 30.989,
+    "deliv": 24.941,
+    "deliv_full": 21.2,
+    "gap": 39.999,
+    "n": 3,
+    "tags": [
+     "25_vanilla4_r1",
+     "25_vanilla4_r2",
+     "25_vanilla4_r3"
+    ],
+    "cam": 25
+   },
+   "HzThreeZero": {
+    "lat": 31.093,
+    "deliv": 29.941,
+    "deliv_full": 25.45,
+    "gap": 33.332,
+    "n": 3,
+    "tags": [
+     "30_vanilla4_r1",
+     "30_vanilla4_r2",
+     "30_vanilla4_r3"
+    ],
+    "cam": 30
+   },
+   "HzFourFive": {
+    "lat": 242.333,
+    "deliv": 38.373,
+    "deliv_full": 32.617,
+    "gap": 25.681,
+    "n": 3,
+    "tags": [
+     "45_vanilla4_r1",
+     "45_vanilla4_r2",
+     "45_vanilla4_r3"
+    ],
+    "cam": 45
+   },
+   "HzSixZero": {
+    "lat": 189.391,
+    "deliv": 38.549,
+    "deliv_full": 32.767,
+    "gap": 25.662,
+    "n": 3,
+    "tags": [
+     "60_vanilla4_r1",
+     "60_vanilla4_r2",
+     "60_vanilla4_r3"
+    ],
+    "cam": 60
+   },
+   "HzNineZero": {
+    "lat": 136.863,
+    "deliv": 38.725,
+    "deliv_full": 32.917,
+    "gap": 25.636,
+    "n": 3,
+    "tags": [
+     "90_vanilla4_r1",
+     "90_vanilla4_r2",
+     "90_vanilla4_r3"
+    ],
+    "cam": 90
+   }
+  },
+  "ROSonallcores": {
+   "HzFourFive": {
+    "lat": 454.637,
+    "deliv": 40.765,
+    "deliv_full": 34.65,
+    "gap": 16.639,
+    "n": 3,
+    "tags": [
+     "45_vanilla4x2_r1",
+     "45_vanilla4x2_r2",
+     "45_vanilla4x2_r3"
+    ],
+    "cam": 45
+   },
+   "HzSixZero": {
+    "lat": 359.821,
+    "deliv": 45.549,
+    "deliv_full": 38.717,
+    "gap": 15.964,
+    "n": 3,
+    "tags": [
+     "60_vanilla4x2_r1",
+     "60_vanilla4x2_r2",
+     "60_vanilla4x2_r3"
+    ],
+    "cam": 60
+   },
+   "HzNineZero": {
+    "lat": 254.263,
+    "deliv": 50.961,
+    "deliv_full": 43.317,
+    "gap": 16.264,
+    "n": 3,
+    "tags": [
+     "90_vanilla4x2_r1",
+     "90_vanilla4x2_r2",
+     "90_vanilla4x2_r3"
+    ],
+    "cam": 90
+   }
+  },
+  "ROSvanillaserialYOLO": {
+   "HzOneFive": {
+    "lat": 53.82,
+    "deliv": 14.961,
+    "deliv_full": 12.717,
+    "gap": 66.665,
+    "n": 3,
+    "tags": [
+     "15_vanilla_r1",
+     "15_vanilla_r2",
+     "15_vanilla_r3"
+    ],
+    "cam": 15
+   },
+   "HzTwoFive": {
+    "lat": 433.292,
+    "deliv": 20.216,
+    "deliv_full": 17.183,
+    "gap": 48.211,
+    "n": 3,
+    "tags": [
+     "25_vanilla_r1",
+     "25_vanilla_r2",
+     "25_vanilla_r3"
+    ],
+    "cam": 25
+   },
+   "HzThreeZero": {
+    "lat": 370.549,
+    "deliv": 20.216,
+    "deliv_full": 17.183,
+    "gap": 48.391,
+    "n": 3,
+    "tags": [
+     "30_vanilla_r1",
+     "30_vanilla_r2",
+     "30_vanilla_r3"
+    ],
+    "cam": 30
+   },
+   "HzFourFive": {
+    "lat": 264.773,
+    "deliv": 20.392,
+    "deliv_full": 17.333,
+    "gap": 48.241,
+    "n": 3,
+    "tags": [
+     "45_vanilla_r1",
+     "45_vanilla_r2",
+     "45_vanilla_r3"
+    ],
+    "cam": 45
+   },
+   "HzSixZero": {
+    "lat": 212.052,
+    "deliv": 20.412,
+    "deliv_full": 17.35,
+    "gap": 48.391,
+    "n": 3,
+    "tags": [
+     "60_vanilla_r1",
+     "60_vanilla_r2",
+     "60_vanilla_r3"
+    ],
+    "cam": 60
+   },
+   "HzNineZero": {
+    "lat": 159.248,
+    "deliv": 20.471,
+    "deliv_full": 17.4,
+    "gap": 48.375,
+    "n": 3,
+    "tags": [
+     "90_vanilla_r1",
+     "90_vanilla_r2",
+     "90_vanilla_r3"
+    ],
+    "cam": 90
+   }
+  },
+  "ROShandtunedpinned": {
+   "HzOneZero": {
+    "lat": 30.533,
+    "deliv": 10.0,
+    "deliv_full": 8.5,
+    "gap": 10.0,
+    "n": 1,
+    "tags": [
+     "10_p3_r1"
+    ],
+    "cam": 10
+   },
+   "HzOneTwo": {
+    "lat": 30.506,
+    "deliv": 12.0,
+    "deliv_full": 10.2,
+    "gap": 10.0,
+    "n": 1,
+    "tags": [
+     "12_p3_r1"
+    ],
+    "cam": 12
+   },
+   "HzOneFive": {
+    "lat": 30.506,
+    "deliv": 14.941,
+    "deliv_full": 12.7,
+    "gap": 10.0,
+    "n": 3,
+    "tags": [
+     "15_p3_r1",
+     "15_p3_r2",
+     "15_p3_r3"
+    ],
+    "cam": 15
+   },
+   "HzTwoZero": {
+    "lat": 30.478,
+    "deliv": 19.941,
+    "deliv_full": 16.95,
+    "gap": 10.0,
+    "n": 1,
+    "tags": [
+     "20_p3_r1"
+    ],
+    "cam": 20
+   },
+   "HzTwoFive": {
+    "lat": 30.47,
+    "deliv": 24.961,
+    "deliv_full": 21.217,
+    "gap": 10.0,
+    "n": 3,
+    "tags": [
+     "25_p3_r1",
+     "25_p3_r2",
+     "25_p3_r3"
+    ],
+    "cam": 25
+   },
+   "HzThreeZero": {
+    "lat": 30.398,
+    "deliv": 29.941,
+    "deliv_full": 25.45,
+    "gap": 10.0,
+    "n": 1,
+    "tags": [
+     "30_p3_r1"
+    ],
+    "cam": 30
+   },
+   "HzFourFive": {
+    "lat": 55.823,
+    "deliv": 38.863,
+    "deliv_full": 33.033,
+    "gap": 10.0,
+    "n": 3,
+    "tags": [
+     "45_p3_r1",
+     "45_p3_r2",
+     "45_p3_r3"
+    ],
+    "cam": 45
+   },
+   "HzFive": {
+    "lat": 30.441,
+    "deliv": 5.0,
+    "deliv_full": 4.25,
+    "gap": 10.0,
+    "n": 1,
+    "tags": [
+     "5_p3_r1"
+    ],
+    "cam": 5
+   },
+   "HzSixZero": {
+    "lat": 55.849,
+    "deliv": 39.118,
+    "deliv_full": 33.25,
+    "gap": 10.0,
+    "n": 1,
+    "tags": [
+     "60_p3_r1"
+    ],
+    "cam": 60
+   },
+   "HzSevenFive": {
+    "lat": 56.079,
+    "deliv": 38.941,
+    "deliv_full": 33.1,
+    "gap": 10.0,
+    "n": 1,
+    "tags": [
+     "75_p3_r1"
+    ],
+    "cam": 75
+   },
+   "HzEight": {
+    "lat": 30.463,
+    "deliv": 8.0,
+    "deliv_full": 6.8,
+    "gap": 10.0,
+    "n": 1,
+    "tags": [
+     "8_p3_r1"
+    ],
+    "cam": 8
+   },
+   "HzNineZero": {
+    "lat": 56.194,
+    "deliv": 38.824,
+    "deliv_full": 33.0,
+    "gap": 10.0,
+    "n": 1,
+    "tags": [
+     "90_p3_r1"
+    ],
+    "cam": 90
+   }
+  }
+ },
+ "G": {
+  "XPURTCPSAT": {
+   "HartZero": 17.08,
+   "HartOne": 9.45,
+   "HartTwo": 14.12,
+   "HartThree": 10.32,
+   "HartFour": 17.35,
+   "HartFive": 8.92,
+   "HartSix": 14.85,
+   "HartSeven": 7.91
+  },
+  "XPURTgreedy": {
+   "HartZero": 32.17,
+   "HartOne": 3.12,
+   "HartTwo": 13.04,
+   "HartThree": 1.64,
+   "HartFour": 39.68,
+   "HartFive": 1.62,
+   "HartSix": 7.53,
+   "HartSeven": 1.19
+  },
+  "ROSonallcorestwoYOLOnodes": {
+   "HartZero": 19.21,
+   "HartOne": 16.23,
+   "HartTwo": 16.25,
+   "HartThree": 16.14,
+   "HartFour": 13.67,
+   "HartFive": 6.11,
+   "HartSix": 6.23,
+   "HartSeven": 6.17
+  },
+  "ROSvanillahartYOLOpool": {
+   "HartZero": 20.41,
+   "HartOne": 19.37,
+   "HartTwo": 19.37,
+   "HartThree": 19.37,
+   "HartFour": 6.96,
+   "HartFive": 5.58,
+   "HartSix": 2.09,
+   "HartSeven": 6.84
+  }
+ },
+ "H": {
+  "ROSvanilla": {
+   "gap": 83.91,
+   "lat": 194.97,
+   "deliv": 11.76,
+   "flightsK": 0,
+   "flightsN": 60
+  },
+  "ROShart": {
+   "gap": 26.31,
+   "lat": 137.76,
+   "deliv": 37.71,
+   "flightsK": 0,
+   "flightsN": 60
+  },
+  "ROSpinned": {
+   "gap": 10.0,
+   "lat": 61.5,
+   "deliv": 38.35
+  },
+  "XPURTgreedy": {
+   "gap": 11.56,
+   "lat": 150.04,
+   "deliv": 57.14,
+   "flightsK": 7,
+   "flightsN": 60
+  },
+  "XPURTCPSAT": {
+   "gap": 9.95,
+   "lat": 58.96,
+   "deliv": 72.42,
+   "flightsK": 13,
+   "flightsN": 60
+  }
+ },
+ "J": {},
+ "K": {},
+ "script": "showdown_v3_figure",
+ "inputs": {
+  "results/codesign_feedback/campaign_break/campaign.csv": "128f7a46419ca5aa1cb568f35ea3efb61610ad080b35a5897903e47fd6e68345",
+  "results/codesign_feedback/campaign_courseC/campaign.csv": "a0a4b730bbe7b959d462bcfb69a6ebdd54ab95ad8600c8141842c395765c8cca",
+  "results/codesign_feedback/campaign_cross/campaign.csv": "fff461f4a94b7f0fc5d6516f13ac672f1ded6ab8e987772fe4115982e7fc643b",
+  "results/codesign_feedback/campaign_percep/campaign.csv": "874cba27e988ed1709ad40352d6a1db5555812261bf62777c080f68fb52f7dc3",
+  "results/codesign_feedback/campaign_qos1/campaign.csv": "f53eaf89c969added3141fc72a42495f0ec33e00241273f84583c478b5a2c89d",
+  "results/codesign_feedback/campaign_rich/campaign.csv": "957e5a475c5610579463b6df70f68edc54c06578d7773cc5a8f45d3d3a821174",
+  "results/codesign_feedback/campaign_seeds24/campaign.csv": "4ee968293048c26b729ec3211cdeabfe5ac4ccb4256e7f7f89ed87cd00b68756",
+  "results/codesign_feedback/campaign_tallcal/campaign.csv": "a4455c1d304e421d146034a6b0d55d2aae2f8f6e401f957d5f29076636c14d44",
+  "results/codesign_feedback/campaign_tallnet/campaign.csv": "f0e636330e842d9eb21db22b62207de82af5ef02488f030c9e19d92d77dfb9b4",
+  "results/codesign_feedback/campaign_walk/campaign.csv": "b7621815bfa95943b58cbb4db1326311887538fdaadb3b66912d289b54527bbe",
+  "results/codesign_feedback/ros_traced/summary.csv": "50b02b05cd10751ce257a94dd78d66b100e3c109885257fdd973b36c12571b11",
+  "schedules/measured_gantt_v3_ros8_metrics.json": "5987b8d7ee8198f06d7891502cddef8e849404afb71bd30fb55918a41e668a15",
+  "schedules/measured_gantt_v3_ros_metrics.json": "65822d8e2be3212c335aa5b00962ed6aa2a4e73f19d6dbcd421dc9bcd948309d",
+  "schedules/measured_gantt_v3_xpu2_metrics.json": "e87ac7d11cbda83bff3198b2d456953f375f4ee780fc94a7abace0df6444c6e1",
+  "schedules/measured_gantt_v3_xpu_metrics.json": "366b582977afc6def6b74a9a1ac8a1a3689c807875a332f8ac80fec8a0a9cac4"
+ },
+ "fallbacks_used": []
+}

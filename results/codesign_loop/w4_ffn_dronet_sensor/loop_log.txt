@@ -1,0 +1,29 @@
+== co-design loop: w4_ffn_dronet_sensor ==
+round 0 · baseline: total-lateness 695.780 (makespan 74.6 ms), 26 instance-miss
+accept rule: candidate_objective.accept() · critical=['mlp_control', 'fused_full', 'ffn_block', 'dronet'] heavy=ffn_block
+      ime: built ime_x60 profiles for (none new; existing reused)
+round 1 · try ime: total-lateness 695.780 -> 642.003 (-7.7%), 22 instance-miss -> ACCEPTABLE
+round 1 · try ime: accepted -- hard deadline misses: ime=22 beats baseline=26 (tolerance 2.72)
+round 1 · try shard: total-lateness 695.780 -> 934.764 (+34.3%), 26 instance-miss -> reject
+round 1 · try shard: rejected -- max deadline lateness: baseline=53.47 beats shard=78.17 (tolerance 0.5)
+      unfuse: adopted ModelBlaster unfused dispatch graph for (none — no fused net with an unfused build on disk)
+round 1 · try unfuse: lever changed nothing on this spec (inapplicable here) — not a candidate
+round 1: ACCEPT +ime  total-lateness 695.780 -> 642.003 (-7.7%)
+round 2 · try shard: total-lateness 642.003 -> 1082.695 (+68.6%), 29 instance-miss -> reject
+round 2 · try shard: rejected -- hard deadline misses: ime=22 beats shard=29 (tolerance 2.72)
+      unfuse: adopted ModelBlaster unfused dispatch graph for (none — no fused net with an unfused build on disk)
+round 2 · try unfuse: lever changed nothing on this spec (inapplicable here) — not a candidate
+round 2: no lever is accepted by the nine-term objective rule — CONVERGED
+fuse: NOT applied — roofline decision-aid says the stack is compute-bound (max fusible-epilogue ceiling 16% on dronet); fusion collapses dispatches (scheduling) but is measured ~+0.85% on cycles, so the loop does not credit a makespan gain it cannot measure.
+
+== board-feedback arm ==  (calibration results/codesign_feedback/k1_board_calibration.json)
+board arm · re-solved converged AOT spec at full budget (cpsat, 300s): makespan 62.68 ms
+board arm · stage1 baseline (AOT costs): 26 instance-miss
+board arm · stage2 AOT-optimized (AOT costs): 10 instance-miss  [levers: ['ime']]
+board arm · stage3 board re-cost of the AOT schedule: 11 instance-miss {'mlp_control': 1, 'ffn_block': 5, 'dronet': 5}  <- the run-honest reveal
+board arm · re-solve iter 1 (--board-calibration, cpsat): 11 -> 17 instance-miss {'fused_full': 7, 'ffn_block': 5, 'dronet': 5} -> no improvement, stop
+board arm: instance-miss arc  baseline->AOT->board-recost->board-resolve = 26 -> 10 -> 11 -> 11
+
+CONVERGED: hard deadline misses (instances) 26 -> 22; total-lateness 695.780 -> 642.003 ms (-7.7%), levers applied: ['ime']
+  decided by: ime (hard deadline misses: ime=22 beats baseline=26 (tolerance 2.72))
+artifacts in /scratch/agustin/xpurt-dev-sync/results/codesign_loop/w4_ffn_dronet_sensor

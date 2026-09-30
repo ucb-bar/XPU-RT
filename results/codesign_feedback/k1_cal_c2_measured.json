@@ -1,0 +1,63 @@
+{
+ "schema": "k1_board_calibration/v2",
+ "source": "1 board trace(s), real SpaceMiT K1; actual=(end-start)ticks/24MHz vs the predicted_duration_ms the runner stamped from the schedule",
+ "workload": "c2_ffn AOT schedule, measured on K1 (aligned)",
+ "generated_by": "scripts/emit_board_calibration.py",
+ "generated_at": "2026-09-09T05:23:40",
+ "measures": "EXECUTION inflation only. Queue delay is carried separately by the trace and excluded: a dispatch that waited is not a dispatch that ran slowly, and folding queueing in would charge the scheduler twice for its own placement.",
+ "statistic": "mean of per-sample ratios; pooled op tier and aggregate floored at predicted >= 0.1 ms (2400 rdtime ticks) so timer granularity cannot inflate a pooled multiplier",
+ "n_dispatch_samples": 109,
+ "n_pooled_samples": 25,
+ "aggregate_multiplier": 1.132,
+ "aggregate_median": 1.0689,
+ "aggregate_mean": 1.132,
+ "primary_key": "network/dispatch_id (exact, for the measured workload)",
+ "fallback_key": "op (generalizing; EXTRAPOLATED for nets not in coverage.nets_exact)",
+ "alignment": {
+  "schedule": "/tmp/c2_aot_sched.json",
+  "verified": true,
+  "networks_aligned": [
+   "ffn_block",
+   "mlp_control"
+  ],
+  "networks_omitted_from_exact_tier": {},
+  "note": "the runner records zero-cost ops with dispatch_id -1 and numbers the rest from zero, while the schedule numbers all of them, so on a network with zero-cost ops the two numberings diverge. Ratios are computed within a row and are always right; only the KEY can be wrong, which is invisible in the emitted table -- hence the check, and hence dropping a misaligned network's per-dispatch keys rather than keeping plausible-looking wrong ones."
+ },
+ "coverage": {
+  "nets_exact": [
+   "ffn_block",
+   "mlp_control"
+  ],
+  "nets_measured": [
+   "ffn_block",
+   "mlp_control"
+  ],
+  "n_exact_dispatch_keys": 12,
+  "n_op_kind_keys": 4,
+  "note": "a net absent from nets_exact is costed by its op kinds or by the aggregate, which is a prediction about that net, not a measurement of it"
+ },
+ "traces": [
+  "ModelBlaster/tmp/c2_board_run/_gen/c2_aot_sched/c2_aot_sched_trace.csv"
+ ],
+ "traces_skipped": [],
+ "per_dispatch_multiplier": {
+  "ffn_block/0": 1.0886,
+  "ffn_block/1": 1.3463,
+  "ffn_block/2": 1.02,
+  "ffn_block/3": 1.1112,
+  "ffn_block/4": 1.094,
+  "mlp_control/0": 1.1805,
+  "mlp_control/1": 0.9848,
+  "mlp_control/2": 0.8695,
+  "mlp_control/3": 1.1023,
+  "mlp_control/4": 1.1861,
+  "mlp_control/5": 1.29,
+  "mlp_control/6": 1.4815
+ },
+ "per_op_multiplier": {
+  "add_s8": 1.094,
+  "gelu_s8": 1.02,
+  "layernorm_s8": 1.0886,
+  "linear_s8": 1.2288
+ }
+}

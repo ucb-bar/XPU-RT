@@ -1,0 +1,15 @@
+{
+  "tag": "long45_other_run3",
+  "schedule": "/scratch/agustin/xpurt-dev-sync/schedules/scheduled_wh_coupled_chain_long_greedy_clamped.json",
+  "schedule_sha256": "5acd1ca0d6747029",
+  "solver": "scheduled_wh_coupled_chain_long_greedy_clamped.json",
+  "board_recost": null,
+  "ir_sha256_yolo": "0c783539626cf1627ae801d997ddc3f8c82316ab1ec10bb488cd9b4418180456",
+  "sched_policy": "SCHED_OTHER",
+  "run_t0_rdtime": 108738896410345,
+  "wall_start_epoch_ms": 1789085408499,
+  "exit_code": 0,
+  "verify_lines": [],
+  "rdtime_hz": 24000000,
+  "note": "numeric verification covers instance 0 only"
+}

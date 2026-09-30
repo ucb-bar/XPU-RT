@@ -1,0 +1,77 @@
+[
+ {
+  "round": 0,
+  "solver": "cpsat_hard",
+  "calibration_aggregate": null,
+  "window_misses": {
+   "mlp_control": {
+    "n": 40,
+    "miss": 40,
+    "worst": 15.380041666666614
+   },
+   "yolov8_nano_64x96": {
+    "n": 36,
+    "miss": 4,
+    "worst": 1.1093833333333123
+   },
+   "fused_full": {
+    "n": 36,
+    "miss": 1,
+    "worst": 0.12054722222217151
+   }
+  },
+  "gap_mean_ms": 10.169347222222223,
+  "e2e_median_ms": 70.08131944444443,
+  "predicted_misses": 0
+ },
+ {
+  "round": 1,
+  "solver": "cpsat_hard",
+  "calibration_aggregate": 1.1051,
+  "window_misses": {
+   "mlp_control": {
+    "n": 40,
+    "miss": 40,
+    "worst": 436.56145833333335
+   },
+   "yolov8_nano_64x96": {
+    "n": 36,
+    "miss": 36,
+    "worst": 443.7050361111111
+   },
+   "fused_full": {
+    "n": 36,
+    "miss": 36,
+    "worst": 441.9919638888889
+   }
+  },
+  "gap_mean_ms": 19.204215811965813,
+  "e2e_median_ms": 354.4328819444445,
+  "predicted_misses": 0
+ },
+ {
+  "round": 2,
+  "solver": "cpsat_hard",
+  "calibration_aggregate": 1.9584,
+  "window_misses": {
+   "mlp_control": {
+    "n": 40,
+    "miss": 40,
+    "worst": 297.71254166666677
+   },
+   "yolov8_nano_64x96": {
+    "n": 36,
+    "miss": 36,
+    "worst": 308.4723555555555
+   },
+   "fused_full": {
+    "n": 36,
+    "miss": 36,
+    "worst": 306.0444500000001
+   }
+  },
+  "gap_mean_ms": 16.58278311965812,
+  "e2e_median_ms": 258.31679166666675,
+  "predicted_misses": 0
+ }
+]

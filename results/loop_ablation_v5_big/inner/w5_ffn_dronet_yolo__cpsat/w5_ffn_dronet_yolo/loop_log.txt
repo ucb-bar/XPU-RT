@@ -1,0 +1,22 @@
+== co-design loop: w5_ffn_dronet_yolo ==
+round 0 · baseline: makespan 74.613 (makespan 74.6 ms), 249 dispatch-miss
+accept rule: candidate_objective.accept() · critical=['mlp_control', 'fused_full', 'ffn_block', 'dronet', 'yolov8_nano_64x96'] heavy=yolov8_nano_64x96
+      ime: built ime_x60 profiles for (none new; existing reused)
+round 1 · try ime: makespan 74.613 -> 80.010 (+7.2%), 322 dispatch-miss -> ACCEPTABLE
+round 1 · try ime: accepted -- hard deadline misses: ime=25 beats baseline=30 (tolerance 2.8)
+round 1 · try shard: makespan 74.613 -> 104.376 (+39.9%), 316 dispatch-miss -> reject
+round 1 · try shard: rejected -- max deadline lateness: baseline=51.37 beats shard=85.6 (tolerance 0.5)
+      unfuse: adopted ModelBlaster unfused dispatch graph for (none — no fused net with an unfused build on disk)
+round 1 · try unfuse: lever changed nothing on this spec (inapplicable here) — not a candidate
+round 1: ACCEPT +ime  makespan 74.613 -> 80.010 (--7.2%)
+round 2 · try shard: NOT BUILDABLE (4 contract violations): REFUSE uniform_width_across_instances: dronet dispatch 0 (conv2d_s8) -- instances take widths [1, 2]; one generated model cannot encode two packed weight layouts for one dispatch
+round 2 · try shard: rejected -- the schedule is valid for the runtime and cannot be code-generated; not a candidate
+      unfuse: adopted ModelBlaster unfused dispatch graph for (none — no fused net with an unfused build on disk)
+round 2 · try unfuse: lever changed nothing on this spec (inapplicable here) — not a candidate
+round 2: no lever is accepted by the nine-term objective rule — CONVERGED
+fuse: NOT applied — roofline decision-aid says the stack is compute-bound (max fusible-epilogue ceiling 16% on dronet); fusion collapses dispatches (scheduling) but is measured ~+0.85% on cycles, so the loop does not credit a makespan gain it cannot measure.
+
+CONVERGED: hard deadline misses (instances) 30 -> 25; makespan 74.613 -> 80.010 ms (+7.2%), levers applied: ['ime']
+  decided by: ime (hard deadline misses: ime=25 beats baseline=30 (tolerance 2.8))
+  note: makespan rose while the rule accepted on a higher-ranked term (misses rank first, makespan lower) — this is the rule working, not a regression
+artifacts in /scratch/agustin/xpurt-dev-sync/results/loop_ablation_v5_big/inner/w5_ffn_dronet_yolo__cpsat/w5_ffn_dronet_yolo

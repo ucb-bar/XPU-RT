@@ -1,0 +1,138 @@
+{
+ "summaries_used": [
+  "results/loop_ablation_postfix/ablation_summary.json"
+ ],
+ "summaries_missing": [],
+ "ablation": {
+  "w4": {
+   "n_nets": 4,
+   "cpsat": {
+    "cells": {
+     "A": 23,
+     "B": 10,
+     "C": 28,
+     "D": 26
+    },
+    "levers": [
+     "shard:dronet",
+     "shard:fused_full"
+    ]
+   },
+   "greedy": {
+    "cells": {
+     "A": 10,
+     "B": 4,
+     "C": 10,
+     "D": 8
+    },
+    "levers": [
+     "shard:ffn_block"
+    ]
+   }
+  },
+  "s5": {
+   "n_nets": 5,
+   "cpsat": {
+    "cells": {
+     "A": 1,
+     "B": 1,
+     "C": 1,
+     "D": 1
+    },
+    "levers": []
+   },
+   "greedy": {
+    "cells": {
+     "A": 1,
+     "B": 0,
+     "C": 1,
+     "D": 0
+    },
+    "levers": [
+     "shard"
+    ]
+   }
+  }
+ },
+ "evolution": [
+  {
+   "stage": 1,
+   "title": "Baseline \u00b7 RVV",
+   "has_shard": false,
+   "has_ime": false,
+   "dispatch_widths": [
+    1
+   ],
+   "implementations": [
+    "rvv"
+   ],
+   "instance_misses": 2,
+   "missed_by_network": {
+    "FFN": 2
+   }
+  },
+  {
+   "stage": 2,
+   "title": "AOT optimise \u00b7 IME",
+   "has_shard": false,
+   "has_ime": true,
+   "dispatch_widths": [
+    1
+   ],
+   "implementations": [
+    "ime",
+    "rvv"
+   ],
+   "instance_misses": 0,
+   "missed_by_network": {}
+  },
+  {
+   "stage": 3,
+   "title": "K1-calibrated replay",
+   "has_shard": false,
+   "has_ime": true,
+   "dispatch_widths": [
+    1
+   ],
+   "implementations": [
+    "ime",
+    "rvv"
+   ],
+   "instance_misses": 1,
+   "missed_by_network": {
+    "NAV": 1
+   }
+  },
+  {
+   "stage": 4,
+   "title": "K1-calibrated re-solve",
+   "has_shard": false,
+   "has_ime": true,
+   "dispatch_widths": [
+    1
+   ],
+   "implementations": [
+    "ime",
+    "rvv"
+   ],
+   "instance_misses": 0,
+   "missed_by_network": {}
+  }
+ ],
+ "canvas_mm": [
+  183.0,
+  58.5
+ ],
+ "saved_mm": [
+  184.49,
+  59.94
+ ],
+ "cell_meaning": {
+  "A": "neither",
+  "B": "inner (AOT)",
+  "C": "outer (HIL)",
+  "D": "both"
+ },
+ "band_a": "schematic only - no measured number appears in band A; the mini-Gantts are illustrations of the two loops",
+ "caveat_cell_C": "Cell C re-solves against measured board costs and is also SCORED on them, so the discrepancy the board step exposes in band C is designed out of it. Its zero benefit is a statement about the ablation's outer-loop measurement, not about HIL feedback."
+}

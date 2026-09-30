@@ -1,0 +1,7 @@
+=== 18:28:58 wh_chain90_rich_shard greedy
+    greedy_periodic: makespan=597.75 ms (all ops 597.75 ms), periodic window misses=1280, converged
+=== 18:29:25 wh_chain90_rich_shard cpsat hard (limit 2400 s)
+  hard rc=1 cpsat status=UNKNOWN wall=2400.5s
+  table cpsat_hard: none
+  table cpsat_soft: none
+=== 19:09:33 STAGE2_DONE wh_chain90_rich_shard

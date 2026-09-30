@@ -1,0 +1,8 @@
+{
+ "log": "campaign_x2tmcells/ros_vanilla4x2tm_lat37.8_h0_a_d0.30_w0.0_g0.0055_c1.0.log",
+ "log_sha256": "dcf4964ceef4310e0ca675baf9d09e09e557191220ec00671b68a92a435aded2",
+ "log_bytes": 2412014893,
+ "lines": {
+  "848425": "2026-09-16T21:38:36Z [462,224ms] [Error] [omni.physx.plugin] PhysX error: PhysX Internal CUDA error. Simulation cannot continue! Error code 2!"
+ }
+}

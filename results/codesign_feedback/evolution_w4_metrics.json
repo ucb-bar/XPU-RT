@@ -1,0 +1,62 @@
+{
+  "layout": "grid",
+  "figure_size_in": [
+    7.16,
+    3.7
+  ],
+  "height_arg": 3.7,
+  "panels": [
+    {
+      "stage": 1,
+      "title": "Baseline \u00b7 RVV singletons",
+      "driver": "loop baseline (levers stripped)",
+      "cost_source": "AOT model",
+      "makespan_ms": 74.61295799999999,
+      "displayed_instance_deadline_misses": 18,
+      "missed_instances_by_network": {
+        "FFN": 5,
+        "dronet": 5,
+        "NAV": 8
+      }
+    },
+    {
+      "stage": 2,
+      "title": "Auto-loop optimize \u2014 no levers",
+      "driver": "levers from the loop's measured search",
+      "cost_source": "AOT model",
+      "makespan_ms": 74.61295799999999,
+      "displayed_instance_deadline_misses": 18,
+      "missed_instances_by_network": {
+        "FFN": 5,
+        "dronet": 5,
+        "NAV": 8
+      }
+    },
+    {
+      "stage": 3,
+      "title": "K1-calibrated replay",
+      "driver": "same assignment, board durations",
+      "cost_source": "K1-calibrated model",
+      "makespan_ms": 77.94816351770001,
+      "displayed_instance_deadline_misses": 19,
+      "missed_instances_by_network": {
+        "dronet": 5,
+        "FFN": 5,
+        "NAV": 9
+      }
+    },
+    {
+      "stage": 4,
+      "title": "K1-calibrated re-solve",
+      "driver": "re-optimized on board costs",
+      "cost_source": "K1-calibrated model",
+      "makespan_ms": 107.0886950022,
+      "displayed_instance_deadline_misses": 13,
+      "missed_instances_by_network": {
+        "FFN": 5,
+        "dronet": 5,
+        "NAV": 3
+      }
+    }
+  ]
+}

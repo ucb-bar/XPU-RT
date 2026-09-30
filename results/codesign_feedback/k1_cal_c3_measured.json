@@ -1,0 +1,84 @@
+{
+ "schema": "k1_board_calibration/v2",
+ "source": "1 board trace(s), real SpaceMiT K1; actual=(end-start)ticks/24MHz vs the predicted_duration_ms the runner stamped from the schedule",
+ "workload": "c3_ffn_sensor AOT schedule, measured on K1",
+ "generated_by": "scripts/emit_board_calibration.py",
+ "generated_at": "2026-09-09T05:25:43",
+ "measures": "EXECUTION inflation only. Queue delay is carried separately by the trace and excluded: a dispatch that waited is not a dispatch that ran slowly, and folding queueing in would charge the scheduler twice for its own placement.",
+ "statistic": "mean of per-sample ratios; pooled op tier and aggregate floored at predicted >= 0.1 ms (2400 rdtime ticks) so timer granularity cannot inflate a pooled multiplier",
+ "n_dispatch_samples": 289,
+ "n_pooled_samples": 133,
+ "aggregate_multiplier": 1.3234,
+ "aggregate_median": 1.1343,
+ "aggregate_mean": 1.3234,
+ "primary_key": "network/dispatch_id (exact, for the measured workload)",
+ "fallback_key": "op (generalizing; EXTRAPOLATED for nets not in coverage.nets_exact)",
+ "alignment": {
+  "schedule": "/tmp/c3_aot_sched.json",
+  "verified": true,
+  "networks_aligned": [
+   "ffn_block",
+   "fused_full",
+   "mlp_control"
+  ],
+  "networks_omitted_from_exact_tier": {},
+  "note": "the runner records zero-cost ops with dispatch_id -1 and numbers the rest from zero, while the schedule numbers all of them, so on a network with zero-cost ops the two numberings diverge. Ratios are computed within a row and are always right; only the KEY can be wrong, which is invisible in the emitted table -- hence the check, and hence dropping a misaligned network's per-dispatch keys rather than keeping plausible-looking wrong ones."
+ },
+ "coverage": {
+  "nets_exact": [
+   "ffn_block",
+   "fused_full",
+   "mlp_control"
+  ],
+  "nets_measured": [
+   "ffn_block",
+   "fused_full",
+   "mlp_control"
+  ],
+  "n_exact_dispatch_keys": 27,
+  "n_op_kind_keys": 7,
+  "note": "a net absent from nets_exact is costed by its op kinds or by the aggregate, which is a prediction about that net, not a measurement of it"
+ },
+ "traces": [
+  "ModelBlaster/tmp/c3_board_run/_gen/c3_aot_sched/c3_aot_sched_trace.csv"
+ ],
+ "traces_skipped": [],
+ "per_dispatch_multiplier": {
+  "ffn_block/0": 1.1516,
+  "ffn_block/1": 1.1324,
+  "ffn_block/2": 1.0608,
+  "ffn_block/3": 1.1377,
+  "ffn_block/4": 1.122,
+  "fused_full/0": 1.2279,
+  "fused_full/1": 1.2869,
+  "fused_full/10": 1.9322,
+  "fused_full/11": 1.5703,
+  "fused_full/12": 1.2582,
+  "fused_full/13": 1.1851,
+  "fused_full/14": 2.0754,
+  "fused_full/2": 1.2391,
+  "fused_full/3": 1.1907,
+  "fused_full/4": 1.6455,
+  "fused_full/5": 2.1369,
+  "fused_full/6": 1.3305,
+  "fused_full/7": 1.2379,
+  "fused_full/8": 3.8547,
+  "fused_full/9": 2.1195,
+  "mlp_control/0": 0.7037,
+  "mlp_control/1": 1.2656,
+  "mlp_control/2": 0.8571,
+  "mlp_control/3": 1.0198,
+  "mlp_control/4": 1.1467,
+  "mlp_control/5": 1.0962,
+  "mlp_control/6": 1.2315
+ },
+ "per_op_multiplier": {
+  "add_s8": 1.122,
+  "conv2d_s8": 1.2365,
+  "gelu_s8": 1.0608,
+  "layernorm_s8": 1.1516,
+  "linear_f16": 2.1369,
+  "linear_s8": 1.1351,
+  "lstm_f16": 1.3379
+ }
+}

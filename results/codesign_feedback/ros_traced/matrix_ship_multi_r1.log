@@ -1,0 +1,36 @@
+=== 16:10:55 5_ship_r1 ===
+ROS_TRACED tag=5_ship_r1 exec=single rate=5 released=100 goals=99 fires=1604 gap_mean=12.47 gap_max=51.98
+=== 16:11:24 8_ship_r1 ===
+ROS_TRACED tag=8_ship_r1 exec=single rate=8 released=160 goals=159 fires=1410 gap_mean=14.19 gap_max=58.25
+=== 16:11:54 10_ship_r1 ===
+ROS_TRACED tag=10_ship_r1 exec=single rate=10 released=200 goals=199 fires=1377 gap_mean=14.53 gap_max=51.21
+=== 16:12:24 12_ship_r1 ===
+ROS_TRACED tag=12_ship_r1 exec=single rate=12 released=240 goals=239 fires=1098 gap_mean=18.22 gap_max=58.62
+=== 16:12:54 15_ship_r1 ===
+ROS_TRACED tag=15_ship_r1 exec=single rate=15 released=300 goals=299 fires=901 gap_mean=22.21 gap_max=58.07
+=== 16:13:24 20_ship_r1 ===
+ROS_TRACED tag=20_ship_r1 exec=single rate=20 released=378 goals=374 fires=426 gap_mean=47.01 gap_max=54.22
+=== 16:13:55 25_ship_r1 ===
+ROS_TRACED tag=25_ship_r1 exec=single rate=25 released=381 goals=377 fires=385 gap_mean=52.02 gap_max=53.94
+=== 16:14:24 30_ship_r1 ===
+ROS_TRACED tag=30_ship_r1 exec=single rate=30 released=383 goals=379 fires=387 gap_mean=51.78 gap_max=54.43
+MATRIX_DONE ship r1 16:14:54
+=== 16:14:54 5_multi_r1 ===
+ROS_TRACED tag=5_multi_r1 exec=multi rate=5 released=100 goals=99 fires=2000 gap_mean=10.00 gap_max=10.69
+=== 16:15:24 8_multi_r1 ===
+ROS_TRACED tag=8_multi_r1 exec=multi rate=8 released=160 goals=159 fires=2000 gap_mean=10.00 gap_max=10.71
+=== 16:15:53 10_multi_r1 ===
+ROS_TRACED tag=10_multi_r1 exec=multi rate=10 released=200 goals=199 fires=2000 gap_mean=10.00 gap_max=11.41
+=== 16:16:23 12_multi_r1 ===
+ROS_TRACED tag=12_multi_r1 exec=multi rate=12 released=240 goals=239 fires=2000 gap_mean=10.00 gap_max=13.84
+=== 16:16:53 15_multi_r1 ===
+ROS_TRACED tag=15_multi_r1 exec=multi rate=15 released=300 goals=299 fires=2000 gap_mean=10.00 gap_max=11.66
+=== 16:17:23 20_multi_r1 ===
+ROS_TRACED tag=20_multi_r1 exec=multi rate=20 released=400 goals=398 fires=2000 gap_mean=10.00 gap_max=13.87
+scp: Connection closed
+=== 16:17:52 25_multi_r1 ===
+ROS_TRACED tag=25_multi_r1 exec=multi rate=25 released=500 goals=409 fires=2000 gap_mean=10.00 gap_max=11.25
+=== 16:18:22 30_multi_r1 ===
+ROS_TRACED tag=30_multi_r1 exec=multi rate=30 released=600 goals=408 fires=2000 gap_mean=10.00 gap_max=12.52
+scp: Connection closed
+MATRIX_DONE multi r1 16:18:51

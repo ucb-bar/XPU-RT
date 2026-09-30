@@ -1,0 +1,30 @@
+{
+  "frame_instance_zero_based": 2,
+  "budget_ms": 23.0,
+  "comparison_unit": "one perception-frame response from release to output",
+  "xpu_response_ms": 22.999776799999992,
+  "xpu_meets_budget": true,
+  "ros_response_ms": 49.764795263999986,
+  "ros_meets_budget": false,
+  "xpu_workload_instances": {
+    "yolo": 5,
+    "nav": 6,
+    "ctrl": 12
+  },
+  "ros_workload_instances": {
+    "yolo": 5,
+    "nav": 6,
+    "ctrl": 12
+  },
+  "horizons_matched": true,
+  "numeric_tolerance_ms": 0.01,
+  "xpu_schedule": "/scratch/agustin/xpurt-dev-sync/schedules/scheduled__flight_deployed_matched_board_cpsat_profiled.json",
+  "ros_schedule": "/scratch/agustin/xpurt-dev-sync/schedules/scheduled_ros_partition_deployed_matched_board.json",
+  "duration_provenance": "K1 per-dispatch calibration where available; aggregate fallback otherwise",
+  "intended_use": "two-column main-paper schedule panel",
+  "authored_figure_size_in": [
+    7.16,
+    3.8
+  ],
+  "minimum_font_size_pt": 7.0
+}

@@ -1,0 +1,98 @@
+{
+ "summaries_used": [
+  "/scratch/agustin/xpurt-dev-sync/results/loop_ablation_v4_small/ablation_summary.json",
+  "/scratch/agustin/xpurt-dev-sync/results/loop_ablation_v4_big/ablation_summary.json"
+ ],
+ "summaries_missing": [
+  "/scratch/agustin/xpurt-dev-sync/results/loop_ablation_stable/ablation_summary.json"
+ ],
+ "ablation": "dropped by --no-ablation",
+ "evolution": [
+  {
+   "stage": 1,
+   "title": "Baseline \u00b7 RVV",
+   "has_shard": false,
+   "has_ime": false,
+   "dispatch_widths": [
+    1
+   ],
+   "implementations": [
+    "rvv"
+   ],
+   "instance_misses": 2,
+   "missed_by_network": {
+    "FFN": 2
+   }
+  },
+  {
+   "stage": 2,
+   "title": "AOT optimise \u00b7 shard+IME",
+   "has_shard": true,
+   "has_ime": true,
+   "dispatch_widths": [
+    1,
+    2,
+    4
+   ],
+   "implementations": [
+    "ime",
+    "rvv"
+   ],
+   "instance_misses": 0,
+   "missed_by_network": {}
+  },
+  {
+   "stage": 3,
+   "title": "K1-calibrated replay",
+   "has_shard": true,
+   "has_ime": true,
+   "dispatch_widths": [
+    1,
+    2,
+    4
+   ],
+   "implementations": [
+    "ime",
+    "rvv"
+   ],
+   "instance_misses": 6,
+   "missed_by_network": {
+    "NAV": 3,
+    "CTRL": 3
+   }
+  },
+  {
+   "stage": 4,
+   "title": "K1-calibrated re-solve",
+   "has_shard": true,
+   "has_ime": true,
+   "dispatch_widths": [
+    1,
+    2,
+    4
+   ],
+   "implementations": [
+    "ime",
+    "rvv"
+   ],
+   "instance_misses": 0,
+   "missed_by_network": {}
+  }
+ ],
+ "canvas_mm": [
+  183.0,
+  42.0
+ ],
+ "saved_mm": [
+  186.52,
+  43.52
+ ],
+ "cell_meaning": {
+  "A": "neither",
+  "B": "inner (AOT)",
+  "C": "outer (HIL)",
+  "D": "both"
+ },
+ "band_a": "schematic only - no measured number appears in band A; the mini-Gantts are illustrations of the two loops",
+ "caveat_cell_C": "Cell C re-solves against measured board costs and is also SCORED on them, so the discrepancy the board step exposes in band C is designed out of it. Its zero benefit is a statement about the ablation's outer-loop measurement, not about HIL feedback."
+}

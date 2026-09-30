@@ -1,0 +1,22 @@
+== co-design loop: w5_ffn_dronet_yolo ==
+inner search runs against MEASURED board costs (results/codesign_feedback/k1_board_calibration.json) -- lever scores here are board-honest and are NOT comparable with an isolated-profile run
+round 0 · baseline: total-lateness 170.536 (makespan 77.9 ms), 11 instance-miss
+accept rule: candidate_objective.accept() · critical=['mlp_control', 'fused_full', 'ffn_block', 'dronet', 'yolov8_nano_64x96'] heavy=yolov8_nano_64x96
+      ime: built ime_x60 profiles for (none new; existing reused)
+round 1 · try ime: total-lateness 170.536 -> 154.365 (-9.5%), 11 instance-miss -> ACCEPTABLE
+round 1 · try ime: accepted -- max deadline lateness: ime=33.76 beats baseline=38.62 (tolerance 0.5)
+round 1 · try shard: total-lateness 170.536 -> 163.697 (-4.0%), 12 instance-miss -> reject
+round 1 · try shard: rejected -- max deadline lateness: baseline=38.62 beats shard=40.38 (tolerance 0.5)
+      unfuse: adopted ModelBlaster unfused dispatch graph for (none — no fused net with an unfused build on disk)
+round 1 · try unfuse: lever changed nothing on this spec (inapplicable here) — not a candidate
+round 1: ACCEPT +ime  total-lateness 170.536 -> 154.365 (-9.5%)
+round 2 · try shard: total-lateness 154.365 -> 158.531 (+2.7%), 12 instance-miss -> reject
+round 2 · try shard: rejected -- max deadline lateness: ime=33.76 beats shard=40.38 (tolerance 0.5)
+      unfuse: adopted ModelBlaster unfused dispatch graph for (none — no fused net with an unfused build on disk)
+round 2 · try unfuse: lever changed nothing on this spec (inapplicable here) — not a candidate
+round 2: no lever is accepted by the nine-term objective rule — CONVERGED
+fuse: NOT applied — roofline decision-aid says the stack is compute-bound (max fusible-epilogue ceiling 16% on dronet); fusion collapses dispatches (scheduling) but is measured ~+0.85% on cycles, so the loop does not credit a makespan gain it cannot measure.
+
+CONVERGED: hard deadline misses (instances) 11 -> 11; total-lateness 170.536 -> 154.365 ms (-9.5%), levers applied: ['ime']
+  decided by: ime (max deadline lateness: ime=33.76 beats baseline=38.62 (tolerance 0.5))
+artifacts in /scratch/agustin/xpurt-dev-sync/results/codesign_feedback/search_costs/board/w5_ffn_dronet_yolo

@@ -1,0 +1,66 @@
+{
+ "a30cpsat_hardr": {
+  "runs": 3,
+  "chain": 55.2,
+  "gap": 9.98,
+  "gmax": 15.44,
+  "late": 0,
+  "n": 36
+ },
+ "a30greedyr": {
+  "runs": 3,
+  "chain": 70.1,
+  "gap": 10.0,
+  "gmax": 15.52,
+  "late": 0,
+  "n": 36
+ },
+ "a60cpsat_hardr": {
+  "runs": 3,
+  "chain": 58.5,
+  "gap": 10.06,
+  "gmax": 15.3,
+  "late": 0,
+  "n": 72
+ },
+ "a60greedyr": {
+  "runs": 3,
+  "chain": 583.6,
+  "gap": 17.48,
+  "gmax": 667.9,
+  "late": 72,
+  "n": 72
+ },
+ "a90cpsat_hardr": {
+  "runs": 3,
+  "chain": 55.9,
+  "gap": 10.0,
+  "gmax": 15.04,
+  "late": 0,
+  "n": 108
+ },
+ "a90greedyr": {
+  "runs": 3,
+  "chain": 947.5,
+  "gap": 25.67,
+  "gmax": 991.65,
+  "late": 111,
+  "n": 111
+ },
+ "ashcpsat_hardr": {
+  "runs": 3,
+  "chain": 291.0,
+  "gap": 14.17,
+  "gmax": 22.61,
+  "late": 120,
+  "n": 120
+ },
+ "ashgreedyr": {
+  "runs": 3,
+  "chain": 490.6,
+  "gap": 18.62,
+  "gmax": 28.37,
+  "late": 120,
+  "n": 120
+ }
+}

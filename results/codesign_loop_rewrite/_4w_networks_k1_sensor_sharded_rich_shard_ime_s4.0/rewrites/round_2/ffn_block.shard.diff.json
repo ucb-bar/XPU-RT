@@ -1,0 +1,12 @@
+{
+ "before": "/scratch2/agustin/XPU-RT/ModelBlaster/build/k1_xpurt/ffn_block/int8/graph.json",
+ "after": "/scratch/agustin/xpurt-dev-sync/results/codesign_loop_rewrite/_4w_networks_k1_sensor_sharded_rich_shard_ime_s4.0/rewrites/round_2/ffn_block.shard.graph.json",
+ "n_before": 5,
+ "n_after": 5,
+ "op_count_delta": 0,
+ "signatures_removed": [],
+ "signatures_added": [],
+ "granularity_changed": false,
+ "verdict": "GRANULARITY UNCHANGED -- negative result, do not profile this as a rewrite",
+ "id_remap_problems": []
+}

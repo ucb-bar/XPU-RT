@@ -1,0 +1,8 @@
+=== 21:05:20 wh_chain120_solve_h200 greedy
+    greedy_periodic: makespan=621.78 ms (all ops 621.78 ms), periodic window misses=2170, converged
+=== 21:05:31 wh_chain120_solve_h200 cpsat hard (limit 3000 s) + cpsat soft alongside
+  hard rc=0 cpsat status=FEASIBLE wall=3000.4s
+  soft rc=0 
+  table cpsat_hard: schedules/fig_fba120hr0_cpsat_hard.json
+  table cpsat_soft: schedules/fig_fba120hr0_cpsat_soft.json
+=== 21:56:26 STAGE2_DONE wh_chain120_solve_h200

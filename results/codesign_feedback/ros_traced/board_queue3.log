@@ -1,0 +1,23 @@
+=== 17:08:40 rebuild traced node (timer + chained)
+-rwxr-xr-x 1 root root 6992832 Sep 11 08:12 ros_mb_chain_traced
+-rwxr-xr-x 1 root root 7032032 Sep 11 08:12 ros_mb_chain_traced_pool
+=== 17:12:49 chained arms
+ROS_TRACED tag=15_cship_r1 exec=single rate=15 released=300 goals=299 fires=299 gap_mean=66.61 gap_max=67.48
+ROS_TRACED tag=25_cship_r1 exec=single rate=25 released=374 goals=370 fires=370 gap_mean=53.77 gap_max=107.07
+ROS_TRACED tag=45_cship_r1 exec=single rate=45 released=374 goals=370 fires=370 gap_mean=53.72 gap_max=106.99
+MATRIX_DONE cship r1 17:14:17
+ROS_TRACED tag=15_cspin_r1 exec=single rate=15 released=300 goals=299 fires=299 gap_mean=66.61 gap_max=70.89
+ROS_TRACED tag=25_cspin_r1 exec=single rate=25 released=500 goals=499 fires=499 gap_mean=39.99 gap_max=44.67
+ROS_TRACED tag=45_cspin_r1 exec=single rate=45 released=649 goals=645 fires=645 gap_mean=30.92 gap_max=59.55
+MATRIX_DONE cspin r1 17:15:47
+ROS_TRACED tag=15_cp3_r1 exec=single rate=15 released=0 goals=287 fires=287 gap_mean=66.65 gap_max=72.30
+ROS_TRACED tag=15_cp3_r1 exec=single rate=15 released=0 goals=0 fires=0 gap_mean=0.00 gap_max=0.00
+ROS_TRACED tag=15_cp3_r1 exec=single rate=15 released=300 goals=0 fires=0 gap_mean=0.00 gap_max=0.00
+ROS_TRACED tag=25_cp3_r1 exec=single rate=25 released=0 goals=479 fires=479 gap_mean=39.99 gap_max=51.53
+ROS_TRACED tag=25_cp3_r1 exec=single rate=25 released=0 goals=0 fires=0 gap_mean=0.00 gap_max=0.00
+ROS_TRACED tag=25_cp3_r1 exec=single rate=25 released=500 goals=0 fires=0 gap_mean=0.00 gap_max=0.00
+ROS_TRACED tag=45_cp3_r1 exec=single rate=45 released=0 goals=739 fires=739 gap_mean=25.93 gap_max=30.22
+ROS_TRACED tag=45_cp3_r1 exec=single rate=45 released=0 goals=0 fires=0 gap_mean=0.00 gap_max=0.00
+ROS_TRACED tag=45_cp3_r1 exec=single rate=45 released=771 goals=0 fires=0 gap_mean=0.00 gap_max=0.00
+MATRIX_DONE cp3 r1 17:17:20
+=== 17:17:20 replicates

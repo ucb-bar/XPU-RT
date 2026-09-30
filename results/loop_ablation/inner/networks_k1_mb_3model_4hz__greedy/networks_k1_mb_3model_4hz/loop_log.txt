@@ -1,0 +1,21 @@
+replay: XPURT_CPSAT_WORKERS=1 (deterministic; the published numbers use 0/6, which is faster and not reproducible)
+== co-design loop: networks_k1_mb_3model_4hz ==
+round 0 · baseline: makespan 902.652 (makespan 902.7 ms), 0 instance-miss
+accept rule: candidate_objective.accept() · critical=['mlp_control', 'dronet', 'yolov8_nano'] heavy=yolov8_nano
+      ime: built ime_x60 profiles for (none new; existing reused)
+round 1 · try ime: makespan 902.652 -> 901.841 (-0.1%), 0 instance-miss -> ACCEPTABLE
+round 1 · try ime: accepted -- p99 response of critical tasks: ime=151.84 beats baseline=152.65 (tolerance 0.5)
+round 1 · try shard: makespan 902.652 -> 902.652 (-0.0%), 0 instance-miss -> reject
+round 1 · try shard: rejected -- p99 response of critical tasks: baseline=152.65 beats shard=191 (tolerance 0.5)
+      unfuse: adopted ModelBlaster unfused dispatch graph for (none — no fused net with an unfused build on disk)
+round 1 · try unfuse: lever changed nothing on this spec (inapplicable here) — not a candidate
+round 1: ACCEPT +ime  makespan 902.652 -> 901.841 (-0.1%)
+round 2 · try shard: makespan 901.841 -> 901.841 (-0.0%), 0 instance-miss -> reject
+round 2 · try shard: rejected -- p99 response of critical tasks: ime=151.84 beats shard=190.19 (tolerance 0.5)
+      unfuse: adopted ModelBlaster unfused dispatch graph for (none — no fused net with an unfused build on disk)
+round 2 · try unfuse: lever changed nothing on this spec (inapplicable here) — not a candidate
+round 2: no lever is accepted by the nine-term objective rule — CONVERGED
+fuse: NOT applied — roofline decision-aid says the stack is compute-bound (max fusible-epilogue ceiling 16% on dronet); fusion collapses dispatches (scheduling) but is measured ~+0.85% on cycles, so the loop does not credit a makespan gain it cannot measure.
+
+CONVERGED [makespan]: 902.652 -> 901.841 ms (-0.1%), levers applied: ['ime']
+artifacts in /scratch/agustin/xpurt-dev-sync/results/loop_ablation/inner/networks_k1_mb_3model_4hz__greedy/networks_k1_mb_3model_4hz

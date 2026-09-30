@@ -1,0 +1,20 @@
+grid: speeds=[1.4] rates=[25 33 50 81 100 125 165 204] episodes=6 sim_dt=0.001 flight_s=14
+gain: calibrated moment_scale=0.5/eff_hz (0.01@50Hz .. 0.0025@200Hz)
+csv:  /scratch/agustin/xpurt-dev-sync/results/codesign_feedback/hil_pilot.csv
+=== 20:55:53 START c1.4_r25  (dec=40 eff~=25.0Hz max_steps=350 moment=0.02000) ===
+  exit=0 success=0/6
+=== 20:57:21 START c1.4_r33  (dec=30 eff~=33.3Hz max_steps=462 moment=0.01502) ===
+  exit=0 success=0/6
+=== 21:04:22 START c1.4_r50  (dec=20 eff~=50.0Hz max_steps=700 moment=0.01000) ===
+  exit=0 success=0/6
+=== 21:10:07 START c1.4_r81  (dec=12 eff~=83.3Hz max_steps=1134 moment=0.00600) ===
+  exit=0 success=1/6
+=== 21:16:16 START c1.4_r100  (dec=10 eff~=100.0Hz max_steps=1400 moment=0.00500) ===
+  exit=0 success=4/6
+=== 21:25:16 START c1.4_r125  (dec=8 eff~=125.0Hz max_steps=1750 moment=0.00400) ===
+  exit=0 success=2/6
+=== 21:35:40 START c1.4_r165  (dec=6 eff~=166.7Hz max_steps=2310 moment=0.00300) ===
+  exit=0 success=1/6
+=== 21:50:59 START c1.4_r204  (dec=5 eff~=200.0Hz max_steps=2856 moment=0.00250) ===
+  exit=0 success=2/6
+=== 22:09:15 DENSE GRID DONE (49 rows incl header) ===

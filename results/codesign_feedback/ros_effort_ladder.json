@@ -1,0 +1,325 @@
+{
+ "rungs": [
+  {
+   "arm": "vanilla@45",
+   "rung": "ROS 2 as it ships: serial YOLO, one process, unpinned",
+   "cores": 1,
+   "ctrl_hz": 20.7,
+   "camera_to_goal_ms": 264.8,
+   "flights_matched_cell": [
+    0,
+    0
+   ],
+   "flights_pooled_all_campaigns": [
+    0,
+    48
+   ],
+   "cell": {
+    "course": "a",
+    "density": [
+     "0.3",
+     "0.30"
+    ],
+    "person_h": "2.4",
+    "gain": "0.0055",
+    "cruise": [
+     "1.0",
+     "1.2",
+     "1.4",
+     "1.6",
+     "1.8"
+    ]
+   },
+   "ctrl_trace": "ros_vanilla45.csv"
+  },
+  {
+   "arm": "vanilla4@45",
+   "rung": "+ a 4-hart worker pool for YOLO",
+   "cores": 4,
+   "ctrl_hz": 38.6,
+   "camera_to_goal_ms": 242.4,
+   "flights_matched_cell": [
+    6,
+    216
+   ],
+   "flights_pooled_all_campaigns": [
+    86,
+    1068
+   ],
+   "cell": {
+    "course": "a",
+    "density": [
+     "0.3",
+     "0.30"
+    ],
+    "person_h": "2.4",
+    "gain": "0.0055",
+    "cruise": [
+     "1.0",
+     "1.2",
+     "1.4",
+     "1.6",
+     "1.8"
+    ]
+   },
+   "ctrl_trace": "ros_vanilla445.csv"
+  },
+  {
+   "arm": "vanilla8@45",
+   "rung": "+ the pool widened to all 8 harts",
+   "cores": 5,
+   "ctrl_hz": 38.5,
+   "camera_to_goal_ms": 242.5,
+   "flights_matched_cell": [
+    0,
+    0
+   ],
+   "flights_pooled_all_campaigns": [
+    0,
+    0
+   ],
+   "cell": {
+    "course": "a",
+    "density": [
+     "0.3",
+     "0.30"
+    ],
+    "person_h": "2.4",
+    "gain": "0.0055",
+    "cruise": [
+     "1.0",
+     "1.2",
+     "1.4",
+     "1.6",
+     "1.8"
+    ]
+   },
+   "ctrl_trace": "ros_vanilla845.csv"
+  },
+  {
+   "arm": "vanilla4_q1@45",
+   "rung": "+ keep-last-1 queues (one QoS argument)",
+   "cores": 4,
+   "ctrl_hz": 39.1,
+   "camera_to_goal_ms": 42.0,
+   "flights_matched_cell": [
+    10,
+    96
+   ],
+   "flights_pooled_all_campaigns": [
+    20,
+    156
+   ],
+   "cell": {
+    "course": "a",
+    "density": [
+     "0.3",
+     "0.30"
+    ],
+    "person_h": "2.4",
+    "gain": "0.0055",
+    "cruise": [
+     "1.0",
+     "1.2",
+     "1.4",
+     "1.6",
+     "1.8"
+    ]
+   },
+   "ctrl_trace": "ros_vanilla4_q145.csv"
+  },
+  {
+   "arm": "vanilla4tm@45",
+   "rung": "+ control on its own 100 Hz timer",
+   "cores": 4,
+   "ctrl_hz": 100.0,
+   "camera_to_goal_ms": 242.5,
+   "flights_matched_cell": [
+    11,
+    120
+   ],
+   "flights_pooled_all_campaigns": [
+    47,
+    540
+   ],
+   "cell": {
+    "course": "a",
+    "density": [
+     "0.3",
+     "0.30"
+    ],
+    "person_h": "2.4",
+    "gain": "0.0055",
+    "cruise": [
+     "1.0",
+     "1.2",
+     "1.4",
+     "1.6",
+     "1.8"
+    ]
+   },
+   "ctrl_trace": "ros_vanilla4tm45.csv"
+  },
+  {
+   "arm": "p3@45",
+   "rung": "hand-pinned: 3 processes over 6 cores",
+   "cores": 5.0,
+   "ctrl_hz": 100.0,
+   "camera_to_goal_ms": 56.4,
+   "flights_matched_cell": [
+    19,
+    144
+   ],
+   "flights_pooled_all_campaigns": [
+    109,
+    636
+   ],
+   "cell": {
+    "course": "a",
+    "density": [
+     "0.3",
+     "0.30"
+    ],
+    "person_h": "2.4",
+    "gain": "0.0055",
+    "cruise": [
+     "1.0",
+     "1.2",
+     "1.4",
+     "1.6",
+     "1.8"
+    ]
+   },
+   "ctrl_trace": "ros_p345.csv"
+  },
+  {
+   "arm": "p3_q1@45",
+   "rung": "hand-pinned + keep-last-1",
+   "cores": 5,
+   "ctrl_hz": 100.0,
+   "camera_to_goal_ms": 31.1,
+   "flights_matched_cell": [
+    16,
+    120
+   ],
+   "flights_pooled_all_campaigns": [
+    81,
+    528
+   ],
+   "cell": {
+    "course": "a",
+    "density": [
+     "0.3",
+     "0.30"
+    ],
+    "person_h": "2.4",
+    "gain": "0.0055",
+    "cruise": [
+     "1.0",
+     "1.2",
+     "1.4",
+     "1.6",
+     "1.8"
+    ]
+   },
+   "ctrl_trace": "ros_p3_q145.csv"
+  },
+  {
+   "arm": "vanilla4x2@45",
+   "rung": "two model instances across both clusters (all 8 cores)",
+   "cores": 8,
+   "ctrl_hz": 45.0,
+   "camera_to_goal_ms": 37.0,
+   "flights_matched_cell": [
+    16,
+    120
+   ],
+   "flights_pooled_all_campaigns": [
+    35,
+    228
+   ],
+   "cell": {
+    "course": "a",
+    "density": [
+     "0.3",
+     "0.30"
+    ],
+    "person_h": "2.4",
+    "gain": "0.0055",
+    "cruise": [
+     "1.0",
+     "1.2",
+     "1.4",
+     "1.6",
+     "1.8"
+    ]
+   },
+   "ctrl_trace": "ros_vanilla4x245.csv"
+  },
+  {
+   "arm": "vanilla4x2@36",
+   "rung": "two instances at the 36 Hz camera the figure draws",
+   "cores": 8,
+   "ctrl_hz": 36.0,
+   "camera_to_goal_ms": 32.2,
+   "flights_matched_cell": [
+    1,
+    60
+   ],
+   "flights_pooled_all_campaigns": [
+    1,
+    60
+   ],
+   "cell": {
+    "course": "a",
+    "density": [
+     "0.3",
+     "0.30"
+    ],
+    "person_h": "2.4",
+    "gain": "0.0055",
+    "cruise": [
+     "1.0",
+     "1.2",
+     "1.4",
+     "1.6",
+     "1.8"
+    ]
+   },
+   "ctrl_trace": "ros_vanilla4x236.csv"
+  },
+  {
+   "arm": "vanilla4x2tm@45",
+   "rung": "two instances + control on its own timer",
+   "cores": 8,
+   "ctrl_hz": 100.0,
+   "camera_to_goal_ms": 37.8,
+   "flights_matched_cell": [
+    0,
+    0
+   ],
+   "flights_pooled_all_campaigns": [
+    0,
+    0
+   ],
+   "cell": {
+    "course": "a",
+    "density": [
+     "0.3",
+     "0.30"
+    ],
+    "person_h": "2.4",
+    "gain": "0.0055",
+    "cruise": [
+     "1.0",
+     "1.2",
+     "1.4",
+     "1.6",
+     "1.8"
+    ]
+   },
+   "ctrl_trace": "ros_vanilla4x2tm45.csv"
+  }
+ ],
+ "note": "timing from scripts/measured_timing.py (--verify re-derives each row from the board traces); flights from the campaign CSVs through flight_quarantine"
+}

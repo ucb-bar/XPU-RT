@@ -1,0 +1,51 @@
+{
+  "layout": "grid",
+  "figure_size_in": [
+    7.16,
+    3.7
+  ],
+  "height_arg": 3.7,
+  "panels": [
+    {
+      "stage": 1,
+      "title": "Baseline \u00b7 RVV singletons",
+      "driver": "loop baseline (levers stripped)",
+      "cost_source": "AOT model",
+      "makespan_ms": 74.61295799999999,
+      "displayed_instance_deadline_misses": 5,
+      "missed_instances_by_network": {
+        "FFN": 5
+      }
+    },
+    {
+      "stage": 2,
+      "title": "Auto-loop optimize \u2014 Shard + IME",
+      "driver": "levers from the loop's measured search",
+      "cost_source": "AOT model",
+      "makespan_ms": 55.849958,
+      "displayed_instance_deadline_misses": 0,
+      "missed_instances_by_network": {}
+    },
+    {
+      "stage": 3,
+      "title": "K1-calibrated replay",
+      "driver": "same assignment, board durations",
+      "cost_source": "K1-calibrated model",
+      "makespan_ms": 55.403982127199995,
+      "displayed_instance_deadline_misses": 2,
+      "missed_instances_by_network": {
+        "FFN": 1,
+        "CTRL": 1
+      }
+    },
+    {
+      "stage": 4,
+      "title": "K1-calibrated re-solve",
+      "driver": "re-optimized on board costs",
+      "cost_source": "K1-calibrated model",
+      "makespan_ms": 57.1636950022,
+      "displayed_instance_deadline_misses": 0,
+      "missed_instances_by_network": {}
+    }
+  ]
+}

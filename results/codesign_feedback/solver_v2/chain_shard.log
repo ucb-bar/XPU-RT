@@ -1,0 +1,13 @@
+=== 23:16:52 wh_chain45_shard_solve certificate
+  greedy:   greedy_periodic: makespan=212.96 ms (all ops 212.96 ms), periodic window misses=0, converged
+  cpsat: cpsat status=FEASIBLE wall=900.1s   cpsat: makespan=210.76 ms (all ops 210.76 ms), periodic window misses=0, converged 
+sed: couldn't edit /dev/null: not a regular file
+=== 23:32:03 wh_chain45_shard_solve greedy
+    greedy_periodic: makespan=1012.97 ms (all ops 1012.97 ms), periodic window misses=0, converged
+=== 23:32:28 wh_chain45_shard_solve cpsat hard (limit 3000 s)
+  hard rc=0 cpsat status=FEASIBLE wall=3000.4s
+=== 00:22:54 STAGE2_DONE wh_chain45_shard_solve
+  re-pulled the board's stdout: 0 of  rows (pull 4)
+FileNotFoundError: [Errno 2] No such file or directory: '/scratch/agustin/xpurt-dev-sync/schedules/fig_ash_cpsat_hard_clamped.json'
+=== 02:27:01 BOARD_STAGE2_DONE ash
+SHARD_CHAIN_DONE

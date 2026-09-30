@@ -1,0 +1,419 @@
+config,kind,description,n_runs
+energy_ros17,energy,"energy run ros17: commanded wrench logged, rotor-model power (arms as in the envelope story's panel)",6
+energy_ros33,energy,"energy run ros33: commanded wrench logged, rotor-model power (arms as in the envelope story's panel)",6
+energy_ros_shipped,energy,"energy run ros_shipped: commanded wrench logged, rotor-model power (arms as in the envelope story's panel)",6
+energy_ros_vanilla,energy,"energy run ros_vanilla: commanded wrench logged, rotor-model power (arms as in the envelope story's panel)",6
+energy_xpu100,energy,"energy run xpu100: commanded wrench logged, rotor-model power (arms as in the envelope story's panel)",6
+energy_xpu_cpsat,energy,"energy run xpu_cpsat: commanded wrench logged, rotor-model power (arms as in the envelope story's panel)",6
+energy_xpu_greedy,energy,"energy run xpu_greedy: commanded wrench logged, rotor-model power (arms as in the envelope story's panel)",6
+flight_lat18.0,flight,fixed control latency 18.0 ms (ZOH hold of ceil(latency/10 ms) steps),120
+flight_lat22.21,flight,fixed control latency 22.21 ms (ZOH hold of ceil(latency/10 ms) steps),36
+flight_lat28.0,flight,fixed control latency 28.0 ms (ZOH hold of ceil(latency/10 ms) steps),108
+flight_lat38.0,flight,fixed control latency 38.0 ms (ZOH hold of ceil(latency/10 ms) steps),120
+flight_lat47.01,flight,fixed control latency 47.01 ms (ZOH hold of ceil(latency/10 ms) steps),36
+flight_lat48.0,flight,fixed control latency 48.0 ms (ZOH hold of ceil(latency/10 ms) steps),120
+flight_lat52.02,flight,fixed control latency 52.02 ms (ZOH hold of ceil(latency/10 ms) steps),36
+flight_lat6.3,flight,fixed control latency 6.3 ms (ZOH hold of ceil(latency/10 ms) steps),48
+flight_lat8.0,flight,fixed control latency 8.0 ms (ZOH hold of ceil(latency/10 ms) steps),120
+flight_ros_multi45_lat264.7_hold50.1,flight,replayed cadence trace ros_multi45.csv; navigation decision delayed by the measured 264.7 ms camera-to-control latency; navigation goal refreshed every 50.1 ms (measured goal rate),48
+flight_ros_p345_lat55.8,flight,"ROS 2 hand-tuned p3 layout, 45 Hz: 100 outputs/s measured; navigation decision delayed by the measured 55.8 ms camera-to-control latency",492
+flight_ros_p345_lat55.8_hold30.3,flight,"ROS 2 hand-tuned p3 layout, 45 Hz: 100 outputs/s measured; navigation decision delayed by the measured 55.8 ms camera-to-control latency; navigation goal refreshed every 30.3 ms (measured goal rate)",60
+flight_ros_p390_lat56.2_hold30.3,flight,"ROS 2 hand-tuned p3 layout, 90 Hz camera: 100 outputs/s measured; navigation decision delayed by the measured 56.2 ms camera-to-control latency; navigation goal refreshed every 30.3 ms (measured goal rate)",480
+flight_ros_p3_q145_lat31.1,flight,"ROS 2 hand-tuned p3 layout with QoS depth 1, 45 Hz: 100 outputs/s measured; navigation decision delayed by the measured 31.1 ms camera-to-control latency",528
+flight_ros_rvanilla445,flight,replayed cadence trace ros_rvanilla445.csv,60
+flight_ros_rvanilla445_lat243_hold26.7,flight,replayed cadence trace ros_rvanilla445.csv; navigation decision delayed by the measured 243 ms camera-to-control latency; navigation goal refreshed every 26.7 ms (measured goal rate),60
+flight_ros_rvanilla490_lat137_hold26.1,flight,replayed cadence trace ros_rvanilla490.csv; navigation decision delayed by the measured 137 ms camera-to-control latency; navigation goal refreshed every 26.1 ms (measured goal rate),60
+flight_ros_vanilla445,flight,"ROS 2 vanilla with the 4-hart YOLO build, control chained, 45 Hz camera: 39 control outputs/s measured",852
+flight_ros_vanilla445_lat242,flight,"ROS 2 vanilla with the 4-hart YOLO build, control chained, 45 Hz camera: 39 control outputs/s measured; navigation decision delayed by the measured 242 ms camera-to-control latency",264
+flight_ros_vanilla45,flight,"ROS 2 vanilla (serial YOLO, control chained), 45 Hz camera: 21 control outputs/s measured",48
+flight_ros_vanilla4_q145,flight,"ROS 2 vanilla4 with QoS depth 1, 45 Hz: 39 outputs/s measured",60
+flight_ros_vanilla4_q145_lat42,flight,"ROS 2 vanilla4 with QoS depth 1, 45 Hz: 39 outputs/s measured; navigation decision delayed by the measured 42 ms camera-to-control latency",60
+flight_ros_vanilla4t45,flight,"ROS 2 vanilla4t (one process, control timer sharing the executor), 45 Hz: 33 outputs/s measured",156
+flight_ros_vanilla4tm45_lat242,flight,"ROS 2 vanilla, control on its own timer in its own process, 45 Hz: 100 outputs/s measured; navigation decision delayed by the measured 242 ms camera-to-control latency",480
+flight_ros_vanilla4tm45_lat242_hold30.3,flight,"ROS 2 vanilla, control on its own timer in its own process, 45 Hz: 100 outputs/s measured; navigation decision delayed by the measured 242 ms camera-to-control latency; navigation goal refreshed every 30.3 ms (measured goal rate)",60
+flight_ros_vanilla4tm90_lat136.5_hold30.3,flight,"ROS 2 vanilla, control on its own timer in its own process, 90 Hz camera: 100 outputs/s measured; navigation decision delayed by the measured 136.5 ms camera-to-control latency; navigation goal refreshed every 30.3 ms (measured goal rate)",480
+flight_ros_vanilla4x245_lat454.6,flight,"ROS 2 vanilla, two perception processes alternating frames, 45 Hz: 60 outputs/s measured; navigation decision delayed by the measured 454.6 ms camera-to-control latency",60
+flight_ros_vanilla4x290_lat254.3_hold19.6,flight,replayed cadence trace ros_vanilla4x290.csv; navigation decision delayed by the measured 254.3 ms camera-to-control latency; navigation goal refreshed every 19.6 ms (measured goal rate),60
+flight_xpu_a90_cpsat_lat55.9_hold11.1,flight,"XPU-RT CP-SAT, 90 Hz camera: measured 10 ms control outputs; navigation decision delayed by the measured 55.9 ms camera-to-control latency; navigation goal refreshed every 11.1 ms (measured goal rate)",480
+flight_xpu_a90_greedy_lat947.5,flight,"XPU-RT greedy, 90 Hz camera: measured bursty control outputs; navigation decision delayed by the measured 947.5 ms camera-to-control latency",420
+flight_xpu_a_cpsat_hard,flight,"XPU-RT CP-SAT, 45 Hz camera: control outputs at 10.0 ms measured on the K1 (96/s over the looped table)",864
+flight_xpu_a_cpsat_hard_lat56.8,flight,"XPU-RT CP-SAT, 45 Hz camera: control outputs at 10.0 ms measured on the K1 (96/s over the looped table); navigation decision delayed by the measured 56.8 ms camera-to-control latency",540
+flight_xpu_a_cpsat_hard_lat56.8_hold22.2,flight,"XPU-RT CP-SAT, 45 Hz camera: control outputs at 10.0 ms measured on the K1 (96/s over the looped table); navigation decision delayed by the measured 56.8 ms camera-to-control latency; navigation goal refreshed every 22.2 ms (measured goal rate)",60
+flight_xpu_a_cpsat_hard_lat59.9_hold8.3,flight,"XPU-RT CP-SAT, 45 Hz camera: control outputs at 10.0 ms measured on the K1 (96/s over the looped table); navigation decision delayed by the measured 59.9 ms camera-to-control latency; navigation goal refreshed every 8.3 ms (measured goal rate)",444
+flight_xpu_a_greedy,flight,"XPU-RT greedy, 45 Hz camera: measured bursty control outputs (a burst then silence)",48
+flight_xpu_a_greedy_lat748,flight,"XPU-RT greedy, 45 Hz camera: measured bursty control outputs (a burst then silence); navigation decision delayed by the measured 748 ms camera-to-control latency",192
+flight_xpu_b5_cpsat,flight,replayed cadence trace xpu_b5_cpsat.csv,60
+flight_xpu_b5_cpsat_lat57.6_hold11.1,flight,replayed cadence trace xpu_b5_cpsat.csv; navigation decision delayed by the measured 57.6 ms camera-to-control latency; navigation goal refreshed every 11.1 ms (measured goal rate),60
+flight_xpu_b5_greedy_lat149_hold11.1,flight,replayed cadence trace xpu_b5_greedy.csv; navigation decision delayed by the measured 149 ms camera-to-control latency; navigation goal refreshed every 11.1 ms (measured goal rate),60
+ros_cp3@15Hz,board_ros,"as p3, control chained to the goal topic; camera at 15 Hz; 20 s run",3
+ros_cp3@25Hz,board_ros,"as p3, control chained to the goal topic; camera at 25 Hz; 20 s run",3
+ros_cp3@45Hz,board_ros,"as p3, control chained to the goal topic; camera at 45 Hz; 20 s run",3
+ros_cp3@60Hz,board_ros,"as p3, control chained to the goal topic; camera at 60 Hz; 20 s run",1
+ros_cp3@75Hz,board_ros,"as p3, control chained to the goal topic; camera at 75 Hz; 20 s run",1
+ros_cp3@90Hz,board_ros,"as p3, control chained to the goal topic; camera at 90 Hz; 20 s run",1
+ros_cship@15Hz,board_ros,"ROS 2, one process, single-threaded executor, serial YOLO, control chained to the goal topic (once per perception result); camera at 15 Hz; 20 s run",3
+ros_cship@25Hz,board_ros,"ROS 2, one process, single-threaded executor, serial YOLO, control chained to the goal topic (once per perception result); camera at 25 Hz; 20 s run",3
+ros_cship@45Hz,board_ros,"ROS 2, one process, single-threaded executor, serial YOLO, control chained to the goal topic (once per perception result); camera at 45 Hz; 20 s run",3
+ros_cspin@15Hz,board_ros,"as spin, control chained to the goal topic; camera at 15 Hz; 20 s run",3
+ros_cspin@25Hz,board_ros,"as spin, control chained to the goal topic; camera at 25 Hz; 20 s run",3
+ros_cspin@45Hz,board_ros,"as spin, control chained to the goal topic; camera at 45 Hz; 20 s run",3
+ros_cspin@60Hz,board_ros,"as spin, control chained to the goal topic; camera at 60 Hz; 20 s run",1
+ros_cspin@75Hz,board_ros,"as spin, control chained to the goal topic; camera at 75 Hz; 20 s run",1
+ros_cspin@90Hz,board_ros,"as spin, control chained to the goal topic; camera at 90 Hz; 20 s run",1
+ros_multi@10Hz,board_ros,"ROS 2, one process, MultiThreadedExecutor, serial YOLO, control timer, unpinned; camera at 10 Hz; 20 s run",2
+ros_multi@12Hz,board_ros,"ROS 2, one process, MultiThreadedExecutor, serial YOLO, control timer, unpinned; camera at 12 Hz; 20 s run",2
+ros_multi@15Hz,board_ros,"ROS 2, one process, MultiThreadedExecutor, serial YOLO, control timer, unpinned; camera at 15 Hz; 20 s run",3
+ros_multi@20Hz,board_ros,"ROS 2, one process, MultiThreadedExecutor, serial YOLO, control timer, unpinned; camera at 20 Hz; 20 s run",2
+ros_multi@25Hz,board_ros,"ROS 2, one process, MultiThreadedExecutor, serial YOLO, control timer, unpinned; camera at 25 Hz; 20 s run",3
+ros_multi@30Hz,board_ros,"ROS 2, one process, MultiThreadedExecutor, serial YOLO, control timer, unpinned; camera at 30 Hz; 20 s run",2
+ros_multi@45Hz,board_ros,"ROS 2, one process, MultiThreadedExecutor, serial YOLO, control timer, unpinned; camera at 45 Hz; 20 s run",3
+ros_multi@5Hz,board_ros,"ROS 2, one process, MultiThreadedExecutor, serial YOLO, control timer, unpinned; camera at 5 Hz; 20 s run",2
+ros_multi@60Hz,board_ros,"ROS 2, one process, MultiThreadedExecutor, serial YOLO, control timer, unpinned; camera at 60 Hz; 20 s run",1
+ros_multi@75Hz,board_ros,"ROS 2, one process, MultiThreadedExecutor, serial YOLO, control timer, unpinned; camera at 75 Hz; 20 s run",1
+ros_multi@8Hz,board_ros,"ROS 2, one process, MultiThreadedExecutor, serial YOLO, control timer, unpinned; camera at 8 Hz; 20 s run",2
+ros_multi@90Hz,board_ros,"ROS 2, one process, MultiThreadedExecutor, serial YOLO, control timer, unpinned; camera at 90 Hz; 20 s run",1
+ros_multi_c200@45Hz,board_ros,"ROS 2, one process, MultiThreadedExecutor, serial YOLO, control timer, unpinned; control timer at 200 Hz; camera at 45 Hz; 20 s run",1
+ros_multi_hog2@45Hz,board_ros,"ROS 2, one process, MultiThreadedExecutor, serial YOLO, control timer, unpinned; two CPU-hog processes added; camera at 45 Hz; 20 s run",1
+ros_multi_q1@25Hz,board_ros,"ROS 2, one process, MultiThreadedExecutor, serial YOLO, control timer, unpinned; QoS history depth 1 instead of 10; camera at 25 Hz; 20 s run",1
+ros_multi_q1@45Hz,board_ros,"ROS 2, one process, MultiThreadedExecutor, serial YOLO, control timer, unpinned; QoS history depth 1 instead of 10; camera at 45 Hz; 20 s run",1
+ros_nproc@15Hz,board_ros,"ROS 2, two processes: nav alone on E4; perception (pool P0-3) and control together; camera at 15 Hz; 20 s run",3
+ros_nproc@25Hz,board_ros,"ROS 2, two processes: nav alone on E4; perception (pool P0-3) and control together; camera at 25 Hz; 20 s run",3
+ros_nproc@45Hz,board_ros,"ROS 2, two processes: nav alone on E4; perception (pool P0-3) and control together; camera at 45 Hz; 20 s run",3
+ros_p3@10Hz,board_ros,"ROS 2, three processes: perception with the 4-hart YOLO pool pinned to P0-3, nav on E4, control on its 100 Hz timer on E5 (hand-tuned layout); camera at 10 Hz; 20 s run",1
+ros_p3@120Hz,board_ros,"ROS 2, three processes: perception with the 4-hart YOLO pool pinned to P0-3, nav on E4, control on its 100 Hz timer on E5 (hand-tuned layout); camera at 120 Hz; 20 s run",3
+ros_p3@12Hz,board_ros,"ROS 2, three processes: perception with the 4-hart YOLO pool pinned to P0-3, nav on E4, control on its 100 Hz timer on E5 (hand-tuned layout); camera at 12 Hz; 20 s run",1
+ros_p3@15Hz,board_ros,"ROS 2, three processes: perception with the 4-hart YOLO pool pinned to P0-3, nav on E4, control on its 100 Hz timer on E5 (hand-tuned layout); camera at 15 Hz; 20 s run",3
+ros_p3@20Hz,board_ros,"ROS 2, three processes: perception with the 4-hart YOLO pool pinned to P0-3, nav on E4, control on its 100 Hz timer on E5 (hand-tuned layout); camera at 20 Hz; 20 s run",1
+ros_p3@25Hz,board_ros,"ROS 2, three processes: perception with the 4-hart YOLO pool pinned to P0-3, nav on E4, control on its 100 Hz timer on E5 (hand-tuned layout); camera at 25 Hz; 20 s run",3
+ros_p3@30Hz,board_ros,"ROS 2, three processes: perception with the 4-hart YOLO pool pinned to P0-3, nav on E4, control on its 100 Hz timer on E5 (hand-tuned layout); camera at 30 Hz; 20 s run",1
+ros_p3@45Hz,board_ros,"ROS 2, three processes: perception with the 4-hart YOLO pool pinned to P0-3, nav on E4, control on its 100 Hz timer on E5 (hand-tuned layout); camera at 45 Hz; 20 s run",6
+ros_p3@5Hz,board_ros,"ROS 2, three processes: perception with the 4-hart YOLO pool pinned to P0-3, nav on E4, control on its 100 Hz timer on E5 (hand-tuned layout); camera at 5 Hz; 20 s run",1
+ros_p3@60Hz,board_ros,"ROS 2, three processes: perception with the 4-hart YOLO pool pinned to P0-3, nav on E4, control on its 100 Hz timer on E5 (hand-tuned layout); camera at 60 Hz; 20 s run",1
+ros_p3@75Hz,board_ros,"ROS 2, three processes: perception with the 4-hart YOLO pool pinned to P0-3, nav on E4, control on its 100 Hz timer on E5 (hand-tuned layout); camera at 75 Hz; 20 s run",1
+ros_p3@8Hz,board_ros,"ROS 2, three processes: perception with the 4-hart YOLO pool pinned to P0-3, nav on E4, control on its 100 Hz timer on E5 (hand-tuned layout); camera at 8 Hz; 20 s run",1
+ros_p3@90Hz,board_ros,"ROS 2, three processes: perception with the 4-hart YOLO pool pinned to P0-3, nav on E4, control on its 100 Hz timer on E5 (hand-tuned layout); camera at 90 Hz; 20 s run",1
+ros_p3_c200@45Hz,board_ros,"ROS 2, three processes: perception with the 4-hart YOLO pool pinned to P0-3, nav on E4, control on its 100 Hz timer on E5 (hand-tuned layout); control timer at 200 Hz; camera at 45 Hz; 20 s run",1
+ros_p3_hog2@45Hz,board_ros,"ROS 2, three processes: perception with the 4-hart YOLO pool pinned to P0-3, nav on E4, control on its 100 Hz timer on E5 (hand-tuned layout); two CPU-hog processes added; camera at 45 Hz; 20 s run",1
+ros_p3_q1@25Hz,board_ros,"ROS 2, three processes: perception with the 4-hart YOLO pool pinned to P0-3, nav on E4, control on its 100 Hz timer on E5 (hand-tuned layout); QoS history depth 1 instead of 10; camera at 25 Hz; 20 s run",1
+ros_p3_q1@45Hz,board_ros,"ROS 2, three processes: perception with the 4-hart YOLO pool pinned to P0-3, nav on E4, control on its 100 Hz timer on E5 (hand-tuned layout); QoS history depth 1 instead of 10; camera at 45 Hz; 20 s run",1
+ros_p8@10Hz,board_ros,"ROS 2, three processes: perception pool on P0-3, nav on E4-5, control on E6-7; camera at 10 Hz; 20 s run",1
+ros_p8@12Hz,board_ros,"ROS 2, three processes: perception pool on P0-3, nav on E4-5, control on E6-7; camera at 12 Hz; 20 s run",1
+ros_p8@15Hz,board_ros,"ROS 2, three processes: perception pool on P0-3, nav on E4-5, control on E6-7; camera at 15 Hz; 20 s run",1
+ros_p8@20Hz,board_ros,"ROS 2, three processes: perception pool on P0-3, nav on E4-5, control on E6-7; camera at 20 Hz; 20 s run",1
+ros_p8@25Hz,board_ros,"ROS 2, three processes: perception pool on P0-3, nav on E4-5, control on E6-7; camera at 25 Hz; 20 s run",1
+ros_p8@30Hz,board_ros,"ROS 2, three processes: perception pool on P0-3, nav on E4-5, control on E6-7; camera at 30 Hz; 20 s run",1
+ros_p8@45Hz,board_ros,"ROS 2, three processes: perception pool on P0-3, nav on E4-5, control on E6-7; camera at 45 Hz; 20 s run",3
+ros_p8@5Hz,board_ros,"ROS 2, three processes: perception pool on P0-3, nav on E4-5, control on E6-7; camera at 5 Hz; 20 s run",1
+ros_p8@8Hz,board_ros,"ROS 2, three processes: perception pool on P0-3, nav on E4-5, control on E6-7; camera at 8 Hz; 20 s run",1
+ros_part8@45Hz,board_ros,ROS 2 layout part8; camera at 45 Hz; 20 s run,6
+ros_rmulti@25Hz,board_ros,as multi plus ffn_block 10 Hz and dronet 30 Hz (heavier stack); camera at 25 Hz; 20 s run,2
+ros_rmulti@45Hz,board_ros,as multi plus ffn_block 10 Hz and dronet 30 Hz (heavier stack); camera at 45 Hz; 20 s run,2
+ros_rp3@25Hz,board_ros,as p3 plus ffn_block 10 Hz and dronet 30 Hz in a fourth process on E6-7 (heavier stack); camera at 25 Hz; 20 s run,2
+ros_rp3@45Hz,board_ros,as p3 plus ffn_block 10 Hz and dronet 30 Hz in a fourth process on E6-7 (heavier stack); camera at 45 Hz; 20 s run,2
+ros_rp3@90Hz,board_ros,as p3 plus ffn_block 10 Hz and dronet 30 Hz in a fourth process on E6-7 (heavier stack); camera at 90 Hz; 20 s run,2
+ros_rp8@45Hz,board_ros,ROS 2 layout rp8; camera at 45 Hz; 20 s run,3
+ros_rspin@25Hz,board_ros,as spin plus ffn_block 10 Hz and dronet 30 Hz as two more nodes in the same process (heavier stack); camera at 25 Hz; 20 s run,2
+ros_rspin@45Hz,board_ros,as spin plus ffn_block 10 Hz and dronet 30 Hz as two more nodes in the same process (heavier stack); camera at 45 Hz; 20 s run,2
+ros_rvanilla4@15Hz,board_ros,as vanilla4 plus ffn_block and dronet as their own unpinned processes: every core carries a node; camera at 15 Hz; 20 s run,3
+ros_rvanilla4@25Hz,board_ros,as vanilla4 plus ffn_block and dronet as their own unpinned processes: every core carries a node; camera at 25 Hz; 20 s run,3
+ros_rvanilla4@30Hz,board_ros,as vanilla4 plus ffn_block and dronet as their own unpinned processes: every core carries a node; camera at 30 Hz; 20 s run,3
+ros_rvanilla4@45Hz,board_ros,as vanilla4 plus ffn_block and dronet as their own unpinned processes: every core carries a node; camera at 45 Hz; 20 s run,3
+ros_rvanilla4@60Hz,board_ros,as vanilla4 plus ffn_block and dronet as their own unpinned processes: every core carries a node; camera at 60 Hz; 20 s run,3
+ros_rvanilla4@90Hz,board_ros,as vanilla4 plus ffn_block and dronet as their own unpinned processes: every core carries a node; camera at 90 Hz; 20 s run,3
+ros_rvanilla4x2tm@45Hz,board_ros,ROS 2 layout rvanilla4x2tm; camera at 45 Hz; 20 s run,3
+ros_rvanilla8@45Hz,board_ros,ROS 2 layout rvanilla8; camera at 45 Hz; 20 s run,3
+ros_rvanilla8tm@45Hz,board_ros,ROS 2 layout rvanilla8tm; camera at 45 Hz; 20 s run,3
+ros_rvanilla@15Hz,board_ros,"as vanilla plus ffn_block 10 Hz and dronet 30 Hz, each its own unpinned process; camera at 15 Hz; 20 s run",3
+ros_rvanilla@25Hz,board_ros,"as vanilla plus ffn_block 10 Hz and dronet 30 Hz, each its own unpinned process; camera at 25 Hz; 20 s run",3
+ros_rvanilla@30Hz,board_ros,"as vanilla plus ffn_block 10 Hz and dronet 30 Hz, each its own unpinned process; camera at 30 Hz; 20 s run",3
+ros_rvanilla@45Hz,board_ros,"as vanilla plus ffn_block 10 Hz and dronet 30 Hz, each its own unpinned process; camera at 45 Hz; 20 s run",3
+ros_rvanilla@60Hz,board_ros,"as vanilla plus ffn_block 10 Hz and dronet 30 Hz, each its own unpinned process; camera at 60 Hz; 20 s run",3
+ros_rvanilla@90Hz,board_ros,"as vanilla plus ffn_block 10 Hz and dronet 30 Hz, each its own unpinned process; camera at 90 Hz; 20 s run",3
+ros_ship@10Hz,board_ros,"ROS 2, one process, single-threaded executor, serial YOLO on one core, control on its 100 Hz timer, unpinned; camera at 10 Hz; 20 s run",2
+ros_ship@12Hz,board_ros,"ROS 2, one process, single-threaded executor, serial YOLO on one core, control on its 100 Hz timer, unpinned; camera at 12 Hz; 20 s run",2
+ros_ship@15Hz,board_ros,"ROS 2, one process, single-threaded executor, serial YOLO on one core, control on its 100 Hz timer, unpinned; camera at 15 Hz; 20 s run",3
+ros_ship@20Hz,board_ros,"ROS 2, one process, single-threaded executor, serial YOLO on one core, control on its 100 Hz timer, unpinned; camera at 20 Hz; 20 s run",2
+ros_ship@25Hz,board_ros,"ROS 2, one process, single-threaded executor, serial YOLO on one core, control on its 100 Hz timer, unpinned; camera at 25 Hz; 20 s run",3
+ros_ship@30Hz,board_ros,"ROS 2, one process, single-threaded executor, serial YOLO on one core, control on its 100 Hz timer, unpinned; camera at 30 Hz; 20 s run",2
+ros_ship@45Hz,board_ros,"ROS 2, one process, single-threaded executor, serial YOLO on one core, control on its 100 Hz timer, unpinned; camera at 45 Hz; 20 s run",3
+ros_ship@5Hz,board_ros,"ROS 2, one process, single-threaded executor, serial YOLO on one core, control on its 100 Hz timer, unpinned; camera at 5 Hz; 20 s run",2
+ros_ship@60Hz,board_ros,"ROS 2, one process, single-threaded executor, serial YOLO on one core, control on its 100 Hz timer, unpinned; camera at 60 Hz; 20 s run",1
+ros_ship@75Hz,board_ros,"ROS 2, one process, single-threaded executor, serial YOLO on one core, control on its 100 Hz timer, unpinned; camera at 75 Hz; 20 s run",1
+ros_ship@8Hz,board_ros,"ROS 2, one process, single-threaded executor, serial YOLO on one core, control on its 100 Hz timer, unpinned; camera at 8 Hz; 20 s run",2
+ros_ship@90Hz,board_ros,"ROS 2, one process, single-threaded executor, serial YOLO on one core, control on its 100 Hz timer, unpinned; camera at 90 Hz; 20 s run",1
+ros_ship_c200@45Hz,board_ros,"ROS 2, one process, single-threaded executor, serial YOLO on one core, control on its 100 Hz timer, unpinned; control timer at 200 Hz; camera at 45 Hz; 20 s run",1
+ros_ship_q1@25Hz,board_ros,"ROS 2, one process, single-threaded executor, serial YOLO on one core, control on its 100 Hz timer, unpinned; QoS history depth 1 instead of 10; camera at 25 Hz; 20 s run",1
+ros_ship_q1@45Hz,board_ros,"ROS 2, one process, single-threaded executor, serial YOLO on one core, control on its 100 Hz timer, unpinned; QoS history depth 1 instead of 10; camera at 45 Hz; 20 s run",1
+ros_smte@10Hz,board_ros,"ROS 2, one process pinned to P0-3, MultiThreadedExecutor, YOLO on a 4-hart pool, control timer; camera at 10 Hz; 20 s run",2
+ros_smte@12Hz,board_ros,"ROS 2, one process pinned to P0-3, MultiThreadedExecutor, YOLO on a 4-hart pool, control timer; camera at 12 Hz; 20 s run",2
+ros_smte@15Hz,board_ros,"ROS 2, one process pinned to P0-3, MultiThreadedExecutor, YOLO on a 4-hart pool, control timer; camera at 15 Hz; 20 s run",1
+ros_smte@20Hz,board_ros,"ROS 2, one process pinned to P0-3, MultiThreadedExecutor, YOLO on a 4-hart pool, control timer; camera at 20 Hz; 20 s run",1
+ros_smte@25Hz,board_ros,"ROS 2, one process pinned to P0-3, MultiThreadedExecutor, YOLO on a 4-hart pool, control timer; camera at 25 Hz; 20 s run",1
+ros_smte@30Hz,board_ros,"ROS 2, one process pinned to P0-3, MultiThreadedExecutor, YOLO on a 4-hart pool, control timer; camera at 30 Hz; 20 s run",1
+ros_smte@45Hz,board_ros,"ROS 2, one process pinned to P0-3, MultiThreadedExecutor, YOLO on a 4-hart pool, control timer; camera at 45 Hz; 20 s run",3
+ros_smte@5Hz,board_ros,"ROS 2, one process pinned to P0-3, MultiThreadedExecutor, YOLO on a 4-hart pool, control timer; camera at 5 Hz; 20 s run",2
+ros_smte@60Hz,board_ros,"ROS 2, one process pinned to P0-3, MultiThreadedExecutor, YOLO on a 4-hart pool, control timer; camera at 60 Hz; 20 s run",1
+ros_smte@75Hz,board_ros,"ROS 2, one process pinned to P0-3, MultiThreadedExecutor, YOLO on a 4-hart pool, control timer; camera at 75 Hz; 20 s run",1
+ros_smte@8Hz,board_ros,"ROS 2, one process pinned to P0-3, MultiThreadedExecutor, YOLO on a 4-hart pool, control timer; camera at 8 Hz; 20 s run",2
+ros_smte@90Hz,board_ros,"ROS 2, one process pinned to P0-3, MultiThreadedExecutor, YOLO on a 4-hart pool, control timer; camera at 90 Hz; 20 s run",1
+ros_spin@10Hz,board_ros,"ROS 2, one process pinned to P0-3, single-threaded executor, YOLO on a 4-hart pool (P0-3), main thread on P0, control timer; camera at 10 Hz; 20 s run",2
+ros_spin@12Hz,board_ros,"ROS 2, one process pinned to P0-3, single-threaded executor, YOLO on a 4-hart pool (P0-3), main thread on P0, control timer; camera at 12 Hz; 20 s run",2
+ros_spin@15Hz,board_ros,"ROS 2, one process pinned to P0-3, single-threaded executor, YOLO on a 4-hart pool (P0-3), main thread on P0, control timer; camera at 15 Hz; 20 s run",3
+ros_spin@20Hz,board_ros,"ROS 2, one process pinned to P0-3, single-threaded executor, YOLO on a 4-hart pool (P0-3), main thread on P0, control timer; camera at 20 Hz; 20 s run",2
+ros_spin@25Hz,board_ros,"ROS 2, one process pinned to P0-3, single-threaded executor, YOLO on a 4-hart pool (P0-3), main thread on P0, control timer; camera at 25 Hz; 20 s run",3
+ros_spin@30Hz,board_ros,"ROS 2, one process pinned to P0-3, single-threaded executor, YOLO on a 4-hart pool (P0-3), main thread on P0, control timer; camera at 30 Hz; 20 s run",2
+ros_spin@45Hz,board_ros,"ROS 2, one process pinned to P0-3, single-threaded executor, YOLO on a 4-hart pool (P0-3), main thread on P0, control timer; camera at 45 Hz; 20 s run",3
+ros_spin@5Hz,board_ros,"ROS 2, one process pinned to P0-3, single-threaded executor, YOLO on a 4-hart pool (P0-3), main thread on P0, control timer; camera at 5 Hz; 20 s run",2
+ros_spin@60Hz,board_ros,"ROS 2, one process pinned to P0-3, single-threaded executor, YOLO on a 4-hart pool (P0-3), main thread on P0, control timer; camera at 60 Hz; 20 s run",1
+ros_spin@75Hz,board_ros,"ROS 2, one process pinned to P0-3, single-threaded executor, YOLO on a 4-hart pool (P0-3), main thread on P0, control timer; camera at 75 Hz; 20 s run",1
+ros_spin@8Hz,board_ros,"ROS 2, one process pinned to P0-3, single-threaded executor, YOLO on a 4-hart pool (P0-3), main thread on P0, control timer; camera at 8 Hz; 20 s run",2
+ros_spin@90Hz,board_ros,"ROS 2, one process pinned to P0-3, single-threaded executor, YOLO on a 4-hart pool (P0-3), main thread on P0, control timer; camera at 90 Hz; 20 s run",1
+ros_spin_c200@45Hz,board_ros,"ROS 2, one process pinned to P0-3, single-threaded executor, YOLO on a 4-hart pool (P0-3), main thread on P0, control timer; control timer at 200 Hz; camera at 45 Hz; 20 s run",1
+ros_spin_hog2@45Hz,board_ros,"ROS 2, one process pinned to P0-3, single-threaded executor, YOLO on a 4-hart pool (P0-3), main thread on P0, control timer; two CPU-hog processes added; camera at 45 Hz; 20 s run",1
+ros_spin_q1@25Hz,board_ros,"ROS 2, one process pinned to P0-3, single-threaded executor, YOLO on a 4-hart pool (P0-3), main thread on P0, control timer; QoS history depth 1 instead of 10; camera at 25 Hz; 20 s run",1
+ros_spin_q1@45Hz,board_ros,"ROS 2, one process pinned to P0-3, single-threaded executor, YOLO on a 4-hart pool (P0-3), main thread on P0, control timer; QoS history depth 1 instead of 10; camera at 45 Hz; 20 s run",1
+ros_vanilla4@120Hz,board_ros,"as vanilla, the perception node using the model's 4-hart YOLO build (the pool pins its own workers to P0-3; ROS itself unpinned); camera at 120 Hz; 20 s run",3
+ros_vanilla4@15Hz,board_ros,"as vanilla, the perception node using the model's 4-hart YOLO build (the pool pins its own workers to P0-3; ROS itself unpinned); camera at 15 Hz; 20 s run",3
+ros_vanilla4@25Hz,board_ros,"as vanilla, the perception node using the model's 4-hart YOLO build (the pool pins its own workers to P0-3; ROS itself unpinned); camera at 25 Hz; 20 s run",3
+ros_vanilla4@30Hz,board_ros,"as vanilla, the perception node using the model's 4-hart YOLO build (the pool pins its own workers to P0-3; ROS itself unpinned); camera at 30 Hz; 20 s run",3
+ros_vanilla4@45Hz,board_ros,"as vanilla, the perception node using the model's 4-hart YOLO build (the pool pins its own workers to P0-3; ROS itself unpinned); camera at 45 Hz; 20 s run",3
+ros_vanilla4@60Hz,board_ros,"as vanilla, the perception node using the model's 4-hart YOLO build (the pool pins its own workers to P0-3; ROS itself unpinned); camera at 60 Hz; 20 s run",3
+ros_vanilla4@90Hz,board_ros,"as vanilla, the perception node using the model's 4-hart YOLO build (the pool pins its own workers to P0-3; ROS itself unpinned); camera at 90 Hz; 20 s run",3
+ros_vanilla4_q1@45Hz,board_ros,"as vanilla, the perception node using the model's 4-hart YOLO build (the pool pins its own workers to P0-3; ROS itself unpinned); QoS history depth 1 instead of 10; camera at 45 Hz; 20 s run",3
+ros_vanilla4_q1@90Hz,board_ros,"as vanilla, the perception node using the model's 4-hart YOLO build (the pool pins its own workers to P0-3; ROS itself unpinned); QoS history depth 1 instead of 10; camera at 90 Hz; 20 s run",3
+ros_vanilla4f@45Hz,board_ros,ROS 2 layout vanilla4f; camera at 45 Hz; 20 s run,3
+ros_vanilla4t@15Hz,board_ros,"ROS 2, ONE process, default single-threaded executor, 4-hart YOLO pool, control on its 100 Hz timer (shares the executor with perception); camera at 15 Hz; 20 s run",3
+ros_vanilla4t@25Hz,board_ros,"ROS 2, ONE process, default single-threaded executor, 4-hart YOLO pool, control on its 100 Hz timer (shares the executor with perception); camera at 25 Hz; 20 s run",3
+ros_vanilla4t@30Hz,board_ros,"ROS 2, ONE process, default single-threaded executor, 4-hart YOLO pool, control on its 100 Hz timer (shares the executor with perception); camera at 30 Hz; 20 s run",3
+ros_vanilla4t@45Hz,board_ros,"ROS 2, ONE process, default single-threaded executor, 4-hart YOLO pool, control on its 100 Hz timer (shares the executor with perception); camera at 45 Hz; 20 s run",3
+ros_vanilla4t@60Hz,board_ros,"ROS 2, ONE process, default single-threaded executor, 4-hart YOLO pool, control on its 100 Hz timer (shares the executor with perception); camera at 60 Hz; 20 s run",3
+ros_vanilla4t@90Hz,board_ros,"ROS 2, ONE process, default single-threaded executor, 4-hart YOLO pool, control on its 100 Hz timer (shares the executor with perception); camera at 90 Hz; 20 s run",3
+ros_vanilla4tm@45Hz,board_ros,"as vanilla4 (one process per node, unpinned, 4-hart YOLO) with control on its own 100 Hz timer in its own process, acting on the held goal; camera at 45 Hz; 20 s run",3
+ros_vanilla4tm@90Hz,board_ros,"as vanilla4 (one process per node, unpinned, 4-hart YOLO) with control on its own 100 Hz timer in its own process, acting on the held goal; camera at 90 Hz; 20 s run",3
+ros_vanilla4x2@45Hz,board_ros,pipelining by hand: the camera alternates frames between two perception processes with 4-hart pools on P0-3 and E4-7; nav and control unpinned; camera at 45 Hz; 20 s run,3
+ros_vanilla4x2@60Hz,board_ros,pipelining by hand: the camera alternates frames between two perception processes with 4-hart pools on P0-3 and E4-7; nav and control unpinned; camera at 60 Hz; 20 s run,3
+ros_vanilla4x2@90Hz,board_ros,pipelining by hand: the camera alternates frames between two perception processes with 4-hart pools on P0-3 and E4-7; nav and control unpinned; camera at 90 Hz; 20 s run,3
+ros_vanilla4x2tm@45Hz,board_ros,ROS 2 layout vanilla4x2tm; camera at 45 Hz; 20 s run,3
+ros_vanilla8@45Hz,board_ros,ROS 2 layout vanilla8; camera at 45 Hz; 20 s run,3
+ros_vanilla8_q1@45Hz,board_ros,ROS 2 layout vanilla8; QoS history depth 1 instead of 10; camera at 45 Hz; 20 s run,3
+ros_vanilla8f@45Hz,board_ros,ROS 2 layout vanilla8f; camera at 45 Hz; 20 s run,3
+ros_vanilla8tm@45Hz,board_ros,ROS 2 layout vanilla8tm; camera at 45 Hz; 20 s run,3
+ros_vanilla@15Hz,board_ros,"ROS 2 as written out of the box: one node per stage, one process each, unpinned, default executor and QoS (depth 10), serial YOLO, control chained to the goal topic; camera at 15 Hz; 20 s run",3
+ros_vanilla@25Hz,board_ros,"ROS 2 as written out of the box: one node per stage, one process each, unpinned, default executor and QoS (depth 10), serial YOLO, control chained to the goal topic; camera at 25 Hz; 20 s run",3
+ros_vanilla@30Hz,board_ros,"ROS 2 as written out of the box: one node per stage, one process each, unpinned, default executor and QoS (depth 10), serial YOLO, control chained to the goal topic; camera at 30 Hz; 20 s run",3
+ros_vanilla@45Hz,board_ros,"ROS 2 as written out of the box: one node per stage, one process each, unpinned, default executor and QoS (depth 10), serial YOLO, control chained to the goal topic; camera at 45 Hz; 20 s run",3
+ros_vanilla@60Hz,board_ros,"ROS 2 as written out of the box: one node per stage, one process each, unpinned, default executor and QoS (depth 10), serial YOLO, control chained to the goal topic; camera at 60 Hz; 20 s run",3
+ros_vanilla@90Hz,board_ros,"ROS 2 as written out of the box: one node per stage, one process each, unpinned, default executor and QoS (depth 10), serial YOLO, control chained to the goal topic; camera at 90 Hz; 20 s run",3
+ros_vanilla_q1@45Hz,board_ros,"ROS 2 as written out of the box: one node per stage, one process each, unpinned, default executor and QoS (depth 10), serial YOLO, control chained to the goal topic; QoS history depth 1 instead of 10; camera at 45 Hz; 20 s run",1
+ros_vanilla_smoke@45Hz,board_ros,"ROS 2 as written out of the box: one node per stage, one process each, unpinned, default executor and QoS (depth 10), serial YOLO, control chained to the goal topic; smoke run; camera at 45 Hz; 20 s run",1
+ros_x2p@45Hz,board_ros,"two cameras (not in the figures): two pinned perception processes (P0-3, E4-7), nav and control pinned; camera at 45 Hz; 20 s run",2
+ros_x2rmulti@45Hz,board_ros,"two cameras plus the heavier stack, MultiThreadedExecutor (not in the figures); camera at 45 Hz; 20 s run",2
+ros_x2rp3@45Hz,board_ros,"two cameras plus the heavier stack, p3 layout (not in the figures); camera at 45 Hz; 20 s run",2
+ros_x2rspin@45Hz,board_ros,"two cameras plus the heavier stack, spin layout (not in the figures); camera at 45 Hz; 20 s run",2
+ros_x2spin@45Hz,board_ros,two cameras (not in the figures): as spin with a second camera/perception pair; camera at 45 Hz; 20 s run,2
+ros_yproc@15Hz,board_ros,"ROS 2, two processes: perception alone (pool P0-3); nav and control together on E4; camera at 15 Hz; 20 s run",3
+ros_yproc@25Hz,board_ros,"ROS 2, two processes: perception alone (pool P0-3); nav and control together on E4; camera at 25 Hz; 20 s run",3
+ros_yproc@45Hz,board_ros,"ROS 2, two processes: perception alone (pool P0-3); nav and control together on E4; camera at 45 Hz; 20 s run",3
+smoke,board_ros,smoke,1
+solve_wh_chain120_solve_500_cpsat_hard,solve,solver run: cpsat on wh_chain120_solve_500,1
+solve_wh_chain120_solve_500_greedy,solve,solver run: greedy on wh_chain120_solve_500,1
+solve_wh_chain120_solve_h200_cpsat,solve,solver run: cpsat on wh_chain120_solve_h200 (200 ms hyperperiod certificate),1
+solve_wh_chain120_solve_h200_cpsat_hard,solve,solver run: cpsat on wh_chain120_solve_h200 (200 ms hyperperiod certificate),1
+solve_wh_chain120_solve_h200_cpsat_soft,solve,solver run: cpsat on wh_chain120_solve_h200_cpsat_soft (200 ms hyperperiod certificate),1
+solve_wh_chain120_solve_h200_greedy,solve,solver run: greedy on wh_chain120_solve_h200 (200 ms hyperperiod certificate),1
+solve_wh_chain150_solve_500_cpsat_hard,solve,solver run: cpsat on wh_chain150_solve_500,1
+solve_wh_chain150_solve_500_greedy,solve,solver run: greedy on wh_chain150_solve_500,1
+solve_wh_chain150_solve_h200_cpsat,solve,solver run: cpsat on wh_chain150_solve_h200 (200 ms hyperperiod certificate),1
+solve_wh_chain150_solve_h200_cpsat_3600,solve,solver run: cpsat on wh_chain150_solve_h200 (200 ms hyperperiod certificate),1
+solve_wh_chain150_solve_h200_greedy,solve,solver run: greedy on wh_chain150_solve_h200 (200 ms hyperperiod certificate),1
+solve_wh_chain30_solve_500_cpsat_hard,solve,solver run: cpsat on wh_chain30_solve_500,1
+solve_wh_chain30_solve_500_greedy,solve,solver run: greedy on wh_chain30_solve_500,1
+solve_wh_chain30_solve_h200_cpsat,solve,solver run: cpsat on wh_chain30_solve_h200 (200 ms hyperperiod certificate),1
+solve_wh_chain30_solve_h200_greedy,solve,solver run: greedy on wh_chain30_solve_h200 (200 ms hyperperiod certificate),1
+solve_wh_chain45_shard_solve_cpsat_hard,solve,solver run: cpsat on wh_chain45_shard_solve,1
+solve_wh_chain45_shard_solve_greedy,solve,solver run: greedy on wh_chain45_shard_solve,1
+solve_wh_chain45_shard_solve_h200_cpsat,solve,solver run: cpsat on wh_chain45_shard_solve_h200 (200 ms hyperperiod certificate),1
+solve_wh_chain45_shard_solve_h200_greedy,solve,solver run: greedy on wh_chain45_shard_solve_h200 (200 ms hyperperiod certificate),1
+solve_wh_chain45_shardonly_cpsat_hard,solve,solver run: cpsat on wh_chain45_shardonly,1
+solve_wh_chain45_shardonly_greedy,solve,solver run: greedy on wh_chain45_shardonly,1
+solve_wh_chain45_solve_cpsat_hard,solve,solver run: cpsat on wh_chain45_solve,1
+solve_wh_chain45_solve_cpsat_soft,solve,solver run: cpsat on wh_chain45_solve_cpsat_soft,1
+solve_wh_chain45_solve_greedy,solve,solver run: greedy on wh_chain45_solve,1
+solve_wh_chain45_solve_h200_cpsat,solve,solver run: cpsat on wh_chain45_solve_h200 (200 ms hyperperiod certificate),1
+solve_wh_chain45_solve_h200_greedy,solve,solver run: greedy on wh_chain45_solve_h200 (200 ms hyperperiod certificate),1
+solve_wh_chain45_solve_h200_yolo100_cpsat,solve,solver run: cpsat on wh_chain45_solve_h200_yolo100 (200 ms hyperperiod certificate),1
+solve_wh_chain45_solve_h200_yolo100_greedy,solve,solver run: greedy on wh_chain45_solve_h200_yolo100 (200 ms hyperperiod certificate),1
+solve_wh_chain45_solve_h200_yolo120_cpsat,solve,solver run: cpsat on wh_chain45_solve_h200_yolo120 (200 ms hyperperiod certificate),1
+solve_wh_chain45_solve_h200_yolo120_greedy,solve,solver run: greedy on wh_chain45_solve_h200_yolo120 (200 ms hyperperiod certificate),1
+solve_wh_chain45_tight_cpsat_hard,solve,solver run: cpsat on wh_chain45_tight,1
+solve_wh_chain45_tight_greedy,solve,solver run: greedy on wh_chain45_tight,1
+solve_wh_chain45_tightmix_cpsat_hard,solve,solver run: cpsat on wh_chain45_tightmix,1
+solve_wh_chain45_tightmix_greedy,solve,solver run: greedy on wh_chain45_tightmix,1
+solve_wh_chain45_w112p_cpsat_hard,solve,solver run: cpsat on wh_chain45_w112p,1
+solve_wh_chain45_w112p_greedy,solve,solver run: greedy on wh_chain45_w112p,1
+solve_wh_chain45_w125p_cpsat_hard,solve,solver run: cpsat on wh_chain45_w125p,1
+solve_wh_chain45_w125p_greedy,solve,solver run: greedy on wh_chain45_w125p,1
+solve_wh_chain45_w15p_cpsat_hard,solve,solver run: cpsat on wh_chain45_w15p,1
+solve_wh_chain45_w15p_greedy,solve,solver run: greedy on wh_chain45_w15p,1
+solve_wh_chain45_w2p_cpsat_hard,solve,solver run: cpsat on wh_chain45_w2p,1
+solve_wh_chain45_w2p_cpsat_hard_long,solve,solver run: cpsat on wh_chain45_w2p_cpsat_hard_long,1
+solve_wh_chain45_w2p_cpsat_soft,solve,solver run: cpsat on wh_chain45_w2p_cpsat_soft,1
+solve_wh_chain45_w2p_greedy,solve,solver run: greedy on wh_chain45_w2p,1
+solve_wh_chain45_w2pime_greedy,solve,solver run: greedy on wh_chain45_w2pime,1
+solve_wh_chain45_w2pshort_cpsat_hard,solve,solver run: cpsat on wh_chain45_w2pshort,1
+solve_wh_chain60_solve_500_cpsat_hard,solve,solver run: cpsat on wh_chain60_solve_500,1
+solve_wh_chain60_solve_500_greedy,solve,solver run: greedy on wh_chain60_solve_500,1
+solve_wh_chain60_solve_h200_cpsat,solve,solver run: cpsat on wh_chain60_solve_h200 (200 ms hyperperiod certificate),1
+solve_wh_chain60_solve_h200_greedy,solve,solver run: greedy on wh_chain60_solve_h200 (200 ms hyperperiod certificate),1
+solve_wh_chain90_rich_shard_cpsat_hard,solve,solver run: cpsat on wh_chain90_rich_shard,1
+solve_wh_chain90_rich_shard_greedy,solve,solver run: greedy on wh_chain90_rich_shard,1
+solve_wh_chain90_rich_solve_500_cpsat_hard,solve,solver run: cpsat on wh_chain90_rich_solve_500,1
+solve_wh_chain90_rich_solve_500_cpsat_soft,solve,solver run: cpsat on wh_chain90_rich_solve_500_cpsat_soft,1
+solve_wh_chain90_rich_solve_500_greedy,solve,solver run: greedy on wh_chain90_rich_solve_500,1
+solve_wh_chain90_rich_solve_cpsat_hard,solve,solver run: cpsat on wh_chain90_rich_solve,1
+solve_wh_chain90_rich_solve_cpsat_soft,solve,solver run: cpsat on wh_chain90_rich_solve_cpsat_soft,1
+solve_wh_chain90_rich_solve_greedy,solve,solver run: greedy on wh_chain90_rich_solve,1
+solve_wh_chain90_rich_solve_h100_cpsat,solve,solver run: cpsat on wh_chain90_rich_solve_h100,1
+solve_wh_chain90_rich_solve_h100_greedy,solve,solver run: greedy on wh_chain90_rich_solve_h100,1
+solve_wh_chain90_solve_500_cpsat_hard,solve,solver run: cpsat on wh_chain90_solve_500,1
+solve_wh_chain90_solve_500_cpsat_soft,solve,solver run: cpsat on wh_chain90_solve_500_cpsat_soft,1
+solve_wh_chain90_solve_500_greedy,solve,solver run: greedy on wh_chain90_solve_500,1
+solve_wh_chain90_solve_h200_cpsat,solve,solver run: cpsat on wh_chain90_solve_h200 (200 ms hyperperiod certificate),1
+solve_wh_chain90_solve_h200_cpsat_hard,solve,solver run: cpsat on wh_chain90_solve_h200 (200 ms hyperperiod certificate),1
+solve_wh_chain90_solve_h200_cpsat_soft,solve,solver run: cpsat on wh_chain90_solve_h200_cpsat_soft (200 ms hyperperiod certificate),1
+solve_wh_chain90_solve_h200_greedy,solve,solver run: greedy on wh_chain90_solve_h200 (200 ms hyperperiod certificate),1
+xpurt_a120greedy,board_xpurt,"XPU-RT, greedy (list scheduling) table of the chain at a 120 Hz camera (half-second table) (wh_chain120_solve_500), executed on the K1; costed with the yolo x1.10 board calibration",3
+xpurt_a120greedyOC,board_xpurt,XPU-RT table a120greedyOCr3,3
+xpurt_a120hcpsat_hard,board_xpurt,"XPU-RT, CP-SAT (hard windows) table of the chain at a 120 Hz camera (200 ms certificate table) (wh_chain120_solve_h200), executed on the K1; costed with the yolo x1.10 board calibration",3
+xpurt_a120hgreedy,board_xpurt,"XPU-RT, greedy (list scheduling) table of the chain at a 120 Hz camera (200 ms certificate table) (wh_chain120_solve_h200), executed on the K1; costed with the yolo x1.10 board calibration",3
+xpurt_a30cpsat_hard,board_xpurt,"XPU-RT, CP-SAT (hard windows) table of the chain at a 30 Hz camera (half-second table) (wh_chain30_solve_500), executed on the K1; costed with the yolo x1.10 board calibration",3
+xpurt_a30greedy,board_xpurt,"XPU-RT, greedy (list scheduling) table of the chain at a 30 Hz camera (half-second table) (wh_chain30_solve_500), executed on the K1; costed with the yolo x1.10 board calibration",3
+xpurt_a30greedyOC,board_xpurt,XPU-RT table a30greedyOCr3,3
+xpurt_a60cpsat_hard,board_xpurt,"XPU-RT, CP-SAT (hard windows) table of the chain at a 60 Hz camera (half-second table) (wh_chain60_solve_500), executed on the K1; costed with the yolo x1.10 board calibration",3
+xpurt_a60greedy,board_xpurt,"XPU-RT, greedy (list scheduling) table of the chain at a 60 Hz camera (half-second table) (wh_chain60_solve_500), executed on the K1; costed with the yolo x1.10 board calibration",3
+xpurt_a60greedyOC,board_xpurt,XPU-RT table a60greedyOCr3,3
+xpurt_a90cpsat_hard,board_xpurt,"XPU-RT, CP-SAT (hard windows) table of the chain at a 90 Hz camera (half-second table) (wh_chain90_solve_500), executed on the K1; costed with the yolo x1.10 board calibration",3
+xpurt_a90greedy,board_xpurt,"XPU-RT, greedy (list scheduling) table of the chain at a 90 Hz camera (half-second table) (wh_chain90_solve_500), executed on the K1; costed with the yolo x1.10 board calibration",3
+xpurt_a90greedyOC,board_xpurt,XPU-RT table a90greedyOCr3,3
+xpurt_acpsat_hard,board_xpurt,"XPU-RT, CP-SAT (hard windows) table of the 45 Hz chain spec (1 s table) (wh_chain45_solve), executed on the K1; costed with k1_board_calibration_yolo110.json (stock per-op table, YOLO dispatches x1.10)",3
+xpurt_agreedy,board_xpurt,"XPU-RT, greedy (list scheduling) table of the 45 Hz chain spec (1 s table) (wh_chain45_solve), executed on the K1; costed with k1_board_calibration_yolo110.json (stock per-op table, YOLO dispatches x1.10)",3
+xpurt_agreedyOC,board_xpurt,XPU-RT table agreedyOCr3,3
+xpurt_ashcpsat_hard,board_xpurt,"XPU-RT, CP-SAT (hard windows) table of the 45 Hz chain with YOLO free to shard (gen_mb_cal costing) (wh_chain45_shard_solve), executed on the K1; costed with gen_mb_cal (YOLO multi-hart rows from executed shard traces)",3
+xpurt_ashgreedy,board_xpurt,"XPU-RT, greedy (list scheduling) table of the 45 Hz chain with YOLO free to shard (gen_mb_cal costing) (wh_chain45_shard_solve), executed on the K1; costed with gen_mb_cal (YOLO multi-hart rows from executed shard traces)",3
+xpurt_ashgreedyOC,board_xpurt,XPU-RT table ashgreedyOCr3,3
+xpurt_b5cpsat_hard,board_xpurt,"XPU-RT, CP-SAT (hard windows) table of the 90 Hz camera + heavier stack spec (half-second table) (wh_chain90_rich_solve_500), executed on the K1; costed with the yolo x1.10 board calibration",3
+xpurt_b5greedy,board_xpurt,"XPU-RT, greedy (list scheduling) table of the 90 Hz camera + heavier stack spec (half-second table) (wh_chain90_rich_solve_500), executed on the K1; costed with the yolo x1.10 board calibration",3
+xpurt_b5greedyOC,board_xpurt,XPU-RT table b5greedyOCr3,3
+xpurt_best25p4,board_xpurt,"XPU-RT, hand placement at a 25 Hz camera",3
+xpurt_best25p4_fifo80_run1,board_xpurt,"XPU-RT, hand placement at a 25 Hz camera",1
+xpurt_best45alt1,board_xpurt,"XPU-RT, hand placement at a 45 Hz camera",2
+xpurt_best45alt2,board_xpurt,"XPU-RT, hand placement best45alt2: 45 Hz camera, control on its own hart (the first recreation's arm)",3
+xpurt_best45alt2_fifo80_run1,board_xpurt,"XPU-RT, hand placement best45alt2: 45 Hz camera, control on its own hart (the first recreation's arm)",1
+xpurt_best45alt2_other_hog2_run1,board_xpurt,"XPU-RT, hand placement best45alt2: 45 Hz camera, control on its own hart (the first recreation's arm)",1
+xpurt_best45alt2_other_hog2_run2,board_xpurt,"XPU-RT, hand placement best45alt2: 45 Hz camera, control on its own hart (the first recreation's arm)",1
+xpurt_best45alt2b,board_xpurt,"XPU-RT, hand placement best45alt2: 45 Hz camera, control on its own hart (the first recreation's arm)",2
+xpurt_best45alt2c200,board_xpurt,"XPU-RT, hand placement best45alt2: 45 Hz camera, control on its own hart (the first recreation's arm)",2
+xpurt_best45alt2long,board_xpurt,"XPU-RT, hand placement best45alt2: 45 Hz camera, control on its own hart (the first recreation's arm)",2
+xpurt_best45alt4,board_xpurt,"XPU-RT, hand placement at a 45 Hz camera",3
+xpurt_best45alt4b,board_xpurt,"XPU-RT, hand placement at a 45 Hz camera",2
+xpurt_best45alt4s,board_xpurt,"XPU-RT, hand placement at a 45 Hz camera",3
+xpurt_best45p4,board_xpurt,"XPU-RT, hand placement at a 45 Hz camera",3
+xpurt_best60alt1,board_xpurt,"XPU-RT, hand placement at a 60 Hz camera",2
+xpurt_best60alt2,board_xpurt,"XPU-RT, hand placement at a 60 Hz camera",2
+xpurt_best75alt2,board_xpurt,"XPU-RT, hand placement at a 75 Hz camera",2
+xpurt_best90alt1,board_xpurt,"XPU-RT, hand placement at a 90 Hz camera",2
+xpurt_bgreedy,board_xpurt,XPU-RT table bgreedyr3,3
+xpurt_cam2alt1,board_xpurt,XPU-RT table cam2alt1,2
+xpurt_cam2rich,board_xpurt,XPU-RT table cam2rich,2
+xpurt_coupled,board_xpurt,XPU-RT table coupled,3
+xpurt_fba120er0cpsatsoftOC,board_xpurt,XPU-RT table fba120er0cpsatsoftOCr3,3
+xpurt_fba120er0greedyOC,board_xpurt,XPU-RT table fba120er0greedyOCr3,3
+xpurt_fba120er1cpsat_hard,board_xpurt,XPU-RT table fba120er1cpsat_hardr3,3
+xpurt_fba120er1cpsat_soft,board_xpurt,XPU-RT table fba120er1cpsat_softr3,3
+xpurt_fba120er1cpsatsoftOC,board_xpurt,XPU-RT table fba120er1cpsatsoftOCr3,3
+xpurt_fba120er1greedy,board_xpurt,XPU-RT table fba120er1greedyr3,3
+xpurt_fba120er1greedyOC,board_xpurt,XPU-RT table fba120er1greedyOCr3,3
+xpurt_fba120er2cpsat_hard,board_xpurt,XPU-RT table fba120er2cpsat_hardr3,3
+xpurt_fba120er2cpsat_soft,board_xpurt,XPU-RT table fba120er2cpsat_softr3,3
+xpurt_fba120er2cpsatsoftOC,board_xpurt,XPU-RT table fba120er2cpsatsoftOCr3,3
+xpurt_fba120er2greedy,board_xpurt,XPU-RT table fba120er2greedyr3,3
+xpurt_fba120er2greedyOC,board_xpurt,XPU-RT table fba120er2greedyOCr3,3
+xpurt_fba120hr0cpsat_hard,board_xpurt,"XPU-RT, CP-SAT (hard windows) table of the chain at a 120 Hz camera (200 ms table) (wh_chain120_solve_h200), executed on the K1; HIL feedback study round 0: solved from the isolated profile, no board knowledge",6
+xpurt_fba120hr0cpsat_soft,board_xpurt,XPU-RT table fba120hr0cpsat_softr3,6
+xpurt_fba120hr0cpsatsoftOC,board_xpurt,XPU-RT table fba120hr0cpsatsoftOCr3,3
+xpurt_fba120hr0greedy,board_xpurt,"XPU-RT, greedy (list scheduling) table of the chain at a 120 Hz camera (200 ms table) (wh_chain120_solve_h200), executed on the K1; HIL feedback study round 0: solved from the isolated profile, no board knowledge",6
+xpurt_fba120hr0greedyOC,board_xpurt,XPU-RT table fba120hr0greedyOCr3,3
+xpurt_fba120hr1cpsat_hard,board_xpurt,"XPU-RT, CP-SAT (hard windows) table of the chain at a 120 Hz camera (200 ms table) (wh_chain120_solve_h200), executed on the K1; HIL feedback study round 1: re-solved on the per-dispatch calibration fitted from round 0's executed CP-SAT traces",3
+xpurt_fba120hr1cpsat_soft,board_xpurt,XPU-RT table fba120hr1cpsat_softr3,3
+xpurt_fba120hr1cpsatsoftOC,board_xpurt,XPU-RT table fba120hr1cpsatsoftOCr3,3
+xpurt_fba120hr1greedy,board_xpurt,"XPU-RT, greedy (list scheduling) table of the chain at a 120 Hz camera (200 ms table) (wh_chain120_solve_h200), executed on the K1; HIL feedback study round 1: re-solved on the per-dispatch calibration fitted from round 0's executed CP-SAT traces",3
+xpurt_fba120hr1greedyOC,board_xpurt,XPU-RT table fba120hr1greedyOCr3,3
+xpurt_fba120hr2cpsat_hard,board_xpurt,"XPU-RT, CP-SAT (hard windows) table of the chain at a 120 Hz camera (200 ms table) (wh_chain120_solve_h200), executed on the K1; HIL feedback study round 2: re-solved on the per-dispatch calibration fitted from round 1's executed CP-SAT traces",3
+xpurt_fba120hr2greedy,board_xpurt,"XPU-RT, greedy (list scheduling) table of the chain at a 120 Hz camera (200 ms table) (wh_chain120_solve_h200), executed on the K1; HIL feedback study round 2: re-solved on the per-dispatch calibration fitted from round 1's executed CP-SAT traces",3
+xpurt_fba120hr2greedyOC,board_xpurt,XPU-RT table fba120hr2greedyOCr3,3
+xpurt_fba90er0cpsatsoftOC,board_xpurt,XPU-RT table fba90er0cpsatsoftOCr3,3
+xpurt_fba90er0greedyOC,board_xpurt,XPU-RT table fba90er0greedyOCr3,3
+xpurt_fba90er1cpsat_hard,board_xpurt,XPU-RT table fba90er1cpsat_hardr3,3
+xpurt_fba90er1cpsat_soft,board_xpurt,XPU-RT table fba90er1cpsat_softr3,3
+xpurt_fba90er1cpsatsoftOC,board_xpurt,XPU-RT table fba90er1cpsatsoftOCr3,3
+xpurt_fba90er1greedy,board_xpurt,XPU-RT table fba90er1greedyr3,3
+xpurt_fba90er1greedyOC,board_xpurt,XPU-RT table fba90er1greedyOCr3,3
+xpurt_fba90er2cpsat_hard,board_xpurt,XPU-RT table fba90er2cpsat_hardr3,3
+xpurt_fba90er2cpsat_soft,board_xpurt,XPU-RT table fba90er2cpsat_softr3,3
+xpurt_fba90er2cpsatsoftOC,board_xpurt,XPU-RT table fba90er2cpsatsoftOCr3,3
+xpurt_fba90er2greedy,board_xpurt,XPU-RT table fba90er2greedyr3,3
+xpurt_fba90er2greedyOC,board_xpurt,XPU-RT table fba90er2greedyOCr3,3
+xpurt_fba90hr0cpsat_hard,board_xpurt,XPU-RT table fba90hr0cpsat_hardr3,6
+xpurt_fba90hr0cpsat_soft,board_xpurt,XPU-RT table fba90hr0cpsat_softr3,6
+xpurt_fba90hr0cpsatsoftOC,board_xpurt,XPU-RT table fba90hr0cpsatsoftOCr3,3
+xpurt_fba90hr0greedy,board_xpurt,XPU-RT table fba90hr0greedyr3,6
+xpurt_fba90hr0greedyOC,board_xpurt,XPU-RT table fba90hr0greedyOCr3,3
+xpurt_fba90hr1cpsat_hard,board_xpurt,XPU-RT table fba90hr1cpsat_hardr3,3
+xpurt_fba90hr1cpsat_soft,board_xpurt,XPU-RT table fba90hr1cpsat_softr3,3
+xpurt_fba90hr1cpsatsoftOC,board_xpurt,XPU-RT table fba90hr1cpsatsoftOCr3,3
+xpurt_fba90hr1greedy,board_xpurt,XPU-RT table fba90hr1greedyr3,3
+xpurt_fba90hr1greedyOC,board_xpurt,XPU-RT table fba90hr1greedyOCr3,3
+xpurt_fba90hr2cpsat_hard,board_xpurt,XPU-RT table fba90hr2cpsat_hardr3,3
+xpurt_fba90hr2cpsat_soft,board_xpurt,XPU-RT table fba90hr2cpsat_softr3,3
+xpurt_fba90hr2cpsatsoftOC,board_xpurt,XPU-RT table fba90hr2cpsatsoftOCr3,3
+xpurt_fba90hr2greedy,board_xpurt,XPU-RT table fba90hr2greedyr3,3
+xpurt_fba90hr2greedyOC,board_xpurt,XPU-RT table fba90hr2greedyOCr3,3
+xpurt_fba90r0cpsat_hard,board_xpurt,"XPU-RT, CP-SAT (hard windows) table of the chain at a 90 Hz camera (wh_chain90_solve_500), executed on the K1; HIL feedback study round 0: solved from the isolated profile, no board knowledge",3
+xpurt_fba90r0greedy,board_xpurt,"XPU-RT, greedy (list scheduling) table of the chain at a 90 Hz camera (wh_chain90_solve_500), executed on the K1; HIL feedback study round 0: solved from the isolated profile, no board knowledge",3
+xpurt_fba90r0greedyOC,board_xpurt,XPU-RT table fba90r0greedyOCr3,3
+xpurt_fba90r1cpsat_hard,board_xpurt,"XPU-RT, CP-SAT (hard windows) table of the chain at a 90 Hz camera (wh_chain90_solve_500), executed on the K1; HIL feedback study round 1: re-solved on the per-dispatch calibration fitted from round 0's executed CP-SAT traces",3
+xpurt_fba90r1cpsat_soft,board_xpurt,XPU-RT table fba90r1cpsat_softr3,3
+xpurt_fba90r1cpsatsoftOC,board_xpurt,XPU-RT table fba90r1cpsatsoftOCr3,3
+xpurt_fba90r1greedy,board_xpurt,"XPU-RT, greedy (list scheduling) table of the chain at a 90 Hz camera (wh_chain90_solve_500), executed on the K1; HIL feedback study round 1: re-solved on the per-dispatch calibration fitted from round 0's executed CP-SAT traces",3
+xpurt_fba90r1greedyOC,board_xpurt,XPU-RT table fba90r1greedyOCr3,3
+xpurt_fba90r2cpsat_hard,board_xpurt,"XPU-RT, CP-SAT (hard windows) table of the chain at a 90 Hz camera (wh_chain90_solve_500), executed on the K1; HIL feedback study round 2: re-solved on the per-dispatch calibration fitted from round 1's executed CP-SAT traces",3
+xpurt_fba90r2greedy,board_xpurt,"XPU-RT, greedy (list scheduling) table of the chain at a 90 Hz camera (wh_chain90_solve_500), executed on the K1; HIL feedback study round 2: re-solved on the per-dispatch calibration fitted from round 1's executed CP-SAT traces",3
+xpurt_fba90r2greedyOC,board_xpurt,XPU-RT table fba90r2greedyOCr3,3
+xpurt_fbb5r0cpsat_hard,board_xpurt,"XPU-RT, CP-SAT (hard windows) table of the 90 Hz camera + heavier stack (wh_chain90_rich_solve_500), executed on the K1; HIL feedback study round 0: solved from the isolated profile, no board knowledge",3
+xpurt_fbb5r0greedy,board_xpurt,"XPU-RT, greedy (list scheduling) table of the 90 Hz camera + heavier stack (wh_chain90_rich_solve_500), executed on the K1; HIL feedback study round 0: solved from the isolated profile, no board knowledge",3
+xpurt_fbb5r0greedyOC,board_xpurt,XPU-RT table fbb5r0greedyOCr3,3
+xpurt_fbb5r1cpsat_hard,board_xpurt,"XPU-RT, CP-SAT (hard windows) table of the 90 Hz camera + heavier stack (wh_chain90_rich_solve_500), executed on the K1; HIL feedback study round 1: re-solved on the per-dispatch calibration fitted from round 0's executed CP-SAT traces",3
+xpurt_fbb5r1greedy,board_xpurt,"XPU-RT, greedy (list scheduling) table of the 90 Hz camera + heavier stack (wh_chain90_rich_solve_500), executed on the K1; HIL feedback study round 1: re-solved on the per-dispatch calibration fitted from round 0's executed CP-SAT traces",3
+xpurt_fbb5r1greedyOC,board_xpurt,XPU-RT table fbb5r1greedyOCr3,3
+xpurt_fbb5r2cpsat_hard,board_xpurt,"XPU-RT, CP-SAT (hard windows) table of the 90 Hz camera + heavier stack (wh_chain90_rich_solve_500), executed on the K1; HIL feedback study round 2: re-solved on the per-dispatch calibration fitted from round 1's executed CP-SAT traces",3
+xpurt_fbb5r2greedy,board_xpurt,"XPU-RT, greedy (list scheduling) table of the 90 Hz camera + heavier stack (wh_chain90_rich_solve_500), executed on the K1; HIL feedback study round 2: re-solved on the per-dispatch calibration fitted from round 1's executed CP-SAT traces",3
+xpurt_fbb5r2greedyOC,board_xpurt,XPU-RT table fbb5r2greedyOCr3,3
+xpurt_long,board_xpurt,XPU-RT table long,3
+xpurt_long25,board_xpurt,XPU-RT table long25,3
+xpurt_long25_fifo80_run1,board_xpurt,XPU-RT table long25_fifo80_run1,1
+xpurt_long45,board_xpurt,XPU-RT table long45,3
+xpurt_long45_fifo80_run1,board_xpurt,XPU-RT table long45_fifo80_run1,1
+xpurt_long_fifo80_run1,board_xpurt,XPU-RT table long_fifo80_run1,1
+xpurt_rich25p4,board_xpurt,XPU-RT table rich25p4,2
+xpurt_rich45alt2,board_xpurt,"XPU-RT, hand placement, 45 Hz camera plus ffn_block and dronet",3
+xpurt_rich45alt2ime,board_xpurt,"XPU-RT, hand placement, 45 Hz camera plus ffn_block and dronet",2
+xpurt_sonlycp,board_xpurt,XPU-RT table sonlycpr3,3
+xpurt_sonlyg,board_xpurt,XPU-RT table sonlygr3,3
+xpurt_tiled25,board_xpurt,XPU-RT table tiled25,3
+xpurt_tiled25_fifo80_run1,board_xpurt,XPU-RT table tiled25_fifo80_run1,1
+xpurt_tiled45,board_xpurt,XPU-RT table tiled45,3
+xpurt_w2pgOC,board_xpurt,XPU-RT table w2pgOCr3,3
+xpurt_w2pgreedy,board_xpurt,XPU-RT table w2pgreedyr3,3
+xpurt_w2pime,board_xpurt,XPU-RT table w2pimer3,3
+xpurt_w2pime2,board_xpurt,XPU-RT table w2pime2r3,3
+xpurt_w2pscp,board_xpurt,XPU-RT table w2pscpr3,3

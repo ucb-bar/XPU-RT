@@ -1,0 +1,7 @@
+[1/1] s5_solvable_reveal
+  -- greedy --
+    inner (AOT) search: levers ['shard']
+    A neither                                    misses=4   worst_late=  16.783 ms  makespan=  60.26 ms
+    B inner only (levers, deployed blind)        misses=5   worst_late=   6.862 ms  makespan=  45.56 ms
+    C outer only (measured re-solve, no levers)  misses=1   worst_late=  30.607 ms  makespan=  60.61 ms
+    D both                                       misses=2   worst_late=   9.112 ms  makespan=  50.58 ms

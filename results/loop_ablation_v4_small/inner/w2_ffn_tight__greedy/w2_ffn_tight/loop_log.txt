@@ -1,0 +1,22 @@
+== co-design loop: w2_ffn_tight ==
+round 0 · baseline: makespan 74.611 (makespan 74.6 ms), 20 dispatch-miss
+accept rule: candidate_objective.accept() · critical=['mlp_control', 'ffn_block'] heavy=ffn_block
+      ime: built ime_x60 profiles for (none new; existing reused)
+round 1 · try ime: makespan 74.611 -> 62.599 (-16.1%), 10 dispatch-miss -> ACCEPTABLE
+round 1 · try ime: accepted -- max deadline lateness: ime=4.6 beats baseline=16.61 (tolerance 0.5)
+round 1 · try shard: makespan 74.611 -> 55.850 (-25.1%), 0 dispatch-miss -> ACCEPTABLE
+round 1 · try shard: accepted -- hard deadline misses: shard=0 beats baseline=5 (tolerance 1.36)
+      unfuse: adopted ModelBlaster unfused dispatch graph for (none — no fused net with an unfused build on disk)
+round 1 · try unfuse: lever changed nothing on this spec (inapplicable here) — not a candidate
+round 1: ACCEPT +shard  makespan 74.611 -> 55.850 (-25.1%)
+      ime: built ime_x60 profiles for (none new; existing reused)
+round 2 · try ime: makespan 55.850 -> 55.848 (-0.0%), 0 dispatch-miss -> reject
+round 2 · try ime: rejected -- indistinguishable on every term; a tie is not an improvement
+      unfuse: adopted ModelBlaster unfused dispatch graph for (none — no fused net with an unfused build on disk)
+round 2 · try unfuse: lever changed nothing on this spec (inapplicable here) — not a candidate
+round 2: no lever is accepted by the nine-term objective rule — CONVERGED
+fuse: NOT applied — roofline decision-aid says the stack is compute-bound (max fusible-epilogue ceiling 16% on dronet); fusion collapses dispatches (scheduling) but is measured ~+0.85% on cycles, so the loop does not credit a makespan gain it cannot measure.
+
+CONVERGED: hard deadline misses (instances) 5 -> 0; makespan 74.611 -> 55.850 ms (-25.1%), levers applied: ['shard']
+  decided by: shard (hard deadline misses: shard=0 beats baseline=5 (tolerance 1.36))
+artifacts in /scratch/agustin/xpurt-dev-sync/results/loop_ablation_v4_small/inner/w2_ffn_tight__greedy/w2_ffn_tight

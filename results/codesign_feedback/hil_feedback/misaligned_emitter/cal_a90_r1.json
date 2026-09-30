@@ -1,0 +1,80 @@
+{
+ "schema": "k1_board_calibration/v2",
+ "source": "3 board trace(s), real SpaceMiT K1; actual=(end-start)ticks/24MHz vs the predicted_duration_ms the runner stamped from the schedule",
+ "workload": "wh_chain90_solve_500, round 0 executed",
+ "generated_by": "scripts/emit_board_calibration.py",
+ "generated_at": "2026-09-11T16:01:53",
+ "measures": "EXECUTION inflation only. Queue delay is carried separately by the trace and excluded: a dispatch that waited is not a dispatch that ran slowly, and folding queueing in would charge the scheduler twice for its own placement.",
+ "statistic": "mean of per-sample ratios; pooled op tier and aggregate floored at predicted >= 0.1 ms (2400 rdtime ticks) so timer granularity cannot inflate a pooled multiplier",
+ "n_dispatch_samples": 15225,
+ "n_pooled_samples": 9699,
+ "aggregate_multiplier": 0.9605,
+ "aggregate_median": 0.9996,
+ "aggregate_mean": 0.9605,
+ "primary_key": "network/dispatch_id (exact, for the measured workload)",
+ "fallback_key": "op (generalizing; EXTRAPOLATED for nets not in coverage.nets_exact)",
+ "alignment": {
+  "schedule": "schedules/fig_fba90r0_cpsat_hard_clamped.json",
+  "verified": true,
+  "networks_aligned": [
+   "fused_full",
+   "mlp_control"
+  ],
+  "networks_omitted_from_exact_tier": {
+   "yolov8_nano_64x96": "the trace has ids the schedule does not: [3, 11, 22, 33, 48, 56]"
+  },
+  "note": "the runner records zero-cost ops with dispatch_id -1 and numbers the rest from zero, while the schedule numbers all of them, so on a network with zero-cost ops the two numberings diverge. Ratios are computed within a row and are always right; only the KEY can be wrong, which is invisible in the emitted table -- hence the check, and hence dropping a misaligned network's per-dispatch keys rather than keeping plausible-looking wrong ones."
+ },
+ "coverage": {
+  "nets_exact": [
+   "fused_full",
+   "mlp_control"
+  ],
+  "nets_measured": [
+   "fused_full",
+   "mlp_control",
+   "yolov8_nano_64x96"
+  ],
+  "n_exact_dispatch_keys": 22,
+  "n_op_kind_keys": 6,
+  "note": "a net absent from nets_exact is costed by its op kinds or by the aggregate, which is a prediction about that net, not a measurement of it"
+ },
+ "traces": [
+  "results/codesign_feedback/xpurt_long/trace_fba90r0cpsat_hardr1_other_run1.csv",
+  "results/codesign_feedback/xpurt_long/trace_fba90r0cpsat_hardr2_other_run1.csv",
+  "results/codesign_feedback/xpurt_long/trace_fba90r0cpsat_hardr3_other_run1.csv"
+ ],
+ "traces_skipped": [],
+ "per_dispatch_multiplier": {
+  "fused_full/0": 1.1612,
+  "fused_full/1": 1.2839,
+  "fused_full/10": 2.3267,
+  "fused_full/11": 1.2988,
+  "fused_full/12": 1.2571,
+  "fused_full/13": 1.2689,
+  "fused_full/14": 3.9037,
+  "fused_full/2": 1.2643,
+  "fused_full/3": 1.1586,
+  "fused_full/4": 1.9194,
+  "fused_full/5": 1.507,
+  "fused_full/6": 1.3065,
+  "fused_full/7": 1.2704,
+  "fused_full/8": 3.7464,
+  "fused_full/9": 1.7278,
+  "mlp_control/0": 0.8734,
+  "mlp_control/1": 1.0589,
+  "mlp_control/2": 1.0476,
+  "mlp_control/3": 1.2155,
+  "mlp_control/4": 1.3236,
+  "mlp_control/5": 1.383,
+  "mlp_control/6": 1.8699
+ },
+ "per_op_multiplier": {
+  "conv2d_batchnorm2d_silu_s8": 0.9091,
+  "conv2d_s8": 1.1703,
+  "linear_f16": 1.507,
+  "lstm_f16": 1.2749,
+  "maxpool2d_s8": 1.0322,
+  "upsample_nearest_s8": 0.6718
+ }
+}

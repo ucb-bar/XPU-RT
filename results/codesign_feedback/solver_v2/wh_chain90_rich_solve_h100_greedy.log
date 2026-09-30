@@ -1,0 +1,153 @@
+--board-calibration: loaded /scratch/agustin/xpurt-dev-sync/results/codesign_feedback/k1_board_calibration_yolo110.json (aggregate x1.261)
+============================================================
+Loading network hierarchy from JSON...
+============================================================
+
+Loading networks from: /scratch/agustin/xpurt-dev-sync/data/toplevel/wh_chain90_rich_solve_h100.json
+  shard_only_networks: ['ffn_block', 'dronet'] (every other network held at one core)
+
+Found 5 networks:
+  - yolov8_nano_64x96 (id: 0, identifier: yolov8_nano_64x96)
+  - fused_full (id: 1, identifier: fused_full)
+  - mlp_control (id: 2, identifier: mlp_control)
+  - ffn_block (id: 3, identifier: ffn_block)
+  - dronet (id: 4, identifier: dronet)
+
+Found 2 network-level dependencies:
+  - yolov8_nano_64x96 → fused_full
+  - fused_full → mlp_control
+
+Resolved runtime configuration:
+  Machine core counts: {'CPU_P': 4, 'CPU_E': 4}
+  Profile HW mapping: CPU_P->rvv_x60, CPU_E->rvv_x60
+  Profile target/topology: target=spacemit_x60, topo_tag=topo_0_1_2_3
+  p_core_speedup: 1.0
+  random_seed: 42
+  solver_verbosity: 0
+  time_limit: 600
+  use_profiled: True
+  prune_periodic: True
+  restrict_makespan_to_nonperiodic: False
+  cvxpy_solver (milp only): MOSEK
+  machine_combination_mode: shard
+  enforce_same_processor_combinations: True
+
+Using profiled runtimes where available...
+  (warning) 8 dispatch(es) were costed 0.0 because a profile that EXISTS has no row for them. Either they are ops the codegen drops (the yolo chunk2_c1 case) or the CSV is short and unmeasured work is being scheduled as instantaneous.
+  - yolov8_nano_64x96/dispatch_3(id=3) costed 0.0 (first seen on rvv_x60/topo_0): no row in an otherwise-present profile; op not knowable from the profile
+  - yolov8_nano_64x96/dispatch_11(id=11) costed 0.0 (first seen on rvv_x60/topo_0): no row in an otherwise-present profile; op not knowable from the profile
+  - yolov8_nano_64x96/dispatch_22(id=22) costed 0.0 (first seen on rvv_x60/topo_0): no row in an otherwise-present profile; op not knowable from the profile
+  - yolov8_nano_64x96/dispatch_33(id=33) costed 0.0 (first seen on rvv_x60/topo_0): no row in an otherwise-present profile; op not knowable from the profile
+  - yolov8_nano_64x96/dispatch_48(id=48) costed 0.0 (first seen on rvv_x60/topo_0): no row in an otherwise-present profile; op not knowable from the profile
+  - yolov8_nano_64x96/dispatch_56(id=56) costed 0.0 (first seen on rvv_x60/topo_0): no row in an otherwise-present profile; op not knowable from the profile
+  - yolov8_nano_64x96/dispatch_64(id=64) costed 0.0 (first seen on rvv_x60/topo_0): no row in an otherwise-present profile; op not knowable from the profile
+  - yolov8_nano_64x96/dispatch_72(id=72) costed 0.0 (first seen on rvv_x60/topo_0): no row in an otherwise-present profile; op not knowable from the profile
+  (warning) set XPURT_STRICT_ZERO_COST=1 to make this fatal
+  Workload declares horizon 100 ms and 5 explicit periodic instance counts; those counts are used as given. Networks without one are still sized by the refinement loop below.
+
+--- greedy_periodic iteration 1 ---
+  stateful: chained 8 instance edge(s) for ['fused_full']
+  Total operations: 1155
+  Job names: ['yolov8_nano_64x960', 'fused_full0', 'mlp_control0', 'ffn_block0', 'dronet0', 'yolov8_nano_64x961', 'yolov8_nano_64x962', 'yolov8_nano_64x963', 'yolov8_nano_64x964', 'yolov8_nano_64x965', 'yolov8_nano_64x966', 'yolov8_nano_64x967', 'yolov8_nano_64x968', 'fused_full1', 'fused_full2', 'fused_full3', 'fused_full4', 'fused_full5', 'fused_full6', 'fused_full7', 'fused_full8', 'mlp_control1', 'mlp_control2', 'mlp_control3', 'mlp_control4', 'mlp_control5', 'mlp_control6', 'mlp_control7', 'mlp_control8', 'mlp_control9', 'dronet1', 'dronet2']
+[contract] shard restricted to ['dronet', 'ffn_block']: 1087 op(s) of other networks held at one core
+[contract] pinned 79 packed-weight dispatch(es) to one measured-best width across their instances
+  Makespan: 140.28 ms
+  Periodic 'yolov8_nano_64x96': the schedule runs to 140 ms, which would take 13 instances, but the workload asks for 9 — keeping 9
+  Periodic 'yolov8_nano_64x96': period=11ms current=9 needed=9
+  Periodic 'fused_full': the schedule runs to 140 ms, which would take 13 instances, but the workload asks for 9 — keeping 9
+  Periodic 'fused_full': period=11ms current=9 needed=9
+  Periodic 'mlp_control': the schedule runs to 140 ms, which would take 15 instances, but the workload asks for 10 — keeping 10
+  Periodic 'mlp_control': period=10ms current=10 needed=10
+  Periodic 'ffn_block': the schedule runs to 140 ms, which would take 2 instances, but the workload asks for 1 — keeping 1
+  Periodic 'ffn_block': period=100ms current=1 needed=1
+  Periodic 'dronet': the schedule runs to 140 ms, which would take 5 instances, but the workload asks for 3 — keeping 3
+  Periodic 'dronet': period=33ms current=3 needed=3
+  All periodic counts cover makespan — converged.
+
+Final greedy makespan: 140.28 ms (after 1 iteration)
+  greedy_periodic: makespan=140.28 ms (all ops 140.28 ms), periodic window misses=18, converged
+
+Scheduling completed!
+Makespan (all operations): 140.28 ms
+
+Combination assignments:
+  1xCPU_P: 903 operations
+  1xCPU_P: 903 operations
+  1xCPU_P: 903 operations
+  1xCPU_P: 903 operations
+  2xCPU_P: 18 operations
+  2xCPU_P: 18 operations
+  4xCPU_P: 12 operations
+  1xCPU_E: 205 operations
+  1xCPU_E: 205 operations
+  1xCPU_E: 205 operations
+  1xCPU_E: 205 operations
+  2xCPU_E: 0 operations
+  2xCPU_E: 0 operations
+  4xCPU_E: 17 operations
+
+Per-network combination assignments:
+  Yolov8_nano_64x960: 1xCPU_P=84, 1xCPU_P=84, 1xCPU_P=84, 1xCPU_P=84, 1xCPU_E=14, 1xCPU_E=14, 1xCPU_E=14, 1xCPU_E=14
+  Fused_full0: 1xCPU_P=14, 1xCPU_P=14, 1xCPU_P=14, 1xCPU_P=14, 1xCPU_E=1, 1xCPU_E=1, 1xCPU_E=1, 1xCPU_E=1
+  Mlp_control0: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Ffn_block0: 1xCPU_P=3, 1xCPU_P=3, 1xCPU_P=3, 1xCPU_P=3, 4xCPU_E=2
+  Dronet0: 1xCPU_P=6, 1xCPU_P=6, 1xCPU_P=6, 1xCPU_P=6, 2xCPU_P=6, 2xCPU_P=6, 4xCPU_P=6, 4xCPU_E=3
+  Yolov8_nano_64x961: 1xCPU_P=85, 1xCPU_P=85, 1xCPU_P=85, 1xCPU_P=85, 1xCPU_E=13, 1xCPU_E=13, 1xCPU_E=13, 1xCPU_E=13
+  Yolov8_nano_64x962: 1xCPU_P=74, 1xCPU_P=74, 1xCPU_P=74, 1xCPU_P=74, 1xCPU_E=24, 1xCPU_E=24, 1xCPU_E=24, 1xCPU_E=24
+  Yolov8_nano_64x963: 1xCPU_P=75, 1xCPU_P=75, 1xCPU_P=75, 1xCPU_P=75, 1xCPU_E=23, 1xCPU_E=23, 1xCPU_E=23, 1xCPU_E=23
+  Yolov8_nano_64x964: 1xCPU_P=71, 1xCPU_P=71, 1xCPU_P=71, 1xCPU_P=71, 1xCPU_E=27, 1xCPU_E=27, 1xCPU_E=27, 1xCPU_E=27
+  Yolov8_nano_64x965: 1xCPU_P=77, 1xCPU_P=77, 1xCPU_P=77, 1xCPU_P=77, 1xCPU_E=21, 1xCPU_E=21, 1xCPU_E=21, 1xCPU_E=21
+  Yolov8_nano_64x966: 1xCPU_P=73, 1xCPU_P=73, 1xCPU_P=73, 1xCPU_P=73, 1xCPU_E=25, 1xCPU_E=25, 1xCPU_E=25, 1xCPU_E=25
+  Yolov8_nano_64x967: 1xCPU_P=69, 1xCPU_P=69, 1xCPU_P=69, 1xCPU_P=69, 1xCPU_E=29, 1xCPU_E=29, 1xCPU_E=29, 1xCPU_E=29
+  Yolov8_nano_64x968: 1xCPU_P=77, 1xCPU_P=77, 1xCPU_P=77, 1xCPU_P=77, 1xCPU_E=21, 1xCPU_E=21, 1xCPU_E=21, 1xCPU_E=21
+  Fused_full1: 1xCPU_P=13, 1xCPU_P=13, 1xCPU_P=13, 1xCPU_P=13, 1xCPU_E=2, 1xCPU_E=2, 1xCPU_E=2, 1xCPU_E=2
+  Fused_full2: 1xCPU_P=14, 1xCPU_P=14, 1xCPU_P=14, 1xCPU_P=14, 1xCPU_E=1, 1xCPU_E=1, 1xCPU_E=1, 1xCPU_E=1
+  Fused_full3: 1xCPU_P=14, 1xCPU_P=14, 1xCPU_P=14, 1xCPU_P=14, 1xCPU_E=1, 1xCPU_E=1, 1xCPU_E=1, 1xCPU_E=1
+  Fused_full4: 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15
+  Fused_full5: 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15
+  Fused_full6: 1xCPU_P=14, 1xCPU_P=14, 1xCPU_P=14, 1xCPU_P=14, 1xCPU_E=1, 1xCPU_E=1, 1xCPU_E=1, 1xCPU_E=1
+  Fused_full7: 1xCPU_P=14, 1xCPU_P=14, 1xCPU_P=14, 1xCPU_P=14, 1xCPU_E=1, 1xCPU_E=1, 1xCPU_E=1, 1xCPU_E=1
+  Fused_full8: 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15
+  Mlp_control1: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control2: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control3: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control4: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control5: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control6: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control7: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control8: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control9: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Dronet1: 1xCPU_P=5, 1xCPU_P=5, 1xCPU_P=5, 1xCPU_P=5, 2xCPU_P=6, 2xCPU_P=6, 4xCPU_P=2, 1xCPU_E=1, 1xCPU_E=1, 1xCPU_E=1, 1xCPU_E=1, 4xCPU_E=7
+  Dronet2: 1xCPU_P=6, 1xCPU_P=6, 1xCPU_P=6, 1xCPU_P=6, 2xCPU_P=6, 2xCPU_P=6, 4xCPU_P=4, 4xCPU_E=5
+Job 'yolov8_nano_64x960' (job_id=0, color_index=0) -> color RGB=[0.99607843 0.73490196 0.28      ]
+DEBUG TRANSFER: alpha_shape=(1155, 14), num_actual_machines=8, len(machines)=8, alpha_cols=14, is_using_combos=True, prev_machine=2, machine=7, transfer_times_shape=(8, 8), machine_combinations=True
+DEBUG IMMEDIATE: op=62, job_id=0, lookup=0, op_color_index=0, base_colors[0]=(np.float64(0.996078431372549), np.float64(0.7349019607843138), np.float64(0.28))
+DEBUG AFTER MODULO: op=62, original=0, after_modulo=0, len(base_colors)=32
+DEBUG BEFORE LEGEND: op=62, op_color_index=0, original=0, job_index=0, legend_key=kind_yolov8_nano_64x, in_legend=True
+DEBUG IMMEDIATE: op=63, job_id=0, lookup=0, op_color_index=0, base_colors[0]=(np.float64(0.996078431372549), np.float64(0.7349019607843138), np.float64(0.28))
+DEBUG AFTER MODULO: op=63, original=0, after_modulo=0, len(base_colors)=32
+DEBUG BEFORE LEGEND: op=63, op_color_index=0, original=0, job_index=0, legend_key=kind_yolov8_nano_64x, in_legend=True
+DEBUG IMMEDIATE: op=64, job_id=0, lookup=0, op_color_index=0, base_colors[0]=(np.float64(0.996078431372549), np.float64(0.7349019607843138), np.float64(0.28))
+DEBUG AFTER MODULO: op=64, original=0, after_modulo=0, len(base_colors)=32
+DEBUG BEFORE LEGEND: op=64, op_color_index=0, original=0, job_index=0, legend_key=kind_yolov8_nano_64x, in_legend=True
+Job 'fused_full0' (job_id=1, color_index=1) -> color RGB=[0.71372549 0.71372549 0.84705882]
+Job 'mlp_control0' (job_id=2, color_index=2) -> color RGB=[0.98745098 0.54117647 0.41568627]
+Job 'ffn_block0' (job_id=3, color_index=3) -> color RGB=[0.18246828 0.59332564 0.30675894]
+Job 'dronet0' (job_id=4, color_index=4) -> color RGB=[0.57960784 0.77019608 0.87372549]
+Saving plot to plots/wh_chain90_rich_solve_h100_greedy_periodic_profiled.png...
+
+Plot saved to plots/wh_chain90_rich_solve_h100_greedy_periodic_profiled.png
+
+Outputting scheduled JSON...
+  pdb_hash = sha256:47cbf98b0bd031d1... over 11 CSV(s)
+  granularity: fused_full declares a 11.111 ms period but its instances start 6.603 ms apart -- it is not meeting its period; advice uses the declared value
+  granularity: dronet declares a 33.333 ms period but its instances start 35.663 ms apart -- it is not meeting its period; advice uses the declared value
+  granularity: fused_full declares a 11.111 ms period but its instances start 6.603 ms apart -- it is not meeting its period; advice uses the declared value
+  granularity: dronet declares a 33.333 ms period but its instances start 35.663 ms apart -- it is not meeting its period; advice uses the declared value
+
+Scheduled JSON saved to: schedules/scheduled_wh_chain90_rich_solve_h100_greedy_periodic_profiled.json
+  granularity: fused_full declares a 11.111 ms period but its instances start 6.603 ms apart -- it is not meeting its period; advice uses the declared value
+  granularity: dronet declares a 33.333 ms period but its instances start 35.663 ms apart -- it is not meeting its period; advice uses the declared value
+Metrics written to: schedules/scheduled_wh_chain90_rich_solve_h100_greedy_periodic_profiled_metrics.json
+  makespan_us=140.28  op_deadline_miss=18 (dispatches, NOT instances)  cross_dev=889  solver_s=0.450
+Scheduler report written to: schedules/scheduled_wh_chain90_rich_solve_h100_greedy_periodic_profiled_report.json

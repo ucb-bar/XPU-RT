@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "target": "scalar",
+  "picks": {
+    "add_s8": {
+      "source": "reference",
+      "algorithm": null,
+      "path": null
+    },
+    "gelu_s8": {
+      "source": "reference",
+      "algorithm": null,
+      "path": null
+    },
+    "layernorm_s8": {
+      "source": "reference",
+      "algorithm": null,
+      "path": null
+    },
+    "linear_s8": {
+      "source": "reference",
+      "algorithm": null,
+      "path": null
+    }
+  }
+}

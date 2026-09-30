@@ -1,0 +1,51 @@
+=== 02:05:27 have xpu_p36free seed 1000 ===
+=== 02:05:27 have xpu_p36free seed 1001 ===
+=== 02:05:27 have xpu_p36free seed 1002 ===
+=== 02:05:27 have xpu_p36free seed 1003 ===
+=== 02:05:27 have xpu_p36free seed 1004 ===
+=== 02:05:27 have xpu_p36free seed 1005 ===
+=== 02:05:27 energy: ros_vanilla4x2ns4_36 seed 1000 (trace ros_vanilla4x236ns4.csv, cruise 1.4) ===
+=== 02:11:05 energy: ros_vanilla4x2ns4_36 seed 1001 (trace ros_vanilla4x236ns4.csv, cruise 1.4) ===
+=== 02:16:09 energy: ros_vanilla4x2ns4_36 seed 1002 (trace ros_vanilla4x236ns4.csv, cruise 1.4) ===
+=== 02:21:20 energy: ros_vanilla4x2ns4_36 seed 1003 (trace ros_vanilla4x236ns4.csv, cruise 1.4) ===
+=== 02:27:08 energy: ros_vanilla4x2ns4_36 seed 1004 (trace ros_vanilla4x236ns4.csv, cruise 1.4) ===
+=== 02:32:37 energy: ros_vanilla4x2ns4_36 seed 1005 (trace ros_vanilla4x236ns4.csv, cruise 1.4) ===
+=== 02:38:29 modeled propulsive energy from the logged wrench ===
+flight            dur_s  meanT(N)  mean|M|  energy(∝) maneuver%
+ros_vanilla4x2ns4_36_s1000    8.7     1.061   0.3642      107.2     95.5%
+ros_vanilla4x2ns4_36_s1001    5.2     1.067   0.3553       63.7     95.3%
+ros_vanilla4x2ns4_36_s1002    6.0     1.065   0.3291       67.0     95.0%
+ros_vanilla4x2ns4_36_s1003   10.8     1.061   0.2953      107.7     94.5%
+ros_vanilla4x2ns4_36_s1004    8.6     1.060   0.3461      105.9     95.5%
+ros_vanilla4x2ns4_36_s1005   11.3     1.063   0.3388      137.3     95.4%
+xpu_p36free_s1000    8.2     1.058   0.0117        6.6     32.3%
+xpu_p36free_s1001    8.0     1.059   0.0099        6.2     28.9%
+xpu_p36free_s1002    5.9     1.059   0.0130        5.2     36.8%
+xpu_p36free_s1003    8.4     1.059   0.0103        6.5     29.2%
+xpu_p36free_s1004    6.6     1.059   0.0124        5.5     33.9%
+xpu_p36free_s1005   10.2     1.057   0.0094        7.5     25.5%
+
+  ros_vanilla4x2ns4_36_s1000 vs XPU: total energy 16.20x, maneuver energy fraction 95.5% vs 32.3%
+
+  ros_vanilla4x2ns4_36_s1001 vs XPU: total energy 9.63x, maneuver energy fraction 95.3% vs 32.3%
+
+  ros_vanilla4x2ns4_36_s1002 vs XPU: total energy 10.12x, maneuver energy fraction 95.0% vs 32.3%
+
+  ros_vanilla4x2ns4_36_s1003 vs XPU: total energy 16.28x, maneuver energy fraction 94.5% vs 32.3%
+
+  ros_vanilla4x2ns4_36_s1004 vs XPU: total energy 16.00x, maneuver energy fraction 95.5% vs 32.3%
+
+  ros_vanilla4x2ns4_36_s1005 vs XPU: total energy 20.75x, maneuver energy fraction 95.4% vs 32.3%
+
+  xpu_p36free_s1001 vs XPU: total energy 0.94x, maneuver energy fraction 28.9% vs 32.3%
+
+  xpu_p36free_s1002 vs XPU: total energy 0.78x, maneuver energy fraction 36.8% vs 32.3%
+
+  xpu_p36free_s1003 vs XPU: total energy 0.99x, maneuver energy fraction 29.2% vs 32.3%
+
+  xpu_p36free_s1004 vs XPU: total energy 0.83x, maneuver energy fraction 33.9% vs 32.3%
+
+  xpu_p36free_s1005 vs XPU: total energy 1.14x, maneuver energy fraction 25.5% vs 32.3%
+
+wrote /scratch/agustin/xpurt-dev-sync/results/codesign_feedback/flight_energy_navpool36.csv  (ratios robust to arm/kappa; absolute ∝ units)
+=== 02:38:29 ENERGY_PAIR_DONE -> /scratch/agustin/xpurt-dev-sync/results/codesign_feedback/flight_energy_navpool36.csv ===

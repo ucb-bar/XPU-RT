@@ -1,0 +1,604 @@
+{
+ "generated_by": "scripts/mutation_audit.py",
+ "method": "each numeric leaf perturbed by max(5%, 1.0) (ints by 1), the owning verifier re-run, detected when it fails",
+ "totals": {
+  "figures": 77,
+  "leaves": 5145,
+  "detected": 5049,
+  "undetected": 96
+ },
+ "figures": [
+  {
+   "stem": "audit_showdown_claims",
+   "owner": "audit_showdown_claims.py",
+   "leaves": 96,
+   "detected": 0,
+   "undetected": [
+    ".COURSE A:20->100.delta_pts",
+    ".COURSE A:20->100.fisher_p",
+    ".COURSE A:20->100.from[0]",
+    ".COURSE A:20->100.from[1]",
+    ".COURSE A:20->100.to[0]",
+    ".COURSE A:20->100.to[1]",
+    ".COURSE A:20->25.delta_pts",
+    ".COURSE A:20->25.fisher_p",
+    ".COURSE A:20->25.from[0]",
+    ".COURSE A:20->25.from[1]",
+    ".COURSE A:20->25.to[0]",
+    ".COURSE A:20->25.to[1]",
+    ".COURSE A:20->33.delta_pts",
+    ".COURSE A:20->33.fisher_p",
+    ".COURSE A:20->33.from[0]",
+    ".COURSE A:20->33.from[1]",
+    ".COURSE A:20->33.to[0]",
+    ".COURSE A:20->33.to[1]",
+    ".COURSE A:20->50.delta_pts",
+    ".COURSE A:20->50.fisher_p",
+    ".COURSE A:20->50.from[0]",
+    ".COURSE A:20->50.from[1]",
+    ".COURSE A:20->50.to[0]",
+    ".COURSE A:20->50.to[1]",
+    ".COURSE A:25->100.delta_pts",
+    ".COURSE A:25->100.fisher_p",
+    ".COURSE A:25->100.from[0]",
+    ".COURSE A:25->100.from[1]",
+    ".COURSE A:25->100.to[0]",
+    ".COURSE A:25->100.to[1]",
+    ".COURSE A:25->33.delta_pts",
+    ".COURSE A:25->33.fisher_p",
+    ".COURSE A:25->33.from[0]",
+    ".COURSE A:25->33.from[1]",
+    ".COURSE A:25->33.to[0]",
+    ".COURSE A:25->33.to[1]",
+    ".COURSE A:25->50.delta_pts",
+    ".COURSE A:25->50.fisher_p",
+    ".COURSE A:25->50.from[0]",
+    ".COURSE A:25->50.from[1]",
+    ".COURSE A:25->50.to[0]",
+    ".COURSE A:25->50.to[1]",
+    ".COURSE A:33->100.delta_pts",
+    ".COURSE A:33->100.fisher_p",
+    ".COURSE A:33->100.from[0]",
+    ".COURSE A:33->100.from[1]",
+    ".COURSE A:33->100.to[0]",
+    ".COURSE A:33->100.to[1]",
+    ".COURSE A:33->50.delta_pts",
+    ".COURSE A:33->50.fisher_p",
+    ".COURSE A:33->50.from[0]",
+    ".COURSE A:33->50.from[1]",
+    ".COURSE A:33->50.to[0]",
+    ".COURSE A:33->50.to[1]",
+    ".COURSE A:50->100.delta_pts",
+    ".COURSE A:50->100.fisher_p",
+    ".COURSE A:50->100.from[0]",
+    ".COURSE A:50->100.from[1]",
+    ".COURSE A:50->100.to[0]",
+    ".COURSE A:50->100.to[1]",
+    ".COURSE B:25->100.delta_pts",
+    ".COURSE B:25->100.fisher_p",
+    ".COURSE B:25->100.from[0]",
+    ".COURSE B:25->100.from[1]",
+    ".COURSE B:25->100.to[0]",
+    ".COURSE B:25->100.to[1]",
+    ".COURSE B:25->33.delta_pts",
+    ".COURSE B:25->33.fisher_p",
+    ".COURSE B:25->33.from[0]",
+    ".COURSE B:25->33.from[1]",
+    ".COURSE B:25->33.to[0]",
+    ".COURSE B:25->33.to[1]",
+    ".COURSE B:25->50.delta_pts",
+    ".COURSE B:25->50.fisher_p",
+    ".COURSE B:25->50.from[0]",
+    ".COURSE B:25->50.from[1]",
+    ".COURSE B:25->50.to[0]",
+    ".COURSE B:25->50.to[1]",
+    ".COURSE B:33->100.delta_pts",
+    ".COURSE B:33->100.fisher_p",
+    ".COURSE B:33->100.from[0]",
+    ".COURSE B:33->100.from[1]",
+    ".COURSE B:33->100.to[0]",
+    ".COURSE B:33->100.to[1]",
+    ".COURSE B:33->50.delta_pts",
+    ".COURSE B:33->50.fisher_p",
+    ".COURSE B:33->50.from[0]",
+    ".COURSE B:33->50.from[1]",
+    ".COURSE B:33->50.to[0]",
+    ".COURSE B:33->50.to[1]",
+    ".COURSE B:50->100.delta_pts",
+    ".COURSE B:50->100.fisher_p",
+    ".COURSE B:50->100.from[0]",
+    ".COURSE B:50->100.from[1]",
+    ".COURSE B:50->100.to[0]",
+    ".COURSE B:50->100.to[1]"
+   ]
+  },
+  {
+   "stem": "control_rate_response",
+   "owner": "verify_control_rate_response.py",
+   "leaves": 211,
+   "detected": 211,
+   "undetected": []
+  },
+  {
+   "stem": "control_rate_response_cp3",
+   "owner": "verify_control_rate_response.py",
+   "leaves": 237,
+   "detected": 237,
+   "undetected": []
+  },
+  {
+   "stem": "control_rate_response_v2",
+   "owner": "verify_control_rate_response.py",
+   "leaves": 231,
+   "detected": 231,
+   "undetected": []
+  },
+  {
+   "stem": "cores_yolo_service_derived_flat",
+   "owner": "verify_cores_yolo.py",
+   "leaves": 164,
+   "detected": 164,
+   "undetected": []
+  },
+  {
+   "stem": "cores_yolo_service_derived_flat_a22",
+   "owner": "verify_cores_yolo.py",
+   "leaves": 164,
+   "detected": 164,
+   "undetected": []
+  },
+  {
+   "stem": "cores_yolo_service_derived_published",
+   "owner": "verify_cores_yolo.py",
+   "leaves": 156,
+   "detected": 156,
+   "undetected": []
+  },
+  {
+   "stem": "cores_yolo_service_derived_published_a24p5",
+   "owner": "verify_cores_yolo.py",
+   "leaves": 156,
+   "detected": 156,
+   "undetected": []
+  },
+  {
+   "stem": "course_progress",
+   "error": "verifier does not pass before mutation (exit 1)",
+   "owner": "verify_showdown_figure.py"
+  },
+  {
+   "stem": "crash_position",
+   "error": "verifier does not pass before mutation (exit 1)",
+   "owner": "verify_showdown_figure.py"
+  },
+  {
+   "stem": "hil_feedback_a120e",
+   "owner": "verify_hil_feedback.py",
+   "leaves": 41,
+   "detected": 41,
+   "undetected": []
+  },
+  {
+   "stem": "hil_feedback_a120h",
+   "owner": "verify_hil_feedback.py",
+   "leaves": 41,
+   "detected": 41,
+   "undetected": []
+  },
+  {
+   "stem": "hil_feedback_a90",
+   "owner": "verify_hil_feedback.py",
+   "leaves": 41,
+   "detected": 41,
+   "undetected": []
+  },
+  {
+   "stem": "hil_feedback_a90h",
+   "owner": "verify_hil_feedback.py",
+   "leaves": 41,
+   "detected": 41,
+   "undetected": []
+  },
+  {
+   "stem": "hil_feedback_b5",
+   "owner": "verify_hil_feedback.py",
+   "leaves": 59,
+   "detected": 59,
+   "undetected": []
+  },
+  {
+   "stem": "hil_feedback_close_120",
+   "owner": "verify_hil_feedback.py",
+   "leaves": 4,
+   "detected": 4,
+   "undetected": []
+  },
+  {
+   "stem": "latency_waterfall",
+   "error": "verifier does not pass before mutation (exit 2)",
+   "owner": "verify_showdown_figure.py"
+  },
+  {
+   "stem": "rate_speed_map",
+   "error": "verifier does not pass before mutation (exit 2)",
+   "owner": "verify_showdown_figure.py"
+  },
+  {
+   "stem": "ros_effort_ladder",
+   "error": "verifier does not pass before mutation (exit 1)",
+   "owner": "verify_ros_effort_ladder.py"
+  },
+  {
+   "stem": "ros_effort_ladder_v2",
+   "owner": "verify_ros_effort_ladder.py",
+   "leaves": 155,
+   "detected": 155,
+   "undetected": []
+  },
+  {
+   "stem": "ros_ladder",
+   "error": "verifier does not pass before mutation (exit 2)",
+   "owner": "verify_showdown_figure.py"
+  },
+  {
+   "stem": "schedule_evolution_short",
+   "owner": "verify_schedule_evolution.py",
+   "leaves": 18,
+   "detected": 18,
+   "undetected": []
+  },
+  {
+   "stem": "schedule_evolution_tall",
+   "owner": "verify_schedule_evolution.py",
+   "leaves": 18,
+   "detected": 18,
+   "undetected": []
+  },
+  {
+   "stem": "seed_pairs",
+   "error": "verifier does not pass before mutation (exit 1)",
+   "owner": "verify_showdown_figure.py"
+  },
+  {
+   "stem": "showdown_36hz_solver_vs_rosallhart_s1006",
+   "owner": "verify_showdown_figure.py",
+   "leaves": 120,
+   "detected": 120,
+   "undetected": []
+  },
+  {
+   "stem": "showdown_36hz_solver_vs_rosallhart_s1006_ladder",
+   "owner": "verify_showdown_figure.py",
+   "leaves": 126,
+   "detected": 126,
+   "undetected": []
+  },
+  {
+   "stem": "showdown_45hz_pinned_vs_rosdefault_s1000",
+   "owner": "verify_showdown_figure.py",
+   "leaves": 126,
+   "detected": 126,
+   "undetected": []
+  },
+  {
+   "stem": "showdown_45hz_pinned_vs_rosdefault_s1003",
+   "owner": "verify_showdown_figure.py",
+   "leaves": 126,
+   "detected": 126,
+   "undetected": []
+  },
+  {
+   "stem": "showdown_45hz_pinned_vs_rospinned_s1011",
+   "owner": "verify_showdown_figure.py",
+   "leaves": 126,
+   "detected": 126,
+   "undetected": []
+  },
+  {
+   "stem": "showdown_45hz_solver_vs_rospinned_s1007",
+   "owner": "verify_showdown_figure.py",
+   "leaves": 126,
+   "detected": 126,
+   "undetected": []
+  },
+  {
+   "stem": "warehouse_showdown_atlas",
+   "error": "verifier does not pass before mutation (exit 5)",
+   "owner": "verify_showdown_figure.py"
+  },
+  {
+   "stem": "warehouse_showdown_cam30_allcores_s1001_xpu_3of4",
+   "owner": "verify_showdown_figure.py",
+   "leaves": 76,
+   "detected": 76,
+   "undetected": []
+  },
+  {
+   "stem": "warehouse_showdown_cam30_allcores_s1003",
+   "owner": "verify_showdown_figure.py",
+   "leaves": 76,
+   "detected": 76,
+   "undetected": []
+  },
+  {
+   "stem": "warehouse_showdown_cam30_allcores_s1007",
+   "owner": "verify_showdown_figure.py",
+   "leaves": 76,
+   "detected": 76,
+   "undetected": []
+  },
+  {
+   "stem": "warehouse_showdown_cam30_allcores_v2_s1001_xpu_3of4",
+   "owner": "verify_showdown_figure.py",
+   "leaves": 76,
+   "detected": 76,
+   "undetected": []
+  },
+  {
+   "stem": "warehouse_showdown_cam30_allcores_v2_s1003",
+   "owner": "verify_showdown_figure.py",
+   "leaves": 76,
+   "detected": 76,
+   "undetected": []
+  },
+  {
+   "stem": "warehouse_showdown_cam30_allcores_v2_s1007",
+   "owner": "verify_showdown_figure.py",
+   "leaves": 76,
+   "detected": 76,
+   "undetected": []
+  },
+  {
+   "stem": "warehouse_showdown_cam30_allcores_v3_s1003",
+   "owner": "verify_showdown_figure.py",
+   "leaves": 76,
+   "detected": 76,
+   "undetected": []
+  },
+  {
+   "stem": "warehouse_showdown_cam30_solver_placed",
+   "owner": "verify_showdown_figure.py",
+   "leaves": 76,
+   "detected": 76,
+   "undetected": []
+  },
+  {
+   "stem": "warehouse_showdown_cam30_solver_placed_rate_gain",
+   "owner": "verify_showdown_figure.py",
+   "leaves": 76,
+   "detected": 76,
+   "undetected": []
+  },
+  {
+   "stem": "warehouse_showdown_cam30_solver_placed_rate_gain_v2",
+   "owner": "verify_showdown_figure.py",
+   "leaves": 120,
+   "detected": 120,
+   "undetected": []
+  },
+  {
+   "stem": "warehouse_showdown_cam30_solver_placed_v2",
+   "owner": "verify_showdown_figure.py",
+   "leaves": 120,
+   "detected": 120,
+   "undetected": []
+  },
+  {
+   "stem": "warehouse_showdown_cam30_static6",
+   "owner": "verify_showdown_figure.py",
+   "leaves": 76,
+   "detected": 76,
+   "undetected": []
+  },
+  {
+   "stem": "warehouse_showdown_cam30_threeway",
+   "owner": "verify_showdown_figure.py",
+   "leaves": 82,
+   "detected": 82,
+   "undetected": []
+  },
+  {
+   "stem": "warehouse_showdown_cam36_allcores_s1001",
+   "owner": "verify_showdown_figure.py",
+   "leaves": 76,
+   "detected": 76,
+   "undetected": []
+  },
+  {
+   "stem": "warehouse_showdown_cam36_allcores_s1003",
+   "owner": "verify_showdown_figure.py",
+   "leaves": 76,
+   "detected": 76,
+   "undetected": []
+  },
+  {
+   "stem": "warehouse_showdown_cam36_allcores_s1003_ladder",
+   "owner": "verify_showdown_figure.py",
+   "leaves": 80,
+   "detected": 80,
+   "undetected": []
+  },
+  {
+   "stem": "warehouse_showdown_cam36_allcores_s1007",
+   "owner": "verify_showdown_figure.py",
+   "leaves": 76,
+   "detected": 76,
+   "undetected": []
+  },
+  {
+   "stem": "warehouse_showdown_cam36_allcores_s1007_ladder",
+   "owner": "verify_showdown_figure.py",
+   "leaves": 80,
+   "detected": 80,
+   "undetected": []
+  },
+  {
+   "stem": "warehouse_showdown_cam36_allcores_s1009",
+   "owner": "verify_showdown_figure.py",
+   "leaves": 76,
+   "detected": 76,
+   "undetected": []
+  },
+  {
+   "stem": "warehouse_showdown_cam36_allcores_s1009_ladder",
+   "owner": "verify_showdown_figure.py",
+   "leaves": 80,
+   "detected": 80,
+   "undetected": []
+  },
+  {
+   "stem": "warehouse_showdown_cam36_navpool_s1000_xpu_3of4",
+   "owner": "verify_showdown_figure.py",
+   "leaves": 76,
+   "detected": 76,
+   "undetected": []
+  },
+  {
+   "stem": "warehouse_showdown_cam36_navpool_s1005_xpu_2of4",
+   "owner": "verify_showdown_figure.py",
+   "leaves": 76,
+   "detected": 76,
+   "undetected": []
+  },
+  {
+   "stem": "warehouse_showdown_cam45_solver_placed",
+   "owner": "verify_showdown_figure.py",
+   "leaves": 82,
+   "detected": 82,
+   "undetected": []
+  },
+  {
+   "stem": "warehouse_showdown_cam45_static6",
+   "owner": "verify_showdown_figure.py",
+   "leaves": 82,
+   "detected": 82,
+   "undetected": []
+  },
+  {
+   "stem": "warehouse_showdown_cam45_unpinned_best",
+   "error": "verifier does not pass before mutation (exit 3)",
+   "owner": "verify_showdown_figure.py"
+  },
+  {
+   "stem": "warehouse_showdown_cam45_unpinned_best_s1007",
+   "owner": "verify_showdown_figure.py",
+   "leaves": 82,
+   "detected": 82,
+   "undetected": []
+  },
+  {
+   "stem": "warehouse_showdown_cam45_unpinned_best_v2",
+   "owner": "verify_showdown_figure.py",
+   "leaves": 82,
+   "detected": 82,
+   "undetected": []
+  },
+  {
+   "stem": "warehouse_showdown_cam45_unpinned_seed1000",
+   "error": "verifier does not pass before mutation (exit 3)",
+   "owner": "verify_showdown_figure.py"
+  },
+  {
+   "stem": "warehouse_showdown_final",
+   "error": "verifier does not pass before mutation (exit 6)",
+   "owner": "verify_showdown_figure.py"
+  },
+  {
+   "stem": "warehouse_showdown_paper10",
+   "error": "verifier does not pass before mutation (exit 3)",
+   "owner": "verify_showdown_figure.py"
+  },
+  {
+   "stem": "warehouse_showdown_paper_allcores",
+   "owner": "verify_showdown_figure.py",
+   "leaves": 82,
+   "detected": 82,
+   "undetected": []
+  },
+  {
+   "stem": "warehouse_showdown_paper_allcores_merged",
+   "owner": "verify_showdown_figure.py",
+   "leaves": 82,
+   "detected": 82,
+   "undetected": []
+  },
+  {
+   "stem": "warehouse_showdown_paper_cal17",
+   "error": "verifier does not pass before mutation (exit 8)",
+   "owner": "verify_showdown_figure.py"
+  },
+  {
+   "stem": "warehouse_showdown_paper_ladder",
+   "owner": "verify_showdown_figure.py",
+   "leaves": 82,
+   "detected": 82,
+   "undetected": []
+  },
+  {
+   "stem": "warehouse_showdown_paper_r30",
+   "owner": "verify_showdown_figure.py",
+   "leaves": 70,
+   "detected": 70,
+   "undetected": []
+  },
+  {
+   "stem": "warehouse_showdown_paper_r36",
+   "owner": "verify_showdown_figure.py",
+   "leaves": 70,
+   "detected": 70,
+   "undetected": []
+  },
+  {
+   "stem": "warehouse_showdown_paper_submitted",
+   "owner": "verify_showdown_figure.py",
+   "leaves": 70,
+   "detected": 70,
+   "undetected": []
+  },
+  {
+   "stem": "warehouse_showdown_v3",
+   "error": "verifier does not pass before mutation (exit 4)",
+   "owner": "verify_showdown_figure.py"
+  },
+  {
+   "stem": "warehouse_showdown_v3_paper",
+   "error": "verifier does not pass before mutation (exit 4)",
+   "owner": "verify_showdown_figure.py"
+  },
+  {
+   "stem": "warehouse_showdown_v3_paper_tall1005_board",
+   "error": "verifier does not pass before mutation (exit 4)",
+   "owner": "verify_showdown_figure.py"
+  },
+  {
+   "stem": "warehouse_showdown_v3_paper_tall1005_inb",
+   "error": "verifier does not pass before mutation (exit 4)",
+   "owner": "verify_showdown_figure.py"
+  },
+  {
+   "stem": "warehouse_showdown_v3_paper_tall1005_none",
+   "error": "verifier does not pass before mutation (exit 4)",
+   "owner": "verify_showdown_figure.py"
+  },
+  {
+   "stem": "warehouse_showdown_v3_tall1000_board",
+   "error": "verifier does not pass before mutation (exit 4)",
+   "owner": "verify_showdown_figure.py"
+  },
+  {
+   "stem": "warehouse_showdown_v3_tall1005_board",
+   "error": "verifier does not pass before mutation (exit 4)",
+   "owner": "verify_showdown_figure.py"
+  },
+  {
+   "stem": "warehouse_showdown_v3_tall1005_inb",
+   "error": "verifier does not pass before mutation (exit 4)",
+   "owner": "verify_showdown_figure.py"
+  },
+  {
+   "stem": "warehouse_showdown_v3_tall1005_none",
+   "error": "verifier does not pass before mutation (exit 4)",
+   "owner": "verify_showdown_figure.py"
+  }
+ ]
+}

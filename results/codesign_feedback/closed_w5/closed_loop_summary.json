@@ -1,0 +1,52 @@
+{
+ "workload": "w5_ffn_dronet_yolo",
+ "networks": [
+  "mlp_control",
+  "fused_full",
+  "ffn_block",
+  "dronet",
+  "yolov8_nano_64x96"
+ ],
+ "solver": "greedy",
+ "repeats": 5,
+ "generated_at": "2026-09-08T22:07:48",
+ "calibration": "results/codesign_feedback/closed_w5/k1_calibration_w5_ffn_dronet_yolo.json",
+ "calibration_aggregate": 1.3476,
+ "board_warnings": [],
+ "nets_measured": [
+  "dronet",
+  "ffn_block",
+  "fused_full",
+  "mlp_control"
+ ],
+ "nets_still_extrapolated": [
+  "yolov8_nano_64x96"
+ ],
+ "aot": {
+  "levers": [
+   "ime"
+  ],
+  "misses_before": 11.0,
+  "misses_after": 11.0,
+  "lateness_before_ms": 109.805,
+  "lateness_after_ms": 99.024
+ },
+ "board": {
+  "levers": [
+   "ime"
+  ],
+  "misses_before": 11.0,
+  "misses_after": 11.0,
+  "lateness_before_ms": 201.617,
+  "lateness_after_ms": 175.115
+ },
+ "levers_dropped_on_measured_costs": [],
+ "levers_added_on_measured_costs": [],
+ "traces": [
+  "results/codesign_feedback/closed_w5/board_0_trace.csv",
+  "results/codesign_feedback/closed_w5/board_1_trace.csv",
+  "results/codesign_feedback/closed_w5/board_2_trace.csv",
+  "results/codesign_feedback/closed_w5/board_3_trace.csv",
+  "results/codesign_feedback/closed_w5/board_4_trace.csv"
+ ]
+}

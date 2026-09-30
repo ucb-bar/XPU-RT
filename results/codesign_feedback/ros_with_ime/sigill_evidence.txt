@@ -1,0 +1,55 @@
+### 1. the ROS perception node with IME kernels, pool on cluster 1 (harts 4-7), foreground
+discovery gate timed out
+exit=6
+--- files written by the node ---
+total 24
+drwxr-xr-x   2 root root  4096 Sep 18 13:40 .
+drwxr-xr-x 430 root root 20480 Sep 18 13:40 ..
+
+### 2. the same node, same kernels, pool on cluster 0 (harts 0-3)
+discovery gate timed out
+exit=6
+--- files written by the node ---
+
+### 3. the standalone model harness, one hart per cluster
+hart 0: exit=0
+hart 1: exit=0
+hart 2: exit=0
+hart 3: exit=0
+hart 4: bash: line 1: 2143895 Illegal instruction     MODELBLASTER_CPU=$c MODELBLASTER_ITERS=1 ./yolo4_ime256/harness > /dev/null 2>&1
+exit=132
+hart 5: bash: line 1: 2143896 Illegal instruction     MODELBLASTER_CPU=$c MODELBLASTER_ITERS=1 ./yolo4_ime256/harness > /dev/null 2>&1
+exit=132
+hart 6: bash: line 1: 2143897 Illegal instruction     MODELBLASTER_CPU=$c MODELBLASTER_ITERS=1 ./yolo4_ime256/harness > /dev/null 2>&1
+exit=132
+hart 7: bash: line 1: 2143898 Illegal instruction     MODELBLASTER_CPU=$c MODELBLASTER_ITERS=1 ./yolo4_ime256/harness > /dev/null 2>&1
+exit=132
+
+### 4. kernel log
+[5155425.637070] epc : 0000002ab5802a76 ra : 0000002ab5802ffa sp : 0000003fd918a080
+[5155425.637076]  gp : 0000002ab5afe808 tp : 0000003f8cedc760 t0 : 0000000000000020
+[5155425.637082]  t1 : 0000002ab57f983c t2 : 0000000000000020 s0 : 0000003fd919b5f0
+[5155425.637087]  s1 : 0000000000000008 a0 : 00000000000000ff a1 : 0000000000003000
+[5155425.637092]  a2 : 0000003fd919b028 a3 : 0000003fd918ecc0 a4 : 0000003fd919b008
+[5155425.637097]  a5 : 0000003fd918ed40 a6 : 0000000000000004 a7 : 0000000000000020
+[5155425.637102]  s2 : 000000000000007f s3 : 0000000000000600 s4 : 0000002ab5a39400
+[5155425.637107]  s5 : 0000000000000000 s6 : 0000000000000004 s7 : 0000003fd918ed40
+[5155425.637112]  s8 : 0000000000000000 s9 : 0000000000000009 s10: ffffffffffffff80
+[5155425.637117]  s11: 0000000000000004 t3 : 000000000000007f t4 : fffffffffffffff7
+[5155425.637121]  t5 : 0000000040000000 t6 : 0000000000000600
+[5155425.637125] status: 8000000200006620 badaddr: 00000000e240342b cause: 0000000000000002
+
+### 5. what the trap says the instruction was
+
+`cause: 0x2` is RISC-V "Illegal instruction", and `badaddr` holds the instruction word:
+
+    badaddr  0xe240342b
+      opcode 0x2b  (custom-1)
+      funct3 3     (ss -- signed x signed)
+      funct7 0x71  (OPMMA, vm/mode bit set)
+      vd v8, vs1 v0, vs2 v4
+
+funct7 0x71 with funct3 3 on custom-1 is `smt.vmadot` ss, which is exactly what
+`kernels/ime/ime_*_s8_ime_vmadot_4x4x8.c` emit as a `.insn`
+(ModelBlaster/artifacts/ime_isa_probe/FINDINGS.md). The trap is the matrix
+instruction itself, not a fault reached through it.

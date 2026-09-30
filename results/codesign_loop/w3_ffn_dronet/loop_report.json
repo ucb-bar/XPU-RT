@@ -1,0 +1,195 @@
+{
+ "workload": "w3_ffn_dronet",
+ "objective": "total-lateness",
+ "accept_rule": "candidate_objective.accept (nine lexicographic terms)",
+ "critical_models": [
+  "mlp_control",
+  "ffn_block",
+  "dronet"
+ ],
+ "heavy_model": "ffn_block",
+ "baseline_terms": {
+  "label": "baseline",
+  "ineligible": null,
+  "01_hard_deadline_misses": 10.0,
+  "02_max_deadline_lateness": 38.49,
+  "03_frequency_compliance": 0.19584783391335644,
+  "04_p99_response_of_critical_tasks": 45.49,
+  "05_heavy_model_max_latency": 39.32,
+  "06_heavy_model_throughput": 67.01,
+  "07_makespan": 74.613,
+  "08_utilization": 29.45,
+  "09_standalone_kernel_cycles": 175718.0,
+  "total_instances": 22
+ },
+ "final_terms": {
+  "label": "shard",
+  "ineligible": null,
+  "01_hard_deadline_misses": 5.0,
+  "02_max_deadline_lateness": 61.63,
+  "03_frequency_compliance": 0.13920556822272884,
+  "04_p99_response_of_critical_tasks": 68.63,
+  "05_heavy_model_max_latency": 57.54,
+  "06_heavy_model_throughput": 71.73,
+  "07_makespan": 69.709,
+  "08_utilization": 38.15,
+  "09_standalone_kernel_cycles": 70685.0,
+  "total_instances": 22
+ },
+ "baseline_score_ms": 196.476,
+ "final_score_ms": 140.205,
+ "total_reduction_pct": 28.6,
+ "baseline_makespan_ms": 74.6,
+ "final_makespan_ms": 69.7,
+ "levers_available": [
+  "ime",
+  "shard",
+  "unfuse"
+ ],
+ "rewrite_arm": {
+  "enabled": false,
+  "runner": "board",
+  "verbs": "fuse,unfuse,split,shard",
+  "irs": {},
+  "backend": {
+   "target": "spacemit_x60",
+   "hw": "rvv_x60",
+   "accel_hw": "ime_x60",
+   "gen_root": "gen_mb",
+   "profile_root": "gen/profile_mb"
+  },
+  "accepted": []
+ },
+ "levers_applied": [
+  "shard"
+ ],
+ "levers_inapplicable": [
+  {
+   "round": 1,
+   "lever": "unfuse",
+   "reason": "lever left the spec unchanged"
+  },
+  {
+   "round": 2,
+   "lever": "unfuse",
+   "reason": "lever left the spec unchanged"
+  }
+ ],
+ "rounds": [
+  {
+   "round": 1,
+   "lever": "shard",
+   "metric": "total-lateness",
+   "score_before_ms": 196.476,
+   "score_after_ms": 140.205,
+   "makespan_before_ms": 74.6,
+   "makespan_after_ms": 69.7,
+   "pct": -28.6,
+   "accepted": true,
+   "deadline_miss": 5,
+   "accept_rule": "objective",
+   "why": "accepted -- hard deadline misses: shard=5 beats baseline=10 (tolerance 1.76)",
+   "rejected": [
+    {
+     "lever": "ime",
+     "why": "rejected -- max deadline lateness: baseline=38.49 beats ime=63.88 (tolerance 0.5)",
+     "score_ms": 155.168,
+     "misses": 10
+    }
+   ],
+   "terms": {
+    "label": "shard",
+    "ineligible": null,
+    "01_hard_deadline_misses": 5.0,
+    "02_max_deadline_lateness": 61.63,
+    "03_frequency_compliance": 0.13920556822272884,
+    "04_p99_response_of_critical_tasks": 68.63,
+    "05_heavy_model_max_latency": 57.54,
+    "06_heavy_model_throughput": 71.73,
+    "07_makespan": 69.709,
+    "08_utilization": 38.15,
+    "09_standalone_kernel_cycles": 70685.0,
+    "total_instances": 22
+   }
+  }
+ ],
+ "trajectory": [
+  {
+   "round": 0,
+   "lever": "baseline",
+   "score_ms": 196.476,
+   "makespan_ms": 74.6,
+   "misses": 10
+  },
+  {
+   "round": 1,
+   "lever": "+shard",
+   "score_ms": 140.205,
+   "makespan_ms": 69.7,
+   "misses": 5
+  },
+  {
+   "round": "board-recost",
+   "lever": "recost(board)",
+   "makespan_ms": 61.1,
+   "misses": 7
+  },
+  {
+   "round": "board-resolve",
+   "lever": "resolve(board)",
+   "makespan_ms": 63.4,
+   "misses": 3
+  }
+ ],
+ "fusion": "fuse: NOT applied \u2014 roofline decision-aid says the stack is compute-bound (max fusible-epilogue ceiling 16% on dronet); fusion collapses dispatches (scheduling) but is measured ~+0.85% on cycles, so the loop does not credit a makespan gain it cannot measure.",
+ "converged": true,
+ "board_feedback": {
+  "enabled": true,
+  "calibration": "results/codesign_feedback/k1_board_calibration.json",
+  "board_solver": "cpsat",
+  "spec": "results/codesign_loop/w3_ffn_dronet/specs/w3_ffn_dronet_r1_shard.json",
+  "baseline_instance_misses": 10,
+  "aot_instance_misses": 5,
+  "board_recost_instance_misses": 7,
+  "board_resolve_instance_misses": 3,
+  "recovered": true,
+  "residual_misses": 3,
+  "stages": [
+   {
+    "stage": "baseline",
+    "cost": "AOT",
+    "sched": "results/codesign_loop/w3_ffn_dronet/panels/stage1_baseline.json",
+    "instance_misses": 10,
+    "makespan_ms": 74.61
+   },
+   {
+    "stage": "aot-optimized",
+    "cost": "AOT",
+    "sched": "results/codesign_loop/w3_ffn_dronet/panels/stage2_aot.json",
+    "instance_misses": 5,
+    "makespan_ms": 69.71,
+    "levers": [
+     "shard"
+    ]
+   },
+   {
+    "stage": "board-recost",
+    "cost": "board",
+    "sched": "results/codesign_loop/w3_ffn_dronet/panels/stage3_board_recost.json",
+    "instance_misses": 7,
+    "missed_by": {
+     "ffn_block": 3,
+     "dronet": 4
+    }
+   },
+   {
+    "stage": "board-resolve",
+    "cost": "board",
+    "sched": "results/codesign_loop/w3_ffn_dronet/panels/stage4_board_resolve.json",
+    "instance_misses": 3,
+    "makespan_ms": 63.43,
+    "solver": "cpsat"
+   }
+  ]
+ }
+}

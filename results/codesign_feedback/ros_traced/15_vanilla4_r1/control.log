@@ -1,0 +1,1 @@
+ROS_TRACED tag=15_vanilla4_r1 exec=single rate=15 released=0 goals=287 fires=287 gap_mean=66.65 gap_max=68.07

@@ -1,0 +1,22 @@
+replay: XPURT_CPSAT_WORKERS=1 (deterministic; the published numbers use 0/6, which is faster and not reproducible)
+== co-design loop: networks_k1_deployed_rich_vithead_noime ==
+round 0 · baseline: makespan 122.600 (makespan 122.6 ms), 255 instance-miss
+accept rule: candidate_objective.accept() · critical=['mlp_control', 'fused_full', 'yolov8_nano_64x96', 'ffn_block', 'attn_block'] heavy=ffn_block
+      ime: built ime_x60 profiles for (none new; existing reused)
+round 1 · try ime: makespan 122.600 -> 122.600 (-0.0%), 255 instance-miss -> ACCEPTABLE
+round 1 · try ime: accepted -- heavy-model max latency: ime=14.6 beats baseline=26.61 (tolerance 1)
+round 1 · try shard: makespan 122.600 -> 110.083 (-10.2%), 0 instance-miss -> ACCEPTABLE
+round 1 · try shard: accepted -- hard deadline misses: shard=0 beats baseline=5 (tolerance 2)
+      unfuse: adopted ModelBlaster unfused dispatch graph for (none — no fused net with an unfused build on disk)
+round 1 · try unfuse: lever changed nothing on this spec (inapplicable here) — not a candidate
+round 1: ACCEPT +shard  makespan 122.600 -> 110.083 (-10.2%)
+      ime: built ime_x60 profiles for (none new; existing reused)
+round 2 · try ime: makespan 110.083 -> 110.083 (-0.0%), 0 instance-miss -> reject
+round 2 · try ime: rejected -- indistinguishable on every term; a tie is not an improvement
+      unfuse: adopted ModelBlaster unfused dispatch graph for (none — no fused net with an unfused build on disk)
+round 2 · try unfuse: lever changed nothing on this spec (inapplicable here) — not a candidate
+round 2: no lever is accepted by the nine-term objective rule — CONVERGED
+fuse: NOT applied — roofline decision-aid says the stack is compute-bound (max fusible-epilogue ceiling 16% on dronet); fusion collapses dispatches (scheduling) but is measured ~+0.85% on cycles, so the loop does not credit a makespan gain it cannot measure.
+
+CONVERGED [makespan]: 122.600 -> 110.083 ms (-10.2%), levers applied: ['shard']
+artifacts in /scratch/agustin/xpurt-dev-sync/results/loop_ablation/inner/networks_k1_deployed_rich_vithead_noime__greedy/networks_k1_deployed_rich_vithead_noime

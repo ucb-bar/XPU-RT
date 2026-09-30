@@ -1,0 +1,23 @@
+{
+  "tag": "p45freer3_other_run1",
+  "schedule": "/scratch/agustin/xpurt-dev-sync/schedules/scheduled_wh_chain45_free_cpsat_profiled_clamped.json",
+  "schedule_relpath": "schedules/scheduled_wh_chain45_free_cpsat_profiled_clamped.json",
+  "schedule_sha256": "0dadbee604559ba25b3144106ed58f8878027373b0e97e48d69e0ac4977e5ff8",
+  "schedule_sha256_16": "0dadbee604559ba2",
+  "camera_hz": 45.0,
+  "seconds": 0.49,
+  "solver": "cpsat",
+  "board_recost": null,
+  "ir_sha256_yolo": "0c783539626cf1627ae801d997ddc3f8c82316ab1ec10bb488cd9b4418180456",
+  "sched_policy": "SCHED_OTHER",
+  "run_t0_rdtime": 127287655312196,
+  "wall_start_epoch_ms": 1789858255313,
+  "exit_code": 0,
+  "verify_lines": [
+    "MODELBLASTER_VERIFY [yolov8_nano_64x96] === max_abs_err=0 max_rel_err=0 n=8316 instance=0 ready=1",
+    "MODELBLASTER_VERIFY [fused_full] === max_abs_err=0.000183105469 max_rel_err=0.00162337662 n=2 instance=0 ready=1",
+    "MODELBLASTER_VERIFY [mlp_control] === max_abs_err=0 max_rel_err=0 n=4 instance=0 ready=1"
+  ],
+  "rdtime_hz": 24000000,
+  "note": "numeric verification covers instance 0 only"
+}

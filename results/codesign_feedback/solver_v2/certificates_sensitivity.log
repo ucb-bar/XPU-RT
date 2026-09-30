@@ -1,0 +1,9 @@
+=== 23:13:52 yolo x100 greedy
+    greedy_periodic: makespan=266.70 ms (all ops 266.70 ms), periodic window misses=255, converged
+=== 23:13:57 yolo x100 cpsat
+  cpsat status=OPTIMAL wall=882.4s   cpsat: makespan=222.86 ms (all ops 222.86 ms), periodic window misses=0, converged 
+=== 23:28:45 yolo x120 greedy
+    greedy_periodic: makespan=304.42 ms (all ops 304.42 ms), periodic window misses=507, converged
+=== 23:28:50 yolo x120 cpsat
+  cpsat status=OPTIMAL wall=778.2s   cpsat: makespan=230.94 ms (all ops 230.94 ms), periodic window misses=0, converged 
+SENS_DONE

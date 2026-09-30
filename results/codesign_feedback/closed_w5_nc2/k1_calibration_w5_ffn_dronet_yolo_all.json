@@ -1,0 +1,390 @@
+{
+ "schema": "k1_board_calibration/v2",
+ "source": "5 board trace(s), real SpaceMiT K1; actual=(end-start)ticks/24MHz vs the predicted_duration_ms the runner stamped from the schedule",
+ "workload": "w5_ffn_dronet_yolo [all 5 runs]",
+ "generated_by": "scripts/emit_board_calibration.py",
+ "generated_at": "2026-09-08T22:51:08",
+ "measures": "EXECUTION inflation only. Queue delay is carried separately by the trace and excluded: a dispatch that waited is not a dispatch that ran slowly, and folding queueing in would charge the scheduler twice for its own placement.",
+ "statistic": "mean of per-sample ratios; pooled op tier and aggregate floored at predicted >= 0.1 ms (2400 rdtime ticks) so timer granularity cannot inflate a pooled multiplier",
+ "n_dispatch_samples": 2420,
+ "n_pooled_samples": 1200,
+ "aggregate_multiplier": 1.328,
+ "aggregate_median": 1.1853,
+ "aggregate_mean": 1.328,
+ "primary_key": "network/dispatch_id (exact, for the measured workload)",
+ "fallback_key": "op (generalizing; EXTRAPOLATED for nets not in coverage.nets_exact)",
+ "alignment": {
+  "schedule": "/scratch/agustin/xpurt-dev-sync/results/codesign_feedback/closed_w5_nc2/scheduled_w5_ffn_dronet_yolo_r1_ime_greedy_profiled.json",
+  "verified": true,
+  "networks_aligned": [
+   "dronet",
+   "ffn_block",
+   "fused_full",
+   "mlp_control"
+  ],
+  "networks_omitted_from_exact_tier": {
+   "yolov8_nano_64x96": "the trace has ids the schedule does not: [3, 11, 22, 33, 48, 56]"
+  },
+  "note": "the runner records zero-cost ops with dispatch_id -1 and numbers the rest from zero, while the schedule numbers all of them, so on a network with zero-cost ops the two numberings diverge. Ratios are computed within a row and are always right; only the KEY can be wrong, which is invisible in the emitted table -- hence the check, and hence dropping a misaligned network's per-dispatch keys rather than keeping plausible-looking wrong ones."
+ },
+ "coverage": {
+  "nets_exact": [
+   "dronet",
+   "ffn_block",
+   "fused_full",
+   "mlp_control"
+  ],
+  "nets_measured": [
+   "dronet",
+   "ffn_block",
+   "fused_full",
+   "mlp_control",
+   "yolov8_nano_64x96"
+  ],
+  "n_exact_dispatch_keys": 48,
+  "n_op_kind_keys": 10,
+  "note": "a net absent from nets_exact is costed by its op kinds or by the aggregate, which is a prediction about that net, not a measurement of it"
+ },
+ "traces": [
+  "results/codesign_feedback/closed_w5_nc2/board_0_trace.csv",
+  "results/codesign_feedback/closed_w5_nc2/board_1_trace.csv",
+  "results/codesign_feedback/closed_w5_nc2/board_2_trace.csv",
+  "results/codesign_feedback/closed_w5_nc2/board_3_trace.csv",
+  "results/codesign_feedback/closed_w5_nc2/board_4_trace.csv"
+ ],
+ "traces_skipped": [],
+ "per_dispatch_multiplier": {
+  "dronet/0": 1.226,
+  "dronet/1": 1.0758,
+  "dronet/10": 1.915,
+  "dronet/11": 1.3019,
+  "dronet/12": 1.9648,
+  "dronet/13": 1.0485,
+  "dronet/14": 1.1169,
+  "dronet/15": 2.3424,
+  "dronet/16": 1.7895,
+  "dronet/17": 2.8261,
+  "dronet/18": 0.9404,
+  "dronet/19": 2.6276,
+  "dronet/2": 1.5979,
+  "dronet/20": 1.8302,
+  "dronet/3": 1.0994,
+  "dronet/4": 1.2751,
+  "dronet/5": 1.4846,
+  "dronet/6": 1.2472,
+  "dronet/7": 1.3411,
+  "dronet/8": 1.0792,
+  "dronet/9": 1.1244,
+  "ffn_block/0": 1.2737,
+  "ffn_block/1": 1.1018,
+  "ffn_block/2": 1.0627,
+  "ffn_block/3": 1.0702,
+  "ffn_block/4": 1.1343,
+  "fused_full/0": 1.2753,
+  "fused_full/1": 1.324,
+  "fused_full/10": 2.322,
+  "fused_full/11": 1.6282,
+  "fused_full/12": 1.3399,
+  "fused_full/13": 1.3153,
+  "fused_full/14": 3.1349,
+  "fused_full/2": 1.2958,
+  "fused_full/3": 1.2041,
+  "fused_full/4": 2.0958,
+  "fused_full/5": 2.1722,
+  "fused_full/6": 1.9188,
+  "fused_full/7": 1.3055,
+  "fused_full/8": 2.6657,
+  "fused_full/9": 2.6443,
+  "mlp_control/0": 1.4136,
+  "mlp_control/1": 1.0663,
+  "mlp_control/2": 0.9755,
+  "mlp_control/3": 1.1186,
+  "mlp_control/4": 1.1693,
+  "mlp_control/5": 1.2537,
+  "mlp_control/6": 1.6444
+ },
+ "per_op_multiplier": {
+  "add_s8": 1.1343,
+  "conv2d_batchnorm2d_s8": 1.0757,
+  "conv2d_batchnorm2d_silu_s8": 1.361,
+  "conv2d_s8": 1.2749,
+  "gelu_s8": 1.0627,
+  "layernorm_s8": 1.2737,
+  "linear_f16": 2.1722,
+  "linear_s8": 1.086,
+  "lstm_f16": 1.4278,
+  "maxpool2d_s8": 1.0515
+ },
+ "validation": {
+  "reference": "results/codesign_feedback/k1_board_calibration.json",
+  "per_dispatch_multiplier": {
+   "n_reference": 48,
+   "n_within_tol": 5,
+   "n_off": 43,
+   "tol": 0.02,
+   "reference_keys_absent_here": [],
+   "new_keys": [],
+   "off": [
+    {
+     "key": "dronet/0",
+     "got": 1.226,
+     "reference": 1.2718
+    },
+    {
+     "key": "dronet/10",
+     "got": 1.915,
+     "reference": 2.5678
+    },
+    {
+     "key": "dronet/11",
+     "got": 1.3019,
+     "reference": 1.4511
+    },
+    {
+     "key": "dronet/12",
+     "got": 1.9648,
+     "reference": 1.6061
+    },
+    {
+     "key": "dronet/13",
+     "got": 1.0485,
+     "reference": 1.1765
+    },
+    {
+     "key": "dronet/14",
+     "got": 1.1169,
+     "reference": 1.1466
+    },
+    {
+     "key": "dronet/15",
+     "got": 2.3424,
+     "reference": 2.5705
+    },
+    {
+     "key": "dronet/16",
+     "got": 1.7895,
+     "reference": 1.4115
+    },
+    {
+     "key": "dronet/17",
+     "got": 2.8261,
+     "reference": 2.2435
+    },
+    {
+     "key": "dronet/18",
+     "got": 0.9404,
+     "reference": 1.1485
+    },
+    {
+     "key": "dronet/19",
+     "got": 2.6276,
+     "reference": 3.1556
+    },
+    {
+     "key": "dronet/2",
+     "got": 1.5979,
+     "reference": 1.7788
+    },
+    {
+     "key": "dronet/20",
+     "got": 1.8302,
+     "reference": 1.9218
+    },
+    {
+     "key": "dronet/3",
+     "got": 1.0994,
+     "reference": 1.164
+    },
+    {
+     "key": "dronet/5",
+     "got": 1.4846,
+     "reference": 1.4185
+    },
+    {
+     "key": "dronet/6",
+     "got": 1.2472,
+     "reference": 1.3515
+    },
+    {
+     "key": "dronet/7",
+     "got": 1.3411,
+     "reference": 1.7131
+    },
+    {
+     "key": "dronet/8",
+     "got": 1.0792,
+     "reference": 1.2841
+    },
+    {
+     "key": "dronet/9",
+     "got": 1.1244,
+     "reference": 1.2297
+    },
+    {
+     "key": "ffn_block/0",
+     "got": 1.2737,
+     "reference": 1.496
+    },
+    {
+     "key": "ffn_block/1",
+     "got": 1.1018,
+     "reference": 1.1385
+    },
+    {
+     "key": "ffn_block/2",
+     "got": 1.0627,
+     "reference": 1.3905
+    },
+    {
+     "key": "ffn_block/4",
+     "got": 1.1343,
+     "reference": 1.3809
+    },
+    {
+     "key": "fused_full/1",
+     "got": 1.324,
+     "reference": 1.2521
+    },
+    {
+     "key": "fused_full/10",
+     "got": 2.322,
+     "reference": 2.0865
+    },
+    {
+     "key": "fused_full/11",
+     "got": 1.6282,
+     "reference": 1.7872
+    },
+    {
+     "key": "fused_full/12",
+     "got": 1.3399,
+     "reference": 1.2541
+    },
+    {
+     "key": "fused_full/13",
+     "got": 1.3153,
+     "reference": 1.1841
+    },
+    {
+     "key": "fused_full/14",
+     "got": 3.1349,
+     "reference": 2.4235
+    },
+    {
+     "key": "fused_full/2",
+     "got": 1.2958,
+     "reference": 1.1898
+    },
+    {
+     "key": "fused_full/3",
+     "got": 1.2041,
+     "reference": 1.1326
+    },
+    {
+     "key": "fused_full/4",
+     "got": 2.0958,
+     "reference": 2.3545
+    },
+    {
+     "key": "fused_full/5",
+     "got": 2.1722,
+     "reference": 2.0193
+    },
+    {
+     "key": "fused_full/6",
+     "got": 1.9188,
+     "reference": 1.9893
+    },
+    {
+     "key": "fused_full/7",
+     "got": 1.3055,
+     "reference": 1.2422
+    },
+    {
+     "key": "fused_full/8",
+     "got": 2.6657,
+     "reference": 6.3488
+    },
+    {
+     "key": "fused_full/9",
+     "got": 2.6443,
+     "reference": 2.4043
+    },
+    {
+     "key": "mlp_control/0",
+     "got": 1.4136,
+     "reference": 0.7867
+    },
+    {
+     "key": "mlp_control/1",
+     "got": 1.0663,
+     "reference": 1.0443
+    },
+    {
+     "key": "mlp_control/3",
+     "got": 1.1186,
+     "reference": 1.0713
+    },
+    {
+     "key": "mlp_control/4",
+     "got": 1.1693,
+     "reference": 1.2476
+    },
+    {
+     "key": "mlp_control/5",
+     "got": 1.2537,
+     "reference": 1.1375
+    },
+    {
+     "key": "mlp_control/6",
+     "got": 1.6444,
+     "reference": 1.5767
+    }
+   ]
+  },
+  "per_op_multiplier": {
+   "n_reference": 11,
+   "n_within_tol": 4,
+   "n_off": 5,
+   "tol": 0.02,
+   "reference_keys_absent_here": [
+    "batchnorm2d_s8",
+    "elu_s8"
+   ],
+   "new_keys": [
+    "conv2d_batchnorm2d_silu_s8"
+   ],
+   "off": [
+    {
+     "key": "linear_f16",
+     "got": 2.1722,
+     "reference": 2.0496
+    },
+    {
+     "key": "layernorm_s8",
+     "got": 1.2737,
+     "reference": 1.496
+    },
+    {
+     "key": "gelu_s8",
+     "got": 1.0627,
+     "reference": 1.3905
+    },
+    {
+     "key": "add_s8",
+     "got": 1.1343,
+     "reference": 1.3852
+    },
+    {
+     "key": "conv2d_batchnorm2d_s8",
+     "got": 1.0757,
+     "reference": 1.1944
+    }
+   ]
+  },
+  "aggregate": {
+   "got": 1.328,
+   "reference": 1.2608
+  }
+ }
+}

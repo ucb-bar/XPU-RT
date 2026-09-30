@@ -1,0 +1,25 @@
+=== 02:37:34 clamp + feasibility greedy
+schedules/fig_a30_greedy_clamped.json: 645 dispatch targets narrowed; width histogram {1: 1625, 2: 255, 4: 165}
+
+FEASIBLE: no double-booking, no dependency violation, no forward edge, every target on the board, every implementation available where it was placed.
+  feasibility rc=0
+=== 02:37:35 clamp + feasibility cpsat_hard
+schedules/fig_a30_cpsat_hard_clamped.json: 513 dispatch targets narrowed; width histogram {1: 2045}
+
+FEASIBLE: no double-booking, no dependency violation, no forward edge, every target on the board, every implementation available where it was placed.
+  feasibility rc=0
+=== 02:37:36 no schedules/fig_a30_cpsat_soft.json
+=== 02:37:36 board a30_greedy run 1
+  trace rows: 2045  hart_acc: 8  policy: SCHED_OTHER  exit: 0  verify: ['MODELBLASTER_VERIFY [yolov8_nano_64x96] === max_abs_err=0 max_rel_err=0 n=8316 instance=0 ready=1']
+=== 02:37:58 board a30_cpsat_hard run 1
+  trace rows: 2045  hart_acc: 8  policy: SCHED_OTHER  exit: 0  verify: ['MODELBLASTER_VERIFY [yolov8_nano_64x96] === max_abs_err=0 max_rel_err=0 n=8316 instance=0 ready=1']
+=== 02:38:19 board a30_greedy run 2
+  re-pulled the board's stdout: 2045 of 2045 rows (pull 1)
+  trace rows: 2045  hart_acc: 8  policy: SCHED_OTHER  exit: 0  verify: ['MODELBLASTER_VERIFY [yolov8_nano_64x96] === max_abs_err=0 max_rel_err=0 n=8316 instance=0 ready=1']
+=== 02:38:47 board a30_cpsat_hard run 2
+  trace rows: 2045  hart_acc: 8  policy: SCHED_OTHER  exit: 0  verify: ['MODELBLASTER_VERIFY [yolov8_nano_64x96] === max_abs_err=0 max_rel_err=0 n=8316 instance=0 ready=1']
+=== 02:39:10 board a30_greedy run 3
+  trace rows: 2045  hart_acc: 8  policy: SCHED_OTHER  exit: 0  verify: ['MODELBLASTER_VERIFY [yolov8_nano_64x96] === max_abs_err=0 max_rel_err=0 n=8316 instance=0 ready=1']
+=== 02:39:31 board a30_cpsat_hard run 3
+  trace rows: 2045  hart_acc: 8  policy: SCHED_OTHER  exit: 0  verify: ['MODELBLASTER_VERIFY [yolov8_nano_64x96] === max_abs_err=0 max_rel_err=0 n=8316 instance=0 ready=1']
+=== 02:39:51 BOARD_STAGE2_DONE a30

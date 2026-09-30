@@ -1,0 +1,236 @@
+{
+ "workload": "w4_ffn_dronet_sensor",
+ "objective": "makespan",
+ "accept_rule": "candidate_objective.accept (nine lexicographic terms)",
+ "critical_models": [
+  "mlp_control",
+  "fused_full",
+  "ffn_block",
+  "dronet"
+ ],
+ "heavy_model": "ffn_block",
+ "baseline_terms": {
+  "label": "baseline",
+  "ineligible": null,
+  "01_hard_deadline_misses": 10.0,
+  "02_max_deadline_lateness": 16.61,
+  "03_frequency_compliance": 0.19584783391335644,
+  "04_p99_response_of_critical_tasks": 26.61,
+  "05_heavy_model_max_latency": 26.61,
+  "06_heavy_model_throughput": 67.01,
+  "07_makespan": 74.6108,
+  "08_utilization": 36.7,
+  "09_standalone_kernel_cycles": 219180.0,
+  "total_instances": 34
+ },
+ "final_terms": {
+  "label": "shard:ffn_block",
+  "ineligible": null,
+  "01_hard_deadline_misses": 5.0,
+  "02_max_deadline_lateness": 1.0,
+  "03_frequency_compliance": 0.0,
+  "04_p99_response_of_critical_tasks": 9.51,
+  "05_heavy_model_max_latency": 9.51,
+  "06_heavy_model_throughput": 89.53,
+  "07_makespan": 58.446,
+  "08_utilization": 47.55,
+  "09_standalone_kernel_cycles": 125377.0,
+  "total_instances": 34
+ },
+ "search_costs": "isolated profile database",
+ "baseline_score_ms": 74.611,
+ "final_score_ms": 58.446,
+ "total_reduction_pct": 21.7,
+ "baseline_makespan_ms": 74.6,
+ "final_makespan_ms": 58.4,
+ "levers_available": [
+  "ime",
+  "unfuse",
+  "shard:mlp_control",
+  "shard:fused_full",
+  "shard:ffn_block",
+  "shard:dronet",
+  "shard"
+ ],
+ "rewrite_arm": {
+  "enabled": false,
+  "runner": "board",
+  "verbs": "fuse,unfuse,split,shard",
+  "irs": {},
+  "backend": {
+   "target": "spacemit_x60",
+   "hw": "rvv_x60",
+   "accel_hw": "ime_x60",
+   "gen_root": "gen_mb",
+   "profile_root": "gen/profile_mb"
+  },
+  "accepted": [
+   {
+    "round": 1,
+    "lever": "shard:ffn_block",
+    "metric": "makespan",
+    "score_before_ms": 74.611,
+    "score_after_ms": 58.446,
+    "makespan_before_ms": 74.6,
+    "makespan_after_ms": 58.4,
+    "pct": -21.7,
+    "accepted": true,
+    "deadline_miss": 30,
+    "accept_rule": "objective",
+    "why": "accepted -- hard deadline misses: shard:ffn_block=5 beats baseline=10 (tolerance 0)",
+    "rejected": [
+     {
+      "lever": "shard:mlp_control",
+      "why": "rejected -- indistinguishable on every term; a tie is not an improvement",
+      "score_ms": 74.611,
+      "misses": 50
+     },
+     {
+      "lever": "shard:fused_full",
+      "why": "rejected -- indistinguishable on every term; a tie is not an improvement",
+      "score_ms": 74.611,
+      "misses": 50
+     }
+    ],
+    "terms": {
+     "label": "shard:ffn_block",
+     "ineligible": null,
+     "01_hard_deadline_misses": 5.0,
+     "02_max_deadline_lateness": 1.0,
+     "03_frequency_compliance": 0.0,
+     "04_p99_response_of_critical_tasks": 9.51,
+     "05_heavy_model_max_latency": 9.51,
+     "06_heavy_model_throughput": 89.53,
+     "07_makespan": 58.446,
+     "08_utilization": 47.55,
+     "09_standalone_kernel_cycles": 125377.0,
+     "total_instances": 34
+    }
+   }
+  ]
+ },
+ "levers_applied": [
+  "shard:ffn_block"
+ ],
+ "levers_inapplicable": [
+  {
+   "round": 1,
+   "lever": "unfuse",
+   "reason": "lever left the spec unchanged"
+  },
+  {
+   "round": 2,
+   "lever": "unfuse",
+   "reason": "lever left the spec unchanged"
+  },
+  {
+   "round": 2,
+   "lever": "shard",
+   "reason": "lever left the spec unchanged"
+  }
+ ],
+ "rounds": [
+  {
+   "round": 1,
+   "lever": "shard:ffn_block",
+   "metric": "makespan",
+   "score_before_ms": 74.611,
+   "score_after_ms": 58.446,
+   "makespan_before_ms": 74.6,
+   "makespan_after_ms": 58.4,
+   "pct": -21.7,
+   "accepted": true,
+   "deadline_miss": 30,
+   "accept_rule": "objective",
+   "why": "accepted -- hard deadline misses: shard:ffn_block=5 beats baseline=10 (tolerance 0)",
+   "rejected": [
+    {
+     "lever": "shard:mlp_control",
+     "why": "rejected -- indistinguishable on every term; a tie is not an improvement",
+     "score_ms": 74.611,
+     "misses": 50
+    },
+    {
+     "lever": "shard:fused_full",
+     "why": "rejected -- indistinguishable on every term; a tie is not an improvement",
+     "score_ms": 74.611,
+     "misses": 50
+    }
+   ],
+   "terms": {
+    "label": "shard:ffn_block",
+    "ineligible": null,
+    "01_hard_deadline_misses": 5.0,
+    "02_max_deadline_lateness": 1.0,
+    "03_frequency_compliance": 0.0,
+    "04_p99_response_of_critical_tasks": 9.51,
+    "05_heavy_model_max_latency": 9.51,
+    "06_heavy_model_throughput": 89.53,
+    "07_makespan": 58.446,
+    "08_utilization": 47.55,
+    "09_standalone_kernel_cycles": 125377.0,
+    "total_instances": 34
+   }
+  },
+  {
+   "round": 2,
+   "lever": null,
+   "accepted": false,
+   "metric": "makespan",
+   "score_before_ms": 58.446,
+   "accept_rule": "objective",
+   "why": "no candidate was accepted; the loop converged here",
+   "rejected": [
+    {
+     "lever": "ime",
+     "why": "rejected -- indistinguishable on every term; a tie is not an improvement",
+     "score_ms": 58.446,
+     "misses": 30,
+     "kind": "lever"
+    },
+    {
+     "lever": "shard:mlp_control",
+     "why": "rejected -- indistinguishable on every term; a tie is not an improvement",
+     "score_ms": 58.446,
+     "misses": 30,
+     "kind": "lever"
+    },
+    {
+     "lever": "shard:fused_full",
+     "why": "rejected -- indistinguishable on every term; a tie is not an improvement",
+     "score_ms": 58.446,
+     "misses": 30,
+     "kind": "lever"
+    },
+    {
+     "lever": "shard:dronet",
+     "why": "rejected -- max deadline lateness: shard:ffn_block=1 beats shard:dronet=2.55 (tolerance 0.5)",
+     "score_ms": 60.549,
+     "misses": 10,
+     "kind": "lever"
+    }
+   ]
+  }
+ ],
+ "trajectory": [
+  {
+   "round": 0,
+   "lever": "baseline",
+   "score_ms": 74.611,
+   "makespan_ms": 74.6,
+   "misses": 50
+  },
+  {
+   "round": 1,
+   "lever": "+shard:ffn_block",
+   "score_ms": 58.446,
+   "makespan_ms": 58.4,
+   "misses": 30
+  }
+ ],
+ "fusion": "fuse: NOT applied \u2014 roofline decision-aid says the stack is compute-bound (max fusible-epilogue ceiling 16% on dronet); fusion collapses dispatches (scheduling) but is measured ~+0.85% on cycles, so the loop does not credit a makespan gain it cannot measure.",
+ "converged": true,
+ "board_feedback": {
+  "enabled": false
+ }
+}

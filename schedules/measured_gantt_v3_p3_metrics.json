@@ -1,0 +1,67 @@
+{
+ "source": "results/codesign_feedback/ros_traced/45_p3_r1/trace.csv",
+ "cpu_source": "results/codesign_feedback/ros_traced/45_p3_r1/cpu.csv",
+ "manifest": "results/codesign_feedback/ros_traced/45_p3_r1/manifest.json",
+ "source_sha256": "cb53c22b6db88ff263733783483535b4ba421e3f2e579c048744ba2094803504",
+ "cpu_source_sha256": "49c0f69de7888284b85c2288e8e14bb5a07f864dc102d55c343010d8bc0d530a",
+ "manifest_sha256": "b574e660c83ee2be9adc28ef9c3b8cd9d9002c14fd9e8c56264f9b79d076a77d",
+ "window_open_ms": 888.752,
+ "window_ms": 100.0,
+ "busy_pct": {
+  "CPU_P#0": 99.4,
+  "CPU_P#1": 87.4,
+  "CPU_P#2": 85.9,
+  "CPU_P#3": 85.6,
+  "CPU_E#0": 20.2,
+  "CPU_E#1": 2.0,
+  "CPU_E#2": 0.5,
+  "CPU_E#3": 1.0
+ },
+ "busy_note": "sampler busy % over the run window",
+ "busy_source": "sampler_epoch",
+ "kernel_frac_pct": null,
+ "chain_ms_median": 60.507,
+ "chain_ms_p95": 65.264,
+ "yolo_span_ms_median": 24.612,
+ "n_frames_paired": 737,
+ "ctrl_gap_mean_ms": 10.0,
+ "ctrl_gap_max_ms": 11.826,
+ "frame_start_lag_median_ms": 25.837,
+ "yolo_window_ms": 66.66666666666666,
+ "frames_late": 2,
+ "frames_checked": 772,
+ "frames_late_frac": 0.0026,
+ "frame_start_lag_max_ms": 74.098,
+ "end_to_end_latency_ms": 60.507,
+ "end_to_end_deadline_ms": 33.3,
+ "executor": "single",
+ "affinity_mask": {
+  "percep": "0x1",
+  "nav": "0x10",
+  "control": "0x20"
+ },
+ "sched_policy": null,
+ "solver": null,
+ "rate_hz": 45,
+ "yolo_period_ms": 22.22222222222222,
+ "nav_period_ms": 22.22222222222222,
+ "ctrl_period_ms": 10.0,
+ "yolo_pool_lanes": {
+  "camera": [
+   "CPU_P#0",
+   "CPU_P#1",
+   "CPU_P#2",
+   "CPU_P#3"
+  ],
+  "perception": [
+   "CPU_P#0",
+   "CPU_P#1",
+   "CPU_P#2",
+   "CPU_P#3"
+  ]
+ },
+ "kind": "ros",
+ "arm": "p3",
+ "arm_label": "ROS 2 \u00b7 3 processes \u00b7 single executor \u00b7 pinned",
+ "placement_note": "3 processes pinned \u00b7 YOLO on 4 harts"
+}

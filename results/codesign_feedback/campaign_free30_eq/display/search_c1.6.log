@@ -1,0 +1,11 @@
+  xpu 1000: === 19:54:14 xpu_s1000
+[ep00] outcome=success   gates=4/4 steps=1001
+  ros 1000: === 20:04:02 ros_s1000
+[ep00] outcome=crash     gates=0/4 steps=289
+  xpu 1001: === 20:09:44 xpu_s1001
+[ep00] outcome=success   gates=4/4 steps=1003
+  ros 1001: === 20:19:17 ros_s1001
+[ep00] outcome=crash     gates=1/4 steps=363
+PAIR_SEED=1001
+PAIR /scratch/agustin/xpurt-dev-sync/results/codesign_feedback/campaign_free30_eq/display/search_c1.6/xpu_s1001_figdata /scratch/agustin/xpurt-dev-sync/results/codesign_feedback/campaign_free30_eq/display/search_c1.6/ros_s1001_figdata
+SAME_ENV_DONE

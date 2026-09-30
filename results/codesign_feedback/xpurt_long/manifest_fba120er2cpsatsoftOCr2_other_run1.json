@@ -1,0 +1,23 @@
+{
+  "tag": "fba120er2cpsatsoftOCr2_other_run1",
+  "schedule": "/scratch/agustin/xpurt-dev-sync/schedules/fig_fba120er2_cpsat_soft_oc_clamped.json",
+  "schedule_relpath": "schedules/fig_fba120er2_cpsat_soft_oc_clamped.json",
+  "schedule_sha256": "2e2730722b8bb1c2053dc2b2a59fdbabcd857b49080c1bf70fe1e108cf411044",
+  "schedule_sha256_16": "2e2730722b8bb1c2",
+  "camera_hz": 120.005,
+  "seconds": 1.083,
+  "solver": "cpsat",
+  "board_recost": null,
+  "ir_sha256_yolo": "0c783539626cf1627ae801d997ddc3f8c82316ab1ec10bb488cd9b4418180456",
+  "sched_policy": "SCHED_OTHER",
+  "run_t0_rdtime": 120871529622988,
+  "wall_start_epoch_ms": 1789590929244,
+  "exit_code": 0,
+  "verify_lines": [
+    "MODELBLASTER_VERIFY [yolov8_nano_64x96] === max_abs_err=0 max_rel_err=0 n=8316 instance=0 ready=1",
+    "MODELBLASTER_VERIFY [fused_full] === max_abs_err=0.000183105469 max_rel_err=0.00162337662 n=2 instance=0 ready=1",
+    "MODELBLASTER_VERIFY [mlp_control] === max_abs_err=0 max_rel_err=0 n=4 instance=0 ready=1"
+  ],
+  "rdtime_hz": 24000000,
+  "note": "numeric verification covers instance 0 only"
+}

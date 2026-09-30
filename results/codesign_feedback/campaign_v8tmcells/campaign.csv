@@ -1,0 +1,13 @@
+seed,cruise_speed,sim_dt,decimation,control_dt_ms,sched_latency_ms,percep_latency_ms,percep_delay_steps,percep_hold_ms,percep_refresh,walk_speed,hold_steps,eff_cmd_hz,moment_scale,gust,motor_tau,pipeline_zoh,gates_passed,steps,K,outcome,crash_type,ctrl_trace,prop_density,course,person_h,layout_seed
+1000,1.0,0.01,1,10.0,0.0,241.9,24,0.0,1,0.0,1,100.0,0.0055,0.0,0.0,0,3,1135,4,crash,clip,ros_vanilla8tm45.csv,0.3,a,2.4,
+1001,1.0,0.01,1,10.0,0.0,241.9,24,0.0,1,0.0,1,100.0,0.0055,0.0,0.0,0,2,916,4,crash,clip,ros_vanilla8tm45.csv,0.3,a,2.4,
+1002,1.0,0.01,1,10.0,0.0,241.9,24,0.0,1,0.0,1,100.0,0.0055,0.0,0.0,0,2,1252,4,crash,clip,ros_vanilla8tm45.csv,0.3,a,2.4,
+1003,1.0,0.01,1,10.0,0.0,241.9,24,0.0,1,0.0,1,100.0,0.0055,0.0,0.0,0,4,1452,4,success,,ros_vanilla8tm45.csv,0.3,a,2.4,
+1004,1.0,0.01,1,10.0,0.0,241.9,24,0.0,1,0.0,1,100.0,0.0055,0.0,0.0,0,2,768,4,crash,clip,ros_vanilla8tm45.csv,0.3,a,2.4,
+1005,1.0,0.01,1,10.0,0.0,241.9,24,0.0,1,0.0,1,100.0,0.0055,0.0,0.0,0,1,260,4,crash,clip,ros_vanilla8tm45.csv,0.3,a,2.4,
+1006,1.0,0.01,1,10.0,0.0,241.9,24,0.0,1,0.0,1,100.0,0.0055,0.0,0.0,0,2,990,4,crash,clip,ros_vanilla8tm45.csv,0.3,a,2.4,
+1007,1.0,0.01,1,10.0,0.0,241.9,24,0.0,1,0.0,1,100.0,0.0055,0.0,0.0,0,2,1800,4,timeout,,ros_vanilla8tm45.csv,0.3,a,2.4,
+1008,1.0,0.01,1,10.0,0.0,241.9,24,0.0,1,0.0,1,100.0,0.0055,0.0,0.0,0,1,494,4,crash,clip,ros_vanilla8tm45.csv,0.3,a,2.4,
+1009,1.0,0.01,1,10.0,0.0,241.9,24,0.0,1,0.0,1,100.0,0.0055,0.0,0.0,0,0,715,4,crash,clip,ros_vanilla8tm45.csv,0.3,a,2.4,
+1010,1.0,0.01,1,10.0,0.0,241.9,24,0.0,1,0.0,1,100.0,0.0055,0.0,0.0,0,1,462,4,crash,clip,ros_vanilla8tm45.csv,0.3,a,2.4,
+1011,1.0,0.01,1,10.0,0.0,241.9,24,0.0,1,0.0,1,100.0,0.0055,0.0,0.0,0,3,1309,4,crash,clip,ros_vanilla8tm45.csv,0.3,a,2.4,

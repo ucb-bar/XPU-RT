@@ -1,0 +1,17 @@
+=== 21:32:52 stage 1: census, layout 1000, gain 0.0055, cruise 1.4, 30 Hz camera ===
+=== 21:34:31 scene tall1000_ac30 layout 1000 xpu_p30free lat 26.8 hold 33.3 cruise 1.4 ===
+[SWEEP] ms=0.0055 cruise=1.4 walk=0.0 hold=33.3 SUCCESS 3/12 clip=9 ground=0  s1000:cras(3/4,997,clip) s1001:succ(4/4,1013,-) s1002:cras(2/4,587,clip) s1003:suc
+=== 21:50:41 scene tall1000_ac30 layout 1000 ros_vanilla4x230 lat 31.4 hold 33.3 cruise 1.4 ===
+[SWEEP] ms=0.0055 cruise=1.4 walk=0.0 hold=33.3 SUCCESS 0/12 clip=10 ground=0  s1000:cras(1/4,339,clip) s1001:cras(0/4,346,clip) s1002:time(0/4,1800,-) s1003:cr
+SCENE_RUNS_DONE tall1000_ac30
+=== 22:04:40 stage 2: which episode seeds separate the two arms ===
+
+arm                      1000   1001   1002   1003   1004   1005   1006   1007   1008   1009   1010   1011  completed
+ros_vanilla4x230           x1     x0     x0     x0     x0     x0     x0     x0     x0     x1     x0     x0       0/12
+xpu_p30free                x3    OK4     x2    OK4     x1     x2     x3    OK4     x1     x1     x3     x1       3/12
+
+seeds where XPU-RT completes and the all-8-hart baseline does not: [1001, 1003, 1007]
+   seed 1001: baseline crashes after 0 gate(s)
+   seed 1003: baseline crashes after 0 gate(s)
+   seed 1007: baseline crashes after 0 gate(s)
+=== 22:04:40 CAMPAIGN_ALLCORES30_DONE ===

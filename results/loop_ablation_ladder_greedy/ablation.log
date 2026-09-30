@@ -1,0 +1,28 @@
+[1/4] w2_ffn_tight
+  -- greedy --
+    inner (AOT) search: levers ['shard']
+    A neither                                    misses=5   worst_late=  19.713 ms  makespan=  68.09 ms
+    B inner only (levers, deployed blind)        misses=0   worst_late=   0.000 ms  makespan=  55.32 ms
+    C outer only (measured re-solve, no levers)  misses=5   worst_late=  19.948 ms  makespan=  77.95 ms
+    D both                                       misses=0   worst_late=   0.000 ms  makespan=  57.16 ms
+[2/4] w3_ffn_dronet
+  -- greedy --
+    inner (AOT) search: levers ['shard']
+    A neither                                    misses=10  worst_late=  17.953 ms  makespan=  68.11 ms
+    B inner only (levers, deployed blind)        misses=5   worst_late=   2.001 ms  makespan=  59.00 ms
+    C outer only (measured re-solve, no levers)  misses=10  worst_late=  19.948 ms  makespan=  77.95 ms
+    D both                                       misses=5   worst_late=  10.902 ms  makespan=  64.74 ms
+[3/4] w4_ffn_dronet_sensor
+  -- greedy --
+    inner (AOT) search: levers ['shard']
+    A neither                                    misses=10  worst_late=  17.953 ms  makespan=  71.33 ms
+    B inner only (levers, deployed blind)        misses=5   worst_late=   3.092 ms  makespan=  60.86 ms
+    C outer only (measured re-solve, no levers)  misses=10  worst_late=  19.948 ms  makespan=  77.95 ms
+    D both                                       misses=7   worst_late=  28.383 ms  makespan=  72.57 ms
+[4/4] w5_ffn_dronet_yolo
+  -- greedy --
+    inner (AOT) search: levers ['ime', 'shard']
+    A neither                                    misses=11  worst_late=  24.560 ms  makespan=  71.57 ms
+    B inner only (levers, deployed blind)        misses=7   worst_late=  26.207 ms  makespan=  64.34 ms
+    C outer only (measured re-solve, no levers)  misses=11  worst_late=  38.620 ms  makespan=  77.95 ms
+    D both                                       misses=12  worst_late=  40.383 ms  makespan=  72.57 ms

@@ -1,0 +1,17 @@
+=== 21:05:20 xpu_s1003 ===
+  xpu_s1003 [ep00] outcome=success   gates=4/4 steps=1149
+=== 21:16:04 ros_s1003 ===
+  ros_s1003 [ep00] outcome=crash     gates=1/4 steps=506
+=== 21:23:10 xpu_s1006 ===
+  xpu_s1006 [ep00] outcome=crash     gates=3/4 steps=853
+=== 21:32:01 ros_s1006 ===
+  ros_s1006 [ep00] outcome=crash     gates=2/4 steps=589
+=== 21:39:35 xpu_s1007 ===
+  xpu_s1007 [ep00] outcome=success   gates=4/4 steps=1132
+=== 21:53:11 ros_s1007 ===
+  ros_s1007 [ep00] outcome=crash     gates=1/4 steps=438
+=== 22:00:22 xpu_s1009 ===
+  xpu_s1009 [ep00] outcome=crash     gates=3/4 steps=754
+=== 22:10:52 ros_s1009 ===
+  ros_s1009 [ep00] outcome=success   gates=4/4 steps=1041
+=== 22:21:03 DISPLAY_PAIRS45_DONE ===

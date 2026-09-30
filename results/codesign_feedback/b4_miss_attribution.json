@@ -1,0 +1,53 @@
+{
+ "trace": "ModelBlaster/tmp/b4_board_run/_gen/b4_aot_sched/b4_aot_sched_trace.csv",
+ "spec": "data/toplevel/scaling/b4_board_sized.json",
+ "networks": [
+  {
+   "network": "dronet",
+   "window_ms": 7.0,
+   "n_instances": 5,
+   "inst0_exec_ms": 8.061,
+   "warm_median_exec_ms": 6.03,
+   "cold_over_warm": 1.34,
+   "instances_over_window_by_execution": 1,
+   "of_which_cold_start": 1,
+   "warm_execution_fits_window": true
+  },
+  {
+   "network": "ffn_block",
+   "window_ms": 12.0,
+   "n_instances": 5,
+   "inst0_exec_ms": 10.676,
+   "warm_median_exec_ms": 8.399,
+   "cold_over_warm": 1.27,
+   "instances_over_window_by_execution": 0,
+   "of_which_cold_start": 0,
+   "warm_execution_fits_window": true
+  },
+  {
+   "network": "fused_full",
+   "window_ms": 5.0,
+   "n_instances": 12,
+   "inst0_exec_ms": 11.727,
+   "warm_median_exec_ms": 4.279,
+   "cold_over_warm": 2.74,
+   "instances_over_window_by_execution": 1,
+   "of_which_cold_start": 1,
+   "warm_execution_fits_window": true
+  },
+  {
+   "network": "mlp_control",
+   "window_ms": 5.0,
+   "n_instances": 12,
+   "inst0_exec_ms": 0.105,
+   "warm_median_exec_ms": 0.076,
+   "cold_over_warm": 1.39,
+   "instances_over_window_by_execution": 0,
+   "of_which_cold_start": 0,
+   "warm_execution_fits_window": true
+  }
+ ],
+ "execution_bound_instances": 2,
+ "cold_start_instances": 2,
+ "means": "execution = sum of the instance's own dispatch cycles, queueing excluded; a scheduler cannot shrink it"
+}

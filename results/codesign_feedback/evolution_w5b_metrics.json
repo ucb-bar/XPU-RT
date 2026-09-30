@@ -1,0 +1,54 @@
+{
+  "layout": "grid",
+  "figure_size_in": [
+    7.16,
+    3.7
+  ],
+  "height_arg": 3.7,
+  "panels": [
+    {
+      "stage": 1,
+      "title": "Baseline \u00b7 RVV singletons",
+      "driver": "loop baseline (levers stripped)",
+      "cost_source": "AOT model",
+      "makespan_ms": 74.61295799999999,
+      "displayed_instance_deadline_misses": 31,
+      "missed_instances_by_network": {
+        "FFN": 5,
+        "dronet": 5,
+        "CTRL": 9,
+        "NAV": 11,
+        "YOLO": 1
+      }
+    },
+    {
+      "stage": 2,
+      "title": "Auto-loop optimize \u2014 IME",
+      "driver": "levers from the loop's measured search",
+      "cost_source": "AOT model",
+      "makespan_ms": 88.852958,
+      "displayed_instance_deadline_misses": 20,
+      "missed_instances_by_network": {
+        "NAV": 9,
+        "FFN": 5,
+        "dronet": 5,
+        "YOLO": 1
+      }
+    },
+    {
+      "stage": 3,
+      "title": "K1-calibrated replay",
+      "driver": "same assignment, board durations",
+      "cost_source": "K1-calibrated model",
+      "makespan_ms": 78.7204062565,
+      "displayed_instance_deadline_misses": 23,
+      "missed_instances_by_network": {
+        "NAV": 10,
+        "FFN": 5,
+        "CTRL": 2,
+        "dronet": 5,
+        "YOLO": 1
+      }
+    }
+  ]
+}

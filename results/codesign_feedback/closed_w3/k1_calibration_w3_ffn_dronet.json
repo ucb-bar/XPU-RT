@@ -1,0 +1,279 @@
+{
+ "schema": "k1_board_calibration/v2",
+ "source": "3 board trace(s), real SpaceMiT K1; actual=(end-start)ticks/24MHz vs the predicted_duration_ms the runner stamped from the schedule",
+ "workload": "w3_ffn_dronet: mlp_control+ffn_block+dronet",
+ "generated_by": "scripts/emit_board_calibration.py",
+ "generated_at": "2026-09-08T21:12:30",
+ "measures": "EXECUTION inflation only. Queue delay is carried separately by the trace and excluded: a dispatch that waited is not a dispatch that ran slowly, and folding queueing in would charge the scheduler twice for its own placement.",
+ "statistic": "mean of per-sample ratios; pooled op tier and aggregate floored at predicted >= 0.1 ms (2400 rdtime ticks) so timer granularity cannot inflate a pooled multiplier",
+ "n_dispatch_samples": 642,
+ "n_pooled_samples": 210,
+ "aggregate_multiplier": 1.196,
+ "aggregate_median": 1.0896,
+ "aggregate_mean": 1.196,
+ "primary_key": "network/dispatch_id (exact, for the measured workload)",
+ "fallback_key": "op (generalizing; EXTRAPOLATED for nets not in coverage.nets_exact)",
+ "coverage": {
+  "nets_exact": [
+   "dronet",
+   "ffn_block",
+   "mlp_control"
+  ],
+  "n_exact_dispatch_keys": 33,
+  "n_op_kind_keys": 7,
+  "note": "a net absent from nets_exact is costed by its op kinds or by the aggregate, which is a prediction about that net, not a measurement of it"
+ },
+ "traces": [
+  "results/codesign_feedback/closed_w3/board_0_trace.csv",
+  "results/codesign_feedback/closed_w3/board_1_trace.csv",
+  "results/codesign_feedback/closed_w3/board_2_trace.csv"
+ ],
+ "traces_skipped": [],
+ "per_dispatch_multiplier": {
+  "dronet/0": 1.235,
+  "dronet/1": 1.0255,
+  "dronet/10": 1.8723,
+  "dronet/11": 1.1433,
+  "dronet/12": 1.6317,
+  "dronet/13": 1.3978,
+  "dronet/14": 1.5568,
+  "dronet/15": 2.3679,
+  "dronet/16": 1.3295,
+  "dronet/17": 2.2044,
+  "dronet/18": 3.019,
+  "dronet/19": 3.2489,
+  "dronet/2": 1.5499,
+  "dronet/20": 1.921,
+  "dronet/3": 1.0079,
+  "dronet/4": 1.2302,
+  "dronet/5": 1.3685,
+  "dronet/6": 1.1223,
+  "dronet/7": 1.387,
+  "dronet/8": 1.1181,
+  "dronet/9": 1.212,
+  "ffn_block/0": 1.2081,
+  "ffn_block/1": 1.1209,
+  "ffn_block/2": 1.0653,
+  "ffn_block/3": 1.1016,
+  "ffn_block/4": 1.0964,
+  "mlp_control/0": 0.7618,
+  "mlp_control/1": 1.0217,
+  "mlp_control/2": 0.8718,
+  "mlp_control/3": 1.0633,
+  "mlp_control/4": 1.0357,
+  "mlp_control/5": 1.1156,
+  "mlp_control/6": 1.0113
+ },
+ "per_op_multiplier": {
+  "add_s8": 1.0964,
+  "conv2d_batchnorm2d_s8": 1.1746,
+  "conv2d_s8": 1.3205,
+  "gelu_s8": 1.0653,
+  "layernorm_s8": 1.2081,
+  "linear_s8": 1.1113,
+  "maxpool2d_s8": 1.0255
+ },
+ "validation": {
+  "reference": "results/codesign_feedback/k1_board_calibration.json",
+  "per_dispatch_multiplier": {
+   "n_reference": 48,
+   "n_within_tol": 7,
+   "n_off": 26,
+   "tol": 0.02,
+   "reference_keys_absent_here": [
+    "fused_full/0",
+    "fused_full/1",
+    "fused_full/10",
+    "fused_full/11",
+    "fused_full/12",
+    "fused_full/13",
+    "fused_full/14",
+    "fused_full/2",
+    "fused_full/3",
+    "fused_full/4",
+    "fused_full/5",
+    "fused_full/6",
+    "fused_full/7",
+    "fused_full/8",
+    "fused_full/9"
+   ],
+   "new_keys": [],
+   "off": [
+    {
+     "key": "dronet/0",
+     "got": 1.235,
+     "reference": 1.2718
+    },
+    {
+     "key": "dronet/1",
+     "got": 1.0255,
+     "reference": 1.0565
+    },
+    {
+     "key": "dronet/10",
+     "got": 1.8723,
+     "reference": 2.5678
+    },
+    {
+     "key": "dronet/11",
+     "got": 1.1433,
+     "reference": 1.4511
+    },
+    {
+     "key": "dronet/13",
+     "got": 1.3978,
+     "reference": 1.1765
+    },
+    {
+     "key": "dronet/14",
+     "got": 1.5568,
+     "reference": 1.1466
+    },
+    {
+     "key": "dronet/15",
+     "got": 2.3679,
+     "reference": 2.5705
+    },
+    {
+     "key": "dronet/16",
+     "got": 1.3295,
+     "reference": 1.4115
+    },
+    {
+     "key": "dronet/18",
+     "got": 3.019,
+     "reference": 1.1485
+    },
+    {
+     "key": "dronet/19",
+     "got": 3.2489,
+     "reference": 3.1556
+    },
+    {
+     "key": "dronet/2",
+     "got": 1.5499,
+     "reference": 1.7788
+    },
+    {
+     "key": "dronet/3",
+     "got": 1.0079,
+     "reference": 1.164
+    },
+    {
+     "key": "dronet/4",
+     "got": 1.2302,
+     "reference": 1.2679
+    },
+    {
+     "key": "dronet/5",
+     "got": 1.3685,
+     "reference": 1.4185
+    },
+    {
+     "key": "dronet/6",
+     "got": 1.1223,
+     "reference": 1.3515
+    },
+    {
+     "key": "dronet/7",
+     "got": 1.387,
+     "reference": 1.7131
+    },
+    {
+     "key": "dronet/8",
+     "got": 1.1181,
+     "reference": 1.2841
+    },
+    {
+     "key": "ffn_block/0",
+     "got": 1.2081,
+     "reference": 1.496
+    },
+    {
+     "key": "ffn_block/2",
+     "got": 1.0653,
+     "reference": 1.3905
+    },
+    {
+     "key": "ffn_block/3",
+     "got": 1.1016,
+     "reference": 1.069
+    },
+    {
+     "key": "ffn_block/4",
+     "got": 1.0964,
+     "reference": 1.3809
+    },
+    {
+     "key": "mlp_control/0",
+     "got": 0.7618,
+     "reference": 0.7867
+    },
+    {
+     "key": "mlp_control/1",
+     "got": 1.0217,
+     "reference": 1.0443
+    },
+    {
+     "key": "mlp_control/2",
+     "got": 0.8718,
+     "reference": 0.9782
+    },
+    {
+     "key": "mlp_control/4",
+     "got": 1.0357,
+     "reference": 1.2476
+    },
+    {
+     "key": "mlp_control/6",
+     "got": 1.0113,
+     "reference": 1.5767
+    }
+   ]
+  },
+  "per_op_multiplier": {
+   "n_reference": 11,
+   "n_within_tol": 2,
+   "n_off": 5,
+   "tol": 0.02,
+   "reference_keys_absent_here": [
+    "batchnorm2d_s8",
+    "elu_s8",
+    "linear_f16",
+    "lstm_f16"
+   ],
+   "new_keys": [],
+   "off": [
+    {
+     "key": "layernorm_s8",
+     "got": 1.2081,
+     "reference": 1.496
+    },
+    {
+     "key": "gelu_s8",
+     "got": 1.0653,
+     "reference": 1.3905
+    },
+    {
+     "key": "add_s8",
+     "got": 1.0964,
+     "reference": 1.3852
+    },
+    {
+     "key": "conv2d_s8",
+     "got": 1.3205,
+     "reference": 1.259
+    },
+    {
+     "key": "maxpool2d_s8",
+     "got": 1.0255,
+     "reference": 1.0565
+    }
+   ]
+  },
+  "aggregate": {
+   "got": 1.196,
+   "reference": 1.2608
+  }
+ }
+}

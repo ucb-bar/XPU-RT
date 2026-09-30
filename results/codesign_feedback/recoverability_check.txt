@@ -1,0 +1,76 @@
+=== results/codesign_feedback/energy_runs_r30_gain
+results/codesign_feedback/energy_runs_r30_gain: 43 byte-identical in an archive, 2609 present but differing, 127 not in any archive
+NOT fully recoverable from the archives -- do not delete
+=== results/codesign_feedback/energy_runs
+results/codesign_feedback/energy_runs: 10 byte-identical in an archive, 2088 present but differing, 78 not in any archive
+NOT fully recoverable from the archives -- do not delete
+=== results/codesign_feedback/energy_runs_free45
+results/codesign_feedback/energy_runs_free45: 25 byte-identical in an archive, 1546 present but differing, 73 not in any archive
+NOT fully recoverable from the archives -- do not delete
+=== results/codesign_feedback/energy_runs_r30
+results/codesign_feedback/energy_runs_r30: 31 byte-identical in an archive, 1502 present but differing, 91 not in any archive
+NOT fully recoverable from the archives -- do not delete
+=== results/codesign_feedback/energy_runs_free30_perrate
+results/codesign_feedback/energy_runs_free30_perrate: 13 byte-identical in an archive, 1598 present but differing, 37 not in any archive
+NOT fully recoverable from the archives -- do not delete
+=== results/codesign_feedback/energy_runs_static6_45
+results/codesign_feedback/energy_runs_static6_45: 25 byte-identical in an archive, 1436 present but differing, 73 not in any archive
+NOT fully recoverable from the archives -- do not delete
+=== results/codesign_feedback/energy_runs_r36
+results/codesign_feedback/energy_runs_r36: 13 byte-identical in an archive, 1170 present but differing, 38 not in any archive
+NOT fully recoverable from the archives -- do not delete
+=== results/codesign_feedback/energy_runs_v2
+results/codesign_feedback/energy_runs_v2: 2 byte-identical in an archive, 1072 present but differing, 60 not in any archive
+NOT fully recoverable from the archives -- do not delete
+=== results/codesign_feedback/energy_runs_allcores30
+results/codesign_feedback/energy_runs_allcores30: 6 byte-identical in an archive, 1013 present but differing, 44 not in any archive
+NOT fully recoverable from the archives -- do not delete
+=== results/codesign_feedback/energy_runs_navpool36
+results/codesign_feedback/energy_runs_navpool36: 13 byte-identical in an archive, 990 present but differing, 25 not in any archive
+NOT fully recoverable from the archives -- do not delete
+=== results/codesign_feedback/energy_runs_allcores36
+results/codesign_feedback/energy_runs_allcores36: 8 byte-identical in an archive, 977 present but differing, 42 not in any archive
+NOT fully recoverable from the archives -- do not delete
+=== results/codesign_feedback/energy_runs_submitted
+results/codesign_feedback/energy_runs_submitted: 13 byte-identical in an archive, 939 present but differing, 37 not in any archive
+NOT fully recoverable from the archives -- do not delete
+=== results/codesign_feedback/energy_runs_free30
+results/codesign_feedback/energy_runs_free30: 13 byte-identical in an archive, 851 present but differing, 37 not in any archive
+NOT fully recoverable from the archives -- do not delete
+=== results/codesign_feedback/energy_runs_static6
+results/codesign_feedback/energy_runs_static6: 13 byte-identical in an archive, 808 present but differing, 37 not in any archive
+NOT fully recoverable from the archives -- do not delete
+=== results/codesign_feedback/crash_verify
+results/codesign_feedback/crash_verify: 0 byte-identical in an archive, 588 present but differing, 34 not in any archive
+NOT fully recoverable from the archives -- do not delete
+=== results/codesign_feedback/g0_backlog
+results/codesign_feedback/g0_backlog: 1 byte-identical in an archive, 418 present but differing, 14 not in any archive
+NOT fully recoverable from the archives -- do not delete
+=== results/codesign_feedback/decoupled
+results/codesign_feedback/decoupled: 1 byte-identical in an archive, 312 present but differing, 10 not in any archive
+NOT fully recoverable from the archives -- do not delete
+=== results/codesign_feedback/energy_runs_unpinned45
+results/codesign_feedback/energy_runs_unpinned45: 7 byte-identical in an archive, 308 present but differing, 19 not in any archive
+NOT fully recoverable from the archives -- do not delete
+=== results/codesign_feedback/ros_grounded
+results/codesign_feedback/ros_grounded: 1 byte-identical in an archive, 295 present but differing, 7 not in any archive
+NOT fully recoverable from the archives -- do not delete
+=== results/codesign_feedback/mean_gap
+results/codesign_feedback/mean_gap: 1 byte-identical in an archive, 269 present but differing, 10 not in any archive
+NOT fully recoverable from the archives -- do not delete
+=== results/codesign_feedback/crash_demo
+results/codesign_feedback/crash_demo: 0 byte-identical in an archive, 172 present but differing, 18 not in any archive
+NOT fully recoverable from the archives -- do not delete
+=== results/codesign_feedback/worstcase
+results/codesign_feedback/worstcase: 1 byte-identical in an archive, 114 present but differing, 7 not in any archive
+NOT fully recoverable from the archives -- do not delete
+=== results/codesign_feedback/percep_latency
+results/codesign_feedback/percep_latency: 1 byte-identical in an archive, 84 present but differing, 4 not in any archive
+NOT fully recoverable from the archives -- do not delete
+=== results/codesign_feedback/midground
+results/codesign_feedback/midground: 1 byte-identical in an archive, 83 present but differing, 4 not in any archive
+NOT fully recoverable from the archives -- do not delete
+=== results/robotic_packing
+results/robotic_packing: 0 byte-identical in an archive, 0 present but differing, 219 not in any archive
+NOT fully recoverable from the archives -- do not delete
+ALLDONE

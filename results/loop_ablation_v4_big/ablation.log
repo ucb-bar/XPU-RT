@@ -1,0 +1,26 @@
+[1/2] w4_ffn_dronet_sensor
+  -- cpsat --
+    inner (AOT) search: levers (none)
+    A neither                                    misses=10  worst_late=  27.926 ms  makespan=  76.62 ms
+    B inner only (levers, deployed blind)        misses=11  worst_late=  19.471 ms  makespan=  68.21 ms
+    C outer only (measured re-solve, no levers)  misses=10  worst_late=  19.951 ms  makespan=  77.95 ms
+    D both                                       misses=10  worst_late=  57.182 ms  makespan=  77.95 ms
+  -- greedy --
+    inner (AOT) search: levers ['ime']
+    A neither                                    misses=10  worst_late=  17.953 ms  makespan=  71.33 ms
+    B inner only (levers, deployed blind)        misses=10  worst_late=  15.364 ms  makespan=  65.94 ms
+    C outer only (measured re-solve, no levers)  misses=10  worst_late=  19.948 ms  makespan=  77.95 ms
+    D both                                       misses=10  worst_late=  19.945 ms  makespan=  72.56 ms
+[2/2] w5_ffn_dronet_yolo
+  -- cpsat --
+    inner (AOT) search: levers ['ime']
+    A neither                                    misses=13  worst_late=  19.948 ms  makespan=  77.95 ms
+    B inner only (levers, deployed blind)        misses=17  worst_late=  56.247 ms  makespan=  63.25 ms
+    C outer only (measured re-solve, no levers)  misses=13  worst_late=  71.216 ms  makespan=  81.48 ms
+    D both                                       misses=16  worst_late=  54.071 ms  makespan=  64.62 ms
+  -- greedy --
+    inner (AOT) search: levers ['ime']
+    A neither                                    misses=11  worst_late=  24.560 ms  makespan=  71.57 ms
+    B inner only (levers, deployed blind)        misses=11  worst_late=  21.448 ms  makespan=  65.94 ms
+    C outer only (measured re-solve, no levers)  misses=11  worst_late=  38.620 ms  makespan=  77.95 ms
+    D both                                       misses=11  worst_late=  33.762 ms  makespan=  72.56 ms

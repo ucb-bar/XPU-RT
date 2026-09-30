@@ -1,0 +1,12 @@
+  spec data/toplevel/wh_chain40_w2p.json: period 25.00 ms, yolo window 50.00 ms, 40 instances
+schedules/fig_w2pg40_greedy_clamped.json: 0 dispatch targets narrowed; width histogram {1: 1940, 2: 600, 4: 2680}
+  trace rows: 5220  hart_acc: 3  policy: SCHED_OTHER  exit: 0  verify: ['MODELBLASTER_VERIFY [yolov8_nano_64x96] === max_abs_err=0 max_rel_err=0 n=8316 instance=0 ready=1']
+  trace rows: 5220  hart_acc: 3  policy: SCHED_OTHER  exit: 0  verify: ['MODELBLASTER_VERIFY [yolov8_nano_64x96] === max_abs_err=0 max_rel_err=0 n=8316 instance=0 ready=1']
+  trace rows: 5220  hart_acc: 3  policy: SCHED_OTHER  exit: 0  verify: ['MODELBLASTER_VERIFY [yolov8_nano_64x96] === max_abs_err=0 max_rel_err=0 n=8316 instance=0 ready=1']
+XPU_GREEDY_SHARD_DONE 40
+  spec data/toplevel/wh_chain36_w2p.json: period 27.78 ms, yolo window 55.56 ms, 36 instances
+schedules/fig_w2pg36_greedy_clamped.json: 0 dispatch targets narrowed; width histogram {1: 1816, 2: 540, 4: 2412}
+  trace rows: 4768  hart_acc: 4  policy: SCHED_OTHER  exit: 0  verify: ['MODELBLASTER_VERIFY [yolov8_nano_64x96] === max_abs_err=0 max_rel_err=0 n=8316 instance=0 ready=1']
+  trace rows: 4768  hart_acc: 4  policy: SCHED_OTHER  exit: 0  verify: ['MODELBLASTER_VERIFY [yolov8_nano_64x96] === max_abs_err=0 max_rel_err=0 n=8316 instance=0 ready=1']
+  trace rows: 4768  hart_acc: 4  policy: SCHED_OTHER  exit: 0  verify: ['MODELBLASTER_VERIFY [yolov8_nano_64x96] === max_abs_err=0 max_rel_err=0 n=8316 instance=0 ready=1']
+XPU_GREEDY_SHARD_DONE 36

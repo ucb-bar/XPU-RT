@@ -1,0 +1,68 @@
+=== 15:05:00 rate-correct census complete (96 rows)
+=== 15:05:00 stage 0: the equal-gain census (baseline only; the scheduled arm's 48 flights carry over)
+=== 15:05:01 ros_cp3n4_30_lat30.1_h33.3_a_d0.30_w0.0_g0.00500_c1.4 trace=ros_cp3n430.csv weights=nav_fused_v12_cnn.pt ===
+[SWEEP] ms=0.005 cruise=1.4 walk=0.0 hold=33.3 SUCCESS 0/12 clip=12 ground=0  s1000:cras(0/4,307,clip) s1001:cras(0/4,255,clip) s1002:cras(0/4,289,clip) s1003:c
+=== 15:14:56 ros_cp3n4_30_lat30.1_h33.3_a_d0.30_w0.0_g0.00500_c1.2 trace=ros_cp3n430.csv weights=nav_fused_v12_cnn.pt ===
+[SWEEP] ms=0.005 cruise=1.2 walk=0.0 hold=33.3 SUCCESS 0/12 clip=11 ground=0  s1000:cras(0/4,367,clip) s1001:cras(0/4,351,clip) s1002:cras(1/4,474,clip) s1003:c
+=== 15:34:07 ros_cp3n4_30_lat30.1_h33.3_a_d0.30_w0.0_g0.00500_c1.0 trace=ros_cp3n430.csv weights=nav_fused_v12_cnn.pt ===
+[SWEEP] ms=0.005 cruise=1.0 walk=0.0 hold=33.3 SUCCESS 0/12 clip=2 ground=0  s1000:time(0/4,1800,-) s1001:time(0/4,1800,-) s1002:time(0/4,1800,-) s1003:time(0/4
+=== 16:05:24 ros_cp3n4_30_lat30.1_h33.3_a_d0.30_w0.0_g0.00500_c1.6 trace=ros_cp3n430.csv weights=nav_fused_v12_cnn.pt ===
+[SWEEP] ms=0.005 cruise=1.6 walk=0.0 hold=33.3 SUCCESS 0/12 clip=12 ground=0  s1000:cras(1/4,307,clip) s1001:cras(1/4,212,clip) s1002:cras(1/4,259,clip) s1003:c
+CAMPAIGN_PERCEP_DONE 16:13:31
+CAMPAIGN_RATE30_GAIN_DONE 16:13:31
+carried over 48 scheduled-arm rows at gain 0.00500
+CAMPAIGN_FREE30_EQ_DONE 16:13:31
+=== 16:13:31 stage 1: the displayed pair, at the equal gain
+=== 16:13:31 search cruise 1.4
+    seed order from the census: 1009 1004 1005 1006 1008 1010 1011 1000 1001 1002 1003 1007
+  xpu 1009: === 16:13:31 xpu_s1009
+  xpu 1004: === 16:19:20 xpu_s1004
+  xpu 1005: === 16:26:11 xpu_s1005
+  xpu 1006: === 16:33:48 xpu_s1006
+  xpu 1008: === 16:43:02 xpu_s1008
+  xpu 1010: === 16:48:57 xpu_s1010
+  xpu 1011: === 16:58:44 xpu_s1011
+  xpu 1000: === 17:07:15 xpu_s1000
+  xpu 1001: === 17:16:20 xpu_s1001
+  xpu 1002: === 17:24:13 xpu_s1002
+  xpu 1003: === 17:31:45 xpu_s1003
+  xpu 1007: === 17:38:02 xpu_s1007
+  ros 1007: === 17:48:20 ros_s1007
+=== 17:54:01 search cruise 1.2
+    seed order from the census: 1002 1003 1006 1008 1009 1010 1011 1000 1001 1005 1007 1004
+  xpu 1002: === 17:54:01 xpu_s1002
+  xpu 1003: === 18:01:44 xpu_s1003
+  xpu 1006: === 18:11:00 xpu_s1006
+  xpu 1008: === 18:18:21 xpu_s1008
+  xpu 1009: === 18:24:38 xpu_s1009
+  xpu 1010: === 18:30:37 xpu_s1010
+  xpu 1011: === 18:37:07 xpu_s1011
+  xpu 1000: === 18:46:01 xpu_s1000
+  ros 1000: === 18:58:03 ros_s1000
+  xpu 1001: === 19:07:27 xpu_s1001
+  xpu 1005: === 19:17:23 xpu_s1005
+  xpu 1007: === 19:23:59 xpu_s1007
+  ros 1007: === 19:35:04 ros_s1007
+  xpu 1004: === 19:46:42 xpu_s1004
+=== 19:54:14 search cruise 1.6
+    seed order from the census: 1000 1001 1002 1004 1010 1003 1005 1006 1007 1008 1009 1011
+  xpu 1000: === 19:54:14 xpu_s1000
+  ros 1000: === 20:04:02 ros_s1000
+  xpu 1001: === 20:09:44 xpu_s1001
+  ros 1001: === 20:19:17 ros_s1001
+PAIR_SEED=1001
+PAIR /scratch/agustin/xpurt-dev-sync/results/codesign_feedback/campaign_free30_eq/display/search_c1.6/xpu_s1001_figdata /scratch/agustin/xpurt-dev-sync/results/codesign_feedback/campaign_free30_eq/display/search_c1.6/ros_s1001_figdata
+DISPLAY_FREE30_EQ_SEARCH_DONE 20:25:07
+=== 20:25:07 pair: cruise 1.6 seed 1001
+=== 20:25:07 stage 2: panel A's scene census, twelve seeds per arm on the scene the pair flies
+=== 20:25:07 scene free30eq_l1001 layout 1001 xpu lat 26.8 hold 33.3 cruise 1.6 ===
+[SWEEP] ms=0.005 cruise=1.6 walk=0.0 hold=33.3 SUCCESS 0/12 clip=12 ground=0  s1000:cras(3/4,827,clip) s1001:cras(3/4,819,clip) s1002:cras(1/4,209,clip) s1003:c
+=== 20:39:08 scene free30eq_l1001 layout 1001 ros8 lat 30.1 hold 33.3 cruise 1.6 ===
+[SWEEP] ms=0.005 cruise=1.6 walk=0.0 hold=33.3 SUCCESS 0/12 clip=12 ground=0  s1000:cras(1/4,227,clip) s1001:cras(0/4,251,clip) s1002:cras(1/4,235,clip) s1003:c
+SCENE_RUNS_DONE free30eq_l1001
+=== 20:47:32 stage 3: panel D's energy runs, cadence only
+  xpu_free30_s1005 vs XPU: total energy 1.29x, maneuver energy fraction 26.9% vs 42.0%
+
+wrote /scratch/agustin/xpurt-dev-sync/results/codesign_feedback/flight_energy_free30.csv  (ratios robust to arm/kappa; absolute ∝ units)
+=== 21:49:30 ENERGY_PAIR_DONE -> /scratch/agustin/xpurt-dev-sync/results/codesign_feedback/flight_energy_free30.csv ===
+=== 21:49:30 FOLLOWON_FREE30_DONE

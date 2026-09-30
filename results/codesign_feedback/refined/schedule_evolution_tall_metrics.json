@@ -1,0 +1,51 @@
+{
+  "layout": "grid",
+  "authored_figure_size_in": [
+    7.16,
+    4.35
+  ],
+  "panels": [
+    {
+      "stage": 1,
+      "title": "Baseline \u00b7 RVV singletons",
+      "driver": "AOT baseline",
+      "cost_source": "AOT model",
+      "makespan_ms": 51.612958,
+      "displayed_instance_deadline_misses": 2,
+      "missed_instances_by_network": {
+        "FFN": 2
+      }
+    },
+    {
+      "stage": 2,
+      "title": "AOT optimize \u2014 Shard + IME",
+      "driver": "both scheduling levers enabled",
+      "cost_source": "AOT model",
+      "makespan_ms": 32.849667,
+      "displayed_instance_deadline_misses": 0,
+      "missed_instances_by_network": {}
+    },
+    {
+      "stage": 3,
+      "title": "K1-calibrated replay",
+      "driver": "same assignment, calibrated durations",
+      "cost_source": "K1-calibrated model",
+      "makespan_ms": 34.1615390783,
+      "displayed_instance_deadline_misses": 4,
+      "missed_instances_by_network": {
+        "FFN": 1,
+        "CTRL": 1,
+        "NAV": 2
+      }
+    },
+    {
+      "stage": 4,
+      "title": "K1-calibrated re-solve",
+      "driver": "new assignment, calibrated durations",
+      "cost_source": "K1-calibrated model",
+      "makespan_ms": 34.1632931603,
+      "displayed_instance_deadline_misses": 0,
+      "missed_instances_by_network": {}
+    }
+  ]
+}

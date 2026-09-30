@@ -1,0 +1,102 @@
+{
+ "what": "per-dispatch IME routing on the deployed 36 Hz coupled chain, K1 board",
+ "date": "2026-09-17",
+ "camera_hz": 36,
+ "method": "same workload spec, same solver (greedy_periodic, seed 42), same profiles; the only difference is scheduler.enable_impls. Both binaries cross-built the same day from the same tree; the RVV arm was re-measured today so the pair is a same-build A/B.",
+ "arms": {
+  "rvv_baseline": {
+   "schedule": "schedules/fig_w2pg36_greedy_clamped.json",
+   "schedule_sha256_16": "e2728d5f5d845e68",
+   "backends": "rvv_x60,rvv_x60",
+   "traces": [
+    "trace_w2pg36base_other_run1.csv",
+    "trace_w2pg36base_other_run2.csv",
+    "trace_w2pg36base_other_run3.csv"
+   ],
+   "ime_dispatches": 0,
+   "ime_dispatches_per_frame": 0.0,
+   "runs": [
+    {
+     "chain_median_ms": 29.73,
+     "chain_p95_ms": 34.3,
+     "chain_max_ms": 42.07,
+     "n_chain": 34,
+     "yolo_span_median_ms": 21.52
+    },
+    {
+     "chain_median_ms": 29.65,
+     "chain_p95_ms": 33.17,
+     "chain_max_ms": 41.82,
+     "n_chain": 34,
+     "yolo_span_median_ms": 21.62
+    },
+    {
+     "chain_median_ms": 29.81,
+     "chain_p95_ms": 35.62,
+     "chain_max_ms": 41.17,
+     "n_chain": 34,
+     "yolo_span_median_ms": 21.53
+    }
+   ],
+   "chain_median_of_medians_ms": 29.73,
+   "yolo_span_median_of_medians_ms": 21.53,
+   "verify": [
+    "=== MODELBLASTER_VERIFY [fused_full] === max_abs_err=0.000183105469 max_rel_err=0.00162337662 n=2 instance=0 ready=1",
+    "=== MODELBLASTER_VERIFY [mlp_control] === max_abs_err=0 max_rel_err=0 n=4 instance=0 ready=1",
+    "=== MODELBLASTER_VERIFY [yolov8_nano_64x96] === max_abs_err=0 max_rel_err=0 n=8316 instance=0 ready=1"
+   ]
+  },
+  "ime_mixed": {
+   "schedule": "schedules/fig_w2pg36ime_greedy_clamped.json",
+   "schedule_sha256_16": "330a4d2dcdfa74e1",
+   "backends": "rvv_x60,rvv_x60,ime_x60",
+   "traces": [
+    "trace_w2pg36ime_other_run1.csv",
+    "trace_w2pg36ime_other_run2.csv",
+    "trace_w2pg36ime_other_run3.csv"
+   ],
+   "ime_dispatches": 1492,
+   "ime_dispatches_per_frame": 41.4,
+   "runs": [
+    {
+     "chain_median_ms": 21.98,
+     "chain_p95_ms": 26.42,
+     "chain_max_ms": 28.83,
+     "n_chain": 35,
+     "yolo_span_median_ms": 14.57
+    },
+    {
+     "chain_median_ms": 22.01,
+     "chain_p95_ms": 26.42,
+     "chain_max_ms": 28.36,
+     "n_chain": 35,
+     "yolo_span_median_ms": 14.48
+    },
+    {
+     "chain_median_ms": 23.08,
+     "chain_p95_ms": 26.42,
+     "chain_max_ms": 28.82,
+     "n_chain": 35,
+     "yolo_span_median_ms": 14.53
+    }
+   ],
+   "chain_median_of_medians_ms": 22.01,
+   "yolo_span_median_of_medians_ms": 14.53,
+   "verify": [
+    "=== MODELBLASTER_VERIFY [fused_full] === max_abs_err=0.000183105469 max_rel_err=0.00162337662 n=2 instance=0 ready=1",
+    "=== MODELBLASTER_VERIFY [mlp_control] === max_abs_err=0 max_rel_err=0 n=4 instance=0 ready=1",
+    "=== MODELBLASTER_VERIFY [yolov8_nano_64x96] === max_abs_err=0 max_rel_err=0 n=8316 instance=0 ready=1"
+   ]
+  }
+ },
+ "result": {
+  "chain_ms": [
+   29.73,
+   22.01
+  ],
+  "chain_speedup": 1.351,
+  "yolo_span_speedup": 1.482,
+  "vs_published_30_1_ms": 1.368,
+  "bit_exact": "yolov8_nano_64x96 max_abs_err=0 on all six runs; fused_full's 1.83e-4 is its fp16 nav head, identical in both arms and never routed to the IME"
+ }
+}

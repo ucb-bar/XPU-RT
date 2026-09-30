@@ -1,0 +1,1420 @@
+{
+ "figure": "results/codesign_feedback/refined/showdown_improved_slide.png",
+ "variant": "slide",
+ "written": "2026-09-29T21:29:26",
+ "pairing_rule": {
+  "cells": "both arms flew the (cruise, seed) cell",
+  "replicates": "first k per cell, k = the fewer either arm flew",
+  "timeout": "counted as not completed",
+  "gates": "4 for a completion, else gates_passed",
+  "gate_diff_bootstrap": {
+   "resamples": 4000,
+   "seed": 11
+  },
+  "completion_interval": "Wilson 95 %"
+ },
+ "census": [
+  {
+   "group": "chained",
+   "short": "serial YOLO (as submitted)",
+   "camera_hz": 45,
+   "ros_trace": "ros_vanilla_c5045.csv",
+   "ros_arm": "serial YOLO, ctrl in goal callback (as submitted)",
+   "xpu_trace": "xpu_a_cpsat_hard.csv",
+   "xpu_arm": "CP-SAT",
+   "campaigns": [
+    "campaign_submitted"
+   ],
+   "gain": 0.0055,
+   "cells": 60,
+   "flights_per_arm": 60,
+   "replicates_set_aside": 0,
+   "ros_ctrl_hz": 20.3,
+   "xpu_ctrl_hz": 100.0,
+   "xpu_completed": [
+    9,
+    60
+   ],
+   "ros_completed": [
+    0,
+    60
+   ],
+   "xpu_wilson95": [
+    0.081,
+    0.2611
+   ],
+   "ros_wilson95": [
+    0.0,
+    0.0602
+   ],
+   "xpu_timeouts": 1,
+   "ros_timeouts": 25,
+   "xpu_mean_gates": 2.033,
+   "ros_mean_gates": 0.233,
+   "gate_diff": [
+    1.8,
+    1.483,
+    2.133
+   ],
+   "per_flight": {
+    "xpu_more": 51,
+    "tie": 9,
+    "xpu_fewer": 0
+   },
+   "completion_diff_newcombe95": [
+    0.15,
+    0.0584,
+    0.2611
+   ],
+   "verdict": "XPU-RT ahead"
+  },
+  {
+   "group": "chained",
+   "short": "4-hart YOLO pool",
+   "camera_hz": 45,
+   "ros_trace": "ros_vanilla445.csv",
+   "ros_arm": "4-hart YOLO pool, unpinned",
+   "xpu_trace": "xpu_a_cpsat_hard.csv",
+   "xpu_arm": "CP-SAT",
+   "campaigns": [
+    "campaign_percep"
+   ],
+   "gain": 0.0055,
+   "cells": 72,
+   "flights_per_arm": 192,
+   "replicates_set_aside": 24,
+   "ros_ctrl_hz": 38.5,
+   "xpu_ctrl_hz": 100.0,
+   "xpu_completed": [
+    27,
+    192
+   ],
+   "ros_completed": [
+    5,
+    192
+   ],
+   "xpu_wilson95": [
+    0.0985,
+    0.1969
+   ],
+   "ros_wilson95": [
+    0.0112,
+    0.0595
+   ],
+   "xpu_timeouts": 3,
+   "ros_timeouts": 7,
+   "xpu_mean_gates": 1.958,
+   "ros_mean_gates": 1.115,
+   "gate_diff": [
+    0.844,
+    0.635,
+    1.057
+   ],
+   "per_flight": {
+    "xpu_more": 108,
+    "tie": 54,
+    "xpu_fewer": 30
+   },
+   "completion_diff_newcombe95": [
+    0.1146,
+    0.0608,
+    0.1728
+   ],
+   "verdict": "XPU-RT ahead"
+  },
+  {
+   "group": "chained",
+   "short": "2 YOLO instances, 8 harts",
+   "camera_hz": 45,
+   "ros_trace": "ros_vanilla4x245.csv",
+   "ros_arm": "two YOLO instances over all 8 harts",
+   "xpu_trace": "xpu_a_cpsat_hard.csv",
+   "xpu_arm": "CP-SAT",
+   "campaigns": [
+    "campaign_percep"
+   ],
+   "gain": 0.0055,
+   "cells": 60,
+   "flights_per_arm": 60,
+   "replicates_set_aside": 120,
+   "ros_ctrl_hz": 45.0,
+   "xpu_ctrl_hz": 100.0,
+   "xpu_completed": [
+    6,
+    60
+   ],
+   "ros_completed": [
+    2,
+    60
+   ],
+   "xpu_wilson95": [
+    0.0466,
+    0.2015
+   ],
+   "ros_wilson95": [
+    0.0092,
+    0.1136
+   ],
+   "xpu_timeouts": 0,
+   "ros_timeouts": 0,
+   "xpu_mean_gates": 1.917,
+   "ros_mean_gates": 1.2,
+   "gate_diff": [
+    0.717,
+    0.367,
+    1.067
+   ],
+   "per_flight": {
+    "xpu_more": 34,
+    "tie": 15,
+    "xpu_fewer": 11
+   },
+   "completion_diff_newcombe95": [
+    0.0667,
+    -0.0298,
+    0.171
+   ],
+   "verdict": "XPU-RT ahead"
+  },
+  {
+   "group": "chained",
+   "short": "pinned, 6 cores",
+   "camera_hz": 45,
+   "ros_trace": "ros_cp345.csv",
+   "ros_arm": "hand-pinned to 6 cores",
+   "xpu_trace": "xpu_a_cpsat_hard.csv",
+   "xpu_arm": "CP-SAT",
+   "campaigns": [
+    "campaign_static6_45"
+   ],
+   "gain": 0.0055,
+   "cells": 60,
+   "flights_per_arm": 60,
+   "replicates_set_aside": 0,
+   "ros_ctrl_hz": 38.5,
+   "xpu_ctrl_hz": 100.0,
+   "xpu_completed": [
+    9,
+    60
+   ],
+   "ros_completed": [
+    8,
+    60
+   ],
+   "xpu_wilson95": [
+    0.081,
+    0.2611
+   ],
+   "ros_wilson95": [
+    0.0691,
+    0.2417
+   ],
+   "xpu_timeouts": 1,
+   "ros_timeouts": 1,
+   "xpu_mean_gates": 2.033,
+   "ros_mean_gates": 1.967,
+   "gate_diff": [
+    0.067,
+    -0.317,
+    0.433
+   ],
+   "per_flight": {
+    "xpu_more": 21,
+    "tie": 19,
+    "xpu_fewer": 20
+   },
+   "completion_diff_newcombe95": [
+    0.0167,
+    -0.1118,
+    0.145
+   ],
+   "verdict": "tie"
+  },
+  {
+   "group": "chained",
+   "short": "pinned, 6 cores (vs solver)",
+   "camera_hz": 45,
+   "ros_trace": "ros_cp345.csv",
+   "ros_arm": "hand-pinned to 6 cores",
+   "xpu_trace": "xpu_p45free.csv",
+   "xpu_arm": "CP-SAT, solver-placed",
+   "campaigns": [
+    "campaign_free45"
+   ],
+   "gain": 0.0055,
+   "cells": 60,
+   "flights_per_arm": 60,
+   "replicates_set_aside": 0,
+   "ros_ctrl_hz": 38.5,
+   "xpu_ctrl_hz": 100.8,
+   "xpu_completed": [
+    7,
+    60
+   ],
+   "ros_completed": [
+    8,
+    60
+   ],
+   "xpu_wilson95": [
+    0.0577,
+    0.2218
+   ],
+   "ros_wilson95": [
+    0.0691,
+    0.2417
+   ],
+   "xpu_timeouts": 0,
+   "ros_timeouts": 1,
+   "xpu_mean_gates": 1.9,
+   "ros_mean_gates": 1.967,
+   "gate_diff": [
+    -0.067,
+    -0.417,
+    0.283
+   ],
+   "per_flight": {
+    "xpu_more": 19,
+    "tie": 22,
+    "xpu_fewer": 19
+   },
+   "completion_diff_newcombe95": [
+    -0.0167,
+    -0.14,
+    0.1065
+   ],
+   "verdict": "tie"
+  },
+  {
+   "group": "chained",
+   "short": "2 YOLO instances, 8 harts",
+   "camera_hz": 40,
+   "ros_trace": "ros_vanilla4x240.csv",
+   "ros_arm": "two YOLO instances over all 8 harts",
+   "xpu_trace": "xpu_w2pg40.csv",
+   "xpu_arm": "greedy on measured costs",
+   "campaigns": [
+    "campaign_rate3640"
+   ],
+   "gain": 0.0055,
+   "cells": 60,
+   "flights_per_arm": 60,
+   "replicates_set_aside": 0,
+   "ros_ctrl_hz": 40.0,
+   "xpu_ctrl_hz": 99.4,
+   "xpu_completed": [
+    5,
+    60
+   ],
+   "ros_completed": [
+    7,
+    60
+   ],
+   "xpu_wilson95": [
+    0.0361,
+    0.1807
+   ],
+   "ros_wilson95": [
+    0.0577,
+    0.2218
+   ],
+   "xpu_timeouts": 0,
+   "ros_timeouts": 1,
+   "xpu_mean_gates": 1.85,
+   "ros_mean_gates": 1.733,
+   "gate_diff": [
+    0.117,
+    -0.233,
+    0.467
+   ],
+   "per_flight": {
+    "xpu_more": 22,
+    "tie": 22,
+    "xpu_fewer": 16
+   },
+   "completion_diff_newcombe95": [
+    -0.0333,
+    -0.1486,
+    0.0805
+   ],
+   "verdict": "tie"
+  },
+  {
+   "group": "chained",
+   "short": "2 YOLO instances, 8 harts",
+   "camera_hz": 36,
+   "ros_trace": "ros_vanilla4x236.csv",
+   "ros_arm": "two YOLO instances over all 8 harts",
+   "xpu_trace": "xpu_w2pg36.csv",
+   "xpu_arm": "greedy on measured costs",
+   "campaigns": [
+    "campaign_rate3640"
+   ],
+   "gain": 0.0055,
+   "cells": 60,
+   "flights_per_arm": 60,
+   "replicates_set_aside": 0,
+   "ros_ctrl_hz": 36.0,
+   "xpu_ctrl_hz": 100.2,
+   "xpu_completed": [
+    7,
+    60
+   ],
+   "ros_completed": [
+    1,
+    60
+   ],
+   "xpu_wilson95": [
+    0.0577,
+    0.2218
+   ],
+   "ros_wilson95": [
+    0.0029,
+    0.0886
+   ],
+   "xpu_timeouts": 1,
+   "ros_timeouts": 2,
+   "xpu_mean_gates": 1.9,
+   "ros_mean_gates": 1.017,
+   "gate_diff": [
+    0.883,
+    0.55,
+    1.217
+   ],
+   "per_flight": {
+    "xpu_more": 36,
+    "tie": 15,
+    "xpu_fewer": 9
+   },
+   "completion_diff_newcombe95": [
+    0.1,
+    0.007,
+    0.206
+   ],
+   "verdict": "XPU-RT ahead"
+  },
+  {
+   "group": "chained",
+   "short": "2 YOLO instances, 8 harts",
+   "camera_hz": 30,
+   "ros_trace": "ros_vanilla4x230.csv",
+   "ros_arm": "two YOLO instances over all 8 harts",
+   "xpu_trace": "xpu_a30_cpsat.csv",
+   "xpu_arm": "CP-SAT",
+   "campaigns": [
+    "campaign_rate30"
+   ],
+   "gain": 0.0055,
+   "cells": 60,
+   "flights_per_arm": 60,
+   "replicates_set_aside": 0,
+   "ros_ctrl_hz": 30.0,
+   "xpu_ctrl_hz": 100.2,
+   "xpu_completed": [
+    6,
+    60
+   ],
+   "ros_completed": [
+    0,
+    60
+   ],
+   "xpu_wilson95": [
+    0.0466,
+    0.2015
+   ],
+   "ros_wilson95": [
+    0.0,
+    0.0602
+   ],
+   "xpu_timeouts": 0,
+   "ros_timeouts": 15,
+   "xpu_mean_gates": 1.867,
+   "ros_mean_gates": 0.317,
+   "gate_diff": [
+    1.55,
+    1.283,
+    1.833
+   ],
+   "per_flight": {
+    "xpu_more": 51,
+    "tie": 9,
+    "xpu_fewer": 0
+   },
+   "completion_diff_newcombe95": [
+    0.1,
+    0.0196,
+    0.2015
+   ],
+   "verdict": "XPU-RT ahead"
+  },
+  {
+   "group": "chained",
+   "short": "partitioned, nav on E",
+   "camera_hz": 30,
+   "ros_trace": "ros_cp3n430.csv",
+   "ros_arm": "partitioned, nav on the E cores",
+   "xpu_trace": "xpu_p30free.csv",
+   "xpu_arm": "CP-SAT, solver-placed",
+   "campaigns": [
+    "campaign_free30_eq"
+   ],
+   "gain": 0.005,
+   "cells": 48,
+   "flights_per_arm": 48,
+   "replicates_set_aside": 0,
+   "ros_ctrl_hz": 29.9,
+   "xpu_ctrl_hz": 100.1,
+   "xpu_completed": [
+    3,
+    48
+   ],
+   "ros_completed": [
+    0,
+    48
+   ],
+   "xpu_wilson95": [
+    0.0215,
+    0.1684
+   ],
+   "ros_wilson95": [
+    0.0,
+    0.0741
+   ],
+   "xpu_timeouts": 0,
+   "ros_timeouts": 11,
+   "xpu_mean_gates": 1.896,
+   "ros_mean_gates": 0.458,
+   "gate_diff": [
+    1.438,
+    1.104,
+    1.771
+   ],
+   "per_flight": {
+    "xpu_more": 35,
+    "tie": 13,
+    "xpu_fewer": 0
+   },
+   "completion_diff_newcombe95": [
+    0.0625,
+    -0.0222,
+    0.1684
+   ],
+   "verdict": "XPU-RT ahead"
+  },
+  {
+   "group": "timer",
+   "short": "4-hart pool + timer",
+   "camera_hz": 45,
+   "ros_trace": "ros_vanilla4tm45.csv",
+   "ros_arm": "4-hart YOLO pool + control timer",
+   "xpu_trace": "xpu_a_cpsat_hard.csv",
+   "xpu_arm": "CP-SAT",
+   "campaigns": [
+    "campaign_percep"
+   ],
+   "gain": 0.0055,
+   "cells": 60,
+   "flights_per_arm": 120,
+   "replicates_set_aside": 60,
+   "ros_ctrl_hz": 100.0,
+   "xpu_ctrl_hz": 100.0,
+   "xpu_completed": [
+    16,
+    120
+   ],
+   "ros_completed": [
+    11,
+    120
+   ],
+   "xpu_wilson95": [
+    0.0838,
+    0.2056
+   ],
+   "ros_wilson95": [
+    0.052,
+    0.1567
+   ],
+   "xpu_timeouts": 0,
+   "ros_timeouts": 0,
+   "xpu_mean_gates": 1.95,
+   "ros_mean_gates": 1.533,
+   "gate_diff": [
+    0.417,
+    0.158,
+    0.683
+   ],
+   "per_flight": {
+    "xpu_more": 54,
+    "tie": 38,
+    "xpu_fewer": 28
+   },
+   "completion_diff_newcombe95": [
+    0.0417,
+    -0.0401,
+    0.1242
+   ],
+   "verdict": "XPU-RT ahead"
+  },
+  {
+   "group": "timer",
+   "short": "pinned + timer",
+   "camera_hz": 45,
+   "ros_trace": "ros_p345.csv",
+   "ros_arm": "hand-pinned + control timer",
+   "xpu_trace": "xpu_a_cpsat_hard.csv",
+   "xpu_arm": "CP-SAT",
+   "campaigns": [
+    "campaign_percep"
+   ],
+   "gain": 0.0055,
+   "cells": 60,
+   "flights_per_arm": 144,
+   "replicates_set_aside": 36,
+   "ros_ctrl_hz": 100.0,
+   "xpu_ctrl_hz": 100.0,
+   "xpu_completed": [
+    18,
+    144
+   ],
+   "ros_completed": [
+    19,
+    144
+   ],
+   "xpu_wilson95": [
+    0.0806,
+    0.1889
+   ],
+   "ros_wilson95": [
+    0.0861,
+    0.1969
+   ],
+   "xpu_timeouts": 0,
+   "ros_timeouts": 0,
+   "xpu_mean_gates": 1.903,
+   "ros_mean_gates": 1.938,
+   "gate_diff": [
+    -0.035,
+    -0.264,
+    0.194
+   ],
+   "per_flight": {
+    "xpu_more": 46,
+    "tie": 53,
+    "xpu_fewer": 45
+   },
+   "completion_diff_newcombe95": [
+    -0.0069,
+    -0.0856,
+    0.0717
+   ],
+   "verdict": "tie"
+  },
+  {
+   "group": "timer",
+   "short": "pinned + timer + keep-last-1",
+   "camera_hz": 45,
+   "ros_trace": "ros_p3_q145.csv",
+   "ros_arm": "hand-pinned + control timer + keep-last-1",
+   "xpu_trace": "xpu_a_cpsat_hard.csv",
+   "xpu_arm": "CP-SAT",
+   "campaigns": [
+    "campaign_percep"
+   ],
+   "gain": 0.0055,
+   "cells": 60,
+   "flights_per_arm": 120,
+   "replicates_set_aside": 60,
+   "ros_ctrl_hz": 100.0,
+   "xpu_ctrl_hz": 100.0,
+   "xpu_completed": [
+    16,
+    120
+   ],
+   "ros_completed": [
+    16,
+    120
+   ],
+   "xpu_wilson95": [
+    0.0838,
+    0.2056
+   ],
+   "ros_wilson95": [
+    0.0838,
+    0.2056
+   ],
+   "xpu_timeouts": 0,
+   "ros_timeouts": 2,
+   "xpu_mean_gates": 1.95,
+   "ros_mean_gates": 1.95,
+   "gate_diff": [
+    0.0,
+    -0.267,
+    0.267
+   ],
+   "per_flight": {
+    "xpu_more": 37,
+    "tie": 49,
+    "xpu_fewer": 34
+   },
+   "completion_diff_newcombe95": [
+    0.0,
+    -0.0877,
+    0.0877
+   ],
+   "verdict": "tie"
+  },
+  {
+   "group": "timer",
+   "short": "pinned + timer",
+   "camera_hz": 30,
+   "ros_trace": "ros_p330.csv",
+   "ros_arm": "hand-pinned + control timer",
+   "xpu_trace": "xpu_p30free.csv",
+   "xpu_arm": "CP-SAT, solver-placed",
+   "campaigns": [
+    "campaign_p3_30",
+    "campaign_free30_eq"
+   ],
+   "gain": 0.005,
+   "cells": 48,
+   "flights_per_arm": 48,
+   "replicates_set_aside": 0,
+   "ros_ctrl_hz": 100.0,
+   "xpu_ctrl_hz": 100.1,
+   "xpu_completed": [
+    3,
+    48
+   ],
+   "ros_completed": [
+    3,
+    48
+   ],
+   "xpu_wilson95": [
+    0.0215,
+    0.1684
+   ],
+   "ros_wilson95": [
+    0.0215,
+    0.1684
+   ],
+   "xpu_timeouts": 0,
+   "ros_timeouts": 2,
+   "xpu_mean_gates": 1.896,
+   "ros_mean_gates": 1.854,
+   "gate_diff": [
+    0.042,
+    -0.292,
+    0.375
+   ],
+   "per_flight": {
+    "xpu_more": 14,
+    "tie": 21,
+    "xpu_fewer": 13
+   },
+   "completion_diff_newcombe95": [
+    0.0,
+    -0.1135,
+    0.1135
+   ],
+   "verdict": "tie"
+  }
+ ],
+ "control_rate": {
+  "vanilla4x2": {
+   "label": "ROS 2 \u00b7 two instances, chained",
+   "points": [
+    [
+     25,
+     25.0
+    ],
+    [
+     30,
+     30.0
+    ],
+    [
+     36,
+     36.0
+    ],
+    [
+     38,
+     38.0
+    ],
+    [
+     40,
+     40.01
+    ],
+    [
+     45,
+     44.99
+    ],
+    [
+     50,
+     50.0
+    ],
+    [
+     60,
+     60.13
+    ],
+    [
+     75,
+     61.77
+    ],
+    [
+     90,
+     61.71
+    ],
+    [
+     120,
+     61.05
+    ]
+   ]
+  },
+  "cp3": {
+   "label": "ROS 2 \u00b7 hand-pinned, chained",
+   "points": [
+    [
+     15,
+     15.0
+    ],
+    [
+     25,
+     25.0
+    ],
+    [
+     30,
+     29.94
+    ],
+    [
+     45,
+     38.83
+    ],
+    [
+     60,
+     39.01
+    ],
+    [
+     75,
+     39.06
+    ],
+    [
+     90,
+     39.1
+    ]
+   ]
+  },
+  "vanilla": {
+   "label": "ROS 2 \u00b7 serial YOLO, chained",
+   "points": [
+    [
+     15,
+     15.0
+    ],
+    [
+     25,
+     20.74
+    ],
+    [
+     30,
+     20.66
+    ],
+    [
+     45,
+     20.73
+    ],
+    [
+     60,
+     20.66
+    ],
+    [
+     90,
+     20.67
+    ]
+   ]
+  },
+  "p3": {
+   "label": "ROS 2 \u00b7 hand-pinned, control timer",
+   "points": [
+    [
+     5,
+     100.0
+    ],
+    [
+     8,
+     100.0
+    ],
+    [
+     10,
+     100.0
+    ],
+    [
+     12,
+     100.0
+    ],
+    [
+     15,
+     100.0
+    ],
+    [
+     20,
+     100.0
+    ],
+    [
+     25,
+     100.0
+    ],
+    [
+     30,
+     100.0
+    ],
+    [
+     45,
+     100.0
+    ],
+    [
+     60,
+     100.0
+    ],
+    [
+     75,
+     100.0
+    ],
+    [
+     90,
+     100.0
+    ],
+    [
+     120,
+     100.0
+    ]
+   ]
+  },
+  "vanilla4x2tm": {
+   "label": "ROS 2 \u00b7 two instances, control timer",
+   "points": [
+    [
+     25,
+     100.0
+    ],
+    [
+     30,
+     100.0
+    ],
+    [
+     45,
+     100.0
+    ],
+    [
+     75,
+     100.0
+    ],
+    [
+     120,
+     100.0
+    ]
+   ]
+  },
+  "xpu": {
+   "label": "XPU-RT \u00b7 CP-SAT schedules",
+   "points": [
+    [
+     30,
+     100.0
+    ],
+    [
+     36,
+     101.63
+    ],
+    [
+     45,
+     99.7
+    ],
+    [
+     60,
+     99.4
+    ],
+    [
+     90,
+     100.0
+    ],
+    [
+     120,
+     100.0
+    ]
+   ],
+   "runs": {
+    "30": [
+     [
+      "fb30r1r",
+      100.1
+     ],
+     [
+      "a30cpsat_hardr",
+      100.2
+     ],
+     [
+      "p30w4imecpr",
+      100.0
+     ],
+     [
+      "p30freer",
+      100.1
+     ],
+     [
+      "p30efullr",
+      100.0
+     ]
+    ],
+    "36": [
+     [
+      "p36freer",
+      101.63
+     ]
+    ],
+    "45": [
+     [
+      "acpsat_hardr",
+      100.0
+     ],
+     [
+      "sonlycpr",
+      99.7
+     ],
+     [
+      "p45freer",
+      100.81
+     ],
+     [
+      "p45detr",
+      101.73
+     ]
+    ],
+    "60": [
+     [
+      "a60cpsat_hardr",
+      99.4
+     ]
+    ],
+    "90": [
+     [
+      "a90cpsat_hardr",
+      100.0
+     ],
+     [
+      "b5cpsat_hardr",
+      100.5
+     ]
+    ],
+    "120": [
+     [
+      "a120hcpsat_hardr",
+      100.0
+     ],
+     [
+      "a120hcpsat_hardr",
+      100.0
+     ]
+    ]
+   }
+  }
+ },
+ "A": {
+  "xpu_dir": "results/codesign_feedback/campaign_free36/display/pairs_ac36/xpu_s1006_figdata",
+  "ros_dir": "results/codesign_feedback/campaign_free36/display/pairs_ns4/ros_s1006_figdata",
+  "xpu_trace": "xpu_p36free.csv",
+  "ros_trace": "ros_vanilla4x236ns4.csv",
+  "camera_hz": 36,
+  "display_cruise": 1.4,
+  "episode_seed": {
+   "xpu": 1006,
+   "ros": 1006
+  },
+  "layout_seed": {
+   "xpu": 1000,
+   "ros": 1000
+  },
+  "xpu_gates": 4,
+  "ros_gates": 2,
+  "ros_outcome": "crash",
+  "hit": "gate frame",
+  "xpu_eff_hz": 100.4,
+  "ros_eff_hz": 36.0,
+  "clearance_m": 0.56,
+  "backdrop": "median of 5 overhead frames (t \u2265 2 s)",
+  "moments": [
+   {
+    "arm": "ROS",
+    "step": 608,
+    "label": "ROS 2 36 Hz \u00b7 clears G2"
+   },
+   {
+    "arm": "ROS",
+    "step": 868,
+    "label": "ROS 2 36 Hz \u00b7 hits gate frame after G2"
+   },
+   {
+    "arm": "XPU",
+    "step": 722,
+    "label": "XPU-RT 100 Hz \u00b7 clears crate 0.56 m"
+   },
+   {
+    "arm": "XPU",
+    "step": 1112,
+    "label": "XPU-RT 100 Hz \u00b7 reaches gate"
+   }
+  ],
+  "scene_dir": "results/codesign_feedback/campaign_scene/tall1000_ac36",
+  "scene_completed": {
+   "xpu": [
+    4,
+    12
+   ],
+   "ros": [
+    0,
+    12
+   ]
+  },
+  "scene_mean_gates": {
+   "xpu": 2.667,
+   "ros": 1.833
+  },
+  "scene_runs": {
+   "xpu": [
+    {
+     "seed": 1000,
+     "outcome": "crash",
+     "gates": 3
+    },
+    {
+     "seed": 1001,
+     "outcome": "success",
+     "gates": 4
+    },
+    {
+     "seed": 1002,
+     "outcome": "crash",
+     "gates": 2
+    },
+    {
+     "seed": 1003,
+     "outcome": "success",
+     "gates": 4
+    },
+    {
+     "seed": 1004,
+     "outcome": "crash",
+     "gates": 1
+    },
+    {
+     "seed": 1005,
+     "outcome": "crash",
+     "gates": 2
+    },
+    {
+     "seed": 1006,
+     "outcome": "crash",
+     "gates": 3
+    },
+    {
+     "seed": 1007,
+     "outcome": "success",
+     "gates": 4
+    },
+    {
+     "seed": 1008,
+     "outcome": "crash",
+     "gates": 1
+    },
+    {
+     "seed": 1009,
+     "outcome": "success",
+     "gates": 4
+    },
+    {
+     "seed": 1010,
+     "outcome": "crash",
+     "gates": 3
+    },
+    {
+     "seed": 1011,
+     "outcome": "crash",
+     "gates": 1
+    }
+   ],
+   "ros": [
+    {
+     "seed": 1000,
+     "outcome": "crash",
+     "gates": 3
+    },
+    {
+     "seed": 1001,
+     "outcome": "crash",
+     "gates": 1
+    },
+    {
+     "seed": 1002,
+     "outcome": "crash",
+     "gates": 1
+    },
+    {
+     "seed": 1003,
+     "outcome": "crash",
+     "gates": 1
+    },
+    {
+     "seed": 1004,
+     "outcome": "crash",
+     "gates": 1
+    },
+    {
+     "seed": 1005,
+     "outcome": "crash",
+     "gates": 3
+    },
+    {
+     "seed": 1006,
+     "outcome": "crash",
+     "gates": 3
+    },
+    {
+     "seed": 1007,
+     "outcome": "crash",
+     "gates": 2
+    },
+    {
+     "seed": 1008,
+     "outcome": "crash",
+     "gates": 2
+    },
+    {
+     "seed": 1009,
+     "outcome": "crash",
+     "gates": 0
+    },
+    {
+     "seed": 1010,
+     "outcome": "crash",
+     "gates": 3
+    },
+    {
+     "seed": 1011,
+     "outcome": "crash",
+     "gates": 2
+    }
+   ]
+  }
+ },
+ "B_flights": 2184,
+ "I": {
+  "xpu": {
+   "chain_ms_median": 25.824,
+   "ctrl_gap_mean_ms": 9.856,
+   "frames_late": 0,
+   "frames_checked": 17,
+   "placement_note": "8 harts \u00b7 scheduled",
+   "busy_source": "sampler_rdtime",
+   "harts_per_net": {
+    "YOLO": [
+     "CPU_E#0",
+     "CPU_E#1",
+     "CPU_E#2",
+     "CPU_E#3",
+     "CPU_P#0",
+     "CPU_P#2"
+    ],
+    "control": [
+     "CPU_E#0",
+     "CPU_E#1",
+     "CPU_E#2",
+     "CPU_E#3",
+     "CPU_P#0",
+     "CPU_P#1",
+     "CPU_P#2",
+     "CPU_P#3"
+    ],
+    "nav": [
+     "CPU_E#0",
+     "CPU_E#1",
+     "CPU_E#2",
+     "CPU_E#3",
+     "CPU_P#0",
+     "CPU_P#1",
+     "CPU_P#2",
+     "CPU_P#3"
+    ]
+   },
+   "drawn_harts_per_net": {
+    "YOLO": [
+     "CPU_E#0",
+     "CPU_E#1",
+     "CPU_E#2",
+     "CPU_E#3",
+     "CPU_P#0",
+     "CPU_P#1",
+     "CPU_P#2",
+     "CPU_P#3"
+    ],
+    "control": [
+     "CPU_E#0",
+     "CPU_E#1",
+     "CPU_E#2",
+     "CPU_E#3",
+     "CPU_P#0",
+     "CPU_P#1",
+     "CPU_P#2",
+     "CPU_P#3"
+    ],
+    "nav": [
+     "CPU_E#0",
+     "CPU_E#1",
+     "CPU_E#2",
+     "CPU_E#3",
+     "CPU_P#0",
+     "CPU_P#1",
+     "CPU_P#2",
+     "CPU_P#3"
+    ]
+   }
+  },
+  "ros": {
+   "chain_ms_median": 37.351,
+   "ctrl_gap_mean_ms": 27.761,
+   "frames_late": 0,
+   "frames_checked": 352,
+   "placement_note": "8 cores \u00b7 OS-scheduled \u00b7 YOLO on 8 harts",
+   "busy_source": "sampler_epoch",
+   "harts_per_net": {
+    "YOLO": [
+     "CPU_E#0",
+     "CPU_E#1",
+     "CPU_E#3",
+     "CPU_P#0",
+     "CPU_P#1",
+     "CPU_P#2"
+    ],
+    "nav": [
+     "CPU_E#0",
+     "CPU_E#2",
+     "CPU_P#1",
+     "CPU_P#2"
+    ],
+    "control": [
+     "CPU_E#0",
+     "CPU_E#2",
+     "CPU_P#1"
+    ]
+   },
+   "drawn_harts_per_net": {
+    "YOLO": [
+     "CPU_E#0",
+     "CPU_E#1",
+     "CPU_E#2",
+     "CPU_E#3",
+     "CPU_P#0",
+     "CPU_P#1",
+     "CPU_P#2",
+     "CPU_P#3"
+    ],
+    "nav": [
+     "CPU_E#0",
+     "CPU_E#2",
+     "CPU_P#1",
+     "CPU_P#2",
+     "CPU_P#3"
+    ],
+    "control": [
+     "CPU_E#0",
+     "CPU_E#2",
+     "CPU_P#1"
+    ]
+   }
+  },
+  "bars": {
+   "XPU-RT": {
+    "dispatches": 441,
+    "drawn": 441
+   },
+   "ROS 2": {
+    "dispatches": 491,
+    "drawn": 491
+   }
+  },
+  "merged_per_hart_and_frame": false
+ },
+ "headline": {
+  "verdicts": {
+   "XPU-RT ahead": 7,
+   "tie": 6,
+   "ROS 2 ahead": 0
+  }
+ },
+ "script": "showdown_improved_figure",
+ "inputs": {
+  "results/codesign_feedback/campaign_break/campaign.csv": "128f7a46419ca5aa1cb568f35ea3efb61610ad080b35a5897903e47fd6e68345",
+  "results/codesign_feedback/campaign_compose/campaign.csv": "eced6ca98c17e391440539d14025df20b750e80f03f21d2912657a85d87ded19",
+  "results/codesign_feedback/campaign_courseC/campaign.csv": "a0a4b730bbe7b959d462bcfb69a6ebdd54ab95ad8600c8141842c395765c8cca",
+  "results/codesign_feedback/campaign_cp3_ladder/campaign.csv": "e98155d19f5a9c623fa2a32f6aa364e6d93cf3d376fdb12a22a96ed72e7adf3a",
+  "results/codesign_feedback/campaign_cross/campaign.csv": "fff461f4a94b7f0fc5d6516f13ac672f1ded6ab8e987772fe4115982e7fc643b",
+  "results/codesign_feedback/campaign_free30/campaign.csv": "0f4c6a073c12f163a5399c94e8c596b1c0b51a8090f9a76dcc2a8c7376934671",
+  "results/codesign_feedback/campaign_free30_eq/campaign.csv": "9511fa4afa11889ef27067c93a29faede17f627fd3c248e6465b72aa3eadbc0e",
+  "results/codesign_feedback/campaign_free36/display/pairs_ac36/xpu_s1006_figdata/figure_data.npz": "ff4a6f28a508769c003951b9e4ee038489ac208f87ebb2388d9d2e610ad97b39",
+  "results/codesign_feedback/campaign_free36/display/pairs_ns4/ros_s1006_figdata/figure_data.npz": "b422c9b48f3b8a6dff79e7d907f48b465a559edeecd670c422ca0652cedb134a",
+  "results/codesign_feedback/campaign_free45/campaign.csv": "adc375e9eba26dea2c270141081a5def6df899a738c302b849c28dfb4ab398e5",
+  "results/codesign_feedback/campaign_gainfair/campaign.csv": "4121eebdae3ee6cb069697fae655629598117a57a9dd239a26badee1edd7e9cd",
+  "results/codesign_feedback/campaign_p3_30/campaign.csv": "65d1162685f06a0b11ece2614f9e6bd7b9ef7e9de985753bbdba8075266cc165",
+  "results/codesign_feedback/campaign_percep/campaign.csv": "252a9f2de72809b03bab11d52c7278b884080fcff784978778d959757e220afd",
+  "results/codesign_feedback/campaign_q1cells/campaign.csv": "6935d1e85a8897ea5e2cdf8008fae8c1942de5cc552855500f4e7fc462dc6bce",
+  "results/codesign_feedback/campaign_qos1/campaign.csv": "f53eaf89c969added3141fc72a42495f0ec33e00241273f84583c478b5a2c89d",
+  "results/codesign_feedback/campaign_rate30/campaign.csv": "c72e9b351062a59d8146d131d0e86738b97010a9c97b6b695977273eee659bbf",
+  "results/codesign_feedback/campaign_rate30_gain/campaign.csv": "1a20793a8759d79b5a265bbcfa1f45c51795c7c58e6508a823f455e9262a1b5e",
+  "results/codesign_feedback/campaign_rate3640/campaign.csv": "539e8b0a5d0f4c5abac071379fa582f1be8eb26b04ead89bcef8da35b177ddf8",
+  "results/codesign_feedback/campaign_rate90/campaign.csv": "0316062a61963b7721ca7f56038af2dbca3745eba48a2f6778faeba4cb23cdf5",
+  "results/codesign_feedback/campaign_rich/campaign.csv": "957e5a475c5610579463b6df70f68edc54c06578d7773cc5a8f45d3d3a821174",
+  "results/codesign_feedback/campaign_richtuned/campaign.csv": "5bcc7b1ff5534d507cb2e8da8da78450b84837635c6c4e56301808e157d9152a",
+  "results/codesign_feedback/campaign_rosgain/campaign.csv": "73bfcc1dde5af9047993c865e4abd8d5e80502c979c74cc3a1750fee7e7c929b",
+  "results/codesign_feedback/campaign_scene/tall1000_ac36/ros_vanilla4x236ns4/ep00_s1000.npz": "f6ee439ec5d037c0ec21bace8e047a28a1f7710283b9c5bc78ddbd7b7ed3c3c0",
+  "results/codesign_feedback/campaign_scene/tall1000_ac36/ros_vanilla4x236ns4/ep01_s1001.npz": "1315f1a391cf12f054f9b03fe0604b9f9bc552e4bffbc1f2b529198d25d00e28",
+  "results/codesign_feedback/campaign_scene/tall1000_ac36/ros_vanilla4x236ns4/ep02_s1002.npz": "eae59fddac2ad476962157edf7fce2f893cdb724d55f3bb5f0fc575e93f1f3aa",
+  "results/codesign_feedback/campaign_scene/tall1000_ac36/ros_vanilla4x236ns4/ep03_s1003.npz": "e9ac951b69e5b7224c9fcf4e4e617e4ea89f6e8f55077cdeb06d326f21382faf",
+  "results/codesign_feedback/campaign_scene/tall1000_ac36/ros_vanilla4x236ns4/ep04_s1004.npz": "3c9a992faa69d2ac3a1a7898370f5386a9e3f2b80417dcf0e90fcf047518c23a",
+  "results/codesign_feedback/campaign_scene/tall1000_ac36/ros_vanilla4x236ns4/ep05_s1005.npz": "a7b2b93558e3fa88b26a781a6455ad7383418a6e593598c18dcd6cf2f29a4e06",
+  "results/codesign_feedback/campaign_scene/tall1000_ac36/ros_vanilla4x236ns4/ep06_s1006.npz": "159564e4f67feeb4cecddfc1f4d38dce679bf83a1c12a1b57b0fb2d63994e695",
+  "results/codesign_feedback/campaign_scene/tall1000_ac36/ros_vanilla4x236ns4/ep07_s1007.npz": "6a859b6838737f6e0eb6aeee43b71a6b029b5e715c049d4a5189875c930e2f78",
+  "results/codesign_feedback/campaign_scene/tall1000_ac36/ros_vanilla4x236ns4/ep08_s1008.npz": "e0328c9503a25ca1d4c31a1be52330189b6638e51fcc64c5bfc9d3c683a00e62",
+  "results/codesign_feedback/campaign_scene/tall1000_ac36/ros_vanilla4x236ns4/ep09_s1009.npz": "e0ab47bfd59106ff0f95546dc95a3b8822e6c122db2ca6f804f80aa093fa0fc3",
+  "results/codesign_feedback/campaign_scene/tall1000_ac36/ros_vanilla4x236ns4/ep10_s1010.npz": "c7c36f0689fe3e963a0abdc3bca601ea764c7d0f594dcfe09a4407771fe49569",
+  "results/codesign_feedback/campaign_scene/tall1000_ac36/ros_vanilla4x236ns4/ep11_s1011.npz": "76f8534a41c5e20baf52faf52ea8c6af7595fc43c9074f9bb43177340b01ea2c",
+  "results/codesign_feedback/campaign_scene/tall1000_ac36/xpu_p36free/ep00_s1000.npz": "30253741915b47d4e1fc3a0531fab00535d4d9924f8e48b41836b5e0d8f670e8",
+  "results/codesign_feedback/campaign_scene/tall1000_ac36/xpu_p36free/ep01_s1001.npz": "8d365eb74fba77ddd9944b398f826a5daa13900535a45c0f99ad25ca2cc0a8f9",
+  "results/codesign_feedback/campaign_scene/tall1000_ac36/xpu_p36free/ep02_s1002.npz": "55ca3b2a2be513a5dd12ca2d04d91838a23ac346816f3cbb138452eea98449a6",
+  "results/codesign_feedback/campaign_scene/tall1000_ac36/xpu_p36free/ep03_s1003.npz": "e37fd93588dd2550d4ba4b9490b1d8eca088e9f7d6eb4137b4d47f72a4282288",
+  "results/codesign_feedback/campaign_scene/tall1000_ac36/xpu_p36free/ep04_s1004.npz": "8b0cba26c7d8bb48c8a2ef2369611b1dbf0fbbf92dff54ed3073eb2028cdf4b0",
+  "results/codesign_feedback/campaign_scene/tall1000_ac36/xpu_p36free/ep05_s1005.npz": "49181da90a7dd0a1c80adf94ff98421f3720d0d7fff94e7ec124b2297aeb33a7",
+  "results/codesign_feedback/campaign_scene/tall1000_ac36/xpu_p36free/ep06_s1006.npz": "bb18565d8d6437e549005f24ec7f838dc6781c1167276cc4eb2aebd3e88a95c5",
+  "results/codesign_feedback/campaign_scene/tall1000_ac36/xpu_p36free/ep07_s1007.npz": "ed5c00988a6009029361a0f70e323fde856a1bb0a5ec8c78e8691bc6a301bc06",
+  "results/codesign_feedback/campaign_scene/tall1000_ac36/xpu_p36free/ep08_s1008.npz": "859a23357aa3b3a0bf18beedf15efbb2f07815af68dc665c0f9b2a494a597e70",
+  "results/codesign_feedback/campaign_scene/tall1000_ac36/xpu_p36free/ep09_s1009.npz": "774663707902e973b01860f1cba39c0ebd2659bf65a63e143f085a1d479c105d",
+  "results/codesign_feedback/campaign_scene/tall1000_ac36/xpu_p36free/ep10_s1010.npz": "fbc49b49e1ef68766688561b1e41aed418cb02fa0e78a2fa9f5fba5a30ef2df6",
+  "results/codesign_feedback/campaign_scene/tall1000_ac36/xpu_p36free/ep11_s1011.npz": "92eec5aac10321f5818a372d0fc4f839fc50186dba05a83bbd18891aa6e0666c",
+  "results/codesign_feedback/campaign_seeds24/campaign.csv": "4ee968293048c26b729ec3211cdeabfe5ac4ccb4256e7f7f89ed87cd00b68756",
+  "results/codesign_feedback/campaign_shardcells/campaign.csv": "d6713164f31a95576e29a4b3b4f57d726241af66fca1b29ca27cbe8b051a5747",
+  "results/codesign_feedback/campaign_static6/campaign.csv": "ab10e14a8fe7998a7f362c74268ba9ea8180dda0113507bc71242fb9a6764648",
+  "results/codesign_feedback/campaign_static6_45/campaign.csv": "ea410d15e00118b8a1ef95041250013698f5ffa313b91dd185df723df7047d1d",
+  "results/codesign_feedback/campaign_submitted/campaign.csv": "cff34cef9d05b2ded743bd14e4e112a6495633bc462409834f4b8447d4a7bc94",
+  "results/codesign_feedback/campaign_tallcal/campaign.csv": "a4455c1d304e421d146034a6b0d55d2aae2f8f6e401f957d5f29076636c14d44",
+  "results/codesign_feedback/campaign_tallnet/campaign.csv": "f0e636330e842d9eb21db22b62207de82af5ef02488f030c9e19d92d77dfb9b4",
+  "results/codesign_feedback/campaign_tuned/campaign.csv": "8794844a73edd82c800115f6b9c8ea43c25ab3236f5b6155b0adb24ce4b5d0b0",
+  "results/codesign_feedback/campaign_v8tmcells/campaign.csv": "0974b9b9bff857ba91720f0ca681b77c48480389e412f53fb24d4ba0322d590b",
+  "results/codesign_feedback/campaign_walk/campaign.csv": "b7621815bfa95943b58cbb4db1326311887538fdaadb3b66912d289b54527bbe",
+  "results/codesign_feedback/campaign_x2cells/campaign.csv": "90a252a06a759c1d7cf9862089a3ed3411b0accc99fea3500f9b7cd72003f471",
+  "results/codesign_feedback/campaign_x2fix/campaign.csv": "2d3aeef9fb142226680417f6528ee14fa02d7085f8ffe5be1e8778523d1ff3a2",
+  "results/codesign_feedback/campaign_x2fix90/campaign.csv": "a2d6a1493a4901aa08688ae06b72ab9c8ab50bd6e49a8964ae7062e5324175ac",
+  "results/codesign_feedback/campaign_x2tmcells/campaign.csv": "398909144003dc838e88b1084ee8e330e9ee5d6f121a5cf27db008a81fca6d59",
+  "results/codesign_feedback/flight_quarantine.csv": "7cbd16bab0a08748d95a166bede154e6f885e26b6df8ae8475083789872a2dba",
+  "results/codesign_feedback/refined/navshard36/measured_gantt_navshard36_ros.json": "2e583f679f13427fdd4bd9b23beecfa4307517723f113f271e2aba927f34ff19",
+  "results/codesign_feedback/refined/navshard36/measured_gantt_navshard36_ros_metrics.json": "15afe30e2c0e627510850db2727515fe1356469e83c8aa14427acbd45748bbaf",
+  "results/codesign_feedback/refined/navshard36/measured_gantt_navshard36_xpu.json": "4d9a995e7c1fbb18a8f22d59e706bee352404dd18780cc3baaf216c3f143ebc4",
+  "results/codesign_feedback/refined/navshard36/measured_gantt_navshard36_xpu_metrics.json": "5e9a1c2786133f85ca0d67cf9587b8f90621056d2680620ad22819a8a372e4cf",
+  "results/codesign_feedback/ros_traced/summary.csv": "8a061d85c1cc9d32a4ceeeb141cfc331c8d8cd7bfbd0b8be6680517de493edc1"
+ },
+ "fallbacks_used": []
+}

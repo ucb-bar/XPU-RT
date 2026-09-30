@@ -1,0 +1,243 @@
+{
+ "name": "ffn_block",
+ "version": 1,
+ "quant": "int8",
+ "input": {
+  "tensor": "x",
+  "tensors": [
+   "x"
+  ]
+ },
+ "output": {
+  "tensors": [
+   "add"
+  ],
+  "tensor": "add"
+ },
+ "tensors": {
+  "x": {
+   "shape": [
+    128,
+    256
+   ],
+   "dtype": "i8",
+   "quant": {
+    "scale": 0.03313700983843466,
+    "zero_point": 0
+   }
+  },
+  "ln": {
+   "shape": [
+    128,
+    256
+   ],
+   "dtype": "i8",
+   "quant": {
+    "scale": 0.0318622664203794,
+    "zero_point": 0
+   }
+  },
+  "fc1": {
+   "shape": [
+    128,
+    1024
+   ],
+   "dtype": "i8",
+   "quant": {
+    "scale": 0.021946745594655436,
+    "zero_point": 0
+   }
+  },
+  "act": {
+   "shape": [
+    128,
+    1024
+   ],
+   "dtype": "i8",
+   "quant": {
+    "scale": 0.021260866029994694,
+    "zero_point": 0
+   }
+  },
+  "fc2": {
+   "shape": [
+    128,
+    256
+   ],
+   "dtype": "i8",
+   "quant": {
+    "scale": 0.006738383000291239,
+    "zero_point": 0
+   }
+  },
+  "add": {
+   "shape": [
+    128,
+    256
+   ],
+   "dtype": "i8",
+   "quant": {
+    "scale": 0.03265571594238281,
+    "zero_point": 0
+   }
+  }
+ },
+ "ops": [
+  {
+   "name": "ln",
+   "op": "layernorm_s8",
+   "inputs": [
+    "x"
+   ],
+   "outputs": [
+    "ln"
+   ],
+   "weight": "ln.gamma",
+   "shape": {
+    "M": 128,
+    "K": 256
+   },
+   "quant": {
+    "scale_in": 0.03313700983843466,
+    "scale_out": 0.0318622664203794,
+    "eps": 1e-05,
+    "activation_min": -128,
+    "activation_max": 127
+   },
+   "bias": "ln.beta",
+   "dispatch_id": 0,
+   "hardware_target": "any",
+   "depends_on": []
+  },
+  {
+   "name": "fc1",
+   "op": "linear_s8",
+   "inputs": [
+    "ln"
+   ],
+   "outputs": [
+    "fc1"
+   ],
+   "weight": "fc1.weight_q",
+   "bias": "fc1.bias_q",
+   "shape": {
+    "M": 128,
+    "K": 256,
+    "N": 1024
+   },
+   "quant": {
+    "input_offset": 0,
+    "filter_offset": 0,
+    "output_offset": 0,
+    "output_multiplier": 1571127057,
+    "output_shift": 10,
+    "activation_min": -128,
+    "activation_max": 127
+   },
+   "dispatch_id": 1,
+   "hardware_target": "any",
+   "depends_on": [
+    0
+   ],
+   "shard_factor": 8
+  },
+  {
+   "name": "act",
+   "op": "gelu_s8",
+   "inputs": [
+    "fc1"
+   ],
+   "outputs": [
+    "act"
+   ],
+   "shape": {
+    "n": 131072
+   },
+   "quant": {
+    "scale_in": 0.021946745594655436,
+    "scale_out": 0.021260866029994694,
+    "activation_min": -128,
+    "activation_max": 127
+   },
+   "dispatch_id": 2,
+   "hardware_target": "any",
+   "depends_on": [
+    1
+   ]
+  },
+  {
+   "name": "fc2",
+   "op": "linear_s8",
+   "inputs": [
+    "act"
+   ],
+   "outputs": [
+    "fc2"
+   ],
+   "weight": "fc2.weight_q",
+   "bias": "fc2.bias_q",
+   "shape": {
+    "M": 128,
+    "K": 1024,
+    "N": 256
+   },
+   "quant": {
+    "input_offset": 0,
+    "filter_offset": 0,
+    "output_offset": 0,
+    "output_multiplier": 1707266138,
+    "output_shift": 10,
+    "activation_min": -128,
+    "activation_max": 127
+   },
+   "dispatch_id": 3,
+   "hardware_target": "any",
+   "depends_on": [
+    2
+   ]
+  },
+  {
+   "name": "add",
+   "op": "add_s8",
+   "inputs": [
+    "x",
+    "fc2"
+   ],
+   "outputs": [
+    "add"
+   ],
+   "shape": {
+    "n": 32768
+   },
+   "quant": {
+    "scale_a": 0.03313700983843466,
+    "scale_b": 0.006738383000291239,
+    "scale_out": 0.03265571594238281,
+    "activation_min": -128,
+    "activation_max": 127
+   },
+   "dispatch_id": 4,
+   "hardware_target": "any",
+   "depends_on": [
+    3
+   ]
+  }
+ ],
+ "dispatches": [
+  0,
+  1,
+  2,
+  3,
+  4
+ ],
+ "_rewrite": {
+  "shard": [
+   {
+    "dispatch_id": 1,
+    "op": "linear_s8",
+    "oc": 1024,
+    "n_shards": 8
+   }
+  ]
+ }
+}

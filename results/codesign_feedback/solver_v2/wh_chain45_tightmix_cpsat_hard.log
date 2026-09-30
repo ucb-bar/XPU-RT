@@ -1,0 +1,119 @@
+--board-calibration: loaded /scratch/agustin/xpurt-dev-sync/results/codesign_feedback/k1_board_calibration_yolo110.json (aggregate x1.261)
+============================================================
+Loading network hierarchy from JSON...
+============================================================
+
+Loading networks from: /scratch/agustin/xpurt-dev-sync/data/toplevel/wh_chain45_tightmix.json
+
+Found 3 networks:
+  - yolov8_nano_64x96 (id: 0, identifier: yolov8_nano_64x96)
+  - fused_full (id: 1, identifier: fused_full)
+  - mlp_control (id: 2, identifier: mlp_control)
+
+Found 2 network-level dependencies:
+  - yolov8_nano_64x96 → fused_full
+  - fused_full → mlp_control
+
+Resolved runtime configuration:
+  Machine core counts: {'CPU_P': 4, 'CPU_E': 4}
+  Profile HW mapping: CPU_P->rvv_x60, CPU_E->rvv_x60
+  Profile target/topology: target=spacemit_x60, topo_tag=topo_0_1_2_3
+  p_core_speedup: 1.0
+  random_seed: 42
+  solver_verbosity: 0
+  time_limit: 600
+  use_profiled: True
+  prune_periodic: True
+  restrict_makespan_to_nonperiodic: False
+  cvxpy_solver (milp only): MOSEK
+  machine_combination_mode: shard
+  enforce_same_processor_combinations: False
+
+Using profiled runtimes where available...
+  (warning) 8 dispatch(es) were costed 0.0 because a profile that EXISTS has no row for them. Either they are ops the codegen drops (the yolo chunk2_c1 case) or the CSV is short and unmeasured work is being scheduled as instantaneous.
+  - yolov8_nano_64x96/dispatch_3(id=3) costed 0.0 (first seen on rvv_x60/topo_0): no row in an otherwise-present profile; op not knowable from the profile
+  - yolov8_nano_64x96/dispatch_11(id=11) costed 0.0 (first seen on rvv_x60/topo_0): no row in an otherwise-present profile; op not knowable from the profile
+  - yolov8_nano_64x96/dispatch_22(id=22) costed 0.0 (first seen on rvv_x60/topo_0): no row in an otherwise-present profile; op not knowable from the profile
+  - yolov8_nano_64x96/dispatch_33(id=33) costed 0.0 (first seen on rvv_x60/topo_0): no row in an otherwise-present profile; op not knowable from the profile
+  - yolov8_nano_64x96/dispatch_48(id=48) costed 0.0 (first seen on rvv_x60/topo_0): no row in an otherwise-present profile; op not knowable from the profile
+  - yolov8_nano_64x96/dispatch_56(id=56) costed 0.0 (first seen on rvv_x60/topo_0): no row in an otherwise-present profile; op not knowable from the profile
+  - yolov8_nano_64x96/dispatch_64(id=64) costed 0.0 (first seen on rvv_x60/topo_0): no row in an otherwise-present profile; op not knowable from the profile
+  - yolov8_nano_64x96/dispatch_72(id=72) costed 0.0 (first seen on rvv_x60/topo_0): no row in an otherwise-present profile; op not knowable from the profile
+  (warning) set XPURT_STRICT_ZERO_COST=1 to make this fatal
+  Workload declares horizon 1000 ms and 3 explicit periodic instance counts; those counts are used as given. Networks without one are still sized by the refinement loop below.
+
+--- cpsat iteration 1 ---
+  stateful: chained 44 instance edge(s) for ['fused_full']
+  Total operations: 5785
+  Job names: ['yolov8_nano_64x960', 'fused_full0', 'mlp_control0', 'yolov8_nano_64x961', 'yolov8_nano_64x962', 'yolov8_nano_64x963', 'yolov8_nano_64x964', 'yolov8_nano_64x965', 'yolov8_nano_64x966', 'yolov8_nano_64x967', 'yolov8_nano_64x968', 'yolov8_nano_64x969', 'yolov8_nano_64x9610', 'yolov8_nano_64x9611', 'yolov8_nano_64x9612', 'yolov8_nano_64x9613', 'yolov8_nano_64x9614', 'yolov8_nano_64x9615', 'yolov8_nano_64x9616', 'yolov8_nano_64x9617', 'yolov8_nano_64x9618', 'yolov8_nano_64x9619', 'yolov8_nano_64x9620', 'yolov8_nano_64x9621', 'yolov8_nano_64x9622', 'yolov8_nano_64x9623', 'yolov8_nano_64x9624', 'yolov8_nano_64x9625', 'yolov8_nano_64x9626', 'yolov8_nano_64x9627', 'yolov8_nano_64x9628', 'yolov8_nano_64x9629', 'yolov8_nano_64x9630', 'yolov8_nano_64x9631', 'yolov8_nano_64x9632', 'yolov8_nano_64x9633', 'yolov8_nano_64x9634', 'yolov8_nano_64x9635', 'yolov8_nano_64x9636', 'yolov8_nano_64x9637', 'yolov8_nano_64x9638', 'yolov8_nano_64x9639', 'yolov8_nano_64x9640', 'yolov8_nano_64x9641', 'yolov8_nano_64x9642', 'yolov8_nano_64x9643', 'yolov8_nano_64x9644', 'fused_full1', 'fused_full2', 'fused_full3', 'fused_full4', 'fused_full5', 'fused_full6', 'fused_full7', 'fused_full8', 'fused_full9', 'fused_full10', 'fused_full11', 'fused_full12', 'fused_full13', 'fused_full14', 'fused_full15', 'fused_full16', 'fused_full17', 'fused_full18', 'fused_full19', 'fused_full20', 'fused_full21', 'fused_full22', 'fused_full23', 'fused_full24', 'fused_full25', 'fused_full26', 'fused_full27', 'fused_full28', 'fused_full29', 'fused_full30', 'fused_full31', 'fused_full32', 'fused_full33', 'fused_full34', 'fused_full35', 'fused_full36', 'fused_full37', 'fused_full38', 'fused_full39', 'fused_full40', 'fused_full41', 'fused_full42', 'fused_full43', 'fused_full44', 'mlp_control1', 'mlp_control2', 'mlp_control3', 'mlp_control4', 'mlp_control5', 'mlp_control6', 'mlp_control7', 'mlp_control8', 'mlp_control9', 'mlp_control10', 'mlp_control11', 'mlp_control12', 'mlp_control13', 'mlp_control14', 'mlp_control15', 'mlp_control16', 'mlp_control17', 'mlp_control18', 'mlp_control19', 'mlp_control20', 'mlp_control21', 'mlp_control22', 'mlp_control23', 'mlp_control24', 'mlp_control25', 'mlp_control26', 'mlp_control27', 'mlp_control28', 'mlp_control29', 'mlp_control30', 'mlp_control31', 'mlp_control32', 'mlp_control33', 'mlp_control34', 'mlp_control35', 'mlp_control36', 'mlp_control37', 'mlp_control38', 'mlp_control39', 'mlp_control40', 'mlp_control41', 'mlp_control42', 'mlp_control43', 'mlp_control44', 'mlp_control45', 'mlp_control46', 'mlp_control47', 'mlp_control48', 'mlp_control49', 'mlp_control50', 'mlp_control51', 'mlp_control52', 'mlp_control53', 'mlp_control54', 'mlp_control55', 'mlp_control56', 'mlp_control57', 'mlp_control58', 'mlp_control59', 'mlp_control60', 'mlp_control61', 'mlp_control62', 'mlp_control63', 'mlp_control64', 'mlp_control65', 'mlp_control66', 'mlp_control67', 'mlp_control68', 'mlp_control69', 'mlp_control70', 'mlp_control71', 'mlp_control72', 'mlp_control73', 'mlp_control74', 'mlp_control75', 'mlp_control76', 'mlp_control77', 'mlp_control78', 'mlp_control79', 'mlp_control80', 'mlp_control81', 'mlp_control82', 'mlp_control83', 'mlp_control84', 'mlp_control85', 'mlp_control86', 'mlp_control87', 'mlp_control88', 'mlp_control89', 'mlp_control90', 'mlp_control91', 'mlp_control92', 'mlp_control93', 'mlp_control94', 'mlp_control95', 'mlp_control96', 'mlp_control97', 'mlp_control98', 'mlp_control99']
+
+Starting CP-SAT solver v9.15.6755
+Parameters: random_seed: 0 max_time_in_seconds: 1800 log_search_progress: true num_search_workers: 8
+
+Initial optimization model '': (model_fingerprint: 0xda7e75f021752e95)
+#Variables: 98'346 (#ints: 1 in objective) (86'415 primary variables)
+  - 80'990 Booleans in [0,1]
+  - 5'150 different domains in [0,137500002802331] with a largest complexity of 1.
+#kExactlyOne: 5'785 (#literals: 80'990)
+#kInterval: 80'990 (#enforced: 80'990)
+#kLinMax: 1 (#expressions: 5'785)
+#kLinear1: 87'136 (#enforced: 80'990)
+#kLinear2: 1'427'039 (#enforced: 1'414'140 #multi: 1'414'140)
+#kLinear3: 5'785
+#kLinearN: 5'433 (#terms: 211'583)
+#kNoOverlap: 8 (#intervals: 138'840, #optional: 138'840, #variable_sizes: 138'840)
+
+Starting presolve at 0.39s
+INFEASIBLE: 'linear: never in domain'
+Unsat after presolving constraint #1589 (warning, dump might be inconsistent): linear { vars: 1581 vars: 1582 vars: 1583 coeffs: -1 coeffs: 1 coeffs: -1 domain: -21 domain: -20 }
+  3.27e-01s  0.00e+00d  [PresolveToFixPoint] 
+
+Presolve summary:
+  - 360 affine relations were detected.
+  - rule 'affine: new relation' was applied 360 times.
+  - rule 'bool_or: only one literal' was applied 1'890 times.
+  - rule 'enforcement: false literal' was applied 1'890 times.
+  - rule 'linear1: x in domain' was applied 6'146 times.
+  - rule 'linear: always true' was applied 112'290 times.
+  - rule 'linear: empty' was applied 5'040 times.
+  - rule 'linear: fixed or dup variables' was applied 5'040 times.
+  - rule 'linear: reduced variable domains' was applied 445 times.
+  - rule 'linear: remapped using affine relations' was applied 913 times.
+  - rule 'presolve: iteration' was applied 1 time.
+  - rule 'variables: detect half reified value encoding' was applied 74'060 times.
+Problem closed by presolve.
+CpSolverResponse summary:
+status: INFEASIBLE
+objective: NA
+best_bound: NA
+integers: 0
+booleans: 0
+conflicts: 0
+branches: 0
+propagations: 0
+integer_propagations: 0
+restarts: 0
+lp_iterations: 0
+walltime: 1.7084
+usertime: 1.7084
+deterministic_time: 0
+gap_integral: 0
+
+cpsat status=INFEASIBLE wall=1.7s
+Traceback (most recent call last):
+  File "/scratch/agustin/xpurt-dev-sync/scripts/run_xpurt_schedule.py", line 1657, in <module>
+    schedule_iree_networks(
+    ~~~~~~~~~~~~~~~~~~~~~~^
+        networks_json_path=args.networks_json,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<20 lines>...
+        no_milp_native_warm_start=args.no_milp_native_warm_start,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/scratch/agustin/xpurt-dev-sync/scripts/run_xpurt_schedule.py", line 852, in schedule_iree_networks
+    t, alpha = _greedy_fn(combined_workload)
+               ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/scratch/agustin/xpurt-dev-sync/xpu-rt/cpsat_scheduler.py", line 261, in cpsat_schedule
+    raise RuntimeError(f"cpsat returned {sol['status']} with no solution")
+RuntimeError: cpsat returned INFEASIBLE with no solution

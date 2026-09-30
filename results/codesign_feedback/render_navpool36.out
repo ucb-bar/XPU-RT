@@ -1,0 +1,12 @@
+=== 02:08:07 waiting for the nav-pool energy ladder
+=== 02:39:07 seed 1006: xpu success 4/4, ros crash 2/4 -> warehouse_showdown_cam36_navpool_s1006
+wrote results/codesign_feedback/refined/warehouse_showdown_cam36_navpool_s1006.png
+0 FAIL
+=== 02:39:22 seed 1000: xpu crash 3/4, ros crash 2/4 -> warehouse_showdown_cam36_navpool_s1000_xpu_3of4
+wrote results/codesign_feedback/refined/warehouse_showdown_cam36_navpool_s1000_xpu_3of4.png
+1 FAIL
+=== 02:39:31 seed 1005: xpu crash 2/4, ros crash 2/4 -> warehouse_showdown_cam36_navpool_s1005_xpu_2of4
+wrote results/codesign_feedback/refined/warehouse_showdown_cam36_navpool_s1005_xpu_2of4.png
+1 FAIL
+=== 02:39:40 rendered 3 figure(s)
+=== 02:39:40 RENDER_NAVPOOL36_DONE

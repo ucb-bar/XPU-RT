@@ -1,0 +1,113 @@
+{
+ "workload": "w4_ffn_dronet_sensor",
+ "objective": "makespan",
+ "accept_rule": "candidate_objective.accept (nine lexicographic terms)",
+ "critical_models": [
+  "mlp_control",
+  "fused_full",
+  "ffn_block",
+  "dronet"
+ ],
+ "heavy_model": "ffn_block",
+ "baseline_terms": {
+  "label": "baseline",
+  "ineligible": null,
+  "01_hard_deadline_misses": 21.0,
+  "02_max_deadline_lateness": 51.04,
+  "03_frequency_compliance": 0.19584783391335644,
+  "04_p99_response_of_critical_tasks": 57.95,
+  "05_heavy_model_max_latency": 26.61,
+  "06_heavy_model_throughput": 67.01,
+  "07_makespan": 74.613,
+  "08_utilization": 36.75,
+  "09_standalone_kernel_cycles": 219180.0,
+  "total_instances": 34
+ },
+ "final_terms": {
+  "label": "baseline",
+  "ineligible": null,
+  "01_hard_deadline_misses": 21.0,
+  "02_max_deadline_lateness": 51.04,
+  "03_frequency_compliance": 0.19584783391335644,
+  "04_p99_response_of_critical_tasks": 57.95,
+  "05_heavy_model_max_latency": 26.61,
+  "06_heavy_model_throughput": 67.01,
+  "07_makespan": 74.613,
+  "08_utilization": 36.75,
+  "09_standalone_kernel_cycles": 219180.0,
+  "total_instances": 34
+ },
+ "search_costs": "isolated profile database",
+ "baseline_score_ms": 74.613,
+ "final_score_ms": 74.613,
+ "total_reduction_pct": 0.0,
+ "baseline_makespan_ms": 74.6,
+ "final_makespan_ms": 74.6,
+ "levers_available": [
+  "ime",
+  "shard",
+  "unfuse"
+ ],
+ "rewrite_arm": {
+  "enabled": false,
+  "runner": "board",
+  "verbs": "fuse,unfuse,split,shard",
+  "irs": {},
+  "backend": {
+   "target": "spacemit_x60",
+   "hw": "rvv_x60",
+   "accel_hw": "ime_x60",
+   "gen_root": "gen_mb",
+   "profile_root": "gen/profile_mb"
+  },
+  "accepted": []
+ },
+ "levers_applied": [],
+ "levers_inapplicable": [
+  {
+   "round": 1,
+   "lever": "shard",
+   "reason": "NOT BUILDABLE (6 contract violations): REFUSE uniform_width_across_instances: dronet dispatch 0 (conv2d_s8) -- instances take widths [1, 4]; one generated model cannot encode two packed weight layouts for one dispatch",
+   "kind": "unbuildable"
+  },
+  {
+   "round": 1,
+   "lever": "unfuse",
+   "reason": "lever left the spec unchanged"
+  }
+ ],
+ "rounds": [
+  {
+   "round": 1,
+   "lever": null,
+   "accepted": false,
+   "metric": "makespan",
+   "score_before_ms": 74.613,
+   "accept_rule": "objective",
+   "why": "no candidate was accepted; the loop converged here",
+   "rejected": [
+    {
+     "lever": "ime",
+     "why": "rejected -- hard deadline misses: baseline=21 beats ime=24 (tolerance 2.72)",
+     "score_ms": 69.353,
+     "misses": 230,
+     "kind": "lever"
+    }
+   ]
+  }
+ ],
+ "trajectory": [
+  {
+   "round": 0,
+   "lever": "baseline",
+   "score_ms": 74.613,
+   "makespan_ms": 74.6,
+   "misses": 131
+  }
+ ],
+ "fusion": "fuse: NOT applied \u2014 roofline decision-aid says the stack is compute-bound (max fusible-epilogue ceiling 16% on dronet); fusion collapses dispatches (scheduling) but is measured ~+0.85% on cycles, so the loop does not credit a makespan gain it cannot measure.",
+ "converged": true,
+ "board_feedback": {
+  "enabled": false
+ }
+}

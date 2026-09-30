@@ -1,0 +1,155 @@
+{
+ "workload": "s5_solvable_reveal",
+ "objective": "makespan",
+ "accept_rule": "candidate_objective.accept (nine lexicographic terms)",
+ "critical_models": [
+  "mlp_control",
+  "fused_full",
+  "ffn_block",
+  "dronet",
+  "yolov8_nano_64x96"
+ ],
+ "heavy_model": "yolov8_nano_64x96",
+ "baseline_terms": {
+  "label": "baseline",
+  "ineligible": null,
+  "01_hard_deadline_misses": 1.0,
+  "02_max_deadline_lateness": 4.64,
+  "03_frequency_compliance": 0.03125,
+  "04_p99_response_of_critical_tasks": 34.64,
+  "05_heavy_model_max_latency": 34.64,
+  "06_heavy_model_throughput": 28.87,
+  "07_makespan": 51.613,
+  "08_utilization": 30.35,
+  "09_standalone_kernel_cycles": 125276.0,
+  "total_instances": 12
+ },
+ "final_terms": {
+  "label": "baseline",
+  "ineligible": null,
+  "01_hard_deadline_misses": 1.0,
+  "02_max_deadline_lateness": 4.64,
+  "03_frequency_compliance": 0.03125,
+  "04_p99_response_of_critical_tasks": 34.64,
+  "05_heavy_model_max_latency": 34.64,
+  "06_heavy_model_throughput": 28.87,
+  "07_makespan": 51.613,
+  "08_utilization": 30.35,
+  "09_standalone_kernel_cycles": 125276.0,
+  "total_instances": 12
+ },
+ "search_costs": "isolated profile database",
+ "baseline_score_ms": 51.613,
+ "final_score_ms": 51.613,
+ "total_reduction_pct": 0.0,
+ "baseline_makespan_ms": 51.6,
+ "final_makespan_ms": 51.6,
+ "levers_available": [
+  "ime",
+  "unfuse",
+  "shard:mlp_control",
+  "shard:fused_full",
+  "shard:ffn_block",
+  "shard:dronet",
+  "shard:yolov8_nano_64x96",
+  "shard"
+ ],
+ "rewrite_arm": {
+  "enabled": false,
+  "runner": "board",
+  "verbs": "fuse,unfuse,split,shard",
+  "irs": {},
+  "backend": {
+   "target": "spacemit_x60",
+   "hw": "rvv_x60",
+   "accel_hw": "ime_x60",
+   "gen_root": "gen_mb",
+   "profile_root": "gen/profile_mb"
+  },
+  "accepted": []
+ },
+ "levers_applied": [],
+ "levers_inapplicable": [
+  {
+   "round": 1,
+   "lever": "unfuse",
+   "reason": "lever left the spec unchanged"
+  }
+ ],
+ "rounds": [
+  {
+   "round": 1,
+   "lever": null,
+   "accepted": false,
+   "metric": "makespan",
+   "score_before_ms": 51.613,
+   "accept_rule": "objective",
+   "why": "no candidate was accepted; the loop converged here",
+   "rejected": [
+    {
+     "lever": "ime",
+     "why": "rejected -- hard deadline misses: baseline=1 beats ime=4 (tolerance 0)",
+     "score_ms": 39.601,
+     "misses": 38,
+     "kind": "lever"
+    },
+    {
+     "lever": "shard:mlp_control",
+     "why": "rejected -- hard deadline misses: baseline=1 beats shard:mlp_control=3 (tolerance 0)",
+     "score_ms": 67.57,
+     "misses": 86,
+     "kind": "lever"
+    },
+    {
+     "lever": "shard:fused_full",
+     "why": "rejected -- hard deadline misses: baseline=1 beats shard:fused_full=3 (tolerance 0)",
+     "score_ms": 54.33,
+     "misses": 86,
+     "kind": "lever"
+    },
+    {
+     "lever": "shard:ffn_block",
+     "why": "rejected -- hard deadline misses: baseline=1 beats shard:ffn_block=3 (tolerance 0)",
+     "score_ms": 57.496,
+     "misses": 97,
+     "kind": "lever"
+    },
+    {
+     "lever": "shard:dronet",
+     "why": "rejected -- hard deadline misses: baseline=1 beats shard:dronet=4 (tolerance 0)",
+     "score_ms": 75.189,
+     "misses": 85,
+     "kind": "lever"
+    },
+    {
+     "lever": "shard:yolov8_nano_64x96",
+     "why": "rejected -- hard deadline misses: baseline=1 beats shard:yolov8_nano_64x96=4 (tolerance 0)",
+     "score_ms": 83.82,
+     "misses": 57,
+     "kind": "lever"
+    },
+    {
+     "lever": "shard",
+     "why": "rejected -- hard deadline misses: baseline=1 beats shard=3 (tolerance 0)",
+     "score_ms": 37.986,
+     "misses": 35,
+     "kind": "lever"
+    }
+   ]
+  }
+ ],
+ "trajectory": [
+  {
+   "round": 0,
+   "lever": "baseline",
+   "score_ms": 51.613,
+   "makespan_ms": 51.6,
+   "misses": 32
+  }
+ ],
+ "fusion": "fuse: NOT applied \u2014 roofline decision-aid says the stack is compute-bound (max fusible-epilogue ceiling 16% on dronet); fusion collapses dispatches (scheduling) but is measured ~+0.85% on cycles, so the loop does not credit a makespan gain it cannot measure.",
+ "converged": true,
+ "board_feedback": {
+  "enabled": false
+ }
+}

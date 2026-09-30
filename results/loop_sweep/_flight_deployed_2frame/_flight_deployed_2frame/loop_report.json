@@ -1,0 +1,166 @@
+{
+ "workload": "_flight_deployed_2frame",
+ "objective": "makespan",
+ "accept_rule": "candidate_objective.accept (nine lexicographic terms)",
+ "critical_models": [
+  "mlp_control",
+  "fused_full",
+  "yolov8_nano_64x96"
+ ],
+ "heavy_model": "yolov8_nano_64x96",
+ "baseline_terms": {
+  "label": "baseline",
+  "ineligible": null,
+  "01_hard_deadline_misses": 2.0,
+  "02_max_deadline_lateness": 12.6,
+  "03_frequency_compliance": 0.2224422442244224,
+  "04_p99_response_of_critical_tasks": 34.6,
+  "05_heavy_model_max_latency": 34.6,
+  "06_heavy_model_throughput": 35.34,
+  "07_makespan": 56.6001,
+  "08_utilization": 22.75,
+  "09_standalone_kernel_cycles": 103033.0,
+  "total_instances": 8
+ },
+ "final_terms": {
+  "label": "shard",
+  "ineligible": null,
+  "01_hard_deadline_misses": 0.0,
+  "02_max_deadline_lateness": 0.0,
+  "03_frequency_compliance": 0.0,
+  "04_p99_response_of_critical_tasks": 20.41,
+  "05_heavy_model_max_latency": 20.41,
+  "06_heavy_model_throughput": 47.16,
+  "07_makespan": 42.4118,
+  "08_utilization": 55.55,
+  "09_standalone_kernel_cycles": 55534.0,
+  "total_instances": 8
+ },
+ "baseline_score_ms": 56.6,
+ "final_score_ms": 42.412,
+ "total_reduction_pct": 25.1,
+ "baseline_makespan_ms": 56.6,
+ "final_makespan_ms": 42.4,
+ "levers_available": [
+  "ime",
+  "shard",
+  "unfuse"
+ ],
+ "levers_applied": [
+  "shard"
+ ],
+ "levers_inapplicable": [
+  {
+   "round": 1,
+   "lever": "unfuse",
+   "reason": "lever left the spec unchanged"
+  },
+  {
+   "round": 2,
+   "lever": "unfuse",
+   "reason": "lever left the spec unchanged"
+  }
+ ],
+ "rounds": [
+  {
+   "round": 1,
+   "lever": "shard",
+   "metric": "makespan",
+   "score_before_ms": 56.6,
+   "score_after_ms": 42.412,
+   "makespan_before_ms": 56.6,
+   "makespan_after_ms": 42.4,
+   "pct": -25.1,
+   "accepted": true,
+   "deadline_miss": 0,
+   "accept_rule": "objective",
+   "why": "accepted -- hard deadline misses: shard=0 beats baseline=2 (tolerance 1)",
+   "rejected": [
+    {
+     "lever": "ime",
+     "why": "rejected -- indistinguishable on every term; a tie is not an improvement",
+     "score_ms": 56.6,
+     "misses": 102
+    }
+   ],
+   "terms": {
+    "label": "shard",
+    "ineligible": null,
+    "01_hard_deadline_misses": 0.0,
+    "02_max_deadline_lateness": 0.0,
+    "03_frequency_compliance": 0.0,
+    "04_p99_response_of_critical_tasks": 20.41,
+    "05_heavy_model_max_latency": 20.41,
+    "06_heavy_model_throughput": 47.16,
+    "07_makespan": 42.4118,
+    "08_utilization": 55.55,
+    "09_standalone_kernel_cycles": 55534.0,
+    "total_instances": 8
+   }
+  }
+ ],
+ "trajectory": [
+  {
+   "round": 0,
+   "lever": "baseline",
+   "score_ms": 56.6,
+   "makespan_ms": 56.6,
+   "misses": 102
+  },
+  {
+   "round": 1,
+   "lever": "+shard",
+   "score_ms": 42.412,
+   "makespan_ms": 42.4,
+   "misses": 0
+  },
+  {
+   "round": "board-recost",
+   "lever": "recost(board)",
+   "makespan_ms": 47.8,
+   "misses": 2
+  }
+ ],
+ "fusion": "fuse: NOT applied \u2014 roofline decision-aid says the stack is compute-bound (max fusible-epilogue ceiling 16% on dronet); fusion collapses dispatches (scheduling) but is measured ~+0.85% on cycles, so the loop does not credit a makespan gain it cannot measure.",
+ "converged": true,
+ "board_feedback": {
+  "enabled": true,
+  "calibration": "results/codesign_feedback/k1_board_calibration.json",
+  "board_solver": "greedy",
+  "spec": "results/loop_sweep/_flight_deployed_2frame/_flight_deployed_2frame/specs/_flight_deployed_2frame_r1_shard.json",
+  "baseline_instance_misses": 2,
+  "aot_instance_misses": 0,
+  "board_recost_instance_misses": 2,
+  "board_resolve_instance_misses": null,
+  "recovered": false,
+  "residual_misses": 2,
+  "stages": [
+   {
+    "stage": "baseline",
+    "cost": "AOT",
+    "sched": "results/loop_sweep/_flight_deployed_2frame/_flight_deployed_2frame/panels/stage1_baseline.json",
+    "instance_misses": 2,
+    "makespan_ms": 56.6
+   },
+   {
+    "stage": "aot-optimized",
+    "cost": "AOT",
+    "sched": "results/loop_sweep/_flight_deployed_2frame/_flight_deployed_2frame/panels/stage2_aot.json",
+    "instance_misses": 0,
+    "makespan_ms": 42.41,
+    "levers": [
+     "shard"
+    ]
+   },
+   {
+    "stage": "board-recost",
+    "cost": "board",
+    "sched": "results/loop_sweep/_flight_deployed_2frame/_flight_deployed_2frame/panels/stage3_board_recost.json",
+    "instance_misses": 2,
+    "missed_by": {
+     "yolov8_nano_64x96": 2
+    }
+   }
+  ]
+ }
+}

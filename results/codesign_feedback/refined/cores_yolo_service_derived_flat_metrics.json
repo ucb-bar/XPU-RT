@@ -1,0 +1,416 @@
+{
+ "figure": "results/codesign_feedback/refined/cores_yolo_service_derived_flat.png",
+ "written": "2026-09-27T14:48:22",
+ "script": "cores_yolo_service",
+ "statistic": "median per-frame YOLO response: per instance, last dispatch finish minus first dispatch start; median over instances",
+ "cruise_anchor_ms": 24.0,
+ "cruise_anchor_note": "a chosen budget, not a measurement: it decides which curves fall inside the band. The published figure used 24.0, a third render 24.5, and the paper's prose calls the frame 22 ms.",
+ "ros_mode": "flat",
+ "cores": [
+  4,
+  5,
+  6,
+  7,
+  8
+ ],
+ "series": {
+  "greedy_sched": [
+   25.9101,
+   23.461,
+   21.1129,
+   20.349,
+   20.4496
+  ],
+  "greedy_board": [
+   35.1984,
+   34.683,
+   30.6189,
+   28.0727,
+   26.7843
+  ],
+  "cpsat_sched": [
+   19.0004,
+   18.7504,
+   18.5004,
+   18.3752,
+   18.25
+  ],
+  "cpsat_board": [
+   24.4944,
+   24.0004,
+   23.2414,
+   23.2455,
+   22.9995
+  ],
+  "ros_sched": [
+   24.1509,
+   24.1509,
+   24.1509,
+   24.1509,
+   24.1509
+  ],
+  "ros_board": [
+   30.4384,
+   30.4384,
+   30.4384,
+   30.4384,
+   30.4384
+  ]
+ },
+ "cruise_at_8_cores": {
+  "greedy_board": 0.896,
+  "cpsat_board": 1.0435,
+  "ros_board": 0.7885
+ },
+ "provenance": [
+  {
+   "series": "greedy_sched",
+   "cores": 4,
+   "value_ms": 25.9101,
+   "kind": "achieved service",
+   "source": "schedules/scheduled_m_greedy_shard_K4_predicted_greedy_profiled.json",
+   "sha256": "31a8a7e95aad396f48a59a728d4a20a7f410a67eb73c43327c33f8fbfb4808b9",
+   "instances": 5
+  },
+  {
+   "series": "greedy_sched",
+   "cores": 5,
+   "value_ms": 23.461,
+   "kind": "achieved service",
+   "source": "schedules/scheduled_m_greedy_shard_K5_predicted_greedy_profiled.json",
+   "sha256": "256f0fca2e6360e74330abe7f5733766413f0f06ad1866fc8ae2dacf5b94b7ad",
+   "instances": 5
+  },
+  {
+   "series": "greedy_sched",
+   "cores": 6,
+   "value_ms": 21.1129,
+   "kind": "achieved service",
+   "source": "schedules/scheduled_m_greedy_shard_K6_predicted_greedy_profiled.json",
+   "sha256": "3100427a6e2076b0460d8bfddaff8231cbf7cf69d80f8dbf554eac9927b6e38e",
+   "instances": 5
+  },
+  {
+   "series": "greedy_sched",
+   "cores": 7,
+   "value_ms": 20.349,
+   "kind": "achieved service",
+   "source": "schedules/scheduled_m_greedy_shard_K7_predicted_greedy_profiled.json",
+   "sha256": "a0d1a354bccf9bb68be287ffcdbe05c8b8612839543fa3a4fc720299f58fb7c3",
+   "instances": 5
+  },
+  {
+   "series": "greedy_sched",
+   "cores": 8,
+   "value_ms": 20.4496,
+   "kind": "achieved service",
+   "source": "schedules/scheduled_m_greedy_shard_K8_predicted_greedy_profiled.json",
+   "sha256": "1a19ad7378ff160c5afb227f6014acc094f5f8698ab5ec6c518f672093226155",
+   "instances": 5
+  },
+  {
+   "series": "greedy_board",
+   "cores": 4,
+   "value_ms": 35.1984,
+   "kind": "achieved service",
+   "source": "schedules/scheduled_m_greedy_shard_K4_board_greedy_profiled.json",
+   "sha256": "09d1b1ca3d02225a6ccaf4698922f3198a46ef06ab52d096787783f90b64214e",
+   "instances": 5
+  },
+  {
+   "series": "greedy_board",
+   "cores": 5,
+   "value_ms": 34.683,
+   "kind": "achieved service",
+   "source": "schedules/scheduled_m_greedy_shard_K5_board_greedy_profiled.json",
+   "sha256": "7c4bc1866de463e07c170d99536ff3e415e35bd36ae411bc379dce05e358a47b",
+   "instances": 5
+  },
+  {
+   "series": "greedy_board",
+   "cores": 6,
+   "value_ms": 30.6189,
+   "kind": "achieved service",
+   "source": "schedules/scheduled_m_greedy_shard_K6_board_greedy_profiled.json",
+   "sha256": "29f238ce6b0efc71d2b5557665d68014dec44d8bc3b0bf53b4c68ad2b86e318c",
+   "instances": 5
+  },
+  {
+   "series": "greedy_board",
+   "cores": 7,
+   "value_ms": 28.0727,
+   "kind": "achieved service",
+   "source": "schedules/scheduled_m_greedy_shard_K7_board_greedy_profiled.json",
+   "sha256": "71580239c93344205f73ac02dbe9e0e1f3dbb83746c61aee7a8d48ed9c0b7072",
+   "instances": 5
+  },
+  {
+   "series": "greedy_board",
+   "cores": 8,
+   "value_ms": 26.7843,
+   "kind": "achieved service",
+   "source": "schedules/scheduled_m_greedy_shard_K8_board_greedy_profiled.json",
+   "sha256": "04f69c961a2d72092b283f9e4906c53da135ffded5dbf22561527ff0862b7b60",
+   "instances": 5
+  },
+  {
+   "series": "cpsat_sched",
+   "cores": 4,
+   "value_ms": 19.0004,
+   "kind": "tightest deadline attempted and accepted; the schedule packs to it",
+   "deadline_ms": 19.0,
+   "solver_deadline_miss_count": 4,
+   "deadlines_attempted": [
+    19.0
+   ],
+   "tightest_attempted": true,
+   "source": "schedules/scheduled_fine_K4_D19.0_cpsat_profiled.json",
+   "sha256": "95a3b8a1be50ac736658fe5a0c51192e01dc3f22d160abcbc99cb473e9a02dc1",
+   "instances": 5
+  },
+  {
+   "series": "cpsat_sched",
+   "cores": 6,
+   "value_ms": 18.5004,
+   "kind": "tightest deadline attempted and accepted; the schedule packs to it",
+   "deadline_ms": 18.5,
+   "solver_deadline_miss_count": 4,
+   "deadlines_attempted": [
+    18.5,
+    18.75,
+    19.0
+   ],
+   "tightest_attempted": true,
+   "source": "schedules/scheduled_fine_K6_D18.5_cpsat_profiled.json",
+   "sha256": "56370b47d1165c123f0e50acafbb6c013d020be3750b843a87d5fd6a01fee509",
+   "instances": 5
+  },
+  {
+   "series": "cpsat_sched",
+   "cores": 8,
+   "value_ms": 18.25,
+   "kind": "tightest deadline attempted and accepted; the schedule packs to it",
+   "deadline_ms": 18.25,
+   "solver_deadline_miss_count": 3,
+   "deadlines_attempted": [
+    18.25,
+    18.5,
+    18.75,
+    19.0
+   ],
+   "tightest_attempted": true,
+   "source": "schedules/scheduled_fine_K8_D18.25_cpsat_profiled.json",
+   "sha256": "f2bca0a697fc07074795083f3888e8a24cbd7a97707d25c023980422d169ed7a",
+   "instances": 5
+  },
+  {
+   "series": "cpsat_sched",
+   "cores": 5,
+   "value_ms": 18.7504,
+   "kind": "interpolated between K4 and K6; no solve at this width",
+   "source": null
+  },
+  {
+   "series": "cpsat_sched",
+   "cores": 7,
+   "value_ms": 18.3752,
+   "kind": "interpolated between K6 and K8; no solve at this width",
+   "source": null
+  },
+  {
+   "series": "cpsat_board",
+   "cores": 4,
+   "value_ms": 24.4944,
+   "kind": "tightest deadline attempted and accepted; the schedule packs to it",
+   "deadline_ms": 24.5,
+   "solver_deadline_miss_count": 1,
+   "deadlines_attempted": [
+    24.5,
+    25.0,
+    27.0
+   ],
+   "tightest_attempted": true,
+   "source": "schedules/scheduled_cbp_K4_board_D24p5_cpsat_profiled.json",
+   "sha256": "902a14c4f02680ba45bc64e8c583088ccf14d18f9e25873282221e451b57f932",
+   "instances": 5
+  },
+  {
+   "series": "cpsat_board",
+   "cores": 5,
+   "value_ms": 24.0004,
+   "kind": "tightest deadline attempted and accepted; the schedule packs to it",
+   "deadline_ms": 24.0,
+   "solver_deadline_miss_count": 3,
+   "deadlines_attempted": [
+    24.0,
+    24.5,
+    25.0
+   ],
+   "tightest_attempted": true,
+   "source": "schedules/scheduled_cbp_K5_board_D24_cpsat_profiled.json",
+   "sha256": "dd2510496478ccbd0de5840844b7e3cced6af26d51ee7a892267b814f4f2a2f2",
+   "instances": 5
+  },
+  {
+   "series": "cpsat_board",
+   "cores": 6,
+   "value_ms": 23.2414,
+   "kind": "tightest deadline attempted and accepted; the schedule packs to it",
+   "deadline_ms": 23.25,
+   "solver_deadline_miss_count": 2,
+   "deadlines_attempted": [
+    23.25,
+    23.5,
+    23.75,
+    25.0
+   ],
+   "tightest_attempted": true,
+   "source": "schedules/scheduled_cbp_K6_board_D23p25_cpsat_profiled.json",
+   "sha256": "89a43ed55ae397500be9b5e5342a708908992c0ca66a0d3c0ca421f3f87d85c8",
+   "instances": 5
+  },
+  {
+   "series": "cpsat_board",
+   "cores": 7,
+   "value_ms": 23.2455,
+   "kind": "tightest deadline attempted and accepted; the schedule packs to it",
+   "deadline_ms": 23.25,
+   "solver_deadline_miss_count": 0,
+   "deadlines_attempted": [
+    23.25
+   ],
+   "tightest_attempted": true,
+   "source": "schedules/scheduled_cbp_K7_board_D23p25_cpsat_profiled.json",
+   "sha256": "eed9619727745f0cb858069ebadc74e4fce2aea4205f5e7648cdbe5913ac9c49",
+   "instances": 5
+  },
+  {
+   "series": "cpsat_board",
+   "cores": 8,
+   "value_ms": 22.9995,
+   "kind": "tightest deadline attempted and accepted; the schedule packs to it",
+   "deadline_ms": 23.0,
+   "solver_deadline_miss_count": 1,
+   "deadlines_attempted": [
+    23.0
+   ],
+   "tightest_attempted": true,
+   "source": "schedules/scheduled_cbp_K8_board_D23_cpsat_profiled.json",
+   "sha256": "8920848aabbc87ddbd1ed41df91f93fe8b9a5add557a0ec65e611c4b6e30f166",
+   "instances": 5
+  },
+  {
+   "series": "ros_sched",
+   "cores": 4,
+   "value_ms": 24.1509,
+   "kind": "achieved service of the one 1-hart pin; it does not shard, so it is the same at every width",
+   "source": "schedules/scheduled_ros_pin_predicted.json",
+   "sha256": "0799fbdc18cd20759888327698e7e50bbd752acc2ce3651db90c61e8ae88faf6",
+   "instances": 5
+  },
+  {
+   "series": "ros_sched",
+   "cores": 5,
+   "value_ms": 24.1509,
+   "kind": "achieved service of the one 1-hart pin; it does not shard, so it is the same at every width",
+   "source": "schedules/scheduled_ros_pin_predicted.json",
+   "sha256": "0799fbdc18cd20759888327698e7e50bbd752acc2ce3651db90c61e8ae88faf6",
+   "instances": 5
+  },
+  {
+   "series": "ros_sched",
+   "cores": 6,
+   "value_ms": 24.1509,
+   "kind": "achieved service of the one 1-hart pin; it does not shard, so it is the same at every width",
+   "source": "schedules/scheduled_ros_pin_predicted.json",
+   "sha256": "0799fbdc18cd20759888327698e7e50bbd752acc2ce3651db90c61e8ae88faf6",
+   "instances": 5
+  },
+  {
+   "series": "ros_sched",
+   "cores": 7,
+   "value_ms": 24.1509,
+   "kind": "achieved service of the one 1-hart pin; it does not shard, so it is the same at every width",
+   "source": "schedules/scheduled_ros_pin_predicted.json",
+   "sha256": "0799fbdc18cd20759888327698e7e50bbd752acc2ce3651db90c61e8ae88faf6",
+   "instances": 5
+  },
+  {
+   "series": "ros_sched",
+   "cores": 8,
+   "value_ms": 24.1509,
+   "kind": "achieved service of the one 1-hart pin; it does not shard, so it is the same at every width",
+   "source": "schedules/scheduled_ros_pin_predicted.json",
+   "sha256": "0799fbdc18cd20759888327698e7e50bbd752acc2ce3651db90c61e8ae88faf6",
+   "instances": 5
+  },
+  {
+   "series": "ros_board",
+   "cores": 4,
+   "value_ms": 30.4384,
+   "kind": "achieved service of the one 1-hart pin; it does not shard, so it is the same at every width",
+   "source": "schedules/scheduled_ros_pin_board.json",
+   "sha256": "8433daf6d6a1af19102cb73faf84f3013ca61694861393d3ad80b3af77f43ad7",
+   "instances": 5
+  },
+  {
+   "series": "ros_board",
+   "cores": 5,
+   "value_ms": 30.4384,
+   "kind": "achieved service of the one 1-hart pin; it does not shard, so it is the same at every width",
+   "source": "schedules/scheduled_ros_pin_board.json",
+   "sha256": "8433daf6d6a1af19102cb73faf84f3013ca61694861393d3ad80b3af77f43ad7",
+   "instances": 5
+  },
+  {
+   "series": "ros_board",
+   "cores": 6,
+   "value_ms": 30.4384,
+   "kind": "achieved service of the one 1-hart pin; it does not shard, so it is the same at every width",
+   "source": "schedules/scheduled_ros_pin_board.json",
+   "sha256": "8433daf6d6a1af19102cb73faf84f3013ca61694861393d3ad80b3af77f43ad7",
+   "instances": 5
+  },
+  {
+   "series": "ros_board",
+   "cores": 7,
+   "value_ms": 30.4384,
+   "kind": "achieved service of the one 1-hart pin; it does not shard, so it is the same at every width",
+   "source": "schedules/scheduled_ros_pin_board.json",
+   "sha256": "8433daf6d6a1af19102cb73faf84f3013ca61694861393d3ad80b3af77f43ad7",
+   "instances": 5
+  },
+  {
+   "series": "ros_board",
+   "cores": 8,
+   "value_ms": 30.4384,
+   "kind": "achieved service of the one 1-hart pin; it does not shard, so it is the same at every width",
+   "source": "schedules/scheduled_ros_pin_board.json",
+   "sha256": "8433daf6d6a1af19102cb73faf84f3013ca61694861393d3ad80b3af77f43ad7",
+   "instances": 5
+  }
+ ],
+ "unsourced_points": 2,
+ "inputs": {
+  "schedules/scheduled_m_greedy_shard_K4_predicted_greedy_profiled.json": "31a8a7e95aad396f48a59a728d4a20a7f410a67eb73c43327c33f8fbfb4808b9",
+  "schedules/scheduled_m_greedy_shard_K5_predicted_greedy_profiled.json": "256f0fca2e6360e74330abe7f5733766413f0f06ad1866fc8ae2dacf5b94b7ad",
+  "schedules/scheduled_m_greedy_shard_K6_predicted_greedy_profiled.json": "3100427a6e2076b0460d8bfddaff8231cbf7cf69d80f8dbf554eac9927b6e38e",
+  "schedules/scheduled_m_greedy_shard_K7_predicted_greedy_profiled.json": "a0d1a354bccf9bb68be287ffcdbe05c8b8612839543fa3a4fc720299f58fb7c3",
+  "schedules/scheduled_m_greedy_shard_K8_predicted_greedy_profiled.json": "1a19ad7378ff160c5afb227f6014acc094f5f8698ab5ec6c518f672093226155",
+  "schedules/scheduled_m_greedy_shard_K4_board_greedy_profiled.json": "09d1b1ca3d02225a6ccaf4698922f3198a46ef06ab52d096787783f90b64214e",
+  "schedules/scheduled_m_greedy_shard_K5_board_greedy_profiled.json": "7c4bc1866de463e07c170d99536ff3e415e35bd36ae411bc379dce05e358a47b",
+  "schedules/scheduled_m_greedy_shard_K6_board_greedy_profiled.json": "29f238ce6b0efc71d2b5557665d68014dec44d8bc3b0bf53b4c68ad2b86e318c",
+  "schedules/scheduled_m_greedy_shard_K7_board_greedy_profiled.json": "71580239c93344205f73ac02dbe9e0e1f3dbb83746c61aee7a8d48ed9c0b7072",
+  "schedules/scheduled_m_greedy_shard_K8_board_greedy_profiled.json": "04f69c961a2d72092b283f9e4906c53da135ffded5dbf22561527ff0862b7b60",
+  "schedules/scheduled_fine_K4_D19.0_cpsat_profiled.json": "95a3b8a1be50ac736658fe5a0c51192e01dc3f22d160abcbc99cb473e9a02dc1",
+  "schedules/scheduled_fine_K6_D18.5_cpsat_profiled.json": "56370b47d1165c123f0e50acafbb6c013d020be3750b843a87d5fd6a01fee509",
+  "schedules/scheduled_fine_K8_D18.25_cpsat_profiled.json": "f2bca0a697fc07074795083f3888e8a24cbd7a97707d25c023980422d169ed7a",
+  "schedules/scheduled_cbp_K4_board_D24p5_cpsat_profiled.json": "902a14c4f02680ba45bc64e8c583088ccf14d18f9e25873282221e451b57f932",
+  "schedules/scheduled_cbp_K5_board_D24_cpsat_profiled.json": "dd2510496478ccbd0de5840844b7e3cced6af26d51ee7a892267b814f4f2a2f2",
+  "schedules/scheduled_cbp_K6_board_D23p25_cpsat_profiled.json": "89a43ed55ae397500be9b5e5342a708908992c0ca66a0d3c0ca421f3f87d85c8",
+  "schedules/scheduled_cbp_K7_board_D23p25_cpsat_profiled.json": "eed9619727745f0cb858069ebadc74e4fce2aea4205f5e7648cdbe5913ac9c49",
+  "schedules/scheduled_cbp_K8_board_D23_cpsat_profiled.json": "8920848aabbc87ddbd1ed41df91f93fe8b9a5add557a0ec65e611c4b6e30f166",
+  "schedules/scheduled_ros_pin_predicted.json": "0799fbdc18cd20759888327698e7e50bbd752acc2ce3651db90c61e8ae88faf6",
+  "schedules/scheduled_ros_pin_board.json": "8433daf6d6a1af19102cb73faf84f3013ca61694861393d3ad80b3af77f43ad7"
+ }
+}

@@ -1,0 +1,64 @@
+{
+ "trace": "ModelBlaster/tmp/w5_board_run2/_gen/w5_shard_sched/w5_shard_sched_trace.csv",
+ "spec": "data/toplevel/scaling/w5_ffn_dronet_yolo.json",
+ "networks": [
+  {
+   "network": "dronet",
+   "window_ms": 7.0,
+   "n_instances": 5,
+   "inst0_exec_ms": 8.307,
+   "warm_median_exec_ms": 6.104,
+   "cold_over_warm": 1.36,
+   "instances_over_window_by_execution": 1,
+   "of_which_cold_start": 1,
+   "warm_execution_fits_window": true
+  },
+  {
+   "network": "ffn_block",
+   "window_ms": 10.0,
+   "n_instances": 5,
+   "inst0_exec_ms": 11.416,
+   "warm_median_exec_ms": 10.336,
+   "cold_over_warm": 1.1,
+   "instances_over_window_by_execution": 3,
+   "of_which_cold_start": 0,
+   "warm_execution_fits_window": false
+  },
+  {
+   "network": "fused_full",
+   "window_ms": 5.0,
+   "n_instances": 12,
+   "inst0_exec_ms": 12.055,
+   "warm_median_exec_ms": 4.466,
+   "cold_over_warm": 2.7,
+   "instances_over_window_by_execution": 1,
+   "of_which_cold_start": 1,
+   "warm_execution_fits_window": true
+  },
+  {
+   "network": "mlp_control",
+   "window_ms": 5.0,
+   "n_instances": 12,
+   "inst0_exec_ms": 0.09,
+   "warm_median_exec_ms": 0.08,
+   "cold_over_warm": 1.13,
+   "instances_over_window_by_execution": 0,
+   "of_which_cold_start": 0,
+   "warm_execution_fits_window": true
+  },
+  {
+   "network": "yolov8_nano_64x96",
+   "window_ms": 26.0,
+   "n_instances": 1,
+   "inst0_exec_ms": 61.92,
+   "warm_median_exec_ms": 61.92,
+   "cold_over_warm": 1.0,
+   "instances_over_window_by_execution": 1,
+   "of_which_cold_start": 0,
+   "warm_execution_fits_window": false
+  }
+ ],
+ "execution_bound_instances": 6,
+ "cold_start_instances": 2,
+ "means": "execution = sum of the instance's own dispatch cycles, queueing excluded; a scheduler cannot shrink it"
+}

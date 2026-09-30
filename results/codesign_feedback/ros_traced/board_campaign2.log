@@ -1,0 +1,75 @@
+=== 16:30:09 waiting for the pinned arms (replicate 1) to finish
+=== 16:38:32 board taken over
+=== 16:38:32 XPU-RT long, 45 Hz camera
+=== 16:38:32 long45_other_run1 ===
+  trace rows: 0  hart_acc: 0  policy: None  exit: 1  verify: []
+=== 16:38:34 long45_other_run2 ===
+  trace rows: 0  hart_acc: 0  policy: None  exit: 1  verify: []
+=== 16:38:37 long45_other_run3 ===
+  trace rows: 0  hart_acc: 0  policy: None  exit: 1  verify: []
+XPURT_LONG_DONE long45 16:38:40
+=== 16:38:40 XPU-RT long, 45 Hz, FIFO
+=== 16:38:40 long45_fifo80_run1 ===
+  trace rows: 0  hart_acc: 0  policy: None  exit: 1  verify: []
+XPURT_LONG_DONE long45 16:38:42
+=== 16:38:42 XPU-RT long, 25 Hz camera
+=== 16:38:42 long25_other_run1 ===
+  trace rows: 0  hart_acc: 0  policy: None  exit: 1  verify: []
+=== 16:38:45 long25_other_run2 ===
+  trace rows: 0  hart_acc: 0  policy: None  exit: 1  verify: []
+=== 16:38:47 long25_other_run3 ===
+  trace rows: 0  hart_acc: 0  policy: None  exit: 1  verify: []
+XPURT_LONG_DONE long25 16:38:50
+=== 16:38:50 XPU-RT single-frame coupled
+=== 16:38:50 coupled_other_run1 ===
+  trace rows: 0  hart_acc: 0  policy: None  exit: 0  verify: []
+=== 16:39:17 coupled_other_run2 ===
+  trace rows: 0  hart_acc: 0  policy: None  exit: 0  verify: []
+=== 16:39:24 coupled_other_run3 ===
+  trace rows: 0  hart_acc: 0  policy: None  exit: 0  verify: []
+XPURT_LONG_DONE coupled 16:39:33
+=== 16:39:33 starvation matrix
+ROS_TRACED tag=15_ship_r1 exec=single rate=15 released=300 goals=299 fires=903 gap_mean=22.16 gap_max=57.88
+ROS_TRACED tag=25_ship_r1 exec=single rate=25 released=380 goals=376 fires=384 gap_mean=52.15 gap_max=53.93
+ROS_TRACED tag=45_ship_r1 exec=single rate=45 released=379 goals=375 fires=382 gap_mean=52.34 gap_max=55.15
+MATRIX_DONE ship r1 16:41:02
+ROS_TRACED tag=15_spin_r1 exec=single rate=15 released=300 goals=299 fires=1570 gap_mean=12.74 gap_max=36.15
+ROS_TRACED tag=25_spin_r1 exec=single rate=25 released=500 goals=499 fires=1500 gap_mean=13.34 gap_max=29.69
+ROS_TRACED tag=45_spin_r1 exec=single rate=45 released=668 goals=664 fires=670 gap_mean=29.84 gap_max=33.84
+MATRIX_DONE spin r1 16:42:31
+ROS_TRACED tag=15_nproc_r1 exec=single rate=15 released=300 goals=299 fires=1570 gap_mean=12.74 gap_max=36.13
+ROS_TRACED tag=15_nproc_r1 exec=single rate=15 released=0 goals=0 fires=0 gap_mean=0.00 gap_max=0.00
+ROS_TRACED tag=25_nproc_r1 exec=single rate=25 released=500 goals=499 fires=1495 gap_mean=13.38 gap_max=30.91
+ROS_TRACED tag=25_nproc_r1 exec=single rate=25 released=0 goals=0 fires=0 gap_mean=0.00 gap_max=0.00
+ROS_TRACED tag=45_nproc_r1 exec=single rate=45 released=773 goals=769 fires=777 gap_mean=25.75 gap_max=30.88
+ROS_TRACED tag=45_nproc_r1 exec=single rate=45 released=0 goals=0 fires=0 gap_mean=0.00 gap_max=0.00
+MATRIX_DONE nproc r1 16:44:04
+ROS_TRACED tag=15_yproc_r1 exec=single rate=15 released=0 goals=299 fires=2001 gap_mean=10.00 gap_max=15.22
+ROS_TRACED tag=15_yproc_r1 exec=single rate=15 released=300 goals=0 fires=0 gap_mean=0.00 gap_max=0.00
+ROS_TRACED tag=25_yproc_r1 exec=single rate=25 released=0 goals=499 fires=2001 gap_mean=10.00 gap_max=10.68
+ROS_TRACED tag=25_yproc_r1 exec=single rate=25 released=500 goals=0 fires=0 gap_mean=0.00 gap_max=0.00
+ROS_TRACED tag=45_yproc_r1 exec=single rate=45 released=0 goals=784 fires=2002 gap_mean=10.00 gap_max=14.47
+ROS_TRACED tag=45_yproc_r1 exec=single rate=45 released=786 goals=0 fires=0 gap_mean=0.00 gap_max=0.00
+MATRIX_DONE yproc r1 16:45:36
+ROS_TRACED tag=15_p3_r1 exec=single rate=15 released=0 goals=287 fires=2001 gap_mean=10.00 gap_max=13.31
+ROS_TRACED tag=15_p3_r1 exec=single rate=15 released=0 goals=0 fires=0 gap_mean=0.00 gap_max=0.00
+ROS_TRACED tag=15_p3_r1 exec=single rate=15 released=300 goals=0 fires=0 gap_mean=0.00 gap_max=0.00
+ROS_TRACED tag=25_p3_r1 exec=single rate=25 released=0 goals=478 fires=2001 gap_mean=10.00 gap_max=13.04
+ROS_TRACED tag=25_p3_r1 exec=single rate=25 released=0 goals=0 fires=0 gap_mean=0.00 gap_max=0.00
+ROS_TRACED tag=25_p3_r1 exec=single rate=25 released=500 goals=0 fires=0 gap_mean=0.00 gap_max=0.00
+ROS_TRACED tag=45_p3_r1 exec=single rate=45 released=0 goals=746 fires=2001 gap_mean=10.00 gap_max=10.61
+ROS_TRACED tag=45_p3_r1 exec=single rate=45 released=0 goals=0 fires=0 gap_mean=0.00 gap_max=0.00
+ROS_TRACED tag=45_p3_r1 exec=single rate=45 released=786 goals=0 fires=0 gap_mean=0.00 gap_max=0.00
+MATRIX_DONE p3 r1 16:47:08
+ROS_TRACED tag=15_multi_r1 exec=multi rate=15 released=300 goals=299 fires=2000 gap_mean=10.00 gap_max=11.39
+ROS_TRACED tag=25_multi_r1 exec=multi rate=25 released=500 goals=409 fires=2000 gap_mean=10.00 gap_max=11.09
+ROS_TRACED tag=45_multi_r1 exec=multi rate=45 released=900 goals=410 fires=2000 gap_mean=10.00 gap_max=11.49
+MATRIX_DONE multi r1 16:48:37
+ROS_TRACED tag=15_smte_r1 exec=multi rate=15 released=300 goals=299 fires=2000 gap_mean=10.00 gap_max=14.71
+ROS_TRACED tag=25_smte_r1 exec=multi rate=25 released=499 goals=481 fires=2000 gap_mean=10.00 gap_max=15.20
+ROS_TRACED tag=45_smte_r1 exec=multi rate=45 released=900 goals=473 fires=2000 gap_mean=10.00 gap_max=14.73
+MATRIX_DONE smte r1 16:50:07
+=== 16:50:07 ROS replicates
+MATRIX_DONE ship r2 16:54:31
+MATRIX_DONE multi r2 16:58:59
+MATRIX_DONE spin r2 17:03:26

@@ -1,0 +1,7 @@
+[1/1] w4_ffn_dronet_sensor
+  -- greedy --
+    inner (AOT) search: levers ['shard:ffn_block']
+    A neither                                    misses=10  worst_late=  21.278 ms  makespan=  72.44 ms
+    B inner only (levers, deployed blind)        misses=4   worst_late=   1.367 ms  makespan=  58.60 ms
+    C outer only (measured re-solve, no levers)  misses=10  worst_late=  21.767 ms  makespan=  79.77 ms
+    D both                                       misses=8   worst_late=   2.716 ms  makespan=  59.73 ms

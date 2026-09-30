@@ -1,0 +1,13 @@
+=== 23:38:20 clamp + feasibility schedules/fig_p30ime_greedy.json
+schedules/fig_p30ime_greedy_clamped.json: 0 dispatch targets narrowed; width histogram {1: 2045}
+
+FEASIBLE: no double-booking, no dependency violation, no forward edge, every target on the board, every implementation available where it was placed.
+  feasibility rc=0
+=== 23:38:21 735 dispatch(es) on the IME: BACKENDS=rvv_x60,rvv_x60,ime_x60
+=== 23:38:22 board p30imer1
+  trace rows: 2045  hart_acc: 6  policy: SCHED_OTHER  exit: 0  verify: ['MODELBLASTER_VERIFY [yolov8_nano_64x96] === max_abs_err=0 max_rel_err=0 n=8316 instance=0 ready=1']
+=== 23:38:52 board p30imer2
+  trace rows: 2045  hart_acc: 6  policy: SCHED_OTHER  exit: 0  verify: ['MODELBLASTER_VERIFY [yolov8_nano_64x96] === max_abs_err=0 max_rel_err=0 n=8316 instance=0 ready=1']
+=== 23:39:23 board p30imer3
+  trace rows: 2045  hart_acc: 6  policy: SCHED_OTHER  exit: 0  verify: ['MODELBLASTER_VERIFY [yolov8_nano_64x96] === max_abs_err=0 max_rel_err=0 n=8316 instance=0 ready=1']
+=== 23:39:54 BOARD_PARTITIONED_DONE p30ime

@@ -1,0 +1,5 @@
+=== 15:07:54 wh_chain90_solve_500 greedy
+    greedy_periodic: makespan=1148.68 ms (all ops 1148.68 ms), periodic window misses=4343, converged
+=== 15:08:26 wh_chain90_solve_500 cpsat hard (limit 3000 s)
+  hard rc=0 cpsat status=FEASIBLE wall=3000.4s
+=== 15:58:55 STAGE2_DONE wh_chain90_solve_500

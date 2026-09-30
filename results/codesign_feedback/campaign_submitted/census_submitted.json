@@ -1,0 +1,35 @@
+{
+ "csv": "results/codesign_feedback/campaign_submitted/campaign.csv",
+ "xpu_trace": "xpu_a_cpsat_hard.csv",
+ "ros_trace": "ros_vanilla_c5045.csv",
+ "pairs": 60,
+ "xpu_success": [
+  9,
+  59
+ ],
+ "ros_success": [
+  0,
+  35
+ ],
+ "xpu_mean_gates": 2.033,
+ "ros_mean_gates": 0.233,
+ "separation_pts": [
+  15.3,
+  3.1,
+  26.5
+ ],
+ "gate_diff": [
+  1.8,
+  1.483,
+  2.133
+ ],
+ "bootstrap": {
+  "resamples": 4000,
+  "seed": 11
+ },
+ "per_cell_gates": {
+  "xpu_more": 51,
+  "tie": 9,
+  "xpu_fewer": 0
+ }
+}

@@ -1,0 +1,61 @@
+=== 15:31:20 pairs_ac36/xpu_s1000 ===
+  pairs_ac36/xpu_s1000 [ep00] outcome=crash     gates=3/4 steps=996
+=== 15:41:08 pairs_ac36/ros_s1000 ===
+  pairs_ac36/ros_s1000 [ep00] outcome=crash     gates=1/4 steps=449
+=== 15:47:57 pairs_ns4/ros_s1000 ===
+  pairs_ns4/ros_s1000 [ep00] outcome=crash     gates=2/4 steps=695
+=== 15:56:09 pairs_ac36/xpu_s1001: already on disk ===
+=== 15:56:09 pairs_ac36/ros_s1001: already on disk ===
+=== 15:56:09 pairs_ns4/ros_s1001: already on disk ===
+=== 15:56:09 pairs_ac36/xpu_s1002 ===
+  pairs_ac36/xpu_s1002 [ep00] outcome=crash     gates=2/4 steps=588
+=== 16:03:45 pairs_ac36/ros_s1002 ===
+  pairs_ac36/ros_s1002 [ep00] outcome=crash     gates=2/4 steps=607
+=== 16:11:51 pairs_ns4/ros_s1002 ===
+  pairs_ns4/ros_s1002 [ep00] outcome=crash     gates=1/4 steps=270
+=== 16:19:13 pairs_ac36/xpu_s1003: already on disk ===
+=== 16:19:13 pairs_ac36/ros_s1003: already on disk ===
+=== 16:19:13 pairs_ns4/ros_s1003: already on disk ===
+=== 16:19:13 pairs_ac36/xpu_s1004 ===
+  pairs_ac36/xpu_s1004 [ep00] outcome=crash     gates=2/4 steps=760
+=== 16:30:51 pairs_ac36/ros_s1004 ===
+  pairs_ac36/ros_s1004 [ep00] outcome=crash     gates=1/4 steps=487
+=== 16:40:05 pairs_ns4/ros_s1004 ===
+  pairs_ns4/ros_s1004 [ep00] outcome=crash     gates=1/4 steps=484
+=== 16:47:10 pairs_ac36/xpu_s1005 ===
+  pairs_ac36/xpu_s1005 [ep00] outcome=crash     gates=2/4 steps=696
+=== 16:55:17 pairs_ac36/ros_s1005 ===
+  pairs_ac36/ros_s1005 [ep00] outcome=crash     gates=1/4 steps=229
+=== 17:00:55 pairs_ns4/ros_s1005 ===
+  pairs_ns4/ros_s1005 [ep00] outcome=crash     gates=2/4 steps=712
+=== 17:09:08 pairs_ac36/xpu_s1006 ===
+  pairs_ac36/xpu_s1006 [ep00] outcome=success   gates=4/4 steps=1159
+=== 17:20:13 pairs_ac36/ros_s1006 ===
+  pairs_ac36/ros_s1006 [ep00] outcome=crash     gates=1/4 steps=439
+=== 17:26:58 pairs_ns4/ros_s1006 ===
+  pairs_ns4/ros_s1006 [ep00] outcome=crash     gates=2/4 steps=869
+=== 17:35:59 pairs_ac36/xpu_s1007: already on disk ===
+=== 17:35:59 pairs_ac36/ros_s1007: already on disk ===
+=== 17:35:59 pairs_ns4/ros_s1007: already on disk ===
+=== 17:35:59 pairs_ac36/xpu_s1008 ===
+  pairs_ac36/xpu_s1008 [ep00] outcome=crash     gates=2/4 steps=469
+=== 17:43:22 pairs_ac36/ros_s1008 ===
+  pairs_ac36/ros_s1008 [ep00] outcome=crash     gates=1/4 steps=401
+=== 17:49:55 pairs_ns4/ros_s1008 ===
+  pairs_ns4/ros_s1008 [ep00] outcome=crash     gates=1/4 steps=402
+=== 17:56:33 pairs_ac36/xpu_s1009: already on disk ===
+=== 17:56:33 pairs_ac36/ros_s1009: already on disk ===
+=== 17:56:33 pairs_ns4/ros_s1009: already on disk ===
+=== 17:56:33 pairs_ac36/xpu_s1010 ===
+  pairs_ac36/xpu_s1010 [ep00] outcome=crash     gates=2/4 steps=677
+=== 18:04:32 pairs_ac36/ros_s1010 ===
+  pairs_ac36/ros_s1010 [ep00] outcome=crash     gates=1/4 steps=547
+=== 18:11:49 pairs_ns4/ros_s1010 ===
+  pairs_ns4/ros_s1010 [ep00] outcome=crash     gates=1/4 steps=388
+=== 18:18:16 pairs_ac36/xpu_s1011 ===
+  pairs_ac36/xpu_s1011 [ep00] outcome=crash     gates=2/4 steps=749
+=== 18:26:39 pairs_ac36/ros_s1011 ===
+  pairs_ac36/ros_s1011 [ep00] outcome=crash     gates=1/4 steps=280
+=== 18:32:30 pairs_ns4/ros_s1011 ===
+  pairs_ns4/ros_s1011 [ep00] outcome=crash     gates=1/4 steps=474
+=== 18:39:25 DISPLAY_ALL12_AC36_DONE ===

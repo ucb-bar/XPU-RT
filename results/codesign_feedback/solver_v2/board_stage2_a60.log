@@ -1,0 +1,28 @@
+=== 02:31:51 clamp + feasibility greedy
+schedules/fig_a60_greedy_clamped.json: 1319 dispatch targets narrowed; width histogram {1: 2930, 2: 480, 4: 330}
+
+FEASIBLE: no double-booking, no dependency violation, no forward edge, every target on the board, every implementation available where it was placed.
+  feasibility rc=0
+=== 02:31:52 clamp + feasibility cpsat_hard
+schedules/fig_a60_cpsat_hard_clamped.json: 665 dispatch targets narrowed; width histogram {1: 3740}
+
+FEASIBLE: no double-booking, no dependency violation, no forward edge, every target on the board, every implementation available where it was placed.
+  feasibility rc=0
+=== 02:31:53 no schedules/fig_a60_cpsat_soft.json
+=== 02:31:54 board a60_greedy run 1
+  re-pulled the board's stdout: 3740 of 3740 rows (pull 1)
+  trace rows: 3740  hart_acc: 8  policy: SCHED_OTHER  exit: 0  verify: ['MODELBLASTER_VERIFY [yolov8_nano_64x96] === max_abs_err=0 max_rel_err=0 n=8316 instance=0 ready=1']
+=== 02:32:18 board a60_cpsat_hard run 1
+  trace rows: 3740  hart_acc: 8  policy: SCHED_OTHER  exit: 0  verify: ['MODELBLASTER_VERIFY [yolov8_nano_64x96] === max_abs_err=0 max_rel_err=0 n=8316 instance=0 ready=1']
+=== 02:32:40 board a60_greedy run 2
+  trace rows: 3740  hart_acc: 8  policy: SCHED_OTHER  exit: 0  verify: ['MODELBLASTER_VERIFY [yolov8_nano_64x96] === max_abs_err=0 max_rel_err=0 n=8316 instance=0 ready=1']
+=== 02:33:02 board a60_cpsat_hard run 2
+  trace rows: 3740  hart_acc: 8  policy: SCHED_OTHER  exit: 0  verify: ['MODELBLASTER_VERIFY [yolov8_nano_64x96] === max_abs_err=0 max_rel_err=0 n=8316 instance=0 ready=1']
+=== 02:33:24 board a60_greedy run 3
+  trace rows: 3740  hart_acc: 8  policy: SCHED_OTHER  exit: 0  verify: ['MODELBLASTER_VERIFY [yolov8_nano_64x96] === max_abs_err=0 max_rel_err=0 n=8316 instance=0 ready=1']
+=== 02:33:47 board a60_cpsat_hard run 3
+  re-pulled the board's stdout: -1 of 3740 rows (pull 1)
+  re-pulled the board's stdout: -1 of 3740 rows (pull 2)
+  re-pulled the board's stdout: 3740 of 3740 rows (pull 3)
+  trace rows: 3740  hart_acc: 8  policy: SCHED_OTHER  exit: 0  verify: ['MODELBLASTER_VERIFY [yolov8_nano_64x96] === max_abs_err=0 max_rel_err=0 n=8316 instance=0 ready=1']
+=== 02:34:16 BOARD_STAGE2_DONE a60

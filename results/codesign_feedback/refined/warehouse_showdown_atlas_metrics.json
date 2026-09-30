@@ -1,0 +1,1389 @@
+{
+ "figure": "/scratch/agustin/xpurt-dev-sync/results/codesign_feedback/refined/warehouse_showdown_atlas.png",
+ "written": "2026-09-15T16:50:36",
+ "A": {
+  "flights": 8100,
+  "campaigns": 17,
+  "ros_board_runs": 319,
+  "xpu_board_runs": 249,
+  "solved_tables": 64,
+  "feedback_studies": 6,
+  "per_campaign": {
+   "campaign_percep": {
+    "xpu_crash": 1518,
+    "xpu_done": 186,
+    "ros_crash": 2121,
+    "ros_done": 291
+   },
+   "campaign_env": {
+    "xpu_crash": 305,
+    "ros_crash": 309,
+    "xpu_done": 55,
+    "ros_done": 51
+   },
+   "campaign_break": {
+    "xpu_done": 93,
+    "xpu_crash": 195,
+    "ros_crash": 306,
+    "ros_done": 42
+   },
+   "campaign_v2": {
+    "ros_crash": 332,
+    "ros_done": 40,
+    "xpu_crash": 157,
+    "xpu_done": 71
+   },
+   "campaign_rich": {
+    "xpu_crash": 152,
+    "xpu_done": 28,
+    "ros_crash": 171,
+    "ros_done": 9
+   },
+   "hil_ablation": {
+    "sim_done": 58,
+    "sim_crash": 242
+   },
+   "gain_controlled": {
+    "sim_crash": 263,
+    "sim_done": 25
+   },
+   "campaign_v1": {
+    "sim_crash": 135,
+    "sim_done": 21
+   },
+   "campaign_cross": {
+    "xpu_crash": 60,
+    "xpu_done": 12,
+    "ros_crash": 62,
+    "ros_done": 10
+   },
+   "campaign_courseC": {
+    "xpu_crash": 54,
+    "xpu_done": 6,
+    "ros_crash": 50,
+    "ros_done": 10
+   },
+   "campaign_tallcal": {
+    "xpu_crash": 53,
+    "xpu_done": 7,
+    "ros_crash": 60
+   },
+   "campaign_tallnet": {
+    "xpu_crash": 59,
+    "xpu_done": 1,
+    "ros_crash": 60
+   },
+   "hil_ablation_courseB": {
+    "sim_done": 22,
+    "sim_crash": 98
+   },
+   "campaign_qos1": {
+    "ros_crash": 72,
+    "ros_done": 12
+   },
+   "campaign_seeds24": {
+    "xpu_crash": 30,
+    "xpu_done": 6,
+    "ros_crash": 35,
+    "ros_done": 1
+   },
+   "campaign_walk": {
+    "xpu_crash": 33,
+    "xpu_done": 3,
+    "ros_crash": 30,
+    "ros_done": 6
+   },
+   "campaign_v2_courseB": {
+    "xpu_done": 17,
+    "xpu_crash": 19,
+    "ros_crash": 32,
+    "ros_done": 4
+   }
+  }
+ },
+ "B": {
+  "xpu_gates": 4,
+  "ros_gates": 1,
+  "hit": "crate",
+  "backdrop": "median of 7 overhead frames (t \u2265 2 s)"
+ },
+ "C": {
+  "XPU-RT \u00b7 CP-SAT": {
+   "30": {
+    "lat": 55.156,
+    "deliv": 23.278,
+    "late": 0,
+    "checked": 42,
+    "gap": 9.982,
+    "n": 3,
+    "tags": [
+     "a30cpsat_hardr1",
+     "a30cpsat_hardr2",
+     "a30cpsat_hardr3"
+    ],
+    "cam": 30.0
+   },
+   "45": {
+    "lat": 56.323,
+    "deliv": 40.897,
+    "late": 0,
+    "checked": 132,
+    "gap": 10.0,
+    "n": 3,
+    "tags": [
+     "acpsat_hardr1",
+     "acpsat_hardr2",
+     "acpsat_hardr3"
+    ],
+    "cam": 45.0
+   },
+   "60": {
+    "lat": 58.783,
+    "deliv": 46.951,
+    "late": 0,
+    "checked": 87,
+    "gap": 10.055,
+    "n": 3,
+    "tags": [
+     "a60cpsat_hardr1",
+     "a60cpsat_hardr2",
+     "a60cpsat_hardr3"
+    ],
+    "cam": 59.999
+   },
+   "90": {
+    "lat": 55.642,
+    "deliv": 72.438,
+    "late": 0,
+    "checked": 132,
+    "gap": 10.0,
+    "n": 3,
+    "tags": [
+     "a90cpsat_hardr1",
+     "a90cpsat_hardr2",
+     "a90cpsat_hardr3"
+    ],
+    "cam": 90.001
+   },
+   "120": {
+    "lat": 59.792,
+    "deliv": 66.187,
+    "late": 0,
+    "checked": 69,
+    "gap": 9.996,
+    "n": 3,
+    "tags": [
+     "a120hcpsat_hardr1",
+     "a120hcpsat_hardr2",
+     "a120hcpsat_hardr3"
+    ],
+    "cam": 120.005
+   }
+  },
+  "XPU-RT \u00b7 greedy": {
+   "30": {
+    "lat": 70.088,
+    "deliv": 22.871,
+    "late": 0,
+    "checked": 42,
+    "gap": 9.997,
+    "n": 3,
+    "tags": [
+     "a30greedyr1",
+     "a30greedyr2",
+     "a30greedyr3"
+    ],
+    "cam": 30.0
+   },
+   "45": {
+    "lat": 747.959,
+    "deliv": 31.016,
+    "late": 132,
+    "checked": 132,
+    "gap": 13.249,
+    "n": 3,
+    "tags": [
+     "agreedyr1",
+     "agreedyr2",
+     "agreedyr3"
+    ],
+    "cam": 45.0
+   },
+   "60": {
+    "lat": 583.533,
+    "deliv": 27.55,
+    "late": 87,
+    "checked": 87,
+    "gap": 17.476,
+    "n": 3,
+    "tags": [
+     "a60greedyr1",
+     "a60greedyr2",
+     "a60greedyr3"
+    ],
+    "cam": 59.999
+   },
+   "90": {
+    "lat": 947.452,
+    "deliv": 29.036,
+    "late": 132,
+    "checked": 132,
+    "gap": 25.669,
+    "n": 3,
+    "tags": [
+     "a90greedyr1",
+     "a90greedyr2",
+     "a90greedyr3"
+    ],
+    "cam": 90.001
+   },
+   "120": {
+    "lat": 566.298,
+    "deliv": 18.594,
+    "late": 69,
+    "checked": 69,
+    "gap": 35.759,
+    "n": 3,
+    "tags": [
+     "a120hgreedyr1",
+     "a120hgreedyr2",
+     "a120hgreedyr3"
+    ],
+    "cam": 120.005
+   }
+  },
+  "ROS 2 vanilla (4-hart YOLO)": {
+   "15": {
+    "lat": 31.035,
+    "deliv": 14.98,
+    "deliv_full": 12.733,
+    "gap": 66.667,
+    "n": 3,
+    "tags": [
+     "15_vanilla4_r1",
+     "15_vanilla4_r2",
+     "15_vanilla4_r3"
+    ],
+    "cam": 15
+   },
+   "25": {
+    "lat": 30.989,
+    "deliv": 24.941,
+    "deliv_full": 21.2,
+    "gap": 39.999,
+    "n": 3,
+    "tags": [
+     "25_vanilla4_r1",
+     "25_vanilla4_r2",
+     "25_vanilla4_r3"
+    ],
+    "cam": 25
+   },
+   "30": {
+    "lat": 31.093,
+    "deliv": 29.941,
+    "deliv_full": 25.45,
+    "gap": 33.332,
+    "n": 3,
+    "tags": [
+     "30_vanilla4_r1",
+     "30_vanilla4_r2",
+     "30_vanilla4_r3"
+    ],
+    "cam": 30
+   },
+   "45": {
+    "lat": 242.333,
+    "deliv": 38.373,
+    "deliv_full": 32.617,
+    "gap": 25.681,
+    "n": 3,
+    "tags": [
+     "45_vanilla4_r1",
+     "45_vanilla4_r2",
+     "45_vanilla4_r3"
+    ],
+    "cam": 45
+   },
+   "60": {
+    "lat": 189.391,
+    "deliv": 38.549,
+    "deliv_full": 32.767,
+    "gap": 25.662,
+    "n": 3,
+    "tags": [
+     "60_vanilla4_r1",
+     "60_vanilla4_r2",
+     "60_vanilla4_r3"
+    ],
+    "cam": 60
+   },
+   "90": {
+    "lat": 136.863,
+    "deliv": 38.725,
+    "deliv_full": 32.917,
+    "gap": 25.636,
+    "n": 3,
+    "tags": [
+     "90_vanilla4_r1",
+     "90_vanilla4_r2",
+     "90_vanilla4_r3"
+    ],
+    "cam": 90
+   }
+  },
+  "ROS 2 on all 8 cores": {
+   "45": {
+    "lat": 454.637,
+    "deliv": 40.765,
+    "deliv_full": 34.65,
+    "gap": 16.639,
+    "n": 3,
+    "tags": [
+     "45_vanilla4x2_r1",
+     "45_vanilla4x2_r2",
+     "45_vanilla4x2_r3"
+    ],
+    "cam": 45
+   },
+   "60": {
+    "lat": 359.821,
+    "deliv": 45.549,
+    "deliv_full": 38.717,
+    "gap": 15.964,
+    "n": 3,
+    "tags": [
+     "60_vanilla4x2_r1",
+     "60_vanilla4x2_r2",
+     "60_vanilla4x2_r3"
+    ],
+    "cam": 60
+   },
+   "90": {
+    "lat": 254.263,
+    "deliv": 50.961,
+    "deliv_full": 43.317,
+    "gap": 16.264,
+    "n": 3,
+    "tags": [
+     "90_vanilla4x2_r1",
+     "90_vanilla4x2_r2",
+     "90_vanilla4x2_r3"
+    ],
+    "cam": 90
+   }
+  },
+  "ROS 2 vanilla, serial YOLO": {
+   "15": {
+    "lat": 53.82,
+    "deliv": 14.961,
+    "deliv_full": 12.717,
+    "gap": 66.665,
+    "n": 3,
+    "tags": [
+     "15_vanilla_r1",
+     "15_vanilla_r2",
+     "15_vanilla_r3"
+    ],
+    "cam": 15
+   },
+   "25": {
+    "lat": 433.292,
+    "deliv": 20.216,
+    "deliv_full": 17.183,
+    "gap": 48.211,
+    "n": 3,
+    "tags": [
+     "25_vanilla_r1",
+     "25_vanilla_r2",
+     "25_vanilla_r3"
+    ],
+    "cam": 25
+   },
+   "30": {
+    "lat": 370.549,
+    "deliv": 20.216,
+    "deliv_full": 17.183,
+    "gap": 48.391,
+    "n": 3,
+    "tags": [
+     "30_vanilla_r1",
+     "30_vanilla_r2",
+     "30_vanilla_r3"
+    ],
+    "cam": 30
+   },
+   "45": {
+    "lat": 264.773,
+    "deliv": 20.392,
+    "deliv_full": 17.333,
+    "gap": 48.241,
+    "n": 3,
+    "tags": [
+     "45_vanilla_r1",
+     "45_vanilla_r2",
+     "45_vanilla_r3"
+    ],
+    "cam": 45
+   },
+   "60": {
+    "lat": 212.052,
+    "deliv": 20.412,
+    "deliv_full": 17.35,
+    "gap": 48.391,
+    "n": 3,
+    "tags": [
+     "60_vanilla_r1",
+     "60_vanilla_r2",
+     "60_vanilla_r3"
+    ],
+    "cam": 60
+   },
+   "90": {
+    "lat": 159.248,
+    "deliv": 20.471,
+    "deliv_full": 17.4,
+    "gap": 48.375,
+    "n": 3,
+    "tags": [
+     "90_vanilla_r1",
+     "90_vanilla_r2",
+     "90_vanilla_r3"
+    ],
+    "cam": 90
+   }
+  },
+  "ROS 2 hand-tuned (pinned)": {
+   "10": {
+    "lat": 30.533,
+    "deliv": 10.0,
+    "deliv_full": 8.5,
+    "gap": 10.0,
+    "n": 1,
+    "tags": [
+     "10_p3_r1"
+    ],
+    "cam": 10
+   },
+   "12": {
+    "lat": 30.506,
+    "deliv": 12.0,
+    "deliv_full": 10.2,
+    "gap": 10.0,
+    "n": 1,
+    "tags": [
+     "12_p3_r1"
+    ],
+    "cam": 12
+   },
+   "15": {
+    "lat": 30.506,
+    "deliv": 14.941,
+    "deliv_full": 12.7,
+    "gap": 10.0,
+    "n": 3,
+    "tags": [
+     "15_p3_r1",
+     "15_p3_r2",
+     "15_p3_r3"
+    ],
+    "cam": 15
+   },
+   "20": {
+    "lat": 30.478,
+    "deliv": 19.941,
+    "deliv_full": 16.95,
+    "gap": 10.0,
+    "n": 1,
+    "tags": [
+     "20_p3_r1"
+    ],
+    "cam": 20
+   },
+   "25": {
+    "lat": 30.47,
+    "deliv": 24.961,
+    "deliv_full": 21.217,
+    "gap": 10.0,
+    "n": 3,
+    "tags": [
+     "25_p3_r1",
+     "25_p3_r2",
+     "25_p3_r3"
+    ],
+    "cam": 25
+   },
+   "30": {
+    "lat": 30.398,
+    "deliv": 29.941,
+    "deliv_full": 25.45,
+    "gap": 10.0,
+    "n": 1,
+    "tags": [
+     "30_p3_r1"
+    ],
+    "cam": 30
+   },
+   "45": {
+    "lat": 55.823,
+    "deliv": 38.863,
+    "deliv_full": 33.033,
+    "gap": 10.0,
+    "n": 3,
+    "tags": [
+     "45_p3_r1",
+     "45_p3_r2",
+     "45_p3_r3"
+    ],
+    "cam": 45
+   },
+   "5": {
+    "lat": 30.441,
+    "deliv": 5.0,
+    "deliv_full": 4.25,
+    "gap": 10.0,
+    "n": 1,
+    "tags": [
+     "5_p3_r1"
+    ],
+    "cam": 5
+   },
+   "60": {
+    "lat": 55.849,
+    "deliv": 39.118,
+    "deliv_full": 33.25,
+    "gap": 10.0,
+    "n": 1,
+    "tags": [
+     "60_p3_r1"
+    ],
+    "cam": 60
+   },
+   "75": {
+    "lat": 56.079,
+    "deliv": 38.941,
+    "deliv_full": 33.1,
+    "gap": 10.0,
+    "n": 1,
+    "tags": [
+     "75_p3_r1"
+    ],
+    "cam": 75
+   },
+   "8": {
+    "lat": 30.463,
+    "deliv": 8.0,
+    "deliv_full": 6.8,
+    "gap": 10.0,
+    "n": 1,
+    "tags": [
+     "8_p3_r1"
+    ],
+    "cam": 8
+   },
+   "90": {
+    "lat": 56.194,
+    "deliv": 38.824,
+    "deliv_full": 33.0,
+    "gap": 10.0,
+    "n": 1,
+    "tags": [
+     "90_p3_r1"
+    ],
+    "cam": 90
+   }
+  }
+ },
+ "D": {
+  "vanilla serial@45": {
+   "lat": 264.8,
+   "deliv": 20.4
+  },
+  "vanilla 4-hart@45": {
+   "lat": 242.3,
+   "deliv": 38.4
+  },
+  "+ control timer@45": {
+   "lat": 242.5,
+   "deliv": 38.3
+  },
+  "+ QoS 1@45": {
+   "lat": 42.0,
+   "deliv": 39.0
+  },
+  "2 YOLO nodes@45": {
+   "lat": 454.6,
+   "deliv": 40.8
+  },
+  "pinned 3 proc.@45": {
+   "lat": 55.8,
+   "deliv": 38.9
+  },
+  "pinned + QoS 1@45": {
+   "lat": 31.1,
+   "deliv": 38.4
+  },
+  "XPU-RT CP-SAT@45": {
+   "lat": 56.3,
+   "deliv": 40.9
+  },
+  "vanilla serial@90": {
+   "lat": 159.2,
+   "deliv": 20.5
+  },
+  "vanilla 4-hart@90": {
+   "lat": 136.9,
+   "deliv": 38.7
+  },
+  "+ control timer@90": {
+   "lat": 136.6,
+   "deliv": 38.9
+  },
+  "+ QoS 1@90": {
+   "lat": 36.7,
+   "deliv": 39.2
+  },
+  "2 YOLO nodes@90": {
+   "lat": 254.3,
+   "deliv": 51.0
+  },
+  "pinned 3 proc.@90": {
+   "lat": 56.2,
+   "deliv": 38.8
+  },
+  "XPU-RT CP-SAT@90": {
+   "lat": 55.6,
+   "deliv": 72.4
+  }
+ },
+ "E": {
+  "XPU-RT \u00b7 CP-SAT": {
+   "parts_ms": [
+    0.0,
+    45.3,
+    4.7,
+    4.7
+   ],
+   "sum_of_part_medians_ms": 54.7,
+   "chain_median_ms": 56.8,
+   "frames": 126
+  },
+  "XPU-RT \u00b7 greedy": {
+   "parts_ms": [
+    0.0,
+    740.3,
+    6.2,
+    0.1
+   ],
+   "sum_of_part_medians_ms": 746.7,
+   "chain_median_ms": 748.0,
+   "frames": 123
+  },
+  "ROS 2 hand-pinned": {
+   "parts_ms": [
+    25.5,
+    24.6,
+    4.9,
+    5.0
+   ],
+   "sum_of_part_medians_ms": 60.0,
+   "chain_median_ms": 57.9,
+   "frames": 2202
+  },
+  "ROS 2 vanilla, 4-hart YOLO": {
+   "parts_ms": [
+    210.7,
+    25.1,
+    4.8,
+    0.8
+   ],
+   "sum_of_part_medians_ms": 241.4,
+   "chain_median_ms": 241.4,
+   "frames": 2230
+  },
+  "ROS 2 two YOLO nodes, 8 cores": {
+   "parts_ms": [
+    0.8,
+    439.9,
+    5.4,
+    0.9
+   ],
+   "sum_of_part_medians_ms": 446.9,
+   "chain_median_ms": 447.8,
+   "frames": 1291
+  },
+  "ROS 2 vanilla, serial YOLO": {
+   "parts_ms": [
+    211.3,
+    47.7,
+    4.8,
+    0.8
+   ],
+   "sum_of_part_medians_ms": 264.6,
+   "chain_median_ms": 264.5,
+   "frames": 1184
+  }
+ },
+ "F": {
+  "people 1.7 m, gain per rate (cadence only)": {
+   "ros_arm": "vanilla, its own gain",
+   "xpu": [
+    19,
+    36
+   ],
+   "ros": [
+    0,
+    36
+   ],
+   "delta": 0.528,
+   "ci": [
+    0.343,
+    0.68
+   ],
+   "speeds": [
+    1.0,
+    1.2,
+    1.4
+   ]
+  },
+  "people 1.7 m, cadence + latency": {
+   "ros_arm": "vanilla",
+   "xpu": [
+    30,
+    72
+   ],
+   "ros": [
+    3,
+    72
+   ],
+   "delta": 0.375,
+   "ci": [
+    0.245,
+    0.493
+   ],
+   "speeds": [
+    1.0,
+    1.2,
+    1.4
+   ]
+  },
+  "heavier stack (5 networks), 90 Hz camera": {
+   "ros_arm": "vanilla + stack",
+   "xpu": [
+    10,
+    36
+   ],
+   "ros": [
+    0,
+    36
+   ],
+   "delta": 0.278,
+   "ci": [
+    0.124,
+    0.44
+   ],
+   "speeds": [
+    1.0,
+    1.2,
+    1.4
+   ]
+  },
+  "heavier stack (5 networks), 45 Hz camera": {
+   "ros_arm": "vanilla + stack",
+   "xpu": [
+    10,
+    36
+   ],
+   "ros": [
+    0,
+    36
+   ],
+   "delta": 0.278,
+   "ci": [
+    0.124,
+    0.44
+   ],
+   "speeds": [
+    1.0,
+    1.2,
+    1.4
+   ]
+  },
+  "cadence only, no latency, course A": {
+   "ros_arm": "vanilla",
+   "xpu": [
+    11,
+    36
+   ],
+   "ros": [
+    6,
+    36
+   ],
+   "delta": 0.139,
+   "ci": [
+    -0.058,
+    0.324
+   ],
+   "speeds": [
+    1.0,
+    1.2,
+    1.4
+   ]
+  },
+  "course A \u00b7 density 0.20": {
+   "ros_arm": "vanilla, control timer",
+   "xpu": [
+    8,
+    36
+   ],
+   "ros": [
+    3,
+    36
+   ],
+   "delta": 0.139,
+   "ci": [
+    -0.032,
+    0.307
+   ],
+   "speeds": [
+    1.0,
+    1.2,
+    1.4
+   ]
+  },
+  "fastest camera each sustains: 120 Hz vs 90 Hz": {
+   "ros_arm": "vanilla, control timer, 90 Hz",
+   "xpu": [
+    7,
+    36
+   ],
+   "ros": [
+    2,
+    36
+   ],
+   "delta": 0.139,
+   "ci": [
+    -0.02,
+    0.3
+   ],
+   "speeds": [
+    1.0,
+    1.2,
+    1.4
+   ]
+  },
+  "course B (cadence only)": {
+   "ros_arm": "vanilla",
+   "xpu": [
+    7,
+    36
+   ],
+   "ros": [
+    2,
+    36
+   ],
+   "delta": 0.139,
+   "ci": [
+    -0.02,
+    0.3
+   ],
+   "speeds": [
+    1.0,
+    1.2,
+    1.4
+   ]
+  },
+  "people crossing the aisle": {
+   "ros_arm": "vanilla",
+   "xpu": [
+    5,
+    36
+   ],
+   "ros": [
+    1,
+    36
+   ],
+   "delta": 0.111,
+   "ci": [
+    -0.027,
+    0.261
+   ],
+   "speeds": [
+    1.0,
+    1.2,
+    1.4
+   ]
+  },
+  "ROS 2 on all 8 cores (two YOLO nodes)": {
+   "ros_arm": "two YOLO nodes, 8 cores (455 ms)",
+   "xpu": [
+    5,
+    36
+   ],
+   "ros": [
+    1,
+    36
+   ],
+   "delta": 0.111,
+   "ci": [
+    -0.027,
+    0.261
+   ],
+   "speeds": [
+    1.0,
+    1.2,
+    1.4
+   ]
+  },
+  "ROS 2 multi-threaded executor, 8 threads": {
+   "ros_arm": "multi-threaded executor (265 ms)",
+   "xpu": [
+    5,
+    36
+   ],
+   "ros": [
+    1,
+    36
+   ],
+   "delta": 0.111,
+   "ci": [
+    -0.027,
+    0.261
+   ],
+   "speeds": [
+    1.0,
+    1.2,
+    1.4
+   ]
+  },
+  "course A \u00b7 density 0.30 \u00b7 people 2.4 m": {
+   "ros_arm": "vanilla",
+   "xpu": [
+    7,
+    48
+   ],
+   "ros": [
+    2,
+    48
+   ],
+   "delta": 0.104,
+   "ci": [
+    -0.018,
+    0.234
+   ],
+   "speeds": [
+    1.0,
+    1.2,
+    1.4
+   ]
+  },
+  "course A \u00b7 density 0.40": {
+   "ros_arm": "vanilla, control timer",
+   "xpu": [
+    5,
+    36
+   ],
+   "ros": [
+    2,
+    36
+   ],
+   "delta": 0.083,
+   "ci": [
+    -0.065,
+    0.236
+   ],
+   "speeds": [
+    1.0,
+    1.2,
+    1.4
+   ]
+  },
+  "gain calibrated per rate, 0.5 / f (cadence only)": {
+   "ros_arm": "vanilla, its own gain",
+   "xpu": [
+    3,
+    36
+   ],
+   "ros": [
+    0,
+    36
+   ],
+   "delta": 0.083,
+   "ci": [
+    -0.027,
+    0.218
+   ],
+   "speeds": [
+    1.0,
+    1.2,
+    1.4
+   ]
+  },
+  "people 1.7 m, fixed gain (cadence only)": {
+   "ros_arm": "vanilla",
+   "xpu": [
+    18,
+    36
+   ],
+   "ros": [
+    15,
+    36
+   ],
+   "delta": 0.083,
+   "ci": [
+    -0.141,
+    0.296
+   ],
+   "speeds": [
+    1.0,
+    1.2,
+    1.4
+   ]
+  },
+  "90 Hz camera": {
+   "ros_arm": "vanilla, control timer",
+   "xpu": [
+    4,
+    36
+   ],
+   "ros": [
+    2,
+    36
+   ],
+   "delta": 0.056,
+   "ci": [
+    -0.087,
+    0.203
+   ],
+   "speeds": [
+    1.0,
+    1.2,
+    1.4
+   ]
+  },
+  "retrained guidance net (cadence only)": {
+   "ros_arm": "vanilla",
+   "xpu": [
+    1,
+    36
+   ],
+   "ros": [
+    0,
+    36
+   ],
+   "delta": 0.028,
+   "ci": [
+    -0.071,
+    0.142
+   ],
+   "speeds": [
+    1.0,
+    1.2,
+    1.4
+   ]
+  },
+  "goal refreshed at the deployment's rate": {
+   "ros_arm": "hand-pinned",
+   "xpu": [
+    6,
+    36
+   ],
+   "ros": [
+    5,
+    36
+   ],
+   "delta": 0.028,
+   "ci": [
+    -0.144,
+    0.199
+   ],
+   "speeds": [
+    1.0,
+    1.2,
+    1.4
+   ]
+  },
+  "baseline with QoS depth 1": {
+   "ros_arm": "vanilla, QoS 1",
+   "xpu": [
+    7,
+    48
+   ],
+   "ros": [
+    5,
+    36
+   ],
+   "delta": 0.007,
+   "ci": [
+    -0.158,
+    0.155
+   ],
+   "speeds": [
+    1.0,
+    1.2,
+    1.4
+   ]
+  },
+  "ROS 2 on all 8 cores, 90 Hz camera": {
+   "ros_arm": "two YOLO nodes, 90 Hz (254 ms)",
+   "xpu": [
+    4,
+    36
+   ],
+   "ros": [
+    4,
+    36
+   ],
+   "delta": 0.0,
+   "ci": [
+    -0.157,
+    0.157
+   ],
+   "speeds": [
+    1.0,
+    1.2,
+    1.4
+   ]
+  },
+  "ROS 2 hand-pinned instead of vanilla": {
+   "ros_arm": "hand-pinned (56 ms)",
+   "xpu": [
+    7,
+    48
+   ],
+   "ros": [
+    6,
+    36
+   ],
+   "delta": -0.021,
+   "ci": [
+    -0.19,
+    0.133
+   ],
+   "speeds": [
+    1.0,
+    1.2,
+    1.4
+   ]
+  },
+  "course C (cadence only)": {
+   "ros_arm": "vanilla",
+   "xpu": [
+    6,
+    36
+   ],
+   "ros": [
+    8,
+    36
+   ],
+   "delta": -0.056,
+   "ci": [
+    -0.237,
+    0.129
+   ],
+   "speeds": [
+    1.0,
+    1.2,
+    1.4
+   ]
+  },
+  "people walking 1.5 m/s (cadence only)": {
+   "ros_arm": "vanilla",
+   "xpu": [
+    3,
+    24
+   ],
+   "ros": [
+    6,
+    24
+   ],
+   "delta": -0.125,
+   "ci": [
+    -0.34,
+    0.101
+   ],
+   "speeds": [
+    1.0,
+    1.4
+   ]
+  },
+  "all conditions (summary)": {
+   "method": "mean of the per-condition deltas; 95 % percentile bootstrap over conditions; flights counted once, at the first condition that includes them",
+   "mean_delta": 0.1138,
+   "ci": [
+    0.0607,
+    0.1751
+   ],
+   "n_conditions": 23,
+   "distinct_flights": {
+    "xpu": [
+     150,
+     648
+    ],
+    "ros": [
+     72,
+     828
+    ]
+   },
+   "summed_counts": [
+    188,
+    888,
+    74,
+    864
+   ],
+   "bootstrap": {
+    "seed": 0,
+    "n": 10000
+   }
+  }
+ },
+ "G": {
+  "xpu": 49,
+  "tie": 20,
+  "ros": 15
+ },
+ "H": {
+  "xpu_cpsat_c0.8": 0.691,
+  "xpu_cpsat_c1.0": 0.565,
+  "xpu_cpsat_c1.2": 0.692,
+  "xpu_cpsat_c1.4": 0.605,
+  "xpu_cpsat_c1.6": 0.523,
+  "xpu_cpsat_c1.8": 0.537,
+  "xpu_greedy_c1.0": 0.066,
+  "xpu_greedy_c1.4": 0.071,
+  "xpu_greedy_c1.8": 0.084,
+  "ros_vanilla4_c0.8": 0.247,
+  "ros_vanilla4_c1.0": 0.276,
+  "ros_vanilla4_c1.2": 0.377,
+  "ros_vanilla4_c1.4": 0.575,
+  "ros_vanilla4_c1.6": 0.552,
+  "ros_vanilla4_c1.8": 0.51,
+  "ros_p3_c1.0": 0.594,
+  "ros_p3_c1.2": 0.528,
+  "ros_p3_c1.4": 0.596,
+  "ros_p3_c1.6": 0.561,
+  "ros_p3_c1.8": 0.591,
+  "ros_vanilla4x2_c1.0": 0.506,
+  "ros_vanilla4x2_c1.2": 0.436,
+  "ros_vanilla4x2_c1.4": 0.492,
+  "ros_vanilla4x2_c1.6": 0.483,
+  "ros_vanilla4x2_c1.8": 0.413
+ },
+ "I": {
+  "CP-SAT@30": {
+   "late_pct": 0.0,
+   "lat_ms": 55.2
+  },
+  "CP-SAT@45": {
+   "late_pct": 0.0,
+   "lat_ms": 56.3
+  },
+  "CP-SAT@60": {
+   "late_pct": 0.0,
+   "lat_ms": 58.8
+  },
+  "CP-SAT@90": {
+   "late_pct": 0.0,
+   "lat_ms": 55.6
+  },
+  "CP-SAT@120": {
+   "late_pct": 0.0,
+   "lat_ms": 59.8
+  },
+  "greedy@30": {
+   "late_pct": 0.0,
+   "lat_ms": 70.1
+  },
+  "greedy@45": {
+   "late_pct": 100.0,
+   "lat_ms": 748.0
+  },
+  "greedy@60": {
+   "late_pct": 100.0,
+   "lat_ms": 583.5
+  },
+  "greedy@90": {
+   "late_pct": 100.0,
+   "lat_ms": 947.5
+  },
+  "greedy@120": {
+   "late_pct": 100.0,
+   "lat_ms": 566.3
+  }
+ },
+ "J": {
+  "ROSvanilla": {
+   "gap": 83.91,
+   "lat": 194.97,
+   "deliv": 11.76,
+   "flightsK": 0,
+   "flightsN": 60
+  },
+  "ROShart": {
+   "gap": 26.31,
+   "lat": 137.76,
+   "deliv": 37.71,
+   "flightsK": 0,
+   "flightsN": 60
+  },
+  "ROSpinned": {
+   "gap": 10.0,
+   "lat": 61.5,
+   "deliv": 38.35
+  },
+  "XPURTgreedy": {
+   "gap": 11.56,
+   "lat": 150.04,
+   "deliv": 57.14,
+   "flightsK": 7,
+   "flightsN": 60
+  },
+  "XPURTCPSAT": {
+   "gap": 9.95,
+   "lat": 58.96,
+   "deliv": 72.42,
+   "flightsK": 13,
+   "flightsN": 60
+  }
+ },
+ "script": "showdown_atlas",
+ "inputs": {
+  "results/codesign_feedback/campaign/campaign.csv": "716faf4d4d051579171b9bbd6dd48acc3d694e2a90c3741c9aa21165806c46ef",
+  "results/codesign_feedback/campaign_break/campaign.csv": "128f7a46419ca5aa1cb568f35ea3efb61610ad080b35a5897903e47fd6e68345",
+  "results/codesign_feedback/campaign_courseC/campaign.csv": "a0a4b730bbe7b959d462bcfb69a6ebdd54ab95ad8600c8141842c395765c8cca",
+  "results/codesign_feedback/campaign_cross/campaign.csv": "fff461f4a94b7f0fc5d6516f13ac672f1ded6ab8e987772fe4115982e7fc643b",
+  "results/codesign_feedback/campaign_env/env_sweep.csv": "37cd9b097b9d3c6a134112b457719f820937ed76516c5c1aeac80cb287f422ea",
+  "results/codesign_feedback/campaign_percep/campaign.csv": "874cba27e988ed1709ad40352d6a1db5555812261bf62777c080f68fb52f7dc3",
+  "results/codesign_feedback/campaign_qos1/campaign.csv": "f53eaf89c969added3141fc72a42495f0ec33e00241273f84583c478b5a2c89d",
+  "results/codesign_feedback/campaign_rich/campaign.csv": "957e5a475c5610579463b6df70f68edc54c06578d7773cc5a8f45d3d3a821174",
+  "results/codesign_feedback/campaign_seeds24/campaign.csv": "4ee968293048c26b729ec3211cdeabfe5ac4ccb4256e7f7f89ed87cd00b68756",
+  "results/codesign_feedback/campaign_tallcal/campaign.csv": "a4455c1d304e421d146034a6b0d55d2aae2f8f6e401f957d5f29076636c14d44",
+  "results/codesign_feedback/campaign_tallnet/campaign.csv": "f0e636330e842d9eb21db22b62207de82af5ef02488f030c9e19d92d77dfb9b4",
+  "results/codesign_feedback/campaign_v2/campaign_v2.csv": "7c6dc6a648f5f72a8d2f0e3efef987d2ef23fb81810e697fc0c367cc10dc4487",
+  "results/codesign_feedback/campaign_v2_courseB/campaign_v2.csv": "781f77ad0ef201981c6fc950e258911c1b7f28e7aedf76576318d76a8a81c152",
+  "results/codesign_feedback/campaign_walk/campaign.csv": "b7621815bfa95943b58cbb4db1326311887538fdaadb3b66912d289b54527bbe",
+  "results/codesign_feedback/gain_controlled/gain_controlled.csv": "8811805bd798c574e1a577fbd3b21a63c4404f892e9ba6368816dffe130ef9e1",
+  "results/codesign_feedback/hil_ablation.csv": "7cab7e9b37c8f36de5408e2b20a32ef2bae072e232290f6ef97a0dc78674393d",
+  "results/codesign_feedback/hil_ablation_courseB.csv": "3f5089f43d645d3da96a22a2ea6961104f257a4150542403a5587e78101e0af2",
+  "results/codesign_feedback/ros_traced/45_p3_r1/trace.csv": "8df51b7a4a097489cd049dcbbaf813f2788e87b1b9f3d30f79bb47a67a283adf",
+  "results/codesign_feedback/ros_traced/45_p3_r2/trace.csv": "fa7d1134095ae4fc98491a9b39f01dde9ce4472d23cf15c524f07fb17fb35c12",
+  "results/codesign_feedback/ros_traced/45_p3_r3/trace.csv": "fb70a281d9b750863f48e184bbd4f5f6c6f0ae1537e5d94ba253973dd5571ca8",
+  "results/codesign_feedback/ros_traced/45_vanilla4_r1/trace.csv": "1c65666135c84a2f7ecae919b485e2a0130f375e26ac7c9bc4b76917cf40f482",
+  "results/codesign_feedback/ros_traced/45_vanilla4_r2/trace.csv": "37c322819de7780980e74b28b21101ee1558a8ca59daa1484d2ec6a950c94660",
+  "results/codesign_feedback/ros_traced/45_vanilla4_r3/trace.csv": "388eeefd62c4750089f4db53cb50694d9a2b7b97e6ac768cf93fdfec90f3c198",
+  "results/codesign_feedback/ros_traced/45_vanilla4x2_r1/trace.csv": "470bde0d0fe9749ad524186806f3d61970ba7e058e9505f360be9246e57e9f08",
+  "results/codesign_feedback/ros_traced/45_vanilla4x2_r2/trace.csv": "83dcc66ba9e544b9595bff8d9e3cc552821a991c9cf08c4b6a66e7abf51c09db",
+  "results/codesign_feedback/ros_traced/45_vanilla4x2_r3/trace.csv": "db3069e1a57566e995d1e1b5e3974f711d07cedde3bb369952e3613f348a1f42",
+  "results/codesign_feedback/ros_traced/45_vanilla_r1/trace.csv": "636bf796ec92172cb082009c648b8633d3d5fc275b6407023d21f268d559641f",
+  "results/codesign_feedback/ros_traced/45_vanilla_r2/trace.csv": "a7a480161e3a74e0f994a9095d60a50904471e4d5543c7fd21b9f54523e628fa",
+  "results/codesign_feedback/ros_traced/45_vanilla_r3/trace.csv": "c264d37387b38b33f75369d620b0ebc9d183d36f2c2a4641d2957f58759e54e3",
+  "results/codesign_feedback/ros_traced/summary.csv": "50b02b05cd10751ce257a94dd78d66b100e3c109885257fdd973b36c12571b11",
+  "results/codesign_feedback/xpurt_long/trace_acpsat_hardr1_other_run1.csv": "fb16ca7138ba6984b9586b709db47ed924c8d9f52ed18790d8005655388bac06",
+  "results/codesign_feedback/xpurt_long/trace_acpsat_hardr2_other_run1.csv": "6569e6b60a654da23c459005d9d45ea45e0c9d7482999be6838c804b867a4ffc",
+  "results/codesign_feedback/xpurt_long/trace_acpsat_hardr3_other_run1.csv": "a55c2c445896a72497b285e02978c36a65ef6d0f57a24308d78c4ce0292bc9b1",
+  "results/codesign_feedback/xpurt_long/trace_agreedyr1_other_run1.csv": "31ab57ab4cdb128fa43e27b2238bc5608f9288009dd292df319388e991de2715",
+  "results/codesign_feedback/xpurt_long/trace_agreedyr2_other_run1.csv": "436a7876670d8efb603077fe3122d71c444bc4a357614f27668bc8835c948dd1",
+  "results/codesign_feedback/xpurt_long/trace_agreedyr3_other_run1.csv": "ac2a950d9922d2b6b5e417c06d60a73cebf4b3e4cdde86fd996ed9322cff8c3c"
+ },
+ "fallbacks_used": []
+}

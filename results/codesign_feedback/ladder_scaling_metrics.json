@@ -1,0 +1,106 @@
+{
+ "rungs": {
+  "w2": {
+   "n_nets": 2,
+   "cpsat": {
+    "cells": {
+     "A": 5,
+     "B": 0,
+     "C": 5,
+     "D": 0
+    },
+    "levers": [
+     "shard"
+    ]
+   },
+   "greedy": {
+    "cells": {
+     "A": 5,
+     "B": 0,
+     "C": 5,
+     "D": 0
+    },
+    "levers": [
+     "shard"
+    ]
+   }
+  },
+  "w3": {
+   "n_nets": 3,
+   "cpsat": {
+    "cells": {
+     "A": 9,
+     "B": 5,
+     "C": 10,
+     "D": 5
+    },
+    "levers": [
+     "shard"
+    ]
+   },
+   "greedy": {
+    "cells": {
+     "A": 10,
+     "B": 5,
+     "C": 10,
+     "D": 5
+    },
+    "levers": [
+     "shard"
+    ]
+   }
+  },
+  "w4": {
+   "n_nets": 4,
+   "cpsat": {
+    "cells": {
+     "A": 10,
+     "B": 11,
+     "C": 10,
+     "D": 10
+    },
+    "levers": []
+   },
+   "greedy": {
+    "cells": {
+     "A": 10,
+     "B": 10,
+     "C": 10,
+     "D": 10
+    },
+    "levers": [
+     "ime"
+    ]
+   }
+  },
+  "w5": {
+   "n_nets": 5,
+   "cpsat": {
+    "cells": {
+     "A": 13,
+     "B": 17,
+     "C": 13,
+     "D": 16
+    },
+    "levers": [
+     "ime"
+    ]
+   },
+   "greedy": {
+    "cells": {
+     "A": 11,
+     "B": 11,
+     "C": 11,
+     "D": 11
+    },
+    "levers": [
+     "ime"
+    ]
+   }
+  }
+ },
+ "reads": [
+  "results/loop_ablation_v4_small/ablation_summary.json",
+  "results/loop_ablation_v4_big/ablation_summary.json"
+ ]
+}

@@ -1,0 +1,281 @@
+============================================================
+Loading network hierarchy from JSON...
+============================================================
+
+Loading networks from: /scratch/agustin/xpurt-dev-sync/data/toplevel/wh_chain40_w2p.json
+
+Found 3 networks:
+  - yolov8_nano_64x96 (id: 0, identifier: yolov8_nano_64x96)
+  - fused_full (id: 1, identifier: fused_full)
+  - mlp_control (id: 2, identifier: mlp_control)
+
+Found 2 network-level dependencies:
+  - yolov8_nano_64x96 → fused_full
+  - fused_full → mlp_control
+
+Resolved runtime configuration:
+  Machine core counts: {'CPU_P': 4, 'CPU_E': 4}
+  Profile HW mapping: CPU_P->rvv_x60, CPU_E->rvv_x60
+  Profile target/topology: target=spacemit_x60, topo_tag=topo_0_1_2_3
+  p_core_speedup: 1.0
+  random_seed: 42
+  solver_verbosity: 0
+  time_limit: 600
+  use_profiled: True
+  prune_periodic: True
+  restrict_makespan_to_nonperiodic: False
+  cvxpy_solver (milp only): MOSEK
+  machine_combination_mode: shard
+  enforce_same_processor_combinations: True
+  yolov8_nano_64x96: width scaling 1:55.7  2:44.5  4:24.7  8:24.6 ms  (best 2.27x on 8 harts)
+
+Using profiled runtimes where available...
+  (warning) 8 dispatch(es) were costed 0.0 because a profile that EXISTS has no row for them. Either they are ops the codegen drops (the yolo chunk2_c1 case) or the CSV is short and unmeasured work is being scheduled as instantaneous.
+  - yolov8_nano_64x96/dispatch_3(id=3) costed 0.0 (first seen on rvv_x60/topo_0): no row in an otherwise-present profile; op not knowable from the profile
+  - yolov8_nano_64x96/dispatch_11(id=11) costed 0.0 (first seen on rvv_x60/topo_0): no row in an otherwise-present profile; op not knowable from the profile
+  - yolov8_nano_64x96/dispatch_22(id=22) costed 0.0 (first seen on rvv_x60/topo_0): no row in an otherwise-present profile; op not knowable from the profile
+  - yolov8_nano_64x96/dispatch_33(id=33) costed 0.0 (first seen on rvv_x60/topo_0): no row in an otherwise-present profile; op not knowable from the profile
+  - yolov8_nano_64x96/dispatch_48(id=48) costed 0.0 (first seen on rvv_x60/topo_0): no row in an otherwise-present profile; op not knowable from the profile
+  - yolov8_nano_64x96/dispatch_56(id=56) costed 0.0 (first seen on rvv_x60/topo_0): no row in an otherwise-present profile; op not knowable from the profile
+  - yolov8_nano_64x96/dispatch_64(id=64) costed 0.0 (first seen on rvv_x60/topo_0): no row in an otherwise-present profile; op not knowable from the profile
+  - yolov8_nano_64x96/dispatch_72(id=72) costed 0.0 (first seen on rvv_x60/topo_0): no row in an otherwise-present profile; op not knowable from the profile
+  (warning) set XPURT_STRICT_ZERO_COST=1 to make this fatal
+  Workload declares horizon 1000 ms and 3 explicit periodic instance counts; those counts are used as given. Networks without one are still sized by the refinement loop below.
+
+--- greedy_periodic iteration 1 ---
+  stateful: chained 39 instance edge(s) for ['fused_full']
+  Total operations: 5220
+  Job names: ['yolov8_nano_64x960', 'fused_full0', 'mlp_control0', 'yolov8_nano_64x961', 'yolov8_nano_64x962', 'yolov8_nano_64x963', 'yolov8_nano_64x964', 'yolov8_nano_64x965', 'yolov8_nano_64x966', 'yolov8_nano_64x967', 'yolov8_nano_64x968', 'yolov8_nano_64x969', 'yolov8_nano_64x9610', 'yolov8_nano_64x9611', 'yolov8_nano_64x9612', 'yolov8_nano_64x9613', 'yolov8_nano_64x9614', 'yolov8_nano_64x9615', 'yolov8_nano_64x9616', 'yolov8_nano_64x9617', 'yolov8_nano_64x9618', 'yolov8_nano_64x9619', 'yolov8_nano_64x9620', 'yolov8_nano_64x9621', 'yolov8_nano_64x9622', 'yolov8_nano_64x9623', 'yolov8_nano_64x9624', 'yolov8_nano_64x9625', 'yolov8_nano_64x9626', 'yolov8_nano_64x9627', 'yolov8_nano_64x9628', 'yolov8_nano_64x9629', 'yolov8_nano_64x9630', 'yolov8_nano_64x9631', 'yolov8_nano_64x9632', 'yolov8_nano_64x9633', 'yolov8_nano_64x9634', 'yolov8_nano_64x9635', 'yolov8_nano_64x9636', 'yolov8_nano_64x9637', 'yolov8_nano_64x9638', 'yolov8_nano_64x9639', 'fused_full1', 'fused_full2', 'fused_full3', 'fused_full4', 'fused_full5', 'fused_full6', 'fused_full7', 'fused_full8', 'fused_full9', 'fused_full10', 'fused_full11', 'fused_full12', 'fused_full13', 'fused_full14', 'fused_full15', 'fused_full16', 'fused_full17', 'fused_full18', 'fused_full19', 'fused_full20', 'fused_full21', 'fused_full22', 'fused_full23', 'fused_full24', 'fused_full25', 'fused_full26', 'fused_full27', 'fused_full28', 'fused_full29', 'fused_full30', 'fused_full31', 'fused_full32', 'fused_full33', 'fused_full34', 'fused_full35', 'fused_full36', 'fused_full37', 'fused_full38', 'fused_full39', 'mlp_control1', 'mlp_control2', 'mlp_control3', 'mlp_control4', 'mlp_control5', 'mlp_control6', 'mlp_control7', 'mlp_control8', 'mlp_control9', 'mlp_control10', 'mlp_control11', 'mlp_control12', 'mlp_control13', 'mlp_control14', 'mlp_control15', 'mlp_control16', 'mlp_control17', 'mlp_control18', 'mlp_control19', 'mlp_control20', 'mlp_control21', 'mlp_control22', 'mlp_control23', 'mlp_control24', 'mlp_control25', 'mlp_control26', 'mlp_control27', 'mlp_control28', 'mlp_control29', 'mlp_control30', 'mlp_control31', 'mlp_control32', 'mlp_control33', 'mlp_control34', 'mlp_control35', 'mlp_control36', 'mlp_control37', 'mlp_control38', 'mlp_control39', 'mlp_control40', 'mlp_control41', 'mlp_control42', 'mlp_control43', 'mlp_control44', 'mlp_control45', 'mlp_control46', 'mlp_control47', 'mlp_control48', 'mlp_control49', 'mlp_control50', 'mlp_control51', 'mlp_control52', 'mlp_control53', 'mlp_control54', 'mlp_control55', 'mlp_control56', 'mlp_control57', 'mlp_control58', 'mlp_control59', 'mlp_control60', 'mlp_control61', 'mlp_control62', 'mlp_control63', 'mlp_control64', 'mlp_control65', 'mlp_control66', 'mlp_control67', 'mlp_control68', 'mlp_control69', 'mlp_control70', 'mlp_control71', 'mlp_control72', 'mlp_control73', 'mlp_control74', 'mlp_control75', 'mlp_control76', 'mlp_control77', 'mlp_control78', 'mlp_control79', 'mlp_control80', 'mlp_control81', 'mlp_control82', 'mlp_control83', 'mlp_control84', 'mlp_control85', 'mlp_control86', 'mlp_control87', 'mlp_control88', 'mlp_control89', 'mlp_control90', 'mlp_control91', 'mlp_control92', 'mlp_control93', 'mlp_control94', 'mlp_control95', 'mlp_control96', 'mlp_control97', 'mlp_control98', 'mlp_control99']
+  Makespan: 999.37 ms
+  Periodic 'yolov8_nano_64x96': period=25ms current=40 needed=40
+  Periodic 'fused_full': period=25ms current=40 needed=40
+  Periodic 'mlp_control': period=10ms current=100 needed=100
+  All periodic counts cover makespan — converged.
+
+Final greedy makespan: 999.37 ms (after 1 iteration)
+  greedy_periodic: makespan=999.37 ms (all ops 999.37 ms), periodic window misses=0, converged
+
+Scheduling completed!
+Makespan (all operations): 999.37 ms
+
+Combination assignments:
+  1xCPU_P: 1940 operations
+  1xCPU_P: 1940 operations
+  1xCPU_P: 1940 operations
+  1xCPU_P: 1940 operations
+  2xCPU_P: 600 operations
+  2xCPU_P: 600 operations
+  4xCPU_P: 2240 operations
+  1xCPU_E: 0 operations
+  1xCPU_E: 0 operations
+  1xCPU_E: 0 operations
+  1xCPU_E: 0 operations
+  2xCPU_E: 0 operations
+  2xCPU_E: 0 operations
+  4xCPU_E: 440 operations
+
+Per-network combination assignments:
+  Yolov8_nano_64x960: 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 2xCPU_P=15, 2xCPU_P=15, 4xCPU_P=56, 4xCPU_E=11
+  Fused_full0: 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15
+  Mlp_control0: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Yolov8_nano_64x961: 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 2xCPU_P=15, 2xCPU_P=15, 4xCPU_P=56, 4xCPU_E=11
+  Yolov8_nano_64x962: 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 2xCPU_P=15, 2xCPU_P=15, 4xCPU_P=56, 4xCPU_E=11
+  Yolov8_nano_64x963: 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 2xCPU_P=15, 2xCPU_P=15, 4xCPU_P=56, 4xCPU_E=11
+  Yolov8_nano_64x964: 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 2xCPU_P=15, 2xCPU_P=15, 4xCPU_P=56, 4xCPU_E=11
+  Yolov8_nano_64x965: 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 2xCPU_P=15, 2xCPU_P=15, 4xCPU_P=56, 4xCPU_E=11
+  Yolov8_nano_64x966: 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 2xCPU_P=15, 2xCPU_P=15, 4xCPU_P=56, 4xCPU_E=11
+  Yolov8_nano_64x967: 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 2xCPU_P=15, 2xCPU_P=15, 4xCPU_P=56, 4xCPU_E=11
+  Yolov8_nano_64x968: 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 2xCPU_P=15, 2xCPU_P=15, 4xCPU_P=56, 4xCPU_E=11
+  Yolov8_nano_64x969: 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 2xCPU_P=15, 2xCPU_P=15, 4xCPU_P=56, 4xCPU_E=11
+  Yolov8_nano_64x9610: 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 2xCPU_P=15, 2xCPU_P=15, 4xCPU_P=56, 4xCPU_E=11
+  Yolov8_nano_64x9611: 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 2xCPU_P=15, 2xCPU_P=15, 4xCPU_P=56, 4xCPU_E=11
+  Yolov8_nano_64x9612: 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 2xCPU_P=15, 2xCPU_P=15, 4xCPU_P=56, 4xCPU_E=11
+  Yolov8_nano_64x9613: 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 2xCPU_P=15, 2xCPU_P=15, 4xCPU_P=56, 4xCPU_E=11
+  Yolov8_nano_64x9614: 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 2xCPU_P=15, 2xCPU_P=15, 4xCPU_P=56, 4xCPU_E=11
+  Yolov8_nano_64x9615: 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 2xCPU_P=15, 2xCPU_P=15, 4xCPU_P=56, 4xCPU_E=11
+  Yolov8_nano_64x9616: 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 2xCPU_P=15, 2xCPU_P=15, 4xCPU_P=56, 4xCPU_E=11
+  Yolov8_nano_64x9617: 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 2xCPU_P=15, 2xCPU_P=15, 4xCPU_P=56, 4xCPU_E=11
+  Yolov8_nano_64x9618: 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 2xCPU_P=15, 2xCPU_P=15, 4xCPU_P=56, 4xCPU_E=11
+  Yolov8_nano_64x9619: 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 2xCPU_P=15, 2xCPU_P=15, 4xCPU_P=56, 4xCPU_E=11
+  Yolov8_nano_64x9620: 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 2xCPU_P=15, 2xCPU_P=15, 4xCPU_P=56, 4xCPU_E=11
+  Yolov8_nano_64x9621: 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 2xCPU_P=15, 2xCPU_P=15, 4xCPU_P=56, 4xCPU_E=11
+  Yolov8_nano_64x9622: 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 2xCPU_P=15, 2xCPU_P=15, 4xCPU_P=56, 4xCPU_E=11
+  Yolov8_nano_64x9623: 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 2xCPU_P=15, 2xCPU_P=15, 4xCPU_P=56, 4xCPU_E=11
+  Yolov8_nano_64x9624: 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 2xCPU_P=15, 2xCPU_P=15, 4xCPU_P=56, 4xCPU_E=11
+  Yolov8_nano_64x9625: 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 2xCPU_P=15, 2xCPU_P=15, 4xCPU_P=56, 4xCPU_E=11
+  Yolov8_nano_64x9626: 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 2xCPU_P=15, 2xCPU_P=15, 4xCPU_P=56, 4xCPU_E=11
+  Yolov8_nano_64x9627: 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 2xCPU_P=15, 2xCPU_P=15, 4xCPU_P=56, 4xCPU_E=11
+  Yolov8_nano_64x9628: 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 2xCPU_P=15, 2xCPU_P=15, 4xCPU_P=56, 4xCPU_E=11
+  Yolov8_nano_64x9629: 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 2xCPU_P=15, 2xCPU_P=15, 4xCPU_P=56, 4xCPU_E=11
+  Yolov8_nano_64x9630: 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 2xCPU_P=15, 2xCPU_P=15, 4xCPU_P=56, 4xCPU_E=11
+  Yolov8_nano_64x9631: 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 2xCPU_P=15, 2xCPU_P=15, 4xCPU_P=56, 4xCPU_E=11
+  Yolov8_nano_64x9632: 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 2xCPU_P=15, 2xCPU_P=15, 4xCPU_P=56, 4xCPU_E=11
+  Yolov8_nano_64x9633: 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 2xCPU_P=15, 2xCPU_P=15, 4xCPU_P=56, 4xCPU_E=11
+  Yolov8_nano_64x9634: 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 2xCPU_P=15, 2xCPU_P=15, 4xCPU_P=56, 4xCPU_E=11
+  Yolov8_nano_64x9635: 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 2xCPU_P=15, 2xCPU_P=15, 4xCPU_P=56, 4xCPU_E=11
+  Yolov8_nano_64x9636: 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 2xCPU_P=15, 2xCPU_P=15, 4xCPU_P=56, 4xCPU_E=11
+  Yolov8_nano_64x9637: 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 2xCPU_P=15, 2xCPU_P=15, 4xCPU_P=56, 4xCPU_E=11
+  Yolov8_nano_64x9638: 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 2xCPU_P=15, 2xCPU_P=15, 4xCPU_P=56, 4xCPU_E=11
+  Yolov8_nano_64x9639: 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 1xCPU_P=16, 2xCPU_P=15, 2xCPU_P=15, 4xCPU_P=56, 4xCPU_E=11
+  Fused_full1: 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15
+  Fused_full2: 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15
+  Fused_full3: 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15
+  Fused_full4: 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15
+  Fused_full5: 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15
+  Fused_full6: 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15
+  Fused_full7: 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15
+  Fused_full8: 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15
+  Fused_full9: 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15
+  Fused_full10: 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15
+  Fused_full11: 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15
+  Fused_full12: 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15
+  Fused_full13: 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15
+  Fused_full14: 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15
+  Fused_full15: 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15
+  Fused_full16: 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15
+  Fused_full17: 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15
+  Fused_full18: 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15
+  Fused_full19: 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15
+  Fused_full20: 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15
+  Fused_full21: 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15
+  Fused_full22: 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15
+  Fused_full23: 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15
+  Fused_full24: 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15
+  Fused_full25: 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15
+  Fused_full26: 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15
+  Fused_full27: 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15
+  Fused_full28: 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15
+  Fused_full29: 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15
+  Fused_full30: 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15
+  Fused_full31: 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15
+  Fused_full32: 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15
+  Fused_full33: 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15
+  Fused_full34: 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15
+  Fused_full35: 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15
+  Fused_full36: 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15
+  Fused_full37: 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15
+  Fused_full38: 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15
+  Fused_full39: 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15, 1xCPU_P=15
+  Mlp_control1: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control2: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control3: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control4: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control5: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control6: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control7: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control8: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control9: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control10: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control11: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control12: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control13: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control14: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control15: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control16: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control17: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control18: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control19: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control20: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control21: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control22: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control23: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control24: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control25: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control26: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control27: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control28: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control29: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control30: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control31: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control32: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control33: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control34: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control35: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control36: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control37: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control38: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control39: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control40: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control41: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control42: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control43: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control44: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control45: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control46: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control47: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control48: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control49: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control50: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control51: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control52: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control53: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control54: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control55: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control56: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control57: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control58: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control59: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control60: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control61: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control62: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control63: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control64: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control65: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control66: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control67: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control68: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control69: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control70: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control71: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control72: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control73: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control74: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control75: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control76: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control77: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control78: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control79: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control80: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control81: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control82: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control83: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control84: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control85: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control86: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control87: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control88: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control89: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control90: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control91: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control92: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control93: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control94: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control95: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control96: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control97: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control98: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+  Mlp_control99: 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7, 1xCPU_P=7
+Job 'yolov8_nano_64x960' (job_id=0, color_index=0) -> color RGB=[0.98745098 0.54117647 0.41568627]
+DEBUG TRANSFER: alpha_shape=(5220, 14), num_actual_machines=8, len(machines)=8, alpha_cols=14, is_using_combos=True, prev_machine=13, machine=6, transfer_times_shape=(8, 8), machine_combinations=True
+DEBUG IMMEDIATE: op=62, job_id=0, lookup=0, op_color_index=0, base_colors[0]=(np.float64(0.9874509803921568), np.float64(0.5411764705882353), np.float64(0.41568627450980394))
+DEBUG AFTER MODULO: op=62, original=0, after_modulo=0, len(base_colors)=180
+DEBUG BEFORE LEGEND: op=62, op_color_index=0, original=0, job_index=0, legend_key=kind_yolov8_nano_64x, in_legend=True
+DEBUG IMMEDIATE: op=63, job_id=0, lookup=0, op_color_index=0, base_colors[0]=(np.float64(0.9874509803921568), np.float64(0.5411764705882353), np.float64(0.41568627450980394))
+DEBUG AFTER MODULO: op=63, original=0, after_modulo=0, len(base_colors)=180
+DEBUG BEFORE LEGEND: op=63, op_color_index=0, original=0, job_index=0, legend_key=kind_yolov8_nano_64x, in_legend=True
+DEBUG IMMEDIATE: op=64, job_id=0, lookup=0, op_color_index=0, base_colors[0]=(np.float64(0.9874509803921568), np.float64(0.5411764705882353), np.float64(0.41568627450980394))
+DEBUG AFTER MODULO: op=64, original=0, after_modulo=0, len(base_colors)=180
+DEBUG BEFORE LEGEND: op=64, op_color_index=0, original=0, job_index=0, legend_key=kind_yolov8_nano_64x, in_legend=True
+Job 'fused_full0' (job_id=1, color_index=1) -> color RGB=[0.59607843 0.8345098  0.57882353]
+Job 'mlp_control0' (job_id=2, color_index=2) -> color RGB=[0.71372549 0.71372549 0.84705882]
+Saving plot to plots/wh_chain40_w2p_greedy_periodic_profiled.png...
+
+Plot saved to plots/wh_chain40_w2p_greedy_periodic_profiled.png
+
+Outputting scheduled JSON...
+  pdb_hash = sha256:ab4444919b7f6c45... over 5 CSV(s)
+
+Scheduled JSON saved to: schedules/scheduled_wh_chain40_w2p_greedy_periodic_profiled.json
+Metrics written to: schedules/scheduled_wh_chain40_w2p_greedy_periodic_profiled_metrics.json
+  makespan_us=999.37  op_deadline_miss=0 (dispatches, NOT instances)  cross_dev=699  solver_s=4.684
+Scheduler report written to: schedules/scheduled_wh_chain40_w2p_greedy_periodic_profiled_report.json

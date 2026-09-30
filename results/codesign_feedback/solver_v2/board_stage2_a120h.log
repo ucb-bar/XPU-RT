@@ -1,0 +1,25 @@
+=== 14:23:31 clamp + feasibility greedy
+schedules/fig_a120h_greedy_clamped.json: 1055 dispatch targets narrowed; width histogram {1: 2180, 2: 432, 4: 240}
+
+FEASIBLE: no double-booking, no dependency violation, no forward edge, every target on the board, every implementation available where it was placed.
+  feasibility rc=0
+=== 14:23:33 clamp + feasibility cpsat_hard
+schedules/fig_a120h_cpsat_hard_clamped.json: 88 dispatch targets narrowed; width histogram {1: 2852}
+
+FEASIBLE: no double-booking, no dependency violation, no forward edge, every target on the board, every implementation available where it was placed.
+  feasibility rc=0
+=== 14:23:34 no schedules/fig_a120h_cpsat_soft.json
+=== 14:23:35 board a120h_greedy run 1
+  trace rows: 2852  hart_acc: 8  policy: SCHED_OTHER  exit: 0  verify: ['MODELBLASTER_VERIFY [yolov8_nano_64x96] === max_abs_err=0 max_rel_err=0 n=8316 instance=0 ready=1']
+=== 14:23:58 board a120h_cpsat_hard run 1
+  re-pulled the board's stdout: 2852 of 2852 rows (pull 1)
+  trace rows: 2852  hart_acc: 8  policy: SCHED_OTHER  exit: 0  verify: ['MODELBLASTER_VERIFY [yolov8_nano_64x96] === max_abs_err=0 max_rel_err=0 n=8316 instance=0 ready=1']
+=== 14:24:22 board a120h_greedy run 2
+  trace rows: 2852  hart_acc: 8  policy: SCHED_OTHER  exit: 0  verify: ['MODELBLASTER_VERIFY [yolov8_nano_64x96] === max_abs_err=0 max_rel_err=0 n=8316 instance=0 ready=1']
+=== 14:24:44 board a120h_cpsat_hard run 2
+  trace rows: 2852  hart_acc: 8  policy: SCHED_OTHER  exit: 0  verify: ['MODELBLASTER_VERIFY [yolov8_nano_64x96] === max_abs_err=0 max_rel_err=0 n=8316 instance=0 ready=1']
+=== 14:25:05 board a120h_greedy run 3
+  trace rows: 2852  hart_acc: 8  policy: SCHED_OTHER  exit: 0  verify: ['MODELBLASTER_VERIFY [yolov8_nano_64x96] === max_abs_err=0 max_rel_err=0 n=8316 instance=0 ready=1']
+=== 14:25:27 board a120h_cpsat_hard run 3
+  trace rows: 2852  hart_acc: 8  policy: SCHED_OTHER  exit: 0  verify: ['MODELBLASTER_VERIFY [yolov8_nano_64x96] === max_abs_err=0 max_rel_err=0 n=8316 instance=0 ready=1']
+=== 14:25:49 BOARD_STAGE2_DONE a120h

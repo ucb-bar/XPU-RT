@@ -1,0 +1,41 @@
+{
+  "tag": "45_rvanilla4x2tm_r2",
+  "rate_hz": 45,
+  "executor": "single",
+  "nodes": "camera | percep | percep2 | nav | control | extra | extra2 (7 processes, unpinned)",
+  "affinity_mask": {
+    "camera": "0xff",
+    "percep": "0xff",
+    "percep2": "0xff",
+    "nav": "0xff",
+    "control": "0xff",
+    "extra": "0xff",
+    "extra2": "0xff"
+  },
+  "sched_policy": null,
+  "yolo_pool": null,
+  "warmup_ms": 3000.0,
+  "n_gaps": 1700,
+  "gap_mean_ms": 9.999971494117647,
+  "gap_p95_ms": 10.817,
+  "gap_max_ms": 14.4903,
+  "n_frames": 797,
+  "n_goals": 761,
+  "n_consumed": 710,
+  "e2e_goal_med_ms": 89.702,
+  "e2e_goal_p95_ms": 204.133,
+  "e2e_med_ms": 96.7375,
+  "e2e_p95_ms": 209.817,
+  "busy_pct": {
+    "0": 58.0,
+    "1": 66.8,
+    "2": 66.8,
+    "3": 65.2,
+    "4": 56.6,
+    "5": 65.8,
+    "6": 66.5,
+    "7": 63.6
+  },
+  "rmw": "rmw_fastrtps_cpp",
+  "kernels_sha": "4727fb69 ir=0c783539626c"
+}

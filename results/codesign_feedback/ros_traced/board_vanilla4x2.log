@@ -1,0 +1,24 @@
+=== 10:39:47 rebuild traced node (alternating camera)
+3
+=== 10:44:14 vanilla4x2 r1
+=== 10:44:14 45_vanilla4x2_r1 ===
+=== 10:44:47 60_vanilla4x2_r1 ===
+=== 10:45:18 90_vanilla4x2_r1 ===
+=== 10:45:48 vanilla4x2 r2
+=== 10:45:48 45_vanilla4x2_r2 ===
+=== 10:46:19 60_vanilla4x2_r2 ===
+=== 10:46:49 90_vanilla4x2_r2 ===
+=== 10:47:20 vanilla4x2 r3
+=== 10:47:20 45_vanilla4x2_r3 ===
+=== 10:47:50 60_vanilla4x2_r3 ===
+=== 10:48:21 90_vanilla4x2_r3 ===
+45_vanilla4x2_r1   single rate   45  gaps n=1025  mean  16.59 max  41.60   chain goal-med  454.56  ctrl-med  454.56  frames 800 goals 694   busy c0:80 c1:58 c2:62 c3:60 c4:79 c5:87 c6:88 c7:86
+45_vanilla4x2_r2   single rate   45  gaps n=1004  mean  16.94 max  47.32   chain goal-med  455.13  ctrl-med  455.13  frames 804 goals 684   busy c0:94 c1:61 c2:62 c3:58 c4:62 c5:85 c6:86 c7:85
+45_vanilla4x2_r3   single rate   45  gaps n=1038  mean  16.38 max  37.40   chain goal-med  454.64  ctrl-med  454.66  frames 800 goals 701   busy c0:64 c1:64 c2:60 c3:58 c4:97 c5:88 c6:88 c7:87
+60_vanilla4x2_r1   single rate   60  gaps n=1053  mean  16.14 max  45.43   chain goal-med  353.43  ctrl-med  353.43  frames 1093 goals 767   busy c0:76 c1:74 c2:74 c3:72 c4:83 c5:80 c6:81 c7:81
+60_vanilla4x2_r2   single rate   60  gaps n=1072  mean  15.83 max  36.65   chain goal-med  360.99  ctrl-med  361.00  frames 1066 goals 781   busy c0:74 c1:64 c2:69 c3:66 c4:94 c5:88 c6:88 c7:87
+60_vanilla4x2_r3   single rate   60  gaps n=1067  mean  15.92 max  42.53   chain goal-med  359.82  ctrl-med  359.82  frames 1072 goals 775   busy c0:76 c1:71 c2:73 c3:68 c4:85 c5:86 c6:87 c7:85
+90_vanilla4x2_r1   single rate   90  gaps n=1044  mean  16.31 max  43.21   chain goal-med  254.26  ctrl-med  254.26  frames 1608 goals 865   busy c0:79 c1:81 c2:82 c3:80 c4:81 c5:72 c6:72 c7:72
+90_vanilla4x2_r2   single rate   90  gaps n=1032  mean  16.47 max  40.59   chain goal-med  254.78  ctrl-med  254.78  frames 1609 goals 853   busy c0:77 c1:80 c2:78 c3:74 c4:79 c5:76 c6:78 c7:74
+90_vanilla4x2_r3   single rate   90  gaps n=1061  mean  16.01 max  45.22   chain goal-med  254.10  ctrl-med  254.11  frames 1609 goals 881   busy c0:70 c1:69 c2:71 c3:68 c4:93 c5:86 c6:86 c7:86
+=== 10:48:51 VANILLA4X2_DONE

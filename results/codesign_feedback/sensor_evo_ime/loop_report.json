@@ -1,0 +1,107 @@
+{
+ "workload": "_4w_networks_k1_sensor_tight_vision_head",
+ "objective": "total-lateness",
+ "baseline_score_ms": 13.226,
+ "final_score_ms": 0.0,
+ "total_reduction_pct": 100.0,
+ "baseline_makespan_ms": 46.6,
+ "final_makespan_ms": 34.6,
+ "levers_available": [
+  "ime"
+ ],
+ "levers_applied": [
+  "ime"
+ ],
+ "rounds": [
+  {
+   "round": 1,
+   "lever": "ime",
+   "metric": "total-lateness",
+   "score_before_ms": 13.226,
+   "score_after_ms": 0.0,
+   "makespan_before_ms": 46.6,
+   "makespan_after_ms": 34.6,
+   "pct": -100.0,
+   "accepted": true,
+   "deadline_miss": 0
+  }
+ ],
+ "trajectory": [
+  {
+   "round": 0,
+   "lever": "baseline",
+   "score_ms": 13.226,
+   "makespan_ms": 46.6,
+   "misses": 2
+  },
+  {
+   "round": 1,
+   "lever": "+ime",
+   "score_ms": 0.0,
+   "makespan_ms": 34.6,
+   "misses": 0
+  },
+  {
+   "round": "board-recost",
+   "lever": "recost(board)",
+   "makespan_ms": 40.8,
+   "misses": 1
+  },
+  {
+   "round": "board-resolve",
+   "lever": "resolve(board)",
+   "makespan_ms": 43.6,
+   "misses": 0
+  }
+ ],
+ "fusion": "fuse: decision-aid unavailable.",
+ "converged": true,
+ "board_feedback": {
+  "enabled": true,
+  "calibration": "results/codesign_feedback/k1_board_calibration.json",
+  "board_solver": "cpsat",
+  "spec": "../tmp/ime_arc/loop_tvh/_4w_networks_k1_sensor_tight_vision_head/specs/_4w_networks_k1_sensor_tight_vision_head_r1_ime.json",
+  "baseline_instance_misses": 2,
+  "aot_instance_misses": 0,
+  "board_recost_instance_misses": 1,
+  "board_resolve_instance_misses": 0,
+  "recovered": true,
+  "residual_misses": 0,
+  "stages": [
+   {
+    "stage": "baseline",
+    "cost": "AOT",
+    "sched": "../tmp/ime_arc/loop_tvh/_4w_networks_k1_sensor_tight_vision_head/panels/stage1_baseline.json",
+    "instance_misses": 2,
+    "makespan_ms": 46.61
+   },
+   {
+    "stage": "aot-optimized",
+    "cost": "AOT",
+    "sched": "../tmp/ime_arc/loop_tvh/_4w_networks_k1_sensor_tight_vision_head/panels/stage2_aot.json",
+    "instance_misses": 0,
+    "makespan_ms": 34.64,
+    "levers": [
+     "ime"
+    ]
+   },
+   {
+    "stage": "board-recost",
+    "cost": "board",
+    "sched": "../tmp/ime_arc/loop_tvh/_4w_networks_k1_sensor_tight_vision_head/panels/stage3_board_recost.json",
+    "instance_misses": 1,
+    "missed_by": {
+     "fused_full": 1
+    }
+   },
+   {
+    "stage": "board-resolve",
+    "cost": "board",
+    "sched": "../tmp/ime_arc/loop_tvh/_4w_networks_k1_sensor_tight_vision_head/panels/stage4_board_resolve.json",
+    "instance_misses": 0,
+    "makespan_ms": 43.6,
+    "solver": "cpsat"
+   }
+  ]
+ }
+}

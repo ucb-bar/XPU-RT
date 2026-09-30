@@ -1,0 +1,21 @@
+=== 22:28:51 clamp + feasibility greedy
+schedules/fig_b_greedy_clamped.json: 122 dispatch targets narrowed; width histogram {1: 11210, 2: 180, 4: 160}
+
+FEASIBLE: no double-booking, no dependency violation, no forward edge, every target on the board, every implementation available where it was placed.
+  feasibility rc=0
+=== 22:28:51 no schedules/fig_b_cpsat_hard.json
+=== 22:28:51 no schedules/fig_b_cpsat_soft.json
+=== 22:28:51 board b_greedy run 1
+  re-pulled the board's stdout: 11550 of 11550 rows (pull 1)
+  trace rows: 11550  hart_acc: 8  policy: SCHED_OTHER  exit: 0  verify: ['MODELBLASTER_VERIFY [yolov8_nano_64x96] === max_abs_err=0 max_rel_err=0 n=8316 instance=0 ready=1']
+=== 22:29:35 board b_greedy run 2
+  re-pulled the board's stdout: 11550 of 11550 rows (pull 1)
+  trace rows: 11550  hart_acc: 8  policy: SCHED_OTHER  exit: 0  verify: ['MODELBLASTER_VERIFY [yolov8_nano_64x96] === max_abs_err=0 max_rel_err=0 n=8316 instance=0 ready=1']
+=== 22:30:12 board b_greedy run 3
+  re-pulled the board's stdout: 2557 of 11550 rows (pull 1)
+  re-pulled the board's stdout: 2557 of 11550 rows (pull 2)
+  re-pulled the board's stdout: 2557 of 11550 rows (pull 3)
+  re-pulled the board's stdout: 2557 of 11550 rows (pull 4)
+  re-pulled the board's stdout: 11550 of 11550 rows (pull 1)
+  trace rows: 11550  hart_acc: 8  policy: SCHED_OTHER  exit: 0  verify: ['MODELBLASTER_VERIFY [yolov8_nano_64x96] === max_abs_err=0 max_rel_err=0 n=8316 instance=0 ready=1']
+=== 22:31:17 BOARD_STAGE2_DONE b

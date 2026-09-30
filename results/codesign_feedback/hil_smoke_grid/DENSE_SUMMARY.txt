@@ -1,0 +1,6 @@
+grid: speeds=[1.2] rates=[100] episodes=2 sim_dt=0.001 flight_s=14
+gain: calibrated moment_scale=0.5/eff_hz (0.01@50Hz .. 0.0025@200Hz)
+csv:  /scratch/agustin/xpurt-dev-sync/results/codesign_feedback/hil_smoke.csv
+=== 20:50:46 START c1.2_r100  (dec=10 eff~=100.0Hz max_steps=1400 moment=0.00500) ===
+  exit=0 success=2/2
+=== 20:55:37 DENSE GRID DONE (3 rows incl header) ===

@@ -1,0 +1,48 @@
+== co-design loop: w4_ffn_dronet_sensor ==
+round 0 · baseline: makespan 74.613 (makespan 74.6 ms), 186 dispatch-miss
+accept rule: candidate_objective.accept() · critical=['mlp_control', 'fused_full', 'ffn_block', 'dronet'] heavy=ffn_block
+levers: shard expanded per network -> ['shard:mlp_control', 'shard:fused_full', 'shard:ffn_block', 'shard:dronet'] (+ shard = all networks)
+      ime: built ime_x60 profiles for (none new; existing reused)
+round 1 · try ime: makespan 74.613 -> 68.731 (-7.9%), 227 dispatch-miss -> reject
+round 1 · try ime: rejected -- max deadline lateness: baseline=52.73 beats ime=58.2 (tolerance 0.5)
+      unfuse: adopted ModelBlaster unfused dispatch graph for (none — no fused net with an unfused build on disk)
+round 1 · try unfuse: lever changed nothing on this spec (inapplicable here) — not a candidate
+      shard:mlp_control: widen mlp_control, hold fused_full+ffn_block+dronet at one core
+round 1 · try shard:mlp_control: SOLVE FAILED (cross their instances
+[cpsat] codegen contract: warm start projected onto the coupling for 122 dispatch instance(s)
+Trac) — reject
+      shard:fused_full: widen fused_full, hold mlp_control+ffn_block+dronet at one core
+round 1 · try shard:fused_full: SOLVE FAILED (cross their instances
+[cpsat] codegen contract: warm start projected onto the coupling for 122 dispatch instance(s)
+Trac) — reject
+      shard:ffn_block: widen ffn_block, hold mlp_control+fused_full+dronet at one core
+round 1 · try shard:ffn_block: makespan 74.613 -> 89.278 (+19.7%), 160 dispatch-miss -> reject
+round 1 · try shard:ffn_block: rejected -- max deadline lateness: baseline=52.73 beats shard:ffn_block=59.23 (tolerance 0.5)
+      shard:dronet: widen dronet, hold mlp_control+fused_full+ffn_block at one core
+round 1 · try shard:dronet: makespan 74.613 -> 92.727 (+24.3%), 20 dispatch-miss -> ACCEPTABLE
+round 1 · try shard:dronet: accepted -- hard deadline misses: shard:dronet=5 beats baseline=26 (tolerance 2.72)
+round 1 · try shard: makespan 74.613 -> 85.288 (+14.3%), 198 dispatch-miss -> reject
+round 1 · try shard: rejected -- hard deadline misses: baseline=26 beats shard=30 (tolerance 2.72)
+round 1: ACCEPT +shard:dronet  makespan 74.613 -> 92.727 (+24.3%)
+      ime: built ime_x60 profiles for (none new; existing reused)
+round 2 · try ime: makespan 92.727 -> 134.327 (+44.9%), 223 dispatch-miss -> reject
+round 2 · try ime: rejected -- hard deadline misses: shard:dronet=5 beats ime=32 (tolerance 2.72)
+      unfuse: adopted ModelBlaster unfused dispatch graph for (none — no fused net with an unfused build on disk)
+round 2 · try unfuse: lever changed nothing on this spec (inapplicable here) — not a candidate
+      shard:mlp_control: widen mlp_control, hold fused_full+ffn_block at one core
+round 2 · try shard:mlp_control: makespan 92.727 -> 160.045 (+72.6%), 150 dispatch-miss -> reject
+round 2 · try shard:mlp_control: rejected -- hard deadline misses: shard:dronet=5 beats shard:mlp_control=20 (tolerance 2.72)
+      shard:fused_full: widen fused_full, hold mlp_control+ffn_block at one core
+round 2 · try shard:fused_full: makespan 92.727 -> 84.808 (-8.5%), 20 dispatch-miss -> reject
+round 2 · try shard:fused_full: rejected -- max deadline lateness: shard:dronet=68.6 beats shard:fused_full=74.1 (tolerance 0.5)
+      shard:ffn_block: widen ffn_block, hold mlp_control+fused_full at one core
+round 2 · try shard:ffn_block: makespan 92.727 -> 83.841 (-9.6%), 177 dispatch-miss -> reject
+round 2 · try shard:ffn_block: rejected -- hard deadline misses: shard:dronet=5 beats shard:ffn_block=28 (tolerance 2.72)
+round 2 · try shard: lever changed nothing on this spec (inapplicable here) — not a candidate
+round 2: no lever is accepted by the nine-term objective rule — CONVERGED
+fuse: NOT applied — roofline decision-aid says the stack is compute-bound (max fusible-epilogue ceiling 16% on dronet); fusion collapses dispatches (scheduling) but is measured ~+0.85% on cycles, so the loop does not credit a makespan gain it cannot measure.
+
+CONVERGED: hard deadline misses (instances) 26 -> 5; makespan 74.613 -> 92.727 ms (+24.3%), levers applied: ['shard:dronet']
+  decided by: shard:dronet (hard deadline misses: shard:dronet=5 beats baseline=26 (tolerance 2.72))
+  note: makespan rose while the rule accepted on a higher-ranked term (misses rank first, makespan lower) — this is the rule working, not a regression
+artifacts in /scratch/agustin/xpurt-dev-sync/results/loop_ablation_final2/inner/w4_ffn_dronet_sensor__cpsat/w4_ffn_dronet_sensor

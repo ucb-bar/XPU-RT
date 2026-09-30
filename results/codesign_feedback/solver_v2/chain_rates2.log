@@ -1,0 +1,42 @@
+=== 22:37:26 wh_chain90_rich_solve_500 greedy
+    greedy_periodic: makespan=597.75 ms (all ops 597.75 ms), periodic window misses=1280, converged
+=== 22:37:51 wh_chain90_rich_solve_500 cpsat hard (limit 3000 s)
+  hard rc=0 cpsat status=FEASIBLE wall=3000.4s
+=== 23:28:19 STAGE2_DONE wh_chain90_rich_solve_500
+  re-pulled the board's stdout: 5775 of 5775 rows (pull 2)
+  trace rows: 5775  hart_acc: 8  policy: SCHED_OTHER  exit: 0  verify: ['MODELBLASTER_VERIFY [yolov8_nano_64x96] === max_abs_err=0 max_rel_err=0 n=8316 instance=0 ready=1']
+=== 23:32:15 BOARD_STAGE2_DONE b5
+=== 23:32:15 wh_chain60_solve certificate
+  greedy:   greedy_periodic: makespan=352.32 ms (all ops 352.32 ms), periodic window misses=859, converged
+  cpsat: cpsat status=FEASIBLE wall=900.2s
+=== 23:47:29 wh_chain60_solve_500 greedy
+    greedy_periodic: makespan=871.49 ms (all ops 871.49 ms), periodic window misses=2766, converged
+=== 23:47:46 wh_chain60_solve_500 cpsat hard (limit 3000 s)
+  hard rc=0 cpsat status=FEASIBLE wall=3000.2s
+=== 00:38:02 STAGE2_DONE wh_chain60_solve_500
+  re-pulled the board's stdout: 0 of  rows (pull 4)
+FileNotFoundError: [Errno 2] No such file or directory: '/scratch/agustin/xpurt-dev-sync/schedules/fig_a60_cpsat_hard_clamped.json'
+=== 00:42:08 BOARD_STAGE2_DONE a60
+=== 00:42:08 wh_chain90_solve certificate
+  greedy:   greedy_periodic: makespan=528.56 ms (all ops 528.56 ms), periodic window misses=1588, converged
+  cpsat: cpsat status=FEASIBLE wall=900.1s
+=== 00:57:25 wh_chain90_solve_500 greedy
+    greedy_periodic: makespan=1274.79 ms (all ops 1274.79 ms), periodic window misses=4309, converged
+=== 00:57:50 wh_chain90_solve_500 cpsat hard (limit 3000 s)
+  hard rc=0 cpsat status=FEASIBLE wall=3000.3s
+=== 01:48:13 STAGE2_DONE wh_chain90_solve_500
+  re-pulled the board's stdout: 0 of  rows (pull 4)
+FileNotFoundError: [Errno 2] No such file or directory: '/scratch/agustin/xpurt-dev-sync/schedules/fig_a90_cpsat_hard_clamped.json'
+=== 01:52:19 BOARD_STAGE2_DONE a90
+=== 01:52:19 wh_chain30_solve certificate
+  greedy:   greedy_periodic: makespan=225.10 ms (all ops 225.10 ms), periodic window misses=0, converged
+  cpsat: cpsat status=OPTIMAL wall=180.9s
+=== 01:55:28 wh_chain30_solve_500 greedy
+    greedy_periodic: makespan=525.16 ms (all ops 525.16 ms), periodic window misses=0, converged
+=== 01:55:34 wh_chain30_solve_500 cpsat hard (limit 3000 s)
+  hard rc=0 cpsat status=OPTIMAL wall=1376.4s
+=== 02:18:39 STAGE2_DONE wh_chain30_solve_500
+  re-pulled the board's stdout: 0 of  rows (pull 4)
+FileNotFoundError: [Errno 2] No such file or directory: '/scratch/agustin/xpurt-dev-sync/schedules/fig_a30_cpsat_hard_clamped.json'
+=== 02:22:45 BOARD_STAGE2_DONE a30
+CHAIN_RATES2_DONE

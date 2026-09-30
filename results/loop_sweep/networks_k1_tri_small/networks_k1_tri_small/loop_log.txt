@@ -1,0 +1,31 @@
+== co-design loop: networks_k1_tri_small ==
+round 0 · baseline: makespan 26.611 (makespan 26.6 ms), 0 instance-miss
+accept rule: candidate_objective.accept() · critical=['mlp_control', 'fused_full', 'dronet', 'ffn_block'] heavy=ffn_block
+      ime: built ime_x60 profiles for (none new; existing reused)
+round 1 · try ime: makespan 26.611 -> 20.083 (-24.5%), 0 instance-miss -> ACCEPTABLE
+round 1 · try ime: accepted -- p99 response of critical tasks: ime=16.55 beats baseline=26.61 (tolerance 0.5)
+round 1 · try shard: makespan 26.611 -> 20.083 (-24.5%), 0 instance-miss -> ACCEPTABLE
+round 1 · try shard: accepted -- p99 response of critical tasks: shard=11.56 beats baseline=26.61 (tolerance 0.5)
+      unfuse: adopted ModelBlaster unfused dispatch graph for (none — no fused net with an unfused build on disk)
+round 1 · try unfuse: lever changed nothing on this spec (inapplicable here) — not a candidate
+round 1: ACCEPT +ime  makespan 26.611 -> 20.083 (-24.5%)
+round 2 · try shard: makespan 20.083 -> 20.083 (-0.0%), 0 instance-miss -> ACCEPTABLE
+round 2 · try shard: accepted -- p99 response of critical tasks: shard=11.56 beats ime=16.55 (tolerance 0.5)
+      unfuse: adopted ModelBlaster unfused dispatch graph for (none — no fused net with an unfused build on disk)
+round 2 · try unfuse: lever changed nothing on this spec (inapplicable here) — not a candidate
+round 2: ACCEPT +shard  makespan 20.083 -> 20.083 (-0.0%)
+      unfuse: adopted ModelBlaster unfused dispatch graph for (none — no fused net with an unfused build on disk)
+round 3 · try unfuse: lever changed nothing on this spec (inapplicable here) — not a candidate
+round 3: no lever is accepted by the nine-term objective rule — CONVERGED
+fuse: NOT applied — roofline decision-aid says the stack is compute-bound (max fusible-epilogue ceiling 16% on dronet); fusion collapses dispatches (scheduling) but is measured ~+0.85% on cycles, so the loop does not credit a makespan gain it cannot measure.
+
+== board-feedback arm ==  (calibration results/codesign_feedback/k1_board_calibration.json)
+board arm · re-solved converged AOT spec at full budget (greedy, 120s): makespan 20.08 ms
+board arm · stage1 baseline (AOT costs): 0 instance-miss
+board arm · stage2 AOT-optimized (AOT costs): 0 instance-miss  [levers: ['ime', 'shard']]
+board arm · stage3 board re-cost of the AOT schedule: 0 instance-miss {}  <- the run-honest reveal
+board arm · AOT schedule already meets every deadline on the board — no re-solve needed.
+board arm: instance-miss arc  baseline->AOT->board-recost->board-resolve = 0 -> 0 -> 0 -> 0
+
+CONVERGED [makespan]: 26.611 -> 20.083 ms (-24.5%), levers applied: ['ime', 'shard']
+artifacts in /scratch/agustin/xpurt-dev-sync/results/loop_sweep/networks_k1_tri_small/networks_k1_tri_small

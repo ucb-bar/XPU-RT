@@ -1,0 +1,14 @@
+=== 22:14:57 waiting for the display pairs
+=== 22:55:57 waiting for panel D's energy ladder
+=== 23:03:57 seed 1001: the scheduled arm reached 3/4 here, not the course -- kept under its own name
+=== 23:03:57 render seed 1001 -> warehouse_showdown_cam30_allcores_s1001_xpu_3of4
+wrote results/codesign_feedback/refined/warehouse_showdown_cam30_allcores_s1001_xpu_3of4.png
+1 FAIL
+=== 23:04:07 render seed 1003 -> warehouse_showdown_cam30_allcores_s1003
+wrote results/codesign_feedback/refined/warehouse_showdown_cam30_allcores_s1003.png
+1 FAIL
+=== 23:04:16 render seed 1007 -> warehouse_showdown_cam30_allcores_s1007
+wrote results/codesign_feedback/refined/warehouse_showdown_cam30_allcores_s1007.png
+1 FAIL
+=== 23:04:25 rendered 3 figure(s)
+=== 23:04:25 RENDER_ALLCORES30_DONE

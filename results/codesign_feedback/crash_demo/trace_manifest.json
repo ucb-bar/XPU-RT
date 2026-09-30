@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "purpose": "Provenance for selected qualitative simulator rollouts; these are not K1 board traces or paired-seed trials.",
+  "common": {
+    "simulator": "Isaac Sim 5.1 / IsaacLab",
+    "physics_step_ms": 10.0,
+    "control_step_ms": 10.0,
+    "environment": "Isaac-Drone-Warehouse-Gates-Vision-Crazyflie-Play-WithSensors-Coll-v0",
+    "environment_seed": null,
+    "seed_status": "Not recorded; the preserved logs report Environment seed: None.",
+    "navigation_model": "sims/models/warehouse/nav_fused_v12_cnn.pt",
+    "controller_model": "sims/models/warehouse/rl_controller_velctrl_dr4.pt",
+    "detector_model": "sims/models/warehouse/yolov8n_gate_person_128x192.pt"
+  },
+  "rollouts": {
+    "xpu_reference": {
+      "figure_data": "complete_figdata/figure_data.npz",
+      "figure_data_sha256": "bb435b7a94493ed54767f85be0a8b77c2b59fe8594ce1f0002b147fa6f836952",
+      "source_log": "provenance/xpu_50hz_success.log",
+      "source_log_sha256": "1b71a1c03aab25ac86b54d6f7570f4e2aae8313499902744c8205a271fd96f95",
+      "scheduler_latency_ms": 12.4,
+      "zero_order_hold_steps": 2,
+      "effective_command_rate_hz": 50.0,
+      "selected_episode": 0,
+      "episodes_observed_in_log": 1,
+      "selection_rule": "First complete successful episode; capture stopped after success.",
+      "terminal_outcome": "success",
+      "gates_completed": 4,
+      "gates_total": 4,
+      "steps": 1250,
+      "duration_s": 12.49
+    },
+    "fixed_baseline": {
+      "figure_data": "crash_figdata/figure_data.npz",
+      "figure_data_sha256": "0551d2f5d97da18d6cfc485704503cc95a02a56498e7bc4086026c5cbdc56908",
+      "source_log": "provenance/ros_33hz_crash.log",
+      "source_log_sha256": "e93318b64708b322c8b2ee44beb8e9e1f17215b610a8b8a6ef9b0ffaf858a0ab",
+      "scheduler_latency_ms": 30.0,
+      "zero_order_hold_steps": 3,
+      "effective_command_rate_hz": 33.3333333333,
+      "selected_episode": 0,
+      "episodes_observed_in_log": 5,
+      "selection_rule": "Deepest progress among five episodes; ties retain the first encountered episode.",
+      "terminal_outcome": "crash",
+      "gates_completed": 1,
+      "gates_total": 4,
+      "steps": 470,
+      "duration_s": 4.69,
+      "episode_summary": [
+        {"episode": 0, "outcome": "crash", "gates_completed": 1, "steps": 470},
+        {"episode": 1, "outcome": "crash", "gates_completed": 0, "steps": 413},
+        {"episode": 2, "outcome": "timeout", "gates_completed": 0, "steps": 1800},
+        {"episode": 3, "outcome": "crash", "gates_completed": 1, "steps": 718},
+        {"episode": 4, "outcome": "crash", "gates_completed": 0, "steps": 417}
+      ]
+    }
+  }
+}

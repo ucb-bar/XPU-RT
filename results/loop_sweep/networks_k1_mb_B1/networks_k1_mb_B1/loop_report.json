@@ -1,0 +1,163 @@
+{
+ "workload": "networks_k1_mb_B1",
+ "objective": "makespan",
+ "accept_rule": "candidate_objective.accept (nine lexicographic terms)",
+ "critical_models": [
+  "mlp_control",
+  "dronet"
+ ],
+ "heavy_model": "dronet",
+ "baseline_terms": {
+  "label": "baseline",
+  "ineligible": null,
+  "01_hard_deadline_misses": 0.0,
+  "02_max_deadline_lateness": 0.0,
+  "03_frequency_compliance": 0.0,
+  "04_p99_response_of_critical_tasks": 8.0,
+  "05_heavy_model_max_latency": 8.0,
+  "06_heavy_model_throughput": 32.5,
+  "07_makespan": 310.083,
+  "08_utilization": 9.2,
+  "09_standalone_kernel_cycles": 85991.0,
+  "total_instances": 42
+ },
+ "final_terms": {
+  "label": "shard",
+  "ineligible": null,
+  "01_hard_deadline_misses": 0.0,
+  "02_max_deadline_lateness": 0.0,
+  "03_frequency_compliance": 0.0,
+  "04_p99_response_of_critical_tasks": 4.89,
+  "05_heavy_model_max_latency": 4.89,
+  "06_heavy_model_throughput": 32.83,
+  "07_makespan": 310.083,
+  "08_utilization": 7.3,
+  "09_standalone_kernel_cycles": 54557.0,
+  "total_instances": 42
+ },
+ "baseline_score_ms": 310.083,
+ "final_score_ms": 310.083,
+ "total_reduction_pct": 0.0,
+ "baseline_makespan_ms": 310.1,
+ "final_makespan_ms": 310.1,
+ "levers_available": [
+  "ime",
+  "shard",
+  "unfuse"
+ ],
+ "levers_applied": [
+  "shard"
+ ],
+ "levers_inapplicable": [
+  {
+   "round": 1,
+   "lever": "unfuse",
+   "reason": "lever left the spec unchanged"
+  },
+  {
+   "round": 2,
+   "lever": "unfuse",
+   "reason": "lever left the spec unchanged"
+  }
+ ],
+ "rounds": [
+  {
+   "round": 1,
+   "lever": "shard",
+   "metric": "makespan",
+   "score_before_ms": 310.083,
+   "score_after_ms": 310.083,
+   "makespan_before_ms": 310.1,
+   "makespan_after_ms": 310.1,
+   "pct": -0.0,
+   "accepted": true,
+   "deadline_miss": 0,
+   "accept_rule": "objective",
+   "why": "accepted -- p99 response of critical tasks: shard=4.89 beats baseline=8 (tolerance 0.5)",
+   "rejected": [
+    {
+     "lever": "ime",
+     "why": "rejected -- indistinguishable on every term; a tie is not an improvement",
+     "score_ms": 310.083,
+     "misses": 0
+    }
+   ],
+   "terms": {
+    "label": "shard",
+    "ineligible": null,
+    "01_hard_deadline_misses": 0.0,
+    "02_max_deadline_lateness": 0.0,
+    "03_frequency_compliance": 0.0,
+    "04_p99_response_of_critical_tasks": 4.89,
+    "05_heavy_model_max_latency": 4.89,
+    "06_heavy_model_throughput": 32.83,
+    "07_makespan": 310.083,
+    "08_utilization": 7.3,
+    "09_standalone_kernel_cycles": 54557.0,
+    "total_instances": 42
+   }
+  }
+ ],
+ "trajectory": [
+  {
+   "round": 0,
+   "lever": "baseline",
+   "score_ms": 310.083,
+   "makespan_ms": 310.1,
+   "misses": 0
+  },
+  {
+   "round": 1,
+   "lever": "+shard",
+   "score_ms": 310.083,
+   "makespan_ms": 310.1,
+   "misses": 0
+  },
+  {
+   "round": "board-recost",
+   "lever": "recost(board)",
+   "makespan_ms": 310.1,
+   "misses": 0
+  }
+ ],
+ "fusion": "fuse: NOT applied \u2014 roofline decision-aid says the stack is compute-bound (max fusible-epilogue ceiling 16% on dronet); fusion collapses dispatches (scheduling) but is measured ~+0.85% on cycles, so the loop does not credit a makespan gain it cannot measure.",
+ "converged": true,
+ "board_feedback": {
+  "enabled": true,
+  "calibration": "results/codesign_feedback/k1_board_calibration.json",
+  "board_solver": "greedy",
+  "spec": "results/loop_sweep/networks_k1_mb_B1/networks_k1_mb_B1/specs/networks_k1_mb_B1_r1_shard.json",
+  "baseline_instance_misses": 0,
+  "aot_instance_misses": 0,
+  "board_recost_instance_misses": 0,
+  "board_resolve_instance_misses": null,
+  "recovered": false,
+  "residual_misses": 0,
+  "stages": [
+   {
+    "stage": "baseline",
+    "cost": "AOT",
+    "sched": "results/loop_sweep/networks_k1_mb_B1/networks_k1_mb_B1/panels/stage1_baseline.json",
+    "instance_misses": 0,
+    "makespan_ms": 310.08
+   },
+   {
+    "stage": "aot-optimized",
+    "cost": "AOT",
+    "sched": "results/loop_sweep/networks_k1_mb_B1/networks_k1_mb_B1/panels/stage2_aot.json",
+    "instance_misses": 0,
+    "makespan_ms": 310.08,
+    "levers": [
+     "shard"
+    ]
+   },
+   {
+    "stage": "board-recost",
+    "cost": "board",
+    "sched": "results/loop_sweep/networks_k1_mb_B1/networks_k1_mb_B1/panels/stage3_board_recost.json",
+    "instance_misses": 0,
+    "missed_by": {}
+   }
+  ]
+ }
+}

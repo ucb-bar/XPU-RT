@@ -1,0 +1,4 @@
+6350 dispatches over 8 machine(s), makespan 1009.664 ms
+  busiest machine: CPU_P#0 at 860.001 ms (85.2% of the makespan)
+
+FEASIBLE: no double-booking, no dependency violation, no forward edge, every target on the board, every implementation available where it was placed.

@@ -1,0 +1,50 @@
+{
+ "platform": "SpaceMiT K1 (measured profile DB; same basis as greedy/shard, board-corroborated)",
+ "model": "micro-ROS per-network pinning (one ROS node/net, one hart, sequential graph, no per-op scheduling) \u2014 models examples/microros_demo/run.sh on K1 profiles",
+ "workload": "networks_k1_tri_exact_100ms.json",
+ "per_net": {
+  "mlp_control": {
+   "latency_ms": 0.083,
+   "period_ms": 20.0,
+   "n_inst": 5,
+   "n_dispatch": 7,
+   "worst_response_ms": 0.083,
+   "deadline_misses": 0,
+   "critical": true
+  },
+  "fused_full": {
+   "latency_ms": 3.622,
+   "period_ms": 20.0,
+   "n_inst": 5,
+   "n_dispatch": 15,
+   "worst_response_ms": 3.622,
+   "deadline_misses": 0,
+   "critical": true
+  },
+  "dronet": {
+   "latency_ms": 12.403,
+   "period_ms": 33.333333333333336,
+   "n_inst": 3,
+   "n_dispatch": 24,
+   "worst_response_ms": 12.403,
+   "deadline_misses": 0,
+   "critical": true
+  },
+  "ffn_block": {
+   "latency_ms": 26.611,
+   "period_ms": 100.0,
+   "n_inst": 1,
+   "n_dispatch": 5,
+   "worst_response_ms": 26.611,
+   "deadline_misses": 0,
+   "critical": false
+  }
+ },
+ "ros_worst_critical_response_ms": 12.403,
+ "ros_total_deadline_misses": 0,
+ "ros_makespan_ms": 37.209,
+ "xpurt_greedy_worst_response_ms": 8.001335,
+ "xpurt_shard_worst_response_ms": 4.890542,
+ "greedy_speedup_over_ros": 1.55,
+ "shard_speedup_over_ros": 2.54
+}

@@ -1,0 +1,12 @@
+### 1. the naive arm's own second perception process, foregrounded so its exit status is visible.
+#    Same five processes as 30_vanilla4x2_ime, same kernels; only the order of the launch changed.
+bash: line 8: 2144080 Illegal instruction     ./ros_mb_chain_traced_pool_ime --nodes perception2 --cameras 2 --yolo-pool 4 --pool-harts 4,5,6,7 --rate 30 --seconds 8 --t0 $T0 --tag sigill --out-dir out/sigill/percep2 2>&1
+percep2 exit=132 (128+4 = SIGILL)
+--- what percep2 left behind ---
+total 8
+drwxr-xr-x 2 root root 4096 Sep 18 13:41 .
+drwxr-xr-x 7 root root 4096 Sep 18 13:41 ..
+
+### 2. the same five processes with BOTH pools on cluster 0
+ROS_TRACED tag=sigok exec=single rate=30 released=0 goals=0 fires=0 gap_mean=0.00 gap_max=0.00
+percep2 exit=0

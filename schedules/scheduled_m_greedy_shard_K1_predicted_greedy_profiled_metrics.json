@@ -1,0 +1,41 @@
+{
+  "scheduler": "greedy",
+  "num_operations": 664,
+  "units_note": "fields suffixed _us are in the schedule's timebase, which is milliseconds; the _ms aliases carry the same values under a correct name",
+  "makespan_us": 266.0391229999998,
+  "makespan_ms": 266.0391229999998,
+  "nonperiodic_makespan_us": 0.0,
+  "nonperiodic_makespan_ms": 0.0,
+  "mean_op_duration_us": 0.39363006626506025,
+  "mean_op_duration_ms": 0.39363006626506025,
+  "p95_op_duration_us": 1.228458,
+  "p95_op_duration_ms": 1.228458,
+  "p99_op_duration_us": 2.274042,
+  "p99_op_duration_ms": 2.274042,
+  "op_deadline_miss_count": 456,
+  "op_deadline_miss_ratio": 0.6867469879518072,
+  "deadline_miss_count": 456,
+  "deadline_miss_ratio": 0.6867469879518072,
+  "total_lateness_us": 31889.415534999956,
+  "total_lateness_ms": 31889.415534999956,
+  "max_lateness_us": 233.82445499999972,
+  "max_lateness_ms": 233.82445499999972,
+  "per_machine_utilization": {
+    "CPU_P#0": 0.9824508555457835
+  },
+  "per_machine_idle_us": {
+    "CPU_P#0": 4.66875900000008
+  },
+  "per_machine_idle_ms": {
+    "CPU_P#0": 4.66875900000008
+  },
+  "cross_device_transitions": 0,
+  "critical_path_us": 34.600121999999985,
+  "critical_path_ms": 34.600121999999985,
+  "solver_wall_time_s": 0.09922036900024978,
+  "peak_dram_bytes": null,
+  "peak_scratchpad_bytes": null,
+  "buffer_reuse_count": null,
+  "jitter_us": null,
+  "packing_capacity": null
+}

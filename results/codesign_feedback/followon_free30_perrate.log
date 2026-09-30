@@ -1,0 +1,33 @@
+=== 21:51:02 equal-gain chain finished; starting the per-rate form
+=== 21:51:02 stage 1: the displayed pair, each arm at its own rate's gain
+=== 21:51:02 search cruise 1.4
+    seed order from the census: 1001 1009 1000 1002 1003 1004 1005 1006 1007 1008 1010 1011
+  xpu 1001: === 21:51:02 xpu_s1001
+  xpu 1009: === 22:00:12 xpu_s1009
+  xpu 1000: === 22:05:59 xpu_s1000
+  xpu 1002: === 22:15:28 xpu_s1002
+  xpu 1003: === 22:22:53 xpu_s1003
+  xpu 1004: === 22:31:36 xpu_s1004
+  xpu 1005: === 22:38:25 xpu_s1005
+  xpu 1006: === 22:46:28 xpu_s1006
+  xpu 1007: === 22:55:36 xpu_s1007
+  ros 1007: === 23:05:47 ros_s1007
+PAIR_SEED=1007
+PAIR /scratch/agustin/xpurt-dev-sync/results/codesign_feedback/campaign_free30/display/search_c1.4/xpu_s1007_figdata /scratch/agustin/xpurt-dev-sync/results/codesign_feedback/campaign_free30/display/search_c1.4/ros_s1007_figdata
+DISPLAY_FREE30_SEARCH_DONE 23:17:14
+=== 23:17:14 pair: cruise 1.4 seed 1007
+=== 23:17:14 stage 2: panel A's scene census, twelve seeds per arm on the scene the pair flies
+=== 23:17:14 scene free30pr_l1007 layout 1007 xpu lat 26.8 hold 33.3 cruise 1.4 ===
+[SWEEP] ms=0.005 cruise=1.4 walk=0.0 hold=33.3 SUCCESS 0/12 clip=12 ground=0  s1000:cras(2/4,651,clip) s1001:cras(2/4,637,clip) s1002:cras(0/4,249,clip) s1003:c
+SCENE_RUNS_DONE free30pr_l1007
+=== 23:30:26 scene free30pr_l1007 layout 1007 ros8 lat 30.1 hold 33.3 cruise 1.4 ===
+[SWEEP] ms=0.01667 cruise=1.4 walk=0.0 hold=33.3 SUCCESS 0/12 clip=3 ground=4  s1000:time(1/4,1800,-) s1001:time(0/4,1800,-) s1002:cras(0/4,586,clip) s1003:cras
+SCENE_RUNS_DONE free30pr_l1007
+=== 23:50:00 stage 3: panel D's energy runs, cadence only
+
+wrote /scratch/agustin/xpurt-dev-sync/results/codesign_feedback/flight_energy_free30_perrate.csv  (ratios robust to arm/kappa; absolute ∝ units)
+=== 00:22:35 ENERGY_PAIR_DONE -> /scratch/agustin/xpurt-dev-sync/results/codesign_feedback/flight_energy_free30_perrate.csv ===
+
+wrote /scratch/agustin/xpurt-dev-sync/results/codesign_feedback/flight_energy_free30_perrate.csv  (ratios robust to arm/kappa; absolute ∝ units)
+=== 01:01:42 ENERGY_PAIR_DONE -> /scratch/agustin/xpurt-dev-sync/results/codesign_feedback/flight_energy_free30_perrate.csv ===
+=== 01:01:42 FOLLOWON_FREE30_PERRATE_DONE

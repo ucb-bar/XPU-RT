@@ -1,0 +1,3214 @@
+[
+ {
+  "xpu": {
+   "trace": "xpu_a_cpsat_hard.csv",
+   "lat": "56.8",
+   "hold": "0.0"
+  },
+  "ros": {
+   "trace": "ros_vanilla445.csv",
+   "lat": "242.0",
+   "hold": "0.0",
+   "arm": "vanilla4",
+   "camera_hz": 45
+  },
+  "pairs": 336,
+  "person_h": [
+   "1.7",
+   "2.4"
+  ],
+  "cells": 3,
+  "workload": "chain",
+  "xpu_success": [
+   102,
+   319
+  ],
+  "ros_success": [
+   20,
+   318
+  ],
+  "works_sometimes": true,
+  "separation_pts": [
+   25.7,
+   19.8,
+   31.4
+  ],
+  "separated": true,
+  "gate_diff": [
+   1.3,
+   1.11,
+   1.48
+  ],
+  "we_win_gates": true,
+  "ros_harts_working": 4,
+  "ros_harts_over_half": 4,
+  "ros_cpu_pct": 385.59999999999997,
+  "crash_pairs": 90,
+  "example": {
+   "seed": "1000",
+   "cruise": "0.8",
+   "cell": [
+    "a",
+    "0.30",
+    "1.7",
+    "0.0",
+    "0.0055"
+   ],
+   "ros_gate": 0.0,
+   "ros_steps": "516"
+  }
+ },
+ {
+  "xpu": {
+   "trace": "xpu_a_cpsat_hard.csv",
+   "lat": "59.9",
+   "hold": "8.3"
+  },
+  "ros": {
+   "trace": "ros_vanilla445.csv",
+   "lat": "242.0",
+   "hold": "0.0",
+   "arm": "vanilla4",
+   "camera_hz": 45
+  },
+  "pairs": 60,
+  "person_h": [
+   "2.4"
+  ],
+  "cells": 1,
+  "workload": "chain",
+  "xpu_success": [
+   10,
+   60
+  ],
+  "ros_success": [
+   1,
+   60
+  ],
+  "works_sometimes": true,
+  "separation_pts": [
+   15.0,
+   4.7,
+   26.4
+  ],
+  "separated": true,
+  "gate_diff": [
+   0.88,
+   0.55,
+   1.25
+  ],
+  "we_win_gates": true,
+  "ros_harts_working": 4,
+  "ros_harts_over_half": 4,
+  "ros_cpu_pct": 385.59999999999997,
+  "crash_pairs": 10,
+  "example": {
+   "seed": "1001",
+   "cruise": "1.2",
+   "cell": [
+    "a",
+    "0.30",
+    "2.4",
+    "0.0",
+    "0.0055"
+   ],
+   "ros_gate": 2.0,
+   "ros_steps": "648"
+  }
+ },
+ {
+  "xpu": {
+   "trace": "xpu_a_cpsat_hard.csv",
+   "lat": "56.8",
+   "hold": "22.2"
+  },
+  "ros": {
+   "trace": "ros_vanilla445.csv",
+   "lat": "242.0",
+   "hold": "0.0",
+   "arm": "vanilla4",
+   "camera_hz": 45
+  },
+  "pairs": 60,
+  "person_h": [
+   "2.4"
+  ],
+  "cells": 1,
+  "workload": "chain",
+  "xpu_success": [
+   10,
+   60
+  ],
+  "ros_success": [
+   1,
+   60
+  ],
+  "works_sometimes": true,
+  "separation_pts": [
+   15.0,
+   4.7,
+   26.4
+  ],
+  "separated": true,
+  "gate_diff": [
+   0.8,
+   0.47,
+   1.17
+  ],
+  "we_win_gates": true,
+  "ros_harts_working": 4,
+  "ros_harts_over_half": 4,
+  "ros_cpu_pct": 385.59999999999997,
+  "crash_pairs": 9,
+  "example": {
+   "seed": "1001",
+   "cruise": "1.4",
+   "cell": [
+    "a",
+    "0.30",
+    "2.4",
+    "0.0",
+    "0.0055"
+   ],
+   "ros_gate": 1.0,
+   "ros_steps": "394"
+  }
+ },
+ {
+  "xpu": {
+   "trace": "xpu_a_cpsat_hard.csv",
+   "lat": "59.9",
+   "hold": "8.3"
+  },
+  "ros": {
+   "trace": "ros_vanilla4tm45.csv",
+   "lat": "242.0",
+   "hold": "0.0",
+   "arm": "vanilla4tm",
+   "camera_hz": 45
+  },
+  "pairs": 444,
+  "person_h": [
+   "2.4"
+  ],
+  "cells": 8,
+  "workload": "chain",
+  "xpu_success": [
+   71,
+   440
+  ],
+  "ros_success": [
+   37,
+   443
+  ],
+  "works_sometimes": true,
+  "separation_pts": [
+   7.8,
+   3.5,
+   12.1
+  ],
+  "separated": true,
+  "gate_diff": [
+   0.42,
+   0.3,
+   0.55
+  ],
+  "we_win_gates": true,
+  "ros_harts_working": 4,
+  "ros_harts_over_half": 4,
+  "ros_cpu_pct": 388.2,
+  "crash_pairs": 49,
+  "example": {
+   "seed": "1001",
+   "cruise": "1.2",
+   "cell": [
+    "a",
+    "0.20",
+    "2.4",
+    "0.0",
+    "0.0055"
+   ],
+   "ros_gate": 2.0,
+   "ros_steps": "607"
+  }
+ },
+ {
+  "xpu": {
+   "trace": "xpu_a_cpsat_hard.csv",
+   "lat": "59.9",
+   "hold": "8.3"
+  },
+  "ros": {
+   "trace": "ros_multi45.csv",
+   "lat": "264.7",
+   "hold": "50.1",
+   "arm": "multi",
+   "camera_hz": 45
+  },
+  "pairs": 48,
+  "person_h": [
+   "2.4"
+  ],
+  "cells": 1,
+  "workload": "chain",
+  "xpu_success": [
+   10,
+   48
+  ],
+  "ros_success": [
+   2,
+   47
+  ],
+  "works_sometimes": true,
+  "separation_pts": [
+   16.6,
+   3.1,
+   30.4
+  ],
+  "separated": true,
+  "gate_diff": [
+   0.73,
+   0.33,
+   1.12
+  ],
+  "we_win_gates": true,
+  "ros_harts_working": 0,
+  "ros_harts_over_half": 0,
+  "ros_cpu_pct": 124.39999999999999,
+  "crash_pairs": 8,
+  "example": {
+   "seed": "1001",
+   "cruise": "1.2",
+   "cell": [
+    "a",
+    "0.30",
+    "2.4",
+    "0.0",
+    "0.0055"
+   ],
+   "ros_gate": 2.0,
+   "ros_steps": "667"
+  }
+ },
+ {
+  "xpu": {
+   "trace": "xpu_a_cpsat_hard.csv",
+   "lat": "56.8",
+   "hold": "0.0"
+  },
+  "ros": {
+   "trace": "ros_vanilla4tm45.csv",
+   "lat": "242.0",
+   "hold": "0.0",
+   "arm": "vanilla4tm",
+   "camera_hz": 45
+  },
+  "pairs": 480,
+  "person_h": [
+   "2.4"
+  ],
+  "cells": 8,
+  "workload": "chain",
+  "xpu_success": [
+   73,
+   472
+  ],
+  "ros_success": [
+   42,
+   479
+  ],
+  "works_sometimes": true,
+  "separation_pts": [
+   6.7,
+   2.6,
+   10.9
+  ],
+  "separated": true,
+  "gate_diff": [
+   0.33,
+   0.19,
+   0.46
+  ],
+  "we_win_gates": true,
+  "ros_harts_working": 4,
+  "ros_harts_over_half": 4,
+  "ros_cpu_pct": 388.2,
+  "crash_pairs": 60,
+  "example": {
+   "seed": "1000",
+   "cruise": "1.0",
+   "cell": [
+    "a",
+    "0.20",
+    "2.4",
+    "0.0",
+    "0.0055"
+   ],
+   "ros_gate": 1.0,
+   "ros_steps": "444"
+  }
+ },
+ {
+  "xpu": {
+   "trace": "xpu_a_cpsat_hard.csv",
+   "lat": "56.8",
+   "hold": "22.2"
+  },
+  "ros": {
+   "trace": "ros_multi45.csv",
+   "lat": "264.7",
+   "hold": "50.1",
+   "arm": "multi",
+   "camera_hz": 45
+  },
+  "pairs": 48,
+  "person_h": [
+   "2.4"
+  ],
+  "cells": 1,
+  "workload": "chain",
+  "xpu_success": [
+   9,
+   48
+  ],
+  "ros_success": [
+   2,
+   47
+  ],
+  "works_sometimes": true,
+  "separation_pts": [
+   14.5,
+   1.3,
+   28.0
+  ],
+  "separated": true,
+  "gate_diff": [
+   0.54,
+   0.12,
+   0.96
+  ],
+  "we_win_gates": true,
+  "ros_harts_working": 0,
+  "ros_harts_over_half": 0,
+  "ros_cpu_pct": 124.39999999999999,
+  "crash_pairs": 7,
+  "example": {
+   "seed": "1001",
+   "cruise": "1.4",
+   "cell": [
+    "a",
+    "0.30",
+    "2.4",
+    "0.0",
+    "0.0055"
+   ],
+   "ros_gate": 1.0,
+   "ros_steps": "347"
+  }
+ },
+ {
+  "xpu": {
+   "trace": "xpu_b5_cpsat.csv",
+   "lat": "57.6",
+   "hold": "11.1"
+  },
+  "ros": {
+   "trace": "ros_rvanilla490.csv",
+   "lat": "137.0",
+   "hold": "26.1",
+   "arm": "rvanilla4",
+   "camera_hz": 90
+  },
+  "pairs": 60,
+  "person_h": [
+   "2.4"
+  ],
+  "cells": 1,
+  "workload": "loaded",
+  "xpu_success": [
+   13,
+   59
+  ],
+  "ros_success": [
+   0,
+   59
+  ],
+  "works_sometimes": false,
+  "separation_pts": [
+   22.0,
+   11.4,
+   34.1
+  ],
+  "separated": true,
+  "gate_diff": [
+   1.08,
+   0.75,
+   1.43
+  ],
+  "we_win_gates": true,
+  "ros_harts_working": 8,
+  "ros_harts_over_half": 4,
+  "ros_cpu_pct": 444.2,
+  "crash_pairs": 12,
+  "example": {
+   "seed": "1001",
+   "cruise": "1.0",
+   "cell": [
+    "a",
+    "0.30",
+    "2.4",
+    "0.0",
+    "0.0055"
+   ],
+   "ros_gate": 2.0,
+   "ros_steps": "793"
+  }
+ },
+ {
+  "xpu": {
+   "trace": "xpu_b5_greedy.csv",
+   "lat": "149.0",
+   "hold": "11.1"
+  },
+  "ros": {
+   "trace": "ros_rvanilla490.csv",
+   "lat": "137.0",
+   "hold": "26.1",
+   "arm": "rvanilla4",
+   "camera_hz": 90
+  },
+  "pairs": 60,
+  "person_h": [
+   "2.4"
+  ],
+  "cells": 1,
+  "workload": "loaded",
+  "xpu_success": [
+   7,
+   60
+  ],
+  "ros_success": [
+   0,
+   59
+  ],
+  "works_sometimes": false,
+  "separation_pts": [
+   11.7,
+   3.2,
+   22.2
+  ],
+  "separated": true,
+  "gate_diff": [
+   0.85,
+   0.5,
+   1.2
+  ],
+  "we_win_gates": true,
+  "ros_harts_working": 8,
+  "ros_harts_over_half": 4,
+  "ros_cpu_pct": 444.2,
+  "crash_pairs": 6,
+  "example": {
+   "seed": "1001",
+   "cruise": "1.2",
+   "cell": [
+    "a",
+    "0.30",
+    "2.4",
+    "0.0",
+    "0.0055"
+   ],
+   "ros_gate": 0.0,
+   "ros_steps": "412"
+  }
+ },
+ {
+  "xpu": {
+   "trace": "xpu_a_cpsat_hard.csv",
+   "lat": "59.9",
+   "hold": "8.3"
+  },
+  "ros": {
+   "trace": "ros_vanilla4t45.csv",
+   "lat": "121.0",
+   "hold": "0.0",
+   "arm": "vanilla4t",
+   "camera_hz": 45
+  },
+  "pairs": 60,
+  "person_h": [
+   "2.4"
+  ],
+  "cells": 1,
+  "workload": "chain",
+  "xpu_success": [
+   10,
+   60
+  ],
+  "ros_success": [
+   0,
+   60
+  ],
+  "works_sometimes": false,
+  "separation_pts": [
+   16.7,
+   7.2,
+   28.0
+  ],
+  "separated": true,
+  "gate_diff": [
+   1.1,
+   0.82,
+   1.42
+  ],
+  "we_win_gates": true,
+  "ros_harts_working": 4,
+  "ros_harts_over_half": 4,
+  "ros_cpu_pct": 317.59999999999997,
+  "crash_pairs": 10,
+  "example": {
+   "seed": "1001",
+   "cruise": "1.2",
+   "cell": [
+    "a",
+    "0.30",
+    "2.4",
+    "0.0",
+    "0.0055"
+   ],
+   "ros_gate": 1.0,
+   "ros_steps": "605"
+  }
+ },
+ {
+  "xpu": {
+   "trace": "xpu_a_cpsat_hard.csv",
+   "lat": "56.8",
+   "hold": "22.2"
+  },
+  "ros": {
+   "trace": "ros_vanilla4t45.csv",
+   "lat": "121.0",
+   "hold": "0.0",
+   "arm": "vanilla4t",
+   "camera_hz": 45
+  },
+  "pairs": 60,
+  "person_h": [
+   "2.4"
+  ],
+  "cells": 1,
+  "workload": "chain",
+  "xpu_success": [
+   10,
+   60
+  ],
+  "ros_success": [
+   0,
+   60
+  ],
+  "works_sometimes": false,
+  "separation_pts": [
+   16.7,
+   7.2,
+   28.0
+  ],
+  "separated": true,
+  "gate_diff": [
+   1.02,
+   0.7,
+   1.37
+  ],
+  "we_win_gates": true,
+  "ros_harts_working": 4,
+  "ros_harts_over_half": 4,
+  "ros_cpu_pct": 317.59999999999997,
+  "crash_pairs": 10,
+  "example": {
+   "seed": "1001",
+   "cruise": "1.4",
+   "cell": [
+    "a",
+    "0.30",
+    "2.4",
+    "0.0",
+    "0.0055"
+   ],
+   "ros_gate": 0.0,
+   "ros_steps": "356"
+  }
+ },
+ {
+  "xpu": {
+   "trace": "xpu_a_cpsat_hard.csv",
+   "lat": "56.8",
+   "hold": "0.0"
+  },
+  "ros": {
+   "trace": "ros_vanilla4t45.csv",
+   "lat": "121.0",
+   "hold": "0.0",
+   "arm": "vanilla4t",
+   "camera_hz": 45
+  },
+  "pairs": 60,
+  "person_h": [
+   "2.4"
+  ],
+  "cells": 1,
+  "workload": "chain",
+  "xpu_success": [
+   6,
+   60
+  ],
+  "ros_success": [
+   0,
+   60
+  ],
+  "works_sometimes": false,
+  "separation_pts": [
+   10.0,
+   2.0,
+   20.1
+  ],
+  "separated": true,
+  "gate_diff": [
+   1.03,
+   0.72,
+   1.37
+  ],
+  "we_win_gates": true,
+  "ros_harts_working": 4,
+  "ros_harts_over_half": 4,
+  "ros_cpu_pct": 317.59999999999997,
+  "crash_pairs": 6,
+  "example": {
+   "seed": "1000",
+   "cruise": "1.0",
+   "cell": [
+    "a",
+    "0.30",
+    "2.4",
+    "0.0",
+    "0.0055"
+   ],
+   "ros_gate": 1.0,
+   "ros_steps": "614"
+  }
+ },
+ {
+  "xpu": {
+   "trace": "xpu_shard45.csv",
+   "lat": "36.0",
+   "hold": "0.0"
+  },
+  "ros": {
+   "trace": "ros_vanilla4t45.csv",
+   "lat": "121.0",
+   "hold": "0.0",
+   "arm": "vanilla4t",
+   "camera_hz": 45
+  },
+  "pairs": 60,
+  "person_h": [
+   "2.4"
+  ],
+  "cells": 1,
+  "workload": "chain",
+  "xpu_success": [
+   6,
+   60
+  ],
+  "ros_success": [
+   0,
+   60
+  ],
+  "works_sometimes": false,
+  "separation_pts": [
+   10.0,
+   2.0,
+   20.1
+  ],
+  "separated": true,
+  "gate_diff": [
+   1.12,
+   0.85,
+   1.4
+  ],
+  "we_win_gates": true,
+  "ros_harts_working": 4,
+  "ros_harts_over_half": 4,
+  "ros_cpu_pct": 317.59999999999997,
+  "crash_pairs": 6,
+  "example": {
+   "seed": "1001",
+   "cruise": "1.4",
+   "cell": [
+    "a",
+    "0.30",
+    "2.4",
+    "0.0",
+    "0.0055"
+   ],
+   "ros_gate": 0.0,
+   "ros_steps": "356"
+  }
+ },
+ {
+  "xpu": {
+   "trace": "xpu_a90_cpsat.csv",
+   "lat": "55.9",
+   "hold": "11.1"
+  },
+  "ros": {
+   "trace": "ros_vanilla4x290.csv",
+   "lat": "252.8",
+   "hold": "19.6",
+   "arm": "vanilla4x2",
+   "camera_hz": 90
+  },
+  "pairs": 60,
+  "person_h": [
+   "2.4"
+  ],
+  "cells": 1,
+  "workload": "chain",
+  "xpu_success": [
+   7,
+   60
+  ],
+  "ros_success": [
+   5,
+   60
+  ],
+  "works_sometimes": true,
+  "separation_pts": [
+   3.3,
+   -8.1,
+   14.9
+  ],
+  "separated": false,
+  "gate_diff": [
+   0.33,
+   0.02,
+   0.65
+  ],
+  "we_win_gates": true,
+  "ros_harts_working": 8,
+  "ros_harts_over_half": 8,
+  "ros_cpu_pct": 626.8,
+  "crash_pairs": 4,
+  "example": {
+   "seed": "1001",
+   "cruise": "1.4",
+   "cell": [
+    "a",
+    "0.30",
+    "2.4",
+    "0.0",
+    "0.0055"
+   ],
+   "ros_gate": 2.0,
+   "ros_steps": "515"
+  }
+ },
+ {
+  "xpu": {
+   "trace": "xpu_shard45.csv",
+   "lat": "36.0",
+   "hold": "0.0"
+  },
+  "ros": {
+   "trace": "ros_vanilla445.csv",
+   "lat": "242.0",
+   "hold": "0.0",
+   "arm": "vanilla4",
+   "camera_hz": 45
+  },
+  "pairs": 60,
+  "person_h": [
+   "2.4"
+  ],
+  "cells": 1,
+  "workload": "chain",
+  "xpu_success": [
+   6,
+   60
+  ],
+  "ros_success": [
+   1,
+   60
+  ],
+  "works_sometimes": true,
+  "separation_pts": [
+   8.3,
+   -0.6,
+   18.6
+  ],
+  "separated": false,
+  "gate_diff": [
+   0.9,
+   0.57,
+   1.25
+  ],
+  "we_win_gates": true,
+  "ros_harts_working": 4,
+  "ros_harts_over_half": 4,
+  "ros_cpu_pct": 385.59999999999997,
+  "crash_pairs": 6,
+  "example": {
+   "seed": "1001",
+   "cruise": "1.4",
+   "cell": [
+    "a",
+    "0.30",
+    "2.4",
+    "0.0",
+    "0.0055"
+   ],
+   "ros_gate": 1.0,
+   "ros_steps": "394"
+  }
+ },
+ {
+  "xpu": {
+   "trace": "xpu_a90_cpsat.csv",
+   "lat": "55.9",
+   "hold": "11.1"
+  },
+  "ros": {
+   "trace": "ros_vanilla4tm90.csv",
+   "lat": "136.5",
+   "hold": "30.3",
+   "arm": "vanilla4tm",
+   "camera_hz": 90
+  },
+  "pairs": 480,
+  "person_h": [
+   "2.4"
+  ],
+  "cells": 8,
+  "workload": "chain",
+  "xpu_success": [
+   79,
+   475
+  ],
+  "ros_success": [
+   62,
+   476
+  ],
+  "works_sometimes": true,
+  "separation_pts": [
+   3.6,
+   -0.9,
+   8.1
+  ],
+  "separated": false,
+  "gate_diff": [
+   0.16,
+   0.04,
+   0.29
+  ],
+  "we_win_gates": true,
+  "ros_harts_working": 4,
+  "ros_harts_over_half": 4,
+  "ros_cpu_pct": 403.59999999999997,
+  "crash_pairs": 49,
+  "example": {
+   "seed": "1000",
+   "cruise": "1.0",
+   "cell": [
+    "a",
+    "0.20",
+    "2.4",
+    "0.0",
+    "0.0055"
+   ],
+   "ros_gate": 1.0,
+   "ros_steps": "647"
+  }
+ },
+ {
+  "xpu": {
+   "trace": "xpu_a_cpsat_hard.csv",
+   "lat": "56.8",
+   "hold": "0.0"
+  },
+  "ros": {
+   "trace": "ros_multi45.csv",
+   "lat": "264.7",
+   "hold": "50.1",
+   "arm": "multi",
+   "camera_hz": 45
+  },
+  "pairs": 48,
+  "person_h": [
+   "2.4"
+  ],
+  "cells": 1,
+  "workload": "chain",
+  "xpu_success": [
+   6,
+   48
+  ],
+  "ros_success": [
+   2,
+   47
+  ],
+  "works_sometimes": true,
+  "separation_pts": [
+   8.2,
+   -3.8,
+   20.8
+  ],
+  "separated": false,
+  "gate_diff": [
+   0.52,
+   0.17,
+   0.88
+  ],
+  "we_win_gates": true,
+  "ros_harts_working": 0,
+  "ros_harts_over_half": 0,
+  "ros_cpu_pct": 124.39999999999999,
+  "crash_pairs": 5,
+  "example": {
+   "seed": "1000",
+   "cruise": "1.0",
+   "cell": [
+    "a",
+    "0.30",
+    "2.4",
+    "0.0",
+    "0.0055"
+   ],
+   "ros_gate": 1.0,
+   "ros_steps": "447"
+  }
+ },
+ {
+  "xpu": {
+   "trace": "xpu_a_cpsat_hard.csv",
+   "lat": "59.9",
+   "hold": "8.3"
+  },
+  "ros": {
+   "trace": "ros_vanilla4_q145.csv",
+   "lat": "42.0",
+   "hold": "0.0",
+   "arm": "vanilla4_q1",
+   "camera_hz": 45
+  },
+  "pairs": 60,
+  "person_h": [
+   "2.4"
+  ],
+  "cells": 1,
+  "workload": "chain",
+  "xpu_success": [
+   10,
+   60
+  ],
+  "ros_success": [
+   5,
+   60
+  ],
+  "works_sometimes": true,
+  "separation_pts": [
+   8.3,
+   -3.9,
+   20.6
+  ],
+  "separated": false,
+  "gate_diff": [
+   0.6,
+   0.28,
+   0.93
+  ],
+  "we_win_gates": true,
+  "ros_harts_working": 4,
+  "ros_harts_over_half": 4,
+  "ros_cpu_pct": 391.90000000000003,
+  "crash_pairs": 8,
+  "example": {
+   "seed": "1001",
+   "cruise": "1.2",
+   "cell": [
+    "a",
+    "0.30",
+    "2.4",
+    "0.0",
+    "0.0055"
+   ],
+   "ros_gate": 2.0,
+   "ros_steps": "795"
+  }
+ },
+ {
+  "xpu": {
+   "trace": "xpu_a_cpsat_hard.csv",
+   "lat": "59.9",
+   "hold": "8.3"
+  },
+  "ros": {
+   "trace": "ros_vanilla4tm45.csv",
+   "lat": "242.0",
+   "hold": "30.3",
+   "arm": "vanilla4tm",
+   "camera_hz": 45
+  },
+  "pairs": 60,
+  "person_h": [
+   "2.4"
+  ],
+  "cells": 1,
+  "workload": "chain",
+  "xpu_success": [
+   10,
+   60
+  ],
+  "ros_success": [
+   5,
+   60
+  ],
+  "works_sometimes": true,
+  "separation_pts": [
+   8.3,
+   -3.9,
+   20.6
+  ],
+  "separated": false,
+  "gate_diff": [
+   0.43,
+   0.03,
+   0.82
+  ],
+  "we_win_gates": true,
+  "ros_harts_working": 4,
+  "ros_harts_over_half": 4,
+  "ros_cpu_pct": 388.2,
+  "crash_pairs": 10,
+  "example": {
+   "seed": "1001",
+   "cruise": "1.2",
+   "cell": [
+    "a",
+    "0.30",
+    "2.4",
+    "0.0",
+    "0.0055"
+   ],
+   "ros_gate": 2.0,
+   "ros_steps": "683"
+  }
+ },
+ {
+  "xpu": {
+   "trace": "xpu_a_cpsat_hard.csv",
+   "lat": "56.8",
+   "hold": "22.2"
+  },
+  "ros": {
+   "trace": "ros_vanilla4_q145.csv",
+   "lat": "42.0",
+   "hold": "0.0",
+   "arm": "vanilla4_q1",
+   "camera_hz": 45
+  },
+  "pairs": 60,
+  "person_h": [
+   "2.4"
+  ],
+  "cells": 1,
+  "workload": "chain",
+  "xpu_success": [
+   10,
+   60
+  ],
+  "ros_success": [
+   5,
+   60
+  ],
+  "works_sometimes": true,
+  "separation_pts": [
+   8.3,
+   -3.9,
+   20.6
+  ],
+  "separated": false,
+  "gate_diff": [
+   0.52,
+   0.2,
+   0.83
+  ],
+  "we_win_gates": true,
+  "ros_harts_working": 4,
+  "ros_harts_over_half": 4,
+  "ros_cpu_pct": 391.90000000000003,
+  "crash_pairs": 7,
+  "example": {
+   "seed": "1001",
+   "cruise": "1.6",
+   "cell": [
+    "a",
+    "0.30",
+    "2.4",
+    "0.0",
+    "0.0055"
+   ],
+   "ros_gate": 1.0,
+   "ros_steps": "295"
+  }
+ },
+ {
+  "xpu": {
+   "trace": "xpu_shard45.csv",
+   "lat": "36.0",
+   "hold": "0.0"
+  },
+  "ros": {
+   "trace": "ros_multi45.csv",
+   "lat": "264.7",
+   "hold": "50.1",
+   "arm": "multi",
+   "camera_hz": 45
+  },
+  "pairs": 48,
+  "person_h": [
+   "2.4"
+  ],
+  "cells": 1,
+  "workload": "chain",
+  "xpu_success": [
+   4,
+   48
+  ],
+  "ros_success": [
+   2,
+   47
+  ],
+  "works_sometimes": true,
+  "separation_pts": [
+   4.1,
+   -7.1,
+   15.7
+  ],
+  "separated": false,
+  "gate_diff": [
+   0.56,
+   0.15,
+   0.96
+  ],
+  "we_win_gates": true,
+  "ros_harts_working": 0,
+  "ros_harts_over_half": 0,
+  "ros_cpu_pct": 124.39999999999999,
+  "crash_pairs": 4,
+  "example": {
+   "seed": "1001",
+   "cruise": "1.4",
+   "cell": [
+    "a",
+    "0.30",
+    "2.4",
+    "0.0",
+    "0.0055"
+   ],
+   "ros_gate": 1.0,
+   "ros_steps": "347"
+  }
+ },
+ {
+  "xpu": {
+   "trace": "xpu_shard45.csv",
+   "lat": "36.0",
+   "hold": "0.0"
+  },
+  "ros": {
+   "trace": "ros_vanilla4tm45.csv",
+   "lat": "242.0",
+   "hold": "0.0",
+   "arm": "vanilla4tm",
+   "camera_hz": 45
+  },
+  "pairs": 72,
+  "person_h": [
+   "2.4"
+  ],
+  "cells": 2,
+  "workload": "chain",
+  "xpu_success": [
+   8,
+   72
+  ],
+  "ros_success": [
+   7,
+   71
+  ],
+  "works_sometimes": true,
+  "separation_pts": [
+   1.3,
+   -9.3,
+   11.8
+  ],
+  "separated": false,
+  "gate_diff": [
+   0.54,
+   0.22,
+   0.83
+  ],
+  "we_win_gates": true,
+  "ros_harts_working": 4,
+  "ros_harts_over_half": 4,
+  "ros_cpu_pct": 388.2,
+  "crash_pairs": 5,
+  "example": {
+   "seed": "1001",
+   "cruise": "1.0",
+   "cell": [
+    "a",
+    "0.20",
+    "2.4",
+    "0.0",
+    "0.0055"
+   ],
+   "ros_gate": 1.0,
+   "ros_steps": "598"
+  }
+ },
+ {
+  "xpu": {
+   "trace": "xpu_a_cpsat_hard.csv",
+   "lat": "56.8",
+   "hold": "0.0"
+  },
+  "ros": {
+   "trace": "ros_vanilla4_q145.csv",
+   "lat": "42.0",
+   "hold": "0.0",
+   "arm": "vanilla4_q1",
+   "camera_hz": 45
+  },
+  "pairs": 60,
+  "person_h": [
+   "2.4"
+  ],
+  "cells": 1,
+  "workload": "chain",
+  "xpu_success": [
+   6,
+   60
+  ],
+  "ros_success": [
+   5,
+   60
+  ],
+  "works_sometimes": true,
+  "separation_pts": [
+   1.7,
+   -9.4,
+   12.9
+  ],
+  "separated": false,
+  "gate_diff": [
+   0.53,
+   0.2,
+   0.85
+  ],
+  "we_win_gates": true,
+  "ros_harts_working": 4,
+  "ros_harts_over_half": 4,
+  "ros_cpu_pct": 391.90000000000003,
+  "crash_pairs": 5,
+  "example": {
+   "seed": "1000",
+   "cruise": "1.0",
+   "cell": [
+    "a",
+    "0.30",
+    "2.4",
+    "0.0",
+    "0.0055"
+   ],
+   "ros_gate": 1.0,
+   "ros_steps": "336"
+  }
+ },
+ {
+  "xpu": {
+   "trace": "xpu_shard45.csv",
+   "lat": "36.0",
+   "hold": "0.0"
+  },
+  "ros": {
+   "trace": "ros_vanilla4_q145.csv",
+   "lat": "42.0",
+   "hold": "0.0",
+   "arm": "vanilla4_q1",
+   "camera_hz": 45
+  },
+  "pairs": 60,
+  "person_h": [
+   "2.4"
+  ],
+  "cells": 1,
+  "workload": "chain",
+  "xpu_success": [
+   6,
+   60
+  ],
+  "ros_success": [
+   5,
+   60
+  ],
+  "works_sometimes": true,
+  "separation_pts": [
+   1.7,
+   -9.4,
+   12.9
+  ],
+  "separated": false,
+  "gate_diff": [
+   0.62,
+   0.33,
+   0.92
+  ],
+  "we_win_gates": true,
+  "ros_harts_working": 4,
+  "ros_harts_over_half": 4,
+  "ros_cpu_pct": 391.90000000000003,
+  "crash_pairs": 4,
+  "example": {
+   "seed": "1003",
+   "cruise": "1.8",
+   "cell": [
+    "a",
+    "0.30",
+    "2.4",
+    "0.0",
+    "0.0055"
+   ],
+   "ros_gate": 1.0,
+   "ros_steps": "547"
+  }
+ },
+ {
+  "xpu": {
+   "trace": "xpu_shard45.csv",
+   "lat": "36.0",
+   "hold": "0.0"
+  },
+  "ros": {
+   "trace": "ros_vanilla4tm45.csv",
+   "lat": "242.0",
+   "hold": "30.3",
+   "arm": "vanilla4tm",
+   "camera_hz": 45
+  },
+  "pairs": 60,
+  "person_h": [
+   "2.4"
+  ],
+  "cells": 1,
+  "workload": "chain",
+  "xpu_success": [
+   6,
+   60
+  ],
+  "ros_success": [
+   5,
+   60
+  ],
+  "works_sometimes": true,
+  "separation_pts": [
+   1.7,
+   -9.4,
+   12.9
+  ],
+  "separated": false,
+  "gate_diff": [
+   0.45,
+   0.1,
+   0.83
+  ],
+  "we_win_gates": true,
+  "ros_harts_working": 4,
+  "ros_harts_over_half": 4,
+  "ros_cpu_pct": 388.2,
+  "crash_pairs": 5,
+  "example": {
+   "seed": "1001",
+   "cruise": "1.4",
+   "cell": [
+    "a",
+    "0.30",
+    "2.4",
+    "0.0",
+    "0.0055"
+   ],
+   "ros_gate": 2.0,
+   "ros_steps": "515"
+  }
+ },
+ {
+  "xpu": {
+   "trace": "xpu_a_cpsat_hard.csv",
+   "lat": "56.8",
+   "hold": "0.0"
+  },
+  "ros": {
+   "trace": "ros_p345.csv",
+   "lat": "55.8",
+   "hold": "0.0",
+   "arm": "p3",
+   "camera_hz": 45
+  },
+  "pairs": 552,
+  "person_h": [
+   "1.7",
+   "2.4"
+  ],
+  "cells": 9,
+  "workload": "chain",
+  "xpu_success": [
+   106,
+   538
+  ],
+  "ros_success": [
+   100,
+   538
+  ],
+  "works_sometimes": true,
+  "separation_pts": [
+   1.1,
+   -3.6,
+   5.8
+  ],
+  "separated": false,
+  "gate_diff": [
+   0.03,
+   -0.09,
+   0.16
+  ],
+  "we_win_gates": false,
+  "ros_harts_working": 5.0,
+  "ros_harts_over_half": 4.0,
+  "ros_cpu_pct": 382.05,
+  "crash_pairs": 56,
+  "example": {
+   "seed": "1000",
+   "cruise": "1.0",
+   "cell": [
+    "a",
+    "0.20",
+    "2.4",
+    "0.0",
+    "0.0055"
+   ],
+   "ros_gate": 1.0,
+   "ros_steps": "635"
+  }
+ },
+ {
+  "xpu": {
+   "trace": "xpu_a90_cpsat.csv",
+   "lat": "55.9",
+   "hold": "11.1"
+  },
+  "ros": {
+   "trace": "ros_p390.csv",
+   "lat": "56.2",
+   "hold": "30.3",
+   "arm": "p3",
+   "camera_hz": 90
+  },
+  "pairs": 480,
+  "person_h": [
+   "2.4"
+  ],
+  "cells": 8,
+  "workload": "chain",
+  "xpu_success": [
+   79,
+   475
+  ],
+  "ros_success": [
+   74,
+   472
+  ],
+  "works_sometimes": true,
+  "separation_pts": [
+   1.0,
+   -3.7,
+   5.7
+  ],
+  "separated": false,
+  "gate_diff": [
+   0.0,
+   -0.12,
+   0.13
+  ],
+  "we_win_gates": false,
+  "ros_harts_working": 5,
+  "ros_harts_over_half": 4,
+  "ros_cpu_pct": 383.8,
+  "crash_pairs": 47,
+  "example": {
+   "seed": "1001",
+   "cruise": "1.2",
+   "cell": [
+    "a",
+    "0.20",
+    "2.4",
+    "0.0",
+    "0.0055"
+   ],
+   "ros_gate": 1.0,
+   "ros_steps": "430"
+  }
+ },
+ {
+  "xpu": {
+   "trace": "xpu_a_cpsat_hard.csv",
+   "lat": "59.9",
+   "hold": "8.3"
+  },
+  "ros": {
+   "trace": "ros_p345.csv",
+   "lat": "55.8",
+   "hold": "30.3",
+   "arm": "p3",
+   "camera_hz": 45
+  },
+  "pairs": 60,
+  "person_h": [
+   "2.4"
+  ],
+  "cells": 1,
+  "workload": "chain",
+  "xpu_success": [
+   10,
+   60
+  ],
+  "ros_success": [
+   5,
+   60
+  ],
+  "works_sometimes": true,
+  "separation_pts": [
+   8.3,
+   -3.9,
+   20.6
+  ],
+  "separated": false,
+  "gate_diff": [
+   0.1,
+   -0.25,
+   0.47
+  ],
+  "we_win_gates": false,
+  "ros_harts_working": 5.0,
+  "ros_harts_over_half": 4.0,
+  "ros_cpu_pct": 382.05,
+  "crash_pairs": 7,
+  "example": {
+   "seed": "1001",
+   "cruise": "1.8",
+   "cell": [
+    "a",
+    "0.30",
+    "2.4",
+    "0.0",
+    "0.0055"
+   ],
+   "ros_gate": 2.0,
+   "ros_steps": "567"
+  }
+ },
+ {
+  "xpu": {
+   "trace": "xpu_a_cpsat_hard.csv",
+   "lat": "56.8",
+   "hold": "22.2"
+  },
+  "ros": {
+   "trace": "ros_p345.csv",
+   "lat": "55.8",
+   "hold": "30.3",
+   "arm": "p3",
+   "camera_hz": 45
+  },
+  "pairs": 60,
+  "person_h": [
+   "2.4"
+  ],
+  "cells": 1,
+  "workload": "chain",
+  "xpu_success": [
+   10,
+   60
+  ],
+  "ros_success": [
+   5,
+   60
+  ],
+  "works_sometimes": true,
+  "separation_pts": [
+   8.3,
+   -3.9,
+   20.6
+  ],
+  "separated": false,
+  "gate_diff": [
+   0.02,
+   -0.3,
+   0.35
+  ],
+  "we_win_gates": false,
+  "ros_harts_working": 5.0,
+  "ros_harts_over_half": 4.0,
+  "ros_cpu_pct": 382.05,
+  "crash_pairs": 6,
+  "example": {
+   "seed": "1001",
+   "cruise": "1.6",
+   "cell": [
+    "a",
+    "0.30",
+    "2.4",
+    "0.0",
+    "0.0055"
+   ],
+   "ros_gate": 2.0,
+   "ros_steps": "551"
+  }
+ },
+ {
+  "xpu": {
+   "trace": "xpu_a_cpsat_hard.csv",
+   "lat": "56.8",
+   "hold": "22.2"
+  },
+  "ros": {
+   "trace": "ros_vanilla4tm45.csv",
+   "lat": "242.0",
+   "hold": "30.3",
+   "arm": "vanilla4tm",
+   "camera_hz": 45
+  },
+  "pairs": 60,
+  "person_h": [
+   "2.4"
+  ],
+  "cells": 1,
+  "workload": "chain",
+  "xpu_success": [
+   10,
+   60
+  ],
+  "ros_success": [
+   5,
+   60
+  ],
+  "works_sometimes": true,
+  "separation_pts": [
+   8.3,
+   -3.9,
+   20.6
+  ],
+  "separated": false,
+  "gate_diff": [
+   0.35,
+   -0.02,
+   0.72
+  ],
+  "we_win_gates": false,
+  "ros_harts_working": 4,
+  "ros_harts_over_half": 4,
+  "ros_cpu_pct": 388.2,
+  "crash_pairs": 8,
+  "example": {
+   "seed": "1001",
+   "cruise": "1.4",
+   "cell": [
+    "a",
+    "0.30",
+    "2.4",
+    "0.0",
+    "0.0055"
+   ],
+   "ros_gate": 2.0,
+   "ros_steps": "515"
+  }
+ },
+ {
+  "xpu": {
+   "trace": "xpu_a_cpsat_hard.csv",
+   "lat": "59.9",
+   "hold": "8.3"
+  },
+  "ros": {
+   "trace": "ros_p345.csv",
+   "lat": "55.8",
+   "hold": "0.0",
+   "arm": "p3",
+   "camera_hz": 45
+  },
+  "pairs": 432,
+  "person_h": [
+   "2.4"
+  ],
+  "cells": 8,
+  "workload": "chain",
+  "xpu_success": [
+   70,
+   428
+  ],
+  "ros_success": [
+   68,
+   426
+  ],
+  "works_sometimes": true,
+  "separation_pts": [
+   0.4,
+   -4.6,
+   5.3
+  ],
+  "separated": false,
+  "gate_diff": [
+   0.06,
+   -0.08,
+   0.2
+  ],
+  "we_win_gates": false,
+  "ros_harts_working": 5.0,
+  "ros_harts_over_half": 4.0,
+  "ros_cpu_pct": 382.05,
+  "crash_pairs": 41,
+  "example": {
+   "seed": "1001",
+   "cruise": "1.2",
+   "cell": [
+    "a",
+    "0.20",
+    "2.4",
+    "0.0",
+    "0.0055"
+   ],
+   "ros_gate": 1.0,
+   "ros_steps": "487"
+  }
+ },
+ {
+  "xpu": {
+   "trace": "xpu_a_cpsat_hard.csv",
+   "lat": "59.9",
+   "hold": "8.3"
+  },
+  "ros": {
+   "trace": "ros_p3_q145.csv",
+   "lat": "31.1",
+   "hold": "0.0",
+   "arm": "p3_q1",
+   "camera_hz": 45
+  },
+  "pairs": 432,
+  "person_h": [
+   "2.4"
+  ],
+  "cells": 8,
+  "workload": "chain",
+  "xpu_success": [
+   71,
+   428
+  ],
+  "ros_success": [
+   70,
+   426
+  ],
+  "works_sometimes": true,
+  "separation_pts": [
+   0.2,
+   -4.8,
+   5.1
+  ],
+  "separated": false,
+  "gate_diff": [
+   0.05,
+   -0.08,
+   0.18
+  ],
+  "we_win_gates": false,
+  "ros_harts_working": 5,
+  "ros_harts_over_half": 4,
+  "ros_cpu_pct": 380.9,
+  "crash_pairs": 41,
+  "example": {
+   "seed": "1001",
+   "cruise": "1.2",
+   "cell": [
+    "a",
+    "0.20",
+    "2.4",
+    "0.0",
+    "0.0055"
+   ],
+   "ros_gate": 2.0,
+   "ros_steps": "1264"
+  }
+ },
+ {
+  "xpu": {
+   "trace": "xpu_a_cpsat_hard.csv",
+   "lat": "56.8",
+   "hold": "22.2"
+  },
+  "ros": {
+   "trace": "ros_vanilla4tm45.csv",
+   "lat": "242.0",
+   "hold": "0.0",
+   "arm": "vanilla4tm",
+   "camera_hz": 45
+  },
+  "pairs": 60,
+  "person_h": [
+   "2.4"
+  ],
+  "cells": 1,
+  "workload": "chain",
+  "xpu_success": [
+   10,
+   60
+  ],
+  "ros_success": [
+   6,
+   60
+  ],
+  "works_sometimes": true,
+  "separation_pts": [
+   6.7,
+   -5.9,
+   19.2
+  ],
+  "separated": false,
+  "gate_diff": [
+   0.38,
+   0.0,
+   0.77
+  ],
+  "we_win_gates": false,
+  "ros_harts_working": 4,
+  "ros_harts_over_half": 4,
+  "ros_cpu_pct": 388.2,
+  "crash_pairs": 7,
+  "example": {
+   "seed": "1001",
+   "cruise": "1.6",
+   "cell": [
+    "a",
+    "0.30",
+    "2.4",
+    "0.0",
+    "0.0055"
+   ],
+   "ros_gate": 1.0,
+   "ros_steps": "203"
+  }
+ },
+ {
+  "xpu": {
+   "trace": "xpu_a_cpsat_hard.csv",
+   "lat": "56.8",
+   "hold": "0.0"
+  },
+  "ros": {
+   "trace": "ros_p345.csv",
+   "lat": "55.8",
+   "hold": "30.3",
+   "arm": "p3",
+   "camera_hz": 45
+  },
+  "pairs": 60,
+  "person_h": [
+   "2.4"
+  ],
+  "cells": 1,
+  "workload": "chain",
+  "xpu_success": [
+   6,
+   60
+  ],
+  "ros_success": [
+   5,
+   60
+  ],
+  "works_sometimes": true,
+  "separation_pts": [
+   1.7,
+   -9.4,
+   12.9
+  ],
+  "separated": false,
+  "gate_diff": [
+   0.03,
+   -0.3,
+   0.38
+  ],
+  "we_win_gates": false,
+  "ros_harts_working": 5.0,
+  "ros_harts_over_half": 4.0,
+  "ros_cpu_pct": 382.05,
+  "crash_pairs": 4,
+  "example": {
+   "seed": "1001",
+   "cruise": "1.8",
+   "cell": [
+    "a",
+    "0.30",
+    "2.4",
+    "0.0",
+    "0.0055"
+   ],
+   "ros_gate": 2.0,
+   "ros_steps": "567"
+  }
+ },
+ {
+  "xpu": {
+   "trace": "xpu_a_cpsat_hard.csv",
+   "lat": "56.8",
+   "hold": "0.0"
+  },
+  "ros": {
+   "trace": "ros_vanilla4tm45.csv",
+   "lat": "242.0",
+   "hold": "30.3",
+   "arm": "vanilla4tm",
+   "camera_hz": 45
+  },
+  "pairs": 60,
+  "person_h": [
+   "2.4"
+  ],
+  "cells": 1,
+  "workload": "chain",
+  "xpu_success": [
+   6,
+   60
+  ],
+  "ros_success": [
+   5,
+   60
+  ],
+  "works_sometimes": true,
+  "separation_pts": [
+   1.7,
+   -9.4,
+   12.9
+  ],
+  "separated": false,
+  "gate_diff": [
+   0.37,
+   -0.02,
+   0.77
+  ],
+  "we_win_gates": false,
+  "ros_harts_working": 4,
+  "ros_harts_over_half": 4,
+  "ros_cpu_pct": 388.2,
+  "crash_pairs": 5,
+  "example": {
+   "seed": "1001",
+   "cruise": "1.8",
+   "cell": [
+    "a",
+    "0.30",
+    "2.4",
+    "0.0",
+    "0.0055"
+   ],
+   "ros_gate": 0.0,
+   "ros_steps": "186"
+  }
+ },
+ {
+  "xpu": {
+   "trace": "xpu_shard45.csv",
+   "lat": "36.0",
+   "hold": "0.0"
+  },
+  "ros": {
+   "trace": "ros_p345.csv",
+   "lat": "55.8",
+   "hold": "30.3",
+   "arm": "p3",
+   "camera_hz": 45
+  },
+  "pairs": 60,
+  "person_h": [
+   "2.4"
+  ],
+  "cells": 1,
+  "workload": "chain",
+  "xpu_success": [
+   6,
+   60
+  ],
+  "ros_success": [
+   5,
+   60
+  ],
+  "works_sometimes": true,
+  "separation_pts": [
+   1.7,
+   -9.4,
+   12.9
+  ],
+  "separated": false,
+  "gate_diff": [
+   0.12,
+   -0.23,
+   0.48
+  ],
+  "we_win_gates": false,
+  "ros_harts_working": 5.0,
+  "ros_harts_over_half": 4.0,
+  "ros_cpu_pct": 382.05,
+  "crash_pairs": 5,
+  "example": {
+   "seed": "1003",
+   "cruise": "1.8",
+   "cell": [
+    "a",
+    "0.30",
+    "2.4",
+    "0.0",
+    "0.0055"
+   ],
+   "ros_gate": 1.0,
+   "ros_steps": "301"
+  }
+ },
+ {
+  "xpu": {
+   "trace": "xpu_a_cpsat_hard.csv",
+   "lat": "59.9",
+   "hold": "8.3"
+  },
+  "ros": {
+   "trace": "ros_vanilla4x245.csv",
+   "lat": "37.0",
+   "hold": "0.0",
+   "arm": "vanilla4x2",
+   "camera_hz": 45
+  },
+  "pairs": 156,
+  "person_h": [
+   "2.4"
+  ],
+  "cells": 3,
+  "workload": "chain",
+  "xpu_success": [
+   22,
+   153
+  ],
+  "ros_success": [
+   31,
+   152
+  ],
+  "works_sometimes": false,
+  "separation_pts": [
+   -6.0,
+   -14.5,
+   2.5
+  ],
+  "separated": false,
+  "gate_diff": [
+   -0.05,
+   -0.28,
+   0.18
+  ],
+  "we_win_gates": false,
+  "ros_harts_working": 8,
+  "ros_harts_over_half": 8,
+  "ros_cpu_pct": 448.3,
+  "crash_pairs": 15,
+  "example": {
+   "seed": "1001",
+   "cruise": "1.6",
+   "cell": [
+    "a",
+    "0.20",
+    "2.4",
+    "0.0",
+    "0.0055"
+   ],
+   "ros_gate": 2.0,
+   "ros_steps": "549"
+  }
+ },
+ {
+  "xpu": {
+   "trace": "xpu_a_cpsat_hard.csv",
+   "lat": "56.8",
+   "hold": "0.0"
+  },
+  "ros": {
+   "trace": "ros_vanilla4x245.csv",
+   "lat": "37.0",
+   "hold": "0.0",
+   "arm": "vanilla4x2",
+   "camera_hz": 45
+  },
+  "pairs": 156,
+  "person_h": [
+   "2.4"
+  ],
+  "cells": 3,
+  "workload": "chain",
+  "xpu_success": [
+   21,
+   153
+  ],
+  "ros_success": [
+   31,
+   152
+  ],
+  "works_sometimes": false,
+  "separation_pts": [
+   -6.7,
+   -15.1,
+   1.8
+  ],
+  "separated": false,
+  "gate_diff": [
+   -0.14,
+   -0.38,
+   0.09
+  ],
+  "we_win_gates": false,
+  "ros_harts_working": 8,
+  "ros_harts_over_half": 8,
+  "ros_cpu_pct": 448.3,
+  "crash_pairs": 10,
+  "example": {
+   "seed": "1001",
+   "cruise": "1.8",
+   "cell": [
+    "a",
+    "0.20",
+    "2.4",
+    "0.0",
+    "0.0055"
+   ],
+   "ros_gate": 2.0,
+   "ros_steps": "513"
+  }
+ },
+ {
+  "xpu": {
+   "trace": "xpu_a_cpsat_hard.csv",
+   "lat": "56.8",
+   "hold": "22.2"
+  },
+  "ros": {
+   "trace": "ros_vanilla4x245.csv",
+   "lat": "37.0",
+   "hold": "0.0",
+   "arm": "vanilla4x2",
+   "camera_hz": 45
+  },
+  "pairs": 60,
+  "person_h": [
+   "2.4"
+  ],
+  "cells": 1,
+  "workload": "chain",
+  "xpu_success": [
+   10,
+   60
+  ],
+  "ros_success": [
+   14,
+   59
+  ],
+  "works_sometimes": false,
+  "separation_pts": [
+   -7.1,
+   -21.3,
+   7.5
+  ],
+  "separated": false,
+  "gate_diff": [
+   -0.33,
+   -0.68,
+   0.02
+  ],
+  "we_win_gates": false,
+  "ros_harts_working": 8,
+  "ros_harts_over_half": 8,
+  "ros_cpu_pct": 448.3,
+  "crash_pairs": 5,
+  "example": {
+   "seed": "1001",
+   "cruise": "1.6",
+   "cell": [
+    "a",
+    "0.30",
+    "2.4",
+    "0.0",
+    "0.0055"
+   ],
+   "ros_gate": 2.0,
+   "ros_steps": "548"
+  }
+ },
+ {
+  "xpu": {
+   "trace": "xpu_shard45.csv",
+   "lat": "36.0",
+   "hold": "0.0"
+  },
+  "ros": {
+   "trace": "ros_vanilla4x245.csv",
+   "lat": "37.0",
+   "hold": "0.0",
+   "arm": "vanilla4x2",
+   "camera_hz": 45
+  },
+  "pairs": 72,
+  "person_h": [
+   "2.4"
+  ],
+  "cells": 2,
+  "workload": "chain",
+  "xpu_success": [
+   8,
+   72
+  ],
+  "ros_success": [
+   17,
+   70
+  ],
+  "works_sometimes": false,
+  "separation_pts": [
+   -13.2,
+   -25.6,
+   -0.5
+  ],
+  "separated": false,
+  "gate_diff": [
+   -0.15,
+   -0.51,
+   0.18
+  ],
+  "we_win_gates": false,
+  "ros_harts_working": 8,
+  "ros_harts_over_half": 8,
+  "ros_cpu_pct": 448.3,
+  "crash_pairs": 4,
+  "example": {
+   "seed": "1007",
+   "cruise": "1.0",
+   "cell": [
+    "a",
+    "0.20",
+    "2.4",
+    "0.0",
+    "0.0055"
+   ],
+   "ros_gate": 2.0,
+   "ros_steps": "1134"
+  }
+ },
+ {
+  "xpu": {
+   "trace": "xpu_a90_greedy.csv",
+   "lat": "947.5",
+   "hold": "0.0"
+  },
+  "ros": {
+   "trace": "ros_vanilla4x290.csv",
+   "lat": "252.8",
+   "hold": "19.6",
+   "arm": "vanilla4x2",
+   "camera_hz": 90
+  },
+  "pairs": 60,
+  "person_h": [
+   "2.4"
+  ],
+  "cells": 1,
+  "workload": "chain",
+  "xpu_success": [
+   0,
+   60
+  ],
+  "ros_success": [
+   5,
+   60
+  ],
+  "works_sometimes": false,
+  "separation_pts": [
+   -8.3,
+   -18.1,
+   -0.7
+  ],
+  "separated": false,
+  "gate_diff": [
+   -1.48,
+   -1.77,
+   -1.2
+  ],
+  "we_win_gates": false,
+  "ros_harts_working": 8,
+  "ros_harts_over_half": 8,
+  "ros_cpu_pct": 626.8,
+  "crash_pairs": 0,
+  "example": null
+ },
+ {
+  "xpu": {
+   "trace": "xpu_a_greedy.csv",
+   "lat": "748.0",
+   "hold": "0.0"
+  },
+  "ros": {
+   "trace": "ros_vanilla4x245.csv",
+   "lat": "37.0",
+   "hold": "0.0",
+   "arm": "vanilla4x2",
+   "camera_hz": 45
+  },
+  "pairs": 60,
+  "person_h": [
+   "2.4"
+  ],
+  "cells": 1,
+  "workload": "chain",
+  "xpu_success": [
+   0,
+   60
+  ],
+  "ros_success": [
+   14,
+   59
+  ],
+  "works_sometimes": false,
+  "separation_pts": [
+   -23.7,
+   -36.0,
+   -12.9
+  ],
+  "separated": false,
+  "gate_diff": [
+   -2.23,
+   -2.53,
+   -1.93
+  ],
+  "we_win_gates": false,
+  "ros_harts_working": 8,
+  "ros_harts_over_half": 8,
+  "ros_cpu_pct": 448.3,
+  "crash_pairs": 0,
+  "example": null
+ },
+ {
+  "xpu": {
+   "trace": "xpu_a_cpsat_hard.csv",
+   "lat": "56.8",
+   "hold": "0.0"
+  },
+  "ros": {
+   "trace": "ros_p3_q145.csv",
+   "lat": "31.1",
+   "hold": "0.0",
+   "arm": "p3_q1",
+   "camera_hz": 45
+  },
+  "pairs": 468,
+  "person_h": [
+   "2.4"
+  ],
+  "cells": 8,
+  "workload": "chain",
+  "xpu_success": [
+   70,
+   460
+  ],
+  "ros_success": [
+   76,
+   461
+  ],
+  "works_sometimes": false,
+  "separation_pts": [
+   -1.3,
+   -6.0,
+   3.5
+  ],
+  "separated": false,
+  "gate_diff": [
+   -0.04,
+   -0.17,
+   0.09
+  ],
+  "we_win_gates": false,
+  "ros_harts_working": 5,
+  "ros_harts_over_half": 4,
+  "ros_cpu_pct": 380.9,
+  "crash_pairs": 39,
+  "example": {
+   "seed": "1001",
+   "cruise": "1.2",
+   "cell": [
+    "a",
+    "0.20",
+    "2.4",
+    "0.0",
+    "0.0055"
+   ],
+   "ros_gate": 2.0,
+   "ros_steps": "1264"
+  }
+ },
+ {
+  "xpu": {
+   "trace": "xpu_a_cpsat_hard.csv",
+   "lat": "56.8",
+   "hold": "22.2"
+  },
+  "ros": {
+   "trace": "ros_p345.csv",
+   "lat": "55.8",
+   "hold": "0.0",
+   "arm": "p3",
+   "camera_hz": 45
+  },
+  "pairs": 60,
+  "person_h": [
+   "2.4"
+  ],
+  "cells": 1,
+  "workload": "chain",
+  "xpu_success": [
+   10,
+   60
+  ],
+  "ros_success": [
+   10,
+   60
+  ],
+  "works_sometimes": false,
+  "separation_pts": [
+   0.0,
+   -13.5,
+   13.5
+  ],
+  "separated": false,
+  "gate_diff": [
+   -0.05,
+   -0.38,
+   0.28
+  ],
+  "we_win_gates": false,
+  "ros_harts_working": 5.0,
+  "ros_harts_over_half": 4.0,
+  "ros_cpu_pct": 382.05,
+  "crash_pairs": 3,
+  "example": {
+   "seed": "1006",
+   "cruise": "1.8",
+   "cell": [
+    "a",
+    "0.30",
+    "2.4",
+    "0.0",
+    "0.0055"
+   ],
+   "ros_gate": 2.0,
+   "ros_steps": "546"
+  }
+ },
+ {
+  "xpu": {
+   "trace": "xpu_a_cpsat_hard.csv",
+   "lat": "56.8",
+   "hold": "22.2"
+  },
+  "ros": {
+   "trace": "ros_p3_q145.csv",
+   "lat": "31.1",
+   "hold": "0.0",
+   "arm": "p3_q1",
+   "camera_hz": 45
+  },
+  "pairs": 60,
+  "person_h": [
+   "2.4"
+  ],
+  "cells": 1,
+  "workload": "chain",
+  "xpu_success": [
+   10,
+   60
+  ],
+  "ros_success": [
+   11,
+   59
+  ],
+  "works_sometimes": false,
+  "separation_pts": [
+   -2.0,
+   -15.8,
+   11.9
+  ],
+  "separated": false,
+  "gate_diff": [
+   -0.2,
+   -0.55,
+   0.13
+  ],
+  "we_win_gates": false,
+  "ros_harts_working": 5,
+  "ros_harts_over_half": 4,
+  "ros_cpu_pct": 380.9,
+  "crash_pairs": 2,
+  "example": {
+   "seed": "1003",
+   "cruise": "1.8",
+   "cell": [
+    "a",
+    "0.30",
+    "2.4",
+    "0.0",
+    "0.0055"
+   ],
+   "ros_gate": 1.0,
+   "ros_steps": "306"
+  }
+ },
+ {
+  "xpu": {
+   "trace": "xpu_shard45.csv",
+   "lat": "36.0",
+   "hold": "0.0"
+  },
+  "ros": {
+   "trace": "ros_p345.csv",
+   "lat": "55.8",
+   "hold": "0.0",
+   "arm": "p3",
+   "camera_hz": 45
+  },
+  "pairs": 72,
+  "person_h": [
+   "2.4"
+  ],
+  "cells": 2,
+  "workload": "chain",
+  "xpu_success": [
+   8,
+   72
+  ],
+  "ros_success": [
+   13,
+   72
+  ],
+  "works_sometimes": false,
+  "separation_pts": [
+   -6.9,
+   -18.7,
+   4.8
+  ],
+  "separated": false,
+  "gate_diff": [
+   0.08,
+   -0.22,
+   0.4
+  ],
+  "we_win_gates": false,
+  "ros_harts_working": 5.0,
+  "ros_harts_over_half": 4.0,
+  "ros_cpu_pct": 382.05,
+  "crash_pairs": 3,
+  "example": {
+   "seed": "1008",
+   "cruise": "1.4",
+   "cell": [
+    "a",
+    "0.30",
+    "2.4",
+    "0.0",
+    "0.0055"
+   ],
+   "ros_gate": 1.0,
+   "ros_steps": "365"
+  }
+ },
+ {
+  "xpu": {
+   "trace": "xpu_shard45.csv",
+   "lat": "36.0",
+   "hold": "0.0"
+  },
+  "ros": {
+   "trace": "ros_p3_q145.csv",
+   "lat": "31.1",
+   "hold": "0.0",
+   "arm": "p3_q1",
+   "camera_hz": 45
+  },
+  "pairs": 72,
+  "person_h": [
+   "2.4"
+  ],
+  "cells": 2,
+  "workload": "chain",
+  "xpu_success": [
+   8,
+   72
+  ],
+  "ros_success": [
+   14,
+   71
+  ],
+  "works_sometimes": false,
+  "separation_pts": [
+   -8.6,
+   -20.6,
+   3.4
+  ],
+  "separated": false,
+  "gate_diff": [
+   -0.01,
+   -0.32,
+   0.31
+  ],
+  "we_win_gates": false,
+  "ros_harts_working": 5,
+  "ros_harts_over_half": 4,
+  "ros_cpu_pct": 380.9,
+  "crash_pairs": 4,
+  "example": {
+   "seed": "1007",
+   "cruise": "1.0",
+   "cell": [
+    "a",
+    "0.20",
+    "2.4",
+    "0.0",
+    "0.0055"
+   ],
+   "ros_gate": 2.0,
+   "ros_steps": "894"
+  }
+ },
+ {
+  "xpu": {
+   "trace": "xpu_a_greedy.csv",
+   "lat": "748.0",
+   "hold": "0.0"
+  },
+  "ros": {
+   "trace": "ros_vanilla4t45.csv",
+   "lat": "121.0",
+   "hold": "0.0",
+   "arm": "vanilla4t",
+   "camera_hz": 45
+  },
+  "pairs": 60,
+  "person_h": [
+   "2.4"
+  ],
+  "cells": 1,
+  "workload": "chain",
+  "xpu_success": [
+   0,
+   60
+  ],
+  "ros_success": [
+   0,
+   60
+  ],
+  "works_sometimes": false,
+  "separation_pts": [
+   0.0,
+   -6.0,
+   6.0
+  ],
+  "separated": false,
+  "gate_diff": [
+   -0.88,
+   -1.02,
+   -0.73
+  ],
+  "we_win_gates": false,
+  "ros_harts_working": 4,
+  "ros_harts_over_half": 4,
+  "ros_cpu_pct": 317.59999999999997,
+  "crash_pairs": 0,
+  "example": null
+ },
+ {
+  "xpu": {
+   "trace": "xpu_a_greedy.csv",
+   "lat": "748.0",
+   "hold": "0.0"
+  },
+  "ros": {
+   "trace": "ros_vanilla445.csv",
+   "lat": "242.0",
+   "hold": "0.0",
+   "arm": "vanilla4",
+   "camera_hz": 45
+  },
+  "pairs": 108,
+  "person_h": [
+   "1.7",
+   "2.4"
+  ],
+  "cells": 2,
+  "workload": "chain",
+  "xpu_success": [
+   0,
+   108
+  ],
+  "ros_success": [
+   6,
+   102
+  ],
+  "works_sometimes": false,
+  "separation_pts": [
+   -5.9,
+   -12.2,
+   -1.2
+  ],
+  "separated": false,
+  "gate_diff": [
+   -1.05,
+   -1.27,
+   -0.85
+  ],
+  "we_win_gates": false,
+  "ros_harts_working": 4,
+  "ros_harts_over_half": 4,
+  "ros_cpu_pct": 385.59999999999997,
+  "crash_pairs": 0,
+  "example": null
+ },
+ {
+  "xpu": {
+   "trace": "xpu_a_greedy.csv",
+   "lat": "748.0",
+   "hold": "0.0"
+  },
+  "ros": {
+   "trace": "ros_multi45.csv",
+   "lat": "264.7",
+   "hold": "50.1",
+   "arm": "multi",
+   "camera_hz": 45
+  },
+  "pairs": 48,
+  "person_h": [
+   "2.4"
+  ],
+  "cells": 1,
+  "workload": "chain",
+  "xpu_success": [
+   0,
+   48
+  ],
+  "ros_success": [
+   2,
+   47
+  ],
+  "works_sometimes": false,
+  "separation_pts": [
+   -4.3,
+   -14.2,
+   3.8
+  ],
+  "separated": false,
+  "gate_diff": [
+   -1.42,
+   -1.71,
+   -1.15
+  ],
+  "we_win_gates": false,
+  "ros_harts_working": 0,
+  "ros_harts_over_half": 0,
+  "ros_cpu_pct": 124.39999999999999,
+  "crash_pairs": 0,
+  "example": null
+ },
+ {
+  "xpu": {
+   "trace": "xpu_a90_greedy.csv",
+   "lat": "947.5",
+   "hold": "0.0"
+  },
+  "ros": {
+   "trace": "ros_vanilla4tm90.csv",
+   "lat": "136.5",
+   "hold": "30.3",
+   "arm": "vanilla4tm",
+   "camera_hz": 90
+  },
+  "pairs": 420,
+  "person_h": [
+   "2.4"
+  ],
+  "cells": 7,
+  "workload": "chain",
+  "xpu_success": [
+   0,
+   420
+  ],
+  "ros_success": [
+   59,
+   417
+  ],
+  "works_sometimes": false,
+  "separation_pts": [
+   -14.1,
+   -17.8,
+   -11.0
+  ],
+  "separated": false,
+  "gate_diff": [
+   -1.88,
+   -1.99,
+   -1.76
+  ],
+  "we_win_gates": false,
+  "ros_harts_working": 4,
+  "ros_harts_over_half": 4,
+  "ros_cpu_pct": 403.59999999999997,
+  "crash_pairs": 0,
+  "example": null
+ },
+ {
+  "xpu": {
+   "trace": "xpu_a_greedy.csv",
+   "lat": "748.0",
+   "hold": "0.0"
+  },
+  "ros": {
+   "trace": "ros_vanilla4_q145.csv",
+   "lat": "42.0",
+   "hold": "0.0",
+   "arm": "vanilla4_q1",
+   "camera_hz": 45
+  },
+  "pairs": 60,
+  "person_h": [
+   "2.4"
+  ],
+  "cells": 1,
+  "workload": "chain",
+  "xpu_success": [
+   0,
+   60
+  ],
+  "ros_success": [
+   5,
+   60
+  ],
+  "works_sometimes": false,
+  "separation_pts": [
+   -8.3,
+   -18.1,
+   -0.7
+  ],
+  "separated": false,
+  "gate_diff": [
+   -1.38,
+   -1.62,
+   -1.17
+  ],
+  "we_win_gates": false,
+  "ros_harts_working": 4,
+  "ros_harts_over_half": 4,
+  "ros_cpu_pct": 391.90000000000003,
+  "crash_pairs": 0,
+  "example": null
+ },
+ {
+  "xpu": {
+   "trace": "xpu_a_greedy.csv",
+   "lat": "748.0",
+   "hold": "0.0"
+  },
+  "ros": {
+   "trace": "ros_p345.csv",
+   "lat": "55.8",
+   "hold": "30.3",
+   "arm": "p3",
+   "camera_hz": 45
+  },
+  "pairs": 60,
+  "person_h": [
+   "2.4"
+  ],
+  "cells": 1,
+  "workload": "chain",
+  "xpu_success": [
+   0,
+   60
+  ],
+  "ros_success": [
+   5,
+   60
+  ],
+  "works_sometimes": false,
+  "separation_pts": [
+   -8.3,
+   -18.1,
+   -0.7
+  ],
+  "separated": false,
+  "gate_diff": [
+   -1.88,
+   -2.15,
+   -1.63
+  ],
+  "we_win_gates": false,
+  "ros_harts_working": 5.0,
+  "ros_harts_over_half": 4.0,
+  "ros_cpu_pct": 382.05,
+  "crash_pairs": 0,
+  "example": null
+ },
+ {
+  "xpu": {
+   "trace": "xpu_a_greedy.csv",
+   "lat": "748.0",
+   "hold": "0.0"
+  },
+  "ros": {
+   "trace": "ros_vanilla4tm45.csv",
+   "lat": "242.0",
+   "hold": "30.3",
+   "arm": "vanilla4tm",
+   "camera_hz": 45
+  },
+  "pairs": 60,
+  "person_h": [
+   "2.4"
+  ],
+  "cells": 1,
+  "workload": "chain",
+  "xpu_success": [
+   0,
+   60
+  ],
+  "ros_success": [
+   5,
+   60
+  ],
+  "works_sometimes": false,
+  "separation_pts": [
+   -8.3,
+   -18.1,
+   -0.7
+  ],
+  "separated": false,
+  "gate_diff": [
+   -1.55,
+   -1.83,
+   -1.28
+  ],
+  "we_win_gates": false,
+  "ros_harts_working": 4,
+  "ros_harts_over_half": 4,
+  "ros_cpu_pct": 388.2,
+  "crash_pairs": 0,
+  "example": null
+ },
+ {
+  "xpu": {
+   "trace": "xpu_a90_greedy.csv",
+   "lat": "947.5",
+   "hold": "0.0"
+  },
+  "ros": {
+   "trace": "ros_p390.csv",
+   "lat": "56.2",
+   "hold": "30.3",
+   "arm": "p3",
+   "camera_hz": 90
+  },
+  "pairs": 420,
+  "person_h": [
+   "2.4"
+  ],
+  "cells": 7,
+  "workload": "chain",
+  "xpu_success": [
+   0,
+   420
+  ],
+  "ros_success": [
+   64,
+   413
+  ],
+  "works_sometimes": false,
+  "separation_pts": [
+   -15.5,
+   -19.3,
+   -12.2
+  ],
+  "separated": false,
+  "gate_diff": [
+   -1.99,
+   -2.1,
+   -1.88
+  ],
+  "we_win_gates": false,
+  "ros_harts_working": 5,
+  "ros_harts_over_half": 4,
+  "ros_cpu_pct": 383.8,
+  "crash_pairs": 0,
+  "example": null
+ },
+ {
+  "xpu": {
+   "trace": "xpu_a_greedy.csv",
+   "lat": "748.0",
+   "hold": "0.0"
+  },
+  "ros": {
+   "trace": "ros_vanilla4tm45.csv",
+   "lat": "242.0",
+   "hold": "0.0",
+   "arm": "vanilla4tm",
+   "camera_hz": 45
+  },
+  "pairs": 60,
+  "person_h": [
+   "2.4"
+  ],
+  "cells": 1,
+  "workload": "chain",
+  "xpu_success": [
+   0,
+   60
+  ],
+  "ros_success": [
+   6,
+   60
+  ],
+  "works_sometimes": false,
+  "separation_pts": [
+   -10.0,
+   -20.1,
+   -2.0
+  ],
+  "separated": false,
+  "gate_diff": [
+   -1.52,
+   -1.8,
+   -1.25
+  ],
+  "we_win_gates": false,
+  "ros_harts_working": 4,
+  "ros_harts_over_half": 4,
+  "ros_cpu_pct": 388.2,
+  "crash_pairs": 0,
+  "example": null
+ },
+ {
+  "xpu": {
+   "trace": "xpu_a_greedy.csv",
+   "lat": "748.0",
+   "hold": "0.0"
+  },
+  "ros": {
+   "trace": "ros_p3_q145.csv",
+   "lat": "31.1",
+   "hold": "0.0",
+   "arm": "p3_q1",
+   "camera_hz": 45
+  },
+  "pairs": 60,
+  "person_h": [
+   "2.4"
+  ],
+  "cells": 1,
+  "workload": "chain",
+  "xpu_success": [
+   0,
+   60
+  ],
+  "ros_success": [
+   11,
+   59
+  ],
+  "works_sometimes": false,
+  "separation_pts": [
+   -18.6,
+   -30.4,
+   -8.7
+  ],
+  "separated": false,
+  "gate_diff": [
+   -2.1,
+   -2.4,
+   -1.83
+  ],
+  "we_win_gates": false,
+  "ros_harts_working": 5,
+  "ros_harts_over_half": 4,
+  "ros_cpu_pct": 380.9,
+  "crash_pairs": 0,
+  "example": null
+ },
+ {
+  "xpu": {
+   "trace": "xpu_a_greedy.csv",
+   "lat": "748.0",
+   "hold": "0.0"
+  },
+  "ros": {
+   "trace": "ros_p345.csv",
+   "lat": "55.8",
+   "hold": "0.0",
+   "arm": "p3",
+   "camera_hz": 45
+  },
+  "pairs": 96,
+  "person_h": [
+   "1.7",
+   "2.4"
+  ],
+  "cells": 2,
+  "workload": "chain",
+  "xpu_success": [
+   0,
+   96
+  ],
+  "ros_success": [
+   20,
+   94
+  ],
+  "works_sometimes": false,
+  "separation_pts": [
+   -21.3,
+   -30.6,
+   -13.2
+  ],
+  "separated": false,
+  "gate_diff": [
+   -2.16,
+   -2.42,
+   -1.92
+  ],
+  "we_win_gates": false,
+  "ros_harts_working": 5.0,
+  "ros_harts_over_half": 4.0,
+  "ros_cpu_pct": 382.05,
+  "crash_pairs": 0,
+  "example": null
+ }
+]

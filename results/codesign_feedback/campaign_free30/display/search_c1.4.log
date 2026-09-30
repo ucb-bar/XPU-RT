@@ -1,0 +1,23 @@
+  xpu 1001: === 21:51:02 xpu_s1001
+[ep00] outcome=crash     gates=3/4 steps=936
+  xpu 1009: === 22:00:12 xpu_s1009
+[ep00] outcome=crash     gates=1/4 steps=279
+  xpu 1000: === 22:05:59 xpu_s1000
+[ep00] outcome=crash     gates=3/4 steps=996
+  xpu 1002: === 22:15:28 xpu_s1002
+[ep00] outcome=crash     gates=2/4 steps=589
+  xpu 1003: === 22:22:53 xpu_s1003
+[ep00] outcome=crash     gates=3/4 steps=859
+  xpu 1004: === 22:31:36 xpu_s1004
+[ep00] outcome=crash     gates=1/4 steps=469
+  xpu 1005: === 22:38:25 xpu_s1005
+[ep00] outcome=crash     gates=1/4 steps=713
+  xpu 1006: === 22:46:28 xpu_s1006
+[ep00] outcome=crash     gates=3/4 steps=916
+  xpu 1007: === 22:55:36 xpu_s1007
+[ep00] outcome=success   gates=4/4 steps=1133
+  ros 1007: === 23:05:47 ros_s1007
+[ep00] outcome=timeout   gates=0/4 steps=1800
+PAIR_SEED=1007
+PAIR /scratch/agustin/xpurt-dev-sync/results/codesign_feedback/campaign_free30/display/search_c1.4/xpu_s1007_figdata /scratch/agustin/xpurt-dev-sync/results/codesign_feedback/campaign_free30/display/search_c1.4/ros_s1007_figdata
+SAME_ENV_DONE

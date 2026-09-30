@@ -1,0 +1,32 @@
+== co-design loop: w2_ffn_tight ==
+round 0 · baseline: total-lateness 83.065 (makespan 74.6 ms), 5 instance-miss
+accept rule: candidate_objective.accept() · critical=['mlp_control', 'ffn_block'] heavy=ffn_block
+      ime: built ime_x60 profiles for (none new; existing reused)
+round 1 · try ime: total-lateness 83.065 -> 23.004 (-72.3%), 5 instance-miss -> ACCEPTABLE
+round 1 · try ime: accepted -- max deadline lateness: ime=4.6 beats baseline=16.61 (tolerance 0.5)
+round 1 · try shard: total-lateness 83.065 -> 0.000 (-100.0%), 0 instance-miss -> ACCEPTABLE
+round 1 · try shard: accepted -- hard deadline misses: shard=0 beats baseline=5 (tolerance 1.36)
+      unfuse: adopted ModelBlaster unfused dispatch graph for (none — no fused net with an unfused build on disk)
+round 1 · try unfuse: lever changed nothing on this spec (inapplicable here) — not a candidate
+round 1: ACCEPT +shard  total-lateness 83.065 -> 0.000 (-100.0%)
+      ime: built ime_x60 profiles for (none new; existing reused)
+round 2 · try ime: total-lateness 0.000 -> 0.000 (+0.0%), 0 instance-miss -> ACCEPTABLE
+round 2 · try ime: accepted -- p99 response of critical tasks: ime=7.85 beats shard=9.04 (tolerance 0.5)
+      unfuse: adopted ModelBlaster unfused dispatch graph for (none — no fused net with an unfused build on disk)
+round 2 · try unfuse: lever changed nothing on this spec (inapplicable here) — not a candidate
+round 2: ACCEPT +ime  total-lateness 0.000 -> 0.000 (-0.0%)
+      unfuse: adopted ModelBlaster unfused dispatch graph for (none — no fused net with an unfused build on disk)
+round 3 · try unfuse: lever changed nothing on this spec (inapplicable here) — not a candidate
+round 3: no lever is accepted by the nine-term objective rule — CONVERGED
+fuse: NOT applied — roofline decision-aid says the stack is compute-bound (max fusible-epilogue ceiling 16% on dronet); fusion collapses dispatches (scheduling) but is measured ~+0.85% on cycles, so the loop does not credit a makespan gain it cannot measure.
+
+== board-feedback arm ==  (calibration results/codesign_feedback/k1_board_calibration.json)
+board arm · re-solved converged AOT spec at full budget (cpsat, 120s): makespan 55.85 ms
+board arm · stage1 baseline (AOT costs): 5 instance-miss
+board arm · stage2 AOT-optimized (AOT costs): 0 instance-miss  [levers: ['shard', 'ime']]
+board arm · stage3 board re-cost of the AOT schedule: 2 instance-miss {'mlp_control': 1, 'ffn_block': 1}  <- the run-honest reveal
+board arm · re-solve iter 1 (--board-calibration, cpsat): 2 -> 0 instance-miss {} -> ACCEPT
+board arm: instance-miss arc  baseline->AOT->board-recost->board-resolve = 5 -> 0 -> 2 -> 0
+
+CONVERGED [total-lateness]: 83.065 -> 0.000 ms (-100.0%), levers applied: ['shard', 'ime']
+artifacts in /scratch/agustin/xpurt-dev-sync/results/codesign_loop/w2_ffn_tight

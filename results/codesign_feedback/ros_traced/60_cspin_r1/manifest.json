@@ -1,0 +1,14 @@
+{
+  "tag": "60_cspin_r1", "nodes": "camera,perception,nav,control",
+  "rate_hz": 60, "ctrl_hz": 100, "seconds": 20,
+  "executor": "single", "executor_threads": 1, "ctrl_mode": "chained",
+  "callback_groups": "mutually_exclusive_per_node", "qos_depth": 10,
+  "rmw": "rmw_fastrtps_cpp",
+  "yolo_pool": 4, "pool_harts": "0,1,2,3", "pin_main": 0,
+  "t0_rdtime": 108851901406181, "run_t0_ticks": 7366179, "run_end_ticks": 487472746,
+  "wall_start_epoch_ms": 1789090123869, "wall_end_epoch_ms": 1789090143874,
+  "n_released": 652, "n_goals": 648, "n_ctrl_fires": 648, "n_consumed": 648,
+  "affinity_mask": "0x1", "sched_policy": "SCHED_OTHER", "rt_priority": 0,
+  "instance_meaning": "perception/nav: camera frame seq; control: timer fire index",
+  "kernels_sha": "c5c4b14 ir=0c783539626c", "hostname": "k1", "kernel": "6.6.63"
+}

@@ -1,0 +1,28 @@
+== co-design loop: _4w_networks_k1_sensor_tight_vision_head ==
+round 0 · baseline: makespan 46.611 (makespan 46.6 ms), 4 instance-miss
+accept rule: candidate_objective.accept() · critical=['mlp_control', 'fused_full', 'yolov8_nano_64x96', 'ffn_block', 'attn_block'] heavy=yolov8_nano_64x96
+      ime: built ime_x60 profiles for (none new; existing reused)
+round 1 · try ime: makespan 46.611 -> 38.764 (-16.8%), 2 instance-miss -> ACCEPTABLE
+round 1 · try ime: accepted -- max deadline lateness: ime=1.75 beats baseline=6.61 (tolerance 0.5)
+round 1 · try shard: makespan 46.611 -> 27.939 (-40.1%), 4 instance-miss -> reject
+round 1 · try shard: rejected -- max deadline lateness: baseline=6.61 beats shard=7.85 (tolerance 0.5)
+      unfuse: adopted ModelBlaster unfused dispatch graph for (none — no fused net with an unfused build on disk)
+round 1 · try unfuse: lever changed nothing on this spec (inapplicable here) — not a candidate
+round 1: ACCEPT +ime  makespan 46.611 -> 38.764 (-16.8%)
+round 2 · try shard: makespan 38.764 -> 27.939 (-27.9%), 4 instance-miss -> reject
+round 2 · try shard: rejected -- max deadline lateness: ime=1.75 beats shard=7.85 (tolerance 0.5)
+      unfuse: adopted ModelBlaster unfused dispatch graph for (none — no fused net with an unfused build on disk)
+round 2 · try unfuse: lever changed nothing on this spec (inapplicable here) — not a candidate
+round 2: no lever is accepted by the nine-term objective rule — CONVERGED
+fuse: NOT applied — roofline decision-aid says the stack is compute-bound (max fusible-epilogue ceiling 16% on dronet); fusion collapses dispatches (scheduling) but is measured ~+0.85% on cycles, so the loop does not credit a makespan gain it cannot measure.
+
+== board-feedback arm ==  (calibration results/codesign_feedback/k1_board_calibration.json)
+board arm · re-solved converged AOT spec at full budget (greedy, 120s): makespan 38.76 ms
+board arm · stage1 baseline (AOT costs): 2 instance-miss
+board arm · stage2 AOT-optimized (AOT costs): 1 instance-miss  [levers: ['ime']]
+board arm · stage3 board re-cost of the AOT schedule: 1 instance-miss {'ffn_block': 1}  <- the run-honest reveal
+board arm · re-solve iter 1 (--board-calibration, greedy): 1 -> 1 instance-miss {'ffn_block': 1} -> no improvement, stop
+board arm: instance-miss arc  baseline->AOT->board-recost->board-resolve = 2 -> 1 -> 1 -> 1
+
+CONVERGED [makespan]: 46.611 -> 38.764 ms (-16.8%), levers applied: ['ime']
+artifacts in /scratch/agustin/xpurt-dev-sync/results/loop_sweep/_4w_networks_k1_sensor_tight_vision_head/_4w_networks_k1_sensor_tight_vision_head

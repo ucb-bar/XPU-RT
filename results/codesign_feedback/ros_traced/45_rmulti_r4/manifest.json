@@ -1,0 +1,15 @@
+{
+  "tag": "45_rmulti_r4", "nodes": "camera,perception,nav,control",
+  "rate_hz": 45, "ctrl_hz": 100, "seconds": 20,
+  "executor": "multi", "executor_threads": 8, "ctrl_mode": "timer",
+  "callback_groups": "mutually_exclusive_per_node; both cameras' YOLO in one group", "qos_depth": 10,
+  "alternate": false,
+  "rmw": "rmw_fastrtps_cpp",
+  "yolo_pool": 4, "pool_harts": "0,1,2,3", "pin_main": -1, "extra": "ffn_block:10,dronet:30", "cameras": 1,
+  "t0_rdtime": 121530371702759, "run_t0_ticks": 8458790, "run_end_ticks": 488964618,
+  "wall_start_epoch_ms": 1789618399435, "wall_end_epoch_ms": 1789618419457,
+  "n_released": 900, "n_goals": 598, "n_ctrl_fires": 1997, "n_consumed": 598,
+  "affinity_mask": "0xff", "sched_policy": "SCHED_OTHER", "rt_priority": 0,
+  "instance_meaning": "perception/nav: camera frame seq; control: timer fire index",
+  "kernels_sha": "de7f98ef ir=0c783539626c", "hostname": "k1", "kernel": "6.6.63"
+}

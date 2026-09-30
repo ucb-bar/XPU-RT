@@ -1,0 +1,30 @@
+== co-design loop: networks_k1_flight_deployed_noshard ==
+round 0 · baseline: makespan 122.600 (makespan 122.6 ms), 255 instance-miss
+accept rule: candidate_objective.accept() · critical=['mlp_control', 'fused_full', 'yolov8_nano_64x96'] heavy=yolov8_nano_64x96
+      ime: built ime_x60 profiles for (none new; existing reused)
+round 1 · try ime: makespan 122.600 -> 122.600 (-0.0%), 255 instance-miss -> reject
+round 1 · try ime: rejected -- indistinguishable on every term; a tie is not an improvement
+round 1 · try shard: makespan 122.600 -> 110.083 (-10.2%), 0 instance-miss -> ACCEPTABLE
+round 1 · try shard: accepted -- hard deadline misses: shard=0 beats baseline=5 (tolerance 1.84)
+      unfuse: adopted ModelBlaster unfused dispatch graph for (none — no fused net with an unfused build on disk)
+round 1 · try unfuse: lever changed nothing on this spec (inapplicable here) — not a candidate
+round 1: ACCEPT +shard  makespan 122.600 -> 110.083 (-10.2%)
+      ime: built ime_x60 profiles for (none new; existing reused)
+round 2 · try ime: makespan 110.083 -> 110.083 (-0.0%), 0 instance-miss -> reject
+round 2 · try ime: rejected -- indistinguishable on every term; a tie is not an improvement
+      unfuse: adopted ModelBlaster unfused dispatch graph for (none — no fused net with an unfused build on disk)
+round 2 · try unfuse: lever changed nothing on this spec (inapplicable here) — not a candidate
+round 2: no lever is accepted by the nine-term objective rule — CONVERGED
+fuse: NOT applied — roofline decision-aid says the stack is compute-bound (max fusible-epilogue ceiling 16% on dronet); fusion collapses dispatches (scheduling) but is measured ~+0.85% on cycles, so the loop does not credit a makespan gain it cannot measure.
+
+== board-feedback arm ==  (calibration results/codesign_feedback/k1_board_calibration.json)
+board arm · re-solved converged AOT spec at full budget (greedy, 120s): makespan 110.08 ms
+board arm · stage1 baseline (AOT costs): 5 instance-miss
+board arm · stage2 AOT-optimized (AOT costs): 0 instance-miss  [levers: ['shard']]
+board arm · stage3 board re-cost of the AOT schedule: 7 instance-miss {'mlp_control': 2, 'yolov8_nano_64x96': 5}  <- the run-honest reveal
+board arm · re-solve iter 1 (--board-calibration, greedy): 7 -> 5 instance-miss {'yolov8_nano_64x96': 5} -> ACCEPT
+board arm · re-solve iter 2 (--board-calibration, greedy): 5 -> 5 instance-miss {'yolov8_nano_64x96': 5} -> no improvement, stop
+board arm: instance-miss arc  baseline->AOT->board-recost->board-resolve = 5 -> 0 -> 7 -> 5
+
+CONVERGED [makespan]: 122.600 -> 110.083 ms (-10.2%), levers applied: ['shard']
+artifacts in /scratch/agustin/xpurt-dev-sync/results/loop_sweep/networks_k1_flight_deployed_noshard/networks_k1_flight_deployed_noshard

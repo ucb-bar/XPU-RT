@@ -1,0 +1,69 @@
+{
+ "source": "results/codesign_feedback/ros_traced/45_vanilla4x2_r1/trace.csv",
+ "cpu_source": "results/codesign_feedback/ros_traced/45_vanilla4x2_r1/cpu.csv",
+ "manifest": "results/codesign_feedback/ros_traced/45_vanilla4x2_r1/manifest.json",
+ "source_sha256": "048abdb87f8e5c57498d523140af9e7abfe354811f1316350b2f243dd4a7e471",
+ "cpu_source_sha256": "5c638ce096bf8f9cdfef16d75490bd6cb252aae225b9dfc4b20e170e2f931a64",
+ "manifest_sha256": "20fa0f4e5b6216e02a4729ba16a498d202cb4081511fde96fd350e380dc0f5ce",
+ "window_open_ms": 400.759,
+ "window_ms": 100.0,
+ "busy_pct": {
+  "CPU_P#0": 54.6,
+  "CPU_P#1": 57.8,
+  "CPU_P#2": 58.1,
+  "CPU_P#3": 56.2,
+  "CPU_E#0": 52.7,
+  "CPU_E#1": 57.4,
+  "CPU_E#2": 56.7,
+  "CPU_E#3": 56.3
+ },
+ "busy_note": "sampler busy % over the run window",
+ "busy_source": "sampler_epoch",
+ "kernel_frac_pct": null,
+ "chain_ms_median": 37.237,
+ "chain_ms_p95": 58.405,
+ "yolo_span_ms_median": 30.208,
+ "n_frames_paired": 447,
+ "ctrl_gap_mean_ms": 22.182,
+ "ctrl_gap_max_ms": 48.151,
+ "frame_start_lag_median_ms": 0.701,
+ "yolo_window_ms": 66.66666666666666,
+ "frames_late": 0,
+ "frames_checked": 448,
+ "frames_late_frac": 0.0,
+ "frame_start_lag_max_ms": 34.356,
+ "end_to_end_latency_ms": 37.237,
+ "end_to_end_deadline_ms": 33.3,
+ "executor": "single",
+ "affinity_mask": {
+  "camera": "0xff",
+  "percep": "0xff",
+  "percep2": "0xff",
+  "nav": "0xff",
+  "control": "0xff"
+ },
+ "sched_policy": null,
+ "solver": null,
+ "rate_hz": 45,
+ "yolo_period_ms": 22.22222222222222,
+ "nav_period_ms": 22.22222222222222,
+ "ctrl_period_ms": 10.0,
+ "yolo_pool_lanes": {
+  "perception": [
+   "CPU_P#0",
+   "CPU_P#1",
+   "CPU_P#2",
+   "CPU_P#3"
+  ],
+  "perception2": [
+   "CPU_E#0",
+   "CPU_E#1",
+   "CPU_E#2",
+   "CPU_E#3"
+  ]
+ },
+ "kind": "ros",
+ "arm": "ros8",
+ "arm_label": "ROS 2 \u00b7 5 processes \u00b7 single executor \u00b7 chained control \u00b7 unpinned",
+ "placement_note": "8 cores \u00b7 OS-scheduled \u00b7 YOLO on 8 harts"
+}

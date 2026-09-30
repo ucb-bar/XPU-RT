@@ -1,0 +1,59 @@
+== closed board loop: w3_ffn_dronet ==
+networks: ['mlp_control', 'ffn_block', 'dronet']
+  board build will use /scratch2/agustin/miniforge3/envs/merlin-dev/bin/python
+
+[1/4] AOT search on isolated profile costs
+  $ /scratch/agustin/xpurt-dev-sync/.venv/bin/python -u /scratch/agustin/xpurt-dev-sync/scripts/run_codesign_loop.py --workload data/toplevel/scaling/w3_ffn_dronet.json --solver greedy --objective lateness --out-dir /scratch/agustin/xpurt-dev-sync/results/codesign_feedback/closed_w3_n10/aot --time-limit 90
+  AOT decided: ['shard']   misses 10.0 -> 5.0   lateness 88.061 -> 7.794 ms
+  converged spec: results/codesign_feedback/closed_w3_n10/aot/w3_ffn_dronet/specs/w3_ffn_dronet_r1_shard.json
+
+[2/4] execute that schedule on the K1 x10
+  solved: makespan 59.56 ms, 10 dispatch-level deadline misses
+  board run 1/10
+  $ bash scripts/run_xpurt_k1.sh --schedule ../schedules/scheduled_w3_ffn_dronet_r1_shard_greedy_profiled.json --backends rvv_x60,ime_x60,rvv_x60 --jobs 4 --models mlp_control,ffn_block,dronet
+  board run 2/10
+  board run 3/10
+  board run 4/10
+  board run 5/10
+  board run 6/10
+  board run 7/10
+  board run 8/10
+  board run 9/10
+  board run 10/10
+
+[3/4] fit a calibration to this workload's own 10 run(s)
+  $ /scratch/agustin/xpurt-dev-sync/.venv/bin/python /scratch/agustin/xpurt-dev-sync/scripts/emit_board_calibration.py --workload w3_ffn_dronet: mlp_control+ffn_block+dronet --out /scratch/agustin/xpurt-dev-sync/results/codesign_feedback/closed_w3_n10/k1_calibration_w3_ffn_dronet.json --validate-against results/codesign_feedback/k1_board_calibration.json --trace /scratch/agustin/xpurt-dev-sync/results/codesign_feedback/closed_w3_n10/board_0_trace.csv --trace /scratch/agustin/xpurt-dev-sync/results/codesign_feedback/closed_w3_n10/board_1_trace.csv --trace /scratch/agustin/xpurt-dev-sync/results/codesign_feedback/closed_w3_n10/board_2_trace.csv --trace /scratch/agustin/xpurt-dev-sync/results/codesign_feedback/closed_w3_n10/board_3_trace.csv --trace /scratch/agustin/xpurt-dev-sync/results/codesign_feedback/closed_w3_n10/board_4_trace.csv --trace /scratch/agustin/xpurt-dev-sync/results/codesign_feedback/closed_w3_n10/board_5_trace.csv --trace /scratch/agustin/xpurt-dev-sync/results/codesign_feedback/closed_w3_n10/board_6_trace.csv --trace /scratch/agustin/xpurt-dev-sync/results/codesign_feedback/closed_w3_n10/board_7_trace.csv --trace /scratch/agustin/xpurt-dev-sync/results/codesign_feedback/closed_w3_n10/board_8_trace.csv --trace /scratch/agustin/xpurt-dev-sync/results/codesign_feedback/closed_w3_n10/board_9_trace.csv
+  read 10 trace(s), 2140 dispatch samples
+  
+  === validate against results/codesign_feedback/k1_board_calibration.json ===
+  per_dispatch_multiplier: 5/48 within 2%   (mine 33, reference 48, 15 reference keys absent here)
+      dronet/0                   got   1.2321  reference   1.2718  (-3.1%)
+      dronet/10                  got   1.8968  reference   2.5678  (-26.1%)
+      dronet/11                  got   1.1563  reference   1.4511  (-20.3%)
+      dronet/12                  got   1.6463  reference   1.6061  (+2.5%)
+      dronet/13                  got   1.4103  reference   1.1765  (+19.9%)
+      dronet/14                  got   1.5762  reference   1.1466  (+37.5%)
+      dronet/15                  got   2.4133  reference   2.5705  (-6.1%)
+      dronet/16                  got   1.3115  reference   1.4115  (-7.1%)
+  per_op_multiplier: 3/11 within 2%   (mine 7, reference 11, 4 reference keys absent here)
+      layernorm_s8               got   1.2063  reference   1.4960  (-19.4%)
+      gelu_s8                    got   1.0809  reference   1.3905  (-22.3%)
+      add_s8                     got   1.1132  reference   1.3852  (-19.6%)
+      conv2d_s8                  got   1.3283  reference   1.2590  (+5.5%)
+  aggregate: got 1.2032  reference 1.2608 (-4.6%)
+  
+  wrote results/codesign_feedback/closed_w3_n10/k1_calibration_w3_ffn_dronet.json
+    aggregate x1.2032 (mean; median 1.105) from 700 pooled samples
+    exact keys 33   op-kind keys 7
+    nets measured: dronet, ffn_block, mlp_control
+  every network in this workload is MEASURED -- nothing extrapolated
+
+[4/4] AOT search again, scored on those measured costs
+  $ /scratch/agustin/xpurt-dev-sync/.venv/bin/python -u /scratch/agustin/xpurt-dev-sync/scripts/run_codesign_loop.py --workload data/toplevel/scaling/w3_ffn_dronet.json --solver greedy --objective lateness --out-dir /scratch/agustin/xpurt-dev-sync/results/codesign_feedback/closed_w3_n10/board --time-limit 90 --search-calibration /scratch/agustin/xpurt-dev-sync/results/codesign_feedback/closed_w3_n10/k1_calibration_w3_ffn_dronet.json
+  board-honest decided: ['shard']   misses 10.0 -> 5.0   lateness 113.029 -> 15.998 ms
+
+=== would the board have chosen differently? ===
+  AOT-cost search   : ['shard']
+  board-cost search : ['shard']
+  same transformations either way: the AOT decision is robust to the cost model on this workload
+  residual lateness the AOT view reports: 7.794 ms; measured-cost view: 15.998 ms (2.05x)

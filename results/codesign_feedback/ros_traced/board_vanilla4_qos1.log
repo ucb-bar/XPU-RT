@@ -1,0 +1,16 @@
+=== 10:36:14 vanilla4 QoS 1 r1
+=== 10:36:14 45_vanilla4_q1_r1 ===
+=== 10:36:44 90_vanilla4_q1_r1 ===
+=== 10:37:17 vanilla4 QoS 1 r2
+=== 10:37:17 45_vanilla4_q1_r2 ===
+=== 10:37:47 90_vanilla4_q1_r2 ===
+=== 10:38:18 vanilla4 QoS 1 r3
+=== 10:38:18 45_vanilla4_q1_r3 ===
+=== 10:38:48 90_vanilla4_q1_r3 ===
+45_vanilla4_q1_r1  single rate   45  gaps n=663   mean  25.63 max  35.47   chain goal-med   42.04  ctrl-med   42.05  frames 806 goals 661   busy c0:2 c1:88 c2:87 c3:86 c4:15 c5:99 c6:2 c7:11
+45_vanilla4_q1_r2  single rate   45  gaps n=668   mean  25.48 max  26.66   chain goal-med   41.92  ctrl-med   41.92  frames 803 goals 666   busy c0:3 c1:89 c2:88 c3:87 c4:8 c5:21 c6:2 c7:99
+45_vanilla4_q1_r3  single rate   45  gaps n=665   mean  25.57 max  34.36   chain goal-med   42.34  ctrl-med   42.34  frames 802 goals 663   busy c0:5 c1:88 c2:88 c3:86 c4:3 c5:99 c6:4 c7:20
+90_vanilla4_q1_r1  single rate   90  gaps n=662   mean  25.65 max  27.77   chain goal-med   36.89  ctrl-med   36.89  frames 1612 goals 661   busy c0:7 c1:89 c2:88 c3:86 c4:5 c5:6 c6:99 c7:21
+90_vanilla4_q1_r2  single rate   90  gaps n=664   mean  25.61 max  31.43   chain goal-med   36.67  ctrl-med   36.67  frames 1604 goals 662   busy c0:5 c1:88 c2:88 c3:86 c4:21 c5:6 c6:99 c7:6
+90_vanilla4_q1_r3  single rate   90  gaps n=676   mean  25.14 max  29.93   chain goal-med   36.10  ctrl-med   36.10  frames 1614 goals 675   busy c0:99 c1:90 c2:88 c3:88 c4:5 c5:2 c6:22 c7:6
+VANILLA4_Q1_DONE

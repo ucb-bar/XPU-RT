@@ -1,0 +1,64 @@
+{
+ "trace": "ModelBlaster/tmp/b5y_board_run/_gen/b5y_aot_sched/b5y_aot_sched_trace.csv",
+ "spec": "data/toplevel/scaling/b5y_board_holds.json",
+ "networks": [
+  {
+   "network": "dronet",
+   "window_ms": 12.0,
+   "n_instances": 4,
+   "inst0_exec_ms": 11.735,
+   "warm_median_exec_ms": 9.609,
+   "cold_over_warm": 1.22,
+   "instances_over_window_by_execution": 0,
+   "of_which_cold_start": 0,
+   "warm_execution_fits_window": true
+  },
+  {
+   "network": "ffn_block",
+   "window_ms": 18.0,
+   "n_instances": 3,
+   "inst0_exec_ms": 16.693,
+   "warm_median_exec_ms": 8.763,
+   "cold_over_warm": 1.9,
+   "instances_over_window_by_execution": 0,
+   "of_which_cold_start": 0,
+   "warm_execution_fits_window": true
+  },
+  {
+   "network": "fused_full",
+   "window_ms": 13.0,
+   "n_instances": 4,
+   "inst0_exec_ms": 12.433,
+   "warm_median_exec_ms": 4.529,
+   "cold_over_warm": 2.75,
+   "instances_over_window_by_execution": 0,
+   "of_which_cold_start": 0,
+   "warm_execution_fits_window": true
+  },
+  {
+   "network": "mlp_control",
+   "window_ms": 5.0,
+   "n_instances": 12,
+   "inst0_exec_ms": 0.107,
+   "warm_median_exec_ms": 0.079,
+   "cold_over_warm": 1.35,
+   "instances_over_window_by_execution": 0,
+   "of_which_cold_start": 0,
+   "warm_execution_fits_window": true
+  },
+  {
+   "network": "yolov8_nano_64x96",
+   "window_ms": 65.0,
+   "n_instances": 1,
+   "inst0_exec_ms": 60.863,
+   "warm_median_exec_ms": 60.863,
+   "cold_over_warm": 1.0,
+   "instances_over_window_by_execution": 0,
+   "of_which_cold_start": 0,
+   "warm_execution_fits_window": true
+  }
+ ],
+ "execution_bound_instances": 0,
+ "cold_start_instances": 0,
+ "means": "execution = sum of the instance's own dispatch cycles, queueing excluded; a scheduler cannot shrink it"
+}

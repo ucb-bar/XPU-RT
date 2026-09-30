@@ -1,0 +1,1 @@
+ROS_TRACED tag=45_rvanilla4_r1 exec=single rate=45 released=0 goals=725 fires=725 gap_mean=26.44 gap_max=44.75

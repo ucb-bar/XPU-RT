@@ -1,0 +1,37 @@
+{
+  "tag": "30_cp3_r3",
+  "rate_hz": 30,
+  "executor": "single",
+  "nodes": "percep | nav | control (3 processes)",
+  "affinity_mask": {
+    "percep": "0x1",
+    "nav": "0x10",
+    "control": "0x20"
+  },
+  "sched_policy": null,
+  "yolo_pool": null,
+  "warmup_ms": 3000.0,
+  "n_gaps": 509,
+  "gap_mean_ms": 33.40042671905697,
+  "gap_p95_ms": 33.7467,
+  "gap_max_ms": 80.5979,
+  "n_frames": 545,
+  "n_goals": 508,
+  "n_consumed": 508,
+  "e2e_goal_med_ms": 30.667,
+  "e2e_goal_p95_ms": 31.125,
+  "e2e_med_ms": 30.669,
+  "e2e_p95_ms": 31.127,
+  "busy_pct": {
+    "0": 77.1,
+    "1": 66.4,
+    "2": 65.5,
+    "3": 65.0,
+    "4": 15.8,
+    "5": 3.1,
+    "6": 0.1,
+    "7": 0.9
+  },
+  "rmw": "rmw_fastrtps_cpp",
+  "kernels_sha": "22c997a6 ir=0c783539626c"
+}

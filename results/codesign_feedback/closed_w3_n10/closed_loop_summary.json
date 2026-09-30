@@ -1,0 +1,51 @@
+{
+ "workload": "w3_ffn_dronet",
+ "networks": [
+  "mlp_control",
+  "ffn_block",
+  "dronet"
+ ],
+ "solver": "greedy",
+ "repeats": 10,
+ "generated_at": "2026-09-08T21:14:19",
+ "calibration": "results/codesign_feedback/closed_w3_n10/k1_calibration_w3_ffn_dronet.json",
+ "calibration_aggregate": 1.2032,
+ "nets_measured": [
+  "dronet",
+  "ffn_block",
+  "mlp_control"
+ ],
+ "nets_still_extrapolated": [],
+ "aot": {
+  "levers": [
+   "shard"
+  ],
+  "misses_before": 10.0,
+  "misses_after": 5.0,
+  "lateness_before_ms": 88.061,
+  "lateness_after_ms": 7.794
+ },
+ "board": {
+  "levers": [
+   "shard"
+  ],
+  "misses_before": 10.0,
+  "misses_after": 5.0,
+  "lateness_before_ms": 113.029,
+  "lateness_after_ms": 15.998
+ },
+ "levers_dropped_on_measured_costs": [],
+ "levers_added_on_measured_costs": [],
+ "traces": [
+  "results/codesign_feedback/closed_w3_n10/board_0_trace.csv",
+  "results/codesign_feedback/closed_w3_n10/board_1_trace.csv",
+  "results/codesign_feedback/closed_w3_n10/board_2_trace.csv",
+  "results/codesign_feedback/closed_w3_n10/board_3_trace.csv",
+  "results/codesign_feedback/closed_w3_n10/board_4_trace.csv",
+  "results/codesign_feedback/closed_w3_n10/board_5_trace.csv",
+  "results/codesign_feedback/closed_w3_n10/board_6_trace.csv",
+  "results/codesign_feedback/closed_w3_n10/board_7_trace.csv",
+  "results/codesign_feedback/closed_w3_n10/board_8_trace.csv",
+  "results/codesign_feedback/closed_w3_n10/board_9_trace.csv"
+ ]
+}

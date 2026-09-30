@@ -1,0 +1,1 @@
+ROS_TRACED tag=60_cp3_r1 exec=single rate=60 released=0 goals=747 fires=747 gap_mean=25.67 gap_max=31.37

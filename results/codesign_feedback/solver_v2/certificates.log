@@ -1,0 +1,9 @@
+=== 20:56:37 wh_chain45_solve_h200 greedy
+  rc=0   greedy_periodic: makespan=283.98 ms (all ops 283.98 ms), periodic window misses=336, converged
+=== 20:56:41 wh_chain45_solve_h200 cpsat (hard windows)
+  rc=0 cpsat status=OPTIMAL wall=771.7s
+=== 21:09:38 wh_chain90_rich_solve_h100 greedy
+  rc=0   greedy_periodic: makespan=140.28 ms (all ops 140.28 ms), periodic window misses=18, converged
+=== 21:09:42 wh_chain90_rich_solve_h100 cpsat (hard windows)
+  rc=0 cpsat status=FEASIBLE wall=900.2s
+CERT_DONE

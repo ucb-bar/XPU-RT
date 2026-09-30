@@ -1,0 +1,380 @@
+{
+ "figure": "results/codesign_feedback/refined/showdown_45hz_pinned_vs_rospinned_s1011.png",
+ "written": "2026-09-25T13:00:21",
+ "sources": {
+  "xpu_dir": "results/codesign_feedback/campaign_static6_45/display/search_c1.4/xpu_s1011_figdata",
+  "ros_dir": "results/codesign_feedback/campaign_static6_45/display/search_c1.4/ros_s1011_figdata",
+  "scene_records": "results/codesign_feedback/campaign_scene/static6_45_l1011",
+  "gantt_sidecars": [
+   "results/codesign_feedback/refined/static6_45b/measured_gantt_static6_45b_xpu_metrics.json",
+   "results/codesign_feedback/refined/static6_45b/measured_gantt_static6_45b_p3_metrics.json"
+  ],
+  "envelope_csv": "/scratch/agustin/xpurt-dev-sync/results/codesign_feedback/hil_ablation.csv",
+  "courseB_csv": "/scratch/agustin/xpurt-dev-sync/results/codesign_feedback/hil_ablation_courseB.csv",
+  "energy_csv": "results/codesign_feedback/flight_energy_static6_45.csv"
+ },
+ "A": {
+  "gain_xpu": 0.0055,
+  "gain_ros": 0.0055,
+  "xpu_gates": 4,
+  "ros_gates": 2,
+  "hit": "crate",
+  "ros_failure": "in_the_course",
+  "xpu_eff_hz": 96.2,
+  "ros_eff_hz": 38.5,
+  "backdrop": "median of 5 overhead frames (t \u2265 2 s)",
+  "plate_std": 50.7,
+  "clearance_m": 0.607,
+  "clearance_measured": true,
+  "moments": [
+   {
+    "arm": "ROS",
+    "step": 565,
+    "label": "ROS 2 38 Hz \u00b7 clears G2",
+    "t_s": 5.65
+   },
+   {
+    "arm": "ROS",
+    "step": 759,
+    "label": "ROS 2 38 Hz \u00b7 hits crate after G2",
+    "t_s": 7.59
+   },
+   {
+    "arm": "XPU",
+    "step": 990,
+    "label": "XPU-RT 96 Hz \u00b7 clears crate 0.61 m",
+    "t_s": 9.9
+   },
+   {
+    "arm": "XPU",
+    "step": 1096,
+    "label": "XPU-RT 96 Hz \u00b7 reaches gate",
+    "t_s": 10.96
+   }
+  ],
+  "layout_seed": {
+   "xpu": 1011,
+   "ros": 1011
+  },
+  "episode_seed": {
+   "xpu": 1011,
+   "ros": 1011
+  },
+  "scene_completed": {
+   "xpu": [
+    4,
+    12
+   ],
+   "ros": [
+    4,
+    12
+   ]
+  },
+  "scene_mean_gates": {
+   "xpu": 2.75,
+   "ros": 2.83
+  },
+  "ros_outcome": "crash",
+  "display_cruise": 1.4,
+  "xpu_trace": "xpu_a_cpsat_hard.csv",
+  "ros_trace": "ros_cp345.csv",
+  "ros_label": "ROS 2 \u00b7 static 6-core partition, two cores idle",
+  "xpu_label": "XPU-RT \u00b7 CP-SAT, hand-pinned placement",
+  "camera_hz": 45.0
+ },
+ "B": {
+  "rates": [
+   20.0,
+   25.0,
+   33.33,
+   50.0,
+   100.0
+  ],
+  "xpu_hz": 96.2370242214533,
+  "ros_hz": 38.47050594544183,
+  "flights": 300,
+  "k_n_per_hz": {
+   "20": [
+    0,
+    60
+   ],
+   "25": [
+    1,
+    60
+   ],
+   "33": [
+    13,
+    60
+   ],
+   "50": [
+    23,
+    60
+   ],
+   "100": [
+    21,
+    60
+   ]
+  }
+ },
+ "C": {
+  "courseB_k_n_per_hz": {
+   "25": [
+    2,
+    30
+   ],
+   "33": [
+    1,
+    30
+   ],
+   "50": [
+    9,
+    30
+   ],
+   "100": [
+    10,
+    30
+   ]
+  }
+ },
+ "D": {
+  "energy_csv": "results/codesign_feedback/flight_energy_static6_45.csv",
+  "xpu_condition": "xpu_cpsat",
+  "conditions": {
+   "ros_shipped": {
+    "n": 6,
+    "moment_x": 68.02,
+    "power_x": 129.37
+   },
+   "ros_static6": {
+    "n": 6,
+    "moment_x": 29.33,
+    "power_x": 13.89
+   },
+   "xpu_cpsat": {
+    "n": 6,
+    "moment_x": 1.0,
+    "power_x": 1.0
+   },
+   "xpu_greedy": {
+    "n": 6,
+    "moment_x": 4.34,
+    "power_x": 2.5
+   }
+  }
+ },
+ "telemetry": {
+  "xpu_mean_w": 0.348,
+  "ros_mean_w": 1.658,
+  "xpu_mean_speed": 1.399,
+  "ros_mean_speed": 1.355,
+  "series": {
+   "E_xpu": {
+    "n": 1142,
+    "min": 0.0297,
+    "max": 5.036,
+    "mean": 0.3347,
+    "sha256": "abca9e6ca77e4d41"
+   },
+   "E_ros": {
+    "n": 760,
+    "min": 0.7351,
+    "max": 5.6069,
+    "mean": 1.6361,
+    "sha256": "6e82cf7f44181bae"
+   },
+   "F_xpu": {
+    "n": 1142,
+    "min": -150.8883,
+    "max": 13.1737,
+    "mean": -9.4385,
+    "sha256": "8ddae5ce80ba6d75"
+   },
+   "F_ros": {
+    "n": 760,
+    "min": -16.9338,
+    "max": 13.7111,
+    "mean": -3.3463,
+    "sha256": "bb6ea5bffa635612"
+   },
+   "G_xpu": {
+    "n": 1142,
+    "min": 0.1374,
+    "max": 1.4462,
+    "mean": 1.3988,
+    "sha256": "27e096a33697ddcc"
+   },
+   "G_ros": {
+    "n": 760,
+    "min": 0.1392,
+    "max": 1.4588,
+    "mean": 1.3551,
+    "sha256": "36118bd2e0b75c6d"
+   },
+   "H_along": {
+    "n": 89,
+    "min": 6.7242,
+    "max": 21.6026,
+    "mean": 14.1568,
+    "sha256": "b2abf17d340a5c58"
+   },
+   "H_across": {
+    "n": 89,
+    "min": -8.3773,
+    "max": -7.4984,
+    "mean": -8.0528,
+    "sha256": "294a649609c4cb6e"
+   },
+   "H_u": {
+    "n": 89,
+    "min": 1.3123,
+    "max": 1.4358,
+    "mean": 1.4091,
+    "sha256": "607eb6cea052adc5"
+   },
+   "H_v": {
+    "n": 89,
+    "min": -0.5553,
+    "max": 0.2094,
+    "mean": -0.0777,
+    "sha256": "44da7fba5f93cfbb"
+   },
+   "H_gates": {
+    "n": 12,
+    "min": -8.3,
+    "max": 21.0,
+    "mean": 2.9875,
+    "sha256": "01065a81bb1eedf1"
+   }
+  }
+ },
+ "I": {
+  "xpu": {
+   "chain_ms_median": 56.86,
+   "ctrl_gap_mean_ms": 10.0,
+   "frames_late": 0,
+   "frames_checked": 44,
+   "placement_note": "8 harts \u00b7 scheduled",
+   "busy_source": "sampler_rdtime",
+   "harts_per_net": {
+    "YOLO": [
+     "CPU_E#0",
+     "CPU_E#1",
+     "CPU_E#2",
+     "CPU_E#3",
+     "CPU_P#0",
+     "CPU_P#1",
+     "CPU_P#2",
+     "CPU_P#3"
+    ],
+    "control": [
+     "CPU_E#0",
+     "CPU_E#1",
+     "CPU_E#2",
+     "CPU_E#3",
+     "CPU_P#0",
+     "CPU_P#1",
+     "CPU_P#2",
+     "CPU_P#3"
+    ],
+    "nav": [
+     "CPU_E#0",
+     "CPU_E#1",
+     "CPU_E#2",
+     "CPU_E#3",
+     "CPU_P#0",
+     "CPU_P#1",
+     "CPU_P#2",
+     "CPU_P#3"
+    ]
+   },
+   "drawn_harts_per_net": {
+    "YOLO": [
+     "CPU_E#0",
+     "CPU_E#1",
+     "CPU_E#2",
+     "CPU_E#3",
+     "CPU_P#0",
+     "CPU_P#1",
+     "CPU_P#2",
+     "CPU_P#3"
+    ],
+    "control": [
+     "CPU_E#0",
+     "CPU_E#1",
+     "CPU_E#2",
+     "CPU_E#3",
+     "CPU_P#0",
+     "CPU_P#1",
+     "CPU_P#2",
+     "CPU_P#3"
+    ],
+    "nav": [
+     "CPU_E#0",
+     "CPU_E#1",
+     "CPU_E#2",
+     "CPU_E#3",
+     "CPU_P#0",
+     "CPU_P#1",
+     "CPU_P#2",
+     "CPU_P#3"
+    ]
+   }
+  },
+  "p3": {
+   "chain_ms_median": 56.757,
+   "ctrl_gap_mean_ms": 25.928,
+   "frames_late": 0,
+   "frames_checked": 769,
+   "placement_note": "3 processes pinned \u00b7 YOLO on 4 harts",
+   "busy_source": "sampler_epoch",
+   "harts_per_net": {
+    "YOLO": [
+     "CPU_P#0"
+    ],
+    "control": [
+     "CPU_E#1"
+    ],
+    "nav": [
+     "CPU_E#0"
+    ]
+   },
+   "drawn_harts_per_net": {
+    "YOLO": [
+     "CPU_P#0",
+     "CPU_P#1",
+     "CPU_P#2",
+     "CPU_P#3"
+    ],
+    "control": [
+     "CPU_E#1"
+    ],
+    "nav": [
+     "CPU_E#0"
+    ]
+   }
+  },
+  "bars": {
+   "XPU-RT": {
+    "dispatches": 881,
+    "drawn": 881
+   },
+   "ROS 2 \u00b7 pinned": {
+    "dispatches": 20,
+    "drawn": 20
+   }
+  },
+  "merged_per_hart_and_frame": false
+ },
+ "script": "showdown_paper_figure",
+ "inputs": {
+  "results/codesign_feedback/campaign_scene/static6_45_l1011/campaign.csv": "932f47d4fa8d3dc998e228e1149f56941f9e3e367bb56b19a07ab9a42580fd73",
+  "results/codesign_feedback/campaign_static6_45/display/search_c1.4/ros_s1011_figdata/figure_data.npz": "3873003488d442000a62f838282abab5fd29f70b7cb5b1df1d241bacf4ca4fe9",
+  "results/codesign_feedback/campaign_static6_45/display/search_c1.4/xpu_s1011_figdata/figure_data.npz": "719dfd627b49f7fcecec1a209e23b5146acd77069f0d17dfcf2228403c936e5a",
+  "results/codesign_feedback/flight_energy_static6_45.csv": "78e4394a9f76d6ba0df9633bf3498e6502b8020e88060ebe5ee0d4c891bdf99d",
+  "results/codesign_feedback/hil_ablation.csv": "7cab7e9b37c8f36de5408e2b20a32ef2bae072e232290f6ef97a0dc78674393d",
+  "results/codesign_feedback/hil_ablation_courseB.csv": "3f5089f43d645d3da96a22a2ea6961104f257a4150542403a5587e78101e0af2",
+  "results/codesign_feedback/refined/static6_45b/measured_gantt_static6_45b_p3_metrics.json": "249283173218662d7889fedb0de6299b02a11351655d05a9be59813e336c5302",
+  "results/codesign_feedback/refined/static6_45b/measured_gantt_static6_45b_xpu_metrics.json": "bb103ae56dea6b6c2b26b1f427dd3267284752f5978da15630a2df15dbbeb0fe"
+ },
+ "fallbacks_used": []
+}

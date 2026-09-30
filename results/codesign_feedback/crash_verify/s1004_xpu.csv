@@ -1,0 +1,2 @@
+seed,cruise_speed,sim_dt,decimation,control_dt_ms,sched_latency_ms,percep_latency_ms,percep_delay_steps,percep_hold_ms,percep_refresh,walk_speed,hold_steps,eff_cmd_hz,moment_scale,gust,motor_tau,pipeline_zoh,gates_passed,steps,K,outcome,crash_type
+1004,1.4,0.01,1,10.0,4.89,0.0,0,0.0,1,0.0,1,100.0,0.005,0.0,0.0,0,2,658,4,crash,clip

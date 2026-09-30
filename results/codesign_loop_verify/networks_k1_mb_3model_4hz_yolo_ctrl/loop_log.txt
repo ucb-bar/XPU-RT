@@ -1,0 +1,16 @@
+== co-design loop: networks_k1_mb_3model_4hz_yolo_ctrl ==
+round 0 · baseline: makespan 898.097 ms (makespan 898.1 ms), 0 miss
+      ime: built ime_x60 profiles for (none new; existing reused)
+round 1 · try ime: makespan 898.097 -> 898.097 ms (-0.0%), 0 miss -> reject
+round 1 · try shard: makespan 898.097 -> 898.097 ms (-0.0%), 0 miss -> reject
+      unfuse: adopted ModelBlaster unfused dispatch graph for ['yolov8_nano']
+round 1 · try unfuse: makespan 898.097 -> 866.421 ms (-3.5%), 0 miss -> ACCEPTABLE
+round 1: ACCEPT +unfuse  makespan 898.097 -> 866.421 ms (-3.5%)
+      ime: built ime_x60 profiles for (none new; existing reused)
+round 2 · try ime: makespan 866.421 -> 866.421 ms (-0.0%), 0 miss -> reject
+round 2 · try shard: makespan 866.421 -> 866.421 ms (-0.0%), 0 miss -> reject
+round 2: no lever improves makespan with 0 added misses — CONVERGED
+fuse: decision-aid unavailable.
+
+CONVERGED [makespan]: 898.097 -> 866.421 ms (-3.5%), levers applied: ['unfuse']
+artifacts in /scratch/agustin/xpurt-dev-sync/results/codesign_loop_verify/networks_k1_mb_3model_4hz_yolo_ctrl

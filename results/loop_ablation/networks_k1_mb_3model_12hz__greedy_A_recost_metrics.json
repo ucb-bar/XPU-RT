@@ -1,0 +1,14 @@
+{
+ "makespan_ms": 1066.4060816400668,
+ "deadline_miss_count": 505,
+ "total_lateness_ms": 17570.573625866353,
+ "board_recost": true,
+ "multiplier_source_counts": {
+  "per_dispatch": 434,
+  "aggregate": 996,
+  "per_op": 180
+ },
+ "multiplier_min": 0.7867,
+ "multiplier_max": 3.1556,
+ "multiplier_mean": 1.2884973913043478
+}

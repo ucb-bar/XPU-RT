@@ -1,0 +1,22 @@
+% Standalone schedule panel (recommended for the main paper).
+\caption{Board-calibrated schedule-model comparison over matched horizons
+(5 YOLO, 6 navigation, and 12 control releases) on the same eight-hart K1
+platform. The third YOLO frame is measured from release to output. XPU-RT's
+CP-SAT schedule uses all eight harts and returns in 23.00\,ms, meeting the
+adapted 23\,ms period/deadline; the ROS-style fixed partition uses six harts
+by policy and returns in 49.76\,ms (26.76\,ms late). Bars include adjacent
+YOLO backlog and concurrent navigation/control work. Durations use K1
+per-dispatch calibration where available and aggregate fallbacks otherwise;
+these are modeled schedules, not direct board traces.}
+\label{fig:warehouse-schedule-board}
+
+% Combined simulator-and-schedule overview (recommended for supplement or a full-width page).
+\caption{Warehouse case study with two distinct forms of evidence. Top:
+selected Isaac simulator rollouts using the same learned detector, navigation
+model, controller, course, and obstacle configuration. One selected 50\,Hz
+reference rollout completes four gates; the deepest of five 33\,Hz
+fixed-baseline trials passes the first gate and then collides. These qualitative
+rollouts are not paired by seed and were not executions of the schedules shown
+below. Bottom: the separate matched-horizon, K1-calibrated schedule-model
+comparison from Fig.~\ref{fig:warehouse-schedule-board}.}
+\label{fig:warehouse-showdown-board}

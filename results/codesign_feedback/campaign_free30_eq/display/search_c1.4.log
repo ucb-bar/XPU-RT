@@ -1,0 +1,27 @@
+  xpu 1009: === 16:13:31 xpu_s1009
+[ep00] outcome=crash     gates=1/4 steps=279
+  xpu 1004: === 16:19:20 xpu_s1004
+[ep00] outcome=crash     gates=1/4 steps=472
+  xpu 1005: === 16:26:11 xpu_s1005
+[ep00] outcome=crash     gates=1/4 steps=624
+  xpu 1006: === 16:33:48 xpu_s1006
+[ep00] outcome=crash     gates=3/4 steps=916
+  xpu 1008: === 16:43:02 xpu_s1008
+[ep00] outcome=crash     gates=1/4 steps=292
+  xpu 1010: === 16:48:57 xpu_s1010
+[ep00] outcome=crash     gates=3/4 steps=982
+  xpu 1011: === 16:58:44 xpu_s1011
+[ep00] outcome=crash     gates=2/4 steps=752
+  xpu 1000: === 17:07:15 xpu_s1000
+[ep00] outcome=crash     gates=3/4 steps=841
+  xpu 1001: === 17:16:20 xpu_s1001
+[ep00] outcome=crash     gates=2/4 steps=652
+  xpu 1002: === 17:24:13 xpu_s1002
+[ep00] outcome=crash     gates=2/4 steps=589
+  xpu 1003: === 17:31:45 xpu_s1003
+[ep00] outcome=crash     gates=1/4 steps=369
+  xpu 1007: === 17:38:02 xpu_s1007
+[ep00] outcome=success   gates=4/4 steps=1134
+  ros 1007: === 17:48:20 ros_s1007
+[ep00] outcome=crash     gates=0/4 steps=308
+SAME_ENV_DONE

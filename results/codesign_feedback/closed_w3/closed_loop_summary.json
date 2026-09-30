@@ -1,0 +1,44 @@
+{
+ "workload": "w3_ffn_dronet",
+ "networks": [
+  "mlp_control",
+  "ffn_block",
+  "dronet"
+ ],
+ "solver": "greedy",
+ "repeats": 3,
+ "generated_at": "2026-09-08T21:12:38",
+ "calibration": "results/codesign_feedback/closed_w3/k1_calibration_w3_ffn_dronet.json",
+ "calibration_aggregate": 1.196,
+ "nets_measured": [
+  "dronet",
+  "ffn_block",
+  "mlp_control"
+ ],
+ "nets_still_extrapolated": [],
+ "aot": {
+  "levers": [
+   "shard"
+  ],
+  "misses_before": 10.0,
+  "misses_after": 5.0,
+  "lateness_before_ms": 88.061,
+  "lateness_after_ms": 7.794
+ },
+ "board": {
+  "levers": [
+   "shard"
+  ],
+  "misses_before": 10.0,
+  "misses_after": 5.0,
+  "lateness_before_ms": 112.665,
+  "lateness_after_ms": 15.855
+ },
+ "levers_dropped_on_measured_costs": [],
+ "levers_added_on_measured_costs": [],
+ "traces": [
+  "results/codesign_feedback/closed_w3/board_0_trace.csv",
+  "results/codesign_feedback/closed_w3/board_1_trace.csv",
+  "results/codesign_feedback/closed_w3/board_2_trace.csv"
+ ]
+}

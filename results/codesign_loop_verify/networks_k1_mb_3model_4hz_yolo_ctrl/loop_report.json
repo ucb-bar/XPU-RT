@@ -1,0 +1,44 @@
+{
+ "workload": "networks_k1_mb_3model_4hz_yolo_ctrl",
+ "objective": "makespan",
+ "baseline_score_ms": 898.097,
+ "final_score_ms": 866.421,
+ "total_reduction_pct": 3.5,
+ "baseline_makespan_ms": 898.1,
+ "final_makespan_ms": 866.4,
+ "levers_applied": [
+  "unfuse"
+ ],
+ "rounds": [
+  {
+   "round": 1,
+   "lever": "unfuse",
+   "metric": "makespan",
+   "score_before_ms": 898.097,
+   "score_after_ms": 866.421,
+   "makespan_before_ms": 898.1,
+   "makespan_after_ms": 866.4,
+   "pct": -3.5,
+   "accepted": true,
+   "deadline_miss": 0
+  }
+ ],
+ "trajectory": [
+  {
+   "round": 0,
+   "lever": "baseline",
+   "score_ms": 898.097,
+   "makespan_ms": 898.1,
+   "misses": 0
+  },
+  {
+   "round": 1,
+   "lever": "+unfuse",
+   "score_ms": 866.421,
+   "makespan_ms": 866.4,
+   "misses": 0
+  }
+ ],
+ "fusion": "fuse: decision-aid unavailable.",
+ "converged": true
+}

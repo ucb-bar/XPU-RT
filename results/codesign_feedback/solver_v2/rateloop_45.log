@@ -1,0 +1,19 @@
+  round 1 spec: window 44.44 ms over a 22.22 ms period
+=== 21:00:02 rate 45 round 1: solve
+  yolov8_nano_64x96: width scaling 1:55.7  2:44.5  4:24.7  8:24.6 ms  (best 2.27x on 8 harts)
+cpsat status=FEASIBLE wall=5405.4s
+schedules/fig_fb45r1_cpsat_hard_clamped.json: 472 dispatch targets narrowed; width histogram {1: 4840, 2: 585, 4: 360}
+  trace rows: 5785  hart_acc: 8  policy: SCHED_OTHER  exit: 0  verify: ['MODELBLASTER_VERIFY [yolov8_nano_64x96] === max_abs_err=0 max_rel_err=0 n=8316 instance=0 ready=1']
+  trace rows: 5785  hart_acc: 8  policy: SCHED_OTHER  exit: 0  verify: ['MODELBLASTER_VERIFY [yolov8_nano_64x96] === max_abs_err=0 max_rel_err=0 n=8316 instance=0 ready=1']
+  trace rows: 5785  hart_acc: 8  policy: SCHED_OTHER  exit: 0  verify: ['MODELBLASTER_VERIFY [yolov8_nano_64x96] === max_abs_err=0 max_rel_err=0 n=8316 instance=0 ready=1']
+=== 22:32:08 rate 45: re-cost from the executed traces
+  exact keys 112   op-kind keys 6
+  nets measured: fused_full, mlp_control, yolov8_nano_64x96
+=== 22:32:08 rate 45 round 2: solve
+  yolov8_nano_64x96: width scaling 1:55.7  2:44.5  4:24.7  8:24.6 ms  (best 2.27x on 8 harts)
+cpsat status=FEASIBLE wall=5409.7s
+schedules/fig_fb45r2_cpsat_hard_clamped.json: 680 dispatch targets narrowed; width histogram {1: 2500, 2: 585, 4: 2700}
+  trace rows: 5785  hart_acc: 8  policy: SCHED_OTHER  exit: 0  verify: ['MODELBLASTER_VERIFY [yolov8_nano_64x96] === max_abs_err=0 max_rel_err=0 n=8316 instance=0 ready=1']
+  trace rows: 5785  hart_acc: 8  policy: SCHED_OTHER  exit: 0  verify: ['MODELBLASTER_VERIFY [yolov8_nano_64x96] === max_abs_err=0 max_rel_err=0 n=8316 instance=0 ready=1']
+  trace rows: 5785  hart_acc: 8  policy: SCHED_OTHER  exit: 0  verify: ['MODELBLASTER_VERIFY [yolov8_nano_64x96] === max_abs_err=0 max_rel_err=0 n=8316 instance=0 ready=1']
+RATE_FEEDBACK_DONE 45 00:05:09

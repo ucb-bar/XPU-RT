@@ -1,0 +1,32 @@
+[1/2] w2_ffn_tight
+  -- cpsat --
+    inner (AOT) search: levers ['shard']
+    A repeated x3 (status feasible): misses [6, 5, 5], spread 2.216 ms
+    A neither                                    misses=5   worst_late=  16.889 ms  makespan=  69.49 ms
+    B inner only (levers, deployed blind)        misses=0   worst_late=   0.000 ms  makespan=  55.07 ms
+    C repeated x3 (status feasible): misses [5, 5, 5], spread 0.0 ms
+    C outer only (measured re-solve, no levers)  misses=5   worst_late=  19.951 ms  makespan=  77.95 ms
+    D both                                       misses=0   worst_late=   0.000 ms  makespan=  57.17 ms
+  -- greedy --
+    inner (AOT) search: levers ['shard']
+    A neither                                    misses=5   worst_late=  19.713 ms  makespan=  68.09 ms
+    B inner only (levers, deployed blind)        misses=0   worst_late=   0.000 ms  makespan=  55.32 ms
+    C outer only (measured re-solve, no levers)  misses=5   worst_late=  19.948 ms  makespan=  77.95 ms
+    D both                                       misses=0   worst_late=   0.000 ms  makespan=  57.16 ms
+[2/2] w3_ffn_dronet
+  -- cpsat --
+    inner (AOT) search: levers ['shard']
+    A repeated x3 (status feasible): misses [9, 8, 9], spread 1.08 ms
+    A neither                                    misses=9   worst_late=  17.953 ms  makespan=  67.87 ms
+    B repeated x3 (status feasible): misses [8, 4, 5], spread 47.666 ms
+    B inner only (levers, deployed blind)        misses=5   worst_late=  26.025 ms  makespan=  56.77 ms
+    C repeated x3 (status feasible): misses [10, 10, 10], spread 8.157 ms
+    C outer only (measured re-solve, no levers)  misses=10  worst_late=  19.951 ms  makespan=  77.95 ms
+    D repeated x3 (status feasible): misses [5, 5, 5], spread 0.0 ms
+    D both                                       misses=5   worst_late=  26.030 ms  makespan=  57.01 ms
+  -- greedy --
+    inner (AOT) search: levers ['shard']
+    A neither                                    misses=10  worst_late=  17.953 ms  makespan=  68.11 ms
+    B inner only (levers, deployed blind)        misses=5   worst_late=   2.001 ms  makespan=  59.00 ms
+    C outer only (measured re-solve, no levers)  misses=10  worst_late=  19.948 ms  makespan=  77.95 ms
+    D both                                       misses=5   worst_late=  10.902 ms  makespan=  64.74 ms

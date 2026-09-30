@@ -1,0 +1,1 @@
+ROS_TRACED tag=10_p8_r1 exec=single rate=10 released=0 goals=189 fires=2000 gap_mean=10.00 gap_max=12.20

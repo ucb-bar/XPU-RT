@@ -1,0 +1,407 @@
+{
+ "schema": "loop_ablation/v3",
+ "population": {
+  "families": {
+   "sensor_rich": [
+    "networks_k1_sensor_sharded_rich",
+    "_4w_networks_k1_sensor_sharded_rich_shard_ime_s4.0",
+    "_evo_sen_og",
+    "_4w_networks_k1_sensor_tight_vision_head",
+    "_4w_networks_k1_sensor_sharded_rich_shard_ime_s5.0",
+    "networks_k1_deployed_rich_vithead",
+    "networks_k1_deployed_rich_vithead_noime"
+   ],
+   "flight_deployed": [
+    "networks_k1_flight_deployed",
+    "networks_k1_flight_deployed_noshard",
+    "networks_k1_flight_deployed_singletons",
+    "_flight_deployed_matched_board",
+    "_flight_deployed_2frame"
+   ],
+   "mb_3model": [
+    "networks_k1_mb_3model_4hz",
+    "networks_k1_mb_3model_4hz_yolo_ctrl",
+    "_evo_og",
+    "networks_k1_mb_3model_12hz"
+   ],
+   "mlp_dronet": [
+    "networks_k1_mb",
+    "networks_k1_mb_B1"
+   ],
+   "tri": [
+    "networks_k1_tri_exact_100ms",
+    "networks_k1_tri_exact_100ms_feedback",
+    "networks_k1_tri_small",
+    "networks_k1_tri_small_feedback"
+   ],
+   "ffn_ime": [
+    "networks_k1_ffn_ime"
+   ],
+   "multicore_shard": [
+    "networks_k1_multicore_shard"
+   ]
+  },
+  "unrunnable": [
+   "networks_k1_mlp_dronet"
+  ],
+  "one_per_family": false,
+  "strata": {
+   "s5_solvable_reveal.json": "at_stake"
+  },
+  "at_stake": [
+   "s5_solvable_reveal.json"
+  ],
+  "note": "the 25 K1 specs contain byte-identical duplicates and variants that return bit-identical results; the family is the unit"
+ },
+ "aggregate_at_stake_only": {
+  "greedy": {
+   "A": {
+    "label": "neither",
+    "n": 1,
+    "workloads_with_zero_misses": 0,
+    "total_instance_misses": 4,
+    "median_instance_misses": 4,
+    "median_worst_lateness_ms": 16.78306969920002
+   },
+   "B": {
+    "label": "inner only (levers, deployed blind)",
+    "n": 1,
+    "workloads_with_zero_misses": 0,
+    "total_instance_misses": 5,
+    "median_instance_misses": 5,
+    "median_worst_lateness_ms": 6.861542874899996
+   },
+   "C": {
+    "label": "outer only (measured re-solve, no levers)",
+    "n": 1,
+    "workloads_with_zero_misses": 0,
+    "total_instance_misses": 1,
+    "median_instance_misses": 1,
+    "median_worst_lateness_ms": 30.607252761200016
+   },
+   "D": {
+    "label": "both",
+    "n": 1,
+    "workloads_with_zero_misses": 0,
+    "total_instance_misses": 2,
+    "median_instance_misses": 2,
+    "median_worst_lateness_ms": 9.112160569500013
+   }
+  }
+ },
+ "aggregate_achievable_only": {
+  "greedy": {
+   "A": {
+    "label": "neither",
+    "n": 1,
+    "total_achievable_misses": 4,
+    "total_infeasible_misses": 0,
+    "workloads_with_zero_achievable_misses": 0
+   },
+   "B": {
+    "label": "inner only (levers, deployed blind)",
+    "n": 1,
+    "total_achievable_misses": 5,
+    "total_infeasible_misses": 0,
+    "workloads_with_zero_achievable_misses": 0
+   },
+   "C": {
+    "label": "outer only (measured re-solve, no levers)",
+    "n": 1,
+    "total_achievable_misses": 1,
+    "total_infeasible_misses": 0,
+    "workloads_with_zero_achievable_misses": 0
+   },
+   "D": {
+    "label": "both",
+    "n": 1,
+    "total_achievable_misses": 2,
+    "total_infeasible_misses": 0,
+    "workloads_with_zero_achievable_misses": 0
+   }
+  }
+ },
+ "achievable_means": "a miss is ACHIEVABLE when the net's fastest measured implementation fits its window; otherwise no schedule can meet that deadline and the miss is a compiler gap, not a scheduling one",
+ "cpsat_time_limit_s": 150.0,
+ "repeats_policy": "repeat only a CP-SAT solve that did not prove optimality; greedy is deterministic",
+ "solve_env": {
+  "XPURT_NO_COMPACT": "1",
+  "XPURT_CPSAT_WORKERS": "4"
+ },
+ "cpsat_workers": {
+  "cells": "4",
+  "inner_search": "4",
+  "why_recorded": "these were once different -- 1 for the inner search under --replay, 4 for the cells -- which made cell B and cells C/D two different CP-SAT configurations inside one row"
+ },
+ "codegen_contract": "cpsat shard solves add XPURT_UNIFORM_PACKED_WIDTH=1 so a packed-weight dispatch takes one width across its instances; greedy cannot be constrained that way and its unbuildable candidates are rejected by the inner search instead",
+ "inner_means": "AOT co-design with ModelBlaster: graph rewrites and the per-dispatch implementation choice, decided offline against isolated per-dispatch profiles",
+ "outer_means": "HIL: measured multipliers from real-time runs of the whole schedule, returned and re-solved against",
+ "cells": {
+  "A": "neither",
+  "B": "inner only (levers, deployed blind)",
+  "C": "outer only (measured re-solve, no levers)",
+  "D": "both"
+ },
+ "scoring": "instance-level misses on BOARD costs for every cell; A/B are solved on predicted costs then re-cost with the assignment fixed, C/D are solved with --board-calibration",
+ "solvers": [
+  "greedy"
+ ],
+ "rewrite_arm": false,
+ "calibration": "results/codesign_feedback/k1_cal_s5_measured.json",
+ "n_workloads": 1,
+ "aggregate": {
+  "greedy": {
+   "A": {
+    "label": "neither",
+    "n": 1,
+    "workloads_with_zero_misses": 0,
+    "total_instance_misses": 4,
+    "median_instance_misses": 4,
+    "median_worst_lateness_ms": 16.78306969920002,
+    "median_makespan_ms": 60.256498255800025
+   },
+   "B": {
+    "label": "inner only (levers, deployed blind)",
+    "n": 1,
+    "workloads_with_zero_misses": 0,
+    "total_instance_misses": 5,
+    "median_instance_misses": 5,
+    "median_worst_lateness_ms": 6.861542874899996,
+    "median_makespan_ms": 45.564234363100006
+   },
+   "C": {
+    "label": "outer only (measured re-solve, no levers)",
+    "n": 1,
+    "workloads_with_zero_misses": 0,
+    "total_instance_misses": 1,
+    "median_instance_misses": 1,
+    "median_worst_lateness_ms": 30.607252761200016,
+    "median_makespan_ms": 60.607252761200016
+   },
+   "D": {
+    "label": "both",
+    "n": 1,
+    "workloads_with_zero_misses": 0,
+    "total_instance_misses": 2,
+    "median_instance_misses": 2,
+    "median_worst_lateness_ms": 9.112160569500013,
+    "median_makespan_ms": 50.575600858000016
+   }
+  }
+ },
+ "workloads_only_both_clears": {
+  "greedy": []
+ },
+ "exact_vs_greedy_per_cell": {},
+ "runs": [
+  {
+   "workload": "data/toplevel/scaling/s5_solvable_reveal.json",
+   "family": "unclassified",
+   "feasibility": {
+    "mlp_control": {
+     "window_ms": 5.0,
+     "best_ms": 0.083,
+     "best_cores": 1,
+     "singleton_ms": 0.083,
+     "verdict": "achievable",
+     "needs_ratio": 0.017
+    },
+    "fused_full": {
+     "window_ms": 13.0,
+     "best_ms": 3.622,
+     "best_cores": 1,
+     "singleton_ms": 3.622,
+     "verdict": "achievable",
+     "needs_ratio": 0.279
+    },
+    "ffn_block": {
+     "window_ms": 34.0,
+     "best_ms": 7.715,
+     "best_cores": 8,
+     "singleton_ms": 14.601,
+     "verdict": "achievable",
+     "needs_ratio": 0.227
+    },
+    "dronet": {
+     "window_ms": 14.0,
+     "best_ms": 5.247,
+     "best_cores": 4,
+     "singleton_ms": 8.325,
+     "verdict": "achievable",
+     "needs_ratio": 0.375
+    },
+    "yolov8_nano_64x96": {
+     "window_ms": 30.0,
+     "best_ms": 23.948,
+     "best_cores": 8,
+     "singleton_ms": 47.729,
+     "verdict": "achievable",
+     "needs_ratio": 0.798
+    }
+   },
+   "solvers": {
+    "greedy": {
+     "status": "ok",
+     "levers": [
+      "shard"
+     ],
+     "cells": {
+      "A": {
+       "label": "neither",
+       "inner": false,
+       "outer": false,
+       "spec": "data/toplevel/scaling/s5_solvable_reveal.json",
+       "solver_status": "feasible",
+       "solve_wall_s": 0.041960267000831664,
+       "repeated": false,
+       "scored_how": "solved on predicted costs, then re-cost on measured with the assignment fixed",
+       "schedule": "results/loop_ablation_owncal/s5/s5_solvable_reveal__greedy_A_recost.json",
+       "instance_misses": 4,
+       "misses_by_network": {
+        "mlp_control": 1,
+        "ffn_block": 1,
+        "dronet": 1,
+        "yolov8_nano_64x96": 1
+       },
+       "total_lateness_ms": 18.941226209900044,
+       "worst_lateness_ms": 16.78306969920002,
+       "makespan_ms": 60.256498255800025,
+       "instances": {
+        "dronet": 2,
+        "ffn_block": 2,
+        "fused_full": 2,
+        "mlp_control": 5,
+        "yolov8_nano_64x96": 1
+       },
+       "achievable_misses": 4,
+       "infeasible_misses": 0,
+       "unknown_misses": 0
+      },
+      "B": {
+       "label": "inner only (levers, deployed blind)",
+       "inner": true,
+       "outer": false,
+       "spec": "results/loop_ablation_owncal/s5/inner/s5_solvable_reveal__greedy/s5_solvable_reveal/specs/s5_solvable_reveal_r1_shard.json",
+       "solver_status": "feasible",
+       "solve_wall_s": 0.06347071498748846,
+       "repeated": false,
+       "scored_how": "solved on predicted costs, then re-cost on measured with the assignment fixed",
+       "schedule": "results/loop_ablation_owncal/s5/s5_solvable_reveal__greedy_B_recost.json",
+       "instance_misses": 5,
+       "misses_by_network": {
+        "mlp_control": 2,
+        "fused_full": 1,
+        "dronet": 1,
+        "yolov8_nano_64x96": 1
+       },
+       "total_lateness_ms": 23.27390392300001,
+       "worst_lateness_ms": 6.861542874899996,
+       "makespan_ms": 45.564234363100006,
+       "instances": {
+        "dronet": 2,
+        "ffn_block": 2,
+        "fused_full": 2,
+        "mlp_control": 5,
+        "yolov8_nano_64x96": 1
+       },
+       "achievable_misses": 5,
+       "infeasible_misses": 0,
+       "unknown_misses": 0
+      },
+      "C": {
+       "label": "outer only (measured re-solve, no levers)",
+       "inner": false,
+       "outer": true,
+       "spec": "data/toplevel/scaling/s5_solvable_reveal.json",
+       "solver_status": "feasible",
+       "solve_wall_s": 0.03966227101045661,
+       "repeated": false,
+       "scored_how": "solved on measured costs",
+       "schedule": "schedules/scheduled_s5_solvable_reveal_greedy_profiled.json",
+       "instance_misses": 1,
+       "misses_by_network": {
+        "yolov8_nano_64x96": 1
+       },
+       "total_lateness_ms": 30.607252761200016,
+       "worst_lateness_ms": 30.607252761200016,
+       "makespan_ms": 60.607252761200016,
+       "instances": {
+        "dronet": 2,
+        "ffn_block": 2,
+        "fused_full": 2,
+        "mlp_control": 5,
+        "yolov8_nano_64x96": 1
+       },
+       "achievable_misses": 1,
+       "infeasible_misses": 0,
+       "unknown_misses": 0
+      },
+      "D": {
+       "label": "both",
+       "inner": true,
+       "outer": true,
+       "spec": "results/loop_ablation_owncal/s5/inner/s5_solvable_reveal__greedy/s5_solvable_reveal/specs/s5_solvable_reveal_r1_shard.json",
+       "solver_status": "feasible",
+       "solve_wall_s": 0.04288203301257454,
+       "repeated": false,
+       "scored_how": "solved on measured costs",
+       "schedule": "schedules/scheduled_s5_solvable_reveal_r1_shard_greedy_profiled.json",
+       "instance_misses": 2,
+       "misses_by_network": {
+        "ffn_block": 1,
+        "yolov8_nano_64x96": 1
+       },
+       "total_lateness_ms": 17.438917027500025,
+       "worst_lateness_ms": 9.112160569500013,
+       "makespan_ms": 50.575600858000016,
+       "instances": {
+        "dronet": 2,
+        "ffn_block": 2,
+        "fused_full": 2,
+        "mlp_control": 5,
+        "yolov8_nano_64x96": 1
+       },
+       "achievable_misses": 2,
+       "infeasible_misses": 0,
+       "unknown_misses": 0
+      }
+     },
+     "seconds": 108.5,
+     "comparability": {
+      "status": "ok",
+      "per_cell": {
+       "A": {
+        "dronet": 2,
+        "ffn_block": 2,
+        "fused_full": 2,
+        "mlp_control": 5,
+        "yolov8_nano_64x96": 1
+       },
+       "B": {
+        "dronet": 2,
+        "ffn_block": 2,
+        "fused_full": 2,
+        "mlp_control": 5,
+        "yolov8_nano_64x96": 1
+       },
+       "C": {
+        "dronet": 2,
+        "ffn_block": 2,
+        "fused_full": 2,
+        "mlp_control": 5,
+        "yolov8_nano_64x96": 1
+       },
+       "D": {
+        "dronet": 2,
+        "ffn_block": 2,
+        "fused_full": 2,
+        "mlp_control": 5,
+        "yolov8_nano_64x96": 1
+       }
+      }
+     }
+    }
+   }
+  }
+ ]
+}

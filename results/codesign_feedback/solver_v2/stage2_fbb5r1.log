@@ -1,0 +1,7 @@
+=== 12:36:13 wh_chain90_rich_solve_500 greedy
+    greedy_periodic: makespan=607.47 ms (all ops 607.47 ms), periodic window misses=1232, converged
+=== 12:36:37 wh_chain90_rich_solve_500 cpsat hard (limit 9000 s)
+  hard rc=0 cpsat status=FEASIBLE wall=9003.5s
+  table cpsat_hard: schedules/fig_fbb5r1_cpsat_hard.json
+  table cpsat_soft: none
+=== 15:07:04 STAGE2_DONE wh_chain90_rich_solve_500

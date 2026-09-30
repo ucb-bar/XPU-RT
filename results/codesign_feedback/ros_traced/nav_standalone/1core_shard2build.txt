@@ -1,0 +1,717 @@
+modelblaster harness: pinned to cpu 0 (1 core(s), running on 0)
+modelblaster harness: model=fused_full in=5698 out=2
+modelblaster harness: no pool (1 core)
+=== MODELBLASTER_ITER_BEGIN [0] ===
+0.166381836
+1.02441406
+=== MODELBLASTER_ITER_END [0] ===
+=== MODELBLASTER_ITER_PROFILE_BEGIN [0] ===
+dispatch_id,name,op,shape,cycles
+0,vision_cnn.0,conv2d_s8,N=1;IC=1;IH=60;IW=90;OC=16;OH=30;OW=45;KH=5;KW=5;SH=2;SW=2;PH=2;PW=2,185882
+1,vision_cnn.2,conv2d_s8,N=1;IC=16;IH=30;IW=45;OC=32;OH=15;OW=23;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,515921
+2,vision_cnn.4,conv2d_s8,N=1;IC=32;IH=15;IW=23;OC=64;OH=8;OW=12;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,551651
+3,vision_cnn.6,conv2d_s8,N=1;IC=64;IH=8;IW=12;OC=64;OH=4;OW=6;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,278446
+4,flatten__cast_f16,cast_i8_to_f16,n=1536,749
+5,vision_fc,linear_f16,M=1;K=1536;N=512,138796
+6,depth_conv.0,conv2d_s8,N=1;IC=4;IH=8;IW=8;OC=16;OH=8;OW=8;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,13062
+7,depth_conv.2,conv2d_s8,N=1;IC=16;IH=8;IW=8;OC=16;OH=8;OW=8;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,46023
+8,flatten_1__cast_f16,cast_i8_to_f16,n=1024,190
+9,depth_fc,linear_f16,M=1;K=1024;N=64,11499
+10,cat,cat3_c1_f16,N=1;H=1;W=1;C_inputs=512|64|21;C_total=597,38
+11,lstm.l0,lstm_f16,input_size=597;hidden_size=128,65962
+12,lstm.l1,lstm_f16,input_size=128;hidden_size=128,25011
+13,lstm.l2,lstm_f16,input_size=128;hidden_size=128,22149
+14,head,linear_f16,M=1;K=128;N=2,51
+=== MODELBLASTER_ITER_PROFILE_END [0] ===
+=== MODELBLASTER_ITER_WALL [0] === 1855678
+=== MODELBLASTER_ITER_BEGIN [1] ===
+0.100402832
+1.36914062
+=== MODELBLASTER_ITER_END [1] ===
+=== MODELBLASTER_ITER_PROFILE_BEGIN [1] ===
+dispatch_id,name,op,shape,cycles
+0,vision_cnn.0,conv2d_s8,N=1;IC=1;IH=60;IW=90;OC=16;OH=30;OW=45;KH=5;KW=5;SH=2;SW=2;PH=2;PW=2,177313
+1,vision_cnn.2,conv2d_s8,N=1;IC=16;IH=30;IW=45;OC=32;OH=15;OW=23;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,518090
+2,vision_cnn.4,conv2d_s8,N=1;IC=32;IH=15;IW=23;OC=64;OH=8;OW=12;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,551188
+3,vision_cnn.6,conv2d_s8,N=1;IC=64;IH=8;IW=12;OC=64;OH=4;OW=6;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,272988
+4,flatten__cast_f16,cast_i8_to_f16,n=1536,288
+5,vision_fc,linear_f16,M=1;K=1536;N=512,50071
+6,depth_conv.0,conv2d_s8,N=1;IC=4;IH=8;IW=8;OC=16;OH=8;OW=8;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,12263
+7,depth_conv.2,conv2d_s8,N=1;IC=16;IH=8;IW=8;OC=16;OH=8;OW=8;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,45923
+8,flatten_1__cast_f16,cast_i8_to_f16,n=1024,190
+9,depth_fc,linear_f16,M=1;K=1024;N=64,4117
+10,cat,cat3_c1_f16,N=1;H=1;W=1;C_inputs=512|64|21;C_total=597,25
+11,lstm.l0,lstm_f16,input_size=597;hidden_size=128,25418
+12,lstm.l1,lstm_f16,input_size=128;hidden_size=128,10211
+13,lstm.l2,lstm_f16,input_size=128;hidden_size=128,10256
+14,head,linear_f16,M=1;K=128;N=2,43
+=== MODELBLASTER_ITER_PROFILE_END [1] ===
+=== MODELBLASTER_ITER_WALL [1] === 1678544
+=== MODELBLASTER_ITER_BEGIN [2] ===
+0.0491027832
+1.41699219
+=== MODELBLASTER_ITER_END [2] ===
+=== MODELBLASTER_ITER_PROFILE_BEGIN [2] ===
+dispatch_id,name,op,shape,cycles
+0,vision_cnn.0,conv2d_s8,N=1;IC=1;IH=60;IW=90;OC=16;OH=30;OW=45;KH=5;KW=5;SH=2;SW=2;PH=2;PW=2,176730
+1,vision_cnn.2,conv2d_s8,N=1;IC=16;IH=30;IW=45;OC=32;OH=15;OW=23;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,516030
+2,vision_cnn.4,conv2d_s8,N=1;IC=32;IH=15;IW=23;OC=64;OH=8;OW=12;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,552814
+3,vision_cnn.6,conv2d_s8,N=1;IC=64;IH=8;IW=12;OC=64;OH=4;OW=6;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,274562
+4,flatten__cast_f16,cast_i8_to_f16,n=1536,284
+5,vision_fc,linear_f16,M=1;K=1536;N=512,49302
+6,depth_conv.0,conv2d_s8,N=1;IC=4;IH=8;IW=8;OC=16;OH=8;OW=8;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,12219
+7,depth_conv.2,conv2d_s8,N=1;IC=16;IH=8;IW=8;OC=16;OH=8;OW=8;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,46902
+8,flatten_1__cast_f16,cast_i8_to_f16,n=1024,190
+9,depth_fc,linear_f16,M=1;K=1024;N=64,4112
+10,cat,cat3_c1_f16,N=1;H=1;W=1;C_inputs=512|64|21;C_total=597,28
+11,lstm.l0,lstm_f16,input_size=597;hidden_size=128,23006
+12,lstm.l1,lstm_f16,input_size=128;hidden_size=128,10230
+13,lstm.l2,lstm_f16,input_size=128;hidden_size=128,10230
+14,head,linear_f16,M=1;K=128;N=2,43
+=== MODELBLASTER_ITER_PROFILE_END [2] ===
+=== MODELBLASTER_ITER_WALL [2] === 1676839
+=== MODELBLASTER_ITER_BEGIN [3] ===
+0.0228118896
+1.41894531
+=== MODELBLASTER_ITER_END [3] ===
+=== MODELBLASTER_ITER_PROFILE_BEGIN [3] ===
+dispatch_id,name,op,shape,cycles
+0,vision_cnn.0,conv2d_s8,N=1;IC=1;IH=60;IW=90;OC=16;OH=30;OW=45;KH=5;KW=5;SH=2;SW=2;PH=2;PW=2,244541
+1,vision_cnn.2,conv2d_s8,N=1;IC=16;IH=30;IW=45;OC=32;OH=15;OW=23;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,529395
+2,vision_cnn.4,conv2d_s8,N=1;IC=32;IH=15;IW=23;OC=64;OH=8;OW=12;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,551124
+3,vision_cnn.6,conv2d_s8,N=1;IC=64;IH=8;IW=12;OC=64;OH=4;OW=6;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,274881
+4,flatten__cast_f16,cast_i8_to_f16,n=1536,292
+5,vision_fc,linear_f16,M=1;K=1536;N=512,50416
+6,depth_conv.0,conv2d_s8,N=1;IC=4;IH=8;IW=8;OC=16;OH=8;OW=8;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,12290
+7,depth_conv.2,conv2d_s8,N=1;IC=16;IH=8;IW=8;OC=16;OH=8;OW=8;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,46082
+8,flatten_1__cast_f16,cast_i8_to_f16,n=1024,192
+9,depth_fc,linear_f16,M=1;K=1024;N=64,4115
+10,cat,cat3_c1_f16,N=1;H=1;W=1;C_inputs=512|64|21;C_total=597,13
+11,lstm.l0,lstm_f16,input_size=597;hidden_size=128,24311
+12,lstm.l1,lstm_f16,input_size=128;hidden_size=128,10189
+13,lstm.l2,lstm_f16,input_size=128;hidden_size=128,10268
+14,head,linear_f16,M=1;K=128;N=2,51
+=== MODELBLASTER_ITER_PROFILE_END [3] ===
+=== MODELBLASTER_ITER_WALL [3] === 1758326
+=== MODELBLASTER_ITER_BEGIN [4] ===
+0.0050201416
+1.41308594
+=== MODELBLASTER_ITER_END [4] ===
+=== MODELBLASTER_ITER_PROFILE_BEGIN [4] ===
+dispatch_id,name,op,shape,cycles
+0,vision_cnn.0,conv2d_s8,N=1;IC=1;IH=60;IW=90;OC=16;OH=30;OW=45;KH=5;KW=5;SH=2;SW=2;PH=2;PW=2,179682
+1,vision_cnn.2,conv2d_s8,N=1;IC=16;IH=30;IW=45;OC=32;OH=15;OW=23;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,520011
+2,vision_cnn.4,conv2d_s8,N=1;IC=32;IH=15;IW=23;OC=64;OH=8;OW=12;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,551747
+3,vision_cnn.6,conv2d_s8,N=1;IC=64;IH=8;IW=12;OC=64;OH=4;OW=6;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,277630
+4,flatten__cast_f16,cast_i8_to_f16,n=1536,288
+5,vision_fc,linear_f16,M=1;K=1536;N=512,49315
+6,depth_conv.0,conv2d_s8,N=1;IC=4;IH=8;IW=8;OC=16;OH=8;OW=8;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,12232
+7,depth_conv.2,conv2d_s8,N=1;IC=16;IH=8;IW=8;OC=16;OH=8;OW=8;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,47012
+8,flatten_1__cast_f16,cast_i8_to_f16,n=1024,191
+9,depth_fc,linear_f16,M=1;K=1024;N=64,4121
+10,cat,cat3_c1_f16,N=1;H=1;W=1;C_inputs=512|64|21;C_total=597,30
+11,lstm.l0,lstm_f16,input_size=597;hidden_size=128,23060
+12,lstm.l1,lstm_f16,input_size=128;hidden_size=128,10218
+13,lstm.l2,lstm_f16,input_size=128;hidden_size=128,10220
+14,head,linear_f16,M=1;K=128;N=2,42
+=== MODELBLASTER_ITER_PROFILE_END [4] ===
+=== MODELBLASTER_ITER_WALL [4] === 1686019
+=== MODELBLASTER_ITER_BEGIN [5] ===
+-0.00798034668
+1.40820312
+=== MODELBLASTER_ITER_END [5] ===
+=== MODELBLASTER_ITER_PROFILE_BEGIN [5] ===
+dispatch_id,name,op,shape,cycles
+0,vision_cnn.0,conv2d_s8,N=1;IC=1;IH=60;IW=90;OC=16;OH=30;OW=45;KH=5;KW=5;SH=2;SW=2;PH=2;PW=2,178232
+1,vision_cnn.2,conv2d_s8,N=1;IC=16;IH=30;IW=45;OC=32;OH=15;OW=23;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,517429
+2,vision_cnn.4,conv2d_s8,N=1;IC=32;IH=15;IW=23;OC=64;OH=8;OW=12;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,554304
+3,vision_cnn.6,conv2d_s8,N=1;IC=64;IH=8;IW=12;OC=64;OH=4;OW=6;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,273112
+4,flatten__cast_f16,cast_i8_to_f16,n=1536,286
+5,vision_fc,linear_f16,M=1;K=1536;N=512,50191
+6,depth_conv.0,conv2d_s8,N=1;IC=4;IH=8;IW=8;OC=16;OH=8;OW=8;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,12217
+7,depth_conv.2,conv2d_s8,N=1;IC=16;IH=8;IW=8;OC=16;OH=8;OW=8;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,45876
+8,flatten_1__cast_f16,cast_i8_to_f16,n=1024,195
+9,depth_fc,linear_f16,M=1;K=1024;N=64,4123
+10,cat,cat3_c1_f16,N=1;H=1;W=1;C_inputs=512|64|21;C_total=597,34
+11,lstm.l0,lstm_f16,input_size=597;hidden_size=128,24070
+12,lstm.l1,lstm_f16,input_size=128;hidden_size=128,10161
+13,lstm.l2,lstm_f16,input_size=128;hidden_size=128,10222
+14,head,linear_f16,M=1;K=128;N=2,43
+=== MODELBLASTER_ITER_PROFILE_END [5] ===
+=== MODELBLASTER_ITER_WALL [5] === 1680658
+=== MODELBLASTER_ITER_BEGIN [6] ===
+-0.0172424316
+1.40429688
+=== MODELBLASTER_ITER_END [6] ===
+=== MODELBLASTER_ITER_PROFILE_BEGIN [6] ===
+dispatch_id,name,op,shape,cycles
+0,vision_cnn.0,conv2d_s8,N=1;IC=1;IH=60;IW=90;OC=16;OH=30;OW=45;KH=5;KW=5;SH=2;SW=2;PH=2;PW=2,177385
+1,vision_cnn.2,conv2d_s8,N=1;IC=16;IH=30;IW=45;OC=32;OH=15;OW=23;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,515142
+2,vision_cnn.4,conv2d_s8,N=1;IC=32;IH=15;IW=23;OC=64;OH=8;OW=12;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,551956
+3,vision_cnn.6,conv2d_s8,N=1;IC=64;IH=8;IW=12;OC=64;OH=4;OW=6;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,274346
+4,flatten__cast_f16,cast_i8_to_f16,n=1536,285
+5,vision_fc,linear_f16,M=1;K=1536;N=512,49249
+6,depth_conv.0,conv2d_s8,N=1;IC=4;IH=8;IW=8;OC=16;OH=8;OW=8;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,12224
+7,depth_conv.2,conv2d_s8,N=1;IC=16;IH=8;IW=8;OC=16;OH=8;OW=8;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,48975
+8,flatten_1__cast_f16,cast_i8_to_f16,n=1024,195
+9,depth_fc,linear_f16,M=1;K=1024;N=64,4122
+10,cat,cat3_c1_f16,N=1;H=1;W=1;C_inputs=512|64|21;C_total=597,37
+11,lstm.l0,lstm_f16,input_size=597;hidden_size=128,23016
+12,lstm.l1,lstm_f16,input_size=128;hidden_size=128,10188
+13,lstm.l2,lstm_f16,input_size=128;hidden_size=128,10244
+14,head,linear_f16,M=1;K=128;N=2,46
+=== MODELBLASTER_ITER_PROFILE_END [6] ===
+=== MODELBLASTER_ITER_WALL [6] === 1677580
+=== MODELBLASTER_ITER_BEGIN [7] ===
+-0.0242462158
+1.40136719
+=== MODELBLASTER_ITER_END [7] ===
+=== MODELBLASTER_ITER_PROFILE_BEGIN [7] ===
+dispatch_id,name,op,shape,cycles
+0,vision_cnn.0,conv2d_s8,N=1;IC=1;IH=60;IW=90;OC=16;OH=30;OW=45;KH=5;KW=5;SH=2;SW=2;PH=2;PW=2,182627
+1,vision_cnn.2,conv2d_s8,N=1;IC=16;IH=30;IW=45;OC=32;OH=15;OW=23;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,516918
+2,vision_cnn.4,conv2d_s8,N=1;IC=32;IH=15;IW=23;OC=64;OH=8;OW=12;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,552602
+3,vision_cnn.6,conv2d_s8,N=1;IC=64;IH=8;IW=12;OC=64;OH=4;OW=6;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,273002
+4,flatten__cast_f16,cast_i8_to_f16,n=1536,285
+5,vision_fc,linear_f16,M=1;K=1536;N=512,50197
+6,depth_conv.0,conv2d_s8,N=1;IC=4;IH=8;IW=8;OC=16;OH=8;OW=8;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,12209
+7,depth_conv.2,conv2d_s8,N=1;IC=16;IH=8;IW=8;OC=16;OH=8;OW=8;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,45875
+8,flatten_1__cast_f16,cast_i8_to_f16,n=1024,190
+9,depth_fc,linear_f16,M=1;K=1024;N=64,4118
+10,cat,cat3_c1_f16,N=1;H=1;W=1;C_inputs=512|64|21;C_total=597,33
+11,lstm.l0,lstm_f16,input_size=597;hidden_size=128,23904
+12,lstm.l1,lstm_f16,input_size=128;hidden_size=128,10139
+13,lstm.l2,lstm_f16,input_size=128;hidden_size=128,10232
+14,head,linear_f16,M=1;K=128;N=2,43
+=== MODELBLASTER_ITER_PROFILE_END [7] ===
+=== MODELBLASTER_ITER_WALL [7] === 1682542
+=== MODELBLASTER_ITER_BEGIN [8] ===
+-0.0289611816
+1.39941406
+=== MODELBLASTER_ITER_END [8] ===
+=== MODELBLASTER_ITER_PROFILE_BEGIN [8] ===
+dispatch_id,name,op,shape,cycles
+0,vision_cnn.0,conv2d_s8,N=1;IC=1;IH=60;IW=90;OC=16;OH=30;OW=45;KH=5;KW=5;SH=2;SW=2;PH=2;PW=2,178474
+1,vision_cnn.2,conv2d_s8,N=1;IC=16;IH=30;IW=45;OC=32;OH=15;OW=23;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,517886
+2,vision_cnn.4,conv2d_s8,N=1;IC=32;IH=15;IW=23;OC=64;OH=8;OW=12;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,550640
+3,vision_cnn.6,conv2d_s8,N=1;IC=64;IH=8;IW=12;OC=64;OH=4;OW=6;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,273591
+4,flatten__cast_f16,cast_i8_to_f16,n=1536,285
+5,vision_fc,linear_f16,M=1;K=1536;N=512,49282
+6,depth_conv.0,conv2d_s8,N=1;IC=4;IH=8;IW=8;OC=16;OH=8;OW=8;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,12227
+7,depth_conv.2,conv2d_s8,N=1;IC=16;IH=8;IW=8;OC=16;OH=8;OW=8;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,47012
+8,flatten_1__cast_f16,cast_i8_to_f16,n=1024,192
+9,depth_fc,linear_f16,M=1;K=1024;N=64,4137
+10,cat,cat3_c1_f16,N=1;H=1;W=1;C_inputs=512|64|21;C_total=597,32
+11,lstm.l0,lstm_f16,input_size=597;hidden_size=128,23025
+12,lstm.l1,lstm_f16,input_size=128;hidden_size=128,10179
+13,lstm.l2,lstm_f16,input_size=128;hidden_size=128,10206
+14,head,linear_f16,M=1;K=128;N=2,51
+=== MODELBLASTER_ITER_PROFILE_END [8] ===
+=== MODELBLASTER_ITER_WALL [8] === 1677388
+=== MODELBLASTER_ITER_BEGIN [9] ===
+-0.032623291
+1.3984375
+=== MODELBLASTER_ITER_END [9] ===
+=== MODELBLASTER_ITER_PROFILE_BEGIN [9] ===
+dispatch_id,name,op,shape,cycles
+0,vision_cnn.0,conv2d_s8,N=1;IC=1;IH=60;IW=90;OC=16;OH=30;OW=45;KH=5;KW=5;SH=2;SW=2;PH=2;PW=2,176571
+1,vision_cnn.2,conv2d_s8,N=1;IC=16;IH=30;IW=45;OC=32;OH=15;OW=23;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,514258
+2,vision_cnn.4,conv2d_s8,N=1;IC=32;IH=15;IW=23;OC=64;OH=8;OW=12;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,554111
+3,vision_cnn.6,conv2d_s8,N=1;IC=64;IH=8;IW=12;OC=64;OH=4;OW=6;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,273391
+4,flatten__cast_f16,cast_i8_to_f16,n=1536,285
+5,vision_fc,linear_f16,M=1;K=1536;N=512,52466
+6,depth_conv.0,conv2d_s8,N=1;IC=4;IH=8;IW=8;OC=16;OH=8;OW=8;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,12219
+7,depth_conv.2,conv2d_s8,N=1;IC=16;IH=8;IW=8;OC=16;OH=8;OW=8;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,45878
+8,flatten_1__cast_f16,cast_i8_to_f16,n=1024,190
+9,depth_fc,linear_f16,M=1;K=1024;N=64,4112
+10,cat,cat3_c1_f16,N=1;H=1;W=1;C_inputs=512|64|21;C_total=597,15
+11,lstm.l0,lstm_f16,input_size=597;hidden_size=128,24161
+12,lstm.l1,lstm_f16,input_size=128;hidden_size=128,10159
+13,lstm.l2,lstm_f16,input_size=128;hidden_size=128,10259
+14,head,linear_f16,M=1;K=128;N=2,45
+=== MODELBLASTER_ITER_PROFILE_END [9] ===
+=== MODELBLASTER_ITER_WALL [9] === 1678291
+=== MODELBLASTER_ITER_BEGIN [10] ===
+-0.034942627
+1.39746094
+=== MODELBLASTER_ITER_END [10] ===
+=== MODELBLASTER_ITER_PROFILE_BEGIN [10] ===
+dispatch_id,name,op,shape,cycles
+0,vision_cnn.0,conv2d_s8,N=1;IC=1;IH=60;IW=90;OC=16;OH=30;OW=45;KH=5;KW=5;SH=2;SW=2;PH=2;PW=2,180571
+1,vision_cnn.2,conv2d_s8,N=1;IC=16;IH=30;IW=45;OC=32;OH=15;OW=23;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,516811
+2,vision_cnn.4,conv2d_s8,N=1;IC=32;IH=15;IW=23;OC=64;OH=8;OW=12;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,550846
+3,vision_cnn.6,conv2d_s8,N=1;IC=64;IH=8;IW=12;OC=64;OH=4;OW=6;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,274158
+4,flatten__cast_f16,cast_i8_to_f16,n=1536,286
+5,vision_fc,linear_f16,M=1;K=1536;N=512,49290
+6,depth_conv.0,conv2d_s8,N=1;IC=4;IH=8;IW=8;OC=16;OH=8;OW=8;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,12217
+7,depth_conv.2,conv2d_s8,N=1;IC=16;IH=8;IW=8;OC=16;OH=8;OW=8;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,47011
+8,flatten_1__cast_f16,cast_i8_to_f16,n=1024,194
+9,depth_fc,linear_f16,M=1;K=1024;N=64,4133
+10,cat,cat3_c1_f16,N=1;H=1;W=1;C_inputs=512|64|21;C_total=597,29
+11,lstm.l0,lstm_f16,input_size=597;hidden_size=128,23073
+12,lstm.l1,lstm_f16,input_size=128;hidden_size=128,10223
+13,lstm.l2,lstm_f16,input_size=128;hidden_size=128,10208
+14,head,linear_f16,M=1;K=128;N=2,45
+=== MODELBLASTER_ITER_PROFILE_END [10] ===
+=== MODELBLASTER_ITER_WALL [10] === 1679280
+=== MODELBLASTER_ITER_BEGIN [11] ===
+-0.0362548828
+1.39746094
+=== MODELBLASTER_ITER_END [11] ===
+=== MODELBLASTER_ITER_PROFILE_BEGIN [11] ===
+dispatch_id,name,op,shape,cycles
+0,vision_cnn.0,conv2d_s8,N=1;IC=1;IH=60;IW=90;OC=16;OH=30;OW=45;KH=5;KW=5;SH=2;SW=2;PH=2;PW=2,177398
+1,vision_cnn.2,conv2d_s8,N=1;IC=16;IH=30;IW=45;OC=32;OH=15;OW=23;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,517420
+2,vision_cnn.4,conv2d_s8,N=1;IC=32;IH=15;IW=23;OC=64;OH=8;OW=12;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,549915
+3,vision_cnn.6,conv2d_s8,N=1;IC=64;IH=8;IW=12;OC=64;OH=4;OW=6;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,274145
+4,flatten__cast_f16,cast_i8_to_f16,n=1536,287
+5,vision_fc,linear_f16,M=1;K=1536;N=512,51585
+6,depth_conv.0,conv2d_s8,N=1;IC=4;IH=8;IW=8;OC=16;OH=8;OW=8;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,12261
+7,depth_conv.2,conv2d_s8,N=1;IC=16;IH=8;IW=8;OC=16;OH=8;OW=8;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,45908
+8,flatten_1__cast_f16,cast_i8_to_f16,n=1024,191
+9,depth_fc,linear_f16,M=1;K=1024;N=64,4116
+10,cat,cat3_c1_f16,N=1;H=1;W=1;C_inputs=512|64|21;C_total=597,16
+11,lstm.l0,lstm_f16,input_size=597;hidden_size=128,25549
+12,lstm.l1,lstm_f16,input_size=128;hidden_size=128,10199
+13,lstm.l2,lstm_f16,input_size=128;hidden_size=128,10260
+14,head,linear_f16,M=1;K=128;N=2,46
+=== MODELBLASTER_ITER_PROFILE_END [11] ===
+=== MODELBLASTER_ITER_WALL [11] === 1679451
+=== MODELBLASTER_ITER_BEGIN [12] ===
+-0.0373535156
+1.39746094
+=== MODELBLASTER_ITER_END [12] ===
+=== MODELBLASTER_ITER_PROFILE_BEGIN [12] ===
+dispatch_id,name,op,shape,cycles
+0,vision_cnn.0,conv2d_s8,N=1;IC=1;IH=60;IW=90;OC=16;OH=30;OW=45;KH=5;KW=5;SH=2;SW=2;PH=2;PW=2,176894
+1,vision_cnn.2,conv2d_s8,N=1;IC=16;IH=30;IW=45;OC=32;OH=15;OW=23;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,515480
+2,vision_cnn.4,conv2d_s8,N=1;IC=32;IH=15;IW=23;OC=64;OH=8;OW=12;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,553502
+3,vision_cnn.6,conv2d_s8,N=1;IC=64;IH=8;IW=12;OC=64;OH=4;OW=6;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,273030
+4,flatten__cast_f16,cast_i8_to_f16,n=1536,284
+5,vision_fc,linear_f16,M=1;K=1536;N=512,49288
+6,depth_conv.0,conv2d_s8,N=1;IC=4;IH=8;IW=8;OC=16;OH=8;OW=8;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,12214
+7,depth_conv.2,conv2d_s8,N=1;IC=16;IH=8;IW=8;OC=16;OH=8;OW=8;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,47031
+8,flatten_1__cast_f16,cast_i8_to_f16,n=1024,191
+9,depth_fc,linear_f16,M=1;K=1024;N=64,4121
+10,cat,cat3_c1_f16,N=1;H=1;W=1;C_inputs=512|64|21;C_total=597,31
+11,lstm.l0,lstm_f16,input_size=597;hidden_size=128,23017
+12,lstm.l1,lstm_f16,input_size=128;hidden_size=128,10198
+13,lstm.l2,lstm_f16,input_size=128;hidden_size=128,10213
+14,head,linear_f16,M=1;K=128;N=2,48
+=== MODELBLASTER_ITER_PROFILE_END [12] ===
+=== MODELBLASTER_ITER_WALL [12] === 1675692
+=== MODELBLASTER_ITER_BEGIN [13] ===
+-0.0377197266
+1.39746094
+=== MODELBLASTER_ITER_END [13] ===
+=== MODELBLASTER_ITER_PROFILE_BEGIN [13] ===
+dispatch_id,name,op,shape,cycles
+0,vision_cnn.0,conv2d_s8,N=1;IC=1;IH=60;IW=90;OC=16;OH=30;OW=45;KH=5;KW=5;SH=2;SW=2;PH=2;PW=2,185615
+1,vision_cnn.2,conv2d_s8,N=1;IC=16;IH=30;IW=45;OC=32;OH=15;OW=23;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,518439
+2,vision_cnn.4,conv2d_s8,N=1;IC=32;IH=15;IW=23;OC=64;OH=8;OW=12;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,552331
+3,vision_cnn.6,conv2d_s8,N=1;IC=64;IH=8;IW=12;OC=64;OH=4;OW=6;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,274399
+4,flatten__cast_f16,cast_i8_to_f16,n=1536,285
+5,vision_fc,linear_f16,M=1;K=1536;N=512,49969
+6,depth_conv.0,conv2d_s8,N=1;IC=4;IH=8;IW=8;OC=16;OH=8;OW=8;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,12239
+7,depth_conv.2,conv2d_s8,N=1;IC=16;IH=8;IW=8;OC=16;OH=8;OW=8;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,46858
+8,flatten_1__cast_f16,cast_i8_to_f16,n=1024,194
+9,depth_fc,linear_f16,M=1;K=1024;N=64,4130
+10,cat,cat3_c1_f16,N=1;H=1;W=1;C_inputs=512|64|21;C_total=597,37
+11,lstm.l0,lstm_f16,input_size=597;hidden_size=128,23012
+12,lstm.l1,lstm_f16,input_size=128;hidden_size=128,10193
+13,lstm.l2,lstm_f16,input_size=128;hidden_size=128,10227
+14,head,linear_f16,M=1;K=128;N=2,39
+=== MODELBLASTER_ITER_PROFILE_END [13] ===
+=== MODELBLASTER_ITER_WALL [13] === 1688138
+=== MODELBLASTER_ITER_BEGIN [14] ===
+-0.0381774902
+1.39746094
+=== MODELBLASTER_ITER_END [14] ===
+=== MODELBLASTER_ITER_PROFILE_BEGIN [14] ===
+dispatch_id,name,op,shape,cycles
+0,vision_cnn.0,conv2d_s8,N=1;IC=1;IH=60;IW=90;OC=16;OH=30;OW=45;KH=5;KW=5;SH=2;SW=2;PH=2;PW=2,179252
+1,vision_cnn.2,conv2d_s8,N=1;IC=16;IH=30;IW=45;OC=32;OH=15;OW=23;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,514372
+2,vision_cnn.4,conv2d_s8,N=1;IC=32;IH=15;IW=23;OC=64;OH=8;OW=12;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,556491
+3,vision_cnn.6,conv2d_s8,N=1;IC=64;IH=8;IW=12;OC=64;OH=4;OW=6;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,272922
+4,flatten__cast_f16,cast_i8_to_f16,n=1536,284
+5,vision_fc,linear_f16,M=1;K=1536;N=512,49264
+6,depth_conv.0,conv2d_s8,N=1;IC=4;IH=8;IW=8;OC=16;OH=8;OW=8;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,13278
+7,depth_conv.2,conv2d_s8,N=1;IC=16;IH=8;IW=8;OC=16;OH=8;OW=8;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,45899
+8,flatten_1__cast_f16,cast_i8_to_f16,n=1024,191
+9,depth_fc,linear_f16,M=1;K=1024;N=64,4140
+10,cat,cat3_c1_f16,N=1;H=1;W=1;C_inputs=512|64|21;C_total=597,38
+11,lstm.l0,lstm_f16,input_size=597;hidden_size=128,23030
+12,lstm.l1,lstm_f16,input_size=128;hidden_size=128,10184
+13,lstm.l2,lstm_f16,input_size=128;hidden_size=128,11718
+14,head,linear_f16,M=1;K=128;N=2,60
+=== MODELBLASTER_ITER_PROFILE_END [14] ===
+=== MODELBLASTER_ITER_WALL [14] === 1681295
+=== MODELBLASTER_ITER_BEGIN [15] ===
+-0.038269043
+1.39746094
+=== MODELBLASTER_ITER_END [15] ===
+=== MODELBLASTER_ITER_PROFILE_BEGIN [15] ===
+dispatch_id,name,op,shape,cycles
+0,vision_cnn.0,conv2d_s8,N=1;IC=1;IH=60;IW=90;OC=16;OH=30;OW=45;KH=5;KW=5;SH=2;SW=2;PH=2;PW=2,175789
+1,vision_cnn.2,conv2d_s8,N=1;IC=16;IH=30;IW=45;OC=32;OH=15;OW=23;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,517319
+2,vision_cnn.4,conv2d_s8,N=1;IC=32;IH=15;IW=23;OC=64;OH=8;OW=12;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,553555
+3,vision_cnn.6,conv2d_s8,N=1;IC=64;IH=8;IW=12;OC=64;OH=4;OW=6;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,272922
+4,flatten__cast_f16,cast_i8_to_f16,n=1536,294
+5,vision_fc,linear_f16,M=1;K=1536;N=512,49734
+6,depth_conv.0,conv2d_s8,N=1;IC=4;IH=8;IW=8;OC=16;OH=8;OW=8;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,12220
+7,depth_conv.2,conv2d_s8,N=1;IC=16;IH=8;IW=8;OC=16;OH=8;OW=8;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,46979
+8,flatten_1__cast_f16,cast_i8_to_f16,n=1024,191
+9,depth_fc,linear_f16,M=1;K=1024;N=64,4138
+10,cat,cat3_c1_f16,N=1;H=1;W=1;C_inputs=512|64|21;C_total=597,40
+11,lstm.l0,lstm_f16,input_size=597;hidden_size=128,23011
+12,lstm.l1,lstm_f16,input_size=128;hidden_size=128,10159
+13,lstm.l2,lstm_f16,input_size=128;hidden_size=128,10245
+14,head,linear_f16,M=1;K=128;N=2,42
+=== MODELBLASTER_ITER_PROFILE_END [15] ===
+=== MODELBLASTER_ITER_WALL [15] === 1676806
+=== MODELBLASTER_ITER_BEGIN [16] ===
+-0.0384216309
+1.39746094
+=== MODELBLASTER_ITER_END [16] ===
+=== MODELBLASTER_ITER_PROFILE_BEGIN [16] ===
+dispatch_id,name,op,shape,cycles
+0,vision_cnn.0,conv2d_s8,N=1;IC=1;IH=60;IW=90;OC=16;OH=30;OW=45;KH=5;KW=5;SH=2;SW=2;PH=2;PW=2,179820
+1,vision_cnn.2,conv2d_s8,N=1;IC=16;IH=30;IW=45;OC=32;OH=15;OW=23;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,514741
+2,vision_cnn.4,conv2d_s8,N=1;IC=32;IH=15;IW=23;OC=64;OH=8;OW=12;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,551462
+3,vision_cnn.6,conv2d_s8,N=1;IC=64;IH=8;IW=12;OC=64;OH=4;OW=6;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,272915
+4,flatten__cast_f16,cast_i8_to_f16,n=1536,286
+5,vision_fc,linear_f16,M=1;K=1536;N=512,49353
+6,depth_conv.0,conv2d_s8,N=1;IC=4;IH=8;IW=8;OC=16;OH=8;OW=8;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,13538
+7,depth_conv.2,conv2d_s8,N=1;IC=16;IH=8;IW=8;OC=16;OH=8;OW=8;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,45924
+8,flatten_1__cast_f16,cast_i8_to_f16,n=1024,190
+9,depth_fc,linear_f16,M=1;K=1024;N=64,4129
+10,cat,cat3_c1_f16,N=1;H=1;W=1;C_inputs=512|64|21;C_total=597,38
+11,lstm.l0,lstm_f16,input_size=597;hidden_size=128,22974
+12,lstm.l1,lstm_f16,input_size=128;hidden_size=128,10232
+13,lstm.l2,lstm_f16,input_size=128;hidden_size=128,13145
+14,head,linear_f16,M=1;K=128;N=2,51
+=== MODELBLASTER_ITER_PROFILE_END [16] ===
+=== MODELBLASTER_ITER_WALL [16] === 1678957
+=== MODELBLASTER_ITER_BEGIN [17] ===
+-0.0385742188
+1.39746094
+=== MODELBLASTER_ITER_END [17] ===
+=== MODELBLASTER_ITER_PROFILE_BEGIN [17] ===
+dispatch_id,name,op,shape,cycles
+0,vision_cnn.0,conv2d_s8,N=1;IC=1;IH=60;IW=90;OC=16;OH=30;OW=45;KH=5;KW=5;SH=2;SW=2;PH=2;PW=2,177300
+1,vision_cnn.2,conv2d_s8,N=1;IC=16;IH=30;IW=45;OC=32;OH=15;OW=23;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,514112
+2,vision_cnn.4,conv2d_s8,N=1;IC=32;IH=15;IW=23;OC=64;OH=8;OW=12;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,554637
+3,vision_cnn.6,conv2d_s8,N=1;IC=64;IH=8;IW=12;OC=64;OH=4;OW=6;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,272777
+4,flatten__cast_f16,cast_i8_to_f16,n=1536,286
+5,vision_fc,linear_f16,M=1;K=1536;N=512,49816
+6,depth_conv.0,conv2d_s8,N=1;IC=4;IH=8;IW=8;OC=16;OH=8;OW=8;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,12230
+7,depth_conv.2,conv2d_s8,N=1;IC=16;IH=8;IW=8;OC=16;OH=8;OW=8;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,45887
+8,flatten_1__cast_f16,cast_i8_to_f16,n=1024,191
+9,depth_fc,linear_f16,M=1;K=1024;N=64,5421
+10,cat,cat3_c1_f16,N=1;H=1;W=1;C_inputs=512|64|21;C_total=597,38
+11,lstm.l0,lstm_f16,input_size=597;hidden_size=128,22997
+12,lstm.l1,lstm_f16,input_size=128;hidden_size=128,10162
+13,lstm.l2,lstm_f16,input_size=128;hidden_size=128,10185
+14,head,linear_f16,M=1;K=128;N=2,43
+=== MODELBLASTER_ITER_PROFILE_END [17] ===
+=== MODELBLASTER_ITER_WALL [17] === 1676246
+=== MODELBLASTER_ITER_BEGIN [18] ===
+-0.0383605957
+1.3984375
+=== MODELBLASTER_ITER_END [18] ===
+=== MODELBLASTER_ITER_PROFILE_BEGIN [18] ===
+dispatch_id,name,op,shape,cycles
+0,vision_cnn.0,conv2d_s8,N=1;IC=1;IH=60;IW=90;OC=16;OH=30;OW=45;KH=5;KW=5;SH=2;SW=2;PH=2;PW=2,178696
+1,vision_cnn.2,conv2d_s8,N=1;IC=16;IH=30;IW=45;OC=32;OH=15;OW=23;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,514932
+2,vision_cnn.4,conv2d_s8,N=1;IC=32;IH=15;IW=23;OC=64;OH=8;OW=12;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,551648
+3,vision_cnn.6,conv2d_s8,N=1;IC=64;IH=8;IW=12;OC=64;OH=4;OW=6;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,273450
+4,flatten__cast_f16,cast_i8_to_f16,n=1536,289
+5,vision_fc,linear_f16,M=1;K=1536;N=512,49282
+6,depth_conv.0,conv2d_s8,N=1;IC=4;IH=8;IW=8;OC=16;OH=8;OW=8;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,12207
+7,depth_conv.2,conv2d_s8,N=1;IC=16;IH=8;IW=8;OC=16;OH=8;OW=8;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,46921
+8,flatten_1__cast_f16,cast_i8_to_f16,n=1024,190
+9,depth_fc,linear_f16,M=1;K=1024;N=64,6096
+10,cat,cat3_c1_f16,N=1;H=1;W=1;C_inputs=512|64|21;C_total=597,33
+11,lstm.l0,lstm_f16,input_size=597;hidden_size=128,22954
+12,lstm.l1,lstm_f16,input_size=128;hidden_size=128,10209
+13,lstm.l2,lstm_f16,input_size=128;hidden_size=128,10239
+14,head,linear_f16,M=1;K=128;N=2,49
+=== MODELBLASTER_ITER_PROFILE_END [18] ===
+=== MODELBLASTER_ITER_WALL [18] === 1677351
+=== MODELBLASTER_ITER_BEGIN [19] ===
+-0.0383300781
+1.3984375
+=== MODELBLASTER_ITER_END [19] ===
+=== MODELBLASTER_ITER_PROFILE_BEGIN [19] ===
+dispatch_id,name,op,shape,cycles
+0,vision_cnn.0,conv2d_s8,N=1;IC=1;IH=60;IW=90;OC=16;OH=30;OW=45;KH=5;KW=5;SH=2;SW=2;PH=2;PW=2,182967
+1,vision_cnn.2,conv2d_s8,N=1;IC=16;IH=30;IW=45;OC=32;OH=15;OW=23;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,513884
+2,vision_cnn.4,conv2d_s8,N=1;IC=32;IH=15;IW=23;OC=64;OH=8;OW=12;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,553705
+3,vision_cnn.6,conv2d_s8,N=1;IC=64;IH=8;IW=12;OC=64;OH=4;OW=6;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,272921
+4,flatten__cast_f16,cast_i8_to_f16,n=1536,285
+5,vision_fc,linear_f16,M=1;K=1536;N=512,50017
+6,depth_conv.0,conv2d_s8,N=1;IC=4;IH=8;IW=8;OC=16;OH=8;OW=8;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,12219
+7,depth_conv.2,conv2d_s8,N=1;IC=16;IH=8;IW=8;OC=16;OH=8;OW=8;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,48590
+8,flatten_1__cast_f16,cast_i8_to_f16,n=1024,190
+9,depth_fc,linear_f16,M=1;K=1024;N=64,4164
+10,cat,cat3_c1_f16,N=1;H=1;W=1;C_inputs=512|64|21;C_total=597,42
+11,lstm.l0,lstm_f16,input_size=597;hidden_size=128,23053
+12,lstm.l1,lstm_f16,input_size=128;hidden_size=128,10187
+13,lstm.l2,lstm_f16,input_size=128;hidden_size=128,10225
+14,head,linear_f16,M=1;K=128;N=2,46
+=== MODELBLASTER_ITER_PROFILE_END [19] ===
+=== MODELBLASTER_ITER_WALL [19] === 1682663
+=== MODELBLASTER_ITER_BEGIN [20] ===
+-0.0384521484
+1.3984375
+=== MODELBLASTER_ITER_END [20] ===
+=== MODELBLASTER_ITER_PROFILE_BEGIN [20] ===
+dispatch_id,name,op,shape,cycles
+0,vision_cnn.0,conv2d_s8,N=1;IC=1;IH=60;IW=90;OC=16;OH=30;OW=45;KH=5;KW=5;SH=2;SW=2;PH=2;PW=2,179215
+1,vision_cnn.2,conv2d_s8,N=1;IC=16;IH=30;IW=45;OC=32;OH=15;OW=23;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,516561
+2,vision_cnn.4,conv2d_s8,N=1;IC=32;IH=15;IW=23;OC=64;OH=8;OW=12;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,551282
+3,vision_cnn.6,conv2d_s8,N=1;IC=64;IH=8;IW=12;OC=64;OH=4;OW=6;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,273596
+4,flatten__cast_f16,cast_i8_to_f16,n=1536,286
+5,vision_fc,linear_f16,M=1;K=1536;N=512,49275
+6,depth_conv.0,conv2d_s8,N=1;IC=4;IH=8;IW=8;OC=16;OH=8;OW=8;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,15294
+7,depth_conv.2,conv2d_s8,N=1;IC=16;IH=8;IW=8;OC=16;OH=8;OW=8;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,45921
+8,flatten_1__cast_f16,cast_i8_to_f16,n=1024,191
+9,depth_fc,linear_f16,M=1;K=1024;N=64,4131
+10,cat,cat3_c1_f16,N=1;H=1;W=1;C_inputs=512|64|21;C_total=597,36
+11,lstm.l0,lstm_f16,input_size=597;hidden_size=128,23032
+12,lstm.l1,lstm_f16,input_size=128;hidden_size=128,10213
+13,lstm.l2,lstm_f16,input_size=128;hidden_size=128,11406
+14,head,linear_f16,M=1;K=128;N=2,52
+=== MODELBLASTER_ITER_PROFILE_END [20] ===
+=== MODELBLASTER_ITER_WALL [20] === 1680660
+=== MODELBLASTER_ITER_BEGIN [21] ===
+-0.0387268066
+1.3984375
+=== MODELBLASTER_ITER_END [21] ===
+=== MODELBLASTER_ITER_PROFILE_BEGIN [21] ===
+dispatch_id,name,op,shape,cycles
+0,vision_cnn.0,conv2d_s8,N=1;IC=1;IH=60;IW=90;OC=16;OH=30;OW=45;KH=5;KW=5;SH=2;SW=2;PH=2;PW=2,175561
+1,vision_cnn.2,conv2d_s8,N=1;IC=16;IH=30;IW=45;OC=32;OH=15;OW=23;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,516482
+2,vision_cnn.4,conv2d_s8,N=1;IC=32;IH=15;IW=23;OC=64;OH=8;OW=12;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,553290
+3,vision_cnn.6,conv2d_s8,N=1;IC=64;IH=8;IW=12;OC=64;OH=4;OW=6;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,272788
+4,flatten__cast_f16,cast_i8_to_f16,n=1536,287
+5,vision_fc,linear_f16,M=1;K=1536;N=512,49916
+6,depth_conv.0,conv2d_s8,N=1;IC=4;IH=8;IW=8;OC=16;OH=8;OW=8;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,12263
+7,depth_conv.2,conv2d_s8,N=1;IC=16;IH=8;IW=8;OC=16;OH=8;OW=8;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,46980
+8,flatten_1__cast_f16,cast_i8_to_f16,n=1024,191
+9,depth_fc,linear_f16,M=1;K=1024;N=64,4141
+10,cat,cat3_c1_f16,N=1;H=1;W=1;C_inputs=512|64|21;C_total=597,36
+11,lstm.l0,lstm_f16,input_size=597;hidden_size=128,22996
+12,lstm.l1,lstm_f16,input_size=128;hidden_size=128,10221
+13,lstm.l2,lstm_f16,input_size=128;hidden_size=128,10224
+14,head,linear_f16,M=1;K=128;N=2,50
+=== MODELBLASTER_ITER_PROFILE_END [21] ===
+=== MODELBLASTER_ITER_WALL [21] === 1675606
+=== MODELBLASTER_ITER_BEGIN [22] ===
+-0.0385742188
+1.3984375
+=== MODELBLASTER_ITER_END [22] ===
+=== MODELBLASTER_ITER_PROFILE_BEGIN [22] ===
+dispatch_id,name,op,shape,cycles
+0,vision_cnn.0,conv2d_s8,N=1;IC=1;IH=60;IW=90;OC=16;OH=30;OW=45;KH=5;KW=5;SH=2;SW=2;PH=2;PW=2,180852
+1,vision_cnn.2,conv2d_s8,N=1;IC=16;IH=30;IW=45;OC=32;OH=15;OW=23;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,517876
+2,vision_cnn.4,conv2d_s8,N=1;IC=32;IH=15;IW=23;OC=64;OH=8;OW=12;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,550779
+3,vision_cnn.6,conv2d_s8,N=1;IC=64;IH=8;IW=12;OC=64;OH=4;OW=6;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,277030
+4,flatten__cast_f16,cast_i8_to_f16,n=1536,286
+5,vision_fc,linear_f16,M=1;K=1536;N=512,49507
+6,depth_conv.0,conv2d_s8,N=1;IC=4;IH=8;IW=8;OC=16;OH=8;OW=8;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,13164
+7,depth_conv.2,conv2d_s8,N=1;IC=16;IH=8;IW=8;OC=16;OH=8;OW=8;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,45893
+8,flatten_1__cast_f16,cast_i8_to_f16,n=1024,191
+9,depth_fc,linear_f16,M=1;K=1024;N=64,4118
+10,cat,cat3_c1_f16,N=1;H=1;W=1;C_inputs=512|64|21;C_total=597,37
+11,lstm.l0,lstm_f16,input_size=597;hidden_size=128,22967
+12,lstm.l1,lstm_f16,input_size=128;hidden_size=128,11514
+13,lstm.l2,lstm_f16,input_size=128;hidden_size=128,10246
+14,head,linear_f16,M=1;K=128;N=2,52
+=== MODELBLASTER_ITER_PROFILE_END [22] ===
+=== MODELBLASTER_ITER_WALL [22] === 1684680
+=== MODELBLASTER_ITER_BEGIN [23] ===
+-0.0385742188
+1.3984375
+=== MODELBLASTER_ITER_END [23] ===
+=== MODELBLASTER_ITER_PROFILE_BEGIN [23] ===
+dispatch_id,name,op,shape,cycles
+0,vision_cnn.0,conv2d_s8,N=1;IC=1;IH=60;IW=90;OC=16;OH=30;OW=45;KH=5;KW=5;SH=2;SW=2;PH=2;PW=2,175743
+1,vision_cnn.2,conv2d_s8,N=1;IC=16;IH=30;IW=45;OC=32;OH=15;OW=23;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,519203
+2,vision_cnn.4,conv2d_s8,N=1;IC=32;IH=15;IW=23;OC=64;OH=8;OW=12;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,553760
+3,vision_cnn.6,conv2d_s8,N=1;IC=64;IH=8;IW=12;OC=64;OH=4;OW=6;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,274797
+4,flatten__cast_f16,cast_i8_to_f16,n=1536,287
+5,vision_fc,linear_f16,M=1;K=1536;N=512,49260
+6,depth_conv.0,conv2d_s8,N=1;IC=4;IH=8;IW=8;OC=16;OH=8;OW=8;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,12219
+7,depth_conv.2,conv2d_s8,N=1;IC=16;IH=8;IW=8;OC=16;OH=8;OW=8;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,46882
+8,flatten_1__cast_f16,cast_i8_to_f16,n=1024,190
+9,depth_fc,linear_f16,M=1;K=1024;N=64,4129
+10,cat,cat3_c1_f16,N=1;H=1;W=1;C_inputs=512|64|21;C_total=597,29
+11,lstm.l0,lstm_f16,input_size=597;hidden_size=128,22992
+12,lstm.l1,lstm_f16,input_size=128;hidden_size=128,10147
+13,lstm.l2,lstm_f16,input_size=128;hidden_size=128,10212
+14,head,linear_f16,M=1;K=128;N=2,46
+=== MODELBLASTER_ITER_PROFILE_END [23] ===
+=== MODELBLASTER_ITER_WALL [23] === 1680045
+=== MODELBLASTER_ITER_BEGIN [24] ===
+-0.0386962891
+1.3984375
+=== MODELBLASTER_ITER_END [24] ===
+=== MODELBLASTER_ITER_PROFILE_BEGIN [24] ===
+dispatch_id,name,op,shape,cycles
+0,vision_cnn.0,conv2d_s8,N=1;IC=1;IH=60;IW=90;OC=16;OH=30;OW=45;KH=5;KW=5;SH=2;SW=2;PH=2;PW=2,177032
+1,vision_cnn.2,conv2d_s8,N=1;IC=16;IH=30;IW=45;OC=32;OH=15;OW=23;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,523000
+2,vision_cnn.4,conv2d_s8,N=1;IC=32;IH=15;IW=23;OC=64;OH=8;OW=12;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,551897
+3,vision_cnn.6,conv2d_s8,N=1;IC=64;IH=8;IW=12;OC=64;OH=4;OW=6;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,272986
+4,flatten__cast_f16,cast_i8_to_f16,n=1536,289
+5,vision_fc,linear_f16,M=1;K=1536;N=512,50585
+6,depth_conv.0,conv2d_s8,N=1;IC=4;IH=8;IW=8;OC=16;OH=8;OW=8;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,12257
+7,depth_conv.2,conv2d_s8,N=1;IC=16;IH=8;IW=8;OC=16;OH=8;OW=8;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,45879
+8,flatten_1__cast_f16,cast_i8_to_f16,n=1024,190
+9,depth_fc,linear_f16,M=1;K=1024;N=64,4125
+10,cat,cat3_c1_f16,N=1;H=1;W=1;C_inputs=512|64|21;C_total=597,34
+11,lstm.l0,lstm_f16,input_size=597;hidden_size=128,23022
+12,lstm.l1,lstm_f16,input_size=128;hidden_size=128,11303
+13,lstm.l2,lstm_f16,input_size=128;hidden_size=128,10210
+14,head,linear_f16,M=1;K=128;N=2,46
+=== MODELBLASTER_ITER_PROFILE_END [24] ===
+=== MODELBLASTER_ITER_WALL [24] === 1683041
+=== MODELBLASTER_ITER_BEGIN [25] ===
+-0.0387268066
+1.3984375
+=== MODELBLASTER_ITER_END [25] ===
+=== MODELBLASTER_ITER_PROFILE_BEGIN [25] ===
+dispatch_id,name,op,shape,cycles
+0,vision_cnn.0,conv2d_s8,N=1;IC=1;IH=60;IW=90;OC=16;OH=30;OW=45;KH=5;KW=5;SH=2;SW=2;PH=2;PW=2,179387
+1,vision_cnn.2,conv2d_s8,N=1;IC=16;IH=30;IW=45;OC=32;OH=15;OW=23;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,517604
+2,vision_cnn.4,conv2d_s8,N=1;IC=32;IH=15;IW=23;OC=64;OH=8;OW=12;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,550222
+3,vision_cnn.6,conv2d_s8,N=1;IC=64;IH=8;IW=12;OC=64;OH=4;OW=6;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,274810
+4,flatten__cast_f16,cast_i8_to_f16,n=1536,284
+5,vision_fc,linear_f16,M=1;K=1536;N=512,49301
+6,depth_conv.0,conv2d_s8,N=1;IC=4;IH=8;IW=8;OC=16;OH=8;OW=8;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,12294
+7,depth_conv.2,conv2d_s8,N=1;IC=16;IH=8;IW=8;OC=16;OH=8;OW=8;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,47079
+8,flatten_1__cast_f16,cast_i8_to_f16,n=1024,191
+9,depth_fc,linear_f16,M=1;K=1024;N=64,4153
+10,cat,cat3_c1_f16,N=1;H=1;W=1;C_inputs=512|64|21;C_total=597,35
+11,lstm.l0,lstm_f16,input_size=597;hidden_size=128,25190
+12,lstm.l1,lstm_f16,input_size=128;hidden_size=128,10178
+13,lstm.l2,lstm_f16,input_size=128;hidden_size=128,10244
+14,head,linear_f16,M=1;K=128;N=2,43
+=== MODELBLASTER_ITER_PROFILE_END [25] ===
+=== MODELBLASTER_ITER_WALL [25] === 1681187
+=== MODELBLASTER_ITER_BEGIN [26] ===
+-0.0386352539
+1.3984375
+=== MODELBLASTER_ITER_END [26] ===
+=== MODELBLASTER_ITER_PROFILE_BEGIN [26] ===
+dispatch_id,name,op,shape,cycles
+0,vision_cnn.0,conv2d_s8,N=1;IC=1;IH=60;IW=90;OC=16;OH=30;OW=45;KH=5;KW=5;SH=2;SW=2;PH=2;PW=2,178838
+1,vision_cnn.2,conv2d_s8,N=1;IC=16;IH=30;IW=45;OC=32;OH=15;OW=23;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,520527
+2,vision_cnn.4,conv2d_s8,N=1;IC=32;IH=15;IW=23;OC=64;OH=8;OW=12;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,551609
+3,vision_cnn.6,conv2d_s8,N=1;IC=64;IH=8;IW=12;OC=64;OH=4;OW=6;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,272897
+4,flatten__cast_f16,cast_i8_to_f16,n=1536,289
+5,vision_fc,linear_f16,M=1;K=1536;N=512,50261
+6,depth_conv.0,conv2d_s8,N=1;IC=4;IH=8;IW=8;OC=16;OH=8;OW=8;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,12220
+7,depth_conv.2,conv2d_s8,N=1;IC=16;IH=8;IW=8;OC=16;OH=8;OW=8;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,45957
+8,flatten_1__cast_f16,cast_i8_to_f16,n=1024,191
+9,depth_fc,linear_f16,M=1;K=1024;N=64,4114
+10,cat,cat3_c1_f16,N=1;H=1;W=1;C_inputs=512|64|21;C_total=597,13
+11,lstm.l0,lstm_f16,input_size=597;hidden_size=128,24363
+12,lstm.l1,lstm_f16,input_size=128;hidden_size=128,10157
+13,lstm.l2,lstm_f16,input_size=128;hidden_size=128,10161
+14,head,linear_f16,M=1;K=128;N=2,48
+=== MODELBLASTER_ITER_PROFILE_END [26] ===
+=== MODELBLASTER_ITER_WALL [26] === 1681795
+=== MODELBLASTER_ITER_BEGIN [27] ===
+-0.0387573242
+1.3984375
+=== MODELBLASTER_ITER_END [27] ===
+=== MODELBLASTER_ITER_PROFILE_BEGIN [27] ===
+dispatch_id,name,op,shape,cycles
+0,vision_cnn.0,conv2d_s8,N=1;IC=1;IH=60;IW=90;OC=16;OH=30;OW=45;KH=5;KW=5;SH=2;SW=2;PH=2;PW=2,178480
+1,vision_cnn.2,conv2d_s8,N=1;IC=16;IH=30;IW=45;OC=32;OH=15;OW=23;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,519772
+2,vision_cnn.4,conv2d_s8,N=1;IC=32;IH=15;IW=23;OC=64;OH=8;OW=12;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,551264
+3,vision_cnn.6,conv2d_s8,N=1;IC=64;IH=8;IW=12;OC=64;OH=4;OW=6;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,274260
+4,flatten__cast_f16,cast_i8_to_f16,n=1536,284
+5,vision_fc,linear_f16,M=1;K=1536;N=512,49303
+6,depth_conv.0,conv2d_s8,N=1;IC=4;IH=8;IW=8;OC=16;OH=8;OW=8;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,12209
+7,depth_conv.2,conv2d_s8,N=1;IC=16;IH=8;IW=8;OC=16;OH=8;OW=8;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,46977
+8,flatten_1__cast_f16,cast_i8_to_f16,n=1024,192
+9,depth_fc,linear_f16,M=1;K=1024;N=64,4142
+10,cat,cat3_c1_f16,N=1;H=1;W=1;C_inputs=512|64|21;C_total=597,24
+11,lstm.l0,lstm_f16,input_size=597;hidden_size=128,22984
+12,lstm.l1,lstm_f16,input_size=128;hidden_size=128,10200
+13,lstm.l2,lstm_f16,input_size=128;hidden_size=128,10241
+14,head,linear_f16,M=1;K=128;N=2,43
+=== MODELBLASTER_ITER_PROFILE_END [27] ===
+=== MODELBLASTER_ITER_WALL [27] === 1680533
+=== MODELBLASTER_ITER_BEGIN [28] ===
+-0.0387268066
+1.3984375
+=== MODELBLASTER_ITER_END [28] ===
+=== MODELBLASTER_ITER_PROFILE_BEGIN [28] ===
+dispatch_id,name,op,shape,cycles
+0,vision_cnn.0,conv2d_s8,N=1;IC=1;IH=60;IW=90;OC=16;OH=30;OW=45;KH=5;KW=5;SH=2;SW=2;PH=2;PW=2,176569
+1,vision_cnn.2,conv2d_s8,N=1;IC=16;IH=30;IW=45;OC=32;OH=15;OW=23;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,517566
+2,vision_cnn.4,conv2d_s8,N=1;IC=32;IH=15;IW=23;OC=64;OH=8;OW=12;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,552245
+3,vision_cnn.6,conv2d_s8,N=1;IC=64;IH=8;IW=12;OC=64;OH=4;OW=6;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,278101
+4,flatten__cast_f16,cast_i8_to_f16,n=1536,285
+5,vision_fc,linear_f16,M=1;K=1536;N=512,51672
+6,depth_conv.0,conv2d_s8,N=1;IC=4;IH=8;IW=8;OC=16;OH=8;OW=8;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,12245
+7,depth_conv.2,conv2d_s8,N=1;IC=16;IH=8;IW=8;OC=16;OH=8;OW=8;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,45897
+8,flatten_1__cast_f16,cast_i8_to_f16,n=1024,194
+9,depth_fc,linear_f16,M=1;K=1024;N=64,4120
+10,cat,cat3_c1_f16,N=1;H=1;W=1;C_inputs=512|64|21;C_total=597,32
+11,lstm.l0,lstm_f16,input_size=597;hidden_size=128,24236
+12,lstm.l1,lstm_f16,input_size=128;hidden_size=128,10164
+13,lstm.l2,lstm_f16,input_size=128;hidden_size=128,10222
+14,head,linear_f16,M=1;K=128;N=2,53
+=== MODELBLASTER_ITER_PROFILE_END [28] ===
+=== MODELBLASTER_ITER_WALL [28] === 1683779
+=== MODELBLASTER_ITER_BEGIN [29] ===
+-0.0387268066
+1.3984375
+=== MODELBLASTER_ITER_END [29] ===
+=== MODELBLASTER_ITER_PROFILE_BEGIN [29] ===
+dispatch_id,name,op,shape,cycles
+0,vision_cnn.0,conv2d_s8,N=1;IC=1;IH=60;IW=90;OC=16;OH=30;OW=45;KH=5;KW=5;SH=2;SW=2;PH=2;PW=2,180069
+1,vision_cnn.2,conv2d_s8,N=1;IC=16;IH=30;IW=45;OC=32;OH=15;OW=23;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,517938
+2,vision_cnn.4,conv2d_s8,N=1;IC=32;IH=15;IW=23;OC=64;OH=8;OW=12;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,555852
+3,vision_cnn.6,conv2d_s8,N=1;IC=64;IH=8;IW=12;OC=64;OH=4;OW=6;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,273196
+4,flatten__cast_f16,cast_i8_to_f16,n=1536,285
+5,vision_fc,linear_f16,M=1;K=1536;N=512,49319
+6,depth_conv.0,conv2d_s8,N=1;IC=4;IH=8;IW=8;OC=16;OH=8;OW=8;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,12274
+7,depth_conv.2,conv2d_s8,N=1;IC=16;IH=8;IW=8;OC=16;OH=8;OW=8;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,46915
+8,flatten_1__cast_f16,cast_i8_to_f16,n=1024,191
+9,depth_fc,linear_f16,M=1;K=1024;N=64,4128
+10,cat,cat3_c1_f16,N=1;H=1;W=1;C_inputs=512|64|21;C_total=597,31
+11,lstm.l0,lstm_f16,input_size=597;hidden_size=128,22944
+12,lstm.l1,lstm_f16,input_size=128;hidden_size=128,10179
+13,lstm.l2,lstm_f16,input_size=128;hidden_size=128,10175
+14,head,linear_f16,M=1;K=128;N=2,43
+=== MODELBLASTER_ITER_PROFILE_END [29] ===
+=== MODELBLASTER_ITER_WALL [29] === 1683684
+=== MODELBLASTER_VERIFY === max_abs_err=0.499023438 max_rel_err=1.34334421 n=2
+=== MODELBLASTER_OUTPUT_BEGIN ===
+-0.0387268066
+1.3984375
+=== MODELBLASTER_OUTPUT_END ===
+=== MODELBLASTER_PROFILE_BEGIN ===
+dispatch_id,name,op,shape,cycles
+0,vision_cnn.0,conv2d_s8,N=1;IC=1;IH=60;IW=90;OC=16;OH=30;OW=45;KH=5;KW=5;SH=2;SW=2;PH=2;PW=2,180069
+1,vision_cnn.2,conv2d_s8,N=1;IC=16;IH=30;IW=45;OC=32;OH=15;OW=23;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,517938
+2,vision_cnn.4,conv2d_s8,N=1;IC=32;IH=15;IW=23;OC=64;OH=8;OW=12;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,555852
+3,vision_cnn.6,conv2d_s8,N=1;IC=64;IH=8;IW=12;OC=64;OH=4;OW=6;KH=3;KW=3;SH=2;SW=2;PH=1;PW=1,273196
+4,flatten__cast_f16,cast_i8_to_f16,n=1536,285
+5,vision_fc,linear_f16,M=1;K=1536;N=512,49319
+6,depth_conv.0,conv2d_s8,N=1;IC=4;IH=8;IW=8;OC=16;OH=8;OW=8;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,12274
+7,depth_conv.2,conv2d_s8,N=1;IC=16;IH=8;IW=8;OC=16;OH=8;OW=8;KH=3;KW=3;SH=1;SW=1;PH=1;PW=1,46915
+8,flatten_1__cast_f16,cast_i8_to_f16,n=1024,191
+9,depth_fc,linear_f16,M=1;K=1024;N=64,4128
+10,cat,cat3_c1_f16,N=1;H=1;W=1;C_inputs=512|64|21;C_total=597,31
+11,lstm.l0,lstm_f16,input_size=597;hidden_size=128,22944
+12,lstm.l1,lstm_f16,input_size=128;hidden_size=128,10179
+13,lstm.l2,lstm_f16,input_size=128;hidden_size=128,10175
+14,head,linear_f16,M=1;K=128;N=2,43
+=== MODELBLASTER_PROFILE_END ===
+=== MODELBLASTER_WALL_CYCLES === 1683684

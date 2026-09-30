@@ -1,0 +1,23 @@
+{
+  "tag": "fba120er0greedyOCr1_other_run1",
+  "schedule": "/scratch/agustin/xpurt-dev-sync/schedules/fig_fba120er0_greedy_oc_clamped.json",
+  "schedule_relpath": "schedules/fig_fba120er0_greedy_oc_clamped.json",
+  "schedule_sha256": "f39cde3467ddd786020091d24d3ac2d7747c8a253daa1f591aece44c36484e92",
+  "schedule_sha256_16": "f39cde3467ddd786",
+  "camera_hz": 120.005,
+  "seconds": 0.638,
+  "solver": "greedy_periodic",
+  "board_recost": null,
+  "ir_sha256_yolo": "0c783539626cf1627ae801d997ddc3f8c82316ab1ec10bb488cd9b4418180456",
+  "sched_policy": "SCHED_OTHER",
+  "run_t0_rdtime": 120865825317820,
+  "wall_start_epoch_ms": 1789590691817,
+  "exit_code": 0,
+  "verify_lines": [
+    "MODELBLASTER_VERIFY [yolov8_nano_64x96] === max_abs_err=0 max_rel_err=0 n=8316 instance=0 ready=1",
+    "MODELBLASTER_VERIFY [fused_full] === max_abs_err=0.000183105469 max_rel_err=0.00162337662 n=2 instance=0 ready=1",
+    "MODELBLASTER_VERIFY [mlp_control] === max_abs_err=0 max_rel_err=0 n=4 instance=0 ready=1"
+  ],
+  "rdtime_hz": 24000000,
+  "note": "numeric verification covers instance 0 only"
+}

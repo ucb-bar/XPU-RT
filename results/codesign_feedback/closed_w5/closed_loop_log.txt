@@ -1,0 +1,54 @@
+== closed board loop: w5_ffn_dronet_yolo ==
+networks: ['mlp_control', 'fused_full', 'ffn_block', 'dronet', 'yolov8_nano_64x96']
+
+[1/4] AOT search on isolated profile costs
+  $ /scratch/agustin/xpurt-dev-sync/.venv/bin/python -u /scratch/agustin/xpurt-dev-sync/scripts/run_codesign_loop.py --workload data/toplevel/scaling/w5_ffn_dronet_yolo.json --solver greedy --objective lateness --out-dir /scratch/agustin/xpurt-dev-sync/results/codesign_feedback/closed_w5/aot --time-limit 90
+  AOT decided: ['ime']   misses 11.0 -> 11.0   lateness 109.805 -> 99.024 ms
+  converged spec: results/codesign_feedback/closed_w5/aot/w5_ffn_dronet_yolo/specs/w5_ffn_dronet_yolo_r1_ime.json
+
+[2/4] execute that schedule on the K1 x5
+  --skip-board: reusing 5 trace(s) already here
+
+[3/4] fit a calibration to this workload's own 5 run(s)
+  alignment will be checked against scheduled_w5_ffn_dronet_yolo_r1_ime_greedy_profiled.json
+  $ /scratch/agustin/xpurt-dev-sync/.venv/bin/python /scratch/agustin/xpurt-dev-sync/scripts/emit_board_calibration.py --workload w5_ffn_dronet_yolo: mlp_control+fused_full+ffn_block+dronet+yolov8_nano_64x96 --out /scratch/agustin/xpurt-dev-sync/results/codesign_feedback/closed_w5/k1_calibration_w5_ffn_dronet_yolo.json --validate-against results/codesign_feedback/k1_board_calibration.json --schedule /scratch/agustin/xpurt-dev-sync/results/codesign_feedback/closed_w5/scheduled_w5_ffn_dronet_yolo_r1_ime_greedy_profiled.json --trace /scratch/agustin/xpurt-dev-sync/results/codesign_feedback/closed_w5/board_0_trace.csv --trace /scratch/agustin/xpurt-dev-sync/results/codesign_feedback/closed_w5/board_1_trace.csv --trace /scratch/agustin/xpurt-dev-sync/results/codesign_feedback/closed_w5/board_2_trace.csv --trace /scratch/agustin/xpurt-dev-sync/results/codesign_feedback/closed_w5/board_3_trace.csv --trace /scratch/agustin/xpurt-dev-sync/results/codesign_feedback/closed_w5/board_4_trace.csv
+  read 5 trace(s), 2420 dispatch samples
+    MISALIGNED yolov8_nano_64x96: the trace has ids the schedule does not: [3, 11, 22, 33, 48, 56]
+      -> per-dispatch keys for yolov8_nano_64x96 are OMITTED; it is costed by its op kinds, which are keyed by the row's own op and are unaffected
+  
+  === validate against results/codesign_feedback/k1_board_calibration.json ===
+  per_dispatch_multiplier: 7/48 within 2%   (mine 48, reference 48)
+      dronet/0                   got   1.2334  reference   1.2718  (-3.0%)
+      dronet/1                   got   1.0800  reference   1.0565  (+2.2%)
+      dronet/10                  got   1.9881  reference   2.5678  (-22.6%)
+      dronet/11                  got   1.9893  reference   1.4511  (+37.1%)
+      dronet/12                  got   1.9562  reference   1.6061  (+21.8%)
+      dronet/13                  got   1.1495  reference   1.1765  (-2.3%)
+      dronet/14                  got   1.2171  reference   1.1466  (+6.1%)
+      dronet/15                  got   2.3370  reference   2.5705  (-9.1%)
+  per_op_multiplier: 1/11 within 2%   (mine 10, reference 11, 2 reference keys absent here, 1 new keys)
+      linear_f16                 got   2.1544  reference   2.0496  (+5.1%)
+      layernorm_s8               got   1.2658  reference   1.4960  (-15.4%)
+      lstm_f16                   got   1.3683  reference   1.4448  (-5.3%)
+      gelu_s8                    got   1.1186  reference   1.3905  (-19.6%)
+      add_s8                     got   1.1229  reference   1.3852  (-18.9%)
+      conv2d_s8                  got   1.3097  reference   1.2590  (+4.0%)
+      conv2d_batchnorm2d_s8      got   1.1117  reference   1.1944  (-6.9%)
+      linear_s8                  got   1.1556  reference   1.1031  (+4.8%)
+  aggregate: got 1.3476  reference 1.2608 (+6.9%)
+  
+  wrote results/codesign_feedback/closed_w5/k1_calibration_w5_ffn_dronet_yolo.json
+    aggregate x1.3476 (mean; median 1.1785) from 1200 pooled samples
+    exact keys 48   op-kind keys 10
+    nets measured: dronet, ffn_block, fused_full, mlp_control, yolov8_nano_64x96
+  STILL EXTRAPOLATED: ['yolov8_nano_64x96'] did not appear in the traces, so they are costed by op kind or by the aggregate
+
+[4/4] AOT search again, scored on those measured costs
+  $ /scratch/agustin/xpurt-dev-sync/.venv/bin/python -u /scratch/agustin/xpurt-dev-sync/scripts/run_codesign_loop.py --workload data/toplevel/scaling/w5_ffn_dronet_yolo.json --solver greedy --objective lateness --out-dir /scratch/agustin/xpurt-dev-sync/results/codesign_feedback/closed_w5/board --time-limit 90 --search-calibration /scratch/agustin/xpurt-dev-sync/results/codesign_feedback/closed_w5/k1_calibration_w5_ffn_dronet_yolo.json
+  board-honest decided: ['ime']   misses 11.0 -> 11.0   lateness 201.617 -> 175.115 ms
+
+=== would the board have chosen differently? ===
+  AOT-cost search   : ['ime']
+  board-cost search : ['ime']
+  same transformations either way: the AOT decision is robust to the cost model on this workload
+  residual lateness the AOT view reports: 99.024 ms; measured-cost view: 175.115 ms (1.77x)

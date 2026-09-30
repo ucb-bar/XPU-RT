@@ -1,0 +1,23 @@
+== co-design loop: w3_ffn_dronet ==
+inner search runs against MEASURED board costs (results/codesign_feedback/closed_w3/k1_calibration_w3_ffn_dronet.json) -- lever scores here are board-honest and are NOT comparable with an isolated-profile run
+round 0 · baseline: total-lateness 112.665 (makespan 77.6 ms), 10 instance-miss
+accept rule: candidate_objective.accept() · critical=['mlp_control', 'ffn_block', 'dronet'] heavy=ffn_block
+      ime: built ime_x60 profiles for (none new; existing reused)
+round 1 · try ime: total-lateness 112.665 -> 65.462 (-41.9%), 10 instance-miss -> ACCEPTABLE
+round 1 · try ime: accepted -- max deadline lateness: ime=12.88 beats baseline=19.65 (tolerance 0.5)
+round 1 · try shard: total-lateness 112.665 -> 15.855 (-85.9%), 5 instance-miss -> ACCEPTABLE
+round 1 · try shard: accepted -- hard deadline misses: shard=5 beats baseline=10 (tolerance 1.76)
+      unfuse: adopted ModelBlaster unfused dispatch graph for (none — no fused net with an unfused build on disk)
+round 1 · try unfuse: lever changed nothing on this spec (inapplicable here) — not a candidate
+round 1: ACCEPT +shard  total-lateness 112.665 -> 15.855 (-85.9%)
+      ime: built ime_x60 profiles for (none new; existing reused)
+round 2 · try ime: total-lateness 15.855 -> 15.854 (-0.0%), 5 instance-miss -> reject
+round 2 · try ime: rejected -- indistinguishable on every term; a tie is not an improvement
+      unfuse: adopted ModelBlaster unfused dispatch graph for (none — no fused net with an unfused build on disk)
+round 2 · try unfuse: lever changed nothing on this spec (inapplicable here) — not a candidate
+round 2: no lever is accepted by the nine-term objective rule — CONVERGED
+fuse: NOT applied — roofline decision-aid says the stack is compute-bound (max fusible-epilogue ceiling 16% on dronet); fusion collapses dispatches (scheduling) but is measured ~+0.85% on cycles, so the loop does not credit a makespan gain it cannot measure.
+
+CONVERGED: hard deadline misses (instances) 10 -> 5; total-lateness 112.665 -> 15.855 ms (-85.9%), levers applied: ['shard']
+  decided by: shard (hard deadline misses: shard=5 beats baseline=10 (tolerance 1.76))
+artifacts in /scratch/agustin/xpurt-dev-sync/results/codesign_feedback/closed_w3/board/w3_ffn_dronet

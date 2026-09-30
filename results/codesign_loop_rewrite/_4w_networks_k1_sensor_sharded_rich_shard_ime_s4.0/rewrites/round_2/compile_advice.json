@@ -1,0 +1,212 @@
+{
+ "schema_version": 1,
+ "schedule_id": "scheduled__4w_networks_k1_sensor_sharded_rich_shard_ime_s4.0_r1_ime_greedy_profiled.json",
+ "advice": [
+  {
+   "model": "ffn_block",
+   "dispatch_id": 1,
+   "recommendation": "shard",
+   "priority": 1,
+   "confidence": "high",
+   "constraints": {
+    "n_cores": 8,
+    "legal_resources": [
+     "k1_cluster0",
+     "k1_cluster1"
+    ]
+   },
+   "rationale": "dispatch 1 takes 14.125 ms on one core against a 13.270 ms slot, and measures 2.215 ms on 8 cores (6.38x, 80% efficient) -- which fits",
+   "evidence": {
+    "service_time_us": 14125.332999999999,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 13270.28501025447,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": true,
+    "cost_1core_ms": 14.1253,
+    "cost_8core_ms": 2.2151,
+    "n_cores": 8,
+    "measured_speedup": 6.377,
+    "parallel_efficiency": 0.797,
+    "sync_overhead_us": 3595.3,
+    "fits_slot_after": true
+   }
+  },
+  {
+   "model": "ffn_block",
+   "dispatch_id": 1,
+   "recommendation": "split",
+   "priority": 1,
+   "confidence": "medium",
+   "constraints": {
+    "max_target_piece_us": 13270.29,
+    "legal_resources": [
+     "k1_cluster0",
+     "k1_cluster1"
+    ]
+   },
+   "rationale": "service time 14125us exceeds the 13270us slot available between periodic releases, so it blocks non-preemptively for 1.1x the slot.",
+   "evidence": {
+    "service_time_us": 14125.33,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 13270.29,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": true,
+    "op": "ffn_block$dispatch_1_rvv_x60_linear_s8_M128xK256xN1024",
+    "overrun_factor": 1.06
+   }
+  },
+  {
+   "model": "ffn_block",
+   "dispatch_id": 1,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "medium",
+   "constraints": {},
+   "rationale": "no measured alternative beats rvv_x60 by 5% (best was rvv_x60 at +0.0%).",
+   "evidence": {
+    "service_time_us": 14125.33,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_x60",
+    "best_alternative": "rvv_x60",
+    "gain_fraction": 0.0,
+    "min_gain_required": 0.05,
+    "min_gain_ms_required": 0.05,
+    "gain_ms": 0.0,
+    "op": "ffn_block$dispatch_1_rvv_x60_linear_s8_M128xK256xN1024",
+    "baseline_kernel": "curated[rvv]/direct",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "ffn_block",
+   "dispatch_id": 3,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "medium",
+   "constraints": {},
+   "rationale": "no measured alternative beats rvv_x60 by 5% (best was rvv_x60 at +0.0%).",
+   "evidence": {
+    "service_time_us": 11104.96,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_x60",
+    "best_alternative": "rvv_x60",
+    "gain_fraction": 0.0,
+    "min_gain_required": 0.05,
+    "min_gain_ms_required": 0.05,
+    "gain_ms": 0.0,
+    "op": "ffn_block$dispatch_3_rvv_x60_linear_s8_M128xK1024xN256",
+    "baseline_kernel": "curated[rvv]/direct",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "ffn_block",
+   "dispatch_id": 0,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "medium",
+   "constraints": {},
+   "rationale": "no measured alternative beats rvv_x60 by 5% (best was rvv_x60 at +0.0%).",
+   "evidence": {
+    "service_time_us": 732.33,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_x60",
+    "best_alternative": "rvv_x60",
+    "gain_fraction": 0.0,
+    "min_gain_required": 0.05,
+    "min_gain_ms_required": 0.05,
+    "gain_ms": 0.0,
+    "op": "ffn_block$dispatch_0_rvv_x60_layernorm_s8_M128xK256",
+    "baseline_kernel": "curated[rvv]/rvv_f64_tail",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "ffn_block",
+   "dispatch_id": 2,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "medium",
+   "constraints": {},
+   "rationale": "no measured alternative beats rvv_x60 by 5% (best was rvv_x60 at +0.0%).",
+   "evidence": {
+    "service_time_us": 478.25,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_x60",
+    "best_alternative": "rvv_x60",
+    "gain_fraction": 0.0,
+    "min_gain_required": 0.05,
+    "min_gain_ms_required": 0.05,
+    "gain_ms": 0.0,
+    "op": "ffn_block$dispatch_2_rvv_x60_gelu_s8_n131072",
+    "baseline_kernel": "curated[rvv]/rvv_memo_lut_gather",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "ffn_block",
+   "dispatch_id": 4,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "medium",
+   "constraints": {},
+   "rationale": "no measured alternative beats rvv_x60 by 5% (best was rvv_x60 at +0.0%).",
+   "evidence": {
+    "service_time_us": 169.96,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_x60",
+    "best_alternative": "rvv_x60",
+    "gain_fraction": 0.0,
+    "min_gain_required": 0.05,
+    "min_gain_ms_required": 0.05,
+    "gain_ms": 0.0,
+    "op": "ffn_block$dispatch_4_rvv_x60_add_s8_n32768",
+    "baseline_kernel": "curated[rvv]/rvv_frm_rmm",
+    "stat_basis": "single_sample_mean"
+   }
+  }
+ ],
+ "notes": {
+  "ffn_block": {
+   "implementations_profiled": [
+    "rvv_x60"
+   ],
+   "n_dispatches": 5,
+   "total_median_ms": 26.611,
+   "linear_chain": true,
+   "stat_basis": [
+    "single_sample_mean"
+   ],
+   "baseline_implementations": [
+    "curated[rvv]/direct",
+    "curated[rvv]/rvv_f64_tail",
+    "curated[rvv]/rvv_frm_rmm",
+    "curated[rvv]/rvv_memo_lut_gather"
+   ],
+   "profile_csv": [
+    "gen_mb/profile/rvv_x60/spacemit_x60/ffn_block/ffn_block.int8/ffn_block_spacemit_x60_rvv_x60_ffn_block.int8/topo_0/results.csv"
+   ],
+   "core_counts_profiled": [
+    1,
+    2,
+    4,
+    8
+   ]
+  }
+ }
+}

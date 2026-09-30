@@ -1,0 +1,116 @@
+{
+ "w4 \u00b7 profile-sized": [
+  {
+   "beat": "baseline",
+   "by_network": {
+    "ffn_block": 5,
+    "dronet": 5
+   },
+   "total": 10,
+   "cost": "AOT"
+  },
+  {
+   "beat": "AOT\n(inner)",
+   "by_network": {
+    "dronet": 5
+   },
+   "total": 5,
+   "cost": "AOT"
+  },
+  {
+   "beat": "re-cost\n(outer:\nreveal)",
+   "by_network": {
+    "dronet": 4
+   },
+   "total": 4,
+   "cost": "board"
+  },
+  {
+   "beat": "re-solve\n(outer:\nfix)\n[refused: nothing better]",
+   "by_network": {
+    "dronet": 4
+   },
+   "total": 4,
+   "cost": "board"
+  }
+ ],
+ "w5 \u00b7 profile-sized": [
+  {
+   "beat": "baseline",
+   "by_network": {
+    "ffn_block": 5,
+    "dronet": 5,
+    "yolov8_nano_64x96": 1
+   },
+   "total": 11,
+   "cost": "AOT"
+  },
+  {
+   "beat": "AOT\n(inner)",
+   "by_network": {
+    "ffn_block": 5,
+    "dronet": 1,
+    "yolov8_nano_64x96": 1
+   },
+   "total": 7,
+   "cost": "AOT"
+  },
+  {
+   "beat": "re-cost\n(outer:\nreveal)",
+   "by_network": {
+    "fused_full": 5,
+    "ffn_block": 5,
+    "dronet": 5,
+    "yolov8_nano_64x96": 1
+   },
+   "total": 16,
+   "cost": "board"
+  },
+  {
+   "beat": "re-solve\n(outer:\nfix)",
+   "by_network": {
+    "fused_full": 5,
+    "ffn_block": 5,
+    "dronet": 3,
+    "yolov8_nano_64x96": 1
+   },
+   "total": 14,
+   "cost": "board"
+  }
+ ],
+ "b4 \u00b7 board-sized": [
+  {
+   "beat": "baseline",
+   "by_network": {
+    "ffn_block": 5,
+    "dronet": 5
+   },
+   "total": 10,
+   "cost": "AOT"
+  },
+  {
+   "beat": "AOT\n(inner)",
+   "by_network": {
+    "ffn_block": 3
+   },
+   "total": 3,
+   "cost": "AOT"
+  },
+  {
+   "beat": "re-cost\n(outer:\nreveal)",
+   "by_network": {
+    "ffn_block": 4
+   },
+   "total": 4,
+   "cost": "board"
+  },
+  {
+   "beat": "re-solve\n(outer:\nfix)\n[refused: nothing better]",
+   "by_network": {
+    "ffn_block": 4
+   },
+   "total": 4,
+   "cost": "board"
+  }
+ ]
+}

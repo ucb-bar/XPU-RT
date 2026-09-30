@@ -1,0 +1,187 @@
+{
+ "generated_by": "scripts/ros_ladder_paired.py",
+ "xpu_trace": "xpu_a_cpsat_hard.csv",
+ "cell": {
+  "course": "a",
+  "density": 0.3,
+  "person_h": 2.4,
+  "gain": 0.0055,
+  "walk_speed": 0.0,
+  "walk_cross": 0
+ },
+ "rule": "per rung: its (cruise, seed) cells shared with XPU-RT, min(n_ros, n_xpu) replicates each, campaign order",
+ "inputs": [
+  "results/codesign_feedback/campaign/campaign.csv",
+  "results/codesign_feedback/campaign_break/campaign.csv",
+  "results/codesign_feedback/campaign_compose/campaign.csv",
+  "results/codesign_feedback/campaign_courseC/campaign.csv",
+  "results/codesign_feedback/campaign_cp3_ladder/campaign.csv",
+  "results/codesign_feedback/campaign_cross/campaign.csv",
+  "results/codesign_feedback/campaign_free30/campaign.csv",
+  "results/codesign_feedback/campaign_free30_eq/campaign.csv",
+  "results/codesign_feedback/campaign_free45/campaign.csv",
+  "results/codesign_feedback/campaign_gainfair/campaign.csv",
+  "results/codesign_feedback/campaign_p3_30/campaign.csv",
+  "results/codesign_feedback/campaign_percep/campaign.csv",
+  "results/codesign_feedback/campaign_q1cells/campaign.csv",
+  "results/codesign_feedback/campaign_qos1/campaign.csv",
+  "results/codesign_feedback/campaign_rate30/campaign.csv",
+  "results/codesign_feedback/campaign_rate30_gain/campaign.csv",
+  "results/codesign_feedback/campaign_rate3640/campaign.csv",
+  "results/codesign_feedback/campaign_rate90/campaign.csv",
+  "results/codesign_feedback/campaign_rich/campaign.csv",
+  "results/codesign_feedback/campaign_richtuned/campaign.csv",
+  "results/codesign_feedback/campaign_rosgain/campaign.csv",
+  "results/codesign_feedback/campaign_seeds24/campaign.csv",
+  "results/codesign_feedback/campaign_shardcells/campaign.csv",
+  "results/codesign_feedback/campaign_static6/campaign.csv",
+  "results/codesign_feedback/campaign_static6_45/campaign.csv",
+  "results/codesign_feedback/campaign_submitted/campaign.csv",
+  "results/codesign_feedback/campaign_tallcal/campaign.csv",
+  "results/codesign_feedback/campaign_tallnet/campaign.csv",
+  "results/codesign_feedback/campaign_tuned/campaign.csv",
+  "results/codesign_feedback/campaign_v2/campaign_v2.csv",
+  "results/codesign_feedback/campaign_v2_courseB/campaign_v2.csv",
+  "results/codesign_feedback/campaign_v8tmcells/campaign.csv",
+  "results/codesign_feedback/campaign_walk/campaign.csv",
+  "results/codesign_feedback/campaign_x2cells/campaign.csv",
+  "results/codesign_feedback/campaign_x2fix/campaign.csv",
+  "results/codesign_feedback/campaign_x2fix90/campaign.csv",
+  "results/codesign_feedback/campaign_x2tmcells/campaign.csv"
+ ],
+ "rows": [
+  {
+   "arm": "vanilla4@45",
+   "rung": "+ a 4-hart worker pool for YOLO",
+   "ros_trace": "ros_vanilla445.csv",
+   "cells": 72,
+   "flights_per_arm": 192,
+   "ros_completed": 5,
+   "xpu_completed": 28,
+   "xpu_completed_weighted": 28.4,
+   "ros_wilson95": [
+    0.0112,
+    0.0595
+   ],
+   "xpu_wilson95": [
+    0.1029,
+    0.2027
+   ],
+   "fisher_p_two_sided": 0.0
+  },
+  {
+   "arm": "vanilla4_q1@45",
+   "rung": "+ keep-last-1 queues (one QoS argument)",
+   "ros_trace": "ros_vanilla4_q145.csv",
+   "cells": 60,
+   "flights_per_arm": 96,
+   "ros_completed": 10,
+   "xpu_completed": 13,
+   "xpu_completed_weighted": 14.8,
+   "ros_wilson95": [
+    0.0576,
+    0.1812
+   ],
+   "xpu_wilson95": [
+    0.0809,
+    0.218
+   ],
+   "fisher_p_two_sided": 0.6575
+  },
+  {
+   "arm": "vanilla4tm@45",
+   "rung": "+ control on its own 100 Hz timer",
+   "ros_trace": "ros_vanilla4tm45.csv",
+   "cells": 60,
+   "flights_per_arm": 120,
+   "ros_completed": 11,
+   "xpu_completed": 16,
+   "xpu_completed_weighted": 17.6,
+   "ros_wilson95": [
+    0.052,
+    0.1567
+   ],
+   "xpu_wilson95": [
+    0.0838,
+    0.2056
+   ],
+   "fisher_p_two_sided": 0.4143
+  },
+  {
+   "arm": "p3@45",
+   "rung": "hand-pinned: 3 processes over 6 cores",
+   "ros_trace": "ros_p345.csv",
+   "cells": 60,
+   "flights_per_arm": 144,
+   "ros_completed": 19,
+   "xpu_completed": 18,
+   "xpu_completed_weighted": 21.2,
+   "ros_wilson95": [
+    0.0861,
+    0.1969
+   ],
+   "xpu_wilson95": [
+    0.0806,
+    0.1889
+   ],
+   "fisher_p_two_sided": 1.0
+  },
+  {
+   "arm": "p3_q1@45",
+   "rung": "hand-pinned + keep-last-1",
+   "ros_trace": "ros_p3_q145.csv",
+   "cells": 60,
+   "flights_per_arm": 120,
+   "ros_completed": 16,
+   "xpu_completed": 16,
+   "xpu_completed_weighted": 17.6,
+   "ros_wilson95": [
+    0.0838,
+    0.2056
+   ],
+   "xpu_wilson95": [
+    0.0838,
+    0.2056
+   ],
+   "fisher_p_two_sided": 1.0
+  },
+  {
+   "arm": "vanilla4x2@45",
+   "rung": "two model instances across both clusters (all 8 cores)",
+   "ros_trace": "ros_vanilla4x245.csv",
+   "cells": 60,
+   "flights_per_arm": 120,
+   "ros_completed": 16,
+   "xpu_completed": 16,
+   "xpu_completed_weighted": 17.6,
+   "ros_wilson95": [
+    0.0838,
+    0.2056
+   ],
+   "xpu_wilson95": [
+    0.0838,
+    0.2056
+   ],
+   "fisher_p_two_sided": 1.0
+  },
+  {
+   "arm": "vanilla4x2@36",
+   "rung": "two instances at the 36 Hz camera the figure draws",
+   "ros_trace": "ros_vanilla4x236.csv",
+   "cells": 60,
+   "flights_per_arm": 60,
+   "ros_completed": 1,
+   "xpu_completed": 6,
+   "xpu_completed_weighted": 8.8,
+   "ros_wilson95": [
+    0.0029,
+    0.0886
+   ],
+   "xpu_wilson95": [
+    0.0466,
+    0.2015
+   ],
+   "fisher_p_two_sided": 0.114
+  }
+ ]
+}

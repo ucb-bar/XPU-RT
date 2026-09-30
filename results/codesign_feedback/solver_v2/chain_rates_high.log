@@ -1,0 +1,18 @@
+=== 13:00:36 wh_chain120_solve certificate
+  greedy:   greedy_periodic: makespan=699.44 ms (all ops 699.44 ms), periodic window misses=2242, converged
+  cpsat: cpsat status=FEASIBLE wall=900.2s
+=== 13:15:59 wh_chain120_solve_500 greedy
+    greedy_periodic: makespan=1739.70 ms (all ops 1739.70 ms), periodic window misses=5800, converged
+=== 13:16:37 wh_chain120_solve_500 cpsat hard (limit 3000 s)
+  hard rc=1 cpsat status=UNKNOWN wall=3000.5s
+=== 14:06:46 STAGE2_DONE wh_chain120_solve_500
+  re-pulled the board's stdout: 2464 of 7130 rows (pull 4)
+  trace rows: 7130  hart_acc: 8  policy: SCHED_OTHER  exit: 0  verify: ['MODELBLASTER_VERIFY [yolov8_nano_64x96] === max_abs_err=0 max_rel_err=0 n=8316 instance=0 ready=1']
+=== 14:08:33 BOARD_STAGE2_DONE a120
+=== 14:08:33 wh_chain150_solve certificate
+  greedy:   greedy_periodic: makespan=846.47 ms (all ops 846.47 ms), periodic window misses=2863, converged
+  cpsat: cpsat status=UNKNOWN wall=900.3s
+Terminated
+=== 14:23:53 wh_chain150_solve_500 greedy
+    greedy_periodic: makespan=2150.85 ms (all ops 2150.85 ms), periodic window misses=7258, converged
+=== 14:24:47 wh_chain150_solve_500 cpsat hard (limit 3000 s)

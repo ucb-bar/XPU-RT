@@ -1,0 +1,6 @@
+[
+ "Baseline \u00b7 RVV singletons|none|results/codesign_feedback/sensor_evo_ime/a1_baseline.json|no accelerator \u2014 perception head misses",
+ "AOT optimize \u2014 IME|ime|results/codesign_feedback/sensor_evo_ime/a2_aot.json|IME matrix engine meets the tight perception head",
+ "K1-calibrated replay|none|results/codesign_feedback/sensor_evo_ime/a3_board_recost.json|same assignment, board durations",
+ "K1-calibrated re-solve|none|results/codesign_feedback/sensor_evo_ime/a4_board_resolve.json|re-optimized on board costs"
+]

@@ -1,0 +1,32 @@
+=== 17:41:49 clamp + feasibility greedy
+schedules/fig_fbb5r2_greedy_clamped.json: 66 dispatch targets narrowed; width histogram {1: 5585, 2: 115, 4: 75}
+
+FEASIBLE: no double-booking, no dependency violation, no forward edge, every target on the board, every implementation available where it was placed.
+  feasibility rc=0
+=== 17:41:50 clamp + feasibility cpsat_hard
+schedules/fig_fbb5r2_cpsat_hard_clamped.json: 548 dispatch targets narrowed; width histogram {1: 5775}
+
+FEASIBLE: no double-booking, no dependency violation, no forward edge, every target on the board, every implementation available where it was placed.
+  feasibility rc=0
+=== 17:41:51 no schedules/fig_fbb5r2_cpsat_soft.json
+=== 17:41:52 board fbb5r2_greedy run 1
+  re-pulled the board's stdout: 5775 of 5775 rows (pull 1)
+  trace rows: 5775  hart_acc: 8  policy: SCHED_OTHER  exit: 0  verify: ['MODELBLASTER_VERIFY [yolov8_nano_64x96] === max_abs_err=0 max_rel_err=0 n=8316 instance=0 ready=1']
+=== 17:42:24 board fbb5r2_cpsat_hard run 1
+  re-pulled the board's stdout: -1 of 5775 rows (pull 1)
+  re-pulled the board's stdout: 5775 of 5775 rows (pull 2)
+  trace rows: 5775  hart_acc: 8  policy: SCHED_OTHER  exit: 0  verify: ['MODELBLASTER_VERIFY [yolov8_nano_64x96] === max_abs_err=0 max_rel_err=0 n=8316 instance=0 ready=1']
+=== 17:42:56 board fbb5r2_greedy run 2
+  re-pulled the board's stdout: 2567 of 5775 rows (pull 1)
+  re-pulled the board's stdout: 5775 of 5775 rows (pull 2)
+  trace rows: 5775  hart_acc: 8  policy: SCHED_OTHER  exit: 0  verify: ['MODELBLASTER_VERIFY [yolov8_nano_64x96] === max_abs_err=0 max_rel_err=0 n=8316 instance=0 ready=1']
+=== 17:43:29 board fbb5r2_cpsat_hard run 2
+  re-pulled the board's stdout: 2554 of 5775 rows (pull 1)
+  re-pulled the board's stdout: 2554 of 5775 rows (pull 2)
+  re-pulled the board's stdout: 5775 of 5775 rows (pull 3)
+  trace rows: 5775  hart_acc: 8  policy: SCHED_OTHER  exit: 0  verify: ['MODELBLASTER_VERIFY [yolov8_nano_64x96] === max_abs_err=0 max_rel_err=0 n=8316 instance=0 ready=1']
+=== 17:44:05 board fbb5r2_greedy run 3
+  trace rows: 5775  hart_acc: 8  policy: SCHED_OTHER  exit: 0  verify: ['MODELBLASTER_VERIFY [yolov8_nano_64x96] === max_abs_err=0 max_rel_err=0 n=8316 instance=0 ready=1']
+=== 17:44:33 board fbb5r2_cpsat_hard run 3
+  trace rows: 5775  hart_acc: 8  policy: SCHED_OTHER  exit: 0  verify: ['MODELBLASTER_VERIFY [yolov8_nano_64x96] === max_abs_err=0 max_rel_err=0 n=8316 instance=0 ready=1']
+=== 17:45:02 BOARD_STAGE2_DONE fbb5r2

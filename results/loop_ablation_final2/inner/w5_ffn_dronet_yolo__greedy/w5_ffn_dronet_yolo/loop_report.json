@@ -1,0 +1,369 @@
+{
+ "workload": "w5_ffn_dronet_yolo",
+ "objective": "makespan",
+ "accept_rule": "candidate_objective.accept (nine lexicographic terms)",
+ "critical_models": [
+  "mlp_control",
+  "fused_full",
+  "ffn_block",
+  "dronet",
+  "yolov8_nano_64x96"
+ ],
+ "heavy_model": "yolov8_nano_64x96",
+ "baseline_terms": {
+  "label": "baseline",
+  "ineligible": null,
+  "01_hard_deadline_misses": 11.0,
+  "02_max_deadline_lateness": 24.67,
+  "03_frequency_compliance": 0.19584783391335644,
+  "04_p99_response_of_critical_tasks": 34.67,
+  "05_heavy_model_max_latency": 34.67,
+  "06_heavy_model_throughput": 28.84,
+  "07_makespan": 74.6108,
+  "08_utilization": 44.7,
+  "09_standalone_kernel_cycles": 266909.0,
+  "total_instances": 35
+ },
+ "final_terms": {
+  "label": "ime",
+  "ineligible": null,
+  "01_hard_deadline_misses": 7.0,
+  "02_max_deadline_lateness": 14.55,
+  "03_frequency_compliance": 0.06216248649945989,
+  "04_p99_response_of_critical_tasks": 37.58,
+  "05_heavy_model_max_latency": 37.58,
+  "06_heavy_model_throughput": 26.61,
+  "07_makespan": 63.9793,
+  "08_utilization": 60.3,
+  "09_standalone_kernel_cycles": 163431.0,
+  "total_instances": 35
+ },
+ "search_costs": "isolated profile database",
+ "baseline_score_ms": 74.611,
+ "final_score_ms": 63.979,
+ "total_reduction_pct": 14.2,
+ "baseline_makespan_ms": 74.6,
+ "final_makespan_ms": 64.0,
+ "levers_available": [
+  "ime",
+  "unfuse",
+  "shard:mlp_control",
+  "shard:fused_full",
+  "shard:ffn_block",
+  "shard:dronet",
+  "shard:yolov8_nano_64x96",
+  "shard"
+ ],
+ "rewrite_arm": {
+  "enabled": false,
+  "runner": "board",
+  "verbs": "fuse,unfuse,split,shard",
+  "irs": {},
+  "backend": {
+   "target": "spacemit_x60",
+   "hw": "rvv_x60",
+   "accel_hw": "ime_x60",
+   "gen_root": "gen_mb",
+   "profile_root": "gen/profile_mb"
+  },
+  "accepted": [
+   {
+    "round": 1,
+    "lever": "shard:dronet",
+    "metric": "makespan",
+    "score_before_ms": 74.611,
+    "score_after_ms": 79.24,
+    "makespan_before_ms": 74.6,
+    "makespan_after_ms": 79.2,
+    "pct": 6.2,
+    "accepted": true,
+    "deadline_miss": 74,
+    "accept_rule": "objective",
+    "why": "accepted -- hard deadline misses: shard:dronet=7 beats baseline=11 (tolerance 0)",
+    "rejected": [
+     {
+      "lever": "shard:mlp_control",
+      "why": "rejected -- indistinguishable on every term; a tie is not an improvement",
+      "score_ms": 74.611,
+      "misses": 93
+     },
+     {
+      "lever": "shard:fused_full",
+      "why": "rejected -- indistinguishable on every term; a tie is not an improvement",
+      "score_ms": 74.611,
+      "misses": 93
+     }
+    ],
+    "terms": {
+     "label": "shard:dronet",
+     "ineligible": null,
+     "01_hard_deadline_misses": 7.0,
+     "02_max_deadline_lateness": 69.01,
+     "03_frequency_compliance": 0.24276971078843151,
+     "04_p99_response_of_critical_tasks": 79.01,
+     "05_heavy_model_max_latency": 37.13,
+     "06_heavy_model_throughput": 26.93,
+     "07_makespan": 79.2397,
+     "08_utilization": 49.6,
+     "09_standalone_kernel_cycles": 251192.0,
+     "total_instances": 35
+    }
+   },
+   {
+    "round": 2,
+    "lever": "shard:ffn_block",
+    "metric": "makespan",
+    "score_before_ms": 79.24,
+    "score_after_ms": 66.013,
+    "makespan_before_ms": 79.2,
+    "makespan_after_ms": 66.0,
+    "pct": -16.7,
+    "accepted": true,
+    "deadline_miss": 74,
+    "accept_rule": "objective",
+    "why": "accepted -- max deadline lateness: shard:ffn_block=14.55 beats shard:dronet=69.01 (tolerance 0.5)",
+    "rejected": [
+     {
+      "lever": "shard:mlp_control",
+      "why": "rejected -- indistinguishable on every term; a tie is not an improvement",
+      "score_ms": 79.24,
+      "misses": 74
+     },
+     {
+      "lever": "shard:fused_full",
+      "why": "rejected -- indistinguishable on every term; a tie is not an improvement",
+      "score_ms": 79.24,
+      "misses": 74
+     },
+     {
+      "lever": "shard:yolov8_nano_64x96",
+      "why": "rejected -- hard deadline misses: shard:dronet=7 beats shard:yolov8_nano_64x96=9 (tolerance 0)",
+      "score_ms": 79.24,
+      "misses": 77
+     }
+    ],
+    "terms": {
+     "label": "shard:ffn_block",
+     "ineligible": null,
+     "01_hard_deadline_misses": 7.0,
+     "02_max_deadline_lateness": 14.55,
+     "03_frequency_compliance": 0.09108364334573388,
+     "04_p99_response_of_critical_tasks": 37.58,
+     "05_heavy_model_max_latency": 37.58,
+     "06_heavy_model_throughput": 26.61,
+     "07_makespan": 66.01339999999999,
+     "08_utilization": 59.75,
+     "09_standalone_kernel_cycles": 163313.0,
+     "total_instances": 35
+    }
+   }
+  ]
+ },
+ "levers_applied": [
+  "shard:dronet",
+  "shard:ffn_block",
+  "ime"
+ ],
+ "levers_inapplicable": [
+  {
+   "round": 1,
+   "lever": "unfuse",
+   "reason": "lever left the spec unchanged"
+  },
+  {
+   "round": 2,
+   "lever": "unfuse",
+   "reason": "lever left the spec unchanged"
+  },
+  {
+   "round": 2,
+   "lever": "shard",
+   "reason": "lever left the spec unchanged"
+  },
+  {
+   "round": 3,
+   "lever": "unfuse",
+   "reason": "lever left the spec unchanged"
+  },
+  {
+   "round": 3,
+   "lever": "shard",
+   "reason": "lever left the spec unchanged"
+  }
+ ],
+ "rounds": [
+  {
+   "round": 1,
+   "lever": "shard:dronet",
+   "metric": "makespan",
+   "score_before_ms": 74.611,
+   "score_after_ms": 79.24,
+   "makespan_before_ms": 74.6,
+   "makespan_after_ms": 79.2,
+   "pct": 6.2,
+   "accepted": true,
+   "deadline_miss": 74,
+   "accept_rule": "objective",
+   "why": "accepted -- hard deadline misses: shard:dronet=7 beats baseline=11 (tolerance 0)",
+   "rejected": [
+    {
+     "lever": "shard:mlp_control",
+     "why": "rejected -- indistinguishable on every term; a tie is not an improvement",
+     "score_ms": 74.611,
+     "misses": 93
+    },
+    {
+     "lever": "shard:fused_full",
+     "why": "rejected -- indistinguishable on every term; a tie is not an improvement",
+     "score_ms": 74.611,
+     "misses": 93
+    }
+   ],
+   "terms": {
+    "label": "shard:dronet",
+    "ineligible": null,
+    "01_hard_deadline_misses": 7.0,
+    "02_max_deadline_lateness": 69.01,
+    "03_frequency_compliance": 0.24276971078843151,
+    "04_p99_response_of_critical_tasks": 79.01,
+    "05_heavy_model_max_latency": 37.13,
+    "06_heavy_model_throughput": 26.93,
+    "07_makespan": 79.2397,
+    "08_utilization": 49.6,
+    "09_standalone_kernel_cycles": 251192.0,
+    "total_instances": 35
+   }
+  },
+  {
+   "round": 2,
+   "lever": "shard:ffn_block",
+   "metric": "makespan",
+   "score_before_ms": 79.24,
+   "score_after_ms": 66.013,
+   "makespan_before_ms": 79.2,
+   "makespan_after_ms": 66.0,
+   "pct": -16.7,
+   "accepted": true,
+   "deadline_miss": 74,
+   "accept_rule": "objective",
+   "why": "accepted -- max deadline lateness: shard:ffn_block=14.55 beats shard:dronet=69.01 (tolerance 0.5)",
+   "rejected": [
+    {
+     "lever": "shard:mlp_control",
+     "why": "rejected -- indistinguishable on every term; a tie is not an improvement",
+     "score_ms": 79.24,
+     "misses": 74
+    },
+    {
+     "lever": "shard:fused_full",
+     "why": "rejected -- indistinguishable on every term; a tie is not an improvement",
+     "score_ms": 79.24,
+     "misses": 74
+    },
+    {
+     "lever": "shard:yolov8_nano_64x96",
+     "why": "rejected -- hard deadline misses: shard:dronet=7 beats shard:yolov8_nano_64x96=9 (tolerance 0)",
+     "score_ms": 79.24,
+     "misses": 77
+    }
+   ],
+   "terms": {
+    "label": "shard:ffn_block",
+    "ineligible": null,
+    "01_hard_deadline_misses": 7.0,
+    "02_max_deadline_lateness": 14.55,
+    "03_frequency_compliance": 0.09108364334573388,
+    "04_p99_response_of_critical_tasks": 37.58,
+    "05_heavy_model_max_latency": 37.58,
+    "06_heavy_model_throughput": 26.61,
+    "07_makespan": 66.01339999999999,
+    "08_utilization": 59.75,
+    "09_standalone_kernel_cycles": 163313.0,
+    "total_instances": 35
+   }
+  },
+  {
+   "round": 3,
+   "lever": "ime",
+   "metric": "makespan",
+   "score_before_ms": 66.013,
+   "score_after_ms": 63.979,
+   "makespan_before_ms": 66.0,
+   "makespan_after_ms": 64.0,
+   "pct": -3.1,
+   "accepted": true,
+   "deadline_miss": 74,
+   "accept_rule": "objective",
+   "why": "accepted -- frequency compliance: ime=0.0621625 beats shard:ffn_block=0.0910836 (tolerance 0.02)",
+   "rejected": [
+    {
+     "lever": "shard:mlp_control",
+     "why": "rejected -- indistinguishable on every term; a tie is not an improvement",
+     "score_ms": 66.013,
+     "misses": 74
+    },
+    {
+     "lever": "shard:fused_full",
+     "why": "rejected -- indistinguishable on every term; a tie is not an improvement",
+     "score_ms": 66.013,
+     "misses": 74
+    },
+    {
+     "lever": "shard:yolov8_nano_64x96",
+     "why": "rejected -- hard deadline misses: shard:ffn_block=7 beats shard:yolov8_nano_64x96=9 (tolerance 0)",
+     "score_ms": 73.04,
+     "misses": 77
+    }
+   ],
+   "terms": {
+    "label": "ime",
+    "ineligible": null,
+    "01_hard_deadline_misses": 7.0,
+    "02_max_deadline_lateness": 14.55,
+    "03_frequency_compliance": 0.06216248649945989,
+    "04_p99_response_of_critical_tasks": 37.58,
+    "05_heavy_model_max_latency": 37.58,
+    "06_heavy_model_throughput": 26.61,
+    "07_makespan": 63.9793,
+    "08_utilization": 60.3,
+    "09_standalone_kernel_cycles": 163431.0,
+    "total_instances": 35
+   }
+  }
+ ],
+ "trajectory": [
+  {
+   "round": 0,
+   "lever": "baseline",
+   "score_ms": 74.611,
+   "makespan_ms": 74.6,
+   "misses": 93
+  },
+  {
+   "round": 1,
+   "lever": "+shard:dronet",
+   "score_ms": 79.24,
+   "makespan_ms": 79.2,
+   "misses": 74
+  },
+  {
+   "round": 2,
+   "lever": "+shard:ffn_block",
+   "score_ms": 66.013,
+   "makespan_ms": 66.0,
+   "misses": 74
+  },
+  {
+   "round": 3,
+   "lever": "+ime",
+   "score_ms": 63.979,
+   "makespan_ms": 64.0,
+   "misses": 74
+  }
+ ],
+ "fusion": "fuse: NOT applied \u2014 roofline decision-aid says the stack is compute-bound (max fusible-epilogue ceiling 16% on dronet); fusion collapses dispatches (scheduling) but is measured ~+0.85% on cycles, so the loop does not credit a makespan gain it cannot measure.",
+ "converged": true,
+ "board_feedback": {
+  "enabled": false
+ }
+}

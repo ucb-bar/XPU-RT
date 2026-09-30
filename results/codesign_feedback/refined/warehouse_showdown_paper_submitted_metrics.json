@@ -1,0 +1,231 @@
+{
+ "figure": "results/codesign_feedback/refined/warehouse_showdown_paper_submitted.png",
+ "written": "2026-09-17T18:27:00",
+ "sources": {
+  "xpu_dir": "results/codesign_feedback/campaign_submitted/display/search_c1.4/xpu_s1000_figdata",
+  "ros_dir": "results/codesign_feedback/campaign_submitted/display/search_c1.4/ros_s1000_figdata",
+  "scene_records": "results/codesign_feedback/campaign_scene/submitted_l1000",
+  "gantt_sidecars": [
+   "results/codesign_feedback/refined/submitted/measured_gantt_sub_xpu_metrics.json",
+   "results/codesign_feedback/refined/submitted/measured_gantt_sub_ros_metrics.json"
+  ],
+  "envelope_csv": "/scratch/agustin/xpurt-dev-sync/results/codesign_feedback/hil_ablation.csv",
+  "courseB_csv": "/scratch/agustin/xpurt-dev-sync/results/codesign_feedback/hil_ablation_courseB.csv",
+  "energy_csv": "results/codesign_feedback/flight_energy_submitted.csv"
+ },
+ "A": {
+  "gain_xpu": 0.0055,
+  "gain_ros": 0.0055,
+  "xpu_gates": 4,
+  "ros_gates": 1,
+  "hit": "crate",
+  "xpu_eff_hz": 96.2,
+  "ros_eff_hz": 20.2,
+  "backdrop": "median of 5 overhead frames (t \u2265 2 s)",
+  "plate_std": 51.7,
+  "clearance_m": 0.614,
+  "clearance_measured": true,
+  "moments": [
+   {
+    "arm": "ROS",
+    "step": 330,
+    "label": "ROS 2 20 Hz \u00b7 clears G1",
+    "t_s": 3.3
+   },
+   {
+    "arm": "ROS",
+    "step": 520,
+    "label": "ROS 2 20 Hz \u00b7 hits crate after G1",
+    "t_s": 5.2
+   },
+   {
+    "arm": "XPU",
+    "step": 701,
+    "label": "XPU-RT 96 Hz \u00b7 clears crate 0.61 m",
+    "t_s": 7.01
+   },
+   {
+    "arm": "XPU",
+    "step": 1084,
+    "label": "XPU-RT 96 Hz \u00b7 reaches gate",
+    "t_s": 10.84
+   }
+  ],
+  "scene_completed": {
+   "xpu": [
+    3,
+    12
+   ],
+   "ros": [
+    0,
+    12
+   ]
+  },
+  "display_cruise": 1.4,
+  "xpu_trace": "xpu_a_cpsat_hard.csv",
+  "ros_trace": "ros_vanilla_c5045.csv",
+  "ros_label": "ROS 2 \u00b7 serial YOLO, control in the goal callback",
+  "xpu_label": "XPU-RT \u00b7 CP-SAT",
+  "camera_hz": 45.0
+ },
+ "B": {
+  "rates": [
+   20.0,
+   25.0,
+   33.33,
+   50.0,
+   100.0
+  ],
+  "xpu_hz": 96.2370242214533,
+  "ros_hz": 20.18096703223992,
+  "flights": 300,
+  "k_n_per_hz": {
+   "20": [
+    0,
+    60
+   ],
+   "25": [
+    1,
+    60
+   ],
+   "33": [
+    13,
+    60
+   ],
+   "50": [
+    23,
+    60
+   ],
+   "100": [
+    21,
+    60
+   ]
+  }
+ },
+ "C": {
+  "courseB_k_n_per_hz": {
+   "25": [
+    2,
+    30
+   ],
+   "33": [
+    1,
+    30
+   ],
+   "50": [
+    9,
+    30
+   ],
+   "100": [
+    10,
+    30
+   ]
+  }
+ },
+ "D": {
+  "energy_csv": "results/codesign_feedback/flight_energy_submitted.csv",
+  "xpu_condition": "xpu_cpsat_sub",
+  "conditions": {
+   "ros_serial50_sub": {
+    "n": 6,
+    "moment_x": 71.55,
+    "power_x": 136.28
+   },
+   "xpu_cpsat_sub": {
+    "n": 6,
+    "moment_x": 1.0,
+    "power_x": 1.0
+   }
+  }
+ },
+ "telemetry": {
+  "xpu_mean_w": 0.321,
+  "ros_mean_w": 5.166,
+  "xpu_mean_speed": 1.405,
+  "ros_mean_speed": 1.21
+ },
+ "I": {
+  "xpu": {
+   "chain_ms_median": 56.86,
+   "ctrl_gap_mean_ms": 10.0,
+   "frames_late": 0,
+   "frames_checked": 44,
+   "placement_note": "8 harts \u00b7 scheduled",
+   "busy_source": "sampler_rdtime",
+   "harts_per_net": {
+    "YOLO": [
+     "CPU_E#0",
+     "CPU_E#1",
+     "CPU_E#2",
+     "CPU_E#3",
+     "CPU_P#0",
+     "CPU_P#1",
+     "CPU_P#2",
+     "CPU_P#3"
+    ],
+    "control": [
+     "CPU_E#0",
+     "CPU_E#1",
+     "CPU_E#2",
+     "CPU_E#3",
+     "CPU_P#0",
+     "CPU_P#1",
+     "CPU_P#2",
+     "CPU_P#3"
+    ],
+    "nav": [
+     "CPU_E#0",
+     "CPU_E#1",
+     "CPU_E#2",
+     "CPU_E#3",
+     "CPU_P#0",
+     "CPU_P#1",
+     "CPU_P#2",
+     "CPU_P#3"
+    ]
+   }
+  },
+  "ros": {
+   "chain_ms_median": 266.116,
+   "ctrl_gap_mean_ms": 49.568,
+   "frames_late": 401,
+   "frames_checked": 401,
+   "placement_note": "8 cores \u00b7 OS-scheduled",
+   "busy_source": "sampler_epoch",
+   "harts_per_net": {
+    "YOLO": [
+     "CPU_E#3"
+    ],
+    "nav": [
+     "CPU_P#3"
+    ],
+    "control": [
+     "CPU_P#2"
+    ]
+   }
+  },
+  "bars": {
+   "XPU-RT": {
+    "dispatches": 881,
+    "drawn": 881
+   },
+   "ROS 2": {
+    "dispatches": 361,
+    "drawn": 361
+   }
+  },
+  "merged_per_hart_and_frame": false
+ },
+ "script": "showdown_paper_figure",
+ "inputs": {
+  "results/codesign_feedback/campaign_scene/submitted_l1000/campaign.csv": "88d1ea0f06cb62f6079655b076170fc561568516e37d4d87084bb42b85b92585",
+  "results/codesign_feedback/campaign_submitted/display/search_c1.4/ros_s1000_figdata/figure_data.npz": "d0434a73bc815fd27901ba95dda54514b34242f2e21b7350bd3d1ff2c8664218",
+  "results/codesign_feedback/campaign_submitted/display/search_c1.4/xpu_s1000_figdata/figure_data.npz": "635735df54356856a4a387475d6969cd1fb53bb4fc087ca03d41752827f66f31",
+  "results/codesign_feedback/flight_energy_submitted.csv": "83bf198ca47471250863e8ee32a0dfe117749b0117823715263f0729cfd5c2a9",
+  "results/codesign_feedback/hil_ablation.csv": "7cab7e9b37c8f36de5408e2b20a32ef2bae072e232290f6ef97a0dc78674393d",
+  "results/codesign_feedback/hil_ablation_courseB.csv": "3f5089f43d645d3da96a22a2ea6961104f257a4150542403a5587e78101e0af2",
+  "results/codesign_feedback/refined/submitted/measured_gantt_sub_ros_metrics.json": "65f37a19d05a17e201537095400dec8ad187c08b18a7ac8f60578c6655a60e8f",
+  "results/codesign_feedback/refined/submitted/measured_gantt_sub_xpu_metrics.json": "7dbc808d03c0714562a44ff34d8daacdae0e70424273943b863512a2a1243f34"
+ },
+ "fallbacks_used": []
+}

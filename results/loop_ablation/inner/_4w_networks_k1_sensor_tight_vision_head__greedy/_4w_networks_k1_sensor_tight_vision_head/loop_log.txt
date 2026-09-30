@@ -1,0 +1,21 @@
+replay: XPURT_CPSAT_WORKERS=1 (deterministic; the published numbers use 0/6, which is faster and not reproducible)
+== co-design loop: _4w_networks_k1_sensor_tight_vision_head ==
+round 0 · baseline: makespan 46.611 (makespan 46.6 ms), 4 instance-miss
+accept rule: candidate_objective.accept() · critical=['mlp_control', 'fused_full', 'yolov8_nano_64x96', 'ffn_block', 'attn_block'] heavy=yolov8_nano_64x96
+      ime: built ime_x60 profiles for (none new; existing reused)
+round 1 · try ime: makespan 46.611 -> 38.764 (-16.8%), 2 instance-miss -> ACCEPTABLE
+round 1 · try ime: accepted -- max deadline lateness: ime=1.75 beats baseline=6.61 (tolerance 0.5)
+round 1 · try shard: makespan 46.611 -> 27.939 (-40.1%), 4 instance-miss -> reject
+round 1 · try shard: rejected -- max deadline lateness: baseline=6.61 beats shard=7.85 (tolerance 0.5)
+      unfuse: adopted ModelBlaster unfused dispatch graph for (none — no fused net with an unfused build on disk)
+round 1 · try unfuse: lever changed nothing on this spec (inapplicable here) — not a candidate
+round 1: ACCEPT +ime  makespan 46.611 -> 38.764 (-16.8%)
+round 2 · try shard: makespan 38.764 -> 27.939 (-27.9%), 4 instance-miss -> reject
+round 2 · try shard: rejected -- max deadline lateness: ime=1.75 beats shard=7.85 (tolerance 0.5)
+      unfuse: adopted ModelBlaster unfused dispatch graph for (none — no fused net with an unfused build on disk)
+round 2 · try unfuse: lever changed nothing on this spec (inapplicable here) — not a candidate
+round 2: no lever is accepted by the nine-term objective rule — CONVERGED
+fuse: NOT applied — roofline decision-aid says the stack is compute-bound (max fusible-epilogue ceiling 16% on dronet); fusion collapses dispatches (scheduling) but is measured ~+0.85% on cycles, so the loop does not credit a makespan gain it cannot measure.
+
+CONVERGED [makespan]: 46.611 -> 38.764 ms (-16.8%), levers applied: ['ime']
+artifacts in /scratch/agustin/xpurt-dev-sync/results/loop_ablation/inner/_4w_networks_k1_sensor_tight_vision_head__greedy/_4w_networks_k1_sensor_tight_vision_head

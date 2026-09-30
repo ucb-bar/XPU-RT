@@ -1,0 +1,4 @@
+worker_idx,kind_idx,kind,hart,kernel_us,dep_wait_us,sync_overhead_us,target_gate_spin_us,hart_idle_us,gemmini_cfg_emit_us,entries_done,wall_total_us
+0,0,rvv,0,8940068,6459,31613,2833971,14830,0,1470,11845125
+1,1,rvv_c1,5,84842,1957,3562,11652818,3718,0,350,11750076
+2,1,rvv_c1,4,1697339,10056829,3997,183588,4780,0,225,11949215
