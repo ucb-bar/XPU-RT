@@ -1,0 +1,388 @@
+{
+ "figure": "results/codesign_feedback/refined/showdown_36hz_solver_vs_rosallhart_s1006.png",
+ "written": "2026-09-24T15:12:58",
+ "sources": {
+  "xpu_dir": "results/codesign_feedback/campaign_free36/display/pairs_ac36/xpu_s1006_figdata",
+  "ros_dir": "results/codesign_feedback/campaign_free36/display/pairs_ns4/ros_s1006_figdata",
+  "scene_records": "results/codesign_feedback/campaign_scene/tall1000_ac36",
+  "gantt_sidecars": [
+   "results/codesign_feedback/refined/navshard36/measured_gantt_navshard36_xpu_metrics.json",
+   "results/codesign_feedback/refined/navshard36/measured_gantt_navshard36_ros_metrics.json"
+  ],
+  "envelope_csv": "/scratch/agustin/xpurt-dev-sync/results/codesign_feedback/hil_ablation.csv",
+  "courseB_csv": "/scratch/agustin/xpurt-dev-sync/results/codesign_feedback/hil_ablation_courseB.csv",
+  "energy_csv": "results/codesign_feedback/flight_energy_navpool36.csv"
+ },
+ "A": {
+  "gain_xpu": 0.0055,
+  "gain_ros": 0.0055,
+  "xpu_gates": 4,
+  "ros_gates": 2,
+  "hit": "gate frame",
+  "ros_failure": "in_the_course",
+  "xpu_eff_hz": 100.4,
+  "ros_eff_hz": 36.0,
+  "backdrop": "median of 5 overhead frames (t \u2265 2 s)",
+  "plate_std": 51.7,
+  "clearance_m": 0.56,
+  "clearance_measured": true,
+  "moments": [
+   {
+    "arm": "ROS",
+    "step": 608,
+    "label": "ROS 2 36 Hz \u00b7 clears G2",
+    "t_s": 6.08
+   },
+   {
+    "arm": "ROS",
+    "step": 868,
+    "label": "ROS 2 36 Hz \u00b7 hits gate frame after G2",
+    "t_s": 8.68
+   },
+   {
+    "arm": "XPU",
+    "step": 722,
+    "label": "XPU-RT 100 Hz \u00b7 clears crate 0.56 m",
+    "t_s": 7.22
+   },
+   {
+    "arm": "XPU",
+    "step": 1112,
+    "label": "XPU-RT 100 Hz \u00b7 reaches gate",
+    "t_s": 11.12
+   }
+  ],
+  "layout_seed": {
+   "xpu": 1000,
+   "ros": 1000
+  },
+  "episode_seed": {
+   "xpu": 1006,
+   "ros": 1006
+  },
+  "scene_completed": {
+   "xpu": [
+    4,
+    12
+   ],
+   "ros": [
+    0,
+    12
+   ]
+  },
+  "scene_mean_gates": {
+   "xpu": 2.67,
+   "ros": 1.83
+  },
+  "ros_outcome": "crash",
+  "display_cruise": 1.4,
+  "xpu_trace": "xpu_p36free.csv",
+  "ros_trace": "ros_vanilla4x236ns4.csv",
+  "ros_label": "ROS 2 \u00b7 two YOLO pools and a nav pool over all eight harts, unpinned, control chained to the goal",
+  "xpu_label": "XPU-RT \u00b7 solver-placed CP-SAT schedule, conv on the IME",
+  "camera_hz": 36.0
+ },
+ "B": {
+  "rates": [
+   20.0,
+   25.0,
+   33.33,
+   50.0,
+   100.0
+  ],
+  "xpu_hz": 100.38610038610038,
+  "ros_hz": 36.017195306146164,
+  "flights": 300,
+  "k_n_per_hz": {
+   "20": [
+    0,
+    60
+   ],
+   "25": [
+    1,
+    60
+   ],
+   "33": [
+    13,
+    60
+   ],
+   "50": [
+    23,
+    60
+   ],
+   "100": [
+    21,
+    60
+   ]
+  }
+ },
+ "C": {
+  "courseB_k_n_per_hz": {
+   "25": [
+    2,
+    30
+   ],
+   "33": [
+    1,
+    30
+   ],
+   "50": [
+    9,
+    30
+   ],
+   "100": [
+    10,
+    30
+   ]
+  }
+ },
+ "D": {
+  "energy_csv": "results/codesign_feedback/flight_energy_navpool36.csv",
+  "xpu_condition": "xpu_p36free",
+  "conditions": {
+   "ros_vanilla4x2ns4_36": {
+    "n": 6,
+    "moment_x": 30.47,
+    "power_x": 14.58
+   },
+   "xpu_p36free": {
+    "n": 6,
+    "moment_x": 1.0,
+    "power_x": 1.0
+   }
+  }
+ },
+ "telemetry": {
+  "xpu_mean_w": 0.356,
+  "ros_mean_w": 2.524,
+  "xpu_mean_speed": 1.404,
+  "ros_mean_speed": 1.349,
+  "series": {
+   "E_xpu": {
+    "n": 1159,
+    "min": 0.0376,
+    "max": 4.5049,
+    "mean": 0.3437,
+    "sha256": "7910c96eddade362"
+   },
+   "E_ros": {
+    "n": 869,
+    "min": 1.1446,
+    "max": 5.4743,
+    "mean": 2.5053,
+    "sha256": "750a3f8e0cd92a4c"
+   },
+   "F_xpu": {
+    "n": 1159,
+    "min": -160.4406,
+    "max": 9.6113,
+    "mean": -11.1098,
+    "sha256": "ef92f99085827fb8"
+   },
+   "F_ros": {
+    "n": 869,
+    "min": -97.084,
+    "max": 25.5762,
+    "mean": -8.8966,
+    "sha256": "1acfc664d3b0ba66"
+   },
+   "G_xpu": {
+    "n": 1159,
+    "min": 0.0591,
+    "max": 1.4537,
+    "mean": 1.4036,
+    "sha256": "24f9d65739301b21"
+   },
+   "G_ros": {
+    "n": 869,
+    "min": 0.0594,
+    "max": 1.5046,
+    "mean": 1.3492,
+    "sha256": "465c13e1b0a88c2d"
+   },
+   "H_along": {
+    "n": 90,
+    "min": 6.2966,
+    "max": 21.4949,
+    "mean": 13.8955,
+    "sha256": "fe09950f3d752f5f"
+   },
+   "H_across": {
+    "n": 90,
+    "min": -8.3576,
+    "max": -7.9578,
+    "mean": -8.2144,
+    "sha256": "b63de5b99d48a5cc"
+   },
+   "H_u": {
+    "n": 90,
+    "min": 1.3909,
+    "max": 1.4371,
+    "mean": 1.4231,
+    "sha256": "6409d536a9bf963c"
+   },
+   "H_v": {
+    "n": 90,
+    "min": -0.2856,
+    "max": 0.2565,
+    "mean": 0.0108,
+    "sha256": "08acabea5961d012"
+   },
+   "H_gates": {
+    "n": 12,
+    "min": -8.3,
+    "max": 21.0,
+    "mean": 2.9875,
+    "sha256": "01065a81bb1eedf1"
+   }
+  }
+ },
+ "I": {
+  "xpu": {
+   "chain_ms_median": 25.824,
+   "ctrl_gap_mean_ms": 9.856,
+   "frames_late": 0,
+   "frames_checked": 17,
+   "placement_note": "8 harts \u00b7 scheduled",
+   "busy_source": "sampler_rdtime",
+   "harts_per_net": {
+    "YOLO": [
+     "CPU_E#0",
+     "CPU_E#1",
+     "CPU_E#2",
+     "CPU_E#3",
+     "CPU_P#0",
+     "CPU_P#2"
+    ],
+    "control": [
+     "CPU_E#0",
+     "CPU_E#1",
+     "CPU_E#2",
+     "CPU_E#3",
+     "CPU_P#0",
+     "CPU_P#1",
+     "CPU_P#2",
+     "CPU_P#3"
+    ],
+    "nav": [
+     "CPU_E#0",
+     "CPU_E#1",
+     "CPU_E#2",
+     "CPU_E#3",
+     "CPU_P#0",
+     "CPU_P#1",
+     "CPU_P#2",
+     "CPU_P#3"
+    ]
+   },
+   "drawn_harts_per_net": {
+    "YOLO": [
+     "CPU_E#0",
+     "CPU_E#1",
+     "CPU_E#2",
+     "CPU_E#3",
+     "CPU_P#0",
+     "CPU_P#1",
+     "CPU_P#2",
+     "CPU_P#3"
+    ],
+    "control": [
+     "CPU_E#0",
+     "CPU_E#1",
+     "CPU_E#2",
+     "CPU_E#3",
+     "CPU_P#0",
+     "CPU_P#1",
+     "CPU_P#2",
+     "CPU_P#3"
+    ],
+    "nav": [
+     "CPU_E#0",
+     "CPU_E#1",
+     "CPU_E#2",
+     "CPU_E#3",
+     "CPU_P#0",
+     "CPU_P#1",
+     "CPU_P#2",
+     "CPU_P#3"
+    ]
+   }
+  },
+  "ros": {
+   "chain_ms_median": 37.351,
+   "ctrl_gap_mean_ms": 27.761,
+   "frames_late": 0,
+   "frames_checked": 352,
+   "placement_note": "8 cores \u00b7 OS-scheduled \u00b7 YOLO on 8 harts",
+   "busy_source": "sampler_epoch",
+   "harts_per_net": {
+    "YOLO": [
+     "CPU_E#0",
+     "CPU_E#1",
+     "CPU_E#3",
+     "CPU_P#0",
+     "CPU_P#1",
+     "CPU_P#2"
+    ],
+    "nav": [
+     "CPU_E#0",
+     "CPU_E#2",
+     "CPU_P#1",
+     "CPU_P#2"
+    ],
+    "control": [
+     "CPU_E#0",
+     "CPU_E#2",
+     "CPU_P#1"
+    ]
+   },
+   "drawn_harts_per_net": {
+    "YOLO": [
+     "CPU_E#0",
+     "CPU_E#1",
+     "CPU_E#2",
+     "CPU_E#3",
+     "CPU_P#0",
+     "CPU_P#1",
+     "CPU_P#2",
+     "CPU_P#3"
+    ],
+    "nav": [
+     "CPU_E#0",
+     "CPU_E#2",
+     "CPU_P#1",
+     "CPU_P#2",
+     "CPU_P#3"
+    ],
+    "control": [
+     "CPU_E#0",
+     "CPU_E#2",
+     "CPU_P#1"
+    ]
+   }
+  },
+  "bars": {
+   "XPU-RT": {
+    "dispatches": 441,
+    "drawn": 441
+   },
+   "ROS 2": {
+    "dispatches": 491,
+    "drawn": 491
+   }
+  },
+  "merged_per_hart_and_frame": false
+ },
+ "script": "showdown_paper_figure",
+ "inputs": {
+  "results/codesign_feedback/campaign_free36/display/pairs_ac36/xpu_s1006_figdata/figure_data.npz": "ff4a6f28a508769c003951b9e4ee038489ac208f87ebb2388d9d2e610ad97b39",
+  "results/codesign_feedback/campaign_free36/display/pairs_ns4/ros_s1006_figdata/figure_data.npz": "b422c9b48f3b8a6dff79e7d907f48b465a559edeecd670c422ca0652cedb134a",
+  "results/codesign_feedback/campaign_scene/tall1000_ac36/campaign.csv": "fcc409ed354ec7659f9c5c8831ccd96f9e105217a1b2d2e73164ea4e349f5d0e",
+  "results/codesign_feedback/flight_energy_navpool36.csv": "b3f5121412222dd312335a8ceb46833053a2369daee4f695986713dfb75e48ef",
+  "results/codesign_feedback/hil_ablation.csv": "7cab7e9b37c8f36de5408e2b20a32ef2bae072e232290f6ef97a0dc78674393d",
+  "results/codesign_feedback/hil_ablation_courseB.csv": "3f5089f43d645d3da96a22a2ea6961104f257a4150542403a5587e78101e0af2",
+  "results/codesign_feedback/refined/navshard36/measured_gantt_navshard36_ros_metrics.json": "15afe30e2c0e627510850db2727515fe1356469e83c8aa14427acbd45748bbaf",
+  "results/codesign_feedback/refined/navshard36/measured_gantt_navshard36_xpu_metrics.json": "5e9a1c2786133f85ca0d67cf9587b8f90621056d2680620ad22819a8a372e4cf"
+ },
+ "fallbacks_used": []
+}

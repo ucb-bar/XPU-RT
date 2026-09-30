@@ -21,10 +21,9 @@ from compile_advice import (  # noqa: E402
     load_profiles_by_cores, load_profiles_by_cores_csv, load_profiles_csv,
     overhead_advice, shard_advice, unfuse_advice, write_advice,
 )
-# The canonical granularity analysis. This file used to carry its own
-# `is_linear_chain` over a dispatch-graph FILE and its own notion of a free
-# slot; both already existed here, and the local copies were the worse of the
-# two -- see the free-slot note below.
+# The canonical granularity analysis. This file keeps no local
+# `is_linear_chain` over a dispatch-graph FILE and no notion of a free slot of
+# its own; granularity_advisor owns both -- see the free-slot note below.
 from granularity_advisor import (  # noqa: E402
     _free_slot_ms, _is_linear_chain, from_schedule_json, group_by_periodicity,
 )
@@ -63,13 +62,13 @@ def main() -> int:
                          "deadline_misses_attributed is 0 -- an unmeasured "
                          "miss count is not evidence.")
     # Defaults describe the LIVE path (ModelBlaster/rvv_x60), not the retired
-    # IREE one. They used to be `gen` / `RVV,scalar,IME` / `RVV` / `jsonl`,
-    # which resolve nothing here: ModelBlaster writes `rvv_x60` and `scalar`
-    # under `gen_mb`. The old defaults did not error -- `scalar` alone
-    # resolved, so the "no profiles" warning never fired, `profs.get("RVV")`
-    # returned {}, and the run wrote an EMPTY advice file and exited 0.
-    # Measured: 118 advice items with the explicit flags, 0 with the defaults,
-    # and nothing said why. The retired tree stays reachable by passing them.
+    # IREE one. The IREE values (`gen` / `RVV,scalar,IME` / `RVV` / `jsonl`)
+    # resolve nothing on the live tree: ModelBlaster writes `rvv_x60` and
+    # `scalar` under `gen/mb`. They also do not error -- `scalar` alone
+    # resolves, so the "no profiles" warning never fires, `profs.get("RVV")`
+    # returns {}, and the run writes an EMPTY advice file and exits 0
+    # (measured: 118 advice items with the live flags, 0 with the IREE ones).
+    # The retired tree stays reachable by passing them explicitly.
     ap.add_argument("--ir", action="append", default=[],
                     help="<network>:<graph.json>, repeatable. Required for "
                          "`unfuse` advice: it is the one verb whose trigger is "
@@ -79,7 +78,7 @@ def main() -> int:
                     help="curated kernel library, e.g. ModelBlaster/kernels/rvv. "
                          "Without it `unfuse_advice` refuses rather than "
                          "guessing a constituent has a kernel to land on.")
-    ap.add_argument("--gen-root", default="gen_mb")
+    ap.add_argument("--gen-root", default="gen/mb")
     ap.add_argument("--target", default="spacemit_x60")
     ap.add_argument("--schedule", required=True)
     ap.add_argument("--out", default="artifacts/k1_run/compile_advice.json")
@@ -115,12 +114,12 @@ def main() -> int:
 
     # The tightest periodic FREE SLOT, not the tightest period.
     #
-    # This previously read `min(periods.values())` while calling itself a slot.
+    # This is not `min(periods.values())`, which is a period and not a slot.
     # A period is the whole interval between releases; the slot is what is left
     # of it after the model's own work -- period * (1 - utilization), computed
     # over a duration-weighted critical path. Using the raw period overstates
     # the room available by exactly the amount the model already occupies, so
-    # every "this dispatch does not fit" judgement was measured against a
+    # every "this dispatch does not fit" judgement would be measured against a
     # budget nobody has.
     #
     # granularity_advisor already computes the real thing; the local version was
@@ -141,15 +140,15 @@ def main() -> int:
     def budget_for(model: str) -> float:
         """The budget a dispatch of `model` has to fit into, in ms.
 
-        Two corrections over the previous `min(periods.values())`:
+        Two properties that `min(periods.values())` lacks:
 
         * per model, not a global minimum. Taking the minimum across models
-          meant one saturated model zeroed the budget for every other one, so a
-          workload containing DroNet produced no advice about the MLP at all.
+          lets one saturated model zero the budget for every other one, so a
+          workload containing DroNet would produce no advice about the MLP.
         * a ZERO free slot means the model already consumes its whole period --
           which is exactly when its long dispatches most need attention, not
-          least. Gating on `slot > 0` silently excluded the saturated model, so
-          the one case the advisor exists for produced nothing. When the slot
+          least. Gating on `slot > 0` would exclude the saturated model, so
+          the one case the advisor exists for would produce nothing. When the slot
           is zero the period itself is the budget: an instance that cannot fit
           its own period is the finding.
         """
@@ -185,14 +184,12 @@ def main() -> int:
         which every dispatch exceeds whenever the model is saturated, so it
         would flag the entire model and say nothing.
 
-        This used to return `period / total` -- a dimensionless scale factor,
-        annotated "caller multiplies by cost" -- and no caller ever did, because
-        no caller was ever written: the function was dead, `blocking_advice` got
-        `budget_for` (the whole period for a saturated model), and the shard
-        path recomputed the largest dispatch's share inline. So the case
-        described above went exactly as described: a model needing 113.7 ms
-        against a 33.3 ms period produced ten `unchanged` items and nothing
-        actionable, because no single dispatch exceeded the full period.
+        It returns a budget in ms, not `period / total` (a dimensionless scale
+        factor a caller would have to multiply by cost), and both
+        `blocking_advice` and the shard path use it. With the whole period as
+        the budget instead, a model needing 113.7 ms against a 33.3 ms period
+        produces ten `unchanged` items and nothing actionable, because no
+        single dispatch exceeds the full period.
         """
         period = periods_by_base.get(model, 0.0) or periods.get(model, 0.0)
         costs = [float(r.get("median_ms") or 0.0) for r in profile.values()]
@@ -224,9 +221,9 @@ def main() -> int:
         if not profs:
             print(f"WARN no profiles for {model}", file=sys.stderr)
             continue
-        # An absent BASELINE is not "no advice", it is "I could not read the
-        # thing every comparison is made against". Silently yielding an empty
-        # advice document for this is how the old defaults hid themselves.
+        # An absent BASELINE is not "no advice", it is "the thing every
+        # comparison is made against could not be read". Yielding an empty
+        # advice document here would hide a mis-pointed tree, so it exits.
         if a.baseline_impl not in profs:
             raise SystemExit(
                 f"--baseline-impl {a.baseline_impl!r} has no profile for "
@@ -252,8 +249,8 @@ def main() -> int:
             "stat_basis": sorted({r.get("stat_basis", "median_of_reps")
                                   for r in base.values()}),
             # Which kernel actually ran. Curated kernels are looked up by exact
-            # op name, so fused ops used to fall back to the scalar reference
-            # inside builds labelled `rvv_x60`; a profile that cannot say which
+            # op name, so a fused op with no curated match falls back to the
+            # scalar reference inside a build labelled `rvv_x60`; a profile that cannot say which
             # kernel it timed cannot support advice about that kernel.
             "baseline_implementations": sorted(
                 {r.get("implementation", "") for r in base.values()}) or None,
@@ -279,11 +276,9 @@ def main() -> int:
         total = sum(r["median_ms"] for r in base.values())
         period = periods.get(model)
         if period and total > period:
-            # `misses` is deadline misses ATTRIBUTED to this model. It used to
-            # be passed as len(base) -- the number of DISPATCHES -- so every
-            # split recommendation carried a dispatch count in a field named
-            # deadline_misses_attributed, identically, for every item. Anyone
-            # reading that field downstream was reading a mislabelled constant.
+            # `misses` is deadline misses ATTRIBUTED to this model, not
+            # len(base) (the number of DISPATCHES), which would put the same
+            # constant in deadline_misses_attributed for every item.
             #
             # The real figure comes from a measured trace, so when none is
             # supplied the honest value is 0 rather than a number that happens
@@ -296,11 +291,8 @@ def main() -> int:
                                          basename, a.baseline_impl)
         if len(by_cores) > 1:
             # The same budget `blocking_advice` was given, from the same
-            # function. These two used to compute it separately -- the shard
-            # path inline and correctly, the blocking path via `budget_for` and
-            # wrongly -- so the two recommendations were made against different
-            # thresholds for the same dispatch, and only one of them could be
-            # right.
+            # function, so the shard and blocking recommendations are made
+            # against one threshold for the same dispatch rather than two.
             advice += shard_advice(model, by_cores, dispatch_budget(model, base))
 
     # THE MEASURED RUN, if there is one. The static advice above comes from

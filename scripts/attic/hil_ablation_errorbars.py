@@ -20,12 +20,13 @@ NOTE: this grid uses the fixed controller gain moment_scale=0.0055 (calibrated ~
 low-rate cells are therefore partly under-authority (a gain artifact), so read the rate axis
 as "command rate at the deployed gain", not as a pure Nyquist effect. See dima-hil-gain-calibration.
 """
-import argparse, csv, math
+import argparse, csv, math, os
 from collections import defaultdict
 import numpy as np, matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.colors import Normalize
+_REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))   # repo root, so this runs from any checkout
 
 INK = "#22242a"
 
@@ -41,8 +42,8 @@ def wilson(k, n, z=1.96):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--csv", default="/scratch/agustin/xpurt-dev-sync/results/codesign_feedback/hil_ablation.csv")
-    ap.add_argument("--out", default="/scratch/agustin/xpurt-dev-sync/results/codesign_feedback/hil_ablation_errorbars")
+    ap.add_argument("--csv", default=_REPO + "/results/codesign_feedback/hil_ablation.csv")
+    ap.add_argument("--out", default=_REPO + "/results/codesign_feedback/hil_ablation_errorbars")
     ap.add_argument("--dpi", type=int, default=300)
     a = ap.parse_args()
 

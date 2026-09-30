@@ -21,10 +21,9 @@ later) are rewritten, so no reference is left dangling. A dangling reference
 after the rewrite is a hard error: building on one produces a binary that
 does not match the schedule it claims to run.
 
-Base model names come from the model bank, never a hardcoded list. That list
-used to be a literal ("mlp_control", "dronet", "yolov8_nano"), which silently
-left fused_full_a/_b and vint_a/_b unflattened; any model added to the bank
-is picked up automatically now.
+Base model names come from the model bank, never a hardcoded list: a literal
+("mlp_control", "dronet", "yolov8_nano") leaves fused_full_a/_b and vint_a/_b
+unflattened, while reading the bank picks up any model added to it.
 
 Usage:
   scripts/flatten_schedule_aliases.py IN.json OUT.json [--bank PATH]

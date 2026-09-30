@@ -8,7 +8,7 @@ Deadlines that the optimistic Gantt met can now be missed — that is the runtim
 the loop re-schedules against. Emits a schedule JSON in the SAME format (+ _metrics.json) so it renders
 as an ordinary evolution panel, with the newly-late dispatches ringed by the renderer's deadline check.
 
-This is the software twin of the board measurement (docs/board_calibration_codesign.md); it is NOT a
+This is the software twin of the board measurement (docs/Feature/board_calibration_codesign.md); it is NOT a
 board run. The multiplier lookup mirrors xpu-rt/profile_loader._board_calibration_mult exactly:
 per-dispatch "net/dispatch_id" (exact) → per-op (extrapolated) → aggregate.
 """

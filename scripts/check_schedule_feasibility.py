@@ -216,6 +216,114 @@ def find_illegal_implementations(dispatches, capabilities=None):
     return bad
 
 
+def find_missing_kernels(dispatches, gen_root="gen/mb", target="spacemit_x60"):
+    """Dispatches asking for an implementation that has no kernel for their op.
+
+    WHY THIS IS NOT COVERED BY `find_illegal_implementations`. That check asks whether the
+    CORE can execute the implementation -- cluster 0 has the IME, cluster 1 traps on
+    `smt.vmadot` -- and a conv placed on `ime` at CPU_P#0 passes it. What it cannot see is
+    whether the implementation has a kernel for that op at all. It does not: there is no
+    conv-on-IME kernel, only `linear_s8`/matmul, so the generated binary has no entry point
+    and the walker stops at the first such dispatch with
+
+        FATAL entry 21 of yolov8_nano_64x96 asks for impl 'ime', which this binary was not
+        built with (has: rvv/rvv_c1)
+
+    -- after the cross-build, the deploy and the board's time.
+
+    THE EVIDENCE IS THE PROFILE ROW'S OWN `implementation` COLUMN. The profile tree names its
+    directories after the implementation that was ASKED for, so `ime_x60/.../results.csv`
+    carries a row for every dispatch of a network with no IME kernel, each one reporting
+    `curated[rvv]/...`. A row naming the engine it ran on is the only thing that says a
+    kernel exists; absence of a row says it does not, and so does a row naming another engine.
+
+    AVAILABILITY IS PER OP-KIND AND PER NETWORK, NOT PER WIDTH. The codegen commits one kernel
+    per (model, backend, op), so whether the binary HAS an ime kernel cannot depend on how many
+    harts a dispatch was given. The per-width cells can and do: the IME's win over the sharded
+    RVV kernel changes with width, so `l0.conv` carries an rvv-costed cell at topo_0 and an
+    ime-costed one at topo_0_1_2_3. Reading only topo_0 therefore reported a legal 4-hart IME
+    placement as having no kernel. So the evidence is unioned over every topo the net was
+    profiled at, and the verdict is taken for the dispatch's OP: one row anywhere naming the
+    engine proves the kernel is generated for that op, and no row anywhere still fails --
+    which is the case this check exists for.
+    """
+    import sys as _sys
+    _sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "xpu-rt"))
+    from profile_roots import resolve_path
+    gen_root = resolve_path(gen_root)
+
+    import csv as _csv
+    import glob
+    _glob = glob
+    tables: dict[tuple[str, str], tuple[dict[int, str], set[str], dict[int, str]]] = {}
+
+    def impls_of(net, impl):
+        """(dispatch_id -> best implementation seen, ops proven to have the kernel,
+        dispatch_id -> op)."""
+        key = (net, impl)
+        if key not in tables:
+            pat = os.path.join(gen_root, "profile", f"{impl}_x60", target, net,
+                               "**", "topo_*", "results.csv")
+            rows: dict[int, str] = {}
+            ops: dict[int, str] = {}
+            proven: set[str] = set()
+            for hit in sorted(_glob.glob(pat, recursive=True)):
+                for r in _csv.DictReader(open(hit)):
+                    try:
+                        did = int(r["dispatch_id"])
+                    except (KeyError, ValueError):
+                        continue
+                    named = r.get("implementation", "") or ""
+                    op = (r.get("op") or "").strip()
+                    if op:
+                        ops.setdefault(did, op)
+                    if impl.lower() in named.lower():
+                        rows[did] = named
+                        if op:
+                            proven.add(op)
+                    else:
+                        rows.setdefault(did, named)
+            tables[key] = (rows, proven, ops)
+        return tables[key]
+
+    # A job name is the network with its instance number appended, and stripping trailing
+    # digits takes the network's own digits with it ("yolov8_nano_64x961" -> "yolov8_nano_64x").
+    # The network names are the directories the profile tree was built from, so match against
+    # those, longest first.
+    known = sorted((os.path.basename(x) for x in
+                    glob.glob(os.path.join(gen_root, "profile", "*", target, "*"))),
+                   key=len, reverse=True)
+
+    def net_of(job_name, module_name):
+        if module_name and "$" in str(module_name):
+            return str(module_name).split("$", 1)[0]
+        for n in known:
+            if job_name.startswith(n):
+                return n
+        return job_name.rstrip("0123456789")
+
+    bad = []
+    for key, d in dispatches.items():
+        impl = str(d.get("impl") or "")
+        if not impl or impl.startswith("rvv"):
+            continue           # rvv is the baseline every op is generated for
+        net = net_of(str(d.get("job_name", "")), d.get("module_name"))
+        did = d.get("id")
+        if not net or not isinstance(did, int):
+            continue
+        rows, proven, ops = impls_of(net, impl)
+        named = rows.get(did, "")
+        op = ops.get(did, "")
+        if impl.lower() in named.lower() or (op and op in proven):
+            continue
+        bad.append({"key": key, "impl": impl, "net": net, "dispatch": did,
+                    "why": (f"{net} dispatch {did} ({op or 'unknown op'}) has no {impl} "
+                            f"kernel at any profiled width"
+                            + (f"; its {impl}_x60 row reports {named!r}" if named
+                               else f"; no {impl}_x60 row at all"))})
+    return bad
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--schedule", required=True)
@@ -225,6 +333,11 @@ def main() -> int:
                     help="overlap below this is float noise, not a conflict")
     ap.add_argument("--top", type=int, default=10)
     ap.add_argument("--json", default=None)
+    ap.add_argument("--gen-root", default="gen/mb",
+                    help="profile tree the kernel-availability check reads, as the workload "
+                         "spec names it (hardware.profile.gen_root). The default is the "
+                         "historical one; a spec solved against gen/mb_shard must say so, or "
+                         "every ime dispatch is reported as having no kernel.")
     a = ap.parse_args()
 
     schedule = json.load(open(a.schedule))
@@ -239,6 +352,7 @@ def main() -> int:
     fwd = find_forward_edges(dispatches, a.tol_ms)
     oor = find_out_of_range_targets(dispatches, a.harts_per_cluster)
     illegal = find_illegal_implementations(dispatches)
+    nokernel = find_missing_kernels(dispatches, gen_root=a.gen_root)
 
     makespan = max(float(d.get("start_time", 0.0)) + float(d.get("duration", 0.0))
                    for d in dispatches.values())
@@ -285,6 +399,15 @@ def main() -> int:
         print(f"\nINFEASIBLE: {len(oor)} target(s) outside this machine.")
         for r in oor[:a.top]:
             print(f"    {r['key']}: {r['target']} -- {r['why']}")
+    if nokernel:
+        ok = False
+        print(f"\nINFEASIBLE: {len(nokernel)} dispatch(es) request an "
+              f"implementation that has no kernel for their op; the walker stops at the "
+              f"first one with a FATAL and the run produces nothing.")
+        for r in nokernel[:a.top]:
+            print(f"    {r['key']}: {r['why']}")
+        if len(nokernel) > a.top:
+            print(f"    ... and {len(nokernel) - a.top} more")
     if illegal:
         ok = False
         print(f"\nINFEASIBLE: {len(illegal)} dispatch(es) request an "

@@ -21,8 +21,7 @@ import argparse, os, subprocess, sys, re
 # modelblaster lives inside the zephyr-chipyard-sw submodule. Resolve its
 # checkout path from .gitmodules (the submodule NAME is the stable identifier;
 # the path is whatever .gitmodules says) rather than hardcoding an absolute
-# path -- this file used to carry one, which made it unusable from any clone
-# but the author's.
+# path, which would make it unusable from any other clone.
 _ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 

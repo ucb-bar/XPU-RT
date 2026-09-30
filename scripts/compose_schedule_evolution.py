@@ -272,9 +272,13 @@ def main():
         fig.savefig(a.out + ".pdf", bbox_inches="tight", pad_inches=0.06)
 
     with open(a.out + "_metrics.json", "w") as f:
+        # Record what was DRAWN, not a literal. This said [7.16, 4.35] for every grid
+        # figure, including after --height's default became 3.7 -- so the artifact
+        # reported a size the figure did not have, which is the same class of drift as
+        # a hand-typed caption.
         json.dump({"layout": a.layout,
-                   "authored_figure_size_in": ([7.16, 4.35] if a.layout == "grid" else
-                                                [3.95, 2.12 * n + 0.35]),
+                   "figure_size_in": [round(v, 3) for v in fig.get_size_inches()],
+                   "height_arg": a.height,
                    "panels": rendered}, f, indent=2)
     print("wrote", a.out + ".png/.pdf")
 

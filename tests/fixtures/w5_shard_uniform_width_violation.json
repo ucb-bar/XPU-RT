@@ -1,0 +1,339 @@
+{
+ "metadata": {
+  "_comment": "EXCERPT of scheduled_w5_ffn_dronet_yolo_r2_shard_greedy_profiled.json, the greedy shard schedule whose board build died. Only the dronet dispatches that violate uniform_width_across_instances are kept, so the fixture is small and cannot be invalidated by a rerun writing to schedules/."
+ },
+ "dispatches": {
+  "dronet0_dispatch_0": {
+   "id": 0,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [],
+   "hardware_target": "CPU_E#2+CPU_E#3",
+   "start_time": 0.0,
+   "duration": 1.423458,
+   "job_name": "dronet0",
+   "module_name": "dronet$dispatch_0_rvv_x60_conv2d_s8_N1xIC3xIH112xIW112xOC32xOH56xOW56xKH3xKW3xSH2xSW2xPH1xPW1",
+   "release_policy": "phase_locked",
+   "release_us": 0.0,
+   "time_dep_mode": "soft",
+   "impl": "rvv"
+  },
+  "dronet0_dispatch_3": {
+   "id": 3,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet0_dispatch_2"
+   ],
+   "hardware_target": "CPU_E#2+CPU_E#3",
+   "start_time": 2.1657079999999995,
+   "duration": 1.031208,
+   "job_name": "dronet0",
+   "module_name": "dronet$dispatch_3_rvv_x60_conv2d_batchnorm2d_s8_N1xIC32xIH27xIW27xOC32xOH14xOW14xKH3xKW3xSH2xSW2xPH1xPW1",
+   "time_dependency": "dronet0_dispatch_0",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "impl": "rvv"
+  },
+  "dronet0_dispatch_8": {
+   "id": 8,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet0_dispatch_7"
+   ],
+   "hardware_target": "CPU_P#0+CPU_P#1+CPU_P#2+CPU_P#3",
+   "start_time": 3.9334159999999994,
+   "duration": 0.283375,
+   "job_name": "dronet0",
+   "module_name": "dronet$dispatch_8_rvv_x60_conv2d_batchnorm2d_s8_N1xIC32xIH14xIW14xOC64xOH7xOW7xKH3xKW3xSH2xSW2xPH1xPW1",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "impl": "rvv"
+  },
+  "dronet0_dispatch_9": {
+   "id": 9,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet0_dispatch_8"
+   ],
+   "hardware_target": "CPU_P#0+CPU_P#1+CPU_P#2+CPU_P#3",
+   "start_time": 4.216791,
+   "duration": 0.367417,
+   "job_name": "dronet0",
+   "module_name": "dronet$dispatch_9_rvv_x60_conv2d_s8_N1xIC64xIH7xIW7xOC64xOH7xOW7xKH3xKW3xSH1xSW1xPH1xPW1",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "impl": "rvv"
+  },
+  "dronet1_dispatch_0": {
+   "id": 0,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [],
+   "hardware_target": "CPU_E#2+CPU_E#3",
+   "start_time": 13.341707999999997,
+   "duration": 1.423458,
+   "job_name": "dronet1",
+   "module_name": "dronet$dispatch_0_rvv_x60_conv2d_s8_N1xIC3xIH112xIW112xOC32xOH56xOW56xKH3xKW3xSH2xSW2xPH1xPW1",
+   "time_dependency": "yolov8_nano_64x960_dispatch_5",
+   "release_policy": "phase_locked",
+   "release_us": 12000.0,
+   "time_dep_mode": "soft",
+   "impl": "rvv"
+  },
+  "dronet1_dispatch_3": {
+   "id": 3,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet1_dispatch_2"
+   ],
+   "hardware_target": "CPU_P#1",
+   "start_time": 15.751957999999997,
+   "duration": 1.167,
+   "job_name": "dronet1",
+   "module_name": "dronet$dispatch_3_rvv_x60_conv2d_batchnorm2d_s8_N1xIC32xIH27xIW27xOC32xOH14xOW14xKH3xKW3xSH2xSW2xPH1xPW1",
+   "time_dependency": "fused_full3_dispatch_7",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "impl": "rvv"
+  },
+  "dronet1_dispatch_8": {
+   "id": 8,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet1_dispatch_7"
+   ],
+   "hardware_target": "CPU_E#0+CPU_E#1+CPU_E#2+CPU_E#3",
+   "start_time": 17.717707999999995,
+   "duration": 0.283375,
+   "job_name": "dronet1",
+   "module_name": "dronet$dispatch_8_rvv_x60_conv2d_batchnorm2d_s8_N1xIC32xIH14xIW14xOC64xOH7xOW7xKH3xKW3xSH2xSW2xPH1xPW1",
+   "time_dependency": "yolov8_nano_64x960_dispatch_61",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "impl": "rvv"
+  },
+  "dronet1_dispatch_9": {
+   "id": 9,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet1_dispatch_8"
+   ],
+   "hardware_target": "CPU_E#2+CPU_E#3",
+   "start_time": 18.001082999999994,
+   "duration": 0.375083,
+   "job_name": "dronet1",
+   "module_name": "dronet$dispatch_9_rvv_x60_conv2d_s8_N1xIC64xIH7xIW7xOC64xOH7xOW7xKH3xKW3xSH1xSW1xPH1xPW1",
+   "time_dependency": "dronet1_dispatch_0",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "impl": "rvv"
+  },
+  "dronet2_dispatch_0": {
+   "id": 0,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [],
+   "hardware_target": "CPU_E#0+CPU_E#1+CPU_E#2+CPU_E#3",
+   "start_time": 24.0,
+   "duration": 1.292625,
+   "job_name": "dronet2",
+   "module_name": "dronet$dispatch_0_rvv_x60_conv2d_s8_N1xIC3xIH112xIW112xOC32xOH56xOW56xKH3xKW3xSH2xSW2xPH1xPW1",
+   "time_dependency": "yolov8_nano_64x960_dispatch_79",
+   "release_policy": "phase_locked",
+   "release_us": 24000.0,
+   "time_dep_mode": "soft",
+   "impl": "rvv"
+  },
+  "dronet2_dispatch_3": {
+   "id": 3,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet2_dispatch_2"
+   ],
+   "hardware_target": "CPU_E#0+CPU_E#1+CPU_E#2+CPU_E#3",
+   "start_time": 26.034875000000003,
+   "duration": 0.943875,
+   "job_name": "dronet2",
+   "module_name": "dronet$dispatch_3_rvv_x60_conv2d_batchnorm2d_s8_N1xIC32xIH27xIW27xOC32xOH14xOW14xKH3xKW3xSH2xSW2xPH1xPW1",
+   "time_dependency": "dronet2_dispatch_1",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "impl": "rvv"
+  },
+  "dronet2_dispatch_8": {
+   "id": 8,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet2_dispatch_7"
+   ],
+   "hardware_target": "CPU_P#0+CPU_P#1",
+   "start_time": 27.71525,
+   "duration": 0.32575,
+   "job_name": "dronet2",
+   "module_name": "dronet$dispatch_8_rvv_x60_conv2d_batchnorm2d_s8_N1xIC32xIH14xIW14xOC64xOH7xOW7xKH3xKW3xSH2xSW2xPH1xPW1",
+   "time_dependency": "dronet2_dispatch_2",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "impl": "rvv"
+  },
+  "dronet2_dispatch_9": {
+   "id": 9,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet2_dispatch_8"
+   ],
+   "hardware_target": "CPU_E#0+CPU_E#1+CPU_E#2+CPU_E#3",
+   "start_time": 28.041,
+   "duration": 0.367417,
+   "job_name": "dronet2",
+   "module_name": "dronet$dispatch_9_rvv_x60_conv2d_s8_N1xIC64xIH7xIW7xOC64xOH7xOW7xKH3xKW3xSH1xSW1xPH1xPW1",
+   "time_dependency": "dronet2_dispatch_10",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "impl": "rvv"
+  },
+  "dronet3_dispatch_0": {
+   "id": 0,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [],
+   "hardware_target": "CPU_E#0+CPU_E#1+CPU_E#2+CPU_E#3",
+   "start_time": 36.0,
+   "duration": 1.292625,
+   "job_name": "dronet3",
+   "module_name": "dronet$dispatch_0_rvv_x60_conv2d_s8_N1xIC3xIH112xIW112xOC32xOH56xOW56xKH3xKW3xSH2xSW2xPH1xPW1",
+   "time_dependency": "ffn_block0_dispatch_3",
+   "release_policy": "phase_locked",
+   "release_us": 36000.0,
+   "time_dep_mode": "soft",
+   "impl": "rvv"
+  },
+  "dronet3_dispatch_3": {
+   "id": 3,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet3_dispatch_2"
+   ],
+   "hardware_target": "CPU_E#0+CPU_E#1+CPU_E#2+CPU_E#3",
+   "start_time": 38.034875,
+   "duration": 0.943875,
+   "job_name": "dronet3",
+   "module_name": "dronet$dispatch_3_rvv_x60_conv2d_batchnorm2d_s8_N1xIC32xIH27xIW27xOC32xOH14xOW14xKH3xKW3xSH2xSW2xPH1xPW1",
+   "time_dependency": "dronet3_dispatch_1",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "impl": "rvv"
+  },
+  "dronet3_dispatch_8": {
+   "id": 8,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet3_dispatch_7"
+   ],
+   "hardware_target": "CPU_P#0+CPU_P#1+CPU_P#2+CPU_P#3",
+   "start_time": 39.71525,
+   "duration": 0.283375,
+   "job_name": "dronet3",
+   "module_name": "dronet$dispatch_8_rvv_x60_conv2d_batchnorm2d_s8_N1xIC32xIH14xIW14xOC64xOH7xOW7xKH3xKW3xSH2xSW2xPH1xPW1",
+   "time_dependency": "dronet2_dispatch_14",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "impl": "rvv"
+  },
+  "dronet3_dispatch_9": {
+   "id": 9,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet3_dispatch_8"
+   ],
+   "hardware_target": "CPU_E#0+CPU_E#1+CPU_E#2+CPU_E#3",
+   "start_time": 39.998625,
+   "duration": 0.367417,
+   "job_name": "dronet3",
+   "module_name": "dronet$dispatch_9_rvv_x60_conv2d_s8_N1xIC64xIH7xIW7xOC64xOH7xOW7xKH3xKW3xSH1xSW1xPH1xPW1",
+   "time_dependency": "dronet3_dispatch_10",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "impl": "rvv"
+  },
+  "dronet4_dispatch_0": {
+   "id": 0,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [],
+   "hardware_target": "CPU_E#2+CPU_E#3",
+   "start_time": 48.0,
+   "duration": 1.423458,
+   "job_name": "dronet4",
+   "module_name": "dronet$dispatch_0_rvv_x60_conv2d_s8_N1xIC3xIH112xIW112xOC32xOH56xOW56xKH3xKW3xSH2xSW2xPH1xPW1",
+   "time_dependency": "yolov8_nano_64x960_dispatch_81",
+   "release_policy": "phase_locked",
+   "release_us": 48000.0,
+   "time_dep_mode": "soft",
+   "impl": "rvv"
+  },
+  "dronet4_dispatch_3": {
+   "id": 3,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet4_dispatch_2"
+   ],
+   "hardware_target": "CPU_P#0+CPU_P#1+CPU_P#2+CPU_P#3",
+   "start_time": 50.175916,
+   "duration": 0.943875,
+   "job_name": "dronet4",
+   "module_name": "dronet$dispatch_3_rvv_x60_conv2d_batchnorm2d_s8_N1xIC32xIH27xIW27xOC32xOH14xOW14xKH3xKW3xSH2xSW2xPH1xPW1",
+   "time_dependency": "dronet3_dispatch_14",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "impl": "rvv"
+  },
+  "dronet4_dispatch_8": {
+   "id": 8,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet4_dispatch_7"
+   ],
+   "hardware_target": "CPU_P#0+CPU_P#1",
+   "start_time": 51.856291,
+   "duration": 0.32575,
+   "job_name": "dronet4",
+   "module_name": "dronet$dispatch_8_rvv_x60_conv2d_batchnorm2d_s8_N1xIC32xIH14xIW14xOC64xOH7xOW7xKH3xKW3xSH2xSW2xPH1xPW1",
+   "time_dependency": "dronet3_dispatch_20",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "impl": "rvv"
+  },
+  "dronet4_dispatch_9": {
+   "id": 9,
+   "ordinal": 1,
+   "total": 1,
+   "dependencies": [
+    "dronet4_dispatch_8"
+   ],
+   "hardware_target": "CPU_E#0+CPU_E#1+CPU_E#2+CPU_E#3",
+   "start_time": 52.182041,
+   "duration": 0.367417,
+   "job_name": "dronet4",
+   "module_name": "dronet$dispatch_9_rvv_x60_conv2d_s8_N1xIC64xIH7xIW7xOC64xOH7xOW7xKH3xKW3xSH1xSW1xPH1xPW1",
+   "time_dependency": "dronet4_dispatch_10",
+   "release_policy": "immediate",
+   "time_dep_mode": "hard",
+   "impl": "rvv"
+  }
+ }
+}

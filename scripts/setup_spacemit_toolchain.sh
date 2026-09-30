@@ -41,10 +41,9 @@ PATH_ONLY=0
 say() { echo "$@" >&2; }
 
 # Search order: an explicit install (SPACEMIT_TOOLCHAIN_ROOT), then ours.
-# There used to be a third candidate under merlin/build_tools/, from when
-# merlin was a submodule here; the 6 GB tree it pointed at now lives at
-# DEST_ROOT and merlin is gone, so the fallback would only ever have found
-# a stale copy on a machine that predates the move.
+# merlin/build_tools/ is deliberately not a candidate: merlin is no longer a
+# submodule and the 6 GB tree lives at DEST_ROOT, so that path could only
+# find a stale copy on a machine that predates the move.
 CANDIDATES=(
     "${DEST_ROOT}/${DIRNAME}"
 )

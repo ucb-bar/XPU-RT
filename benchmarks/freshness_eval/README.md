@@ -18,8 +18,9 @@ The only environment with the full solver stack is the `merlin-dev` conda env
 The repo `.venv` lacks mosek and ortools.
 
 ```bash
-PY=/scratch2/agustin/miniforge3/envs/merlin-dev/bin/python
-export PYTHONPATH=/scratch2/agustin/XPU-RT:/scratch2/agustin/XPU-RT/xpu-rt
+XPURT=<your XPU-RT checkout>
+PY=<merlin-dev env>/bin/python   # e.g. $(conda run -n merlin-dev which python)
+export PYTHONPATH=$XPURT:$XPURT/xpu-rt
 ```
 
 `mosek.lic` must be present at the repo root (gitignored — it is machine-local).
@@ -35,16 +36,16 @@ them from ModelBlaster with:
 
 ```bash
 # dispatch graphs (ModelBlaster's own emitter)
-cd /scratch2/agustin/ModelBlaster
+cd $XPURT/ModelBlaster
 for m in dronet mlp_control yolov8_nano_64; do
   PYTHONPATH=. $PY -m pipeline.emit_dispatch_graph \
       --ir examples/$m/int8/generated/graph.json \
-      --out-root /scratch2/agustin/XPU-RT/gen/vmfb \
+      --out-root $XPURT/gen/vmfb \
       --target firesim_gemmini_opu --hw gemmini
 done
 
 # per-dispatch costs
-cd /scratch2/agustin/XPU-RT
+cd $XPURT
 $PY scripts/export_profile_db_to_results_csv.py
 ```
 

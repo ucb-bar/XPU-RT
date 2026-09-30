@@ -114,10 +114,10 @@ def main() -> int:
             #                        SHIPPING build: unfusing is -19.1% and was
             #                        accepted at term 5.
             #
-            # This refusal used to have no second branch, and that is why the
-            # 19% was invisible: the belief that a curated fused kernel beats
-            # its constituents was encoded in the producer AND here, so fixing
-            # only the producer left the bridge still refusing.
+            # The second branch is what lets the 19% be found: the belief that
+            # a curated fused kernel beats its constituents must not be encoded
+            # here as well as in the producer, or the bridge keeps refusing what
+            # the producer proposes.
             print(f"REFUSED dispatch {did}: evidence says the fused op ran "
                   f"{fused_impl!r} and carries no runtime-share probe. "
                   f"Unfusing on any other basis loses the epilogue fusion and "

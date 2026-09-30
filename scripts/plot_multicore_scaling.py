@@ -41,7 +41,7 @@ import figstyle  # noqa: E402
 
 PROFILE_ROOT = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-    "gen_mb", "profile")
+    "gen/mb", "profile")
 
 #: The four widths, in the order they are drawn. The label is what a reader
 #: needs (how many harts); the tag is what the tree is keyed on.

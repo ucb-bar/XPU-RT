@@ -15,7 +15,7 @@ Three panels, because the interesting part is not the headline:
      gain is the critical path, and only if the two land on different harts.
   c  the methodology trap. The same split measures -0.2% or +13.7% depending on
      which baseline it is compared against, and one of those baselines is
-     stale. Panel c is why this file compares against gen_mb and not against
+     stale. Panel c is why this file compares against gen/mb and not against
      the backup sitting next to the split profile.
 
 Everything plotted is MEASURED. Nothing here is predicted or modelled.

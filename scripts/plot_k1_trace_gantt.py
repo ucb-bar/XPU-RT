@@ -71,7 +71,7 @@ def model_of(job_name: str, row: dict | None = None) -> str:
 
     Prefers the trace's own `network` column. Stripping trailing digits off
     `<network><instance>` is ambiguous the moment a network name ends in a
-    digit -- `yolov8_nano_64x96` is a real one -- and it silently produced a
+    digit -- `yolov8_nano_64x96` is a real one -- and would produce a
     `yolov8_nano_64x` series, in the fallback grey, for the model carrying the
     workload in the featured figure.
     """
@@ -87,8 +87,8 @@ K1_RDTIME_HZ = k1_trace.K1_RDTIME_HZ
 def read_trace(path: str) -> List[dict]:
     """Both producers' schemas, normalised in `xpu-rt/k1_trace.py`.
 
-    It used to live here, which made this the only tool that could read a
-    ModelBlaster trace -- `join_k1_trace.py` sat next to it unable to read one.
+    The reader lives in the shared module rather than here, so every tool that
+    reads a ModelBlaster trace (e.g. `join_k1_trace.py`) uses the same one.
     """
     return k1_trace.read(path)
 

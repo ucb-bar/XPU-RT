@@ -10,8 +10,9 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-OUT = os.path.join(os.environ.get("XPURT_ROOT") or os.path.abspath(
-    os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..")), "plots")
+_REPO = os.environ.get("XPURT_ROOT") or os.path.abspath(
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
+OUT = os.path.join(_REPO, "plots")
 S = os.environ.get("XPURT_STUDY_DATA") or os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "data")
 
@@ -234,7 +235,7 @@ def fig5():
             best.setdefault(r["spec"], {})[r["solver"]] = ok
 
     def has_gemmini(spec):
-        d = _json.load(open(f"/scratch2/dima/misc_sw/XPU-RT/data/toplevel/{spec}.json"))
+        d = _json.load(open(os.path.join(_REPO, "data", "toplevel", f"{spec}.json")))
         lanes = (d.get("hardware", {}).get("profile_hw", {}) or {}).values()
         return any("gemmini" in str(v).lower() for v in lanes)
 

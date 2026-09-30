@@ -98,9 +98,9 @@
 #   predicted_start_ms=320.000000 and actual_start_cycles=320000. The 60 MHz
 #   in the bitstream name is the HOST FPGA emulation frequency and has
 #   nothing to do with this; using 60 scales every result by 16.7x.
-#   (RUNBOOK.md used to say "1 GHz target clock, 1 cycle == 1 ns", which is
-#   wrong in detail -- the divisor its own recorded fpga_results.json used
-#   was 1000, not 1e6. Corrected in the RUNBOOK alongside this script.)
+#   (A "1 GHz target clock, 1 cycle == 1 ns" reading does not match the data:
+#   the divisor the recorded fpga_results.json uses is 1000, not 1e6. The
+#   RUNBOOK states the same convention as this script.)
 #
 # * Sentinel rows. Trace rows with dispatch_id < 0 and a zero actual
 #   timestamp never executed (fused/chunk pseudo-ops). They are dropped
@@ -361,8 +361,8 @@ log "  ${#POINTS[@]} validated point(s): ${POINTS[*]}"
 # --- Step 2: flatten rate-group aliases (RUNBOOK section 2) ----------------
 # REQUIRED. The generator names rate groups dronet_a0/fused_full_b1/...;
 # ingest_xpurt_schedule only knows base model names. Base names come from
-# the model bank, never a hardcoded list -- a hardcoded triple is exactly
-# what silently left fused_full/vint aliases unflattened before.
+# the model bank, never a hardcoded list -- a hardcoded triple leaves the
+# fused_full/vint aliases unflattened.
 if [[ -z "${SKIP_FLATTEN}" ]]; then
     log "step 2/6: flattening rate-group aliases -> ${FLAT_DIR}"
     for point in "${POINTS[@]}"; do

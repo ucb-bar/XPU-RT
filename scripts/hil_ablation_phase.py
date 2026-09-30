@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 """HIL — two views of one mechanism, sharing the command-rate axis:
 
-  LEFT  : the schedule's worst-case loop response sets the fastest command rate it can sustain
-          (rate_max = 1000 / worst_response).  The AOT feedback loop cuts response 8.00 -> 4.89 ms, lifting
-          the sustainable rate 125 -> 204 Hz; ROS per-net pinning (12.40 ms) tops out at 81 Hz.
-  RIGHT : a flight PHASE DIAGRAM (real Isaac flights, ZOH latency) — at each command rate, how fast the drone
-          can fly before it crashes. The three schedulers' rates carry straight across from the left panel:
-          ROS (81 Hz) sits on the crash frontier; XPU-RT (125 / 204 Hz) sits clear above it.
+  LEFT  : the loop response each runtime actually delivers sets the fastest command rate it can
+          sustain (rate_max = 1000 / control gap). Both values come from scripts/measured_timing.py,
+          which holds the board measurements and their provenance — and both are measured on the
+          SAME workload, so the two bars are comparable. A solver's predicted response is a
+          different quantity and does not belong on this axis beside a measured one.
+  RIGHT : a flight PHASE DIAGRAM (real Isaac flights, ZOH latency) — at each command rate, how fast
+          the drone can fly before it crashes. The runtimes' rates carry straight across from the
+          left panel; the rates are read from the constants, never written into the caption.
 """
 import argparse, csv, os
 from collections import defaultdict
@@ -17,9 +19,11 @@ import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 
 # measured worst-case per-loop response (ms) -> sustainable rate = 1000/response
-SCHEDS = [("ROS · per-net pinning", 12.40, "#e2231a"),
-          ("XPU-RT · greedy", 8.00, "#2f6fb0"),
-          ("XPU-RT · shard (feedback)", 4.89, "#1f9e5a")]
+from measured_timing import XPURT, ROS       # measured on the K1; see that module for provenance
+
+SCHEDS = [("ROS · default executor", ROS["ctrl_gap_mean_ms"], "#e2231a"),
+          ("ROS · multi-threaded executor", ROS["ctrl_gap_mean_mt_ms"], "#2f6fb0"),
+          ("XPU-RT · shard (feedback)", XPURT["ctrl_gap_mean_ms"], "#1f9e5a")]
 
 
 def upsample(speeds, lf, Z, ns=140, nf=160):
@@ -71,7 +75,8 @@ def main():
         axL.scatter([w], [np.log10(r)], s=170, color=col, edgecolors="white", linewidths=1.8, zorder=6, clip_on=False)
         axL.annotate(f"{w:.2f} ms", (w, ymin), textcoords="offset points", xytext=(0, 6), ha="center", va="bottom",
                      fontsize=11.5, weight="bold", color=col, zorder=7)
-    axL.annotate("", xy=(4.89, np.log10(1000/4.89)), xytext=(8.0, np.log10(1000/8.0)),
+    axL.annotate("", xy=(XPURT["ctrl_gap_mean_ms"], np.log10(1000/XPURT["ctrl_gap_mean_ms"])),
+             xytext=(ROS["ctrl_gap_mean_ms"], np.log10(1000/ROS["ctrl_gap_mean_ms"])),
                  arrowprops=dict(arrowstyle="-|>", color="#1f9e5a", lw=3), zorder=7)
     axL.text(6.4, np.log10(178), "feedback loop\n−39% response", color="#1f9e5a", fontsize=11, weight="bold",
              ha="center", va="center", linespacing=1.2,
@@ -114,7 +119,8 @@ def main():
                loc="upper left", fontsize=11, framealpha=0.97, bbox_to_anchor=(0.008, 0.995))
 
     fig.suptitle("Fly faster — the schedule's worst-response sets the command rate, and the rate decides fly vs crash: "
-                 "feedback (4.89 ms, 204 Hz) flies clear while ROS (12.40 ms, 81 Hz) sits on the crash edge",
+                 f"XPU-RT ({XPURT['ctrl_gap_mean_ms']:.2f} ms, {1000/XPURT['ctrl_gap_mean_ms']:.0f} Hz) against "
+                 f"ROS ({ROS['ctrl_gap_mean_ms']:.2f} ms, {1000/ROS['ctrl_gap_mean_ms']:.0f} Hz)",
                  fontsize=15, weight="bold", x=0.075, ha="left")
     fig.savefig(a.out + ".png", dpi=160, bbox_inches="tight")
     fig.savefig(a.out + ".pdf", bbox_inches="tight")

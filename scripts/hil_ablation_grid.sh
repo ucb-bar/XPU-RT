@@ -8,7 +8,7 @@ set -u
 # All paths overridable by env. ROOT = the XPU-RT repo root (this script lives in $ROOT/scripts).
 ROOT="${XPURT_REPO:-$(cd "$(dirname "$0")/.." && pwd)}"
 OUT="${HIL_OUTDIR:-$ROOT/results/codesign_feedback/hil_grid}"; mkdir -p "$OUT/tmp"; export TMPDIR="$OUT/tmp"
-PY="${ISAAC_PY:-python}"                         # conda env_isaaclab python (see docs/REPRODUCE.md)
+PY="${ISAAC_PY:-python}"                         # conda env_isaaclab python (see docs/Artifact/REPRODUCE.md)
 W="${HIL_WEIGHTS:-$ROOT/sims/models/warehouse/nav_fused_v12_cnn.pt}"
 CSV=$OUT/hil_ablation.csv
 SUMMARY=$OUT/GRID_SUMMARY.txt; : > "$SUMMARY"

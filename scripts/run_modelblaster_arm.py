@@ -48,8 +48,8 @@ PY = os.environ.get("XPURT_PY") or (_venv if os.path.exists(_venv) else sys.exec
 MB = os.environ.get("MB_ROOT") or os.path.join(REPO, "ModelBlaster")
 
 # The appliers do not agree on what to call the model: apply_shard_hint.py takes
-# --network, the other three take --model. Passing the wrong one is a usage error the
-# arm used to report as "applier refused", which reads like a rejected rewrite.
+# --network, the other three take --model. Passing the wrong one is a usage error, which
+# must not be reported as "applier refused" (that reads like a rejected rewrite).
 APPLIER_MODEL_FLAG = {"shard": "--network"}
 
 # verb -> (bridge script, applier relative to ModelBlaster, hint contract)
@@ -196,7 +196,7 @@ def main() -> int:
     ap.add_argument("--ir", action="append", default=[], metavar="MODEL=PATH",
                     help="ModelBlaster graph.json per model (repeatable)")
     ap.add_argument("--out-dir", default="results/modelblaster_arm/run")
-    ap.add_argument("--gen-root", default="gen_mb")
+    ap.add_argument("--gen-root", default="gen/mb")
     ap.add_argument("--target", default="spacemit_x60")
     ap.add_argument("--models", default=None, help="passed through to emit_compile_advice")
     ap.add_argument("--impls", default=None, help="passed through to emit_compile_advice")

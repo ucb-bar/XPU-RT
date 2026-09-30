@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Regenerate the headline co-design figures from on-disk artifacts.
 # CPU-only steps run here; GPU steps (Isaac flight data for the warehouse mega plots + HIL scatter grid) are
-# NOTED and skipped unless their inputs already exist. See docs/figure_runbook.md for full commands.
+# NOTED and skipped unless their inputs already exist. See docs/Evaluation/figure_runbook.md for full commands.
 set -u
 REPO="${XPURT_REPO:-$(cd "$(dirname "$0")/.." && pwd)}"
 PY="${XPURT_PY:-$REPO/.venv/bin/python}"
@@ -40,12 +40,14 @@ if [ ! -f $R/sensor_evo/panels.json ]; then
 fi
 if [ -f $R/sensor_evo/panels.json ]; then
   say "schedule_evolution_mega"
+  # --height is the committed figure's geometry, not a default: without it the composer draws the
+  # same numbers at 3.7 in and the paper's copy no longer reproduces (verify_schedule_evolution.py).
   $PY scripts/compose_schedule_evolution.py --spec $EVO --panels-json $R/sensor_evo/panels.json \
-    --layout grid || true
+    --layout grid --height 4.35 || true
 fi
 
 # 4. HIL command-rate PHASE DIAGRAM — needs the grid CSV (committed copy at $R/hil_ablation.csv; regen via
-#    scripts/hil_ablation_grid.sh on a GPU box with ISAAC_PY set — see docs/figure_runbook.md §2).
+#    scripts/hil_ablation_grid.sh on a GPU box with ISAAC_PY set — see docs/Evaluation/figure_runbook.md §2).
 CSV=$R/hil_ablation.csv; [ -f $R/hil_grid/hil_ablation.csv ] && CSV=$R/hil_grid/hil_ablation.csv
 if [ -f "$CSV" ]; then
   say "hil_ablation_phase"; $PY scripts/hil_ablation_phase.py --csv "$CSV" || true
@@ -67,7 +69,33 @@ if [ -f $CFD/figure_data.npz ] && [ -f $CFD/clean_bg.npz ]; then
   say "mega_warehouse_ros"; $ISAAC sims/scripts/compose_mega_figure.py --data-dir $CFD \
     --gantt $R/gantt_annotated_ros.png --crash-step 779 --out $R/mega_warehouse_ros || true
 else
-  echo "(skip warehouse figures: need Isaac flight dumps; see docs/figure_runbook.md §2-4)"
+  echo "(skip warehouse figures: need Isaac flight dumps; see docs/Evaluation/figure_runbook.md §2-4)"
+fi
+
+# 7. loop_ablation — reads an ablation_summary.json only, never re-solves. The summary is
+# produced by scripts/ablate_feedback_loops.py (hours for a CP-SAT arm), so this renders
+# whatever is on disk and says so when there is nothing.
+#
+# Candidates in PREFERENCE order, newest experiment first. The ladder is the current
+# population (see docs/Evaluation/figure_runbook.md §7 for why the 25-spec corpus answers a different
+# question), and results/loop_ablation holds the older corpus-wide greedy-only run. Taking
+# the first that exists means a fresh ladder run supersedes the old one without anyone
+# having to remember to edit this file, and the chosen summary is PRINTED so the figure
+# can never quietly come from a source the reader did not expect.
+ABL_SUMMARY=""
+for _cand in results/loop_ablation_ladder_v2 results/loop_ablation_ladder \
+             results/loop_ablation; do
+  if [ -f "$REPO/$_cand/ablation_summary.json" ]; then
+    ABL_SUMMARY="$_cand/ablation_summary.json"; break
+  fi
+done
+if [ -n "$ABL_SUMMARY" ]; then
+  say "loop_ablation (inner vs outer, per solver) from $ABL_SUMMARY"
+  $PY scripts/plot_loop_ablation.py \
+    --summary "$ABL_SUMMARY" \
+    --out-dir "$R" --stem loop_ablation || true
+else
+  echo "(skip loop_ablation: no ablation_summary.json under results/loop_ablation*; see docs/Evaluation/figure_runbook.md §7)"
 fi
 
 say "done — figures in $R"

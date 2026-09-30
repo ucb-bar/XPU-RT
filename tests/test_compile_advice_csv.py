@@ -2,14 +2,14 @@
 
 Two regressions are guarded here.
 
-**1. `compile_advice` could only read one of the two profile producers.**
+**1. `compile_advice` must read both profile producers.**
 `load_profiles` reads `profile.jsonl`, which the retired IREE path wrote.
 ModelBlaster's `pipeline/profile_writer.py` writes an IREE-shape `results.csv`
 at a path with an extra spec directory, and the corrected `rvv_x60` builds --
-the ones where curated kernels are no longer silently falling back to the scalar
-reference -- exist ONLY in that format. Regenerating advice against the
-corrected costs was therefore impossible, and the advisor kept citing costs from
-a build labelled `rvv` that had run `scalar`.
+the ones where curated kernels do not fall back to the scalar reference --
+exist ONLY in that format. Reading only `profile.jsonl` makes advice against
+those costs impossible and leaves the advisor citing costs from a build
+labelled `rvv` that ran `scalar`.
 
 **2. `cv_pct` must stay absent for a single-sample profile.** `results.csv`
 carries one `mean_time` per dispatch. Inventing a `cv_pct` of 0 would promote

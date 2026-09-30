@@ -62,15 +62,15 @@ CORES = [f"CPU_P#{i}" for i in range(4)] + [f"CPU_E#{i}" for i in range(4)]
 #:
 #: The historical figure this file produced was captioned "B4 + sharding,
 #: after the scheduler fed evidence back" and drawn from IREE measurements.
-#: At that time ModelBlaster's `parallel_conv2d_s8` sliced IHWOC-packed weights
-#: with an OIHW offset formula, so the claimed ModelBlaster sharding path had
-#: not actually run. ModelBlaster now repacks conv weights for the exact width
+#: In that ModelBlaster version `parallel_conv2d_s8` sliced IHWOC-packed weights
+#: with an OIHW offset formula, so that figure is not evidence of the ModelBlaster
+#: sharding path. ModelBlaster repacks conv weights for the exact width
 #: selected by the schedule, and the exact-cycle experiment exercises that path
-#: on K1. Keep the historical provenance warning: the old IREE trace still
-#: cannot be relabelled as ModelBlaster evidence.
+#: on K1. The provenance warning stays: an IREE-era trace cannot be relabelled
+#: as ModelBlaster evidence.
 #:
-#: Detecting provenance and stamping it on the output is the cheap half of the
-#: fix. The other half -- a ModelBlaster rung ladder -- needs a schema adapter,
+#: Detecting provenance and stamping it on the output is the cheap half of
+#: keeping the two apart. The other half -- a ModelBlaster rung ladder -- needs a schema adapter,
 #: because these two traces share no column names; `plot_k1_trace_gantt.py`
 #: already has `_normalise_modelblaster` for that.
 IREE_ERA = "iree"
@@ -148,14 +148,12 @@ def pct(xs, p):
 
 
 # ------------------------------------------------------- reusable Gantt render
-# One renderer, parameterised. This block used to be the body of figure1() with
-# the rungs, the two model colours, the eight K1 cores and the 140 ms window all
-# hardcoded, so anything else that needed a core-lane Gantt wrote its own -- and
-# by now `xpu-rt/plot_gantt.py` (terminal) and the retired merlin
-# `analysis/plot_dispatch_trace.py` already disagree with it about the schema.
-# The policy sweep needs exactly this picture per solver, so the picture became
-# a function and figure1 became its first caller. Nothing about the published
-# figure changed: same lanes, same window, same styling.
+# One renderer, parameterised: the rungs, the two model colours, the eight K1
+# cores and the 140 ms window are arguments, so every core-lane Gantt shares one
+# schema (`xpu-rt/plot_gantt.py` (terminal) and the retired merlin
+# `analysis/plot_dispatch_trace.py` each use their own). The policy sweep needs
+# exactly this picture per solver, and figure1 is its first caller with the same
+# lanes, window and styling as the published figure.
 
 #: Okabe-Ito, minus the two already spoken for below.
 PALETTE = [figstyle.GREEN, figstyle.PURPLE, figstyle.SKY,
@@ -563,7 +561,7 @@ def main():
     provenance = distinct.pop()
     print(f"trace provenance: {provenance}")
 
-    # The prefix is part of the fix. A file called
+    # The prefix carries the provenance into the filename. A file called
     # `k1_schedule_evolution.png` says nothing about which toolchain it came
     # from; `iree_era_k1_schedule_evolution.png` cannot be mistaken.
     prefix = "iree_era_" if provenance == IREE_ERA else ""

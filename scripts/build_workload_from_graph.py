@@ -142,10 +142,9 @@ def main() -> int:
                     default=None,
                     required=True,
                     type=pathlib.Path,
-                    help="directory holding manifest.json. This used to "
-                         "default to a hardcoded merlin build path on one "
-                         "machine; required now, because a default that only "
-                         "resolves on the author's filesystem is a worse "
+                    help="directory holding manifest.json. Required rather "
+                         "than defaulted, because a default that only "
+                         "resolves on one machine's filesystem is a worse "
                          "failure than asking.")
     ap.add_argument("--cost-table",
                     default=_XPU_RT_ROOT / "qnn_scheduler" / "qrb5165_costs.json",

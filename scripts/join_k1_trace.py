@@ -61,9 +61,9 @@ def audit_alignment(disp, trace):
     The trace's `dispatch_id` is a record SLOT and drifts from the IR's id by
     the number of zero-cost ops before it (`k1_trace.ir_slot_map`), so a join
     on the id alone compares different ops. Both numbers are real, which is
-    what makes it convincing: yolov8_nano dispatch 81 reported "predicted
-    17.465 ms, measured 0.577 ms" -- a 96.8% error that was entirely a
-    mislabel.
+    what makes such a join convincing: joined by id, yolov8_nano dispatch 81
+    reads "predicted 17.465 ms, measured 0.577 ms" -- a 96.8% error that is
+    entirely a mislabel.
 
     The op KIND settles it without needing the IR: the schedule carries it in
     `module_name`, the trace in its own `op` column.

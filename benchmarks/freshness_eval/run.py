@@ -170,8 +170,8 @@ POLICIES: Dict[str, Dict] = {
         #
         # NOTE these are profile-hw names (hardware.profile_hw VALUES), not
         # cluster names: profile_loader compares preferred_hw against combo_hw,
-        # which holds "gemmini"/"rvv_opu". Naming the cluster instead used to
-        # penalise every combination silently; it now raises.
+        # which holds "gemmini"/"rvv_opu". Naming the cluster instead raises,
+        # because it would match no combination and penalise every one.
         "mutations": {"preferred_hw": {"dronet": "gemmini"}},
         "intent": (
             "Protects the DroNet->control chain by reserving the fast "
@@ -193,8 +193,8 @@ POLICIES: Dict[str, Dict] = {
 # The mechanistic reading of that failure: DroNet is 17.973 ms on gemmini vs
 # 241.462 ms on rvv_opu, so it lands on gemmini regardless -- the pin cannot
 # move a placement that was already optimal. All it does is perturb the costs
-# the greedy picker orders by. It was never a reservation, and reserving a
-# BACKEND was the wrong lever anyway: at B>=1 the contention is for gemmini
+# the greedy picker orders by. It is not a reservation, and reserving a BACKEND
+# would not address the contention either: at B>=1 the contention is for gemmini
 # TIME, which a preference does not allocate.
 #
 # Every probe below holds solver=greedy fixed -- the same solver as
@@ -237,8 +237,8 @@ PROBES.update({
     #     B=1        0.633  0.900  0.833  0.733  0.700
     #     B=2        0.400  0.867  0.733  0.533   (overruns epoch)
     #
-    # Two assumptions in the original probe design were WRONG and are corrected
-    # here rather than quietly dropped:
+    # Two assumptions a naive probe design makes do not hold, and the design
+    # below accounts for both:
     #
     #  (a) "50 ms is the phase control -- a full producer period is the same
     #      alignment as no deferral." False. The offset is applied to the SOFT
@@ -281,8 +281,8 @@ PROBES.update({
     },
     # M5: attempt at a directional control by delaying the producer.
     #
-    # PREDICTION WRONG, and the reason is a real limitation of the metric rather
-    # than a bug. Measured at phi = A0+20:
+    # The prediction does not hold, and the reason is a limitation of the metric
+    # rather than of the implementation. Measured at phi = A0+20:
     #
     #                     B=0    B=1    B=2    B=3
     #   baseline         .933   .633   .400   .220!
@@ -454,7 +454,7 @@ def _git_info() -> Dict[str, object]:
     out: Dict[str, object] = {}
     for name, repo in (
         ("xpu-rt", _REPO),
-        ("ModelBlaster", os.environ.get("MODELBLASTER_ROOT", "/scratch2/agustin/ModelBlaster")),
+        ("ModelBlaster", os.environ.get("MODELBLASTER_ROOT", os.path.join(_REPO, "ModelBlaster"))),
         ("zephyr-chipyard-sw", os.path.join(_REPO, "zephyr-chipyard-sw")),
     ):
         try:
@@ -641,7 +641,7 @@ def run_schedule(cfg: Dict, *, stem: str, solver: str, scheduler: str,
     already exists. Scheduling dominates the cost (measured: 6 s at B=0 rising to
     584 s at B=4 per cell) while evaluation is milliseconds, so a change to the
     EVALUATOR should not require re-solving. That is not a micro-optimisation: it
-    is what makes it affordable to fix an evaluator bug and restate every number,
+    is what makes it affordable to change the evaluator and restate every number,
     rather than being tempted to leave results as they are.
 
     Reuse is gated on a content hash of the exact config, written as a sidecar
@@ -729,9 +729,9 @@ def compute_a0(base: Dict, *, epoch_ms: float, edge) -> Dict[str, object]:
     topo = base["hardware"]["profile"].get("topo_tag", "topo_0")
     # MUST match the tree the solver reads, or A0 -- and therefore the whole phi
     # grid -- is computed on a different timing basis than the schedules it is
-    # used to judge. This silently happened once: gen_root was ignored
-    # everywhere, so a 25 MHz control produced 25 MHz periods against 1 GHz
-    # latencies and A0 came out as 2000.546 instead of 2421.84.
+    # used to judge, and nothing in the output shows it: with gen_root ignored,
+    # a 25 MHz control produces 25 MHz periods against 1 GHz latencies and A0
+    # comes out as 2000.546 instead of 2421.84.
     gen_root = base["hardware"]["profile"].get("gen_root") or "gen"
 
     def latency(net: str) -> float:
@@ -811,9 +811,9 @@ def main() -> int:
                          "when sweeping a config that is not the canonical one: "
                          "stems are (policy, B, seed) only, so two different "
                          "workloads swept with the same policy names overwrite each "
-                         "other's fixtures. That has already happened once -- the "
-                         "25 MHz clock-invariance control clobbered three "
-                         "static_nominal fixtures. The content-hash sidecar makes "
+                         "other's fixtures (the 25 MHz clock-invariance control "
+                         "shares three stems with static_nominal). The content-hash "
+                         "sidecar makes "
                          "the collision safe (it forces a re-solve rather than "
                          "silently reusing the wrong schedule); this flag makes it "
                          "not happen.")
@@ -908,9 +908,9 @@ def main() -> int:
                 )
                 # run_schedule distinguishes a fresh solve ("ok") from a verified
                 # reuse ("ok (reused fixture)"); both are successes. Comparing for
-                # exact equality here silently turned all 57 reused cells into
-                # "failures" with a passing status string, which is the worst kind
-                # of bug -- it drops data while the manifest looks fine.
+                # exact equality here would turn every reused cell (57 in the
+                # reference sweep) into a "failure" with a passing status string,
+                # dropping data while the manifest looks fine.
                 if not status.startswith("ok"):
                     print(f"  [FAIL] {policy:<20} B={burst} seed={seed}: {status}")
                     failures.append({
@@ -1015,7 +1015,7 @@ def main() -> int:
     # --- oracle: post-hoc upper bound, NOT a deployable policy ---
     #
     # Restricted to cells whose schedule FITS THE EPOCH. Ranking every cell by
-    # rate silently promoted overrunning schedules: at B=3 / phi=A0+50 the best
+    # rate would promote overrunning schedules: at B=3 / phi=A0+50 the best
     # rate was 0.952 from a 495 ms schedule scored over 42 consumer invocations,
     # against 0.933 from the best schedule that fits the 300 ms epoch over 30. A
     # bound no admissible schedule can reach is not an upper bound on anything

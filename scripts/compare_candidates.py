@@ -104,7 +104,7 @@ def main() -> int:
     # The check that the candidate was solved against different costs at all.
     # solve_hash is preferred where present: pdb_hash fingerprints only the profile CSVs,
     # so an additive solve and a --board-calibration re-solve of the same spec share it and
-    # this check used to refuse the board-feedback comparison -- the one the headline
+    # a pdb_hash-only check refuses the board-feedback comparison -- the one the headline
     # result rests on. solve_hash folds in the calibration table, solver and env, so those
     # two are distinguishable; identical solve_hash still means genuinely nothing differed.
     bm = (base_s.get("metadata") or {})

@@ -51,7 +51,7 @@ REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 #: yolov8 downsamples by 32 at its deepest level, so a non-multiple of 32 is
 #: not a buildable configuration -- ModelBlaster enforces this on
-#: MODELBLASTER_YOLOV8N_INPUT. Caught candidate D (imgsz 48) in review.
+#: MODELBLASTER_YOLOV8N_INPUT (this excludes candidate D, imgsz 48).
 STRIDE_CONSTRAINT = 32
 
 FUSED_CONV = "conv2d_batchnorm2d_silu_s8"

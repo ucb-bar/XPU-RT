@@ -71,10 +71,8 @@ def best_valid_heuristic(w, ctx, budget=30.0):
 def main():
     spec, seed, tl = sys.argv[1], int(sys.argv[2]), float(sys.argv[3])
     warm_json = sys.argv[4] if len(sys.argv) > 4 else None
-    os.environ.setdefault(
-        "XPURT_CPSAT_PYTHON",
-        "/tmp/claude-1172/-scratch2-dima-misc-sw-XPU-RT/"
-        "cb67e7aa-73a1-4f96-95bd-e31812fb2543/scratchpad/cpsat-venv/bin/python")
+    # the interpreter that has ortools; this one unless $XPURT_CPSAT_PYTHON names another
+    os.environ.setdefault("XPURT_CPSAT_PYTHON", sys.executable)
 
     w, nd = build(f"{DATA}/data/toplevel/wl_sweep/{spec}.json")
     ctx = DecoderContext(w)

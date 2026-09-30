@@ -1,0 +1,20 @@
+e45403ca2d349df181b1e948c5719fef2642fc13615ee79be42c692c1bfe7c59     13237726959  xpurt.bundle
+45e96ec0475360c532fcfc572fb25cdca79286b5cdbfbb40c5501590d42058c5        21034341  modelblaster.bundle
+
+# xpurt.bundle         repository  https://github.com/ucb-bar/XPU-RT.git
+#                      branch      feat/codesign-loop-hardening
+#                      bundled at  08c6ebd8106b135d57a831640c00245e992b886b   (28 commits ahead of origin/dev)
+#                      origin/dev  8d9f54af881dc13ca879c7572948f0b579f12432
+#
+# modelblaster.bundle  repository  https://github.com/ucb-bar/ModelBlaster.git   (submodule ModelBlaster/)
+#                      branch      feat/split-linear-along-m
+#                      bundled at  2b11d038af904fdba6f3ad14b2a9a9f6dff57997   (1 commit ahead of origin)
+#                      origin      8f0f688125e5670456760a1ece720ea75cd91f4b
+#
+# `git bundle list-heads <bundle>` prints the two ids above; `git bundle verify <bundle>` reports a
+# complete history for each. Both were verified after cutting.
+#
+# The bundles are regenerable and are NOT tracked (.gitignore: artifact/history/*.bundle); this file
+# is. "bundled at" is the branch tip at the moment of cutting: a bundle cannot contain the commit
+# that records its own hash, so the commit adding this file sits one after the tip named above.
+# Regenerate at any later tip with the commands in README.md and update these lines.

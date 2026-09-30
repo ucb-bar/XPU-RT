@@ -20,11 +20,11 @@
 #   * flight duration is held ~constant (FLIGHT_S, default 14 s) by scaling
 #     max_steps = round(rate * FLIGHT_S), so every cell flies the same seconds.
 #
-# Controller-gain calibration across the rate axis (THE fix over the old grid):
+# Controller-gain calibration across the rate axis:
 #   The RL/MLP controller was trained at 50 Hz; its action->moment gain
 #   (moment_scale) is calibrated for a 50 Hz closed loop. Running it at another
 #   command rate WITHOUT rescaling the gain changes the effective closed-loop
-#   gain, so the old grid's fixed moment_scale=0.0055 was under-authority at
+#   gain, so a fixed moment_scale=0.0055 is under-authority at
 #   25-50 Hz and over-authority at 200 Hz -- a gain artifact masquerading as a
 #   rate effect. Here moment_scale is set PER CELL to hold the closed-loop gain
 #   constant:  moment_scale = MOMENT_C / eff_cmd_hz   (MOMENT_C=0.5 -> 0.01 @50Hz,
@@ -43,7 +43,7 @@
 #   SPEEDS=1.2 RATES=100 EPISODES=2 ISAAC_PY=<env_isaaclab py> bash scripts/hil_dense_grid.sh
 #
 # FULL RUN:
-#   ISAAC_PY=/scratch2/agustin/miniforge3/envs/env_isaaclab/bin/python \
+#   ISAAC_PY=<the Isaac Sim / IsaacLab interpreter> \
 #     bash scripts/hil_dense_grid.sh
 #
 # Output: results/codesign_feedback/hil_dense.csv  (additive; append-only).
@@ -56,14 +56,14 @@ set -u
 
 ROOT="${XPURT_REPO:-$(cd "$(dirname "$0")/.." && pwd)}"
 # sweep_rate_demo.py imports hil/safety_layer.py (unconditional, line ~148). Some worktrees
-# lack the hil/ dir; fall back to the canonical repo that has it so the sim can import.
-if [ ! -f "$ROOT/hil/safety_layer.py" ] && [ -f /scratch/agustin/projects/DIMA/XPU-RT/hil/safety_layer.py ]; then
-  echo "[driver] $ROOT lacks hil/safety_layer.py -> using canonical repo /scratch/agustin/projects/DIMA/XPU-RT" >&2
-  ROOT=/scratch/agustin/projects/DIMA/XPU-RT
+# lack the hil/ dir; $XPURT_SIM_TREE (scripts/env.sh, scripts/env.local.sh) names one that has it.
+if [ ! -f "$ROOT/hil/safety_layer.py" ] && [ -f "${XPURT_SIM_TREE:-}/hil/safety_layer.py" ]; then
+  echo "[driver] $ROOT lacks hil/safety_layer.py -> using \$XPURT_SIM_TREE ($XPURT_SIM_TREE)" >&2
+  ROOT="$XPURT_SIM_TREE"
 fi
 OUT="${HIL_OUTDIR:-$ROOT/results/codesign_feedback/hil_dense_grid}"
 mkdir -p "$OUT/tmp"; export TMPDIR="$OUT/tmp"
-PY="${ISAAC_PY:-python}"                          # conda env_isaaclab python (docs/REPRODUCE.md)
+PY="${ISAAC_PY:-python}"                          # conda env_isaaclab python (docs/Artifact/REPRODUCE.md)
 W="${HIL_WEIGHTS:-$ROOT/sims/models/warehouse/nav_fused_v12_cnn.pt}"
 CSV="${HIL_CSV:-$ROOT/results/codesign_feedback/hil_dense.csv}"
 

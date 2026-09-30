@@ -13,7 +13,7 @@ BOARD, and only then re-solve and adjudicate:
 Both arms are profiled in the SAME session with the SAME curated kernels and filed under
 their own basenames (`<net>.<tag>`), so nothing clobbers the tree the baseline was solved
 from and the only difference between the two schedules is the rewrite. That basename
-discipline is not cosmetic: `gen_mb/profile` is a symlink and the profiler writes in
+discipline is not cosmetic: `gen/mb/profile` is a symlink and the profiler writes in
 place, so a shared basename means the second run overwrites what the first was solved
 from, and the comparison silently becomes a schedule against itself.
 
@@ -77,7 +77,7 @@ def stage_ir(ir_path, net, tag, work_dir, log):
     The runbook's step 4 warning, mechanised: `emit_dispatch_graph` derives its output
     path from `ir["name"]`/`ir["quant"]`, so a candidate that keeps the baseline's
     identity overwrites the baseline's dispatch graph -- and the profiler, writing in
-    place through the `gen_mb/profile` symlink, overwrites the costs it was solved from.
+    place through the `gen/mb/profile` symlink, overwrites the costs it was solved from.
     """
     g = json.load(open(ir_path))
     m = arm_model(net, tag)
@@ -150,7 +150,7 @@ def board_profile(ir, net, tag, seed_dir, target, hw, cores, log):
 
 def emit_graph(ir, target, hw, log):
     r = sh([PY, os.path.join(MB, "pipeline/emit_dispatch_graph.py"), "--ir", ir,
-            "--out-root", "gen_mb/vmfb", "--target", target, "--hw", hw])
+            "--out-root", "gen/mb/vmfb", "--target", target, "--hw", hw])
     if r.returncode != 0:
         log(f"  emit_dispatch_graph failed: {(r.stderr or r.stdout)[-400:]}")
         return None
@@ -167,7 +167,7 @@ def write_spec(workload, net, tag, target, hw, out_path):
     # The network KEY stays `net`, so its period, window and criticality are untouched;
     # only which graph (and therefore which measured profile) it points at changes.
     spec["networks"][net]["dispatch_deps_path"] = (
-        f"gen_mb/vmfb/{m}/{target}/{hw}/{m}.int8/{m}.int8_dispatch_graph.json")
+        f"gen/mb/vmfb/{m}/{target}/{hw}/{m}.int8/{m}.int8_dispatch_graph.json")
     json.dump(spec, open(out_path, "w"), indent=1)
     return out_path
 

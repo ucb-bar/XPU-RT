@@ -48,7 +48,7 @@ def pairs(schedule, trace_rows):
     The model name comes from the trace's own `network` column where there is
     one. Deriving it by stripping trailing digits off `job_name` is ambiguous
     the moment a network name ends in a digit -- `yolov8_nano_64x96` is a real
-    one -- and it silently produced a `yolov8_nano_64x` series in the fallback
+    one -- and would produce a `yolov8_nano_64x` series in the fallback
     grey for the model carrying the workload.
     """
     by_key = {}

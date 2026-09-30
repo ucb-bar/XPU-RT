@@ -188,8 +188,8 @@ def main() -> int:
     remap_problems, remap_checked = audit_id_remap(a.before, a.after)
     if remap_checked:
         # Say how many were checked. A silent pass is indistinguishable from a
-        # check that ran on nothing, which is exactly what this check used to
-        # do on a split graph.
+        # check that ran on nothing (e.g. on a split graph with no one-to-one
+        # entries).
         print(f"id_remap: {remap_checked} one-to-one entr"
               f"{'y' if remap_checked == 1 else 'ies'} checked against the "
               f"signatures, {len(remap_problems)} disagreement(s)")

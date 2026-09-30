@@ -623,10 +623,10 @@ def read_schedule_metadata(path: str) -> Dict[str, object]:
     # is exactly what the instance-count clobber and the periodic trim used
     # to do.
     # Split `<network><instance>` by longest-prefix against the networks this
-    # schedule actually declares -- NOT by a trailing-digit regex. The regex
-    # that used to live here read "vision_v3_dispatch_6" as instance 3 of a
-    # network "vision_v", i.e. it corrupted every model whose own name ends in
-    # a digit. `job_name` is used directly so the "_dispatch_N" suffix never
+    # schedule actually declares -- NOT by a trailing-digit regex, which reads
+    # "vision_v3_dispatch_6" as instance 3 of a network "vision_v", i.e.
+    # corrupts every model whose own name ends in a digit. `job_name` is used
+    # directly so the "_dispatch_N" suffix never
     # has to be parsed at all.
     known = sorted((meta.get("periodic_networks") or {}))
     landed: Dict[str, set] = {}

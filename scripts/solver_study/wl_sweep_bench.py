@@ -13,8 +13,8 @@ import numpy as np
 
 CODE = os.environ.get("XPURT_CODE_ROOT") or os.path.abspath(
     os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
-DATA = os.environ.get("XPURT_DATA_ROOT",
-                       "/scratch/dima/rose-infra/RoSE/soc/sw/xpu-rt")
+# the spec tree: this checkout unless $XPURT_DATA_ROOT names another
+DATA = os.environ.get("XPURT_DATA_ROOT", CODE)
 OUT  = os.environ.get("XPURT_BENCH_OUT", ".")
 sys.path.insert(0, CODE); sys.path.insert(0, os.path.join(CODE, "xpu-rt"))
 

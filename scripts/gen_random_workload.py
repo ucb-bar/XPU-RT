@@ -454,9 +454,9 @@ def fit_windows(ref_ms: float, factors: List[float], period: int,
     `window_duration` is a deadline, not a duration: the instance has to
     finish inside [start_time + i*T, start_time + i*T + window].  Consecutive
     instances therefore overlap unless a model's copies fit in one frame,
-    which is what the old generator had backwards -- it summed the windows
-    and called the sum a period, so the period grew with the deadline slack
-    instead of the slack being bounded by the rate.
+    so the windows are never summed into a period -- that would make the
+    period grow with the deadline slack instead of the slack being bounded
+    by the rate.
 
     Three moves, in the order that costs the least meaning:
       1. squeeze the deadlines toward the measured runtime (a tight deadline

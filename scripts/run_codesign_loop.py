@@ -11,10 +11,10 @@ lever is accepted (converged). The loop's intelligence is the advisor/cost-model
 driver applies, measures, and accepts — honestly (a lever that does not help is
 rejected, with the deciding term recorded).
 
-The old rule (`misses_not_worse AND objective_delta > 0.05 ms`) survives behind
-`--accept-rule legacy` only to reproduce pre-hardening runs. It disagreed with the real
-one: results/codesign_loop/_ime_yolo_c0only/loop_report.json records an ACCEPT of the
-ime lever with 93 deadline misses on both sides, won on makespan — term 7 of 9.
+The two-term rule (`misses_not_worse AND objective_delta > 0.05 ms`) is available behind
+`--accept-rule legacy` only to reproduce pre-hardening runs. It can disagree with the
+nine-term rule: results/codesign_loop/_ime_yolo_c0only/loop_report.json records an ACCEPT
+of the ime lever with 93 deadline misses on both sides, won on makespan — term 7 of 9.
 
 Levers:
   * ime   — expose the K1 IME matrix engine as a per-dispatch alternative. For every
@@ -60,6 +60,10 @@ try:
 except Exception:  # pragma: no cover - the scheduling-lever loop works without it
     rewrite_arm = None
 try:
+    import codegen_contract
+except Exception:  # pragma: no cover - the loop still runs, it just cannot gate
+    codegen_contract = None
+try:
     import candidate_objective as objective
     import schedule_scoring
     import workload_spec
@@ -104,8 +108,8 @@ def objective_verdict(cand_out, base_out, cand_sched_path, base_sched_path, spec
     """(ok, why) from `candidate_objective.accept()` -- nine lexicographic terms, hard
     deadline misses FIRST and makespan SEVENTH, each with its own noise tolerance.
 
-    THE GAP THIS CLOSES. This driver used to accept on two terms of its own,
-    `misses_not_worse AND objective_delta > 0.05ms`, which is not the project's rule and
+    WHY. A two-term rule of the driver's own,
+    `misses_not_worse AND objective_delta > 0.05ms`, is not the project's rule and
     disagrees with it: results/codesign_loop/_ime_yolo_c0only/loop_report.json records an
     ACCEPT of the ime lever with 93 deadline misses on both sides, won on makespan -- the
     term the real rule ranks seventh. A tie is a rejection, and unequal instance counts are
@@ -118,7 +122,45 @@ def objective_verdict(cand_out, base_out, cand_sched_path, base_sched_path, spec
     if bi != ci:
         return False, (f"refused -- instance counts differ ({bi} vs {ci}); that is two "
                        f"amounts of work, not two graphs")
-    return objective.accept(cand_out, base_out)
+    # DETERMINISTIC comparison: both sides are analytic evaluations of solved schedules
+    # against fixed costs, not repeated executions, so the miss counts carry no jitter
+    # for a tolerance to absorb. With the measurement tolerance the search converged a
+    # lever short on w4 and b4 -- 5 -> 3 misses called "indistinguishable" because 8% of
+    # 34 instances is 2.72. See candidate_objective.DETERMINISTIC_TOLERANCES.
+    return objective.accept(cand_out, base_out,
+                            tol=objective.DETERMINISTIC_TOLERANCES)
+
+
+def buildable(sched_path, log, label):
+    """`(ok, why)` -- is this candidate's schedule something ModelBlaster can BUILD?
+
+    A LEVER THAT WINS ON PAPER AND CANNOT BE COMPILED IS NOT A WIN. `shard` mode lets
+    every periodic instance of a dispatch pick its own core width, which for a packed
+    convolution is unbuildable -- one generated model cannot carry two weight layouts
+    for one dispatch. Without this gate the loop happily accepted such a candidate,
+    reported the improvement, and the board build then died at stage 1 of 5 with an
+    error from inside a shell script. The contract
+    (`ModelBlaster/cores/codegen_contract.json`) is what makes the constraint visible on
+    this side, and checking it costs milliseconds.
+
+    A missing contract does NOT fail a candidate: refusing everything because the
+    submodule is absent would be worse than not checking. It is reported once, so the
+    run says which mode it was in.
+    """
+    if codegen_contract is None or not sched_path:
+        return True, "codegen contract unavailable -- NOT gated"
+    try:
+        vs = codegen_contract.violations(sched_path)
+    except codegen_contract.ContractUnavailable as e:
+        return True, f"codegen contract unavailable ({e}) -- NOT gated"
+    except Exception as e:  # a checker bug must not silently reject every candidate
+        return True, f"codegen contract check errored ({type(e).__name__}) -- NOT gated"
+    refuse = [v for v in vs if v.get("severity") == "refuse"]
+    if not refuse:
+        return True, "buildable"
+    first = codegen_contract.describe(refuse[0])
+    return False, (f"NOT BUILDABLE ({len(refuse)} contract violation"
+                   f"{'s' if len(refuse) > 1 else ''}): {first}")
 
 
 def objective_of(spec: dict) -> str:
@@ -145,8 +187,10 @@ def worst_response_ms(sched_path: str, spec: dict):
         return None
 
 
-def _run(cmd):
-    return subprocess.run(cmd, cwd=REPO, capture_output=True, text=True)
+def _run(cmd, env=None):
+    e = dict(os.environ)
+    e.update(env or {})
+    return subprocess.run(cmd, cwd=REPO, capture_output=True, text=True, env=e)
 
 
 def _rvv_profile(net, variant, hw="rvv_x60"):
@@ -189,10 +233,46 @@ def solve(spec_path, solver="greedy", board_cal=None, time_limit=None):
         cmd += ["--solver", "greedy"]
         sfx = "greedy_profiled"
     if time_limit is not None:
+        # THE BUDGET TRAP. --time-limit is MILP-only; CP-SAT reads --cpsat-time-limit
+        # and otherwise runs at scheduler.cpsat_time_limit (300 s default). Passing only
+        # --time-limit to a cpsat arm therefore gives it 300 s while every other arm
+        # gets what was asked, which makes any budget-matched comparison a fiction.
         cmd += ["--time-limit", str(time_limit)]
+        if solver == "cpsat":
+            cmd += ["--cpsat-time-limit", str(float(time_limit))]
     if board_cal:
         cmd += ["--board-calibration"] + ([board_cal] if isinstance(board_cal, str) else [])
-    r = _run(cmd)
+    # CONSTRAIN RATHER THAN REJECT, where the solver can be constrained. When the
+    # candidate uses shard mode, a packed-weight (convolution) dispatch must take one
+    # core width across its periodic instances or ModelBlaster cannot generate it. CP-SAT
+    # can express that -- a per-(dispatch, width) indicator linked to its
+    # combination-presence variables, so the solver still CHOOSES the width and simply
+    # has to choose one -- and asking for it here is what makes the `shard` lever's
+    # output deployable instead of merely promising.
+    #
+    # Greedy has no combination-selection variable to couple, so for that arm the
+    # contract can only be checked afterwards and the candidate rejected. The asymmetry
+    # is real and is left visible rather than hidden: it understates greedy on exactly
+    # the workloads where sharding is the answer.
+    env = None
+    try:
+        _spec = json.load(open(spec_path))
+        _mode = ((_spec.get("scheduler") or {}).get("machine_combination_mode"))
+        if _mode == "shard":
+            # BOTH ARMS, not just CP-SAT. This was cpsat-only because the constraint it
+            # sets was a CP-SAT constraint; greedy's candidate was checked afterwards
+            # and thrown away instead. The comment above predicted the cost of that
+            # ("it understates greedy on exactly the workloads where sharding is the
+            # answer") and w4_ffn_dronet_sensor is that workload: greedy's shard
+            # schedule takes its misses from 10 to 5 and its worst lateness from
+            # 17.95 ms to 3.90, and it was discarded over three dronet dispatches.
+            # `codegen_contract.pin_uniform_widths` now gives the list scheduler the
+            # same guarantee by pricing the losing widths out, so the flag means the
+            # same thing to both arms.
+            env = {"XPURT_UNIFORM_PACKED_WIDTH": "1"}
+    except Exception:
+        pass
+    r = _run(cmd, env=env)
     metrics = os.path.join(REPO, "schedules", f"scheduled_{stem}_{sfx}_metrics.json")
     sched = os.path.join(REPO, "schedules", f"scheduled_{stem}_{sfx}.json")
     if not os.path.exists(metrics):
@@ -309,10 +389,10 @@ def apply_ime(spec: dict, log) -> dict:
             failed.append(f"{net}.{variant}: {(r.stderr or r.stdout or '').strip()[-160:]}")
     log(f"      ime: built ime_x60 profiles for {built or '(none new; existing reused)'}")
     if failed:
-        # WHY THIS IS LOUD. This used to swallow the failure, append nothing, and STILL set
-        # enable_impls=True -- so on a checkout without scripts/make_ime_profile.py or
-        # xpu-rt/data/ the "ime" lever was a no-op that the ledger recorded as applied, and
-        # a rejected lever and an unapplied one are not the same finding.
+        # WHY THIS IS LOUD. Swallowing the failure while still setting enable_impls=True
+        # would, on a checkout without scripts/make_ime_profile.py or xpu-rt/data/, make
+        # the "ime" lever a no-op that the ledger records as applied -- and a rejected
+        # lever and an unapplied one are not the same finding.
         for f in failed:
             log(f"      ime: BUILD FAILED {f}")
         if not built and not have_existing:
@@ -353,6 +433,39 @@ def apply_unfuse(spec: dict, log) -> dict:
     return spec
 
 
+def apply_shard_only(net: str):
+    """A shard lever that widens ONE network and holds the rest at a single core.
+
+    WHY PER-NETWORK. `apply_shard` flips a global switch, so the loop could only take
+    sharding for every network at once or not at all. On `w5_ffn_dronet_yolo` that made
+    the lever unusable: widening also widens `yolov8_nano_64x96`, 191.6 core-ms that
+    monopolises all eight harts while the 5 ms-period networks wait, so worst deadline
+    lateness went 24.67 -> 34.87 ms and the whole lever was rejected -- including the
+    part that helps. The right answer on that rung is to widen `ffn_block` and `dronet`
+    and leave yolo alone, which is exactly the decision the ladder was built to force
+    ("it has to choose WHICH nets to widen"), and which one global switch cannot say.
+
+    Successive rounds compose: each accepted `shard:<net>` appends to the list, so the
+    loop discovers a SET of networks to widen one at a time instead of guessing it.
+    """
+    def f(spec: dict, log) -> dict:
+        spec = copy.deepcopy(spec)
+        sch = spec.setdefault("scheduler", {})
+        sch["machine_combination_mode"] = "shard"
+        only = list(sch.get("shard_only_networks") or [])
+        if net in only:
+            return spec  # already widened; not a candidate (the caller skips no-ops)
+        only.append(net)
+        sch["shard_only_networks"] = only
+        if "hardware" in spec and "profile" in spec["hardware"]:
+            spec["hardware"]["profile"]["topo_tag_override"] = False
+        log(f"      shard:{net}: widen {net}, hold {'+'.join(
+            n for n in spec.get('networks', {}) if n not in only) or '(nothing)'} "
+            f"at one core")
+        return spec
+    return f
+
+
 LEVERS = {"ime": apply_ime, "shard": apply_shard, "unfuse": apply_unfuse}
 
 
@@ -378,6 +491,17 @@ def main():
                          "cpsat gives an optimal 0-miss AOT schedule, needed for the sharp board arc).")
     ap.add_argument("--time-limit", type=int, default=45,
                     help="per-solve CP-SAT seconds during the lever search (ignored by greedy).")
+    ap.add_argument("--search-calibration", nargs="?", const=True, default=None,
+                    metavar="PATH",
+                    help="run the INNER lever/rewrite search itself against measured "
+                         "board costs instead of the isolated profile database. This is "
+                         "the AOT decisions being re-taken in light of what the silicon "
+                         "actually did: an op the board inflates (linear_f16 runs 2.05x "
+                         "its profile) is worth splitting or widening even when the "
+                         "isolated profile says it is cheap, and the AOT-cost search "
+                         "cannot see that. Bare flag uses the default calibration "
+                         "artifact; pass a path to override. Distinct from "
+                         "--board-calibration, which only RE-SOLVES a fixed spec.")
     ap.add_argument("--board-calibration", nargs="?", const=True, default=None, metavar="PATH",
                     help="ENABLE THE BOARD-FEEDBACK ARM. After the predicted lever search converges, "
                          "re-cost the accepted schedule under measured K1 board costs; if that reveals "
@@ -417,7 +541,7 @@ def main():
     ap.add_argument("--accel-hw", default="ime_x60",
                     help="the per-dispatch alternative the `ime` lever exposes; "
                          "set empty to disable that lever on a backend without one")
-    ap.add_argument("--gen-root", default="gen_mb")
+    ap.add_argument("--gen-root", default="gen/mb")
     ap.add_argument("--profile-root", default="gen/profile_mb")
     ap.add_argument("--replay", action="store_true",
                     help="deterministic offline replay: pin XPURT_CPSAT_WORKERS=1 and "
@@ -452,10 +576,22 @@ def main():
             return 1
         active_levers = [l for l in LEVERS if l in want]
 
+    DEFAULT_CAL = os.path.join(REPO,
+                               "results/codesign_feedback/k1_board_calibration.json")
     board_cal_path = None
     if args.board_calibration is not None:
-        board_cal_path = (os.path.join(REPO, "results/codesign_feedback/k1_board_calibration.json")
-                          if args.board_calibration is True else args.board_calibration)
+        board_cal_path = (DEFAULT_CAL if args.board_calibration is True
+                          else args.board_calibration)
+    # The calibration the INNER search solves against. None keeps the historical
+    # behaviour: levers are chosen on isolated profile costs, and the board only ever
+    # gets to re-solve what the AOT stage already decided.
+    search_cal_path = None
+    if args.search_calibration is not None:
+        search_cal_path = (DEFAULT_CAL if args.search_calibration is True
+                           else args.search_calibration)
+        if not os.path.exists(search_cal_path):
+            print(f"--search-calibration: no artifact at {search_cal_path}")
+            return 1
 
     wl_stem = os.path.splitext(os.path.basename(args.workload))[0]
     out_dir = os.path.join(REPO, args.out_dir, wl_stem)
@@ -484,7 +620,16 @@ def main():
     working = baseline(json.load(open(args.workload)))
     base_path = os.path.join(spec_dir, f"{wl_stem}_r0_baseline.json")
     json.dump(working, open(base_path, "w"), indent=1)
-    mk, miss, sched, err = solve(base_path, solver=args.solver, time_limit=args.time_limit)
+    if search_cal_path:
+        # SAY IT LOUDLY. Every number the search reports now includes the board's
+        # measured inflation, so it is not comparable with an AOT-cost run of the same
+        # workload, and the baseline it improves on is the board-honest baseline.
+        log(f"inner search runs against MEASURED board costs "
+            f"({os.path.relpath(search_cal_path, REPO)}) -- lever scores here are "
+            f"board-honest and are NOT comparable with an isolated-profile run")
+    mk, miss, sched, err = solve(base_path, solver=args.solver,
+                                 board_cal=search_cal_path,
+                                 time_limit=args.time_limit)
     if mk is None:
         log(f"BASELINE SOLVE FAILED: {err}")
         return 1
@@ -522,6 +667,13 @@ def main():
                 return m
         return op_miss
 
+    # THE TWO COUNTERS DISAGREE AND MUST BE NAMED. guard_miss returns instance-level
+    # misses only for the lateness/misses objectives; on the makespan and worst-response
+    # paths it returns the scheduler's DISPATCH count. Printing either as "instance-miss"
+    # would make a 22-instance workload report "72 instance-miss", which is impossible,
+    # so the unit is named explicitly.
+    miss_unit = "instance-miss" if instance_guard else "dispatch-miss"
+
     base_score = score(sched, working, mk)
     base_gmiss = guard_miss(sched, working, miss)
     backend = None
@@ -545,7 +697,7 @@ def main():
         log("WARNING: candidate_objective unavailable; falling back to the legacy two-term rule")
     base_out = outcome_of("baseline", sched, working, critical, heavy) if use_objective else None
     log(f"round 0 · baseline: {metric_name} {base_score:.3f} "
-        f"(makespan {mk:.1f} ms), {base_gmiss} instance-miss")
+        f"(makespan {mk:.1f} ms), {base_gmiss} {miss_unit}")
     if use_objective:
         log(f"accept rule: candidate_objective.accept() · critical={list(critical)} "
             f"heavy={heavy}")
@@ -557,12 +709,26 @@ def main():
     cur_sched, cur_spec_path = sched, base_path
     cur_out = base_out
 
+    # EXPAND `shard` INTO ONE CANDIDATE PER NETWORK, plus the all-networks lever it
+    # came from. The per-network candidates let a round widen `ffn_block` without also
+    # widening yolo; keeping the global one means a workload where widening everything
+    # IS right (w2, w3) still gets there in a single round.
+    lever_fns = dict(LEVERS)
+    if "shard" in active_levers:
+        _nets = list((working.get("networks") or {}).keys())
+        for _n in _nets:
+            lever_fns[f"shard:{_n}"] = apply_shard_only(_n)
+        active_levers = ([l for l in active_levers if l != "shard"]
+                         + [f"shard:{n}" for n in _nets] + ["shard"])
+        log(f"levers: shard expanded per network -> "
+            f"{[f'shard:{n}' for n in _nets]} (+ shard = all networks)")
+
     for rnd in range(1, args.max_rounds + 1):
         cands = []
         for lever in active_levers:
             if lever in applied:
                 continue
-            cspec = LEVERS[lever](cur_spec, log)
+            cspec = lever_fns[lever](cur_spec, log)
             if cspec == cur_spec:
                 # A LEVER THAT CHANGED NOTHING IS NOT A CANDIDATE. This is not
                 # pedantry: on the sensor workload `unfuse` found no unfused build on
@@ -578,9 +744,19 @@ def main():
                 continue
             cpath = os.path.join(spec_dir, f"{wl_stem}_r{rnd}_{lever}.json")
             json.dump(cspec, open(cpath, "w"), indent=1)
-            cmk, cmiss, csched, cerr = solve(cpath, solver=args.solver, time_limit=args.time_limit)
+            cmk, cmiss, csched, cerr = solve(cpath, solver=args.solver,
+                                             board_cal=search_cal_path,
+                                             time_limit=args.time_limit)
             if cmk is None:
                 log(f"round {rnd} · try {lever}: SOLVE FAILED ({cerr[:120] if cerr else ''}) — reject")
+                continue
+            ok_build, why_build = buildable(csched, log, lever)
+            if not ok_build:
+                log(f"round {rnd} · try {lever}: {why_build}")
+                log(f"round {rnd} · try {lever}: rejected -- the schedule is valid for "
+                    f"the runtime and cannot be code-generated; not a candidate")
+                inapplicable.append(dict(round=rnd, lever=lever, reason=why_build,
+                                         kind="unbuildable"))
                 continue
             csc = score(csched, cspec, cmk)
             cgmiss = guard_miss(csched, cspec, cmiss)
@@ -597,7 +773,8 @@ def main():
                 why = (f"legacy rule: misses {cur_miss}->{cgmiss}, "
                        f"{metric_name} delta {delta:+.3f} vs EPS {EPS}")
             log(f"round {rnd} · try {lever}: {metric_name} {cur_score:.3f} -> {csc:.3f} "
-                f"({pct:+.1f}%), {cgmiss} instance-miss -> {'ACCEPTABLE' if ok else 'reject'}")
+                f"({pct:+.1f}%), {cgmiss} {miss_unit} -> "
+                f"{'ACCEPTABLE' if ok else 'reject'}")
             log(f"round {rnd} · try {lever}: {why}")
             cands.append(dict(lever=lever, mk=cmk, score=csc, miss=cgmiss, sched=csched,
                               spec=cspec, spec_path=cpath, ok=ok, why=why, out=cout))
@@ -647,10 +824,17 @@ def main():
                                       backend, cpath)
                 cspec = json.load(open(cpath))
                 cmk, cmiss, csched, cerr = solve(cpath, solver=args.solver,
+                                                 board_cal=search_cal_path,
                                                  time_limit=args.time_limit)
                 if cmk is None:
                     log(f"round {rnd} · rewrite {label}: SOLVE FAILED "
                         f"({(cerr or '')[:120]}) — reject")
+                    continue
+                ok_build, why_build = buildable(csched, log, label)
+                if not ok_build:
+                    log(f"round {rnd} · rewrite {label}: {why_build} — rejected")
+                    inapplicable.append(dict(round=rnd, lever=label, kind="unbuildable",
+                                             reason=why_build))
                     continue
                 csc = score(csched, cspec, cmk)
                 cgmiss = guard_miss(csched, cspec, cmiss)
@@ -664,7 +848,7 @@ def main():
                     ok = (cgmiss <= cur_miss) and ((cur_score - csc) > EPS)
                     why = "legacy rule"
                 log(f"round {rnd} · rewrite {label}: {metric_name} {cur_score:.3f} -> "
-                    f"{csc:.3f}, {cgmiss} instance-miss (MEASURED on "
+                    f"{csc:.3f}, {cgmiss} {miss_unit} (MEASURED on "
                     f"{meas['runner']}) -> {'ACCEPTABLE' if ok else 'reject'}")
                 log(f"round {rnd} · rewrite {label}: {why}")
                 cands.append(dict(lever=label, mk=cmk, score=csc, miss=cgmiss,
@@ -674,18 +858,49 @@ def main():
 
         winners = [c for c in cands if c["ok"]]
         if not winners:
+            # RECORD THE ROUND THAT ACCEPTED NOTHING. Rejections are recorded in their
+            # own round entry rather than nested inside an accepted one, so the outcome
+            # that most needs explaining -- "levers applied: none" -- keeps every reason
+            # (e.g. w4_ffn_dronet_sensor): a reader can tell whether the levers were
+            # rejected on measurement, failed to solve, or were skipped.
+            rounds.append(dict(round=rnd, lever=None, accepted=False,
+                               metric=metric_name,
+                               score_before_ms=round(cur_score, 3),
+                               accept_rule=args.accept_rule,
+                               why="no candidate was accepted; the loop converged here",
+                               rejected=[dict(lever=c["lever"], why=c.get("why"),
+                                              score_ms=round(c["score"], 3),
+                                              misses=c["miss"],
+                                              kind=c.get("kind", "lever"))
+                                         for c in cands]))
             log(f"round {rnd}: no lever is accepted by the "
                 f"{'nine-term objective' if use_objective else 'legacy two-term'} rule "
                 f"— CONVERGED")
             break
-        # lexicographic: minimize the objective first, break ties by makespan (among lever sets
-        # that meet deadlines equally, prefer the one that also finishes soonest). On this workload
-        # shard and IME EACH drive lateness to 0 independently, so this tie-break is what decides
-        # between two genuinely-deadline-meeting options rather than an arbitrary dict order.
-        best = min(winners, key=lambda c: (c["score"], c["mk"]))
+        # RANK WINNERS BY THE RULE THAT ACCEPTED THEM, not by makespan.
+        # `min(winners, key=(c["score"], c["mk"]))` would rank by `score`, which IS the
+        # makespan metric, so among several accepted candidates the loop would take the
+        # FASTEST schedule even when another had fewer deadline misses, the term the
+        # rule ranks first. With deterministic tolerances w5 offers several candidates
+        # per round, and ranking by makespan takes its final miss count from 7 to NINE --
+        # a hill-climb steered by the seventh term.
+        #
+        # The key mirrors the nine-term order: misses, worst lateness, frequency
+        # shortfall, p99, then makespan as the final tie-break.
+        def _rank(c):
+            o = c.get("out")
+            if o is None:  # legacy two-term rule; keep its old behaviour
+                return (0, c["score"], c["mk"])
+            return (o.total_misses(), o.worst_lateness(),
+                    o.worst_frequency_shortfall(), o.worst_p99(), c["mk"])
+
+        best = min(winners, key=_rank)
         pct = ((cur_score - best["score"]) / cur_score * 100) if cur_score else 0.0
+        # A lever can be accepted on a HIGHER-priority term while this metric gets
+        # worse -- w5 accepts shard:dronet because misses go 10 -> 7 even though makespan
+        # grows -- so the change is signed once (never "(--12.9%)").
         log(f"round {rnd}: ACCEPT +{best['lever']}  {metric_name} "
-            f"{cur_score:.3f} -> {best['score']:.3f} (-{pct:.1f}%)")
+            f"{cur_score:.3f} -> {best['score']:.3f} ({-pct:+.1f}%)")
 
         # render the accepted schedule's Gantt (IME dispatches darker+hatched)
         gstem = os.path.join(out_dir, f"round_{rnd}_{best['lever']}_gantt")
@@ -732,7 +947,7 @@ def main():
     #      the scheduler knows the true costs, and accept if the board misses drop;
     #   3. repeat until misses==0 or no further improvement.
     # Every stage's verdict is a MEASURED instance-miss count (instance_misses(), the figure's
-    # own source-of-truth), never a hardcoded number.
+    # own source-of-truth).
     board = {"enabled": bool(board_cal_path)}
     panel_dir = os.path.join(out_dir, "panels")
     if board_cal_path:
@@ -851,6 +1066,12 @@ def main():
                                   if use_objective and base_out is not None else None),
                   final_terms=(objective.terms_dict(cur_out)
                                if use_objective and cur_out is not None else None),
+                  # WHICH COSTS THE SEARCH SAW. Without this a board-honest run and an
+                  # isolated-profile run of the same workload produce two reports that
+                  # look comparable and are not.
+                  search_costs=("measured board ("
+                                + os.path.relpath(search_cal_path, REPO) + ")"
+                                if search_cal_path else "isolated profile database"),
                   baseline_score_ms=round(base_score, 3), final_score_ms=round(cur_score, 3),
                   total_reduction_pct=round((base_score - cur_score) / denom * 100, 1),
                   baseline_makespan_ms=round(mk, 1), final_makespan_ms=round(cur_mk, 1),
@@ -872,8 +1093,41 @@ def main():
 
     _plot_traj(traj, os.path.join(out_dir, "objective_vs_round"), metric_name)
     _write_readme(out_dir, wl_stem, args, report, fnote)
-    log(f"\nCONVERGED [{metric_name}]: {base_score:.3f} -> {cur_score:.3f} ms "
-        f"(-{report['total_reduction_pct']:.1f}%), levers applied: {applied or 'none'}")
+    # WHAT THIS LINE MUST SAY. The declared objective alone is not enough, because the
+    # nine-term rule may not have optimised it: the rule ranks hard deadline misses FIRST
+    # and lateness fourth, so a large miss reduction can arrive with the objective going
+    # UP (w3: total lateness 257.989 -> 274.292 ms while misses go 10 -> 1), which read
+    # quickly looks like a failure. So: lead with the misses, name the term that actually
+    # decided each acceptance, and give the objective its sign.
+    _deciding = [f"{r['lever']} ({str(r.get('why', '')).split('--', 1)[-1].strip()})"
+                 for r in rounds if r.get("accepted") and r.get("lever")]
+    _red = report["total_reduction_pct"]
+    # WHICH MISS COUNTER. There are two, and they disagree: guard_miss returns the
+    # scheduler's per-DISPATCH op_deadline_miss_count for the makespan/worst-response
+    # objectives, while candidate_objective's term 1 counts per-INSTANCE misses. On w2
+    # that is 20 against 5 for the same schedule. Quoting one next to a verdict decided
+    # on the other is how a reader ends up comparing two experiments, so report the
+    # rule's own number when the rule is what decided, and label the fallback.
+    if use_objective and base_out is not None and cur_out is not None:
+        _mlabel = "hard deadline misses (instances)"
+        _mbase, _mfinal = base_out.total_misses(), cur_out.total_misses()
+    else:
+        _mlabel = ("instance-misses" if instance_guard
+                   else "dispatch-window misses")
+        _mbase, _mfinal = base_gmiss, cur_miss
+    log(f"\nCONVERGED: {_mlabel} {_mbase} -> {_mfinal}"
+        f"; {metric_name} {base_score:.3f} -> {cur_score:.3f} ms "
+        f"({-_red:+.1f}%), levers applied: {applied or 'none'}")
+    if _deciding:
+        for d in _deciding:
+            log(f"  decided by: {d}")
+    elif not applied:
+        log("  no lever was accepted; every candidate and its reason is in "
+            "loop_report.json under rounds[].rejected")
+    if _red < 0:
+        log(f"  note: {metric_name} rose while the rule accepted on a higher-ranked "
+            f"term (misses rank first, {metric_name} lower) — this is the rule working, "
+            f"not a regression")
     log(f"artifacts in {out_dir}")
     open(os.path.join(out_dir, "loop_log.txt"), "w").write("\n".join(lines) + "\n")
     return 0
@@ -916,8 +1170,17 @@ def _write_readme(out_dir, stem, args, report, fnote):
           f"(-{r['total_reduction_pct']}%)** — levers applied: {r['levers_applied'] or 'none'}.", "",
           "| round | lever | before (ms) | after (ms) | % | misses |", "|--:|--|--:|--:|--:|--:|"]
     for rr in r["rounds"]:
-        md.append(f"| {rr['round']} | +{rr['lever']} | {rr['makespan_before_ms']} | "
-                  f"{rr['makespan_after_ms']} | {rr['pct']} | {rr['deadline_miss']} |")
+        # A round that accepted nothing is recorded too (so its rejections survive), and
+        # it carries no before/after makespan -- there is no accepted candidate to have
+        # one. Render it as the convergence row rather than crashing on the missing key.
+        if not rr.get("lever"):
+            md.append(f"| {rr['round']} | _(none accepted)_ | "
+                      f"{rr.get('score_before_ms', '')} | — | — | — |")
+            continue
+        md.append(f"| {rr['round']} | +{rr['lever']} | "
+                  f"{rr.get('makespan_before_ms', '')} | "
+                  f"{rr.get('makespan_after_ms', '')} | {rr.get('pct', '')} | "
+                  f"{rr.get('deadline_miss', '')} |")
     md += ["", f"Honest note — {fnote}", "",
            "Artifacts: `loop_report.json`, `makespan_vs_round.{png,pdf}`, "
            "`round_<k>_<lever>_gantt.{png,pdf}` (IME dispatches drawn darker + hatched), "

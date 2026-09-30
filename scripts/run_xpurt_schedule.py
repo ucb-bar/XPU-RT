@@ -11,6 +11,7 @@ import os
 import pathlib
 import json
 import argparse
+import re
 import functools
 import numpy as np
 
@@ -143,19 +144,27 @@ def load_networks_config(json_path: str) -> tuple[dict, dict]:
         "solver_verbosity": int(sched.get("solver_verbosity", 0)),
         # 20 s is the historical default. It lives here rather than on the
         # CLI flag so that a `scheduler.time_limit` in the workload spec can
-        # actually take effect: an argparse default is not None, so it used to
-        # win the `if time_limit is not None` override below every single run
-        # and every spec's own value was dead.
+        # actually take effect: an argparse default is not None, so it would
+        # win the `if time_limit is not None` override below on every run
+        # and every spec's own value would be dead.
         "time_limit": sched.get("time_limit", 20),
         # Which cvxpy backend the `milp` solver hands the model to.
         "cvxpy_solver": str(sched.get("cvxpy_solver", "MOSEK")),
         # Optional: run this solver first and start every other solver's
         # periodic-instance refinement from the counts it converged on.
         "seed_solver": sched.get("seed_solver") or None,
-        # CP-SAT gets its own budget. It used to borrow the MILP's
-        # `time_limit`, so `--solver cpsat` silently ran on the MILP's 20 s
-        # fallback while the flag controlling it was documented "milp only".
+        # CP-SAT gets its own budget rather than the MILP's `time_limit`, so
+        # `--solver cpsat` never runs on the MILP's 20 s fallback under a flag
+        # documented "milp only".
         "cpsat_time_limit": float(sched.get("cpsat_time_limit", 300.0)),
+        # Networks the solver may widen across harts. The co-design loop writes this
+        # when it decides to shard some networks and not others; recorded in the SPEC so
+        # the decision is reproducible, unlike an env var set by whoever launched the run.
+        # The literal string "none" says NO network may be widened; a list names the
+        # ones that may; absent/empty leaves every network free to shard.
+        "shard_only_networks": (
+            "none" if str(sched.get("shard_only_networks", "")).strip().lower() == "none"
+            else list(sched.get("shard_only_networks") or []) or None),
         "use_profiled": bool(sched.get("use_profiled", False)),
         "prune_periodic": bool(sched.get("prune_periodic", True)),
         "restrict_makespan_to_nonperiodic": bool(sched.get("restrict_makespan_to_nonperiodic", True)),
@@ -279,15 +288,33 @@ def schedule_iree_networks(
     profile_topo_tag = cfg["profile_topo_tag"]
     profile_topo_tag_override = cfg["profile_topo_tag_override"]
     profile_topo_tag_per_hw = cfg["profile_topo_tag_per_hw"]
-    # `gen_root` selects which profile tree the timings come from. It was parsed
-    # into cfg and then never read by anything, so a config naming an alternate
-    # tree silently got the default one -- i.e. a run could be labelled with one
-    # timing basis while actually using another. Defaulting to "gen" preserves
+    # `gen_root` selects which profile tree the timings come from, and is read
+    # here so a config naming an alternate tree gets that tree -- otherwise a run
+    # could be labelled with one timing basis while using another. Defaulting to "gen" preserves
     # every existing config, whose value is either absent or literally "gen".
     gen_root = cfg.get("gen_root") or "gen"
     effective_p_core_speedup = cfg["p_core_speedup"]
     effective_random_seed = cfg["random_seed"]
     effective_solver_verbosity = cfg["solver_verbosity"]
+    # THE SHARD SET TRAVELS WITH THE SPEC, and must be published BEFORE any solver
+    # runs. `scheduler.shard_only_networks` is what the co-design loop writes when it
+    # decides to widen some networks and not others; a decision recorded in the spec is
+    # reproducible where an env var set by whoever launched the run is not. Set here
+    # rather than at the CP-SAT call site because `--solver greedy` never reaches that
+    # site -- the first version of this only bound the registry path, so every
+    # per-network shard candidate came back with byte-identical numbers and the loop
+    # rejected all five of them for the same reason at once.
+    _only = cfg.get("shard_only_networks")
+    if _only == "none":
+        os.environ["XPURT_SHARD_ONLY_NETS"] = "none"
+        print("  shard_only_networks: none (every network held at one core)")
+    elif _only:
+        os.environ["XPURT_SHARD_ONLY_NETS"] = ",".join(str(x) for x in _only)
+        print(f"  shard_only_networks: {list(_only)} "
+              f"(every other network held at one core)")
+    else:
+        os.environ.pop("XPURT_SHARD_ONLY_NETS", None)
+
     effective_time_limit = cfg["time_limit"]
     effective_use_profiled = cfg["use_profiled"]
     effective_prune_periodic = cfg["prune_periodic"]
@@ -321,9 +348,23 @@ def schedule_iree_networks(
     print(f"  machine_combination_mode: {machine_combination_mode}")
     print(f"  enforce_same_processor_combinations: {enforce_same_processor_combinations}")
 
+    # WHAT THE SHARD LEVER IS ALLOWED TO BE WORTH, said out loud before the solve. Enabling
+    # sharding and costing it from a tree whose per-width tables are copies of the one-hart
+    # table is indistinguishable, from the outside, from a solver that does not shard: the
+    # option exists, every width prices the same, and the search correctly never takes one.
+    # Set XPURT_REQUIRE_WIDTH_PROFILE=1 to make a flat table an error instead of a warning.
+    if str(machine_combination_mode).lower().startswith("shard"):
+        try:
+            from profile_loader import report_width_scaling
+            _flat = report_width_scaling(gen_root, profile_target, list(networks))
+            if _flat and os.environ.get("XPURT_REQUIRE_WIDTH_PROFILE", "") == "1":
+                raise SystemExit(f"shard mode with no width dimension for: {', '.join(_flat)}")
+        except ImportError:
+            pass
+
     # Build machines list and machine combinations (cumulative core groups per type)
-    # machine_combination_mode is now honoured (it used to be parsed and only
-    # printed). "singletons" -- its long-standing default -- gives every core its
+    # machine_combination_mode is honoured, not only parsed and printed.
+    # "singletons" -- its long-standing default -- gives every core its
     # own combination, which is what a multi-core target needs to express real
     # concurrency; "prefix" keeps the cumulative-group reading. The two are
     # identical when every kind has one core, so no pre-K1 config changes.
@@ -450,8 +491,53 @@ def schedule_iree_networks(
         return any(jn.startswith(nid) and jn[len(nid):].isdigit() and jn != nid
                    for nid in periodic_net_ids)
 
+    def _annotate_op_kinds(workload):
+        """Attach the profiled op kind to each Operation as `op_kind`.
+
+        WHY IT IS NEEDED HERE. A dispatch graph carries only id/ordinal/dependencies, so
+        `operation_name` is `<net-instance>_dispatch_<id>` and says nothing about WHAT
+        the dispatch computes. The op kind lives in the profile database, and the solver
+        needs it to honour the codegen contract: only packed-weight (convolution)
+        dispatches must take one core width across their periodic instances, and
+        constraining the rest would throw away the freedom shard mode exists to give.
+
+        The base-network lookup is by MEMBERSHIP, never by trimming trailing digits.
+        `yolov8_nano_64x96` ends in a digit, so a blind strip yields `yolov8_nano_64x`
+        and every one of its dispatches silently loses its op kind -- the same hazard
+        `postprocessing.py` resolves by longest base-network prefix.
+        """
+        if not profiled_by_network:
+            return
+        bases = sorted(profiled_by_network, key=len, reverse=True)
+        for op in getattr(workload, "operations", []) or []:
+            did = getattr(op, "operation_id", None)
+            name = str(getattr(op, "operation_name", "") or "")
+            if did is None or not name:
+                continue
+            head = name.split("_dispatch_")[0]
+            net = head if head in profiled_by_network else next(
+                (b for b in bases
+                 if head.startswith(b) and head[len(b):].isdigit()), None)
+            if net is None:
+                continue
+            per = profiled_by_network.get(net) or {}
+            for side in ("p", "e"):
+                rec = (per.get(side) or {}).get(did)
+                kind = (rec or {}).get("op")
+                if kind:
+                    op.op_kind = str(kind)
+                    op.op_network = net
+                    # OC too, for the divisibility half of the contract. It is only in
+                    # the module name -- the profile record has no OC field -- so parse
+                    # it from there rather than inferring it from the op kind.
+                    mod = str((rec or {}).get("module_name") or "")
+                    m = re.search(r"[x_]OC(\d+)", mod)
+                    if m:
+                        op.op_oc = int(m.group(1))
+                    break
+
     def _build_workload():
-        return create_workload_from_network_hierarchy(
+        _w = create_workload_from_network_hierarchy(
             networks_data=networks_data,
             repo_base_path=repo_base_path,
             machines=machines,
@@ -460,7 +546,10 @@ def schedule_iree_networks(
             random_seed=effective_random_seed,
             processing_times=processing_times,
             machine_combinations=machine_combinations,
+            combo_impls=combo_impls,
         )
+        _annotate_op_kinds(_w)
+        return _w
 
     if solver == "milp":
         # Single global solve. Build workload once, run the selected registry
@@ -554,11 +643,25 @@ def schedule_iree_networks(
                 "objective_stop_after": cfg["objective_stop_after"],
             }
 
+        # THE CP-SAT BUDGET HAS TO REACH CP-SAT ON *THIS* PATH TOO. `--cpsat-time-limit`
+        # was added because `--time-limit` is the MILP's, but it was only ever wired into
+        # the milp-native fallback below (`candidate == "cpsat"`). The registry path --
+        # which is what `--scheduler cpsat` actually takes -- kept handing CP-SAT the
+        # MILP limit, so every `--cpsat-time-limit 300` run in the ablation really solved
+        # at the `--time-limit 90` the MILP arm was given, and the certificates recorded
+        # `wall_s: 90.1`. One flag, two call sites, only one of them honouring it.
+        cpsat_budget = effective_time_limit
+        if scheduler.startswith("cpsat"):
+            cpsat_budget = cfg["cpsat_time_limit"]
+            if cpsat_budget != effective_time_limit:
+                print(f"  cpsat_time_limit: {cpsat_budget} "
+                      f"(MILP --time-limit {effective_time_limit} does not apply)")
+
         solver_t0 = time.perf_counter()
         result = scheduler_fn(
             combined_workload,
             solver_verbosity=effective_solver_verbosity,
-            time_limit=effective_time_limit,
+            time_limit=cpsat_budget,
             restrict_makespan_to_nonperiodic=effective_restrict_makespan_to_nonperiodic,
             prune_cross_period_constraints=effective_prune_periodic,
             **fresh_kwargs,
@@ -605,7 +708,7 @@ def schedule_iree_networks(
         # It stays because the workload its case rests on — the QRB5165 3-way,
         # where it matches the MILP optimum — is one of the specs that root
         # cannot build, and a pass costs about a second. See §4.6 of
-        # docs/scheduler_solver_study.md, which names the measurement that
+        # docs/Feature/scheduler_solver_study.md, which names the measurement that
         # would justify removing it.
         if solver == "auto":
             candidate_solvers = ["greedy_reserved", "greedy_periodic",
@@ -634,11 +737,11 @@ def schedule_iree_networks(
         # emits one per periodic network, sized from the horizon it laid the
         # sporadic tasks into) gets exactly that count: the refinement loop
         # sizes counts for workloads that DON'T say, and a document that does
-        # say has already decided. Two things went wrong when it did not:
+        # say has already decided. Resizing it anyway has two effects:
         #   - overwriting the count with 1 and then growing from the
-        #     *non-periodic* makespan meant a workload of nothing but
-        #     periodic tasks measured a makespan of 0 and converged at one
-        #     instance of each network — mlp_control ran once, at t=0, and
+        #     *non-periodic* makespan means a workload of nothing but
+        #     periodic tasks measures a makespan of 0 and converges at one
+        #     instance of each network — mlp_control runs once, at t=0, and
         #     never again;
         #   - growing past a declared count undoes the generator's
         #     --cap-instances and --max-ops budgets at schedule time, which
@@ -864,8 +967,8 @@ def schedule_iree_networks(
             # The loop breaks as soon as a pass is self-consistent, so reaching
             # the cap with a growing makespan means it never was: the schedule
             # being returned asks for more periodic instances than it contains.
-            # Say so — silently handing back the worst pass is what made this
-            # look like a tuning knob.
+            # Say so — handing back the worst pass without a warning would make
+            # this look like a tuning knob.
             if not converged_this_pass and len(iterates) > 1 and \
                     iterates[-1] > iterates[0] + 1e-9:
                 print(f"  WARN: {candidate} did not converge on this workload — the "
@@ -972,6 +1075,14 @@ def schedule_iree_networks(
             cfg["critical_models"],
             cfg["heavy_model"],
         )
+    # A refinement pass that returns no assignment leaves `alpha` as it was initialised. Say so and
+    # stop, rather than subscripting None several lines later: the driver's contract is that a solve
+    # which returns no table leaves no table, and a TypeError here reads as a crash instead.
+    if alpha is None or combined_workload is None or t is None:
+        print(f"[{algo_name}] no schedule produced (the solver returned no assignment); writing no table",
+              file=sys.stderr)
+        raise SystemExit(1)
+
     # Calculate makespan (non-periodic operations only, matching the solver objective)
     machine_combinations = combined_workload.get_machine_combinations()
     all_completion = []
@@ -1107,14 +1218,14 @@ def schedule_iree_networks(
     plot_profile_hw = {k.upper(): v for k, v in profile_hw_map.items()}
     plot_profile_hw.setdefault(CPU_P, cpu_p_profile_hw)
     plot_profile_hw.setdefault(CPU_E, cpu_e_profile_hw)
-    # The Gantt render must never be able to destroy the run's data. It used to:
-    # this call precedes output_scheduled_json, and on large schedules
-    # matplotlib/FreeType raised "raster overflow" while rasterising a glyph,
-    # aborting the process after the solve had already succeeded. A sweep lost
-    # 14 of 45 cells that way -- every cell at contention B>=3, i.e. exactly the
-    # oversubscribed points the experiment exists to measure.
+    # The Gantt render must never be able to destroy the run's data: this call
+    # precedes output_scheduled_json, and on large schedules matplotlib/FreeType
+    # can raise "raster overflow" while rasterising a glyph, aborting the process
+    # after the solve has already succeeded (14 of 45 cells of one sweep -- every
+    # cell at contention B>=3, i.e. exactly the oversubscribed points the
+    # experiment exists to measure).
     #
-    # plot.py now scales dpi down and retries, so this should be rare; the guard
+    # plot.py scales dpi down and retries, so this should be rare; the guard
     # stays because a cosmetic artifact is never worth a solved schedule. The
     # failure is printed loudly rather than swallowed, since a per-cell Gantt is
     # a required deliverable and a silently missing one would be worse than a
@@ -1146,7 +1257,7 @@ def schedule_iree_networks(
     # Snapshot the CSVs the loader read this run and hash them.
     # Embed both in the fixture metadata so the runtime loader can
     # detect when the PDB-on-disk has drifted from the PDB the solve
-    # was performed against — the trap that produced v8's 9x
+    # was performed against — drift of that kind accounts for v8's 9x
     # predicted/measured gap.
     _pdb_declared_files = _portable_repo_paths(list(_LAST_LOAD_CSV_PATHS))
     _pdb_hash, _pdb_files = compute_pdb_hash(
@@ -1176,9 +1287,8 @@ def schedule_iree_networks(
     # combination.
     #
     # Driven by the --emit-feedback / --feedback-run-id CLI flags, which main()
-    # forwards as arguments. They used to be read off a module-global `args`,
-    # which does not exist here -- `args` is a local of main() -- so ANY call
-    # to this function raised NameError before reaching the write.
+    # forwards as arguments: `args` is a local of main(), not a module global,
+    # so reading it here would raise NameError before reaching the write.
     if emit_feedback:
         import feedback as _feedback
         _payload = _feedback.derive_dispatch_hints(
@@ -1229,7 +1339,7 @@ def schedule_iree_networks(
         # magnitude: one B4 cell reports 229 late dispatches and 13 late
         # instances out of 47. The alias is fine in the JSON, where the
         # op_-prefixed name sits beside it; on a summary line with no context
-        # it is a trap, and it caught me.
+        # it is easy to misread, so the line spells out the unit.
         print(f"  makespan_us={metrics_dict['makespan_us']:.2f}  "
               f"op_deadline_miss={metrics_dict['op_deadline_miss_count']}"
               f" (dispatches, NOT instances)  "
@@ -1517,11 +1627,11 @@ if __name__ == "__main__":
                   if args.board_calibration is True else args.board_calibration)
         _cabs = _cpath if os.path.isabs(_cpath) else os.path.join(_REPO_ROOT, _cpath)
         if not os.path.exists(_cabs):
-            # WHY THIS EXITS. This used to print and continue with _calib=None -- exactly the
-            # "silently running additive" the comment above claims to prevent -- so a solve
-            # launched from the wrong cwd (the default path is repo-relative) produced an
-            # UNCALIBRATED schedule filed under a calibrated name, with nothing in the file
-            # to say so. A missing calibration is a broken request, not a default.
+            # WHY THIS EXITS. Continuing with _calib=None would be the "silently running
+            # additive" the comment above prevents: a solve launched from the wrong cwd (the
+            # default path is repo-relative) would produce an UNCALIBRATED schedule filed
+            # under a calibrated name, with nothing in the file to say so. A missing
+            # calibration is a broken request, not a default.
             print(f"--board-calibration: no artifact at {_cabs}. Refusing to run additive "
                   f"under a calibrated request -- pass the right path, or drop the flag to "
                   f"ask for the additive view on purpose.", file=sys.stderr)

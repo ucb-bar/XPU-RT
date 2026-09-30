@@ -168,8 +168,8 @@ def build_effective_config(path: str, out_dir: str, *, gen_root: Optional[str],
 
     Returns (path, config, overrides_applied). Written rather than mutated so
     the sweep's timing basis is a file on disk that can be diffed against the
-    original -- the `gen_root` bug this repo already hit was exactly a run
-    labelled with one timing basis while reading another.
+    original, so a run cannot be labelled with one timing basis while reading
+    another (the `gen_root` failure mode pinned by xpu-rt/tests/test_gen_root.py).
     """
     with open(path) as f:
         cfg = json.load(f)
