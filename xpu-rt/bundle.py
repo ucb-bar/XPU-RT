@@ -17,6 +17,8 @@ runs the candidates.
 """
 from __future__ import annotations
 
+import job_names
+
 from typing import Any, Dict, List, Optional
 
 # Curated axis-A scheduler candidates as (solver, scheduler) pairs. solver in
@@ -42,7 +44,7 @@ DEFAULT_SCHEDULERS: List[Dict[str, Optional[str]]] = [
 ]
 
 
-def _parse_name(name: str):
+def _parse_name(name: str, known=None):
     """('mlp_control0_dispatch_7') -> (root 'mlp_control', local_dispatch_id 7).
 
     The network *root* (instance index stripped) is shared across periodic
@@ -54,7 +56,12 @@ def _parse_name(name: str):
     for sep in ("_dispatch_", "$dispatch_"):
         if sep in name:
             pre, post = name.split(sep, 1)
-            root = pre.rstrip("0123456789") or pre
+            # `job_names`, not a bare rstrip: a network name may itself END IN
+            # A DIGIT (`yolov8_nano_64x96` is a real one), and stripping the
+            # trailing run then yields `yolov8_nano_64x`, which matches no
+            # network. Without the known set this falls back to exactly the
+            # old behaviour, so nothing that worked before changes.
+            root = job_names.model_of(pre, known) or pre
             local = int(post) if post.isdigit() else None
             return root, local
     return (name.split("_")[0] if name else "unknown"), None
@@ -71,6 +78,76 @@ def backend_assignments(available: List[str], machines=("cpu_p", "cpu_e")) -> Li
         if het not in out:
             out.append(het)
     return out
+
+
+#: The two Contract-2 schemas ModelBlaster's rewriters accept. Three call sites
+#: build these -- `fusion_hints_from_diagnosis` below (from a SchedulerReport),
+#: `scripts/granularity_loop.py` (from scored candidates) and
+#: `scripts/advice_to_fusion_hint.py` (from compile_advice) -- because they
+#: analyse different things. What they must NOT differ on is the wire format,
+#: so the schema is written once, here.
+FUSION_CONTRACT = "modelblaster.fusion_hints/v1"
+SPLIT_CONTRACT = "modelblaster.split_hints/v1"
+SHARD_CONTRACT = "modelblaster.shard_hints/v1"
+
+
+def fusion_hint(groups_by_network: Dict[str, List[List[int]]], reason: str,
+                provenance: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    """`{network: [[op_id, ...], ...]}` -> `modelblaster.fusion_hints/v1`."""
+    doc: Dict[str, Any] = {
+        "contract": FUSION_CONTRACT,
+        "reason": reason,
+        "networks": [{"network": net,
+                      "fuse_groups": [sorted(set(g)) for g in groups if len(g) > 1],
+                      "n_tiny": sum(len(g) for g in groups if len(g) > 1)}
+                     for net, groups in sorted(groups_by_network.items())
+                     if any(len(g) > 1 for g in groups)],
+    }
+    if provenance:
+        doc["_provenance"] = provenance
+    return doc
+
+
+def split_hint(splits_by_network: Dict[str, List[Dict[str, int]]], reason: str,
+               provenance: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    """`{network: [{"op": id, "n_splits": n}, ...]}` -> split_hints/v1."""
+    doc: Dict[str, Any] = {
+        "contract": SPLIT_CONTRACT,
+        "reason": reason,
+        "networks": [{"network": net, "split_ops": ops}
+                     for net, ops in sorted(splits_by_network.items()) if ops],
+    }
+    if provenance:
+        doc["_provenance"] = provenance
+    return doc
+
+
+def shard_hint(shards_by_network: Dict[str, List[Dict[str, int]]], reason: str,
+               provenance: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    """`{network: [{"op": id, "n_shards": n}, ...]}` -> shard_hints/v1.
+
+    SHARD IS NOT SPLIT, and the two contracts are separate because the graphs
+    they produce are different. A split CUTS one dispatch into n dispatches:
+    the graph grows, the scheduler sees n independent pieces it may place
+    anywhere, and the cost model gets n new rows. A shard leaves the dispatch
+    count alone and says this ONE dispatch is compiled to run its output
+    channels across n cores at once -- same node, same edges, one cost that
+    depends on the width it was given.
+
+    So `n_shards` is a property of a dispatch, not a rewrite of the graph, and
+    the field is spelled differently from `n_splits` on purpose: a hint file
+    that confuses them would be accepted by the wrong applier and silently do
+    the other thing.
+    """
+    doc: Dict[str, Any] = {
+        "contract": SHARD_CONTRACT,
+        "reason": reason,
+        "networks": [{"network": net, "shard_ops": ops}
+                     for net, ops in sorted(shards_by_network.items()) if ops],
+    }
+    if provenance:
+        doc["_provenance"] = provenance
+    return doc
 
 
 def fusion_hints_from_diagnosis(report: Dict[str, Any], diag: Any) -> Dict[str, Any]:
