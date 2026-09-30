@@ -1,0 +1,12 @@
+{
+ "schema": "ime_derived_profile/v1",
+ "kind": "DERIVED, not measured per dispatch",
+ "out": "gen/profile_mb/ime_x60/spacemit_x60/yolov8_nano_64x96/yolov8_nano_64x96.int8/yolov8_nano_64x96_spacemit_x60_ime_x60_yolov8_nano_64x96.int8/topo_0/results.csv",
+ "derived_from": "gen/profile_mb/rvv_x60/spacemit_x60/yolov8_nano_64x96/yolov8_nano_64x96.int8/yolov8_nano_64x96_spacemit_x60_rvv_x60_yolov8_nano_64x96.int8/topo_0/results.csv",
+ "derived_from_sha256": "692e5585d188496c452c52c1f6fa42eb6d7f8d5ef986e7412b432567399f8937",
+ "speedup_table": "xpu-rt/data/ime_measured_conv.csv",
+ "speedup_table_sha256": "8e0fb29476a2d0e683725984d1280ba78a7da1a653c5ef7d530508f366097eaa",
+ "n_rows": 90,
+ "n_rows_derived": 0,
+ "note": "conv winners carry rvv_cost/measured_speedup with source=ime_derived(...); every other row is the rvv measurement copied verbatim so the solver keeps RVV"
+}

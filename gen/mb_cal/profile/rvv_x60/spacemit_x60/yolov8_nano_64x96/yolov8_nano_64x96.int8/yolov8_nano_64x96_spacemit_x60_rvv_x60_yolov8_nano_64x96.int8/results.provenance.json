@@ -1,0 +1,32 @@
+{
+  "note": "per-dispatch wall time (first shard start to last shard end), median over warm instances, P-cluster placements",
+  "sources": {
+    "w1": [
+      "results/codesign_feedback/xpurt_long/trace_acpsat_hardr1_other_run1.csv",
+      "results/codesign_feedback/xpurt_long/trace_acpsat_hardr2_other_run1.csv"
+    ],
+    "w2": [
+      "results/codesign_feedback/xpurt_long/trace_best45alt2_other_run1.csv",
+      "results/codesign_feedback/xpurt_long/trace_best45alt2_other_run2.csv"
+    ],
+    "w4": [
+      "results/codesign_feedback/xpurt_long/trace_best45p4_other_run1.csv",
+      "results/codesign_feedback/xpurt_long/trace_best45p4_other_run2.csv"
+    ]
+  },
+  "topo_0": {
+    "dispatches_measured": 82,
+    "sum_ms_before": 55.748,
+    "sum_ms_after": 46.653
+  },
+  "topo_0_1": {
+    "dispatches_measured": 57,
+    "sum_ms_before": 55.604,
+    "sum_ms_after": 34.012
+  },
+  "topo_0_1_2_3": {
+    "dispatches_measured": 55,
+    "sum_ms_before": 55.654,
+    "sum_ms_after": 30.701
+  }
+}

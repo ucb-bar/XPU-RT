@@ -1,0 +1,27 @@
+{
+  "script": "emit_shard_profile.py",
+  "net": "yolov8_nano_64x96",
+  "widths": {
+    "2": {
+      "log": "results/codesign_feedback/ros_traced/yolo_standalone/2core.txt",
+      "topo": "topo_0_1",
+      "table": "rvv_x60/spacemit_x60/yolov8_nano_64x96/yolov8_nano_64x96.int8/yolov8_nano_64x96_spacemit_x60_rvv_x60_yolov8_nano_64x96.int8/topo_0_1/results.csv",
+      "dispatches": 90,
+      "sum_ms": 44.538
+    },
+    "4": {
+      "log": "results/codesign_feedback/ros_traced/yolo_standalone/4core_w.txt",
+      "topo": "topo_0_1_2_3",
+      "table": "rvv_x60/spacemit_x60/yolov8_nano_64x96/yolov8_nano_64x96.int8/yolov8_nano_64x96_spacemit_x60_rvv_x60_yolov8_nano_64x96.int8/topo_0_1_2_3/results.csv",
+      "dispatches": 90,
+      "sum_ms": 24.659
+    },
+    "8": {
+      "log": "results/codesign_feedback/ros_traced/yolo_standalone/8core_w.txt",
+      "topo": "topo_0_1_2_3_4_5_6_7",
+      "table": "rvv_x60/spacemit_x60/yolov8_nano_64x96/yolov8_nano_64x96.int8/yolov8_nano_64x96_spacemit_x60_rvv_x60_yolov8_nano_64x96.int8/topo_0_1_2_3_4_5_6_7/results.csv",
+      "dispatches": 90,
+      "sum_ms": 24.603
+    }
+  }
+}

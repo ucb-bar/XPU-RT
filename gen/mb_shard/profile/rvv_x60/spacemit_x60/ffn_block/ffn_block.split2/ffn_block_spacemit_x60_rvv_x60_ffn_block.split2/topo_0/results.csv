@@ -1,0 +1,7 @@
+dispatch_id,module_name,vmfb_path,mlir_path,mean_time,mean_unit,mean_time_ns,returncode,log_path,source,op,shape,cycles,cycles_n,cycles_cv_pct,implementation
+0,ffn_block$dispatch_0_rvv_x60_layernorm_s8_M128xK256,,,0.936917,ms,936916.666667,0,,k1,layernorm_s8,M=128;K=256,22486,1,,curated[rvv]/rvv_f64_tail
+1,ffn_block$dispatch_1_rvv_x60_linear_s8_M64xK256xN1024,,,7.733792,ms,7733791.666667,0,,k1,linear_s8,M=64;K=256;N=1024,185611,1,,curated[rvv]/direct
+2,ffn_block$dispatch_2_rvv_x60_linear_s8_M64xK256xN1024,,,6.872000,ms,6872000.000000,0,,k1,linear_s8,M=64;K=256;N=1024,164928,1,,curated[rvv]/direct
+3,ffn_block$dispatch_3_rvv_x60_gelu_s8_n131072,,,0.641833,ms,641833.333333,0,,k1,gelu_s8,n=131072,15404,1,,curated[rvv]/rvv_memo_lut_gather
+4,ffn_block$dispatch_4_rvv_x60_linear_s8_M128xK1024xN256,,,11.067292,ms,11067291.666667,0,,k1,linear_s8,M=128;K=1024;N=256,265615,1,,curated[rvv]/direct
+5,ffn_block$dispatch_5_rvv_x60_add_s8_n32768,,,0.211875,ms,211875.000000,0,,k1,add_s8,n=32768,5085,1,,curated[rvv]/rvv_frm_rmm

@@ -1,0 +1,6 @@
+dispatch_id,module_name,vmfb_path,mlir_path,mean_time,mean_unit,mean_time_ns,returncode,log_path,source,op,shape,cycles,cycles_n,cycles_cv_pct,implementation
+0,ffn_block_r2shard$dispatch_0_rvv_x60_layernorm_s8_M128xK256,,,0.942500,ms,942500.000000,0,,k1,layernorm_s8,M=128;K=256,22620,1,,curated[rvv]/rvv_f64_tail
+1,ffn_block_r2shard$dispatch_1_rvv_x60_linear_s8_M128xK256xN1024,,,15.785625,ms,15785625.000000,0,,k1,linear_s8,M=128;K=256;N=1024,378855,1,,curated[rvv]/direct
+2,ffn_block_r2shard$dispatch_2_rvv_x60_gelu_s8_n131072,,,0.632542,ms,632541.666667,0,,k1,gelu_s8,n=131072,15181,1,,curated[rvv]/rvv_memo_lut_gather
+3,ffn_block_r2shard$dispatch_3_rvv_x60_linear_s8_M128xK1024xN256,,,12.483167,ms,12483166.666667,0,,k1,linear_s8,M=128;K=1024;N=256,299596,1,,curated[rvv]/direct
+4,ffn_block_r2shard$dispatch_4_rvv_x60_add_s8_n32768,,,0.221625,ms,221625.000000,0,,k1,add_s8,n=32768,5319,1,,curated[rvv]/rvv_frm_rmm

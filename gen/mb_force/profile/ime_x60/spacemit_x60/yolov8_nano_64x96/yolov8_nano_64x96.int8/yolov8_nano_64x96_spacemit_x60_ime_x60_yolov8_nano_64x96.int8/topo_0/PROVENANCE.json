@@ -1,0 +1,19 @@
+{
+ "schema": "ime_derived_profile/v1",
+ "kind": "DERIVED, not measured per dispatch",
+ "out": "gen_mb_force/profile/ime_x60/spacemit_x60/yolov8_nano_64x96/yolov8_nano_64x96.int8/yolov8_nano_64x96_spacemit_x60_ime_x60_yolov8_nano_64x96.int8/topo_0/results.csv",
+ "derived_from": "gen_mb_force/profile/rvv_x60/spacemit_x60/yolov8_nano_64x96/yolov8_nano_64x96.int8/yolov8_nano_64x96_spacemit_x60_rvv_x60_yolov8_nano_64x96.int8/topo_0/results.csv",
+ "derived_from_sha256": "7dac598679bc60048b7a6b4bf79d1ef2dd4ba929dbf545095d2c5b6d9477fcbf",
+ "speedup_source": "matched board runs 1core_w.txt (rvv) vs ime_force_shard4_1hart.txt (ime), 90 shared dispatches, per-dispatch ratio",
+ "ime_ops_source": "ModelBlaster/build/k1_ime_force_shard4/yolov8_nano_64x96/int8/generated/kernel_picks.json",
+ "ime_ops": [
+  "conv2d_batchnorm2d_silu_s8",
+  "conv2d_s8"
+ ],
+ "speedup_table": null,
+ "n_rows": 90,
+ "n_rows_derived": 63,
+ "only_if_better": false,
+ "n_rows_derived_slower_than_rvv": 16,
+ "note": "conv winners carry rvv_cost/measured_speedup with source=ime_derived(...); every other row is the rvv measurement copied verbatim so the solver keeps RVV"
+}

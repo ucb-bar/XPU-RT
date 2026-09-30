@@ -1,0 +1,15 @@
+dispatch_id,module_name,vmfb_path,mlir_path,mean_time,mean_unit,mean_time_ns,returncode,log_path,source,op,shape,cycles,cycles_n,cycles_cv_pct,implementation
+0,attn_block$dispatch_0_ime_x60_layernorm_s8_M8xK32,,,0.006208,ms,6208.333333,0,,k1,layernorm_s8,M=8;K=32,149,6,0.51,curated[rvv]/rvv_f64_tail
+1,attn_block$dispatch_1_ime_x60_linear_s8_M8xK32xN32,,,0.014333,ms,14333.333333,0,,k1,linear_s8,M=8;K=32;N=32,344,6,1.23,curated[ime]/ime_vmadot_4x4x8
+2,attn_block$dispatch_2_ime_x60_sin_s8_n256,,,0.017167,ms,17166.666667,0,,k1,sin_s8,n=256,412,6,1.19,curated[rvv]/rvv_memo_lut_gather
+3,attn_block$dispatch_3_ime_x60_cos_s8_n256,,,0.016542,ms,16541.666667,0,,k1,cos_s8,n=256,397,6,0.64,curated[rvv]/rvv_memo_lut_gather
+4,attn_block$dispatch_4_ime_x60_mul_s8_n256,,,0.001375,ms,1375.000000,0,,k1,mul_s8,n=256,33,6,0.0,curated[rvv]/rvv_frm_rmm
+5,attn_block$dispatch_5_ime_x60_linear_s8_M8xK32xN32,,,0.013958,ms,13958.333333,0,,k1,linear_s8,M=8;K=32;N=32,335,6,1.45,curated[ime]/ime_vmadot_4x4x8
+6,attn_block$dispatch_6_ime_x60_mul_s8_n256,,,0.001375,ms,1375.000000,0,,k1,mul_s8,n=256,33,6,1.56,curated[rvv]/rvv_frm_rmm
+7,attn_block$dispatch_7_ime_x60_linear_s8_M8xK32xN32,,,0.014042,ms,14041.666667,0,,k1,linear_s8,M=8;K=32;N=32,337,6,1.79,curated[ime]/ime_vmadot_4x4x8
+8,attn_block$dispatch_8_ime_x60_mul_s8_n256,,,0.001333,ms,1333.333333,0,,k1,mul_s8,n=256,32,6,1.71,curated[rvv]/rvv_frm_rmm
+9,attn_block$dispatch_9_ime_x60_linear_s8_M8xK32xN32,,,0.013958,ms,13958.333333,0,,k1,linear_s8,M=8;K=32;N=32,335,6,1.21,curated[ime]/ime_vmadot_4x4x8
+10,attn_block$dispatch_10_ime_x60_matmul_s8_M8xK32xN8xtranspose_b1,,,0.005750,ms,5750.000000,0,,k1,matmul_s8,M=8;K=32;N=8;transpose_b=1,138,6,1.3,curated[ime]/ime_vmadot_4x4x8
+11,attn_block$dispatch_11_ime_x60_softmax_s8_M8xK8,,,0.004458,ms,4458.333333,0,,k1,softmax_s8,M=8;K=8,107,6,0.48,curated[rvv]/rvv_cached_exp
+12,attn_block$dispatch_12_ime_x60_matmul_s8_M8xK8xN32xtranspose_b0,,,0.015583,ms,15583.333333,0,,k1,matmul_s8,M=8;K=8;N=32;transpose_b=0,374,6,0.45,curated[ime]/ime_vmadot_4x4x8
+13,attn_block$dispatch_13_ime_x60_linear_s8_M8xK32xN32,,,0.014042,ms,14041.666667,0,,k1,linear_s8,M=8;K=32;N=32,337,6,2.68,curated[ime]/ime_vmadot_4x4x8

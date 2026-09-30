@@ -1,0 +1,28 @@
+{
+  "script": "emit_shard_profile.py",
+  "net": "fused_full",
+  "runs_dir": "results/codesign_feedback/ros_traced/nav_standalone",
+  "widths": {
+    "1": {
+      "log": "results/codesign_feedback/ros_traced/nav_standalone/1core_unsharded.txt",
+      "topo": "topo_0",
+      "table": "rvv_x60/spacemit_x60/fused_full/fused_full.int8/fused_full_spacemit_x60_rvv_x60_fused_full.int8/topo_0/results.csv",
+      "dispatches": 15,
+      "sum_ms": 3.908
+    },
+    "2": {
+      "log": "results/codesign_feedback/ros_traced/nav_standalone/c2_shard2_2core.txt",
+      "topo": "topo_0_1",
+      "table": "rvv_x60/spacemit_x60/fused_full/fused_full.int8/fused_full_spacemit_x60_rvv_x60_fused_full.int8/topo_0_1/results.csv",
+      "dispatches": 15,
+      "sum_ms": 3.639
+    },
+    "4": {
+      "log": "results/codesign_feedback/ros_traced/nav_standalone/c2_shard4_4core.txt",
+      "topo": "topo_0_1_2_3",
+      "table": "rvv_x60/spacemit_x60/fused_full/fused_full.int8/fused_full_spacemit_x60_rvv_x60_fused_full.int8/topo_0_1_2_3/results.csv",
+      "dispatches": 15,
+      "sum_ms": 3.543
+    }
+  }
+}

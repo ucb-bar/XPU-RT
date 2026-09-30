@@ -1,0 +1,12 @@
+{
+ "schema": "ime_derived_profile/v1",
+ "kind": "DERIVED, not measured per dispatch",
+ "out": "gen/profile_mb/ime_x60/spacemit_x60/dronet/dronet.int8/dronet_spacemit_x60_ime_x60_dronet.int8/topo_0/results.csv",
+ "derived_from": "gen/profile_mb/rvv_x60/spacemit_x60/dronet/dronet.int8/dronet_spacemit_x60_rvv_x60_dronet.int8/topo_0/results.csv",
+ "derived_from_sha256": "620fae21696428bf3130e1d062479fed92c6bfe4f154b00dca670088853d4ec0",
+ "speedup_table": "xpu-rt/data/ime_measured_conv.csv",
+ "speedup_table_sha256": "8e0fb29476a2d0e683725984d1280ba78a7da1a653c5ef7d530508f366097eaa",
+ "n_rows": 21,
+ "n_rows_derived": 1,
+ "note": "conv winners carry rvv_cost/measured_speedup with source=ime_derived(...); every other row is the rvv measurement copied verbatim so the solver keeps RVV"
+}

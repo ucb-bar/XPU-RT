@@ -1,0 +1,14 @@
+dispatch_id,module_name,vmfb_path,mlir_path,mean_time,mean_unit,mean_time_ns,returncode,log_path,source,op,shape,cycles
+0,vitfly_lstm$dispatch_0_scalar_conv2d_s8_N1xIC1xIH60xIW90xOC4xOH20xOW30xKH5xKW5xSH3xSW3xPH1xPW1,,,0.841250,ms,841250.000000,0,,k1,conv2d_s8,N=1;IC=1;IH=60;IW=90;OC=4;OH=20;OW=30;KH=5;KW=5;SH=3;SW=3;PH=1;PW=1,20190
+1,vitfly_lstm$dispatch_1_scalar_batchnorm2d_s8_N1xC4xH20xW30,,,0.130167,ms,130166.666667,0,,k1,batchnorm2d_s8,N=1;C=4;H=20;W=30,3124
+2,vitfly_lstm$dispatch_2_scalar_maxpool2d_s8_N1xC4xIH20xIW30xOH18xOW28xKH3xKW3xSH1xSW1xPH0xPW0xDH1xDW1,,,0.126917,ms,126916.666667,0,,k1,maxpool2d_s8,N=1;C=4;IH=20;IW=30;OH=18;OW=28;KH=3;KW=3;SH=1;SW=1;PH=0;PW=0;DH=1;DW=1,3046
+3,vitfly_lstm$dispatch_3_scalar_conv2d_s8_N1xIC4xIH18xIW28xOC10xOH8xOW13xKH3xKW3xSH2xSW2xPH0xPW0,,,0.448917,ms,448916.666667,0,,k1,conv2d_s8,N=1;IC=4;IH=18;IW=28;OC=10;OH=8;OW=13;KH=3;KW=3;SH=2;SW=2;PH=0;PW=0,10774
+4,vitfly_lstm$dispatch_4_scalar_batchnorm2d_s8_N1xC10xH8xW13,,,0.099583,ms,99583.333333,0,,k1,batchnorm2d_s8,N=1;C=10;H=8;W=13,2390
+5,vitfly_lstm$dispatch_5_scalar_avgpool2d_s8_N1xC10xIH8xIW13xOH6xOW11xKH3xKW3xSH1xSW1xPH0xPW0xcount_include_pad1,,,0.043833,ms,43833.333333,0,,k1,avgpool2d_s8,N=1;C=10;IH=8;IW=13;OH=6;OW=11;KH=3;KW=3;SH=1;SW=1;PH=0;PW=0;count_include_pad=1,1052
+6,vitfly_lstm$dispatch_6_scalar_lstm_s8_input_size660xhidden_size395,,,15.972792,ms,15972791.666667,0,,k1,lstm_s8,input_size=660;hidden_size=395,383347
+7,vitfly_lstm$dispatch_7_scalar_lstm_s8_input_size395xhidden_size395,,,11.791333,ms,11791333.333333,0,,k1,lstm_s8,input_size=395;hidden_size=395,282992
+8,vitfly_lstm$dispatch_8_scalar_linear_s8_M1xK395xN64,,,0.217042,ms,217041.666667,0,,k1,linear_s8,M=1;K=395;N=64,5209
+9,vitfly_lstm$dispatch_9_scalar_leaky_relu_s8_n64,,,0.004375,ms,4375.000000,0,,k1,leaky_relu_s8,n=64,105
+10,vitfly_lstm$dispatch_10_scalar_linear_s8_M1xK64xN16,,,0.008292,ms,8291.666667,0,,k1,linear_s8,M=1;K=64;N=16,199
+11,vitfly_lstm$dispatch_11_scalar_leaky_relu_s8_n16,,,0.000958,ms,958.333333,0,,k1,leaky_relu_s8,n=16,23
+12,vitfly_lstm$dispatch_12_scalar_linear_s8_M1xK16xN3,,,0.000792,ms,791.666667,0,,k1,linear_s8,M=1;K=16;N=3,19
