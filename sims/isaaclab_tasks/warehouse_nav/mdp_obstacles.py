@@ -58,19 +58,14 @@ for _k in KIND_ORDER:
 FORK_IDX = N_HUMANS + N_STATIC               # object-id of the forklift slot
 
 DUMP_Z = -1000.0
-PERSON_H = 1.7
+# people height (m): 2.4 m, so the patrols reach through the 2.0 m cruise altitude and have to
+# be avoided rather than overflown (WAREHOUSE_PERSON_H overrides; runs record the value they used)
+PERSON_H = float(__import__("os").environ.get("WAREHOUSE_PERSON_H", "2.4"))
 
 # baked kinematic-rigid-body wrapper USDs (sims/scripts/bake_prop_rigidbodies.py) — the raw
 # Simple_Warehouse prop meshes have no physics schemas, so UsdFileCfg.rigid_props no-ops on them.
 _RB_PROP_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "..", "out", "rb_props")
 _RB_PROP_DIR = os.path.abspath(_RB_PROP_DIR)
-# The crowded-course rack/box prop meshes are a generated asset, not tracked in
-# this repo. Fall back to the collaborator's read-only checkout if the local
-# generated dir is absent (the clean gate course doesn't spawn these).
-if not os.path.isdir(_RB_PROP_DIR):
-    _ag_props = "/scratch/agustin/projects/DIMA/XPU-RT/out/rb_props"
-    if os.path.isdir(_ag_props):
-        _RB_PROP_DIR = _ag_props
 
 
 def _prop_spawn(kind: str, collide: bool = True) -> sim_utils.UsdFileCfg:
@@ -135,6 +130,9 @@ class reset_obstacle_field(ManagerTermBase):
         self.volume = cfg.params.get("volume")
         self.half_density_prob = cfg.params.get("half_density_prob", 0.15)
         self.speed = cfg.params.get("walk_speed", 0.8)
+        # people cross the aisle (east-west) instead of patrolling along it: a crossing has to be
+        # seen and reacted to inside the crossing time, which is what a stale decision misses
+        self.cross = bool(cfg.params.get("walk_cross", False))
         # optional: place obstacles across a named CIRCUIT's full regions/route (proper-B), instead
         # of the single aisle `volume`. When set, C.sample_obstacles owns start/goal/gate/lane clearance.
         self.circuit = cfg.params.get("circuit", None)
@@ -172,7 +170,7 @@ class reset_obstacle_field(ManagerTermBase):
         env._fork_idx = self._fork_idx
 
     def __call__(self, env, env_ids, volume=None, half_density_prob=0.15, walk_speed=0.8,
-                 circuit=None, full_density=False, prop_density=None):
+                 circuit=None, full_density=False, prop_density=None, layout_seed=None, walk_cross=False):
         coll = env.scene["obstacles"]
         dev = env.device
         self._ensure_idx(env)
@@ -201,10 +199,16 @@ class reset_obstacle_field(ManagerTermBase):
         pbase = origins[:, None, :] + lo + (hi - lo) * torch.rand(n, N_HUMANS, 3, device=dev)
         pbase[..., 2] = origins[:, None, 2] + PERSON_H / 2
         sign = torch.where(torch.rand(n, N_HUMANS, device=dev) < 0.5, -1.0, 1.0)
-        ang = sign * (math.pi / 2) + (torch.rand(n, N_HUMANS, device=dev) - 0.5) * 0.6
+        if walk_cross or self.cross:
+            # east-west crossing: base on the aisle centre line, span half the aisle width each way
+            pbase[..., 0] = origins[:, None, 0] + 0.5 * (lo[0] + hi[0])
+            ang = torch.where(sign > 0, 0.0, math.pi) + (torch.rand(n, N_HUMANS, device=dev) - 0.5) * 0.3
+            env.person_half[env_ids] = 0.5 * (hi[0] - lo[0]) * (0.8 + 0.2 * torch.rand(n, N_HUMANS, device=dev))
+        else:
+            ang = sign * (math.pi / 2) + (torch.rand(n, N_HUMANS, device=dev) - 0.5) * 0.6
+            env.person_half[env_ids] = 1.5 + 1.5 * torch.rand(n, N_HUMANS, device=dev)
         env.person_dir[env_ids] = torch.stack([torch.cos(ang), torch.sin(ang)], dim=-1)
         env.person_base[env_ids] = pbase
-        env.person_half[env_ids] = 1.5 + 1.5 * torch.rand(n, N_HUMANS, device=dev)
         env.person_speed[env_ids] = self.speed * (0.7 + 0.6 * torch.rand(n, N_HUMANS, device=dev))
         pose[:, person_ids, :3] = pbase
 
@@ -221,7 +225,9 @@ class reset_obstacle_field(ManagerTermBase):
         else:
             density = 1.0 if full_density else (0.25 + 0.75 * frac)
         region_box = (vol["x"][0] - 0.1, vol["x"][1] + 0.1, vol["y"][0], vol["y"][1])
-        step = int(getattr(env, "common_step_counter", 0))
+        # the prop layout is drawn from the process step counter (every reset a new field); with
+        # ``layout_seed`` it is drawn from that seed instead, so two runs can share one scene
+        step = int(getattr(env, "common_step_counter", 0)) if layout_seed is None else int(layout_seed)
         for row, eid in enumerate(env_ids.tolist() if density > 0.0 else []):
             rng = random.Random(step * 100003 + eid * 131 + 7)
             if self._circ is not None:

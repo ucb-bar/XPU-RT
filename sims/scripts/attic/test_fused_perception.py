@@ -20,10 +20,18 @@ import sys
 
 _ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 sys.path.insert(0, _ROOT)
+# Where Isaac Lab's source packages live: $ISAACLAB_SOURCE, else sims/IsaacLab/source (the pinned
+# submodule). Neither present is an error that names both.
+_ISAACLAB_SRC = os.environ.get("ISAACLAB_SOURCE") or os.path.join(_ROOT, "IsaacLab", "source")
+if not os.path.isdir(_ISAACLAB_SRC):
+    raise SystemExit(f"Isaac Lab source not found at {_ISAACLAB_SRC}: run `git submodule update --init "
+                     f"sims/IsaacLab`, or set $ISAACLAB_SOURCE to the source/ directory of an Isaac Lab checkout")
 for _p in ("isaaclab", "isaaclab_assets", "isaaclab_rl", "isaaclab_contrib"):
-    sys.path.insert(0, f"/scratch2/dima/IsaacLab/source/{_p}")
-# FusedSensorNet lives in the vitfly package (imports ViTsubmodules relatively).
-sys.path.insert(0, "/scratch/agustin/projects/DIMA/vitfly/models")
+    sys.path.insert(0, os.path.join(_ISAACLAB_SRC, _p))
+# FusedSensorNet lives in the vitfly package (imports ViTsubmodules relatively): $MODELBLASTER_VITFLY_MODELS,
+# else a vitfly checkout next to this repository.
+sys.path.insert(0, os.environ.get("MODELBLASTER_VITFLY_MODELS") or os.path.abspath(
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "..", "vitfly", "models")))
 
 from isaaclab.app import AppLauncher
 

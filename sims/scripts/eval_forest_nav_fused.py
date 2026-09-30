@@ -17,14 +17,21 @@ Compare its offset table head-to-head with the DroNet/ViT rows from eval_forest_
 from __future__ import annotations
 
 import argparse
+import tempfile
 import json
 import os
 import sys
 
 freshscheduler_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 sys.path.insert(0, freshscheduler_root)
+# Where Isaac Lab's source packages live: $ISAACLAB_SOURCE, else sims/IsaacLab/source (the pinned
+# submodule). Neither present is an error that names both.
+_ISAACLAB_SRC = os.environ.get("ISAACLAB_SOURCE") or os.path.join(freshscheduler_root, "sims", "IsaacLab", "source")
+if not os.path.isdir(_ISAACLAB_SRC):
+    raise SystemExit(f"Isaac Lab source not found at {_ISAACLAB_SRC}: run `git submodule update --init "
+                     f"sims/IsaacLab`, or set $ISAACLAB_SOURCE to the source/ directory of an Isaac Lab checkout")
 for _p in ("isaaclab", "isaaclab_assets", "isaaclab_rl", "isaaclab_contrib"):
-    sys.path.insert(0, f"/scratch2/dima/IsaacLab/source/{_p}")
+    sys.path.insert(0, os.path.join(_ISAACLAB_SRC, _p))
 sys.path.insert(0, os.path.abspath(os.path.join(freshscheduler_root, "..", "vitfly", "models")))
 from isaaclab.app import AppLauncher  # noqa: E402
 
@@ -42,8 +49,9 @@ parser.add_argument("--mask_off", type=str, default="",
                          "(#62), e.g. 'front_grey,down_tof,baro'. Valid: front_grey,tof_cross,"
                          "optical_flow,down_tof,baro,quat,body_rates,desired_vel.")
 parser.add_argument("--inner_ckpt", type=str,
-                    default="/scratch2/dima/misc_sw/FreshScheduler/logs/rsl_rl/"
-                            "crazyflie_steering_tracking/2026-04-13_12-23-08/model_6998.pt")
+                    default=os.path.join(
+                        os.environ.get("XPURT_RSL_RL_LOGS", "logs/rsl_rl"),
+                        "crazyflie_steering_tracking/2026-04-13_12-23-08/model_6998.pt"))
 parser.add_argument("--out", type=str, default=None)
 parser.add_argument("--gate_seed", type=int, default=0,
                     help="Gate-course DR seed (0=canonical) — eval on a held-out layout to test generalization.")
@@ -164,7 +172,7 @@ def main():
                                    args_cli.max_steps * float(env_cfg.sim.dt * env_cfg.decimation) + 1.0)
     geom = Geometry(env_cfg, curved)
     out_dir = os.path.dirname(args_cli.out) if args_cli.out else \
-        "/tmp/claude-2621/-scratch-agustin-projects-DIMA/057226a3-598b-40aa-8396-ef0c5c742cd9/scratchpad"
+        os.environ.get("XPURT_SCRATCH", tempfile.gettempdir())
 
     log(f"[env] gym.make {task_id}")
     env = gym.make(task_id, cfg=env_cfg)

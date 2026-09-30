@@ -8,8 +8,11 @@
 # metrics JSON (success = flew through all 4 gates without hitting a prop / rack / person / gate).
 set -euo pipefail
 
-REPO="/scratch/agustin/projects/DIMA"
-PY="/scratch2/agustin/miniforge3/envs/env_isaaclab/bin/python"
+# the simulator tree and the Isaac interpreter come from scripts/env.sh, which reads the
+# machine-local scripts/env.local.sh; REPO here is the parent holding train_out/ beside it
+WT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"; . "$WT/scripts/env.sh"
+REPO="${REPO:-$(cd "$SIM_TREE/.." && pwd)}"
+PY="$ISAAC_PY"
 cd "$REPO"
 
 # crowded-course checkpoint (CNN+LSTM). Override by passing a path as $1 (e.g. the ViT+LSTM one).

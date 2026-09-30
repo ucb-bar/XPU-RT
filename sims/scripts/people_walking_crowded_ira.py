@@ -20,8 +20,7 @@ obstacle scatter (spawned before the bake), and (c) an mp4/stills encode at the 
 output goes to a NEW filename (people_walking_crowded.mp4) and the original is kept.
 
 Run:
-  /scratch2/dima/miniforge3/envs/xpurt/bin/python \
-    /scratch/agustin/projects/DIMA/XPU-RT/sims/scripts/people_walking_crowded_ira.py \
+  <isaac sim python> sims/scripts/people_walking_crowded_ira.py \
     --frames 360 --num 20
 
 Output: out/people_walking/  (people_walking_crowded.mp4 + still_crowded_*.png)
@@ -32,6 +31,7 @@ import asyncio
 import math
 import os
 import sys
+import tempfile
 
 # make `sims.isaaclab_tasks.warehouse_nav` importable (namespace pkg under XPU-RT)
 _XPURT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
@@ -45,7 +45,8 @@ parser = argparse.ArgumentParser("IRA people walking (crowded + obstacles)")
 parser.add_argument("--frames", type=int, default=360, help="simulation_length (frames @30fps)")
 parser.add_argument("--num", type=int, default=20, help="number of characters")
 parser.add_argument("--seed", type=int, default=20260715)
-parser.add_argument("--out", default="/scratch/agustin/projects/DIMA/out/people_walking")
+parser.add_argument("--out", default=os.path.join(
+    os.environ.get("XPURT_SCRATCH", tempfile.gettempdir()), "people_walking"))
 parser.add_argument("--width", type=int, default=1600)
 parser.add_argument("--height", type=int, default=900)
 args = parser.parse_args()
@@ -61,7 +62,11 @@ MP4_PATH = os.path.join(OUT, "people_walking_crowded.mp4")
 
 # Stock full experience boots offline on this box; anim/replicator/scripting exts
 # are enabled at runtime (resolved from the local extscache, no registry needed).
-EXP = "/scratch2/dima/miniforge3/envs/xpurt/lib/python3.11/site-packages/isaacsim/apps/isaacsim.exp.full.kit"
+# the experience file ships inside the isaacsim package this interpreter imports; $ISAACSIM_EXP
+# names another one
+import isaacsim as _isaacsim  # noqa: E402
+EXP = os.environ.get("ISAACSIM_EXP") or os.path.join(
+    os.path.dirname(_isaacsim.__file__), "apps", "isaacsim.exp.full.kit")
 
 # ---------------------------------------------------------------------------
 # ROUTES: mix of HALL-CROSSERS (open south hall, y<=7) and AISLE-WALKERS (down the

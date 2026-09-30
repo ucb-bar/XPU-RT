@@ -34,8 +34,14 @@ import sys
 # isaaclab is a SOURCE checkout here (not pip-installed) — add it to path before import.
 freshscheduler_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 sys.path.insert(0, freshscheduler_root)
+# Where Isaac Lab's source packages live: $ISAACLAB_SOURCE, else sims/IsaacLab/source (the pinned
+# submodule). Neither present is an error that names both.
+_ISAACLAB_SRC = os.environ.get("ISAACLAB_SOURCE") or os.path.join(freshscheduler_root, "sims", "IsaacLab", "source")
+if not os.path.isdir(_ISAACLAB_SRC):
+    raise SystemExit(f"Isaac Lab source not found at {_ISAACLAB_SRC}: run `git submodule update --init "
+                     f"sims/IsaacLab`, or set $ISAACLAB_SOURCE to the source/ directory of an Isaac Lab checkout")
 for _p in ("isaaclab", "isaaclab_assets", "isaaclab_rl", "isaaclab_contrib"):
-    sys.path.insert(0, f"/scratch2/dima/IsaacLab/source/{_p}")
+    sys.path.insert(0, os.path.join(_ISAACLAB_SRC, _p))
 from isaaclab.app import AppLauncher  # noqa: E402
 
 # ---- CLI (parse BEFORE launching the app) ----
@@ -46,8 +52,9 @@ parser.add_argument("--nav_size", choices=["small", "large"], default="small", h
 parser.add_argument("--nav_rgb", action="store_true", help="Nav model uses RGB (default greyscale).")
 parser.add_argument("--nav_weights", type=str, required=True)
 parser.add_argument("--inner_ckpt", type=str,
-                    default="/scratch2/dima/misc_sw/FreshScheduler/logs/rsl_rl/"
-                            "crazyflie_steering_tracking/2026-04-13_12-23-08/model_6998.pt",
+                    default=os.path.join(
+                        os.environ.get("XPURT_RSL_RL_LOGS", "logs/rsl_rl"),
+                        "crazyflie_steering_tracking/2026-04-13_12-23-08/model_6998.pt"),
                     help="Frozen steering inner-loop policy (model_6998).")
 parser.add_argument("--trail", choices=["straight", "curved"], default="straight")
 parser.add_argument("--with_humans", action="store_true")
@@ -70,6 +77,7 @@ import gymnasium as gym  # noqa: E402
 import numpy as np  # noqa: E402
 import torch  # noqa: E402
 import torch.nn.functional as F  # noqa: E402
+import tempfile
 from rsl_rl.runners import OnPolicyRunner  # noqa: E402
 
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -223,7 +231,7 @@ def main() -> int:
     if "distribution.std_param" in _asd and "distribution.log_std_param" not in _asd:
         _asd["distribution.log_std_param"] = _asd.pop("distribution.std_param").clamp_min(1e-6).log()
         inner_ckpt = os.path.join(
-            "/tmp/claude-2621/-scratch-agustin-projects-DIMA/057226a3-598b-40aa-8396-ef0c5c742cd9/scratchpad",
+            os.environ.get("XPURT_SCRATCH", tempfile.gettempdir()),
             "model_6998_logstd.pt")
         torch.save(_loaded, inner_ckpt)
         log(f"[inner] remapped std_param->log_std_param (rsl_rl drift) -> {inner_ckpt}")
@@ -314,7 +322,7 @@ def main() -> int:
     log("\n=== FOREST NAV EVAL ===")
     log(json.dumps(agg, indent=2))
     out = args_cli.out or os.path.join(
-        "/tmp/claude-2621/-scratch-agustin-projects-DIMA/057226a3-598b-40aa-8396-ef0c5c742cd9/scratchpad",
+        os.environ.get("XPURT_SCRATCH", tempfile.gettempdir()),
         f"forestnav_{args_cli.nav_arch}_{args_cli.nav_head}_{args_cli.trail}.json")
     with open(out, "w") as f:
         json.dump({"agg": agg, "episodes": results, "args": vars(args_cli)}, f, indent=2)

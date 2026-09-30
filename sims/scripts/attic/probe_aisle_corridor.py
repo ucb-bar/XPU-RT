@@ -6,8 +6,14 @@ down the x=-8 aisle, so we can see exactly what the drone is clipping.
 from __future__ import annotations
 import argparse, os, sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
+# Where Isaac Lab's source packages live: $ISAACLAB_SOURCE, else the pinned submodule; neither
+# present is an error naming both.
+_ISAACLAB_SRC = os.environ.get("ISAACLAB_SOURCE") or os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "IsaacLab", "source"))
+if not os.path.isdir(_ISAACLAB_SRC):
+    raise SystemExit(f"Isaac Lab not found at {_ISAACLAB_SRC}: run `git submodule update --init "
+                     f"sims/IsaacLab`, or set $ISAACLAB_SOURCE to the source/ directory of an Isaac Lab checkout")
 for _p in ("isaaclab", "isaaclab_assets", "isaaclab_rl", "isaaclab_contrib"):
-    sys.path.insert(0, f"/scratch2/dima/IsaacLab/source/{_p}")
+    sys.path.insert(0, os.path.join(_ISAACLAB_SRC, _p))
 from isaaclab.app import AppLauncher
 parser = argparse.ArgumentParser()
 parser.add_argument("--scene", default="full_warehouse")

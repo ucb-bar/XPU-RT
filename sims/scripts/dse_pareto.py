@@ -35,6 +35,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(REPO, "..", "vitfly", "models"))
 import torch.nn as nn  # noqa: E402
 from ablate_fused_compute import MacCounter  # noqa: E402  (hook-based MAC counter)
 import hw_cycle_model as HW  # noqa: E402  (measured-FireSim-grounded per-op cycle model)
+import tempfile
 
 
 class FloatOpCounter:
@@ -71,8 +72,8 @@ class FloatOpCounter:
             h.remove()
         self._handles = []
 
-_SCRATCH = ("/tmp/claude-2621/-scratch-agustin-projects-DIMA/"
-            "057226a3-598b-40aa-8396-ef0c5c742cd9/scratchpad")
+# where intermediates land: $XPURT_SCRATCH, else $TMPDIR
+_SCRATCH = os.environ.get("XPURT_SCRATCH", tempfile.gettempdir())
 
 # Per-MAC energy ESTIMATE (pJ/MAC), rough order-of-magnitude at a ~16-28nm edge node.
 # LABELED ESTIMATE — real energy needs the ModelBlaster/Accelergy path (audit #24, P3: energy

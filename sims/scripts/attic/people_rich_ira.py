@@ -21,10 +21,10 @@ IRA SimulationManager / character pipeline (that stays verbatim):
 
 Run:
   /scratch2/dima/miniforge3/envs/xpurt/bin/python \
-    /scratch/agustin/projects/DIMA/XPU-RT/sims/scripts/people_rich_ira.py \
+    sims/scripts/attic/people_rich_ira.py \
     --frames 360 --num 20
 
-Output: out/people_walking/  (people_rich.mp4 + still_rich_*.png)
+Output: $XPURT_SCRATCH/people_walking/ (default: $TMPDIR)  (people_rich.mp4 + still_rich_*.png)
 """
 
 import argparse
@@ -32,6 +32,7 @@ import asyncio
 import math
 import os
 import sys
+import tempfile
 
 # make `sims.isaaclab_tasks.warehouse_nav` importable (namespace pkg under XPU-RT)
 _XPURT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
@@ -46,7 +47,8 @@ parser.add_argument("--frames", type=int, default=360, help="simulation_length (
 parser.add_argument("--num", type=int, default=20, help="number of characters")
 parser.add_argument("--seed", type=int, default=20260715)
 parser.add_argument("--obs_seed", type=int, default=7, help="seed for the warehouse_grand obstacle layout")
-parser.add_argument("--out", default="/scratch/agustin/projects/DIMA/out/people_walking")
+parser.add_argument("--out", default=os.path.join(
+    os.environ.get("XPURT_SCRATCH", tempfile.gettempdir()), "people_walking"))
 parser.add_argument("--width", type=int, default=1600)
 parser.add_argument("--height", type=int, default=900)
 parser.add_argument("--drone_scale", type=float, default=16.0)

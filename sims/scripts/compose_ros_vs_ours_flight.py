@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """The literal run: same course, same speed — under ROS onboard-scheduling timing the drone's
-control command goes stale (refresh capped at 1/12.40 ms) and it CRASHES; under our co-design
-schedule (4.89 ms) the command stays fresh and it COMPLETES 4/4.
+control command goes stale (its refresh is capped by the schedule's worst response) and it CRASHES; under
+our co-design schedule the command stays fresh and it COMPLETES the course. Each arm's latency is read from
+its own flight dump (`sched_latency_ms`), never typed here.
 
 Overlays the two REAL flight trajectories (from record_sensor_demo --sched_latency_ms runs) on the
 top-down aisle: ours (green, reaches the last gate) vs ROS (red, truncated at the crash + ✗ marker).
@@ -72,8 +73,12 @@ def main():
             ax.scatter(u[m][-1], v[m][-1], s=180, marker="*", color=color, edgecolors="white",
                        linewidths=1.6, zorder=8)
 
-    draw(ours, "#2f8f4e", "XPU-RT schedule — 4.89 ms → SUCCESS 4/4", crash=False)
-    draw(ros, "#e2231a", "ROS per-net pinning — 12.40 ms → CRASH", crash=True)
+    def _lat(z):
+        return f"{float(z['sched_latency_ms']):.2f} ms" if "sched_latency_ms" in getattr(z, "files", ()) else "measured latency"
+    def _gates(z):
+        return f"{int(z['gates_passed'])}/4" if "gates_passed" in getattr(z, "files", ()) else "the course"
+    draw(ours, "#2f8f4e", f"XPU-RT schedule — {_lat(ours)} → SUCCESS {_gates(ours)}", crash=False)
+    draw(ros, "#e2231a", f"ROS per-net pinning — {_lat(ros)} → CRASH", crash=True)
 
     gu, gv, gok = project(K, cpos, cquat, gates); gu, gv = T(gu, gv)
     for i in range(len(gates)):

@@ -10,14 +10,15 @@
 #   LATENCY_MODE=none ./run_demo_scheduled.sh   # free-inference baseline
 #   EPISODES=3 MAX_STEPS=400 ./run_demo_scheduled.sh
 set -euo pipefail
-source /scratch2/dima/miniforge3/etc/profile.d/conda.sh
-conda activate xpurt
+# $CONDA_HOOK names the conda profile script of the installation holding the `xpurt` env
+source "${CONDA_HOOK:?set CONDA_HOOK to <conda root>/etc/profile.d/conda.sh}"
+conda activate "${CONDA_ENV:-xpurt}"
 export ACCEPT_EULA=Y PRIVACY_CONSENT=Y
 
 # IsaacLab puts its log dir at $TMPDIR/isaaclab/logs. On a shared host that
 # collides with whoever ran Isaac first -- /tmp/isaaclab ends up owned by
 # another user and the run dies on PermissionError before the sim starts.
-export TMPDIR="${TMPDIR:-/scratch2/dima/tmp/xpurt-$(id -un)}"
+export TMPDIR="${TMPDIR:-${XPURT_SCRATCH:-/tmp}/xpurt-$(id -un)}"
 mkdir -p "$TMPDIR"
 
 cd "$(dirname "$0")"

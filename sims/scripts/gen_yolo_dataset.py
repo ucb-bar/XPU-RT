@@ -15,8 +15,14 @@ import argparse, json, os, sys
 
 freshscheduler_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 sys.path.insert(0, freshscheduler_root)
+# Where Isaac Lab's source packages live: $ISAACLAB_SOURCE, else sims/IsaacLab/source (the pinned
+# submodule). Neither present is an error that names both.
+_ISAACLAB_SRC = os.environ.get("ISAACLAB_SOURCE") or os.path.join(freshscheduler_root, "sims", "IsaacLab", "source")
+if not os.path.isdir(_ISAACLAB_SRC):
+    raise SystemExit(f"Isaac Lab source not found at {_ISAACLAB_SRC}: run `git submodule update --init "
+                     f"sims/IsaacLab`, or set $ISAACLAB_SOURCE to the source/ directory of an Isaac Lab checkout")
 for _p in ("isaaclab", "isaaclab_assets", "isaaclab_rl", "isaaclab_contrib"):
-    sys.path.insert(0, f"/scratch2/dima/IsaacLab/source/{_p}")
+    sys.path.insert(0, os.path.join(_ISAACLAB_SRC, _p))
 sys.path.insert(0, os.path.abspath(os.path.join(freshscheduler_root, "..", "vitfly", "models")))
 from isaaclab.app import AppLauncher  # noqa: E402
 
@@ -60,7 +66,7 @@ PASS_RADIUS = GW.FixedGateCourseCommandCfg().success_radius
 
 # class collapse. nc=2 {gate, person}: static props (pallet/crate/box/cone/klt/forklift) are handled by
 # nav's camera+ToF (ToF-redundancy finding), so they're dropped from detection; only gates (navigation)
-# and people (moving hazards) are learned. Set DIMA_YOLO_NC=3 to restore the old 3-class map.
+# and people (moving hazards) are learned. Set DIMA_YOLO_NC=3 to use the 3-class map instead.
 if os.environ.get("DIMA_YOLO_NC", "2") == "3":
     RAW2ID = {"gate": 0, "person": 1, "pallet": 2, "crate": 2, "box": 2, "cone": 2, "klt": 2, "forklift": 2}
     CLASS_NAMES = ["gate", "person", "obstacle"]

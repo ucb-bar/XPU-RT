@@ -22,10 +22,16 @@ import sys
 # Isaac Lab lives outside this repo; match the path setup the other sims/scripts use.
 freshscheduler_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 sys.path.insert(0, freshscheduler_root)
-sys.path.insert(0, "/scratch2/dima/IsaacLab/source/isaaclab")
-sys.path.insert(0, "/scratch2/dima/IsaacLab/source/isaaclab_assets")
-sys.path.insert(0, "/scratch2/dima/IsaacLab/source/isaaclab_rl")
-sys.path.insert(0, "/scratch2/dima/IsaacLab/source/isaaclab_contrib")
+# Where Isaac Lab's source packages live: $ISAACLAB_SOURCE, else sims/IsaacLab/source (the pinned
+# submodule). Neither present is an error that names both.
+_ISAACLAB_SRC = os.environ.get("ISAACLAB_SOURCE") or os.path.join(freshscheduler_root, "IsaacLab", "source")
+if not os.path.isdir(_ISAACLAB_SRC):
+    raise SystemExit(f"Isaac Lab source not found at {_ISAACLAB_SRC}: run `git submodule update --init "
+                     f"sims/IsaacLab`, or set $ISAACLAB_SOURCE to the source/ directory of an Isaac Lab checkout")
+sys.path.insert(0, os.path.join(_ISAACLAB_SRC, "isaaclab"))
+sys.path.insert(0, os.path.join(_ISAACLAB_SRC, "isaaclab_assets"))
+sys.path.insert(0, os.path.join(_ISAACLAB_SRC, "isaaclab_rl"))
+sys.path.insert(0, os.path.join(_ISAACLAB_SRC, "isaaclab_contrib"))
 
 from isaaclab.app import AppLauncher
 

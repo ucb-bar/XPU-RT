@@ -33,8 +33,16 @@ import sys
 
 freshscheduler_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 sys.path.insert(0, freshscheduler_root)
+# Where Isaac Lab's source packages live. `sims/IsaacLab` is the pinned submodule; the path below
+# was a checkout of that same commit outside the repository. Resolution order lets a clone use the
+# submodule without editing this file, and leaves the original path working where it exists:
+#   $ISAACLAB_SOURCE  ->  sims/IsaacLab/source (the pinned submodule)  ->  the original checkout
+_ISAACLAB_SRC = os.environ.get("ISAACLAB_SOURCE") or next(
+    (c for c in (os.path.join(freshscheduler_root, "sims", "IsaacLab", "source"),
+                 "/scratch2/dima/IsaacLab/source") if os.path.isdir(c)),
+    "/scratch2/dima/IsaacLab/source")
 for _p in ("isaaclab", "isaaclab_assets", "isaaclab_rl", "isaaclab_contrib"):
-    sys.path.insert(0, f"/scratch2/dima/IsaacLab/source/{_p}")
+    sys.path.insert(0, os.path.join(_ISAACLAB_SRC, _p))
 sys.path.insert(0, os.path.abspath(os.path.join(freshscheduler_root, "..", "vitfly", "models")))
 from isaaclab.app import AppLauncher  # noqa: E402
 

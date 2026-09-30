@@ -13,12 +13,18 @@ from isaaclab.utils import configclass
 from sims.isaaclab_tasks.warehouse_nav.mdp_velocity_action import (
     VelocityCommandAction, VelocityCommandActionCfg)
 
-_WRAP_DIR = "/scratch/agustin/projects/DIMA/coordination/k1_hil/shared/modelblaster"
+# the HIL wrapper package (warehouse_mlp_control) is staged outside the repo, beside the board
+# tree; $XPURT_K1_HIL_WRAPPERS names where
+_WRAP_DIR = os.environ.get("XPURT_K1_HIL_WRAPPERS", "")
 
 
 class MLPVelocityCommandAction(VelocityCommandAction):
     def __init__(self, cfg, env):
         super().__init__(cfg, env)
+        if not _WRAP_DIR:
+            raise RuntimeError(
+                "set XPURT_K1_HIL_WRAPPERS to the directory holding warehouse_mlp_control.py "
+                "(the K1 HIL wrapper package, staged outside the repo)")
         if _WRAP_DIR not in sys.path:
             sys.path.insert(0, _WRAP_DIR)
         from warehouse_mlp_control import get_model

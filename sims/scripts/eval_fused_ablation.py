@@ -19,11 +19,14 @@ import json
 import os
 import subprocess
 import sys
+import tempfile
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
 _EVAL = os.path.join(_HERE, "eval_forest_nav_fused.py")
-_PY = "/scratch2/agustin/miniforge3/envs/env_isaaclab/bin/python"
-_SCRATCH = "/tmp/claude-2621/-scratch-agustin-projects-DIMA/057226a3-598b-40aa-8396-ef0c5c742cd9/scratchpad"
+# the Isaac interpreter and the directory the per-subset JSONs land in are both machine-local:
+# $ISAAC_PY (as scripts/env.sh resolves it) and $XPURT_SCRATCH, else this interpreter and $TMPDIR
+_PY = os.environ.get("ISAAC_PY", sys.executable)
+_SCRATCH = os.environ.get("XPURT_SCRATCH", tempfile.gettempdir())
 
 # (name, modalities-to-zero-skip). Mirrors ablate_fused_compute.SUBSETS where possible.
 SUBSETS = [
@@ -45,7 +48,7 @@ def run(weights, trail, episodes, name, mask_off):
     if mask_off:
         cmd += ["--mask_off", mask_off]
     print(f"[abl] {name}: mask_off='{mask_off or 'none'}'", flush=True)
-    subprocess.run(cmd, cwd="/scratch/agustin/projects/DIMA/train_out",
+    subprocess.run(cmd, cwd=os.environ.get("XPURT_TRAIN_OUT", os.getcwd()),
                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     try:
         a = json.load(open(out))["agg"]

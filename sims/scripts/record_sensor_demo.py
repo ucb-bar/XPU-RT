@@ -34,8 +34,14 @@ import sys
 
 freshscheduler_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 sys.path.insert(0, freshscheduler_root)
+# Where Isaac Lab's source packages live: $ISAACLAB_SOURCE, else sims/IsaacLab/source (the pinned
+# submodule). Neither present is an error that names both.
+_ISAACLAB_SRC = os.environ.get("ISAACLAB_SOURCE") or os.path.join(freshscheduler_root, "sims", "IsaacLab", "source")
+if not os.path.isdir(_ISAACLAB_SRC):
+    raise SystemExit(f"Isaac Lab source not found at {_ISAACLAB_SRC}: run `git submodule update --init "
+                     f"sims/IsaacLab`, or set $ISAACLAB_SOURCE to the source/ directory of an Isaac Lab checkout")
 for _p in ("isaaclab", "isaaclab_assets", "isaaclab_rl", "isaaclab_contrib"):
-    sys.path.insert(0, f"/scratch2/dima/IsaacLab/source/{_p}")
+    sys.path.insert(0, os.path.join(_ISAACLAB_SRC, _p))
 sys.path.insert(0, os.path.abspath(os.path.join(freshscheduler_root, "..", "vitfly", "models")))
 sys.path.insert(0, os.path.join(freshscheduler_root, "hil"))  # for safety_layer
 from isaaclab.app import AppLauncher  # noqa: E402
@@ -60,6 +66,34 @@ parser.add_argument("--decimation", type=int, default=None,
 parser.add_argument("--sim_dt", type=float, default=None,
                     help="Override sim.dt (base 0.01 = 100 Hz physics). e.g. 0.005 = 200 Hz physics for finer "
                          "dynamics while keeping the control rate via decimation.")
+parser.add_argument("--post_success_steps", type=int, default=0,
+                    help="keep flying (and recording) this many control steps after the last gate, so the "
+                         "crossing itself is in the video and the figure data")
+parser.add_argument("--keep_gates", type=int, default=-1,
+                    help="keep the first episode that CRASHES after clearing exactly this many gates (the "
+                         "baseline's display flight); -1 = keep the first success (default)")
+parser.add_argument("--keep_video", action="store_true",
+                    help="keep the video and the figure data of the episode whatever its outcome (the "
+                         "default keeps a success, else the deepest attempt)")
+parser.add_argument("--ctrl_trace", type=str, default="",
+                    help="CSV of measured control-output times (ms) from a board trace "
+                         "(scripts/ctrl_trace_from_board.py); the held command refreshes only at "
+                         "control steps where the board produced an output. Overrides --sched_latency_ms.")
+parser.add_argument("--layout_seed", type=int, default=None,
+                    help="draw the prop layout from this seed instead of the process step counter, so "
+                         "two runs (two arms) fly one and the same scene")
+parser.add_argument("--percep_latency_ms", type=float, default=0.0,
+                    help="camera-to-control latency of the deployment: the drone acts on the nav+YOLO+safety "
+                         "decision computed this long ago (a transport delay, distinct from the command cadence).")
+parser.add_argument("--percep_hold_ms", type=float, default=0.0,
+                    help="goal-refresh period of the deployment: nav goal and YOLO detections are refreshed only "
+                         "every ceil(percep_hold_ms/control_dt) control steps while the control command stays at full rate.")
+parser.add_argument("--sched_latency_ms", type=float, default=0.0,
+                    help="Onboard-schedule worst-case control latency (ms). The motor command can only be "
+                         "REFRESHED every ceil(latency/control_dt) control steps; between refreshes the last "
+                         "command is held (zero-order hold). Models a schedule that cannot deliver a fresh "
+                         "command faster than its worst critical response (the value measured for the deployment "
+                         "on the board). 0 = ideal (fresh every step).")
 parser.add_argument("--dump_figure_data", type=str, default=None,
                     help="Capture stroboscopic-figure data (clean overhead bg + all drone poses + "
                          "cam intrinsics/pose + gates + a few sensor snapshots) to a dir, for "
@@ -75,7 +109,8 @@ parser.add_argument("--cruise_speed", type=float, default=1.3)
 parser.add_argument("--yaw_scale", type=float, default=1.0)
 parser.add_argument("--moment_scale", type=float, default=0.01)
 parser.add_argument("--gantt_schedule", type=str,
-                    default="/scratch2/agustin/XPU-RT/schedules/scheduled_networks_k1_live_stack_cpsat_profiled.json",
+                    default=os.path.join(freshscheduler_root, "schedules",
+                                         "scheduled_networks_k1_live_stack_cpsat_profiled.json"),
                     help="XPU-RT scheduled_*.json to embed as the Gantt strip (red playhead synced to sim "
                          "time + sensor-input arrows). Empty string disables the strip.")
 parser.add_argument("--safety", action="store_true",
@@ -166,6 +201,45 @@ ISO_CENTER_LOCAL = (OV_CENTER_LOCAL[0], OV_CENTER_LOCAL[1], TARGET_H)
 ISO_EYE_OFFSET = (-5.0, -14.0, 11.0)
 
 FIG_DENSE = 10          # dump dense per-moment frames every FIG_DENSE control steps (figure data)
+
+
+def _load_ctrl_trace(path):
+    """Measured control-output times (ms, ascending) from a board trace: '#' lines are provenance.
+    Returns the times relative to the first output and the span the trace covers."""
+    ts = []; span = None
+    for line in open(path):
+        line = line.strip()
+        if line.startswith("#"):
+            for tok in line[1:].split():
+                if tok.startswith("span_ms="):
+                    span = float(tok.split("=")[1])       # the period the trace repeats with (its silence included)
+            continue
+        if not line or line.startswith("t_ms"):
+            continue
+        ts.append(float(line.split(",")[0]))
+    if len(ts) < 2:
+        raise SystemExit(f"--ctrl_trace {path}: fewer than two output times")
+    gaps = [b - a for a, b in zip(ts, ts[1:])]
+    if span is None:                               # no loop declared: re-base on the first output, repeat after the last gap
+        t0 = ts[0]; ts = [t - t0 for t in ts]
+        span = ts[-1] + sum(gaps) / len(gaps)
+    return ts, max(span, ts[-1] + 1e-3)            # times are relative to the loop start the file declares
+
+
+class _CtrlReplay:
+    """The command refreshes only at control steps during which the board emitted an output;
+    the trace loops when exhausted, so any run length is covered by the measured cadence."""
+    def __init__(self, times_ms, span_ms, control_dt_ms):
+        self.t, self.span, self.dt = times_ms, span_ms, control_dt_ms
+        self.i = 0; self.loop = 0
+    def refresh(self, step):
+        hi = (step + 1) * self.dt; fired = False
+        while True:
+            cur = self.t[self.i] + self.loop * self.span
+            if cur >= hi: break
+            fired = True; self.i += 1
+            if self.i >= len(self.t): self.i = 0; self.loop += 1
+        return fired
 
 
 def log(m):
@@ -284,7 +358,9 @@ def load_schedule_gantt(path):
     import json as _json
     d = _json.load(open(path))
     md = d["metadata"]
-    lanes = list(md["machines"])
+    lanes = list(md["machines"]) if md.get("machines") else sorted(
+        {c for v in d["dispatches"].values() for c in v.get("hardware_target", "").split("+") if c},
+        key=lambda c: (c.split("_")[1][0] != "P", c))          # measured tables name harts, not machines
     lane_idx = {m: i for i, m in enumerate(lanes)}
     makespan = float(md.get("makespan") or 0.0)
     bars = []
@@ -299,7 +375,7 @@ def load_schedule_gantt(path):
             if core in lane_idx:
                 bars.append((lane_idx[core], st, max(du, 0.05), kind, impl))
         makespan = max(makespan, st + du)
-    return lanes, bars, makespan
+    return lanes, bars, makespan, md
 
 
 class Compositor:
@@ -328,11 +404,20 @@ class Compositor:
         ax_chase.set_title("Chase cam — following the drone (red)", fontsize=17, weight="bold")
         self.im_chase = ax_chase.imshow(np.zeros((540, 960, 3), dtype=np.uint8))
         # K1 multi-rate scheduling indicator (bottom-left of chase): 3 lanes lit when each net fires.
-        # Latencies are REAL, measured on the SpacemiT K1 (rvv_x60 int8; WALL_CYCLES @ 24 MHz rdtime).
-        self._sched_lanes = [("CTRL", "100 Hz · 0.08 ms"), ("NAV", "50 Hz · 4.0 ms"),
-                             ("YOLO", "5.4 Hz · 184 ms")]
+        # The cadence lines come from the measured table's metadata (scripts/make_measured_gantt_pair.py):
+        # nothing here is typed in; without a measured table the lines are simply absent.
+        _md = gantt[3] if (gantt is not None and len(gantt) > 3) else {}
+        self._sched_lanes = []
+        if _md.get("ctrl_gap_mean_ms"):
+            self._sched_lanes.append(("CTRL", f"every {_md['ctrl_gap_mean_ms']:.1f} ms"))
+        if _md.get("nav_period_ms"):
+            self._sched_lanes.append(("NAV", f"{1000.0/_md['nav_period_ms']:.0f} Hz"))
+        if _md.get("yolo_period_ms"):
+            self._sched_lanes.append(("YOLO", f"{1000.0/_md['yolo_period_ms']:.0f} Hz camera"
+                                      + (f" · {_md['chain_ms_median']:.0f} ms to control" if _md.get("chain_ms_median") else "")))
         self.sched_txt = []
-        ax_chase.text(0.015, 0.16, "K1 schedule (measured):", transform=ax_chase.transAxes, va="center",
+        _arm = _md.get("arm_label") or ("K1 schedule" if not _md else "")
+        ax_chase.text(0.015, 0.16, f"{_arm} (measured on the K1):" if self._sched_lanes else "", transform=ax_chase.transAxes, va="center",
                       fontsize=11, weight="bold", color="white",
                       bbox=dict(boxstyle="round", fc="black", alpha=0.55, ec="none"))
         for i, (nm, hz) in enumerate(self._sched_lanes):
@@ -447,7 +532,7 @@ class Compositor:
         # --- K1 XPU-RT schedule strip (full-width bottom): static schedule + red playhead + sensor arrows
         self.ax_gantt = None
         if gantt is not None:
-            lanes, bars, makespan = gantt
+            lanes, bars, makespan = gantt[0], gantt[1], gantt[2]
             self._gantt_makespan = max(makespan, 1.0)
             axg = self.fig.add_subplot(gs[3, 0:5])
             self.ax_gantt = axg
@@ -474,9 +559,14 @@ class Compositor:
             axg.set_yticks([i + 0.5 for i in range(nlane)])
             axg.set_yticklabels(lanes, fontsize=9)
             _has_ime = any(len(b) > 4 and b[4] == "ime" for b in bars)
-            _title = ("K1 XPU-RT schedule (real board profile · 8 harts"
-                      + (" + IME MAC" if _has_ime else "") + " · CP-SAT deadline-aware) — "
-                      "red playhead = HW position synced to sim · ▼ = sensor input")
+            if _md.get("arm_label"):        # a measured table: say what was measured
+                _title = (f"{_md['arm_label']} · {_md.get('placement_note', '')} · measured on the K1"
+                          + (f" · camera→control {_md['chain_ms_median']:.0f} ms" if _md.get("chain_ms_median") else "")
+                          + (f" · control every {_md['ctrl_gap_mean_ms']:.1f} ms" if _md.get("ctrl_gap_mean_ms") else "")
+                          + " — red playhead = position in the table · ▼ = sensor input")
+            else:
+                _title = ("K1 schedule (board profile · 8 harts" + (" + IME MAC" if _has_ime else "")
+                          + ") — red playhead = HW position synced to sim · ▼ = sensor input")
             axg.set_title(_title, fontsize=13, weight="bold")
             axg.set_xlabel("schedule time (ms)", fontsize=11)
             axg.tick_params(axis="x", labelsize=9)
@@ -617,6 +707,8 @@ def main():
     env_cfg.scene.num_envs = 1
     env_cfg.curriculum.obstacle_count.params["min_level"] = args_cli.obstacle_level
     env_cfg.events.reset_obstacles.params["prop_density"] = args_cli.prop_density
+    if args_cli.layout_seed is not None:
+        env_cfg.events.reset_obstacles.params["layout_seed"] = int(args_cli.layout_seed)
     if args_cli.controller == "rl":
         # swap the classical velocity-command action for the RL/MLP controller's thrust/moment interface
         env_cfg.actions.velocity = DirectThrustMomentActionCfg(
@@ -663,6 +755,26 @@ def main():
     dev = uenv.device
     N = uenv.num_envs
     control_dt = float(env_cfg.sim.dt * env_cfg.decimation)
+    # onboard-schedule control-refresh limit: a fresh motor command only every N control steps
+    _ctrl_refresh = max(1, _math.ceil(args_cli.sched_latency_ms / (control_dt * 1000.0))) \
+        if args_cli.sched_latency_ms > 0 else 1
+    log(f"[sched] latency={args_cli.sched_latency_ms} ms, control_dt={control_dt*1000:.1f} ms "
+        f"-> refresh every {_ctrl_refresh} step(s) ({1000.0/(control_dt*1000*_ctrl_refresh):.0f} Hz effective command rate)")
+    _ctrl_replay = None
+    if args_cli.ctrl_trace:
+        _ct, _cspan = _load_ctrl_trace(args_cli.ctrl_trace)
+        _ctrl_replay = _CtrlReplay(_ct, _cspan, control_dt * 1000.0)
+        _cgaps = [b - a for a, b in zip(_ct, _ct[1:])]
+        _ctrl_trace_hz = 1000.0 * len(_ct) / _cspan           # outputs per second over the loop, silence included
+        log(f"[sched] control cadence replayed from {args_cli.ctrl_trace}: {len(_ct)} outputs over "
+            f"{_cspan:.0f} ms, gap mean {sum(_cgaps)/len(_cgaps):.2f} ms max {max(_cgaps):.2f} ms "
+            f"-> {_ctrl_trace_hz:.1f} Hz effective command rate (looped)")
+    # perception->action transport delay and goal-refresh cadence, as in sweep_rate_demo.py: the drone acts on
+    # the decision computed _percep_delay steps ago; nav goal and detections refresh every _percep_refresh steps
+    _percep_delay = int(round(args_cli.percep_latency_ms / (control_dt * 1000.0))) if args_cli.percep_latency_ms > 0 else 0
+    _percep_refresh = max(1, _math.ceil(args_cli.percep_hold_ms / (control_dt * 1000.0))) if args_cli.percep_hold_ms > 0 else 1
+    log(f"[percep] latency={args_cli.percep_latency_ms} ms -> delay {_percep_delay} step(s); "
+        f"hold={args_cli.percep_hold_ms} ms -> nav+YOLO refresh every {_percep_refresh} step(s)")
 
     est = model = actor = yolo = None
     # CLEAN-BACKGROUND mode skips the nav/controller/detector nets entirely (no flight).
@@ -945,6 +1057,12 @@ def main():
         comp.reset_traces()
         hidden = None
         last_action = torch.zeros((N, 4), device=dev, dtype=torch.float32)
+        _applied_action = last_action                   # held motor command (schedule-refresh ZOH)
+        if _ctrl_replay is not None:                    # every episode replays the trace from its start
+            _ctrl_replay.i = 0; _ctrl_replay.loop = 0
+        _held_nav = None                                                             # held nav goal (goal-refresh cadence)
+        _cmd_buf = deque(maxlen=_percep_delay + 1) if _percep_delay > 0 else None    # transport-delay buffer
+        _post_left = None
         last_safety_dets = []          # most-recent YOLO detections (held between 4 Hz ticks)
         safety_tele = None
         tmp = f"{final}.ep{ep:02d}.tmp.mp4"
@@ -957,7 +1075,9 @@ def main():
                    "alt_dtof": [], "alt_baro": [],
                    "dense_chase": [], "dense_fpv": [], "dense_tof": [], "dense_det": [],
                    "frame_steps": [], "iso_frames": [],
+                   "ov_seq": [], "ov_seq_t": [], "ov_seq_pose": [], "ov_seq_obst": [],
                    "ov_bg": None, "iso_bg": None} if args_cli.dump_figure_data else None)
+        _OVSEQ_N = 9; _ovseq_stride = max(1, args_cli.max_steps // _OVSEQ_N)   # chronophotography stride
         last_det = []   # freshest YOLO detections, held between the sparse figure snapshots
         for t in range(args_cli.max_steps):
             xy_now = (robot.data.root_pos_w[0] - origin[0])[:2].cpu().numpy().astype(np.float64)
@@ -987,6 +1107,10 @@ def main():
             else:
                 yaw_rate = float(cmd[0, 0].item())
                 fwd = args_cli.fixed_speed if args_cli.fixed_speed > 0 else float(max(0.1, min(MAX_SPEED, cmd[0, 1].item())))
+            if args_cli.percep_hold_ms > 0:                       # the deployment's goal-refresh cadence
+                if t % _percep_refresh == 0 or _held_nav is None:
+                    _held_nav = (yaw_rate, fwd)
+                yaw_rate, fwd = _held_nav
 
             grey60 = F.interpolate(inp["front_grey"], size=(60, 90), mode="bilinear",
                                    align_corners=False)[0, 0].cpu().numpy()
@@ -1010,7 +1134,7 @@ def main():
             }
             det = None
             yolo_fire = False
-            if yolo is not None and t % G_YOLO == 0:
+            if yolo is not None and t % (_percep_refresh if args_cli.percep_hold_ms > 0 else G_YOLO) == 0:
                 det = run_yolo(grey128); yolo_fire = True
                 last_det = det
                 # hold the freshest detections for the safety layer (px 90x60 -> normalized xywh)
@@ -1020,6 +1144,9 @@ def main():
             # USE YOLO: route detections through the safety layer to modulate the command
             if args_cli.safety:
                 (yaw_rate, fwd), safety_tele = apply_safety((yaw_rate, fwd), last_safety_dets)
+            if _cmd_buf is not None:                              # act on the decision made percep_latency_ms ago
+                _cmd_buf.append((yaw_rate, fwd))
+                yaw_rate, fwd = _cmd_buf[0]
             _cn = "nav LSTM-conv + MLP ctrl + YOLOv8n" if args_cli.controller == "rl" else "v12 CNN nav + YOLOv8n"
             _sfx = ""
             if args_cli.safety and safety_tele and safety_tele.get("trigger"):
@@ -1047,6 +1174,13 @@ def main():
                 _figep["imu_w"].append(np.asarray(snap["w"], dtype=np.float32))    # (3,) body ang-vel
                 _figep["alt_dtof"].append(np.float32(snap["dtof"]))
                 _figep["alt_baro"].append(np.float32(snap["baro"]))
+                # --- chronophotography: fixed overhead cam at ~9 evenly-spaced steps (movers move, bg fixed) ---
+                if t % _ovseq_stride == 0 and len(_figep["ov_seq"]) < _OVSEQ_N:
+                    _figep["ov_seq"].append(_rgb(ov))
+                    _figep["ov_seq_t"].append(t * control_dt)
+                    _figep["ov_seq_pose"].append(np.concatenate([snap["pos_w"],
+                                                 robot.data.root_quat_w[0].cpu().numpy()]))
+                    _figep["ov_seq_obst"].append(coll.data.object_pos_w[0].cpu().numpy())
                 # --- dense per-moment frames (every FIG_DENSE steps) for post-hoc moment selection ---
                 if t % FIG_DENSE == 0:
                     # run YOLO fresh so the boxes match THIS fpv frame (cls,x0,y0,x1,y1,conf in 90×60)
@@ -1064,14 +1198,25 @@ def main():
                                     robot.data.projected_gravity_b, (robot.data.root_pos_w - origin)[:, 2:3],
                                     steer_cmd, last_action], dim=1)
                 with torch.no_grad():
-                    action = actor(rl_obs).clamp(-1.0, 1.0)
+                    fresh = actor(rl_obs).clamp(-1.0, 1.0)
+                # onboard schedule can only deliver a fresh command every _ctrl_refresh steps; hold otherwise
+                if (_ctrl_replay.refresh(t) if _ctrl_replay is not None else t % _ctrl_refresh == 0):
+                    _applied_action = fresh
+                action = _applied_action
                 last_action = action.detach()
                 obs, _r, dones, _i = env.step(action)
             else:
                 obs, _r, dones, _i = env.step(cmd_to_action(yaw_rate, fwd, h_now, dev, N))
             last_h = float(robot.data.root_pos_w[0, 2].item())
             if gates_passed >= K:
-                outcome = "success"; break
+                outcome = "success"
+                # keep flying for --post_success_steps after the last gate so the crossing itself is
+                # in the video; the outcome is already decided
+                if _post_left is None: _post_left = int(args_cli.post_success_steps)
+                if _post_left <= 0: break
+                _post_left -= 1
+            if bool(dones[0].item()) and gates_passed >= K:
+                break   # a termination while flying on past the last gate cannot undo the completion
             if bool(dones[0].item()):
                 try:
                     tm = uenv.termination_manager
@@ -1091,7 +1236,10 @@ def main():
         prog = gates_passed / K
         log(f"[ep{ep:02d}] outcome={outcome:9s} gates={gates_passed}/{K} steps={t + 1}")
 
-        if outcome == "success":
+        if _figep is not None:
+            _figep["outcome"] = outcome; _figep["gates_passed"] = int(gates_passed)
+        _wanted = ((outcome == "crash" and gates_passed == args_cli.keep_gates) if args_cli.keep_gates >= 0 else outcome == "success")
+        if _wanted or args_cli.keep_video:
             os.replace(tmp, final); captured = True
             if _figep is not None:
                 _figdata["ep"] = _figep
@@ -1166,6 +1314,11 @@ def main():
             gates_world=gates_world,                                       # (G,3)
             # --- fixed overhead (top-down) camera ---
             ov_bg=fe["ov_bg"], ovK=ovK, ovpos=ovpos, ovquat=ovquat,
+            # --- chronophotography sequence of the fixed overhead cam (N frames; movers at successive pos) ---
+            ov_seq=np.asarray(fe["ov_seq"], dtype=np.uint8),
+            ov_seq_t=np.asarray(fe["ov_seq_t"], dtype=np.float64),
+            ov_seq_pose=np.asarray(fe["ov_seq_pose"], dtype=np.float64),
+            ov_seq_obst=np.asarray(fe["ov_seq_obst"], dtype=np.float32),
             # --- fixed isometric overview camera ---
             iso_bg=fe["iso_bg"], iso_over=iso_over,
             isoK=iso_calib["K"], isopos=iso_calib["pos"], isoquat=iso_calib["quat"],
@@ -1175,6 +1328,18 @@ def main():
             tof=np.asarray(fe["dense_tof"], dtype=np.float32),             # (n,4,8,8)
             det=det_obj,                                                  # (n,) object -> (k,6)
             frame_steps=np.asarray(fe["frame_steps"], dtype=np.int64),     # (n,)
+            # --- experiment metadata (the figure and its verifier read these) ---
+            sched_latency_ms=np.float64(args_cli.sched_latency_ms),
+            percep_latency_ms=np.float64(args_cli.percep_latency_ms), percep_delay_steps=np.int64(_percep_delay),
+            layout_seed=np.int64(args_cli.layout_seed if args_cli.layout_seed is not None else -1),
+            ctrl_trace=np.str_(args_cli.ctrl_trace),
+            cruise_speed=np.float64(args_cli.cruise_speed),
+            moment_scale=np.float64(args_cli.moment_scale),
+            eff_cmd_hz=np.float64(_ctrl_trace_hz if _ctrl_replay is not None else 1000.0 / (control_dt * 1000.0 * _ctrl_refresh)),
+            ctrl_refresh=np.int64(_ctrl_refresh),
+            seed=np.int64(args_cli.seed),
+            outcome=np.str_(fe.get("outcome", "")),
+            gates_passed=np.int64(fe.get("gates_passed", -1)),
         )
 
         # per-moment frame files (convenience: one .npz per dense moment)

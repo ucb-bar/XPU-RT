@@ -8,21 +8,22 @@ HW. This is everything you need to plug our nav net into your RoSE-in-Isaac low-
 **No RoSE bridge is included** — you own the Isaac↔RoSE side (RoSE already flies in Isaac on
 your end); we own the net + env + sensors + the command seam documented below.
 
-## Where everything lives (absolute paths on this host — you have read access)
+## Where everything lives (paths on the host — you have read access)
 
-Everything is under `/scratch/agustin/projects/DIMA` (world-readable on this machine, so just
+Everything is under one workspace directory, `<workspace>` below, holding the `XPU-RT`, `vitfly`,
+`train_out` and `out` trees (world-readable on the host, so just
 `grep`/read in place; copy into your own `/scratch2/dima/...` if you want to modify/retrain).
 
-| thing | absolute path |
+| thing | path |
 |---|---|
-| this doc + the env | `/scratch/agustin/projects/DIMA/XPU-RT/sims/isaaclab_tasks/warehouse_nav/` |
-| sensor rig + estimator | `/scratch/agustin/projects/DIMA/XPU-RT/sims/isaaclab_tasks/forest_trail/{sensors,state_estimator}.py` |
-| eval / reference driver | `/scratch/agustin/projects/DIMA/XPU-RT/sims/scripts/eval_fused_warehouse.py` |
-| model class `FusedSensorNet` | `/scratch/agustin/projects/DIMA/vitfly/models/fused_model.py` *(separate `vitfly` repo)* |
-| **crowded ship checkpoint (v12, CNN)** | `/scratch/agustin/projects/DIMA/train_out/fused_bc_warehouse_v12_mixed_cnn/2026-08-03_19-51-49/best.pt` |
-| clean-course checkpoints (v8/v9) | `/scratch/agustin/projects/DIMA/train_out/fused_bc_warehouse_v9_stage1/2026-07-28_08-33-38/best.pt` |
-| demo videos (crowded collidable) | `/scratch/agustin/projects/DIMA/out/v12_crowded_collidable_{chase,fullrun}.mp4` |
-| conda python | `/scratch2/agustin/miniforge3/envs/env_isaaclab/bin/python` |
+| this doc + the env | `<workspace>/XPU-RT/sims/isaaclab_tasks/warehouse_nav/` |
+| sensor rig + estimator | `<workspace>/XPU-RT/sims/isaaclab_tasks/forest_trail/{sensors,state_estimator}.py` |
+| eval / reference driver | `<workspace>/XPU-RT/sims/scripts/eval_fused_warehouse.py` |
+| model class `FusedSensorNet` | `<workspace>/vitfly/models/fused_model.py` *(separate `vitfly` repo)* |
+| **crowded ship checkpoint (v12, CNN)** | `<workspace>/train_out/fused_bc_warehouse_v12_mixed_cnn/2026-08-03_19-51-49/best.pt` |
+| clean-course checkpoints (v8/v9) | `<workspace>/train_out/fused_bc_warehouse_v9_stage1/2026-07-28_08-33-38/best.pt` |
+| demo videos (crowded collidable) | `<workspace>/out/v12_crowded_collidable_{chase,fullrun}.mp4` |
+| conda python | `$ISAAC_PY` (the `env_isaaclab` conda env; see `scripts/env.local.sh.example`) |
 
 Read it straight off the filesystem — **nothing is pushed to git** (the env/eval/docs are
 uncommitted working-tree changes in the local **XPU-RT** checkout; the model class is in the
@@ -117,7 +118,7 @@ forward_speed)` + your own vz.
 
 ```bash
 # crowded collidable course with the v12 CNN ship model (records first clean weave-through):
-/scratch2/agustin/miniforge3/envs/env_isaaclab/bin/python \
+"$ISAAC_PY" \
     XPU-RT/sims/scripts/eval_fused_warehouse.py --headless \
     --weights train_out/fused_bc_warehouse_v12_mixed_cnn/2026-08-03_19-51-49/best.pt \
     --prop_density 0.30 --obstacle_level 8 --fixed_speed 0.9 --episodes 12 \
@@ -132,7 +133,7 @@ forward_speed)` + your own vz.
 - `success = flew through all 4 gates`. **v12 CNN: ~42 % on the crowded collidable course**
   (teacher-bounded), **12/12 on the clean course**.
 
-Python env: `/scratch2/agustin/miniforge3/envs/env_isaaclab/bin/python`. IsaacLab source at
+Python env: `$ISAAC_PY` (the `env_isaaclab` conda env). IsaacLab source at
 `/scratch2/dima/IsaacLab/source/*` (added to path by the eval).
 
 ---

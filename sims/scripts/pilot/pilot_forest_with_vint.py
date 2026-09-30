@@ -55,6 +55,13 @@ sys.path.insert(0, os.path.join(isaaclab_root, "isaaclab"))
 sys.path.insert(0, os.path.join(isaaclab_root, "isaaclab_assets"))
 sys.path.insert(0, os.path.join(isaaclab_root, "isaaclab_rl"))
 sys.path.insert(0, os.path.join(isaaclab_root, "isaaclab_contrib"))
+# Where the older training logs live. Isaac Lab sits outside this repository on the machine those
+# runs came from; `sims/IsaacLab` is the pinned submodule a clone gets instead.
+#   $ISAACLAB_ROOT, else sims/IsaacLab (the pinned submodule); neither present is an error.
+_ISAACLAB_ROOT = os.environ.get("ISAACLAB_ROOT") or os.path.join(freshscheduler_root, "sims", "IsaacLab")
+if not os.path.isdir(_ISAACLAB_ROOT):
+    raise SystemExit(f"Isaac Lab not found at {_ISAACLAB_ROOT}: run `git submodule update --init "
+                     f"sims/IsaacLab`, or set $ISAACLAB_ROOT to the root of an Isaac Lab checkout")
 sys.path.insert(0, vint_root)
 
 from isaaclab.app import AppLauncher
@@ -188,7 +195,7 @@ def _b(msg: str) -> None:
 
 def find_latest_checkpoint() -> str:
     log_dirs = [
-        os.path.join(os.environ.get("ISAACLAB_ROOT", "/scratch2/dima/IsaacLab"),
+        os.path.join(_ISAACLAB_ROOT,
                      "logs", "rsl_rl", "crazyflie_steering_tracking"),
         os.path.join(freshscheduler_root, "logs/rsl_rl/crazyflie_steering_tracking"),
     ]

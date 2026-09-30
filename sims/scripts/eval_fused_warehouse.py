@@ -24,8 +24,14 @@ import sys
 
 freshscheduler_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 sys.path.insert(0, freshscheduler_root)
+# Where Isaac Lab's source packages live: $ISAACLAB_SOURCE, else sims/IsaacLab/source (the pinned
+# submodule). Neither present is an error that names both.
+_ISAACLAB_SRC = os.environ.get("ISAACLAB_SOURCE") or os.path.join(freshscheduler_root, "sims", "IsaacLab", "source")
+if not os.path.isdir(_ISAACLAB_SRC):
+    raise SystemExit(f"Isaac Lab source not found at {_ISAACLAB_SRC}: run `git submodule update --init "
+                     f"sims/IsaacLab`, or set $ISAACLAB_SOURCE to the source/ directory of an Isaac Lab checkout")
 for _p in ("isaaclab", "isaaclab_assets", "isaaclab_rl", "isaaclab_contrib"):
-    sys.path.insert(0, f"/scratch2/dima/IsaacLab/source/{_p}")
+    sys.path.insert(0, os.path.join(_ISAACLAB_SRC, _p))
 # vitfly lives outside this repo, so let an env var override the sibling-checkout
 # default (ported from rose-2-dev, whose copy hardcoded a per-user path).
 for _vitfly_models in (os.environ.get("MODELBLASTER_VITFLY_MODELS", ""),
@@ -36,6 +42,7 @@ for _vitfly_models in (os.environ.get("MODELBLASTER_VITFLY_MODELS", ""),
 else:  # nothing found -- keep the historical default so the import error names it
     sys.path.insert(0, os.path.abspath(os.path.join(freshscheduler_root, "..", "vitfly", "models")))
 from isaaclab.app import AppLauncher  # noqa: E402
+import tempfile
 
 parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
 parser.add_argument("--weights", type=str,
@@ -246,7 +253,7 @@ def main():
     env_cfg.episode_length_s = max(env_cfg.episode_length_s,
                                    args_cli.max_steps * float(env_cfg.sim.dt * env_cfg.decimation) + 1.0)
     out_dir = os.path.dirname(args_cli.out) if args_cli.out else \
-        "/tmp/claude-2621/-scratch-agustin-projects-DIMA/057226a3-598b-40aa-8396-ef0c5c742cd9/scratchpad"
+        os.environ.get("XPURT_SCRATCH", tempfile.gettempdir())
 
     log(f"[env] gym.make {TASK_ID}")
     env = gym.make(TASK_ID, cfg=env_cfg)

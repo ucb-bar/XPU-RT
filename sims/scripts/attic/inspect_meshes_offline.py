@@ -15,22 +15,33 @@ display on this host, so run the whole thing under xvfb-run, e.g.:
 
   xvfb-run -a -s "-screen 0 1600x1200x24" \
     /scratch2/dima/miniforge3/envs/env_isaaclab/bin/python \
-    /scratch/agustin/projects/DIMA/XPU-RT/sims/scripts/inspect_meshes_offline.py
+    sims/scripts/attic/inspect_meshes_offline.py
 
-Writes PNGs to /scratch/agustin/projects/DIMA/out/framework_gallery/.
+Needs CRL_DRONE_RACING_ROOT and AERIAL_GYM_ROOT (the two reference checkouts).
+Writes PNGs to $XPURT_SCRATCH/framework_gallery/ (default: $TMPDIR).
 Read-only w.r.t. the reference repos: only reads their assets.
 """
 import os
 import json
 import math
+import tempfile
 import traceback
 
 import numpy as np
 import trimesh
 
-OUT = "/scratch/agustin/projects/DIMA/out/framework_gallery"
-CRL = "/scratch/agustin/projects/DIMA/CRL-Drone-Racing/datasets/spy_datasets"
-AG = "/scratch/agustin/projects/DIMA/aerial_gym_simulator/resources/models/environment_assets"
+def _require_env(name, what):
+    v = os.environ.get(name)
+    if not v:
+        raise SystemExit(f"set {name} to {what}")
+    return v
+
+
+OUT = os.path.join(os.environ.get("XPURT_SCRATCH", tempfile.gettempdir()), "framework_gallery")
+CRL = os.path.join(_require_env("CRL_DRONE_RACING_ROOT", "a CRL-Drone-Racing checkout"),
+                   "datasets", "spy_datasets")
+AG = os.path.join(_require_env("AERIAL_GYM_ROOT", "an aerial_gym_simulator checkout"),
+                  "resources", "models", "environment_assets")
 
 RES = (1400, 1000)
 

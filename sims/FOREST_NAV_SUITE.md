@@ -5,7 +5,7 @@ Reproducibility catalog for the drone autonomy stack: onboard-sensor-driven navi
 model→hardware co-design (quality-vs-cost DSE). All commands use the Isaac Lab python:
 
 ```
-PY=/scratch2/agustin/miniforge3/envs/env_isaaclab/bin/python
+PY=$ISAAC_PY   # the env_isaaclab interpreter; see scripts/env.local.sh.example
 ```
 Run training/collection from a writable CWD (`train_out/`); Isaac `close()` hangs → scripts
 `os._exit(0)`; `--headless` is required for the onboard cameras to render.

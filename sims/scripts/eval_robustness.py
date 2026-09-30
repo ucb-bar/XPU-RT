@@ -27,11 +27,14 @@ import json
 import os
 import subprocess
 import sys
+import tempfile
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
 _EVAL = os.path.join(_HERE, "eval_bodyrate_tracking.py")
-_PY = "/scratch2/agustin/miniforge3/envs/env_isaaclab/bin/python"
-_SCRATCH = "/tmp/claude-2621/-scratch-agustin-projects-DIMA/057226a3-598b-40aa-8396-ef0c5c742cd9/scratchpad"
+# machine-local, both overridable: $ISAAC_PY (scripts/env.sh) and $XPURT_SCRATCH, else this
+# interpreter and $TMPDIR
+_PY = os.environ.get("ISAAC_PY", sys.executable)
+_SCRATCH = os.environ.get("XPURT_SCRATCH", tempfile.gettempdir())
 
 # (name, {plant overrides}) — nominal first, then OOD plants outside the DR training band.
 CONDITIONS = [
@@ -51,7 +54,7 @@ def run_condition(label, controller, checkpoint, name, overrides):
     for k, v in overrides.items():
         cmd += [k, v]
     print(f"[rob] {label}/{name}: {' '.join(cmd[2:])}", flush=True)
-    subprocess.run(cmd, cwd="/scratch/agustin/projects/DIMA/train_out",
+    subprocess.run(cmd, cwd=os.environ.get("XPURT_TRAIN_OUT", os.getcwd()),
                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     try:
         with open(os.path.join(out, "summary.json")) as f:

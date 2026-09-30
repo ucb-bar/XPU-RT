@@ -10,9 +10,11 @@ topology so ModelBlaster's existing yolov8_nano int8/fusion path applies to the 
 from __future__ import annotations
 import argparse, os
 
+_REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 p = argparse.ArgumentParser()
 p.add_argument("--data", required=True, help="dataset.yaml from gen_yolo_dataset.py")
-p.add_argument("--weights", default="/scratch2/agustin/ModelBlaster/yolov8n.pt",
+p.add_argument("--weights", default=os.path.join(_REPO, "ModelBlaster", "yolov8n.pt"),
                help="pretrained init (fallback to ultralytics 'yolov8n.pt' if absent)")
 p.add_argument("--epochs", type=int, default=60)
 p.add_argument("--imgsz", type=int, default=96, help="long-side train size. With --rect on 90x60 (W x H) frames "
@@ -20,7 +22,8 @@ p.add_argument("--imgsz", type=int, default=96, help="long-side train size. With
 p.add_argument("--rect", action="store_true", default=True, help="rectangular training (no square grey-bar padding)")
 p.add_argument("--no-rect", dest="rect", action="store_false")
 p.add_argument("--batch", type=int, default=64)
-p.add_argument("--out", default="/scratch/agustin/projects/DIMA/train_out/warehouse_yolov8n")
+p.add_argument("--out", default=os.path.join(
+    os.environ.get("XPURT_TRAIN_OUT", "train_out"), "warehouse_yolov8n"))
 p.add_argument("--device", default="0")
 args = p.parse_args()
 

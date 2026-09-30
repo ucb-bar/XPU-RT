@@ -33,9 +33,10 @@ sys.path.insert(0, str(REPO))
 from qnn_models.dronet import DronetTorch  # noqa: E402
 from sims.training.dataset_idsia import IDSIAConfig, IDSIATrailDataset  # noqa: E402
 from sims.training.train_dronet import evaluate, head_loss  # noqa: E402
+import tempfile
 
-_SCRATCH = ("/tmp/claude-2621/-scratch-agustin-projects-DIMA/"
-            "057226a3-598b-40aa-8396-ef0c5c742cd9/scratchpad")
+# where intermediates land: $XPURT_SCRATCH, else $TMPDIR
+_SCRATCH = os.environ.get("XPURT_SCRATCH", tempfile.gettempdir())
 
 
 def main():

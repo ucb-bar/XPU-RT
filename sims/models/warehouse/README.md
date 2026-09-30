@@ -2,7 +2,7 @@
 
 These are the trained checkpoints for the warehouse drone sensor-fusion navigation experiment, shipped
 in-repo so the demo/eval run from a fresh clone **without** any external `train_out/` directory. See
-`docs/warehouse_sensorfusion_reproduce.md` for how they're used, and how to retrain them from scratch.
+`docs/Evaluation/warehouse_sensorfusion_reproduce.md` for how they're used, and how to retrain them from scratch.
 
 | file | model | what it is |
 |---|---|---|
@@ -18,3 +18,13 @@ Provenance (for retraining): nav via the fused-BC pipeline; controller via
 `sims/scripts/train_steering_tracking.py --task Isaac-Track-VelocityCtrl-DR-Crazyflie-v0`; YOLO via
 `sims/scripts/gen_yolo_dataset.py` (nc=2, 60×90 deployment-geometry frames) + `sims/scripts/train_yolo.py`
 (`--rect`, `--imgsz 96` → 64×96, or `--imgsz 192` → 128×192).
+
+## Provenance and licence of the detector weights
+
+`yolov8n_gate_person_128x192.pt` and `yolov8n_gate_person_64x96.pt` are fine-tuned from Ultralytics
+YOLOv8n (`yolov8n.pt`) by `sims/scripts/train_yolo.py`. The checkpoints carry Ultralytics' licence
+string, `AGPL-3.0 (https://ultralytics.com/license)`, and a derived weight inherits the licence of
+what it was derived from. Anyone redistributing this directory is redistributing AGPL-3.0 material.
+
+The other three files here are ours: `nav_fused_v12_cnn.pt` and `nav_fused_v20_tall_cnn.pt` are the
+guidance nets, `rl_controller_velctrl_dr4.pt` the body-rate controller.

@@ -154,7 +154,8 @@ def evaluate(model, loader, device, mask=None):
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--data", nargs="+", required=True)
-    p.add_argument("--out_dir", type=Path, default=Path("/scratch/agustin/projects/DIMA/train_out/fused_bc"))
+    p.add_argument("--out_dir", type=Path,
+                   default=Path(os.environ.get("XPURT_TRAIN_OUT", "train_out")) / "fused_bc")
     p.add_argument("--window", type=int, default=32)
     p.add_argument("--stride", type=int, default=16)
     p.add_argument("--epochs", type=int, default=40)

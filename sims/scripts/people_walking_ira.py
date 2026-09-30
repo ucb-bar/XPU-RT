@@ -12,14 +12,14 @@ omni.kit.scripting is actually running AND the timeline is played through the re
 orchestrator. IRA's experience + DataGeneration.run_async do exactly that.
 
 Run:
-  /scratch2/dima/miniforge3/envs/xpurt/bin/python \
-    /scratch/agustin/projects/DIMA/XPU-RT/sims/scripts/people_walking_ira.py \
+  <isaac sim python> sims/scripts/people_walking_ira.py \
     --frames 480 --num 8
 
 Output: out/people_walking/  (RGB frames + people_walking.mp4 + stills)
 """
 
 import argparse
+import tempfile
 import asyncio
 import os
 import sys
@@ -31,7 +31,8 @@ parser = argparse.ArgumentParser("IRA people walking")
 parser.add_argument("--frames", type=int, default=480, help="simulation_length (frames @30fps)")
 parser.add_argument("--num", type=int, default=8, help="number of characters")
 parser.add_argument("--seed", type=int, default=20260715)
-parser.add_argument("--out", default="/scratch/agustin/projects/DIMA/out/people_walking")
+parser.add_argument("--out", default=os.path.join(
+    os.environ.get("XPURT_SCRATCH", tempfile.gettempdir()), "people_walking"))
 parser.add_argument("--width", type=int, default=1600)
 parser.add_argument("--height", type=int, default=900)
 args = parser.parse_args()
@@ -44,7 +45,11 @@ os.makedirs(CFG_DIR, exist_ok=True)
 
 # Stock full experience boots offline on this box; anim/replicator/scripting exts
 # are enabled at runtime (resolved from the local extscache, no registry needed).
-EXP = "/scratch2/dima/miniforge3/envs/xpurt/lib/python3.11/site-packages/isaacsim/apps/isaacsim.exp.full.kit"
+# the experience file ships inside the isaacsim package this interpreter imports; $ISAACSIM_EXP
+# names another one
+import isaacsim as _isaacsim  # noqa: E402
+EXP = os.environ.get("ISAACSIM_EXP") or os.path.join(
+    os.path.dirname(_isaacsim.__file__), "apps", "isaacsim.exp.full.kit")
 
 # ---------------------------------------------------------------------------
 # Launch app  (headless, RTX, cameras/rendering on)

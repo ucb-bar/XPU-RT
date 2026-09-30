@@ -58,6 +58,36 @@ FUSED_GATES = [
     ((-8.05, 21.0, 2.0), 0.0),
 ]
 
+# --- alternate gate course (env-var selected) for cross-course GENERALIZATION -----------------
+# A second flyable weave in the SAME aisle with a different lateral phase + y-offset, so the nav
+# and controller face a genuinely different gate LAYOUT (not merely a different obstacle seed).
+# Selected by env var WAREHOUSE_COURSE (default "a" => the original courses, byte-identical).
+# When "b" is chosen, BOTH GATES (the command tracker) and FUSED_GATES (scene + demo goal) rebind
+# to course B so every consumer stays consistent. Unset => nothing changes.
+FUSED_GATES_B = [
+    ((-7.75, 8.5, 2.0), 0.0),
+    ((-8.30, 12.5, 2.0), 0.0),
+    ((-7.80, 16.5, 2.0), 0.0),
+    ((-8.25, 20.5, 2.0), 0.0),
+]
+# Course C: a third weave drawn from a seeded generator (WAREHOUSE_COURSE_SEED, default 8):
+# lateral phase within +-0.35 m of the aisle centre, first gate between y=8 and 9.5, 4 m apart.
+# The default is the first seed whose course spans >= 0.5 m laterally with no gate-to-gate step
+# above 0.6 m (course A's largest) and at least one direction reversal.
+def _course_from_seed(seed: int):
+    import random as _random
+    rng = _random.Random(seed); y0 = rng.uniform(8.0, 9.5)
+    return [((round(-8.0 + rng.uniform(-0.35, 0.35), 2), round(y0 + 4.0 * k, 2), 2.0), 0.0) for k in range(4)]
+import os as _os
+_COURSE = _os.environ.get("WAREHOUSE_COURSE", "a").lower()
+if _COURSE == "b":
+    GATES = FUSED_GATES_B
+    FUSED_GATES = FUSED_GATES_B
+elif _COURSE == "c":
+    FUSED_GATES_C = _course_from_seed(int(_os.environ.get("WAREHOUSE_COURSE_SEED", "8")))
+    GATES = FUSED_GATES_C
+    FUSED_GATES = FUSED_GATES_C
+
 # gate frame dimensions (metres). CRL gate.glb is outer 1.28 / opening ~1.0; we use a wider
 # ~1.5 m opening so a from-scratch forward-only policy can reliably thread it.
 _OPEN = 1.5
