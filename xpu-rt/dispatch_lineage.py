@@ -24,8 +24,8 @@ make that less trivial than `key=module_name`:
   `dronet$dispatch_4_rvv_x60_conv2d_s8_N1xIC32x...`; the IREE-era profiler
   writes `dronet$async_dispatch_4_embedded_elf_riscv_64_dronet$async_dispatch_4_conv_...`
   -- the same index embedded twice. Stripping only the first occurrence leaves a
-  key that still changes when the graph is renumbered, which is the original bug
-  wearing a different hat. `op_signature` removes *every* occurrence.
+  key that still changes when the graph is renumbered -- an index-keyed join
+  under another name. `op_signature` removes *every* occurrence.
 
 * **Signatures are not unique.** DroNet's dispatches 18 and 19 are both
   `linear_s8_M1xK2048xN1`; the two heads of the network genuinely run the same

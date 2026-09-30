@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 """Sibling-core semantics for the CP-SAT backend.
 
-Both bugs fixed in 95db5778 were silent, and both were only reachable once a
-machine kind had more than one core -- exactly what sharding produces. Neither
-was caught, because nothing here exercised sibling-core combinations and the
-only visible symptom was an objective value that looked plausible (85.42 ms on
-control_mix_gempair, against 60.07 from a heuristic).
+Sibling-core errors in the payload (see 95db5778) are silent and only reachable
+once a machine kind has more than one core -- exactly what sharding produces.
+Their only visible symptom is an objective value that looks plausible (85.42 ms
+on control_mix_gempair, against 60.07 from a heuristic).
 
 So these tests assert the model's *semantics* rather than its objective:
 
@@ -13,8 +12,8 @@ So these tests assert the model's *semantics* rather than its objective:
   - a two-core combination CANNOT overlap either singleton,
   - two operations on the same singleton hart cannot overlap.
 
-An objective-only test would pass on a model that serialises sibling harts, as
-the old one effectively did. Run with pytest, or directly:
+An objective-only test would pass on a model that serialises sibling harts.
+Run with pytest, or directly:
 
     python3 xpu-rt/tests/test_cpsat_sibling_cores.py
 """
@@ -38,8 +37,8 @@ INF = float("inf")
 # `mode="shard"` is the enumeration that offers sibling-hart concurrency at
 # all: "prefix" gives only cumulative prefixes of core #0, which all intersect,
 # and "singletons" never offers the two-core combination. Sharding is also what
-# produces a multi-core kind in the first place, which is the situation both
-# bugs above needed.
+# produces a multi-core kind in the first place, which is the situation these
+# semantics matter in.
 #
 # machines = ['CPU_P#0', 'CPU_P#1']
 # combos   = [['CPU_P#0'], ['CPU_P#1'], ['CPU_P#0','CPU_P#1']]
@@ -172,9 +171,8 @@ def test_integerize_serialises_a_two_core_op_against_a_singleton():
 def test_model_runs_sibling_harts_in_parallel():
     """Independent ops, one per hart: makespan is one duration, not two.
 
-    This is the assertion the old model failed. It had all three combinations
-    on a single machine's no-overlap list, so it returned 20 here and called
-    it optimal.
+    A model that puts all three combinations on a single machine's no-overlap
+    list returns 20 here and calls it optimal; this assertion rejects it.
     """
     if _needs_cpsat():
         return

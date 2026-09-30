@@ -349,8 +349,8 @@ class TheLoopRuns(unittest.TestCase):
     # ------------------------------------------------------------ stage 1-2
 
     def test_the_schedule_used_the_profiled_costs_not_synthetic_ones(self):
-        """`load_profiled_processing_times` used to fall back to
-        `rng.uniform(2, 10)` per missing dispatch, silently.
+        """`load_profiled_processing_times` must not fall back to
+        `rng.uniform(2, 10)` per missing dispatch.
 
         A 62 us MLP dispatch coming back as a 2-10 ms one changes every
         conclusion downstream while looking like a normal schedule. So the first
@@ -458,8 +458,8 @@ class TheLoopRuns(unittest.TestCase):
 
         `blocking_advice` gated on the free slot rather than the raw period is
         what keeps this quiet; comparing against the period would still be
-        quiet here, but comparing against 0 (the bug when the periodic map is
-        missing) would flag every dispatch in the workload.
+        quiet here, but comparing against 0 (what a missing periodic map
+        yields) would flag every dispatch in the workload.
         """
         self.assertEqual(
             [a for a in self.advice["advice"] if a["recommendation"] == "split"],
@@ -631,9 +631,8 @@ class TheLoopRuns(unittest.TestCase):
         many-to-one entries are fusions, so no signature can be expected to
         survive them; the one-to-one entry (the tail) must, and
         `check_id_remap` says whether the remap and the module names tell the
-        same story. That check is the thing that would have caught the remap
-        being stale, which is the one failure mode the field itself cannot
-        report.
+        same story. That check is what detects a stale remap, which is the one
+        failure mode the field itself cannot report.
         """
         before, after, remap = self._before_after_profiles("hint_remap.json")
         self.assertEqual([remap[i] for i in range(7)], [0, 0, 1, 1, 2, 2, 3])
@@ -646,29 +645,23 @@ class TheLoopRuns(unittest.TestCase):
 
 
 class ASaturatedModelStillGetsAdvice(unittest.TestCase):
-    """THE BUG THIS CLASS FOUND, and what made it invisible.
+    """A saturated model must still get actionable split advice.
 
-    `emit_compile_advice.py` carried a function, `dispatch_budget`, whose
-    docstring names this exact case: DroNet needs 113.7 ms against a 33.3 ms
-    window while its largest single dispatch is 22.9 ms, so comparing each
-    dispatch to the whole period "reports 'no dispatch is too long' about a
-    model that misses every deadline".
+    `emit_compile_advice.dispatch_budget` names this exact case: DroNet needs
+    113.7 ms against a 33.3 ms window while its largest single dispatch is
+    22.9 ms, so comparing each dispatch to the whole period "reports 'no
+    dispatch is too long' about a model that misses every deadline".
+    `blocking_advice` must be given that proportional budget, not the free
+    slot: a saturated model's free slot is zero, falls back to the whole
+    period, and a model overrunning its deadline by 3.4x would produce ten
+    `unchanged` items and nothing actionable -- "the advisor looked and found
+    nothing wrong".
 
-    That function was never called. `blocking_advice` was handed `budget_for`,
-    which returns the free slot -- and the free slot of a saturated model is
-    zero, so it falls back to the whole period. The result: a model overrunning
-    its deadline by 3.4x produced ten `unchanged` items and nothing actionable,
-    which reads as "the advisor looked and found nothing wrong". The fix that
-    was written for it sat one scope away, dead, with the numbers in its
-    docstring.
-
-    It was invisible because nothing failed: the run succeeded, the document
-    validated, and an empty result from an advisor is indistinguishable from a
-    healthy workload unless you already know the workload is not healthy.
-
-    Saturation is also the ONLY regime where this matters, which is why it
-    survived: for a model that fits its period the free-slot test is right, and
-    every test workload in the tree fits.
+    Nothing fails in that case: the run succeeds, the document validates, and
+    an empty result from an advisor is indistinguishable from a healthy
+    workload. Saturation is also the ONLY regime where this matters: for a
+    model that fits its period the free-slot test is right, and every other
+    test workload in the tree fits. Hence this class.
     """
 
     #: 113.7 ms of work against a 33.3 ms window -- the shape from the
@@ -695,7 +688,7 @@ class ASaturatedModelStillGetsAdvice(unittest.TestCase):
         return [a for a in self.advice["advice"] if a["model"] == model]
 
     def test_the_premise_holds_no_single_dispatch_exceeds_the_period(self):
-        """Otherwise the whole-period test would have caught it by accident.
+        """Otherwise the whole-period test would find it by accident.
 
         This is what makes the next test a real regression rather than a
         restatement: the budget has to come from the proportional share,
@@ -708,7 +701,7 @@ class ASaturatedModelStillGetsAdvice(unittest.TestCase):
         self.assertGreater(total, period * 2)
 
     def test_the_saturated_model_produces_actionable_split_advice(self):
-        """Before the fix this list was empty for this exact workload."""
+        """With the free-slot budget this list is empty for this exact workload."""
         splits = [a for a in self._for("dronet")
                   if a["recommendation"] == "split"]
         self.assertTrue(

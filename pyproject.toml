@@ -8,10 +8,15 @@ version = "0.1.0"
 description = "An adaptable full-stack end-to-end (E2E) compilation and scheduling flow for efficient mapping of robotic multi-model workloads onto heterogeneous shared-memory SoCs."
 requires-python = ">=3.9"
 dependencies = [
-    "numpy",
-    "scipy",
-    "matplotlib",
-    "pandas",
+    # lower bounds are the versions the study's figures and verifiers were run with
+    # (requirements-host.txt is the exact freeze); CP-SAT (ortools) is on the reproduction
+    # path -- scripts/solve_stage2_hard.sh and every showdown figure read its tables -- so it is
+    # a base dependency, not an extra.
+    "numpy>=2.0",
+    "scipy>=1.14",
+    "matplotlib>=3.9",
+    "pandas>=2.2",
+    "ortools>=9.10",
 ]
 
 [project.optional-dependencies]
@@ -32,7 +37,7 @@ milp = ["cvxpy"]
 # What is license-gated is USING it -- without ~/mosek/mosek.lic or
 # $MOSEKLM_LICENSE_FILE the import succeeds and every solve fails. So it is
 # listed, and the licence remains a separate manual step.
-solvers = ["cvxpy", "ortools", "mosek"]
+solvers = ["cvxpy", "mosek"]
 
 # xpu-rt/ isn't actually consumed as an installed package -- every script
 # (see scripts/run_xpurt_schedule.py) inserts the xpu-rt/ directory onto

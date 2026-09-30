@@ -13,11 +13,11 @@ SIGILL probe:
 
 So an IME dispatch running on core 2 *occupies core 2*. Nothing else may run
 there at the same time. The tempting way to give the scheduler an IME option --
-declaring `{"ime": 4}` as four more machines alongside the CPU cores -- creates
-exactly the bug that makes a schedule physically impossible: the IME "machine"
-is busy while the core it actually lives on is still marked idle.
+declaring `{"ime": 4}` as four more machines alongside the CPU cores -- makes
+a schedule physically impossible: the IME "machine" is busy while the core it
+actually lives on is still marked idle.
 
-The fix leans on an invariant the scheduler already has.
+This module leans on an invariant the scheduler already has instead.
 `Workload.combinations_overlap` (workload.py) is set intersection over machine
 *names*, and the MILP (scheduler.py) and the greedy scheduler both refuse to
 overlap two combinations that intersect. So if the RVV option and the IME option

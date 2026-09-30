@@ -13,10 +13,10 @@ differently:
     predicted_start_ms
 
 Normalising once, here, is what stops every renderer from carrying its own
-translation. `scripts/join_k1_trace.py` used to read only merlin's spelling --
-the tool that answers "is this a slow kernel or a long queue", which is the
-question a deadline miss turns on, and it could not read a single trace this
-project had taken. Keeping the column names after retiring the producer that
+translation. A reader that knows only merlin's spelling -- e.g.
+`scripts/join_k1_trace.py`, the tool that answers "is this a slow kernel or a
+long queue", which is the question a deadline miss turns on -- cannot read a
+single ModelBlaster trace. Keeping the column names after retiring the producer that
 coined them is the same trade as `results.csv`: renaming would touch every
 reader to change nothing measurable.
 

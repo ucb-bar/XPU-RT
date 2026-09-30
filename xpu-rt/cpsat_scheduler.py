@@ -103,13 +103,13 @@ def _integerize(ctx, t, alpha, dur_int) -> tuple[list[int], list[int]] | None:
 def build_payload(ctx, time_limit: float = 60.0,
                   restrict_to_nonperiodic: bool = True, workers: int = 8,
                   random_seed: int = 0, warm_start=None,
-                  verbose: bool = False) -> dict:
+                  uniform_groups=None, verbose: bool = False) -> dict:
     """The JSON model handed to `_cpsat_solve.py`.
 
     Split out from `cpsat_schedule` so the model can be inspected without an
-    ortools interpreter: the two bugs fixed in 95db5778 were both in this
-    payload's account of which machines a combination occupies, and neither
-    was reachable by a test that could only look at an objective value.
+    ortools interpreter. This payload's account of which machines a
+    combination occupies is where errors are invisible to a test that only
+    looks at an objective value (see 95db5778 and test_cpsat_sibling_cores.py).
     """
     dur = np.where(np.isfinite(ctx.dur), ctx.dur, -1.0)
     model = {
@@ -152,6 +152,16 @@ def build_payload(ctx, time_limit: float = 60.0,
         "workers": int(workers),
         "random_seed": int(random_seed),
     }
+    # THE CODEGEN CONTRACT, WHICH THIS BACKEND COULD NOT SEE. A packed-weight convolution
+    # materialises one weight layout, so every periodic instance of a dispatch has to run at the
+    # same shard width or the model cannot be generated. `scheduler_cpsat` expresses that as a
+    # constraint, but `--solver cpsat` comes here instead and the payload carried no dispatch
+    # identity at all -- so its tables had instances disagreeing on a width (35 of 98 dispatches on
+    # the 45 Hz chain), and `clamp_schedule_widths` then narrowed 1085 targets to make them
+    # buildable, taking most of the sharding back out. Only the group memberships are needed: the
+    # child derives each combination's width from `combo_machines`.
+    if uniform_groups:
+        model["uniform_width_groups"] = [sorted(idxs) for idxs in uniform_groups if len(idxs) >= 2]
     if warm_start is not None:
         ws_t, ws_alpha = warm_start
         # A hint has to be *complete and self-consistent* to be usable: CP-SAT
@@ -236,7 +246,20 @@ def cpsat_schedule(workload, time_limit: float = 60.0,
             "(e.g. a venv created with `python -m venv && pip install ortools`)")
 
     ctx = DecoderContext(workload)
-    model = build_payload(ctx, time_limit=time_limit,
+    # The op annotations (`op_kind`, `op_network`) that identify a packed-weight dispatch are still
+    # on the live Operation objects here; they are what the payload's numeric tables drop.
+    _groups = None
+    if os.environ.get("XPURT_UNIFORM_PACKED_WIDTH", "0") not in ("0", "", "false"):
+        try:
+            from scheduler_cpsat import _packed_weight_groups
+            _groups = list(_packed_weight_groups(ctx.ops).values())
+            if verbose and _groups:
+                print(f"  cpsat: codegen contract, {sum(1 for g in _groups if len(g) >= 2)} "
+                      f"packed-weight dispatch(es) coupled to one width across their instances")
+        except Exception as _e:
+            print(f"  cpsat: could not build the uniform-width groups ({_e}); "
+                  f"the table may not be buildable")
+    model = build_payload(ctx, uniform_groups=_groups, time_limit=time_limit,
                           restrict_to_nonperiodic=restrict_to_nonperiodic,
                           workers=(workers if workers != 8 else _default_workers()),
                           random_seed=random_seed,

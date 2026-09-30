@@ -86,7 +86,7 @@ class LteHelper(unittest.TestCase):
 
     def test_tolerance_is_tiny_relative_to_the_experiment_grid(self):
         """A tolerance big enough to reclassify a real invocation would be worse
-        than the bug. 1e-9 relative at ~100 ms is ~1e-7 ms, four orders of
+        than none. 1e-9 relative at ~100 ms is ~1e-7 ms, four orders of
         magnitude below the 1e-3 ms resolution of any measured duration."""
         self.assertLess(BOUNDARY_RTOL * 100.0, 1e-6)
 
@@ -104,7 +104,7 @@ class FreshnessWindowBoundary(unittest.TestCase):
         self.assertEqual(_reason(_trace(0.0, 60.0, 70.6), 70.546074), STALE_INPUT)
 
     def test_verdict_is_identical_under_a_40x_time_rescaling(self):
-        """The invariance the bug broke: scaling every time by k must not change
+        """The invariance an exact comparison breaks: scaling every time by k must not change
         any verdict, since the schedule is then a pure time-rescaling."""
         K = 40.0
         for end, window in ((70.546074, 70.546074),

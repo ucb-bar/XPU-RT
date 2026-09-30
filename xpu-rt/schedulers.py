@@ -111,7 +111,7 @@ def _sa(workload, **kwargs):
 # scheduler_rl, scheduler_llm_ranker) are deliberately NOT carried on this
 # branch — they are explicit non-goals for the freshness evaluation, and
 # advertising registry names whose modules are absent would make
-# available_schedulers() lie. Re-add both the module and the entry together.
+# available_schedulers() report schedulers that cannot run. Re-add both the module and the entry together.
 
 
 _REGISTRY: Dict[str, SchedulerFn] = {

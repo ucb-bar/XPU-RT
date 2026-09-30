@@ -1,6 +1,6 @@
 """The K1 resource model: IME is a property of cores 0-3, not a separate engine.
 
-THE BUG THIS PREVENTS: the natural way to let the scheduler choose IME is to
+THE FAILURE THIS PREVENTS: the natural way to let the scheduler choose IME is to
 declare it as extra machines -- `{"cpu_p": 4, "cpu_e": 4, "ime": 4}`. That
 produces schedules that cannot run. The IME "machine" is marked busy while
 CPU_P#2, the core the IME instruction actually executes on, is still marked

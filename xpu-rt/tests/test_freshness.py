@@ -625,7 +625,7 @@ class TestDigitSuffixNetworksAreNotMisSplit(unittest.TestCase):
         import re
         bad = re.compile(r"^(?P<net>.+?)(?P<instance>\d*)_dispatch_\d+$")
         self.assertEqual(bad.match("vision_v3_dispatch_6").group("net"),
-                         "vision_v")   # the bug, pinned
+                         "vision_v")   # the misparse, pinned
         self.assertEqual("vision_v3".rstrip("0123456789"), "vision_v")
         # and what the shared splitter does instead
         self.assertEqual(split_instance_name("vision_v3", self.TASKS)[0],

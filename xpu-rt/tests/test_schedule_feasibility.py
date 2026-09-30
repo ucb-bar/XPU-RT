@@ -170,5 +170,65 @@ class AnImplementationMustExistWhereItWasPlaced(unittest.TestCase):
         self.assertEqual(len(chk.find_illegal_implementations(d)), 2)
 
 
+class TestKernelAvailabilityIsPerOpNotPerWidth(unittest.TestCase):
+    """`find_missing_kernels` asks whether the BINARY has a kernel, and the
+    codegen commits one kernel per (model, backend, op). So the answer cannot
+    depend on the hart count a dispatch was given -- but the per-width profile
+    cells can, and do: the IME beats the sharded RVV conv at four harts on
+    layers it loses to at one. Reading only topo_0 reported a legal four-hart
+    IME placement as having no kernel and refused the schedule."""
+
+    OP = "conv2d_batchnorm2d_silu_s8"
+
+    def _tree(self, tmp, rows_by_topo):
+        import csv
+        base = os.path.join(tmp, "profile", "ime_x60", "spacemit_x60", "net",
+                            "net.int8", "net_x_ime_x60_net.int8")
+        for topo, rows in rows_by_topo.items():
+            d = os.path.join(base, topo)
+            os.makedirs(d)
+            with open(os.path.join(d, "results.csv"), "w", newline="") as f:
+                w = csv.DictWriter(f, fieldnames=["dispatch_id", "op", "implementation"])
+                w.writeheader()
+                w.writerows(rows)
+        return tmp
+
+    def test_proven_at_a_wider_topo_is_accepted_at_every_width(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp:
+            self._tree(tmp, {
+                # dispatch 0 loses at one hart (rvv-costed cell) and wins at four
+                "topo_0": [{"dispatch_id": 0, "op": self.OP,
+                            "implementation": "curated[rvv]/rvv_oc_blocked"},
+                           {"dispatch_id": 1, "op": self.OP,
+                            "implementation": "curated[ime]/ime_vmadot_4x4x8"}],
+                "topo_0_1_2_3": [{"dispatch_id": 0, "op": self.OP,
+                                  "implementation": "curated[ime]/ime_vmadot_4x4x8"},
+                                 {"dispatch_id": 1, "op": self.OP,
+                                  "implementation": "curated[ime]/ime_vmadot_4x4x8"}],
+            })
+            d = {"net0_dispatch_0": dict(_d(0.0, 1.0, "CPU_P#0+CPU_P#1+CPU_P#2+CPU_P#3",
+                                            impl="ime"),
+                                         id=0, job_name="net0", module_name="net$d0")}
+            self.assertEqual(chk.find_missing_kernels(d, gen_root=tmp, target="spacemit_x60"), [])
+
+    def test_an_op_with_no_ime_row_anywhere_is_still_refused(self):
+        """The failure this check exists for: yolo had no conv IME kernel at
+        all, so every ime placement would FATAL on the board."""
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp:
+            self._tree(tmp, {
+                "topo_0": [{"dispatch_id": 0, "op": self.OP,
+                            "implementation": "curated[rvv]/rvv_oc_blocked"}],
+                "topo_0_1_2_3": [{"dispatch_id": 0, "op": self.OP,
+                                  "implementation": "curated[rvv]/rvv_oc_blocked"}],
+            })
+            d = {"net0_dispatch_0": dict(_d(0.0, 1.0, "CPU_P#0", impl="ime"),
+                                         id=0, job_name="net0", module_name="net$d0")}
+            bad = chk.find_missing_kernels(d, gen_root=tmp, target="spacemit_x60")
+            self.assertEqual(len(bad), 1)
+            self.assertIn("no ime kernel", bad[0]["why"])
+
+
 if __name__ == "__main__":
     unittest.main()

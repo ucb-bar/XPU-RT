@@ -1,18 +1,17 @@
 """Regression tests for `gen_root`, which selects the profile tree timings come
 from.
 
-THE BUG: `hardware.profile.gen_root` was parsed out of the schedule JSON into a
-config dict and then never read by anything. `find_profile_csv` hardcoded
-`<repo>/gen/profile`. So a config naming an alternate profile tree silently read
-the default one, and a run could be labelled with one timing basis while
-actually using another -- the failure mode where the numbers look completely
-reasonable and are answers to a different question.
+WHAT IS PINNED: `hardware.profile.gen_root` from the schedule JSON must reach
+`find_profile_csv` rather than a hardcoded `<repo>/gen/profile`. Otherwise a
+config naming an alternate profile tree reads the default one, and a run is
+labelled with one timing basis while using another -- the failure mode where
+the numbers look completely reasonable and are answers to a different question.
 
-It hid for so long because the canonical config's value is literally "gen",
-identical to the hardcoded path, so the bug was invisible until a control
-experiment pointed at `gen25/` (the same measured cycles converted at the real
-25 MHz instead of an assumed 1 GHz) and got 1 GHz latencies back with 25 MHz
-periods. A0 came out 2000.546 instead of 2421.843, which is what exposed it.
+The canonical config's value is literally "gen", so only a non-canonical tree
+shows the difference: a control experiment pointed at `gen25/` (the same
+measured cycles converted at the real 25 MHz instead of an assumed 1 GHz) gets
+1 GHz latencies with 25 MHz periods if gen_root is ignored, and A0 comes out
+2000.546 instead of 2421.843.
 
 The scale-invariance test is the substantive one: it establishes that the
 headline result does not depend on the fictional 1 GHz clock, because scaling
@@ -63,7 +62,7 @@ class GenRootSelectsTheTree(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        for tree in ("gen", "gen25"):
+        for tree in ("gen", os.path.join("gen", "clk25")):
             path = os.path.join(_REPO, tree, "profile", "gemmini",
                                 "firesim_gemmini_opu", "mlp_control",
                                 "mlp_control.int8", "topo_0", "results.csv")
@@ -78,15 +77,16 @@ class GenRootSelectsTheTree(unittest.TestCase):
 
     def test_explicit_gen_root_is_honoured_not_ignored(self):
         """The regression itself: passing an alternate tree must change the
-        resolved path. Before the fix this returned the gen/ path."""
+        resolved path rather than return the gen/ path."""
         p = find_profile_csv(_REPO, gen_root="gen25", **LOOKUP)
         self.assertIsNotNone(p)
-        self.assertIn(os.path.join("gen25", "profile"), p)
+        # "gen25" is the name specs record; the tree lives at gen/clk25
+        self.assertIn(os.path.join("gen", "clk25", "profile"), p)
         self.assertNotIn(os.path.join("gen", "profile", "gemmini"), p)
 
     def test_nonexistent_gen_root_returns_none_rather_than_falling_back(self):
-        """Silently falling back to the default tree is what made the original
-        bug undetectable. Returning None lets strict mode raise."""
+        """Falling back to the default tree would make an ignored gen_root
+        undetectable. Returning None lets strict mode raise."""
         self.assertIsNone(
             find_profile_csv(_REPO, gen_root="gen_definitely_not_here", **LOOKUP))
 
@@ -103,7 +103,7 @@ class GenRootSelectsTheTree(unittest.TestCase):
 
 
 @unittest.skipUnless(
-    os.path.exists(os.path.join(_REPO, "gen25", "profile"))
+    os.path.exists(os.path.join(_REPO, "gen", "clk25", "profile"))
     and os.path.exists(SCALED),
     "25 MHz control tree/config absent")
 class ClockScaleInvariance(unittest.TestCase):

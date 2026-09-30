@@ -204,10 +204,10 @@ def _finer_recs(workload: Any, makespan: float) -> List[Recommendation]:
         import dag_analysis
     except ImportError:
         # `dag_analysis` does not exist on this branch, so the whole "finer"
-        # category is unreachable. It used to be swallowed by a bare
-        # `except Exception: return []`, which is indistinguishable from
-        # "analysed the graph and found no split opportunities" -- a missing
-        # capability reported as a negative result. Say it once, out loud.
+        # category is unreachable. A bare `except Exception: return []` would
+        # be indistinguishable from "analysed the graph and found no split
+        # opportunities" -- a missing capability reported as a negative
+        # result. Say it once, out loud.
         global _WARNED_NO_DAG_ANALYSIS
         if not _WARNED_NO_DAG_ANALYSIS:
             _WARNED_NO_DAG_ANALYSIS = True

@@ -14,6 +14,7 @@ import json
 import os
 
 import workload_spec
+from profile_roots import resolve_gen_root, resolve_path
 
 import numpy as np
 
@@ -221,15 +222,14 @@ def find_profile_csv(
 
     We pick the most recently modified match.
 
-    `gen_root` used to be hardcoded to "gen" while the schedule JSON's
-    `hardware.profile.gen_root` was parsed and then never passed anywhere. Any
-    config naming an alternate profile tree silently read the default one
-    instead, so a run could be labelled as using one timing basis while actually
-    using another. That went unnoticed because the canonical config's value is
-    literally "gen" -- identical to the hardcoded path. It surfaced when a
-    clock-rescaling control pointed at gen25/ and came back with 1 GHz numbers.
+    `gen_root` comes from the schedule JSON's `hardware.profile.gen_root` rather
+    than a hardcoded "gen", so a config naming an alternate profile tree reads
+    that tree and a run cannot be labelled with one timing basis while using
+    another. The canonical config's value is literally "gen", so only a
+    non-canonical tree (e.g. a clock-rescaling control pointing at gen/clk25/)
+    exercises this; xpu-rt/tests/test_gen_root.py pins it.
     """
-    profile_root = os.path.join(repo_base_path, gen_root, "profile")
+    profile_root = os.path.join(repo_base_path, resolve_gen_root(gen_root), "profile")
 
     # New layout (with input_tag subdir).
     pat1 = os.path.join(profile_root, hw, target, model, basename, "*", topo_tag, "results.csv")
@@ -399,8 +399,8 @@ def _load_id_remap(dispatch_deps_path: str) -> dict:
     scheduled with maxpool's 0.218024 ms, maxpool1 with batchnorm's
     0.031082 ms, and so on down the graph. The model still computed the
     right answer -- data deps come from the model graph, not the schedule
-    -- but every placement and duration after the split was wrong, so the
-    two tiles serialised instead of running concurrently.
+    -- but every placement and duration after the split was off by one
+    dispatch, so the two tiles serialised instead of running concurrently.
 
     Returns {} when the graph carries no remap, i.e. every unsplit model,
     so this is a no-op on the existing flow.
@@ -738,12 +738,11 @@ def load_profiled_processing_times(
 
     `strict` (default True): when a (network, hw, topo) profile CSV is
     missing — or has no entry for a specific dispatch_id — raise loudly.
-    The previous behaviour silently substituted ``rng.uniform(2.0, 10.0)``
-    per missing dispatch, which let schedules be generated against
-    fictional timings (every yolov8_nano-on-RVV op was a random number
-    on the FireSim run, because that profile sweep had never been
-    captured). The synthetic-fallback path is preserved behind
-    `strict=False` for cases where partial coverage is intentional.
+    A silent ``rng.uniform(2.0, 10.0)`` per missing dispatch would let
+    schedules be generated against fictional timings (on the FireSim run
+    every yolov8_nano-on-RVV op would be a random number, because that
+    profile sweep was never captured). The synthetic-fallback path is kept
+    behind `strict=False` for cases where partial coverage is intentional.
 
     Returns:
       (processing_times, combined_profiled_p, combined_profiled_e,
@@ -930,15 +929,31 @@ def load_profiled_processing_times(
                         if isinstance(cand_id, int) and cand_id in prof:
                             t_ms = float(prof[cand_id]["time_ms"]) * float(tile_fraction)
 
-                # _op must be re-derived per (dispatch, combination): it used to be
-                # assigned only inside the `t_ms is not None` branch, so the zero-cost
-                # branch below read the PREVIOUS dispatch's op and mislabelled every
-                # diagnostic it printed (yolo's chunk2_c1 dispatches were reported as
+                # _op must be re-derived per (dispatch, combination), not only inside
+                # the `t_ms is not None` branch: otherwise the zero-cost branch below
+                # reads the PREVIOUS dispatch's op and mislabels every diagnostic it
+                # prints (yolo's chunk2_c1 dispatches would be reported as
                 # conv2d_batchnorm2d_silu_s8 -- a real conv, which is what a reader
                 # would act on).
                 _op = (prof[dispatch_id].get("op")
                        if (prof and isinstance(dispatch_id, int) and dispatch_id in prof)
                        else None)
+                # AN ime_x60 ROW IS NOT AN ime KERNEL. The profile tree names its directories
+                # after the implementation that was ASKED for, not the one the picker chose, so
+                # `ime_x60/.../results.csv` holds a row for every dispatch -- and for a network
+                # with no ime kernel (all 90 of yolov8_nano_64x96, all 15 of fused_full) every
+                # one of those rows says `curated[rvv]/...`. Taking the number at face value
+                # offers the solver an "ime" cell that is an rvv re-run, so it decides between
+                # two measurements of the same kernel and picks up their run-to-run noise as if
+                # it were an NPU speedup. The row's own `implementation` column is what says
+                # which engine ran it; when it does not name one, fall through to the
+                # INFEASIBLE_COST branch below, which is where an op with no ime kernel belongs.
+                if t_ms is not None and hw.lower().startswith("ime"):
+                    _impl = (prof[dispatch_id].get("implementation") or ""
+                             if (prof and isinstance(dispatch_id, int) and dispatch_id in prof)
+                             else "")
+                    if "ime" not in _impl.lower():
+                        t_ms = None
                 if t_ms is not None:
                     # Board calibration (opt-in): scale the isolated-profile time by
                     # the measured board actual/predicted ratio. No-op (x1.0) unless a
@@ -980,7 +995,7 @@ def load_profiled_processing_times(
                         # For anything else it is a SHORT CSV -- a profile that
                         # exists but lacks rows -- and costing those dispatches
                         # zero is how a schedule gets built against work that
-                        # was never measured. docs/the_loop.md lists this as a
+                        # was never measured. docs/Feature/the_loop.md lists this as a
                         # guard rail that does not exist; it does now. Recorded
                         # here, adjudicated after the loop (see zero_costed).
                         base_t = 0.0
@@ -1004,9 +1019,9 @@ def load_profiled_processing_times(
 
             if all(v is None for v in combo_times):
                 # No combination in this hardware config can run this
-                # dispatch. Any number we invent is fiction — the old code
-                # passed the 1e6 ms sentinel straight through and the
-                # schedule inherited it — so record it and fail below.
+                # dispatch. Any number invented here is fiction — passing the
+                # 1e6 ms sentinel straight through would let the schedule
+                # inherit it — so record it and fail below.
                 unrunnable.append(
                     f"  - {net_id}/{dispatch_name} (dispatch_id={dispatch_id}): "
                     f"unsupported on every profiled backend "
@@ -1062,8 +1077,8 @@ def load_profiled_processing_times(
         raise FileNotFoundError(
             "profile_loader: required profile data is missing. "
             "Schedules generated against synthetic random times produce "
-            "fictional predicted timelines (this used to be silent — see "
-            "the rng.uniform(2.0, 10.0) fallback). Either:\n"
+            "fictional predicted timelines (see the rng.uniform(2.0, 10.0) "
+            "fallback behind strict=False). Either:\n"
             "  1. Run the missing profile sweeps (ModelBlaster's\n"
             "     scripts/run_model_k1.sh with PROFILE_OUT_ROOT set\n"
             "     or profile_dispatches.py — make sure the harness flags match\n"
@@ -1116,3 +1131,66 @@ def load_profiled_processing_times(
               f"profiled backend; costed with synthetic times (strict=False)")
 
     return processing_times, combined_profiled_p, combined_profiled_e, profiled_by_network
+
+
+#: Widths whose tables the shard lever reads, by topo tag.
+SHARD_TOPO_TAGS = (("topo_0", 1), ("topo_0_1", 2), ("topo_0_1_2_3", 4),
+                   ("topo_0_1_2_3_4_5_6_7", 8))
+
+
+def width_scaling(gen_root: str, target: str, network: str,
+                  impl: str = "rvv_x60") -> dict[int, float]:
+    """`{n_harts: summed dispatch cost (ms)}` for a network's per-width profile tables.
+
+    The topo tag names the harts a measurement held, and the scheduler costs a machine
+    combination from the table whose tag matches its size. A tree that profiled one core
+    count and copied it into the wider tags therefore prices a four-hart combination like
+    one hart, and no solver will ever widen anything -- which is not a solver bug and does
+    not look like one from the outside.
+    """
+    import csv as _csv
+    import glob as _glob
+    out: dict[int, float] = {}
+    for tag, n in SHARD_TOPO_TAGS:
+        hits = _glob.glob(os.path.join(resolve_path(gen_root), "profile", impl, target, network,
+                                       "**", tag, "results.csv"), recursive=True)
+        if not hits:
+            continue
+        tot = 0.0
+        for r in _csv.DictReader(open(max(hits, key=os.path.getmtime))):
+            try:
+                tot += float(r["mean_time"])
+            except (KeyError, ValueError, TypeError):
+                pass
+        if tot > 0:
+            out[n] = tot
+    return out
+
+
+def report_width_scaling(gen_root: str, target: str, networks, impl: str = "rvv_x60",
+                         tol: float = 0.02, log=print) -> list[str]:
+    """Report, per network, what the shard lever is allowed to be worth. Returns the flat ones.
+
+    Called when `machine_combination_mode` is a sharding mode. A network whose wider tables
+    are within `tol` of its one-hart table has no width dimension in its profile: the lever
+    is enabled, costed at zero benefit, and silently never used. On the deployed chain that
+    was the difference between a 23.6 ms and a 45.3 ms YOLO on the board.
+    """
+    flat = []
+    for net in sorted(set(networks)):
+        w = width_scaling(gen_root, target, net, impl)
+        if len(w) < 2:
+            continue
+        one = w.get(1) or max(w.values())
+        best = min(w.values())
+        shown = "  ".join(f"{n}:{v:.1f}" for n, v in sorted(w.items()))
+        if one > 0 and (one - best) / one <= tol:
+            flat.append(net)
+            log(f"  !! {net}: per-width profile is FLAT ({shown} ms over the dispatches). "
+                f"Sharding is enabled and costed at no benefit, so no solver will widen "
+                f"anything. Measure the widths (scripts/emit_shard_profile.py) or the "
+                f"lever is decorative.")
+        else:
+            log(f"  {net}: width scaling {shown} ms  (best {one / best:.2f}x on "
+                f"{min(w, key=lambda k: w[k])} harts)")
+    return flat

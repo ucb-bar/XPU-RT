@@ -1,17 +1,17 @@
 """Regression tests for rendering a predicted schedule into trace rows.
 
-THE BUG THIS FILE EXISTS FOR: a predicted schedule and a measured run were
-scored by two different definitions of "deadline miss".
+WHY THIS FILE EXISTS: a predicted schedule and a measured run must be scored by
+one definition of "deadline miss".
 
 `output_scheduled_json` writes `start_time` and `duration` in **ms**;
-`trace_metrics` reads a trace in **us**. Because nothing converted between them,
-the only host-side scorer in the tree then (`k1_baselines.predicted()`) grew
-its own fourth copy of the instance collapse -- per instance, no rate, no
-response time, no utilization -- while `trace_metrics` (the module written
-specifically to stop that happening) counted instances properly. Two numbers,
-same name, different meaning, and no error anywhere.
+`trace_metrics` reads a trace in **us**. Without a conversion between them a
+host-side scorer (`k1_baselines.predicted()`) needs its own copy of the
+instance collapse -- per instance, no rate, no response time, no utilization --
+while `trace_metrics` counts instances properly: two numbers, same name,
+different meaning, and no error anywhere.
 
-`schedule_trace` removes the second definition rather than adding a third. These
+`schedule_trace` renders the schedule into trace rows so there is one
+definition rather than two. These
 tests pin the two things that make that safe: the unit conversion, and the fact
 that `trace_metrics.summarise_trace` on the rendered rows agrees with the
 schedule it came from.

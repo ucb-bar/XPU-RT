@@ -183,7 +183,7 @@ def test_free_slot_accounts_for_periodic_jobs_own_utilization():
     # dronet's own 3-dispatch chain (20+20+20=60ms) eats 60% of its 100ms
     # period, leaving only a 40ms free slot -- so mobilenet's 50ms dispatch
     # should be flagged "finer" even though 50 < the *raw* 100ms period
-    # (which the old period-only heuristic would have called "unchanged").
+    # (which a period-only heuristic would call "unchanged").
     periodic = _periodic_chain_records("dronet", period=100.0, n_instances=4, chain_durations=[20.0, 20.0, 20.0])
     non_periodic = _non_periodic_records("mobilenet", durations=[50.0])
     advice = analyze_granularity(periodic + non_periodic)

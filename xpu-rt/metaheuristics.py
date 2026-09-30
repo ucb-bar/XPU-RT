@@ -399,7 +399,7 @@ def heft_edf_schedule(workload, gate=None,
     spike workloads it produced *zero* valid schedules, missing windows on all
     30 with a median worst-lateness of 728 ms.
 
-    The fix keeps HEFT's insight (order the makespan-critical chain by upward
+    This decoder keeps HEFT's insight (order the makespan-critical chain by upward
     rank, not by who finishes soonest) but puts it in the band *below* the
     periodic work: periodic ops are ordered among themselves by deadline —
     earliest deadline first, the classic EDF rule — and outrank every
@@ -441,7 +441,7 @@ def heft_edf_schedule(workload, gate=None,
     `_MAX_LAXITY_GATES` caps it.
 
     `gate` overrides the enumeration with literal thresholds: a float for one
-    fixed cut, or `float("inf")` to restore the old unconditional band.
+    fixed cut, or `float("inf")` for the unconditional band.
     """
     ctx = DecoderContext(workload)
     rank = ctx.upward_rank()

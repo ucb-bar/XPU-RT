@@ -171,7 +171,7 @@ def _auto_big_m(operations, machine_combinations, machines, transfer_times,
                 max_transfer = v
     H = float(2 * (sum(max_durs) + len(operations) * max_transfer + 1.0))
     # The computed H = 2*(sum of durations) is already a VALID upper bound on any
-    # feasible makespan. The old hard floor of 5000 forces big-M to ~58x the actual
+    # feasible makespan. A hard floor of 5000 forces big-M to ~58x the actual
     # makespan on ms-unit workloads (~86ms), which cripples MOSEK's LP relaxation
     # (weak bound -> no incumbent). Make the floor env-tunable: XPURT_BIGM_FLOOR=1
     # lets the tight computed H through, dramatically strengthening the relaxation
@@ -809,13 +809,13 @@ def schedule(
 
     # (4) and (5) Non-overlap constraints: if two operations are assigned to overlapping combinations, enforce ordering
     #
-    # `beta` used to be a dense (num_operations x num_operations) boolean
-    # matrix, allocated before any of the pruning below ran. The pruning is
-    # very effective on the *constraints* — on the QRB5165 3-way workload it
-    # drops 94% of the (4)(5) pairs — but nothing shrank the variable, so
-    # MOSEK still had to presolve an ordering bit for every pair, including
-    # the pruned ones: 36,481 of that model's 37,246 variables, ~95% of them
-    # never referenced by a constraint. Deciding the surviving pairs first
+    # `beta` is not a dense (num_operations x num_operations) boolean matrix
+    # allocated before the pruning below runs. The pruning is very effective
+    # on the *constraints* — on the QRB5165 3-way workload it drops 94% of
+    # the (4)(5) pairs — but a dense variable would still make MOSEK presolve
+    # an ordering bit for every pair, including the pruned ones: 36,481 of
+    # that model's 37,246 variables, ~95% of them never referenced by a
+    # constraint. Deciding the surviving pairs first
     # and allocating one ordering bit per surviving pair keeps the model
     # identical and makes the variable count track the pruning.
     end = log("(4)(5) non-overlap (pairwise, overlapping combinations)")

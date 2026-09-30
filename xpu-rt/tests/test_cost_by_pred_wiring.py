@@ -1,20 +1,19 @@
 """cost_by_pred must reach the solver on the path the scheduler actually uses.
 
-THE FAILURES THIS PINS were both silent. Phase E measured a real per-edge
-cross-cluster cost and handed it over as a per-dispatch
-{"CPU_P#0->CPU_E#0": ms} map that `workload_factory` already parses. Two things
-then dropped it on the floor without a word:
+THE FAILURES THIS PINS are both silent. Phase E measures a real per-edge
+cross-cluster cost and hands it over as a per-dispatch
+{"CPU_P#0->CPU_E#0": ms} map that `workload_factory` parses. Two places can
+drop it without a word:
 
   1. The predecessor-aware makespan term (processing_times_by_pred -> a gamma
-     linearisation) existed ONLY in scheduler.schedule_window(). But
-     `--scheduler mosek` forwards to scheduler.schedule(), a different function
-     that had no such term -- so the map was consumed by nothing on the used
-     path, and every schedule came out identical to cost_by_pred-absent.
+     linearisation) must exist in scheduler.schedule(), not only in
+     scheduler.schedule_window(): `--scheduler mosek` forwards to schedule(),
+     so without it the map is consumed by nothing on the used path and every
+     schedule comes out identical to cost_by_pred-absent.
 
   2. The PROFILED workload builder is create_workload_from_network_hierarchy,
-     not create_workload_from_dependencies. Only the latter read cost_by_pred
-     (and infeasible_machines); the profiled builder built Operations without
-     either field, so the map never even reached an Operation.
+     not create_workload_from_dependencies. It must read cost_by_pred (and
+     infeasible_machines) too, or the map never reaches an Operation.
 
 Both are the "labelled-but-not-wired" class: the data is present, the code that
 should act on it is elsewhere, and nothing errors. These tests assert the map
@@ -87,7 +86,7 @@ class CostByPredParsing(unittest.TestCase):
 
 
 class ProfiledBuilderPlumbing(unittest.TestCase):
-    """Bug 2: the profiled builder must carry cost_by_pred AND infeasible_machines
+    """Failure 2 above: the profiled builder must carry cost_by_pred AND infeasible_machines
     onto the Operation, and keep them distinct per network."""
 
     def _build(self, tmp):
@@ -136,7 +135,7 @@ class ProfiledBuilderPlumbing(unittest.TestCase):
 
 
 class GammaOnUsedPath(unittest.TestCase):
-    """Bug 1 + guard: schedule() (the used entry) must move a placement because
+    """Failure 1 above, plus a guard: schedule() (the used entry) must move a placement because
     of cost_by_pred, and must NOT misindex when combinations aren't singletons."""
 
     def _chain(self, with_cbp, combos=None):

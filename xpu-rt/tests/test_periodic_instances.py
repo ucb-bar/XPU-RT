@@ -1,20 +1,19 @@
-"""Regression tests for three silent-failure modes found while building the
-freshness sweep. Each one produced a plausible-looking but wrong result with no
-warning, which is the class of bug that quietly invalidates an experiment.
+"""Regression tests for three silent-failure modes of the freshness sweep. Each
+produces a plausible-looking but wrong result with no warning, which is the class
+of failure that quietly invalidates an experiment.
 
-1. An explicit per-network `num_instances` was ignored when EVERY network was
-   periodic: that case took an early return in the instance-count estimator that
-   hard-coded 1 instance. A 30-instance control task silently became a
-   1-instance one.
+1. An explicit per-network `num_instances` must be honoured when EVERY network is
+   periodic, rather than an early return in the instance-count estimator
+   hard-coding 1 instance (a 30-instance control task becoming a 1-instance one).
 
-2. The adjacent auto-merge post-pass rewrote the emitted fixture by default,
-   collapsing dispatches and shifting start times, so any cross-policy
-   comparison was really policy+automerge.
+2. The adjacent auto-merge post-pass must not rewrite the emitted fixture by
+   default: it collapses dispatches and shifts start times, so any cross-policy
+   comparison would really be policy+automerge.
 
 3. `preferred_hw` naming the CLUSTER ("cpu_p") instead of the profile hw
-   ("gemmini") matched no combination, so every combination was treated as
-   non-preferred and received the pin penalty -- inflating that network's cost
-   by ~100 ms per dispatch and producing a nonsense schedule.
+   ("gemmini") matches no combination, so every combination would be treated as
+   non-preferred and receive the pin penalty -- inflating that network's cost
+   by ~100 ms per dispatch and producing a nonsense schedule. It must raise.
 """
 
 from __future__ import annotations
@@ -84,8 +83,8 @@ def _instances(workload):
 class NumInstancesOverride(unittest.TestCase):
     def test_override_honoured_when_all_networks_are_periodic(self):
         """The regression: with no aperiodic network the estimator has no horizon
-        to derive a count from and used to return 1 per network, discarding the
-        explicit num_instances."""
+        to derive a count from, and must not return 1 per network and discard
+        the explicit num_instances."""
         wl = _build({
             "mlp_control": _net("mlp_control", 0, period=10, instances=30),
             "dronet": _net("dronet", 1, period=50, instances=6),
@@ -168,8 +167,8 @@ class PreferredHwValidation(unittest.TestCase):
         )
 
     def test_cluster_name_instead_of_profile_hw_raises(self):
-        """'cpu_p' is a cluster, not a profile hw. It used to match nothing and
-        silently penalise every combination."""
+        """'cpu_p' is a cluster, not a profile hw. It matches nothing, and must
+        raise rather than penalise every combination."""
         with self.assertRaises(ValueError) as cm:
             self._load("cpu_p")
         msg = str(cm.exception)
@@ -193,9 +192,9 @@ class PreferredHwValidation(unittest.TestCase):
 
 
 class EdfUsesTheWindowClose(unittest.TestCase):
-    """`edf` read only op.deadline_us, which run_xpurt_schedule.py never sets, so
-    it silently fell back to upward rank -- it ran, and reported itself as "edf",
-    while ordering by something else entirely. Periodic workloads express the
+    """`edf` must not read only op.deadline_us, which run_xpurt_schedule.py never
+    sets: it would fall back to upward rank -- running, and reporting itself as
+    "edf", while ordering by something else entirely. Periodic workloads express the
     deadline as the window close (max_end_t), which the MILP itself enforces."""
 
     @staticmethod
@@ -233,7 +232,7 @@ class EdfUsesTheWindowClose(unittest.TestCase):
         self.assertTrue(all(isinstance(p, float) for p in prio))
 
     def test_ordering_differs_from_upward_rank(self):
-        """If it matched upward rank the fix would be inert. Give the op with the
+        """If it matched upward rank the test would be inert. Give the op with the
         LATER window the higher upward rank, so the two rules disagree."""
         from scheduler_heft import _deadline_priority, _upward_rank
         # a is a predecessor of b, so a has the higher upward rank; but a's

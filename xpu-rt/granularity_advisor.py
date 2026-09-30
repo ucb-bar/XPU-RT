@@ -13,7 +13,7 @@ the same schedule, so a human (or an upstream optimizer loop) can act on it.
 Motivating case: a non-periodic job gets scheduled as one large, unfused
 dispatch that occupies a core for far longer than a periodic job's period --
 if the two ever need to share a core, that one coarse dispatch blows through
-several periodic deadlines before yielding. The fix is to partition that
+several periodic deadlines before yielding. The remedy is to partition that
 non-periodic job's dispatches finer upstream, not something xpu-rt can do to
 an already-profiled dispatch graph itself.
 
@@ -115,7 +115,7 @@ def _strip_trailing_digits(s: str) -> str:
 def _base_id(instance_id: str, known=None) -> str:
     """`<network><instance>` -> network, given the real network names.
 
-    Without `known` this is the old trailing-digit strip, which reads
+    Without `known` this is a plain trailing-digit strip, which reads
     `yolov8_nano_64x960` as `yolov8_nano_64x` + 960. That name reaches
     `metadata.periodic_networks` and from there every consumer, including the
     scorer that decides deadline misses -- see `job_names`.

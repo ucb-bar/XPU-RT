@@ -170,7 +170,7 @@ class ThresholdIsAWorkloadConstant(unittest.TestCase):
         self.assertAlmostEqual(good["steady_no_producer_rate"], 0.0)
 
     def test_a_self_relative_threshold_would_have_erased_the_difference(self):
-        """Demonstrates the bug being prevented: threshold = each policy's own
+        """Demonstrates the failure being prevented: threshold = each policy's own
         first producer completion makes the starving policy look identical to the
         uncontended one."""
         consumers = [i * 10.0 for i in range(10)]

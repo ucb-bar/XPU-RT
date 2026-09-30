@@ -1,21 +1,20 @@
 """Integrity tests for the sweep driver's bookkeeping.
 
-Every case here corresponds to a bug that was live in this repository and that
-produced a *plausible-looking* artifact rather than an error. That is the class of
-bug this file exists to catch: nothing crashed, the manifest looked fine, and the
-numbers were wrong.
+Every case here is a bookkeeping failure that produces a *plausible-looking*
+artifact rather than an error: nothing crashes, the manifest looks fine, and the
+numbers are wrong. Each has been observed in this repository's sweeps.
 
 1. FIXTURE/CONFIG COLLISION. Fixture stems are (policy, burst, seed) only, so two
    different workloads swept with the same policy names overwrite each other's
-   schedules. This happened: the 25 MHz clock-invariance control clobbered
-   `_fx_static_nominal_B{0,1,2}_s0`, and a later reuse pass would have scored
-   2820-ms-scale input ages against a 70.5 ms freshness window and reported the
+   schedules: the 25 MHz clock-invariance control collides with
+   `_fx_static_nominal_B{0,1,2}_s0`, and a reuse pass would then score
+   2820-ms-scale input ages against a 70.5 ms freshness window and report the
    entire baseline column as stale.
 
 2. SUCCESS-STATUS EQUALITY. `run_schedule` returns "ok" for a fresh solve and
-   "ok (reused fixture)" for a verified reuse. A `status != "ok"` check turned all
-   57 reused cells into recorded failures -- data silently dropped while every
-   failure's status string read "ok".
+   "ok (reused fixture)" for a verified reuse. A `status != "ok"` check turns every
+   reused cell (57 in the reference sweep) into a recorded failure -- data dropped
+   while every failure's status string reads "ok".
 
 3. EPOCH COMPARABILITY. When a schedule overruns the epoch, greedy's horizon
    search extends the horizon and adds instances, so rates are computed over a

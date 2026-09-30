@@ -314,14 +314,14 @@ class RecommendationVocabulary(unittest.TestCase):
 
 
 class MislabelledFieldsStayFixed(unittest.TestCase):
-    """Two fields in this schema were previously carrying the wrong quantity."""
+    """Two fields in this schema that must carry the quantity their names state."""
 
     def test_deadline_misses_attributed_is_the_measured_miss_count(self):
-        """It used to be passed `len(profile)` -- a DISPATCH COUNT.
+        """Not `len(profile)` -- a DISPATCH COUNT.
 
-        Every split recommendation then carried the same number in a field named
-        `deadline_misses_attributed`, and anything reading it downstream was
-        reading a mislabelled constant. The honest value with no measured trace
+        That would put the same number in every split recommendation's
+        `deadline_misses_attributed`, a mislabelled constant for anything
+        reading it downstream. The honest value with no measured trace
         is 0, so a caller passing 0 must get 0 and not a fallback.
         """
         prof = _profile({0: 10.0, 1: 11.0, 2: 12.0})
@@ -337,9 +337,9 @@ class MislabelledFieldsStayFixed(unittest.TestCase):
     def test_periodic_free_slot_is_a_slot_not_a_period(self):
         """`split` is only meaningful against the room actually available.
 
-        The emitter previously passed `min(periods.values())` while calling it a
-        slot, which overstates the budget by exactly the work the model already
-        does. The evidence field has to report whatever budget the decision was
+        `min(periods.values())` is a period, not a slot, and overstates the
+        budget by exactly the work the model already does. The evidence field
+        has to report whatever budget the decision was
         made against, so the two can never disagree.
         """
         adv = blocking_advice("m", _profile({0: 10.0}), free_slot_ms=2.5,

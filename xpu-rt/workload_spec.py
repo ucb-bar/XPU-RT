@@ -21,7 +21,7 @@ from typing import Any, Dict, List
 
 
 def basename_from_dispatch_deps_path(path: str) -> str:
-    """`gen_mb/vmfb/<m>/<t>/<hw>/<m>.int8/<m>.int8_dispatch_graph.json` -> `<m>.int8`.
+    """`gen/mb/vmfb/<m>/<t>/<hw>/<m>.int8/<m>.int8_dispatch_graph.json` -> `<m>.int8`.
 
     The profile tree's second level is this basename, which is what lets a
     rewritten graph (`dronet.split_x2.int8`) be profiled beside its baseline

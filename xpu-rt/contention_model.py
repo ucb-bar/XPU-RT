@@ -47,9 +47,9 @@ MEASUREMENT'S RESOLUTION at these co-runner counts, and neither artifact
 should be installed as a model today.
 
 `artifacts/k1_run/CONTENTION_FINDINGS.md` has the full account, including the
-three ways the re-measurement was wrong before it was right -- a co-runner
-that was not pinned where it claimed, a survivor check that counted itself,
-and an unpaired design whose drift was the size of its effect.
+three measurement-design requirements the re-measurement meets -- a co-runner
+pinned where it claims, a survivor check that does not count itself, and a
+paired design, since an unpaired one drifts by the size of the effect.
 
 Nothing here changes by default: :func:`load` returns ``None`` when the
 artifact is absent and the scheduler wiring is off unless a model is

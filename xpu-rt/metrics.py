@@ -109,8 +109,8 @@ def compute_metrics(
     # UNITS. Every field below named `*_us` is in the unit of the schedule's
     # own timebase, which for every K1 and FireSim workload in this repo is
     # MILLISECONDS -- `duration` and `start_time` in a scheduled JSON are ms.
-    # So `makespan_us: 412.83` describes a 412.83 ms schedule. The suffix is
-    # wrong and has been since the file was written.
+    # So `makespan_us: 412.83` describes a 412.83 ms schedule: the `_us` suffix
+    # names the wrong unit.
     #
     # Renaming the keys would break `_metrics.json` consumers (sweep
     # aggregators, the Gantt overlay, the band-compliance audit) for no

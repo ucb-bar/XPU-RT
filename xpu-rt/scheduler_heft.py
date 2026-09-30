@@ -313,12 +313,12 @@ def _deadline_priority(workload: Workload) -> List[float]:
        ``release + window_duration`` per instance.
     3. upward rank, so the rule stays well defined on a workload with neither.
 
-    Falling straight from (1) to (3) made this silently NOT EDF on every
+    Falling straight from (1) to (3) would make this NOT EDF on every
     workload that expresses deadlines as windows rather than as `deadline_us` —
     which is every workload the main entry point produces, since
-    run_xpurt_schedule.py never sets `deadline_us`. The scheduler still ran and
-    still reported itself as "edf"; it was ordering by upward rank. Preferring
-    max_end_t makes the baseline mean what its name says.
+    run_xpurt_schedule.py never sets `deadline_us` — while it still reports
+    itself as "edf" and orders by upward rank. Preferring max_end_t makes the
+    baseline mean what its name says.
 
     Note both (1) and (2) are compared only against each other here, never mixed
     into one score, so the ms/us ambiguity between the two fields cannot corrupt

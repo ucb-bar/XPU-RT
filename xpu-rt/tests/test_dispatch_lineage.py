@@ -145,7 +145,7 @@ def _split(profile, victim, n_tiles=2):
 
 
 class TheHazardIsReal(unittest.TestCase):
-    """Before asserting the fix works, show the mistake it prevents."""
+    """Before asserting lineage keys work, show the mispairing they prevent."""
 
     def test_a_dispatch_id_join_pairs_different_ops(self):
         """A `dispatch_id` join across one fuse mispairs almost every dispatch.
@@ -177,7 +177,7 @@ class TheHazardIsReal(unittest.TestCase):
                            "speedup, which is how this was found")
 
     def test_the_raw_module_name_is_not_a_stable_key_either(self):
-        """`key=module_name` is not the fix: the index is inside the name.
+        """`key=module_name` is not a stable key: the index is inside the name.
 
         ModelBlaster writes `dronet$dispatch_4_rvv_x60_conv2d_s8_...`, so
         renumbering rewrites the string. Anyone reaching for `module_name`
@@ -200,7 +200,7 @@ class SignatureIsStable(unittest.TestCase):
 
         `dronet$async_dispatch_1_embedded_elf_riscv_64_dronet$async_dispatch_1_conv_...`
         -- stripping only the first occurrence leaves a key that still moves
-        when the graph is renumbered, which is the original bug in disguise.
+        when the graph is renumbered -- an index-keyed join under another name.
         This is a real name from
         `gen/profile/RVV/spacemit_x60/dronet/dronet.q.int8/topo_0/profile.jsonl`.
         """
@@ -484,7 +484,7 @@ class SingletonListRemapEntries(unittest.TestCase):
 
     def test_a_singleton_list_is_checked_not_skipped(self):
         before, after = self._pair()
-        # 0 -> [1] is a lie: a conv did not become a linear.
+        # 0 -> [1] is an invalid remap: a conv did not become a linear.
         problems = dispatch_lineage.check_id_remap(before, after, {0: [1]})
         self.assertTrue(problems, "a singleton list must be checked")
         self.assertIn("0 -> 1", problems[0])

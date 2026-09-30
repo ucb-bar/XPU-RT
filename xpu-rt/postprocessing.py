@@ -22,11 +22,9 @@ except ImportError:
 from granularity_advisor import analyze_granularity, from_workload, group_by_periodicity
 
 
-# `validate_schedule` and `write_validation_report` are NOT here. They used to
-# be, and were simultaneously present in schedule_validation.py -- 448 lines
-# byte-identical in both files, which is two places to fix when one of them is
-# wrong. They live in `schedule_validation` now, which is where `schedulers.py`
-# already documented them as living.
+# `validate_schedule` and `write_validation_report` live in
+# `schedule_validation`, the module `schedulers.py` documents them in; keeping
+# one copy means one place to change.
 #
 # Deliberately NOT re-exported from here. `schedule_validation` imports
 # `count_overlaps` and `overlap_fixer` from this module, so the dependency runs
@@ -189,8 +187,7 @@ def output_scheduled_json(
         # dispatch_id (e.g. zero-cost IR ops like view/reshape that the
         # profile CSV skips), leave module_name as None — falling through
         # to the combined dicts here would pick up a *different*
-        # network's entry by accident, which is the bug this routing was
-        # introduced to fix.
+        # network's entry by accident, which is what this routing prevents.
         module_name = None
         net_id = _network_for_op(dispatch_name) if profiled_times_by_network else None
         if net_id and isinstance(dispatch_id, int):
@@ -457,7 +454,7 @@ def output_scheduled_json(
     # Apply same-network adjacent auto-merge (schedule-time fusion of
     # back-to-back dispatches on the same core that have no external readers).
     #
-    # OPT-IN via XPURT_AUTOMERGE=1. It used to be opt-out, but this pass
+    # OPT-IN via XPURT_AUTOMERGE=1, because this pass
     # rewrites the emitted fixture -- collapsing dispatches and shifting start
     # times -- so leaving it on by default makes every cross-policy comparison
     # a comparison of policy+automerge, and makes per-instance intervals

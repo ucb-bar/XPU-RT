@@ -1,0 +1,78 @@
+{
+  "_comment": "wh_chain45_solve with only the profile tree changed: the same three-period window, costed against the board per-width tables. Isolates the cost model from the window.",
+  "hardware": {
+    "machines": {
+      "cpu_p": 4,
+      "cpu_e": 4
+    },
+    "profile_hw": {
+      "cpu_p": "rvv_x60",
+      "cpu_e": "rvv_x60"
+    },
+    "profile": {
+      "target": "spacemit_x60",
+      "topo_tag_override": false,
+      "gen_root": "gen_mb_shard"
+    },
+    "p_core_speedup": 1.0
+  },
+  "scheduler": {
+    "random_seed": 42,
+    "solver_verbosity": 1,
+    "time_limit": 600,
+    "use_profiled": true,
+    "prune_periodic": true,
+    "restrict_makespan_to_nonperiodic": false,
+    "machine_combination_mode": "shard",
+    "enable_impls": false,
+    "cpsat_time_limit": 3600,
+    "shard_only_networks": []
+  },
+  "networks": {
+    "yolov8_nano_64x96": {
+      "id": 0,
+      "identifier": "yolov8_nano_64x96",
+      "dispatch_deps_path": "gen_mb/vmfb/yolov8_nano_64x96/spacemit_x60/rvv_x60/yolov8_nano_64x96.int8/yolov8_nano_64x96.int8_dispatch_graph.json",
+      "period": 22.22222222222222,
+      "window_duration": 66.66666666666666,
+      "num_instances": 45
+    },
+    "fused_full": {
+      "id": 1,
+      "identifier": "fused_full",
+      "dispatch_deps_path": "gen_mb/vmfb/fused_full/spacemit_x60/rvv_x60/fused_full.int8/fused_full.int8_dispatch_graph.json",
+      "period": 22.22222222222222,
+      "window_duration": 77.77777777777777,
+      "num_instances": 45,
+      "stateful": true
+    },
+    "mlp_control": {
+      "id": 2,
+      "identifier": "mlp_control",
+      "dispatch_deps_path": "gen_mb/vmfb/mlp_control/spacemit_x60/rvv_x60/mlp_control.int8/mlp_control.int8_dispatch_graph.json",
+      "period": 10.0,
+      "window_duration": 10.0,
+      "num_instances": 100
+    }
+  },
+  "edges": [
+    {
+      "from": "yolov8_nano_64x96",
+      "to": "fused_full"
+    },
+    {
+      "from": "fused_full",
+      "to": "mlp_control"
+    }
+  ],
+  "chain": {
+    "nodes": [
+      "yolov8_nano_64x96",
+      "fused_full",
+      "mlp_control"
+    ],
+    "chain_end_to_end_deadline_ms": 80.0,
+    "deadline_rationale": "a frame's goal reaches control within its nav window (77.8 ms); control is phase-locked at 100 Hz and acts on the newest goal"
+  },
+  "horizon_ms": 1000.0
+}

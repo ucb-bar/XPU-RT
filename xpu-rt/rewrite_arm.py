@@ -65,14 +65,14 @@ REWRITE_VERBS = ("fuse", "unfuse", "split", "shard")
 class Backend:
     """Where a backend's graphs, profiles and build live.
 
-    The loop hardcoded `spacemit_x60` / `rvv_x60` / `ime_x60` / `gen_mb`, which is one
+    The loop hardcoded `spacemit_x60` / `rvv_x60` / `ime_x60` / `gen/mb`, which is one
     of the ten backends ModelBlaster knows. Everything that varies per backend is here
     so the same chain runs for another one by passing a different Backend.
     """
     target: str = "spacemit_x60"
     hw: str = "rvv_x60"
     accel_hw: Optional[str] = "ime_x60"      # the per-dispatch alternative, if any
-    gen_root: str = "gen_mb"                  # where dispatch graphs live
+    gen_root: str = "gen/mb"                  # where dispatch graphs live
     profile_root: str = "gen/profile_mb"      # where measured profiles live
     mb_root: str = field(default_factory=lambda: os.environ.get(
         "MB_ROOT") or os.path.join(REPO, "ModelBlaster"))

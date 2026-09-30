@@ -65,10 +65,10 @@ class TheSplitNeedsTheRealNames(unittest.TestCase):
 
 
 class TheScorerReportsAMeasurementNotAStructuralZero(unittest.TestCase):
-    """The bug, end to end. `instance_index` returned 960, the deadline is
-    `k*T + D`, so the detector's deadline became 960 * 50 ms = 48 seconds and
-    it could not miss. Measured on the featured schedule: 0 misses with
-    `response_p50 = -47954.45 ms`."""
+    """The failure mode, end to end. If `instance_index` returns 960, then with
+    the deadline at `k*T + D` the detector's deadline becomes 960 * 50 ms = 48
+    seconds and it cannot miss. On the featured schedule that reads 0 misses
+    with `response_p50 = -47954.45 ms`."""
 
     PERIOD = 50.0
 
@@ -97,7 +97,7 @@ class TheScorerReportsAMeasurementNotAStructuralZero(unittest.TestCase):
                            "was read from the network's own name")
 
     def test_a_real_miss_is_reported_as_a_miss(self):
-        """The property the bug destroyed: with k mis-read as ~960 the
+        """The property a misparsed index destroys: with k mis-read as ~960 the
         deadline is 48 s and nothing can ever be late."""
         rows = self._rows()
         for r in rows:                      # 60 ms of work in a 50 ms window

@@ -57,11 +57,11 @@ class TicksAreRdtimeAt24MHz(unittest.TestCase):
 
 
 class ADeadlineTheBoardDoesNotKnowIsUnknownNotZero(unittest.TestCase):
-    """The failure this guards against has already happened once.
+    """A structural zero must not be reported as a measured one.
 
-    A network whose name ended in a digit had its instance index misparsed, so
-    its deadline became ~48 s and it could never miss. The reported zero was
-    structural, not measured, and it looked exactly like a pass.
+    A network whose name ends in a digit can have its instance index misparsed,
+    so its deadline becomes ~48 s and it can never miss. That zero is
+    structural, not measured, and it looks exactly like a pass.
     """
 
     def test_without_a_spec_the_miss_is_None(self):

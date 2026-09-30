@@ -1,6 +1,6 @@
 """What a solve was actually solved *against*, recorded with the schedule.
 
-THE GAP THIS CLOSES. `pdb_hash` fingerprints the profile CSVs the solver read, and nothing
+WHY THIS EXISTS. `pdb_hash` fingerprints the profile CSVs the solver read, and nothing
 else. So an additive solve and a `--board-calibration` re-solve of the same spec read the same
 CSVs, carry the SAME `pdb_hash`, and `compare_candidates.py` refuses to adjudicate them:
 
@@ -8,10 +8,10 @@ CSVs, carry the SAME `pdb_hash`, and `compare_candidates.py` refuses to adjudica
     SAME measured costs.
 
 That is exactly the comparison the board-feedback story is built on -- panel 3 (board re-cost)
-against panel 4 (re-solve on board costs) -- so the flagship claim sat outside the guard rail
-that protects every other claim. It also silently lost the environment: `XPURT_CPSAT_WORKERS`
-changes CP-SAT's search (and its determinism), compaction and automerge rewrite the emitted
-schedule, and none of it was in the file.
+against panel 4 (re-solve on board costs) -- so `pdb_hash` alone leaves the flagship claim
+outside the guard rail that protects every other claim. Nor does it record the environment:
+`XPURT_CPSAT_WORKERS` changes CP-SAT's search (and its determinism), and compaction and
+automerge rewrite the emitted schedule.
 
 `solve_hash` folds all of that in: profile content, calibration table content, solver,
 scheduler, and the env switches that change the result. Two schedules that differ in any of

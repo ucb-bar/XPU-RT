@@ -13,6 +13,7 @@ import json
 import os
 
 import workload_spec
+from profile_roots import resolve_gen_root
 from collections import defaultdict
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -71,7 +72,7 @@ def _find_profile_csv(
     basename: str,
     topo_tag: str,
 ) -> Optional[str]:
-    profile_root = os.path.join(repo_base, gen_root, "profile")
+    profile_root = os.path.join(repo_base, resolve_gen_root(gen_root), "profile")
     pat1 = os.path.join(
         profile_root, hw, target, model, basename, "*", topo_tag, "results.csv"
     )

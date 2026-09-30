@@ -36,8 +36,8 @@ there is no skip mechanism, so no `skip_fired`. The signals derivable from the
 stream alone are therefore about the COST MODEL: measured duration against the
 duration the scheduler predicted. Pass `--windows-from <spec.json>` to get real
 deadline misses as well; without it the miss rate is reported as unknown rather
-than as zero, because a structural zero that looks like a measurement is how
-the `yolov8_nano_64x96` deadline bug survived as long as it did.
+than as zero, because a structural zero that looks like a measurement hides
+real misses (such as the `yolov8_nano_64x96` digit-suffix misparse).
 
 Example:
 
@@ -333,8 +333,8 @@ def main(argv: Optional[list[str]] = None) -> int:
                         "computed. Without it the miss rate is unknown "
                         "rather than zero -- the board does not know its own "
                         "deadlines, and a structural zero that reads as a "
-                        "measurement is exactly how the digit-suffixed "
-                        "network bug survived.")
+                        "measurement hides real misses (e.g. a "
+                        "digit-suffixed network name misparsed).")
     p.add_argument("--run-id", required=True,
                    help="Run identifier for this streaming session. "
                         "Reuse across consecutive POSTs to accumulate "

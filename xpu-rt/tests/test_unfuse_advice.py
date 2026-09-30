@@ -156,11 +156,11 @@ class AWorkingFusedKernelIsAQuestionNotAnAnswer(unittest.TestCase):
 
     The lost epilogue fusion costs 4.655 ms (57 BN + 57 SiLU passes) and buys
     46.5 ms, because the fused kernel's conv inner loop is slower than
-    `rvv_conv2d_s8_rvv_vsmul_vnclip.c`. The old gate was ASSERTING an outcome
-    the loop exists to MEASURE, and the price of that certainty was a 19% win
-    that nothing could propose.
+    `rvv_conv2d_s8_rvv_vsmul_vnclip.c`. Refusing it would ASSERT an outcome
+    the loop exists to MEASURE, at the price of a 19% win that nothing could
+    propose.
 
-    So a big enough fused op with covered constituents is now a PROBE: low
+    So a big enough fused op with covered constituents is a PROBE: low
     confidence, priority 3, `measure_before_adopting`. If the fused kernel is
     genuinely better the loop rejects it, which costs one rung and is the loop
     working rather than failing.

@@ -5,7 +5,7 @@ a reduction chain, so the variables MOSEK receives are not `t`/`alpha`/`beta`
 and there is no mapping to carry a user-set `.value` through. Supplying a
 complete, feasible starting schedule via cvxpy is measurably a no-op — MOSEK
 returns the identical cold answer to three decimals (see
-docs/scheduler_solver_study.md 4.2b). Building the model here instead makes
+docs/Feature/scheduler_solver_study.md 4.2b). Building the model here instead makes
 `putxxslice` + MSK_IPAR_MIO_CONSTRUCT_SOL available, which is the supported way
 to hand MOSEK an incumbent.
 

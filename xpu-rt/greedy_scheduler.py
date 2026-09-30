@@ -44,6 +44,8 @@ schedulers ship as siblings under `xpu-rt/`.
 
 from __future__ import annotations
 
+import os
+
 import numpy as np
 
 from workload import Workload
@@ -167,7 +169,7 @@ _EPS = 1e-9
 # on wl_sweep, better on two others — but the eleven spike/FireSim workloads
 # that ruled out a 4x cap cannot be built from this data root, so moving would
 # trade a documented 30 ms win for a 2 ms one, blind. See §4.6 of
-# docs/scheduler_solver_study.md for the numbers and the follow-up measurement.
+# docs/Feature/scheduler_solver_study.md for the numbers and the follow-up measurement.
 _RESERVED_MAX_SLOWDOWN = 2.0
 
 
@@ -387,6 +389,33 @@ def _schedule_loop(workload, mode: str,
     machine_combinations = workload.get_machine_combinations()
     num_combinations = len(machine_combinations)
     transfer_times = workload.get_transfer_times()
+
+    # THE CODEGEN CONTRACT, FOR A SCHEDULER THAT CANNOT BE CONSTRAINED. A list
+    # scheduler chooses each op's combination as it walks the ready set, so a rule
+    # coupling a dispatch's instances cannot be expressed as a constraint the way it is
+    # in CP-SAT -- it could only be checked afterwards and the whole candidate thrown
+    # away. On w4_ffn_dronet_sensor that discarded the best schedule anyone has produced
+    # for the workload (5 instance misses against the baseline's 10, worst lateness
+    # 3.09 ms against 17.95) over THREE dronet dispatches whose instances took different
+    # widths, and the loop then reported w4 as a workload where no lever helps.
+    #
+    # Pinning excludes the losing widths up front, so the schedule is uniform-width by
+    # construction. Off unless asked for, so no existing greedy result moves.
+    try:
+        import codegen_contract
+        _only = codegen_contract.shard_only_networks_from_env()
+        if _only is not None:
+            codegen_contract.restrict_shard_to_networks(
+                workload.operations, machine_combinations, machines, _only, log=print)
+    except Exception as _e:
+        print(f"[contract] per-network shard restriction unavailable: {_e}")
+    if os.environ.get("XPURT_UNIFORM_PACKED_WIDTH", "0") not in ("0", "", "false"):
+        try:
+            import codegen_contract
+            codegen_contract.pin_uniform_widths(
+                workload.operations, machine_combinations, machines, log=print)
+        except Exception as _e:  # never let the contract break a solve
+            print(f"[contract] width pinning unavailable: {_e}")
     op_idx_of = _op_indices(workload)
 
     # `greedy_reserved` needs, per periodic op, (a) how much the

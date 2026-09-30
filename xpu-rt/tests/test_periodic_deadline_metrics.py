@@ -1,21 +1,16 @@
 """Periodic deadline misses must be counted.
 
-THE BUG: compute_metrics counted a miss only when `op.deadline_us` was set. But
-workload_factory expands `period` / `window_duration` into `min_start_t` /
+WHY: workload_factory expands `period` / `window_duration` into `min_start_t` /
 `max_end_t` and never touches `deadline_us` -- that field is only populated by
-create_workload_from_dependencies, a different entry point. So for every
-periodic workload, which is the entire point of this scheduler, the deadline
-metric was structurally incapable of being non-zero.
+create_workload_from_dependencies, a different entry point. A metric keyed on
+`deadline_us` alone is therefore structurally zero for every periodic workload,
+which is the entire point of this scheduler: on a K1 schedule where all ten
+dronet instances overrun their 33.3 ms window by ~80 ms each (DroNet measures
+113 ms of work per instance on one core) it reports deadline_miss_count = 0,
+and a reader would conclude the workload is feasible.
 
-It surfaced on the first real K1 schedule. All ten dronet instances overran
-their 33.3 ms window by ~80 ms each -- DroNet measures 113 ms of work per
-instance on one core -- and the metrics file reported deadline_miss_count = 0.
-The schedule was not wrong; the number describing it was, which is the more
-dangerous of the two. Anyone reading the metrics would have concluded the
-workload was feasible.
-
-The fix takes whichever of deadline_us / max_end_t is tighter, so both entry
-points are covered and neither overrides the other.
+compute_metrics takes whichever of deadline_us / max_end_t is tighter, so both
+entry points are covered and neither overrides the other.
 """
 
 from __future__ import annotations

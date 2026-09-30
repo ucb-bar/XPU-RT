@@ -1,0 +1,80 @@
+{
+  "_comment": "The deployed chain at one 45 Hz camera, solved as a periodic table: yolo's window is three periods (66.7 ms, frames may be in flight together), nav consumes its own frame inside 77.8 ms, control is a 100 Hz task with a 10 ms window paired to the newest closed goal. YOLO may shard, costed from the board-measured shard profile (gen_mb_cal). Windows are deadlines the solver must meet; greedy ignores them and is measured on the same table.",
+  "hardware": {
+    "machines": {
+      "cpu_p": 4,
+      "cpu_e": 4
+    },
+    "profile_hw": {
+      "cpu_p": "rvv_x60",
+      "cpu_e": "rvv_x60"
+    },
+    "profile": {
+      "target": "spacemit_x60",
+      "topo_tag_override": false,
+      "gen_root": "gen_mb_cal"
+    },
+    "p_core_speedup": 1.0
+  },
+  "scheduler": {
+    "random_seed": 42,
+    "solver_verbosity": 1,
+    "time_limit": 600,
+    "use_profiled": true,
+    "prune_periodic": true,
+    "restrict_makespan_to_nonperiodic": false,
+    "machine_combination_mode": "shard",
+    "enable_impls": false,
+    "cpsat_time_limit": 900,
+    "shard_only_networks": [
+      "yolov8_nano_64x96"
+    ]
+  },
+  "networks": {
+    "yolov8_nano_64x96": {
+      "id": 0,
+      "identifier": "yolov8_nano_64x96",
+      "dispatch_deps_path": "gen_mb/vmfb/yolov8_nano_64x96/spacemit_x60/rvv_x60/yolov8_nano_64x96.int8/yolov8_nano_64x96.int8_dispatch_graph.json",
+      "period": 22.22222222222222,
+      "window_duration": 66.66666666666666,
+      "num_instances": 9
+    },
+    "fused_full": {
+      "id": 1,
+      "identifier": "fused_full",
+      "dispatch_deps_path": "gen_mb/vmfb/fused_full/spacemit_x60/rvv_x60/fused_full.int8/fused_full.int8_dispatch_graph.json",
+      "period": 22.22222222222222,
+      "window_duration": 77.77777777777777,
+      "num_instances": 9,
+      "stateful": true
+    },
+    "mlp_control": {
+      "id": 2,
+      "identifier": "mlp_control",
+      "dispatch_deps_path": "gen_mb/vmfb/mlp_control/spacemit_x60/rvv_x60/mlp_control.int8/mlp_control.int8_dispatch_graph.json",
+      "period": 10.0,
+      "window_duration": 10.0,
+      "num_instances": 20
+    }
+  },
+  "edges": [
+    {
+      "from": "yolov8_nano_64x96",
+      "to": "fused_full"
+    },
+    {
+      "from": "fused_full",
+      "to": "mlp_control"
+    }
+  ],
+  "chain": {
+    "nodes": [
+      "yolov8_nano_64x96",
+      "fused_full",
+      "mlp_control"
+    ],
+    "chain_end_to_end_deadline_ms": 80.0,
+    "deadline_rationale": "a frame's goal reaches control within its nav window (77.8 ms); control is phase-locked at 100 Hz and acts on the newest goal"
+  },
+  "horizon_ms": 200.0
+}

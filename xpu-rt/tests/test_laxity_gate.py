@@ -131,7 +131,7 @@ def test_gate_recovers_makespan_without_dropping_a_deadline():
     float; banding none of them drops the tight window."""
     w, _, _, _ = _fixture()
 
-    unconditional = _score(w, gate=np.inf)     # the old behaviour
+    unconditional = _score(w, gate=np.inf)     # the unconditional band
     none_lifted = _score(w, gate=-np.inf)      # plain HEFT ordering
     gated = _score(w)
 

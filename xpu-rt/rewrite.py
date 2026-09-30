@@ -86,7 +86,7 @@ def _copy_op(op: Operation) -> Operation:
         # cur_combo_idx) -- see workload_factory.py's `ptbp`. The keys are
         # machine-combination INDICES and _copy_workload preserves the
         # machine list verbatim, so a plain dict copy stays valid. Dropping
-        # it (as this did before) silently demotes every re-scheduled
+        # it would demote every re-scheduled
         # candidate to scheduler.py's 2D `dur_vec` fallback, so a candidate
         # would be scored under a different cost model than the baseline it
         # is compared against.

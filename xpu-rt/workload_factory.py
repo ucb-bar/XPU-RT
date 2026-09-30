@@ -5,6 +5,7 @@ import os
 from typing import Tuple, Dict, List, Optional
 
 from profile_metrics import profile_based_horizon_ms
+from profile_roots import resolve_path
 
 # Hardware constants — SpacemiT x60
 CPU_P = "CPU_P"
@@ -44,14 +45,191 @@ def parse_cost_by_pred(dispatch_info: dict, machines: List[str]) -> Dict[Tuple[i
     return ptbp
 
 
-def parse_infeasible_combinations(dispatch_info: dict, machines: List[str]) -> set:
+PINNED_OUT_COST_MS = 1e8
+"""Cost written into an excluded (op, combination) cell.
+
+Restriction has to be expressed BOTH as `infeasible_combinations` and as a cost.
+The MILP and CP-SAT paths read the set; the greedy list scheduler does not read
+it at all -- it picks the combination with the earliest completion, full stop --
+so a set-only exclusion is silently ignored by exactly one of the three solvers.
+Same value and same reasoning as `codegen_contract._PINNED_OUT_COST_MS`, which
+prices widths out for the same reason; CP-SAT folds a cost this large back into
+its own exclusions (`scheduler_cpsat._INFEASIBLE_COST_MS`)."""
+
+
+def _expand_machine_selector(name: str, machines: List[str]) -> List[str]:
+    """Machines a spec-written selector names: a core ('CPU_P#2') or a whole
+    kind ('CPU_P', every core of that kind). Case-insensitive, because the
+    hardware block writes kinds lowercase ('cpu_p') and the machine list
+    uppercase ('CPU_P#0')."""
+    want = str(name).strip().lower()
+    if not want:
+        return []
+    if "#" in want:
+        return [m for m in machines if m.lower() == want]
+    return [m for m in machines if machine_type_prefix(m).lower() == want]
+
+
+def machine_restriction_to_infeasible_combinations(
+    allowed: Optional[List[str]],
+    machines: List[str],
+    machine_combinations: Optional[List[List[str]]] = None,
+    context: str = "",
+    widths: Optional[object] = None,
+) -> set:
+    """Combination indices to exclude so that only `allowed` machines are used,
+    and only combinations of one of `widths` harts.
+
+    `allowed` is a list of selectors as a spec writes them -- a core
+    ('CPU_E#0') or a whole kind ('CPU_P'). `None`/empty means no restriction.
+
+    `widths` is how many harts one dispatch of this network may occupy: an int
+    or a list of ints, `None` for no restriction. WHICH harts and HOW MANY are
+    separate questions and a spec has to be able to ask both -- pinning yolo to
+    cluster 0 says nothing about whether a frame runs on one hart or spreads
+    over four, and on this workload that second choice is worth more than the
+    first. The workload-wide form of the same question is
+    `machine_combination_mode`, and `scheduler.shard_only_networks` is its
+    per-network on/off; this is the per-network set.
+
+    A combination survives only if EVERY machine in it is allowed. That is the
+    whole reason this cannot be done in machine-index space: under
+    `machine_combination_mode: "shard"` a combination is a SET of harts (an
+    aligned block), so "may this network use CPU_E#0" and "may it use
+    combination 11" are different questions, and a block that straddles the
+    allowed boundary occupies harts outside it for its whole duration rather
+    than partially. `parse_infeasible_combinations` maps names into the
+    *machines* list, which coincides with combination indices only while every
+    combination is a singleton.
+
+    Raises ValueError when a selector names no machine (a typo silently
+    restricting nothing, or restricting everything, is worse than a stop) or
+    when the restriction leaves no combination at all.
+    """
+    if widths is None and not allowed:
+        return set()
+    combos = (machine_combinations if machine_combinations is not None
+              else [[m] for m in machines])
+    where = f"{context}: " if context else ""
+    excluded_by_width: set = set()
+    if widths is not None:
+        def _ok(w):
+            return isinstance(w, int) and not isinstance(w, bool) and w >= 1
+        if _ok(widths):
+            want = {widths}
+        elif isinstance(widths, (list, tuple, set, frozenset)):
+            want = set(widths)
+        else:
+            want = set()
+        if not want or not all(_ok(w) for w in want):
+            raise ValueError(
+                f"{where}machine_width={widths!r} must be a positive int or a "
+                f"non-empty list of positive ints (harts per dispatch).")
+        have = sorted({len(c) for c in combos})
+        if not (want & set(have)):
+            raise ValueError(
+                f"{where}machine_width={sorted(want)} matches no machine "
+                f"combination; the widths this hardware offers are {have}. "
+                f"A width above 1 needs machine_combination_mode 'shard' or "
+                f"'prefix' and a profile at that width.")
+        excluded_by_width = {k for k, c in enumerate(combos) if len(c) not in want}
+    if not allowed:
+        if len(excluded_by_width) == len(combos):
+            raise ValueError(
+                f"{where}machine_width={widths!r} leaves no runnable machine "
+                f"combination out of {len(combos)}.")
+        return excluded_by_width
+    allow: set = set()
+    for name in allowed:
+        hit = _expand_machine_selector(name, machines)
+        if not hit:
+            raise ValueError(
+                f"{where}allowed_machines entry {name!r} names no machine. "
+                f"Available machines: {sorted(machines)}; available kinds: "
+                f"{sorted({machine_type_prefix(m) for m in machines})}. Use a "
+                f"core name ('CPU_P#0') or a kind ('CPU_P')."
+            )
+        allow.update(hit)
+    excluded = {k for k, combo in enumerate(combos)
+                if not set(combo).issubset(allow)} | excluded_by_width
+    if len(excluded) == len(combos):
+        raise ValueError(
+            f"{where}allowed_machines={list(allowed)}"
+            + (f" with machine_width={widths!r}" if widths is not None else "")
+            + f" leaves no runnable machine combination out of {len(combos)}. "
+            f"Under shard mode a combination is a block of harts and must lie "
+            f"wholly inside the allowed set."
+        )
+    return excluded
+
+
+def impl_restriction_to_infeasible_combinations(
+    prefer_impls: Optional[List[str]],
+    combo_impls: Optional[List[str]],
+    context: str = "",
+) -> set:
+    """Combination indices whose implementation this network does not want.
+
+    `prefer_impls` names the implementations a network should be placed on when
+    `scheduler.enable_impls` offers each core-group combination once per legal
+    implementation (`combo_impls[i]` is combination i's). It is how a spec says
+    "turn the accelerator on for everything it has a kernel for", which a
+    per-dispatch cost model cannot say: a solver handed both cells always takes
+    the cheaper one, so the only placements it will ever produce are the ones
+    the cost table already calls wins. A deployment is allowed to be less clever
+    than that, and measuring it needs a way to write it down.
+
+    PREFER, NOT ALLOW, and the difference is load-bearing. `impl` is per
+    DISPATCH, and an op with no kernel for that implementation has no such cell
+    at any cost -- 35 of yolov8_nano_64x96's 98 dispatches are add/cat/maxpool/
+    upsample, for which no matrix kernel exists. A strict reading makes those
+    dispatches unplaceable and the whole network unschedulable, which is not
+    what the deployment does: it runs them on the ordinary kernels out of the
+    same binary. So the caller applies this set only to the dispatches that have
+    a cell under it, keeps the network's other combinations for the rest, and
+    reports how many took that route.
+    """
+    if not prefer_impls:
+        return set()
+    if not combo_impls:
+        raise ValueError(
+            f"{context + ': ' if context else ''}prefer_impls="
+            f"{list(prefer_impls)} needs the per-combination implementation "
+            f"list, which exists only when `scheduler.enable_impls` is on.")
+    want = {str(i).strip().lower() for i in prefer_impls}
+    have = sorted({str(i).lower() for i in combo_impls})
+    if not (want & set(have)):
+        raise ValueError(
+            f"{context + ': ' if context else ''}prefer_impls={sorted(want)} "
+            f"matches no combination; this hardware offers {have}.")
+    return {k for k, im in enumerate(combo_impls) if str(im).lower() not in want}
+
+
+def parse_infeasible_combinations(
+    dispatch_info: dict,
+    machines: List[str],
+    machine_combinations: Optional[List[List[str]]] = None,
+) -> set:
     """Map a dispatch's optional {"infeasible_machines": [name, ...]} to the set
     of combination indices to hard-exclude (MILP constraint (2b)). Shared by both
     workload builders so the profiled (hierarchy) path honours pins too — without
-    this the field is silently dropped there, same class as cost_by_pred."""
+    this the field is silently dropped there, same class as cost_by_pred.
+
+    With `machine_combinations` given, the answer is in COMBINATION index space:
+    a combination is excluded when it contains any named machine. Without it the
+    machines list is read as the combination list (one singleton per machine),
+    which is what the two non-shard modes produce and what callers predating
+    shard mode assume.
+    """
     infe_names = dispatch_info.get("infeasible_machines", []) or []
-    m_idx = {m: i for i, m in enumerate(machines)}
-    return {m_idx[n] for n in infe_names if n in m_idx}
+    if not infe_names:
+        return set()
+    combos = (machine_combinations if machine_combinations is not None
+              else [[m] for m in machines])
+    denied: set = set()
+    for name in infe_names:
+        denied.update(_expand_machine_selector(name, machines))
+    return {k for k, combo in enumerate(combos) if denied & set(combo)}
 
 
 def machine_type_prefix(machine_name: str) -> str:
@@ -166,6 +344,7 @@ def resolve_dispatch_deps_path(repo_base_path: str, dispatch_deps_path: str) -> 
     normalized = raw_path.lstrip("./")
     candidates: List[str] = [
         os.path.join(repo_base_path, normalized),
+        os.path.join(repo_base_path, resolve_path(normalized)),
     ]
 
     legacy_prefix = "src/pytorch_workload/samples/"
@@ -421,6 +600,7 @@ def create_workload_from_network_hierarchy(
     p_core_speedup: float = 1.5,
     random_seed: Optional[int] = 0,
     machine_combinations: Optional[List[List[str]]] = None,
+    combo_impls: Optional[List[str]] = None,
 ) -> Workload:
     """
     Creates a workload from a hierarchical network dependencies structure.
@@ -444,6 +624,9 @@ def create_workload_from_network_hierarchy(
     - random_seed: Seed for synthetic runtime generation. None = nondeterministic.
     - machine_combinations: List of core groupings (e.g. [[CPU_P#0], [CPU_P#0,CPU_P#1], ...]).
                            If None, each machine becomes a singleton combination.
+    - combo_impls: Implementation each combination runs ('rvv' / 'ime' / ...), one per
+                   combination, when the spec's `enable_impls` offers a combination once
+                   per legal implementation. Only read by a network's `allowed_impls`.
     """
     networks = networks_data.get('networks', {})
     network_edges = networks_data.get('edges', [])
@@ -636,11 +819,11 @@ def create_workload_from_network_hierarchy(
     periodic_processing_times_cache: Dict[Tuple[str, str], List[float]] = {}  # (base_network_id, dispatch_name) -> proc_times
 
     # Track all user-provided base IDs so periodic instance IDs don't
-    # collide with another network's id.  Previously we used `base_id + i`
-    # which overlaps when a non-periodic network has id == base_id+i;
-    # the resulting shared job_id silently merged operations under one
-    # job (and confused downstream printers / plotters that key on
-    # job_names[job_id]).  Use a counter past the max user-provided id.
+    # collide with another network's id.  `base_id + i` would overlap when
+    # a non-periodic network has id == base_id+i; the shared job_id would
+    # merge operations under one job (and confuse downstream printers /
+    # plotters that key on job_names[job_id]).  Use a counter past the max
+    # user-provided id.
     _user_ids = [int(n.get('id', 0)) for n in networks.values()]
     next_periodic_instance_id = (max(_user_ids) + 1) if _user_ids else 0
 
@@ -808,6 +991,10 @@ def create_workload_from_network_hierarchy(
             # Neither is periodic - keep original edge
             expanded_edges.append(edge)
 
+    _restriction_announced: set = set()
+    _impl_fallbacks: list = []
+    _impl_fallback_announced: set = set()
+
     # Map to store operations for each network
     network_operations_map: Dict[str, List[Operation]] = {}
     # Map to store all operations by their prefixed names
@@ -846,7 +1033,43 @@ def create_workload_from_network_hierarchy(
         # Extract time constraints from network info (if present)
         network_min_start_t = network_info.get('min_start_t', None)
         network_max_end_t = network_info.get('max_end_t', None)
-        
+
+        # SPATIAL restriction, alongside the temporal ones above: a network may
+        # declare the harts it is allowed to occupy. Expressed per network in the
+        # spec (`"allowed_machines": ["CPU_P"]`) rather than per dispatch, because
+        # it is a property of the network's placement -- an instruction-set
+        # legality (IME is cluster-0 only on the K1) or a separation of concerns
+        # the deployment wants -- and applying it here means every instance of a
+        # periodic network inherits it through `network_info.copy()`.
+        network_restricted = machine_restriction_to_infeasible_combinations(
+            network_info.get('allowed_machines'), machines, effective_combos,
+            context=f"network {network_identifier!r}",
+            widths=network_info.get('machine_width'))
+        network_impl_restricted = impl_restriction_to_infeasible_combinations(
+            network_info.get('prefer_impls'), combo_impls,
+            context=f"network {network_identifier!r}")
+        if network_restricted or network_impl_restricted:
+            _base = periodic_base_to_instances.get(
+                network_identifier, network_identifier)
+            if _base not in _restriction_announced:
+                _restriction_announced.add(_base)
+                _all_restricted = network_restricted | network_impl_restricted
+                _kept = [effective_combos[k] for k in range(len(effective_combos))
+                         if k not in _all_restricted]
+                _how = []
+                if network_info.get('allowed_machines'):
+                    _how.append(f"allowed_machines={list(network_info['allowed_machines'])}")
+                if network_info.get('machine_width') is not None:
+                    _how.append(f"machine_width={network_info['machine_width']!r}")
+                if network_info.get('prefer_impls'):
+                    _how.append(f"prefer_impls={list(network_info['prefer_impls'])}")
+                print(f"  restricted: {_base} -> {', '.join(_how)}, "
+                      f"{len(_kept)}/{len(effective_combos)} combination(s) kept "
+                      f"({sorted({m for c in _kept for m in c})}, "
+                      f"width(s) {sorted({len(c) for c in _kept})}"
+                      + (f", impl(s) {sorted({combo_impls[k] for k in range(len(effective_combos)) if k not in _all_restricted})}"
+                         if combo_impls else "") + ")")
+
         # Create operations for dispatches in this network
         network_ops_map: Dict[str, Operation] = {}
         
@@ -869,6 +1092,34 @@ def create_workload_from_network_hierarchy(
             else:
                 proc_times = _synthetic_proc_times()
             
+            dispatch_restricted = network_restricted
+            if network_impl_restricted:
+                # PER DISPATCH, because `impl` is per dispatch: an op with no
+                # kernel for the preferred implementation has no cell there at
+                # any cost (profile_loader files those at its own 1e8 sentinel),
+                # and excluding its remaining combinations too would make the
+                # op unplaceable. Such a dispatch keeps the network's other
+                # combinations -- which is what the deployment being described
+                # does: it runs those ops on the ordinary kernels out of the
+                # same binary.
+                _wanted = [k for k in range(len(proc_times))
+                           if k not in network_restricted
+                           and k not in network_impl_restricted
+                           and proc_times[k] < PINNED_OUT_COST_MS]
+                if _wanted:
+                    dispatch_restricted = network_restricted | network_impl_restricted
+                else:
+                    _impl_fallbacks.append(prefixed_dispatch_name)
+            if dispatch_restricted:
+                # Copy before pricing out: a periodic network's instances share
+                # one cached list, and so can two dispatches fed from the same
+                # profile row. Mutating in place would leak one network's
+                # restriction into another's costs.
+                proc_times = list(proc_times)
+                for k in dispatch_restricted:
+                    if k < len(proc_times):
+                        proc_times[k] = PINNED_OUT_COST_MS
+
             # Extract dispatch ID and create operation
             # Inherit time constraints from network if present
             dispatch_id = dispatch_info.get('id', None)
@@ -884,12 +1135,26 @@ def create_workload_from_network_hierarchy(
                 min_start_t=network_min_start_t,
                 max_end_t=network_max_end_t,
                 processing_times_by_pred=parse_cost_by_pred(dispatch_info, machines),
-                infeasible_combinations=parse_infeasible_combinations(dispatch_info, machines),
+                infeasible_combinations=(
+                    parse_infeasible_combinations(
+                        dispatch_info, machines, effective_combos)
+                    | dispatch_restricted),
             )
             
             network_ops_map[dispatch_name] = operation
             all_operations_map[prefixed_dispatch_name] = operation
-        
+
+        if network_impl_restricted and _impl_fallbacks:
+            _base = periodic_base_to_instances.get(
+                network_identifier, network_identifier)
+            if _base not in _impl_fallback_announced:
+                _impl_fallback_announced.add(_base)
+                print(f"  prefer_impls: {len(_impl_fallbacks)} of {len(dispatches)} "
+                      f"dispatch(es) of {_base} have no cell under "
+                      f"{list(network_info['prefer_impls'])} and keep the network's "
+                      f"other combinations (no kernel there, not a cost decision)")
+            _impl_fallbacks = []
+
         # Set up dispatch-level dependencies within this network
         for dispatch_name, dispatch_info in dispatches.items():
             dependencies = dispatch_info.get('dependencies', [])

@@ -165,6 +165,42 @@ def main(inp, outp):
             model.Add(e <= hi)
         start.append(s); end.append(e); dur_var.append(d); combo_lit.append(lits)
 
+    # THE CODEGEN CONTRACT: every periodic instance of a packed-weight dispatch runs at the same
+    # shard width. A generated model materialises one packed weight layout per convolution, so a
+    # table whose instances disagree cannot be built -- `clamp_schedule_widths` repairs it after the
+    # fact by narrowing, which takes the sharding back out. The parent sends the group memberships
+    # (it has the op annotations this payload's numeric tables drop); the width of a combination is
+    # just how many machines it occupies.
+    groups = m.get("uniform_width_groups") or []
+    n_coupled = 0
+    for idxs in groups:
+        idxs = [i for i in idxs if 0 <= i < n]
+        if len(idxs) < 2:
+            continue
+        widths = sorted({len(combo_machines[c]) for c in range(n_combos)})
+        # only a width every instance can actually take: coupling to one that some instance has no
+        # feasible combination for makes AddExactlyOne unsatisfiable and the whole solve INFEASIBLE
+        # with nothing pointing at the reason
+        usable_w = [w for w in widths
+                    if all(any(len(combo_machines[c]) == w and dur[i][c] >= 0
+                               for c in range(n_combos)) for i in idxs)]
+        if not usable_w:
+            continue
+        wv = {}
+        for w in usable_w:
+            ks = [c for c in range(n_combos) if len(combo_machines[c]) == w and combo_lit[idxs[0]][c] is not None]
+            v = model.NewBoolVar(f"uw_{idxs[0]}_{w}")
+            wv[w] = v
+            for i in idxs:
+                lits = [combo_lit[i][c] for c in range(n_combos)
+                        if len(combo_machines[c]) == w and combo_lit[i][c] is not None]
+                model.Add(sum(lits) == v) if lits else model.Add(v == 0)
+        if wv:
+            model.AddExactlyOne(wv.values())
+            n_coupled += 1
+    if n_coupled:
+        print(f"cpsat: codegen contract, {n_coupled} dispatch(es) coupled to one width", flush=True)
+
     # No-overlap per machine: one optional interval per (op, combination),
     # present exactly when that combination is chosen. This is the piece the
     # MILP has to spell out as O(N^2) big-M ordering rows.
@@ -179,18 +215,18 @@ def main(inp, outp):
                                               f"iv{i}_{c}")
             # One interval per machine the combination actually occupies.
             #
-            # This used to walk the conflict row and file the interval under
-            # the FIRST conflicting combination's first machine, then break.
-            # With sibling-core combinations -- ['CPU_P#0'], ['CPU_P#0',
-            # 'CPU_P#1'], ['CPU_P#1'] -- combination 2 conflicts first with
+            # Filing the interval under the FIRST conflicting combination's
+            # first machine (walking the conflict row, then breaking) is wrong
+            # for sibling-core combinations -- ['CPU_P#0'], ['CPU_P#0',
+            # 'CPU_P#1'], ['CPU_P#1']: combination 2 conflicts first with
             # combination 1, whose first machine is CPU_P#0, so ALL THREE
-            # combinations landed on machine 0's list and machine 1's list
-            # stayed empty. The single resulting AddNoOverlap then forbade
+            # combinations would land on machine 0's list and machine 1's list
+            # would stay empty. The single resulting AddNoOverlap would forbid
             # ['CPU_P#0'] and ['CPU_P#1'] from running at the same time, which
             # is precisely the two-hart parallelism the pair configurations
-            # exist to use: CP-SAT was solving a model where a gemmini or rvv
-            # pair is serialised. It answered that model correctly (85.42 ms on
-            # control_mix_gempair against heft_edf's 60.07) and rejected a
+            # exist to use: CP-SAT would solve a model where a gemmini or rvv
+            # pair is serialised, answer it correctly (85.42 ms on
+            # control_mix_gempair against heft_edf's 60.07) and reject a
             # correct schedule handed to it as a hint, reporting it "complete,
             # but infeasible".
             for mi in combo_machines[c]:

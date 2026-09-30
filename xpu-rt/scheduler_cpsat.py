@@ -71,6 +71,44 @@ def _lazy_cp_model():
         ) from exc
 
 
+def _packed_weight_groups(ops):
+    """`{(network, dispatch_id): [op index, ...]}` for packed-weight dispatches only.
+
+    The op kind is not a field on an Operation; it is inside `operation_name`, which is
+    the module name (`<net>$dispatch_<id>_<backend>_<op>_<SHAPE>`). The packed set comes
+    from ModelBlaster's codegen contract so there is one definition of it, and an
+    unavailable contract yields no groups -- constraining nothing is the right failure
+    here, since the alternative is constraining every dispatch on a guess.
+    """
+    try:
+        import codegen_contract
+        packed = codegen_contract.packed_weight_ops()
+        op_of = codegen_contract.op_of
+    except Exception:
+        return {}
+    groups = {}
+    for i, op in enumerate(ops):
+        name = str(getattr(op, "operation_name", "") or "")
+        # `op_kind` is attached from the profile database by
+        # run_xpurt_schedule._annotate_op_kinds, because a dispatch graph carries only
+        # ids and dependencies -- `operation_name` is `<net-instance>_dispatch_<id>` and
+        # names no op at all. The module-name parse is the fallback for callers that
+        # build a workload without going through that path.
+        kind = str(getattr(op, "op_kind", "") or "") or op_of(name, packed)
+        if kind not in packed:
+            continue
+        did = getattr(op, "operation_id", None)
+        if did is None:
+            continue
+        # The GROUP is the base network: its periodic instances are what must agree.
+        net = str(getattr(op, "op_network", "") or "")
+        if not net:
+            net = (name.split("$")[0] if "$" in name
+                   else name.split("_dispatch_")[0])
+        groups.setdefault((net, int(did)), []).append(i)
+    return groups
+
+
 def _to_int_us(x: float) -> int:
     if x is None or x <= 0:
         return 0
@@ -118,6 +156,43 @@ def cpsat_schedule(
     transfer = workload.get_transfer_times()
     if transfer is None or len(transfer) == 0:
         transfer = np.zeros((len(machines), len(machines)))
+
+    # ---- CODEGEN CONTRACT: a shard's OC slice cannot have a remainder ---------
+    # A packed convolution's weights are split across shards by output channel, so a
+    # width that does not divide OC has nowhere to put the remainder and ModelBlaster
+    # refuses the schedule: "has OC=2, not divisible by scheduled width 4; codegen would
+    # silently run a serial implementation".
+    #
+    # Excluded BEFORE the duration table is built, so the horizon arithmetic never sees
+    # these combinations. This is the cheapest constraint in the file to satisfy: on the
+    # deployed sensor workload the two offending dispatches are yolo's OC=2 detect-head
+    # convs, and the board measures them SLOWER on four cores than on one (0.0319 vs
+    # 0.0312 ms) -- so the widths being removed were never worth having, and the
+    # schedule that motivated this rule paid 0.17% of yolo's time for them.
+    if os.environ.get("XPURT_UNIFORM_PACKED_WIDTH", "0") not in ("0", "", "false"):
+        _n_oc = 0
+        for op in ops:
+            oc = getattr(op, "op_oc", None)
+            if not oc:
+                continue
+            bad = {k for k in range(n_combos)
+                   if len(combos[k]) > 1 and oc % len(combos[k])}
+            if bad and not bad >= set(range(n_combos)):
+                op.infeasible_combinations = set(op.infeasible_combinations) | bad
+                _n_oc += 1
+        if _n_oc:
+            print(f"[cpsat] codegen contract: {_n_oc} packed-weight dispatch(es) had "
+                  f"width(s) that do not divide their OC excluded")
+
+    # PER-NETWORK SHARD RESTRICTION, before the duration table, so a restricted
+    # combination is excluded rather than merely expensive and the horizon stays tight.
+    try:
+        import codegen_contract as _cc
+        _only = _cc.shard_only_networks_from_env()
+        if _only is not None:
+            _cc.restrict_shard_to_networks(ops, combos, machines, _only, log=print)
+    except Exception as _e:
+        print(f"[cpsat] per-network shard restriction unavailable: {_e}")
 
     # Horizon = sum of max per-op duration across *feasible* combos.
     # Infeasible combos get a placeholder large duration (won't be chosen), but
@@ -218,6 +293,68 @@ def cpsat_schedule(
         # Release time.
         if op.min_start_t is not None and op.min_start_t > 0:
             model.Add(chosen_s >= _to_int_us(float(op.min_start_t)))
+
+    # ---- CODEGEN CONTRACT: one width per packed-weight dispatch --------------
+    # Every periodic instance of a dispatch whose weights are PACKED PER SHARD must be
+    # given the same core width, because the packed weight array is materialised per
+    # shard while generating the skeleton -- one generated model cannot carry two
+    # layouts for one dispatch. Without this the solver is free to give `dronet`
+    # dispatch 0 two cores in one instance and four in another; the schedule is valid
+    # for the runtime and the compiler refuses it, and the refusal arrives at stage 1 of
+    # 5 of a board build.
+    #
+    # Encoded as a per-(dispatch, width) indicator rather than by pinning a width: the
+    # solver still CHOOSES the width, it just has to choose one. Pinning would trade a
+    # correctness constraint for a policy decision, and the whole point of shard mode is
+    # that the right width depends on what else is running.
+    #
+    # Off unless asked for, so no existing result moves. The co-design loop's `shard`
+    # lever turns it on, which is what makes that lever's output deployable.
+    # Recorded for the warm start below: a hint that violates the coupling is worse
+    # than no hint, so the hint has to know which dispatches are coupled to what.
+    uniform_groups: dict = {}
+    if os.environ.get("XPURT_UNIFORM_PACKED_WIDTH", "0") not in ("0", "", "false"):
+        _groups = _packed_weight_groups(ops)
+        _n_coupled = 0
+        _skipped = []
+        for _key, _idxs in sorted(_groups.items()):
+            if len(_idxs) < 2:
+                continue
+            _widths = sorted({len(combos[k]) for k in range(n_combos)})
+            # A width is only usable by the GROUP if every instance can actually take
+            # it. Without this check a group whose instances have disjoint feasible
+            # widths -- one restricted to 1 core, another to 4, by
+            # `infeasible_combinations` -- makes AddExactlyOne unsatisfiable, and the
+            # solve comes back INFEASIBLE with nothing pointing at the reason. Such a
+            # dispatch is genuinely unbuildable under shard mode, and saying so beats
+            # returning "no solution" for the whole workload.
+            _usable = [
+                _w for _w in _widths
+                if all(any(k not in ops[_i].infeasible_combinations
+                           for k in range(n_combos) if len(combos[k]) == _w)
+                       for _i in _idxs)]
+            if not _usable:
+                _skipped.append(_key)
+                continue
+            _w_vars = {}
+            for _w in _usable:
+                _ks = [k for k in range(n_combos) if len(combos[k]) == _w]
+                _wv = model.NewBoolVar(f"pw_{_key[0]}_{_key[1]}_{_w}")
+                _w_vars[_w] = _wv
+                for _i in _idxs:
+                    # this instance runs at width w  <=>  the dispatch runs at width w
+                    model.Add(sum(presence[_i][k] for k in _ks) == _wv)
+            model.AddExactlyOne(_w_vars.values())
+            uniform_groups[_key] = (list(_idxs), sorted(_usable))
+            _n_coupled += 1
+        if _skipped:
+            print(f"[cpsat] codegen contract: {len(_skipped)} packed-weight "
+                  f"dispatch(es) have NO width every instance can take, so they are "
+                  f"left unconstrained and the schedule will not be buildable: "
+                  f"{_skipped[:4]}")
+        if _n_coupled:
+            print(f"[cpsat] codegen contract: {_n_coupled} packed-weight dispatch(es) "
+                  f"constrained to one width across their instances")
 
     # Per-machine NoOverlap.
     for m, ivars in intervals_per_machine.items():
@@ -431,15 +568,75 @@ def cpsat_schedule(
         lower_obj += transfer_weight * sum(p * c for p, c in transfer_terms)
 
     # Warm start (HEFT).
+    #
+    # A HINT THAT BREAKS THE UNIFORM-WIDTH COUPLING IS WORSE THAN NO HINT. HEFT picks a
+    # width per INSTANCE, so on a packed-weight dispatch it will happily hint width 1
+    # for one instance and 4 for another -- exactly the assignment the coupling above
+    # forbids. CP-SAT then starts from an infeasible point and spends its budget
+    # repairing it: on w4 the constrained solve returned NO SCHEDULE AT ALL (alpha None)
+    # while the unconstrained one solved fine, which is what sent us looking here.
+    # So project the hint onto the constraint first: per coupled dispatch, take the
+    # width HEFT chose most often among that dispatch's instances (restricted to the
+    # widths every instance can take), and hint that one width for all of them.
+    _forced_width = {}
+    if uniform_groups and warm_start is not None:
+        try:
+            _ws_alpha = warm_start[1]
+            for _key, (_idxs, _usable) in uniform_groups.items():
+                _votes: dict = {}
+                for _i in _idxs:
+                    _w = len(combos[int(np.argmax(_ws_alpha[_i]))])
+                    if _w in _usable:
+                        _votes[_w] = _votes.get(_w, 0) + 1
+                # No instance voted for a usable width -> fall back to the narrowest,
+                # which is always buildable and never the reason a solve fails.
+                _w_pick = (max(_votes, key=lambda w: (_votes[w], -w)) if _votes
+                           else _usable[0])
+                for _i in _idxs:
+                    _forced_width[_i] = _w_pick
+        except Exception:
+            _forced_width = {}
+
     if warm_start is not None:
         ws_t, ws_alpha = warm_start
         try:
             for i in range(n):
                 k = int(np.argmax(ws_alpha[i]))
+                if i in _forced_width:
+                    # Keep HEFT's machine choice when it already has the right width;
+                    # otherwise take any combination of the forced width this op can run.
+                    if len(combos[k]) != _forced_width[i]:
+                        _alt = [kk for kk in range(n_combos)
+                                if len(combos[kk]) == _forced_width[i]
+                                and kk not in ops[i].infeasible_combinations]
+                        if not _alt:
+                            continue  # nothing legal to hint; leave this op unhinted
+                        k = _alt[0]
+                # AND NEVER HINT AN EXCLUDED COMBINATION, whatever excluded it. HEFT runs
+                # in `cpsat_with_heft_warm_start` BEFORE this function, so it never sees
+                # the exclusions made here -- `restrict_shard_to_networks` prices out
+                # every multi-core combination for networks the loop chose not to widen,
+                # and HEFT will happily have placed one there. The projection above only
+                # covers packed-weight groups, so the w5 board re-solve still handed
+                # CP-SAT an infeasible starting point and came back with NO SCHEDULE at
+                # 400 s ("SOLVE FAILED"), which the loop then reported as a re-solve that
+                # found nothing. One feasibility check on the way out covers every
+                # exclusion source at once.
+                if k in ops[i].infeasible_combinations:
+                    _ok = [kk for kk in range(n_combos)
+                           if kk not in ops[i].infeasible_combinations]
+                    if not _ok:
+                        continue
+                    # Prefer the cheapest legal combination, so the hint is not merely
+                    # feasible but a reasonable place to start.
+                    k = min(_ok, key=lambda kk: durations_int[i][kk])
                 model.AddHint(presence[i][k], 1)
                 model.AddHint(chosen_start[i], _to_int_us(float(ws_t[i])))
         except Exception:
             pass
+    if _forced_width:
+        print(f"[cpsat] codegen contract: warm start projected onto the coupling for "
+              f"{len(_forced_width)} dispatch instance(s)")
 
     solver = cp_model.CpSolver()
     if time_limit is not None and time_limit > 0:
@@ -480,7 +677,40 @@ def cpsat_schedule(
 
     status = None
     phase_reports = []
+    bounded_phases: List[str] = []
+
+    # PER-PHASE BUDGET. `max_time_in_seconds` applies to EACH Solve() call, so a
+    # three-phase lexicographic solve under a "300 s limit" could legitimately run
+    # 900 s -- and, worse, phase 1 could spend the entire wall clock the caller
+    # budgeted for the whole solve and leave nothing for the rest. Split it: the top
+    # phase matters most, so it gets half, and the remaining phases share the other
+    # half, with a floor so no phase gets a budget too small to find a point at all.
+    total_budget = float(time_limit) if time_limit and time_limit > 0 else None
+    last_solution = None
+
+    def _snapshot():
+        """The current solution as (var, value) pairs, to hint the next phase with."""
+        out = [(chosen_start[i], solver.Value(chosen_start[i])) for i in range(n)]
+        for i in range(n):
+            for k in range(n_combos):
+                out.append((presence[i][k], solver.Value(presence[i][k])))
+        return out
+
     for phase, (phase_name, phase_obj, phase_unit) in enumerate(objectives):
+        if total_budget is not None:
+            n_rest = max(1, len(objectives) - 1)
+            share = (total_budget * 0.5 if phase == 0
+                     else total_budget * 0.5 / n_rest)
+            solver.parameters.max_time_in_seconds = max(10.0, share)
+        # START EACH PHASE WHERE THE LAST ONE ENDED. Minimize+Solve restarts the
+        # search, keeping no incumbent across calls, so a phase given a modest budget
+        # can otherwise return a point WORSE than the phase before it -- or, on a hard
+        # instance, nothing at all, discarding a schedule we already had in hand.
+        if last_solution is not None:
+            if hasattr(model, "ClearHints"):
+                model.ClearHints()  # re-hinting a var without this is a proto error
+            for _var, _val in last_solution:
+                model.AddHint(_var, _val)
         model.Minimize(phase_obj)
         status = solver.Solve(model)
         phase_reports.append({
@@ -505,12 +735,33 @@ def cpsat_schedule(
                 "certified": False,
             }
             return None, None, None, None  # type: ignore[return-value]
+        last_solution = _snapshot()
         if objective_stop_after and phase_name == objective_stop_after:
             break
-        if status != cp_model.OPTIMAL or phase == len(objectives) - 1:
+        if phase == len(objectives) - 1:
             break
-        optimum = int(round(solver.ObjectiveValue()))
-        model.Add(phase_obj == optimum)
+        value = int(round(solver.ObjectiveValue()))
+        if status == cp_model.OPTIMAL:
+            model.Add(phase_obj == value)
+        else:
+            # BOUND THE PHASE, DO NOT ABANDON THE REST. Fixing an unproven value with
+            # `==` would be a false lexicographic claim, but breaking out of the loop
+            # when a phase fails to PROVE its optimum means that wherever phase 1
+            # times out THE LOWER PHASES NEVER RUN: the schedule minimises deadline
+            # misses only, with lateness and makespan left wherever phase 1's
+            # incumbent drops them. That alone makes such a solve return a worse
+            # makespan than greedy on the big rungs (77.95 vs 71.57 ms on w5) -- not a
+            # solver limitation, an objective that is never optimised; its certificate
+            # shows one phase, `dispatch_deadline_misses`, FEASIBLE, and nothing after it.
+            #
+            # `<= value` is sound where `== value` is not. The incumbent is achieved,
+            # so the feasible region stays non-empty; the higher-priority term can
+            # never get worse than what we already had; and the next phase minimises
+            # the lower term subject to that bound. The claim it supports is
+            # "lexicographic, with this phase bounded but not proven" -- which is what
+            # the certificate records, per phase.
+            model.Add(phase_obj <= value)
+            bounded_phases.append(phase_name)
 
     assert status is not None
 
@@ -526,6 +777,13 @@ def cpsat_schedule(
         "phases": phase_reports,
         "certified": all(p["status"] == "OPTIMAL" for p in phase_reports),
         "certified_through": phase_reports[-1]["name"],
+        # Phases that ran, but under a bound taken from an unproven incumbent rather
+        # than a proven optimum. A reader can tell "lexicographic and proven" from
+        # "lexicographic and bounded" without inferring it from statuses.
+        "bounded_not_proven": list(bounded_phases),
+        "phase_budget_s": ({"top": total_budget * 0.5,
+                            "each_lower": total_budget * 0.5 / max(1, len(objectives) - 1)}
+                           if total_budget is not None else None),
     }
 
     t = np.zeros(n)

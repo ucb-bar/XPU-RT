@@ -36,6 +36,8 @@ import os
 from dataclasses import asdict, dataclass, field
 from typing import Any, Dict, List, Optional, Sequence
 
+from profile_roots import resolve_path
+
 SCHEMA_VERSION = 1
 
 #: The compiler-facing vocabulary. Every verb here is a directive ModelBlaster
@@ -408,10 +410,10 @@ def unfuse_advice(model: str, profile: Dict[int, dict],
             # rvv_conv2d_batchnorm2d_silu_s8_rvv_oc_blocked_bn_silu_epilogue.c
             # has a slower conv inner loop than rvv_conv2d_s8_rvv_vsmul_vnclip.c.
             #
-            # The old gate was ASSERTING an outcome the loop exists to MEASURE,
-            # and the cost of that certainty was a 19% win nobody could see. So
+            # Refusing here would ASSERT an outcome the loop exists to MEASURE,
+            # and would hide a 19% win. So
             # a fused op big enough to be worth a board slot, whose constituents
-            # all have curated kernels, is now PROPOSED as a probe rather than
+            # all have curated kernels, is PROPOSED as a probe rather than
             # refused -- at lower confidence and priority, and worded as a
             # question. If the fused kernel is genuinely better the loop rejects
             # it, which costs one rung and is the loop working.
@@ -543,8 +545,9 @@ def _load_results_csv(path: str, n_cores: Optional[int] = None) -> Dict[int, dic
       correct answer for n=1.
     * `implementation`. The column that records which kernel actually ran
       (`curated[rvv]/rvv_oc_blocked_bn_epilogue`, and so on). It exists because
-      curated kernels were looked up by exact op name, so fused ops silently
-      fell back to the scalar reference inside builds labelled `rvv_x60`. Any
+      curated kernels are looked up by exact op name, so a fused op with no
+      curated match falls back to the scalar reference inside a build labelled
+      `rvv_x60`. Any
       advice derived from a profile whose rows say `scalar` while the build says
       `rvv` is advice about a binary nobody shipped, so the string is carried
       into the evidence rather than left on disk.
@@ -607,7 +610,7 @@ def _find_results_csv(gen_root: str, impl: str, target: str, model: str,
     (`<model>_<target>_<impl>_<basename>`) between the basename and the topo
     tag, and the older one does not.
     """
-    root = os.path.join(gen_root, "profile", impl, target, model, basename)
+    root = os.path.join(resolve_path(gen_root), "profile", impl, target, model, basename)
     for pat in (os.path.join(root, "*", topo_tag, "results.csv"),
                 os.path.join(root, topo_tag, "results.csv")):
         hits = glob.glob(pat)
@@ -660,7 +663,7 @@ def load_profiles(gen_root: str, target: str, model: str, basename: str,
                   impls: List[str], topo_tag: str = "topo_0") -> Dict[str, Dict[int, dict]]:
     out = {}
     for impl in impls:
-        p = os.path.join(gen_root, "profile", impl, target, model, basename,
+        p = os.path.join(resolve_path(gen_root), "profile", impl, target, model, basename,
                          topo_tag, "profile.jsonl")
         rec = _load_jsonl(p)
         if rec:
@@ -691,7 +694,7 @@ def load_profiles_by_cores(gen_root: str, target: str, model: str,
     """
     out: Dict[int, Dict[int, dict]] = {}
     for tag in topo_tags:
-        p = os.path.join(gen_root, "profile", impl, target, model, basename,
+        p = os.path.join(resolve_path(gen_root), "profile", impl, target, model, basename,
                          tag, "profile.jsonl")
         rec = _load_jsonl(p)
         if not rec:

@@ -77,8 +77,8 @@ def known_from_schedule(schedule: dict) -> list:
 
     `split_job_name` is only correct when it is told the names; without them it
     falls back to stripping trailing digits, which turns "smolvlm_vision_v3"
-    into "smolvlm_vision_v". Callers that have no workload spec to hand (no
-    `--windows-from`) used to take that fallback silently.
+    into "smolvlm_vision_v". This recovers the names for callers that have no
+    workload spec to hand (no `--windows-from`), so they do not take that fallback.
 
     Two sources, unioned:
       * `metadata.periodic_networks` -- the periodic bases. Their instances
