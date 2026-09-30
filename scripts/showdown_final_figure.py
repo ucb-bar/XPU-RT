@@ -104,7 +104,7 @@ def draw_system(ax, fz):
 
 
 def draw_envelope_paper(ax, cax, hx, hr, fz, base):
-    """the control-rate envelope of the submitted figure (rate injected, colour = cruise), with the two measured rates marked."""
+    """the control-rate envelope of the paper figure (rate injected, colour = cruise), with the two measured rates marked."""
     csv_path = os.path.join(RES, "hil_ablation.csv")
     draw_envelope(ax, csv_path, compact=True, colorbar_ax=cax, highlight_hz=100.0)
     shrink(ax, base / 22.0, cax)

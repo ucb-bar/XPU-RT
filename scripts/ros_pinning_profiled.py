@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 """The static per-node pinning model, costed from the BOARD'S OWN ROS 2 runs.
 
-WHY THIS EXISTS. The submitted figure's ROS 2 baseline is a POLICY MODEL (Tier A,
-docs/Baselines/ros_baseline_tiers.md): one node per network, pinned to a static partition, the node's graph
+Tier B of docs/Baselines/ros_baseline_tiers.md. The Tier A ROS 2 baseline is a POLICY MODEL: one node per network, pinned to a static partition, the node's graph
 run sequentially, a periodic timer releasing each instance (`scripts/ros_pinning_generic.py`,
 `ros_pinning_periodic.py`). That model's per-node cost inputs come from an XPU-RT schedule of the
 same workload -- XPU-RT's measured per-dispatch durations, summed per network, divided by a
@@ -26,7 +25,7 @@ prediction has a measurement standing next to it.
     scripts/ros_pinning_profiled.py --table       # predicted vs measured, per arm and camera rate
     scripts/ros_pinning_profiled.py --json out.json
 
-WHAT THE MODEL IS (unchanged from the submitted one).  Each node owns a static partition. Frame k is
+WHAT THE MODEL IS (unchanged from the Tier A one).  Each node owns a static partition. Frame k is
 released at k*T. A node starts frame k at max(arrival_k, partition_free) and runs for its whole cost,
 serially; there is no cross-node overlap inside a partition and no per-op sharding across partitions.
 Nothing is charged for DDS, for executor wake-up, or for a queue. The two extension terms this module
@@ -60,9 +59,9 @@ WARMUP_MS = 3000.0        # discarded from every ROS run on the host, the same r
 # camera's own cost is not measured directly and is DERIVED in `camera_cost()` instead.
 STAGES = ("camera", "perception", "nav", "control")
 
-# The per-node costs the submitted baseline was GIVEN, so a reader sees every input in one table.
+# The per-node costs the Tier A baseline was GIVEN, so a reader sees every input in one table.
 # Both variants are real and both are in the paper's lineage, so both are carried: `submitted` is
-# what panel I of the submitted figure was drawn from, `recost` is the board-recost pair the
+# what panel I of the Tier A showdown was drawn from, `recost` is the board-recost pair the
 # schedule sidecar warehouse_showdown_board_metrics.json reports 49.76 ms from. Each is the
 # per-instance duration sum of that network in its schedule, already divided by the width-4
 # speedup ros_pinning_generic.py:63 applies. Neither has a camera node at all.
@@ -194,7 +193,7 @@ def camera_cost(arms=("cp3", "p3", "p8", "part8"), rates=(45, 60, 75, 90, 120)):
 # --------------------------------------------------------------------------------------------
 def predict(cost, camera_hz, ctrl_mode, ctrl_hz, qos_depth, camera_colocated_with_perception=True,
             horizon_s=17.0):
-    """The submitted pinning model, evaluated on `cost`. Returns the model, then the two extras.
+    """The Tier A pinning model, evaluated on `cost`. Returns the model, then the two extras.
 
     The model, verbatim from ros_pinning_generic.py:84-96: frame k is released at k*T; a node starts
     it at max(arrival, its partition's free time) and runs its whole cost; nothing overlaps inside a
@@ -289,7 +288,7 @@ def table(arms=PINNED, rates=None, costs=None):
     return rows
 
 
-# The spec the submitted figure's ROS arm was laid out on, read off that schedule's own instance
+# The spec the Tier A showdown's ROS arm was laid out on, read off that schedule's own instance
 # release times (schedules/scheduled_ros_partition_deployed_matched_board.json): yolo released every
 # 22 ms for 5 instances, nav every 20 for 6, control every 10 for 12, against the 23 ms perception
 # budget results/codesign_feedback/warehouse_showdown_board_metrics.json states.
@@ -299,7 +298,7 @@ SUBMITTED_SPEC = {"yolo_period_ms": 22.0, "yolo_instances": 5, "budget_ms": 23.0
 
 
 def submitted_spec_response(perception_ms, spec=SUBMITTED_SPEC):
-    """The submitted figure's own metric -- release-to-output for each perception instance.
+    """The Tier A showdown's own metric -- release-to-output for each perception instance.
 
     The recurrence, and only the recurrence: start_k = max(k*T, free), free += cost. No recost pass,
     so these will not reproduce the schedule JSON's numbers to the digit (that file was board-recost
@@ -334,7 +333,7 @@ def main():
     ap.add_argument("--table", action="store_true", help="predicted vs measured, per arm and rate")
     ap.add_argument("--arms", default=",".join(PINNED))
     ap.add_argument("--submitted-spec", action="store_true",
-                    help="the submitted figure's own release-to-output metric, both ways")
+                    help="the Tier A showdown's own release-to-output metric, both ways")
     ap.add_argument("--json", default="")
     a = ap.parse_args()
     if not (a.costs or a.table or a.submitted_spec):
@@ -400,7 +399,7 @@ def main():
         pm = costs[("perception", 4)]["med"]
         rs = submitted_spec_response(ASSUMED["submitted"]["perception"])
         ra, rp = submitted_spec_response(ASSUMED["recost"]["perception"]), submitted_spec_response(pm)
-        print("\nthe submitted figure's own metric: perception release-to-output, %g ms period, "
+        print("\nthe Tier A showdown's own metric: perception release-to-output, %g ms period, "
               "%d instances\n" % (sp["yolo_period_ms"], sp["yolo_instances"]))
         print("  %-30s %s" % ("instance", "  ".join("%7d" % k for k in range(len(ra)))))
         print("  %-30s %s" % ("submitted %6.3f ms/frame" % ASSUMED["submitted"]["perception"],

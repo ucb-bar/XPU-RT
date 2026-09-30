@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # The pinned six-core baseline's own control-rate ladder.
 #
-# `cp3` is the deployment the submitted figure drew: a four-hart YOLO pool on harts 0-3, nav on
+# `cp3` is the deployment the Tier A showdown drew: a four-hart YOLO pool on harts 0-3, nav on
 # hart 4, control on hart 5, harts 6 and 7 untouched. Because ROS 2 chains control to the
 # perception output, its command rate is the camera rate -- until the pipeline saturates. The board
 # runs already on disk say where that happens:

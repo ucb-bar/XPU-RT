@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# The submitted-equivalent figure at 45 Hz, everything it still needs from the GPU, in order.
+# The per-node-pinning figure at 45 Hz, everything it still needs from the GPU, in order.
 #
 # Queued behind the 30 Hz chain because they share the simulator budget. Stage 3 flies FOUR arms, not
 # two: the mechanism panel is a ladder over scheduling quality -- our solver, our greedy scheduler,
-# the static 6-core ROS partition, and the deployment the submitted figure described -- so the reader
+# the static 6-core ROS partition, and the deployment the Tier A showdown described -- so the reader
 # sees a spectrum rather than a two-horse race, and two of the four rungs are ours.
 set -u
 cd "$(dirname "$0")/.."

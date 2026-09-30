@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# The submitted figure's configuration at ITS OWN camera rate.
+# The per-node-pinning configuration at ITS OWN camera rate.
 #
-# The submitted panel I is titled "measured at the 45 Hz camera" and draws "static - 6 cores": a
+# The Tier A panel I is titled "measured at the 45 Hz camera" and draws "static - 6 cores": a
 # four-hart YOLO pool, nav and control each pinned to one more hart, two harts marked idle. `cp3` is
 # that deployment; at 45 Hz the board puts its pool at 84-98 % busy and its two spare harts at 0.2 %
 # and 0.6 %, and control -- chained to the goal -- comes out at 38.8 Hz, right at the rate floor
 # rather than far below it. That is the rate at which the baseline survives into the course, which is
-# what the submitted figure drew.
+# what the Tier A showdown drew.
 #
 # Only the baseline is flown: the scheduled arm's rows at this gain, latency and hold are already in
 # campaign_submitted and are carried over unchanged, so the counts stay equal and nothing is re-flown.

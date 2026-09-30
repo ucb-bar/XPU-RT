@@ -215,7 +215,7 @@ _ARMS = [
     ReplayArm("ros_vanilla4x236ns4.csv", "ROS 2 on all 8 cores with a nav pool, 36 Hz camera",
               37.4, 27.8, 36, _rv("vanilla4x2ns4c", 36), _rv("vanilla4x2ns4c", 36, "ctrl_gap_mean_ms"), "ros8"),
     ReplayArm("ros_cp3n430.csv", "ROS 2 · partitioned, nav across the E cores, 30 Hz camera", 30.1, 33.3, 30, _rv("cp3n4", 30), _rv("cp3n4", 30, "ctrl_gap_mean_ms"), "ros8"),
-    # the static partition the submitted figure drew: a four-hart YOLO pool, nav and control each
+    # the static partition the Tier A showdown drew: a four-hart YOLO pool, nav and control each
     # pinned to one more hart, and two harts left untouched
     ReplayArm("ros_cp315.csv", "ROS 2 · static 6-core partition, two cores idle, 15 Hz camera", 30.8, 66.7, 15,
               ("ROS_SENSITIVITY", "15_cp3_r1", "chain_goal_ms"), ("ROS_SENSITIVITY", "15_cp3_r1", "ctrl_gap_mean_ms"), "p3"),

@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 """YOLO per-frame service against the cores allocated to it, derived from the schedules.
 
-The paper's submitted `fig_cores_yolo` was drawn by `fig_fair_v6.py`, a script that lived outside
-both repositories and held all thirty of its points as literals (docs/Baselines/ros_baseline_tiers.md
-section 2). This derives every point from the schedules under `schedules/`, and records in a sidecar where each row comes from -- because
+The earlier `fig_cores_yolo` was drawn by `fig_fair_v6.py`, which held all thirty of its points
+as literals (docs/Baselines/ros_baseline_tiers.md). This derives every point from the schedules under `schedules/`, and records in a sidecar where each row comes from -- because
 the rows are not all the same kind of number, and the figure's claim depends on which kind each is.
 
 Every row is the **median per-frame YOLO response** of its schedule: per YOLO instance, the last
@@ -24,9 +23,9 @@ sidecar records the deadline beside the achieved value at every point so the two
 
 **The ROS arm has one schedule, not a sweep.** `scheduled_ros_pin_*` is a single 1-hart pin, which
 is what the paper's caption means by core-independent. It is a Tier A schedule
-(`policy: ros_pinning_periodic`; docs/Baselines/ros_baseline_tiers.md). The submitted figure draws a curve
+(`policy: ros_pinning_periodic`; docs/Baselines/ros_baseline_tiers.md). The literal curve drew one
 through five core counts that varies by 5 ms. `--ros flat` draws the one schedule pair at every width;
-`--ros published` reproduces the submitted curve and marks the four unsourced points in the sidecar.
+`--ros published` reproduces the earlier literal curve and marks the four unsourced points in the sidecar.
 
     scripts/cores_yolo_service.py [--ros flat|published] [--anchor MS] [--out PREFIX]
 

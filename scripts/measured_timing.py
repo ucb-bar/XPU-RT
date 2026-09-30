@@ -17,8 +17,7 @@ Artifacts (all under results/codesign_feedback/):
 
 Re-derive everything with:  scripts/measured_timing.py --verify
 
-The one baseline that is NOT measured -- the modelled ROS 2 per-node-pinning arm the warehouse
-showdown was submitted with -- lives in `scripts/ros_pinning_model.py`, which states its
+The analytical (Tier A) ROS 2 per-node-pinning arm lives in `scripts/ros_pinning_model.py`, which states its
 assumptions and re-derives its numbers the same way; nothing modelled belongs in this module.
 """
 from __future__ import annotations
@@ -340,7 +339,7 @@ ROS_VANILLA = {   # ROS 2 as one would write it: one process per node, unpinned,
     ("p3", 45):    {"ctrl_gap_mean_ms": 10.0, "chain_goal_ms": 56.4, "goals_per_s": 38.9},   # camera->control is 61.6: control waits for its own timer
     ("p3", 90):    {"ctrl_gap_mean_ms": 10.0, "chain_goal_ms": 56.2, "goals_per_s": 38.8},
     ("multi", 45): {"ctrl_gap_mean_ms": 10.0, "chain_goal_ms": 264.7, "goals_per_s": 19.9},
-    # the submitted figure's baseline, measured: a 50 Hz control TIMER over serial YOLO. The timer is
+    # ROS 2 out of the box (`vanilla_c50`), measured: a 50 Hz control TIMER over serial YOLO. The timer is
     # configured at 50 Hz and starves to 20 Hz because the single-threaded executor cannot fire it
     # while a frame is in YOLO -- "serial on one hart backs up -> control starves", as its panel I says.
     ("vanilla_c50", 45): {"ctrl_gap_mean_ms": 49.2, "chain_goal_ms": 265.9, "goals_per_s": 8.4},

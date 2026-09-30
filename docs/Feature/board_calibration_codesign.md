@@ -142,7 +142,7 @@ boundary: CP-SAT 23.22 ms → refreshes the command every **1 step (fresh)**, gr
 non-greedy winner is the only arm that finishes the gate weave. Fig: `warehouse_solver_flight`.
 
 MOSEK is launched on both (per the ask) and reported honestly: the monolithic MILP does not converge on a
-multi-network workload (`docs/solvers.md`), and the per-network decomposition converges only as a bounded
+multi-network workload (`docs/Feature/solvers.md`), and the per-network decomposition converges only as a bounded
 upper bound — neither is a joint-optimal schedule, so CP-SAT is the real winner over greedy.
 
 **Reproduce:** `scratchpad/solver_arms_lean.sh` *(LOST)* (all arms, `XPURT_CPSAT_WORKERS=0`) ·
@@ -176,7 +176,7 @@ single scalar worst-case, the faithful RoSE-style sync.
 **Crate-tower crash demo.** The warehouse scene has real collidable 2.0-3.5 m box/crate **towers**
 (`--prop_density 0.35 --obstacle_level 8`; `sims/isaaclab_tasks/warehouse_nav/mdp_obstacles.py`), and any
 body contact fires the `collision` termination = crash. ROS keeps its resources (fair static partition,
-YOLO sharded across its P-cores) but its slow schedule -> stale control (`--sched_latency_ms 12.40`, 2-step
+YOLO sharded across its P-cores) but its slow schedule -> stale control (`--sched_latency_ms 24.94`, 2-step
 hold at 100 Hz) -> the drone drifts off the x=-8 gate line and collides with a tower; the fresh CP-SAT
 schedule (`4.89` ms, 1-step) stays centered and weaves through. Recorded with
 `sims/scripts/record_sensor_demo.py --controller rl --save_video` (chase+FPV+overhead+Gantt composite) and

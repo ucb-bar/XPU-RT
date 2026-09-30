@@ -307,8 +307,9 @@ the hard-validity denominator.
 ## 8. Commands
 
 ```bash
-PY=/scratch2/agustin/miniforge3/envs/merlin-dev/bin/python
-export PYTHONPATH=/scratch2/agustin/XPU-RT:/scratch2/agustin/XPU-RT/xpu-rt
+XPURT=<your XPU-RT checkout>
+PY=<merlin-dev env>/bin/python   # e.g. $(conda run -n merlin-dev which python)
+export PYTHONPATH=$XPURT:$XPURT/xpu-rt
 
 # tests
 $PY -m pytest xpu-rt/tests/ -q

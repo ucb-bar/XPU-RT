@@ -482,6 +482,17 @@ reads a `tight_loop` figure again.
 | `control_mix_hetero` | 36.38 ms | 37.25 ms | **2.39%** |
 | `vint_multi_hetero` | 3750.82 ms | 4208.46 ms | **12.20%** |
 
+The deployed schedules the HIL figures fly are in the same position, and their
+reports say so rather than claiming optimality. The 36 Hz chain
+(`data/toplevel/wh_chain36_free.json`, the workload behind
+`docs/Evaluation/showdown_cam36_allcores_reproduction.md`) returned
+`solver_status: feasible` after a 3600 s bound — 3605.3 s of wall time, 2384
+operations over 21 machine combinations — with a makespan of 491.12 µs against
+an oracle floor of 490.02 µs, so the optimum is known to within **0.2247 %**
+(`schedules/scheduled_wh_chain36_free_cpsat_profiled_report.json`). Near-optimal
+and time-limited, not proven optimal; a caption that quotes the schedule should
+not say the solver proved anything about it.
+
 Closing the open ones needs either a stronger lower bound — energetic reasoning
 that credits partial overlap rather than only fully-pinned operations, or a
 machine-decomposition relaxation solved exactly — or a better upper bound than

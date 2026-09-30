@@ -32,7 +32,7 @@ merlin submodule; what follows is what actually runs.
 ## Channel 1 — compile advice (rewrite the graph)
 
 ```
-gen_mb/profile/**/results.csv          measured, per dispatch, per topo tag
+gen/mb/profile/**/results.csv          measured, per dispatch, per topo tag
         │
         ▼  scripts/emit_compile_advice.py
 compile_advice.json                    {fuse, split, unfuse, shard,

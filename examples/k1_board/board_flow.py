@@ -70,7 +70,7 @@ width, and `ModelBlaster/scripts/check_rvv_avl.py` is what enforces it.""")
 
     step(1, "BUILD + PROFILE — one model, one backend, one core width")
     note("""
-    PROFILE_OUT_ROOT=$PWD/gen_mb/profile \\
+    PROFILE_OUT_ROOT=$PWD/gen/profile_mb \\
       bash ModelBlaster/scripts/run_model_k1.sh dronet int8 rvv_x60 0
 
 Correctness is not a separate step: run_model_k1.sh golden-compares in-binary

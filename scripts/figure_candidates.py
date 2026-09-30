@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Every figure the flights already on disk could support, scored against what the figure needs.
 
-The submitted figure needs a baseline that is not a strawman: it has to use most of the machine, it
+The paper figure needs a baseline that is not a strawman: it has to use most of the machine, it
 has to WORK SOMETIMES rather than never, we have to be ahead of it on average gates as well as on
 success, and there has to be at least one reproducible seed where it crashes before the third gate
 and we complete the course. Those are five separate conditions and no single number orders them, so

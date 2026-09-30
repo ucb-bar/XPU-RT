@@ -3,12 +3,10 @@
 
 `measured_timing.py` is the single source of truth for numbers that came off the SpaceMiT K1.
 This module is its counterpart for the analytical (Tier A, docs/Baselines/ros_baseline_tiers.md) ROS 2
-arrangement the warehouse showdown was submitted with (`plots/fig_hil_showdown.pdf`, on disk as
-`results/codesign_feedback/refined/warehouse_showdown_story.pdf`). Its panel I is a schedule
-MODEL, not a board trace. The submitted render's panel I is titled "Onboard K1 schedule -- ..." with
-the axis "onboard schedule time (ms) . K1 board" and carries no model marker; the current composer's
-form of that panel prints the footer "Calibrated model, not a board trace"
-(`sims/scripts/compose_warehouse_showdown.py:379`). Provenance: docs/Baselines/ros_baseline_tiers.md.
+per-node-pinning arrangement drawn by the Tier A warehouse showdown
+(`results/codesign_feedback/refined/warehouse_showdown_story.pdf`), whose panel I is a schedule
+MODEL, not a board trace; the composer prints the footer "Calibrated model, not a board trace"
+(`sims/scripts/compose_warehouse_showdown.py:379`).
 Everything that model claims is re-derived here from stated inputs, so the modelled arm is
 reproducible on the same terms as the measured ones rather than surviving only as a committed
 schedule JSON.
@@ -35,17 +33,17 @@ For a node with one-hart serial compute C, period T and instance index k:
     response_k = finish_k - release_k
     miss_k    = response_k > T
 
-Two executor policies are offered: the submitted schedule places instances by release time and the
+Two executor policies are offered: the deployed schedule places instances by release time and the
 script that shares its name serialises them, and both are computed so the difference is visible:
 
   * "release" places every instance at its release time even when the partition is still busy
     with the previous instance. This is what `schedules/scheduled_ros_partition_deployed.json`
-    -- the schedule the submitted figure drew -- actually contains: YOLO instances start at
+    -- the schedule the Tier A showdown drew -- actually contains: YOLO instances start at
     0, 22, 44, 66, 88 ms while each takes 24.353 ms, so consecutive frames overlap on the same
     partition. The per-frame overrun is real and drawn; the growing queue is not modelled.
   * "queued" serialises instances on the partition, which is what a single-threaded executor
     does and what `scripts/ros_pinning_periodic.py` writes. It is the stricter reading and it
-    makes the baseline slower than the "release" reading the submitted figure drew.
+    makes the baseline slower than the "release" reading the Tier A showdown drew.
 
 The chain quantity the figures quote is camera -> control:
 
@@ -88,7 +86,7 @@ MEASURED   per-dispatch durations (K1, ModelBlaster kernels, `gen/mb` profiles);
 ANALYTICAL the placement (which net on which harts), the release/queue arithmetic, every
            response and makespan that follows from it, the chain latency, and the command
            cadence the ZOH rule turns a response into.
-NEITHER    the two worst-case control responses the submitted figure's panel A and B labels rest
+NEITHER    the two worst-case control responses the Tier A showdown's panel A and B labels rest
            on -- 4.89 ms for XPU-RT and 12.40 ms for the baseline, giving the "100 Hz vs 50 Hz"
            captions. They are inputs to the composer, not outputs of either schedule named in
            the same sidecar: a prediction of this policy on the four-network workload, in
@@ -137,7 +135,7 @@ DEPLOYED_NODES = {
 # kernel's property and it is charged to the baseline in the baseline's favour.
 PERCEPTION_SPEEDUP = {1: 1.00, 2: 55.870 / 50.384, 4: 55.870 / 52.294, 8: 55.870 / 39.386}
 
-# --- what the submitted figure prints --------------------------------------------------------
+# --- what the Tier A showdown prints --------------------------------------------------------
 # refined/warehouse_showdown_story.pdf, panel I: "XPU-RT done 40 ms", "ROS still backlogged
 # 112 ms -> CRASH", "CP-SAT . 8 cores" against "static . 6 cores" with two lanes reading
 # "idle -- core unused", and the 22 ms YOLO deadline rules the baseline crosses every frame.
@@ -171,7 +169,7 @@ MATCHED_BOARD = {
     "source": "one interior perception frame, release to output, across both schedules",
 }
 
-# The submitted figure's "100 Hz vs 50 Hz" labels, recorded in
+# The Tier A showdown's "100 Hz vs 50 Hz" labels, recorded in
 # results/codesign_feedback/refined_src/warehouse_regen_metrics.json. NOT derived from either
 # schedule in that same sidecar -- see the module docstring, "NEITHER".
 CONTROL_RATE_PANEL = {
@@ -297,7 +295,7 @@ def model(nodes: dict = None, executor: str = "release", control_dt_ms: float = 
     }
 
 
-# --- reading the artifacts the submitted figure drew --------------------------------------------
+# --- reading the artifacts the Tier A showdown drew --------------------------------------------
 def _dispatches(path: str) -> dict:
     p = path if os.path.isabs(path) else os.path.join(REPO, path)
     if not os.path.exists(p):
@@ -348,7 +346,7 @@ def derive() -> dict:
     """Recompute every recorded number, from the artifacts and from the model."""
     d: dict = {"missing": []}
 
-    # (1) the submitted pair, straight off disk
+    # (1) the deployed pair, straight off disk
     ros = schedule_facts(SUBMITTED["ros_schedule"])
     xpu = schedule_facts(SUBMITTED["xpu_schedule"])
     if ros:
@@ -433,7 +431,7 @@ def verify() -> int:
     def info(msg):
         print("INFO " + msg)
 
-    print("== the submitted figure's modelled baseline "
+    print("== the Tier A showdown's modelled baseline "
           "(refined/warehouse_showdown_story.pdf, panel I) ==")
     a = d.get("submitted_ros_artifact") or {}
     m = d["submitted_model"]
@@ -470,7 +468,7 @@ def verify() -> int:
     q = d["submitted_model_queued"]
     info(f"the stricter reading: a single-threaded executor that QUEUES instances gives "
          f"makespan {q['makespan_ms']:.3f} ms and a worst perception response of "
-         f"{q['nodes']['yolov8_nano_64x96']['response_worst_ms']:.3f} ms. The submitted artifact "
+         f"{q['nodes']['yolov8_nano_64x96']['response_worst_ms']:.3f} ms. The deployed artifact "
          f"places each instance at its release instead, so the drawn baseline is the faster of the two readings.")
     info(f"model chain camera->control {m['chain_camera_to_control_ms']:.3f} ms -> "
          f"{m['command_rate_hz']:.1f} Hz commands under the {m['control_dt_ms']:.0f} ms ZOH; "

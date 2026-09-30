@@ -256,7 +256,7 @@ predicted vs actual : plots/flowc_3way_qrb5165_milp_predicted_vs_actual.png
   scheduler timeline : plots/networks_flowc_3way_qrb5165_profiled.png
 ```
 
-The renderer is modelblaster's `scripts/plot_xpurt_trace.py`, unmodified.
+The renderer is modelblaster's `ModelBlaster/scripts/plot_xpurt_trace.py`, unmodified.
 The Flow C runtime emits its trace in that script's own column schema with
 microsecond ticks, so `--clock-mhz 1` is the entire adaptation. Red borders
 mark entries that ran past their predicted finish — expect all
@@ -473,7 +473,7 @@ a reader of one table can read the other.
 | `pipeline/emit_dispatch_graph.py` | `<net>.int8_dispatch_graph.json` |
 | `pipeline/profile_writer.py` | `results.csv` in the IREE schema |
 | `pipeline/ingest_xpurt_schedule.py` | schedule → ordered entries, deps, `time_dependency` |
-| `scripts/plot_xpurt_trace.py` | the predicted-vs-actual Gantt |
+| `ModelBlaster/scripts/plot_xpurt_trace.py` | the predicted-vs-actual Gantt |
 | `models/{dronet,mlp_control}.py` | the PyTorch definitions + trained checkpoints |
 
 ### Reused from `qnn_models/` (this repo, not modelblaster)

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""The paper's showdown figure in its submitted layout, every number measured.
+"""The paper's showdown figure in its paper layout, every number measured.
 
-Same skeleton as the figure that was submitted (A top-down pair · B control-rate envelope · C generalisation ·
+Same skeleton as the paper figure (A top-down pair · B control-rate envelope · C generalisation ·
 D mechanism · a–d moments with chase, FPV + YOLO and cross-ToF · E–H telemetry of the pair · I the schedules), with
 the two arms measured on the K1 and replayed into the flights:
 
@@ -209,7 +209,7 @@ def main():
     ap.add_argument("--out", required=True,
                     help="output stem, e.g. results/codesign_feedback/refined/"
                          "showdown_45hz_solver_vs_rospinned_s1007 (no extension)")
-    # which pair of deployments the figure is about; the defaults are the submitted figure's
+    # which pair of deployments the figure is about; the defaults are the 45 Hz pair
     ap.add_argument("--xpu-trace", default="xpu_a_cpsat_hard.csv", help="ctrl trace naming the XPU-RT arm in the scene's campaign table")
     ap.add_argument("--ros-trace", default="ros_vanilla445.csv", help="ctrl trace naming the ROS 2 arm in the scene's campaign table")
     ap.add_argument("--ros-label", default="ROS 2 vanilla", help="how panel A names the baseline")

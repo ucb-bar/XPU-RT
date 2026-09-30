@@ -38,9 +38,10 @@ Run from `XPU-RT/`:
 bash scripts/build_per_target.sh   # NOT YET WRITTEN — manual today
 
 # Phase 1.5: per-dispatch VMFB build (CPU + QNN placeholder).
-conda run -n merlin-dev uv run python /scratch2/agustin/merlin/tools/breakdown_vmfb.py \
-    --output-dir /scratch2/agustin/merlin/build/het/qrb5165_cpu \
-    --iree-compile /scratch2/agustin/merlin/build/host-vanilla-release/tools/iree-compile
+# $MERLIN_DIR is your merlin checkout.
+conda run -n merlin-dev uv run python $MERLIN_DIR/tools/breakdown_vmfb.py \
+    --output-dir $MERLIN_DIR/build/het/qrb5165_cpu \
+    --iree-compile $MERLIN_DIR/build/host-vanilla-release/tools/iree-compile
 # (and similarly for qrb5165_gpu / qrb5165_hta with --target-flag=...)
 
 # Phase 2: per-target on-board profile.
@@ -54,9 +55,9 @@ conda run -n merlin-dev uv run python scripts/profile_per_target_on_board.py \
 # Phase 4: ingest + workload build.
 conda run -n merlin-dev uv run python scripts/ingest_per_target_profiles.py \
     --cost-table qnn_scheduler/qrb5165_costs.json \
-    --manifest /scratch2/agustin/merlin/build/het/qrb5165_cpu/breakdowns/profiled_manifest.json --backend CPU \
-    --manifest /scratch2/agustin/merlin/build/het/qrb5165_gpu/breakdowns/profiled_manifest.json --backend GPU \
-    --manifest /scratch2/agustin/merlin/build/het/qrb5165_hta/breakdowns/profiled_manifest.json --backend HTA
+    --manifest $MERLIN_DIR/build/het/qrb5165_cpu/breakdowns/profiled_manifest.json --backend CPU \
+    --manifest $MERLIN_DIR/build/het/qrb5165_gpu/breakdowns/profiled_manifest.json --backend GPU \
+    --manifest $MERLIN_DIR/build/het/qrb5165_hta/breakdowns/profiled_manifest.json --backend HTA
 conda run -n merlin-dev uv run python scripts/build_workload_from_graph.py
 
 # Phase 5: MILP + Gantt + DAG.

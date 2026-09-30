@@ -107,7 +107,7 @@ Everything below §0 assumes the `zephyr` conda env, the Zephyr SDK, and the
 symlinking in an already-installed toolchain — this section closes that
 gap, verified via a genuine from-scratch install (conda + SDK + full
 pipeline run) on 2026-08-27. Good news: unlike the unrelated `xpurt`/Isaac
-Sim env elsewhere in this repo (see `docs/xpurt_env_setup.md`), **this
+Sim env elsewhere in this repo (see `docs/Artifact/xpurt_env_setup.md`), **this
 environment already has a real, committed setup script** —
 `zephyr-chipyard-sw/README.md`'s "Standalone Installation" section plus
 `scripts/install_conda.sh` / `install_submodules.sh` / `install_toolchain_sdk.sh`.

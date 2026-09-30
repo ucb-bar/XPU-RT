@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# The displayed pair for the submitted figure's configuration at its own 45 Hz camera.
+# The displayed pair for the per-node-pinning configuration at its own 45 Hz camera.
 #
-# Baseline `cp3`: the static 6-core partition the submitted panel I drew, 56.2 ms camera->goal with
+# Baseline `cp3`: the static 6-core partition the Tier A panel I drew, 56.2 ms camera->goal with
 # control chained to the goal at 38.8 Hz -- at the rate floor rather than far below it, which is why
 # this is the configuration in which the baseline survives into the course. Scheduled arm: the CP-SAT
 # schedule at 56.8 ms with control on its own 100 Hz slot. Both fly moment_scale 0.0055, the gain the

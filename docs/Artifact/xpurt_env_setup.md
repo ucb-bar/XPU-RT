@@ -17,9 +17,11 @@ conda-level operation, ever:
 Everything else — Isaac Sim, PyTorch, IsaacLab, rsl_rl, ultralytics, YOLO,
 matplotlib, and ~350 other pip packages accumulated over time — was
 installed with `pip` afterward, and pip installs aren't recorded in
-`conda-meta/history`. There's no `environment.yml`, no `requirements.txt`,
-no install script anywhere in the repo. `sims/scripts/utils/setup_env.sh`
-only exports `PYTHONPATH`, and does so against a stale, pre-vendoring path.
+`conda-meta/history`. The record of the interpreter the study's flights ran
+with is `requirements-isaac.txt` at the repo root (`docs/Artifact/environment.md`
+§Environments, with the host interpreter's `requirements-host.txt` beside
+it); the flow below rebuilds that environment step by step and says why each
+step is there. `sims/scripts/utils/setup_env.sh` only exports `PYTHONPATH`.
 
 The flow below was reverse-engineered from what's actually installed
 (`pip show <pkg>`, `pip index versions <pkg>` against plain PyPI with no
@@ -29,9 +31,10 @@ match what's installed to the patch version, so this is very likely the
 actual flow that was originally run, not a guess from scratch) — and it has
 now been **executed end-to-end on a clean machine** (fresh git clone in
 `/tmp`, brand-new conda env, following this flow verbatim). It ran the
-reference pilot command successfully, but only after fixing three real bugs
-the dry run surfaced (§ below) that weren't visible from just reading the
-original env's installed-package state.
+reference pilot command successfully; three steps a clean machine needs
+(the EULA variable, the cuDNN check and the project extras, folded into
+steps 3/5/6 below) come from that dry run rather than from the original
+env's installed-package state.
 
 ## The flow
 
@@ -123,22 +126,20 @@ And remember `OMNI_KIT_ACCEPT_EULA=Y` on every future invocation that
 imports `isaacsim` (including the pilot scripts themselves) — it's a
 per-process bypass, not a one-time acceptance.
 
-## Exact-reproduction fallback
+## Exact reproduction
 
-The curated flow above is what's *necessary* for the demo. The live `xpurt`
-env also has ~350 other pip packages from unrelated work (this conda env is
-shared across projects, not demo-dedicated) — freezing all of them isn't a
-clean recipe, but it is available as a fallback if the curated flow above
-drifts or someone wants a byte-for-byte match: `pip_freeze.txt`
-(`pip freeze --exclude-editable`, captured 2026-07-08). This is a point-in-time
-snapshot, not maintained — prefer the curated flow above and only reach for
-this if something in it fails to resolve.
+The curated flow above is what's *necessary* for the demo. The byte-for-byte
+record of the interpreter the study's flights ran with is
+`requirements-isaac.txt` at the repo root (`pip freeze` of `env_isaaclab`,
+Python 3.11; `docs/Artifact/environment.md` §Environments). Use it when the curated
+flow drifts or an exact match is wanted; the curated flow explains the steps,
+the requirements file pins them.
 
 ## Dry run result
 
 Executed 2026-07-08: fresh `git clone` into `/tmp`, brand-new `xpurt_dryrun`
-conda env, this flow run verbatim (including hitting and fixing the three
-issues folded into steps 3/5/6 above), then the reference pilot command run
+conda env, this flow run verbatim (including the three steps folded into
+3/5/6 above), then the reference pilot command run
 with a small `--num_periods` and a tracked substitute schedule file (see
 `docs/Demo/replicate_forest_trail_demo.md` §5, "Get a schedule JSON"). Result: DroNet/MLP/YOLO all
 executed, three video chunks produced and verified with `ffprobe`

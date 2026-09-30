@@ -19,7 +19,7 @@ takes `results/codesign_feedback/board.lock`.
 scripts/ros_traced_matrix.sh <arm> [replicate]      # one arm across RATES, sampler around every run
 RATES="25 30 36 38 40 45 60 75 90 120" scripts/ros_traced_matrix.sh vanilla4x2 1
 scripts/board_rate_sweep_x2.sh                      # env RATES; both runtimes at every rate
-scripts/board_ctrl50_arms.sh                        # the submitted figure's 50 Hz control timer
+scripts/board_ctrl50_arms.sh                        # the Tier A showdown's 50 Hz control timer
 ```
 
 An arm is a real deployment named by what the launcher does to the process; the program never pins

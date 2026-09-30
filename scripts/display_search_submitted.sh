@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# The displayed pair for the submitted figure's configuration (scripts/campaign_submitted_config.sh).
+# The displayed pair for ROS 2 out of the box (scripts/campaign_submitted_config.sh).
 #
 # Like scripts/display_search_rate36.sh: the display script flies ONE episode with layout_seed = seed
 # through record_sensor_demo.py, so a census cell is a different scene and a census outcome never

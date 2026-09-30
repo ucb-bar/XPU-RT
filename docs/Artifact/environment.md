@@ -4,15 +4,49 @@ Two flows, two environments, and they are not the same one.
 
 | flow | environment | doc |
 |---|---|---|
-| **A — chipyard** (spike / FireSim, Zephyr) | conda, from zephyr-chipyard-sw's own installer | [`mlp_dronet_yolo_spike_reproduction.md`](Demo/mlp_dronet_yolo_spike_reproduction.md) §0 |
+| **A — chipyard** (spike / FireSim, Zephyr) | conda, from zephyr-chipyard-sw's own installer | [`mlp_dronet_yolo_spike_reproduction.md`](../Demo/mlp_dronet_yolo_spike_reproduction.md) §0 |
 | **B — SpaceMiT K1** (Linux/riscv64, on-device) | a plain venv, below | this page |
-| Isaac Sim / forest-trail demo | the `xpurt` conda env | [`xpurt_env_setup.md`](xpurt_env_setup.md) |
+| Isaac Sim (the warehouse flights, the forest-trail demo) | the `env_isaaclab` conda env, from `requirements-isaac.txt` | the Environments section below; [`xpurt_env_setup.md`](xpurt_env_setup.md) walks the same install step by step |
 
 **None of them is merlin's `.venv`.** That directory still exists on the
 original dev machine and was, until this branch, the only Python on it with
 `torch` installed — which is why so much tooling quietly ran from it. merlin is
 retired; if you find yourself typing `merlin/.venv/bin/python`, the recipe
 below is what you actually want.
+
+## Environments
+
+The record of the two interpreters the study ran with is the pair of requirements files at the
+repo root. Every other environment note in `docs/` points here.
+
+| interpreter | file | Python | what runs under it |
+|---|---|---|---|
+| **host** — `HOST_PY`, default `$REPO/.venv/bin/python` | `requirements-host.txt`, frozen from the study's host venv (numpy 2.5.3, matplotlib 3.11.1, ortools 9.15, cvxpy, mosek 11.2.3, pytest) | 3.13 | solvers, board calibration, trace reading, aggregation, every figure and verifier, the tests |
+| **Isaac** — `ISAAC_PY` | `requirements-isaac.txt`, frozen from `env_isaaclab` (Isaac Sim 5.1.0.0 from PyPI, torch); IsaacLab is the checkout at `sims/IsaacLab`, installed editable | 3.11 | every flight (`sims/scripts/sweep_rate_demo.py`, `record_sensor_demo.py`) and the guidance-net training |
+
+```bash
+python3.13 -m venv .venv && .venv/bin/pip install -r requirements-host.txt        # host
+conda create -n env_isaaclab python=3.11 && conda activate env_isaaclab          # Isaac
+pip install -r requirements-isaac.txt && pip install -e sims/IsaacLab/source/*
+```
+
+`pyproject.toml` declares the host set as lower bounds (`pip install -e .` on a newer interpreter);
+`ortools` is a base dependency because CP-SAT is on the reproduction path. The `mosek` wheel installs
+from the requirements file; using it needs a licence (`~/mosek/mosek.lic` or `MOSEKLM_LICENSE_FILE`),
+and only `--solver milp --scheduler mosek` asks for one.
+
+**Machine paths.** The repo root is wherever the clone lives. Every reproduction script sources
+`scripts/env.sh`, which sets `REPO` (the clone), `SIM_TREE` (the tree holding `sims/IsaacLab` and
+`sims/scripts`; the clone itself unless overridden — on the study machine
+`/scratch/agustin/projects/DIMA/XPU-RT`), `ISAAC_PY`, `HOST_PY` and `RES=$REPO/results/codesign_feedback`.
+Per-machine values go in `scripts/env.local.sh` (ignored by git; `scripts/env.local.sh.example` is the
+template) or in the environment (`XPURT_REPO`, `XPURT_SIM_TREE`, `ISAAC_PY`, `HOST_PY`), which wins over
+the file. The documents write `$REPO`, `$SIM_TREE`, `$HOST_PY` and `$ISAAC_PY` for these; an absolute
+path under `results/` is a record of what ran, not an instruction.
+
+**Solver settings.** A CP-SAT solve run by hand takes `export XPURT_CPSAT_WORKERS=0` (let CP-SAT
+choose its parallelism; the default is one worker). The reproduction scripts export their own values
+(`XPURT_CPSAT_WORKERS=8 XPURT_UNIFORM_PACKED_WIDTH=1 XPURT_NO_COMPACT=1`, `solve_stage2_hard.sh`).
 
 ## Flow B: the K1 board flow
 
@@ -51,7 +85,7 @@ Makespan: 8.00 ms            a real solve on committed profiles
 
 **Committed, so it works immediately:** the measured profiles
 (`gen/profile_mb`, four core widths for dronet / ffn_block /
-yolov8_nano_64x96), the dispatch graphs (`gen_mb/vmfb`), 69 workload specs,
+yolov8_nano_64x96), the dispatch graphs (`gen/mb/vmfb`), 69 workload specs,
 `data/banks`, and two model checkpoints (`dronet`, `mlp_control`).
 
 That is enough to schedule, produce real advice, bridge it, rewrite a graph
@@ -76,10 +110,10 @@ first use. `ffn_block`, `attn_block`, `norm_block`, `lstm_tiny`,
 `dronet` and `mlp_control` have vendored checkpoints.
 
 **Needs a board:** anything that profiles or runs. See
-[`k1_board.md`](K1/k1_board.md).
+[`k1_board.md`](../K1/k1_board.md).
 
 **Not in the repo at all:** the ViNT calibration data (`datasets/idsia/samples/sc`
-and the IsaacLab forest renders). Its two kernels are verified standalone on the
+and the IsaacLab forest renders; see [`external_data.md`](external_data.md)). Its two kernels are verified standalone on the
 board but have never run inside the model.
 
 ### What the 9 skips are
@@ -165,7 +199,7 @@ ModelBlaster's own scripts take `PY` for the interpreter:
 
 ```bash
 eval "$(scripts/setup_spacemit_toolchain.sh)"
-PY=$PWD/.venv/bin/python PROFILE_OUT_ROOT=$PWD/gen_mb/profile \
+PY=$PWD/.venv/bin/python PROFILE_OUT_ROOT=$PWD/gen/mb/profile \
     bash ModelBlaster/scripts/run_model_k1.sh dronet int8 rvv_x60 0
 ```
 
@@ -179,21 +213,15 @@ cd ModelBlaster && ../.venv/bin/python -m pytest tests pipeline/tests -q
 Without `CROSS` the curated kernels cannot be verified, so the picker correctly
 falls back to the reference and the pin tests skip rather than fail.
 
-## The two ModelBlaster checkouts
+## The ModelBlaster submodule
 
-ModelBlaster is reachable twice — XPU-RT's own top-level submodule (Flow B) and
-`zephyr-chipyard-sw/modelblaster` (Flow A). **They should always name the same
-commit.** Two checkouts of one repo at different commits means the two flows
-compile different kernels from the same op names, with nothing to say so.
-
-An uninitialised submodule is an *empty directory*, not an error, which is
-exactly how that goes unnoticed — `scripts/install_xpurt_deps.sh` used to run
-all the way to `pip install -e <empty dir>` before failing, with a message
-about packaging.
+ModelBlaster is XPU-RT's top-level submodule, `ModelBlaster/`, and both flows build from it. An
+uninitialised submodule is an *empty directory*, not an error, so initialise it before anything that
+imports or builds from it:
 
 ```bash
-git submodule update --init ModelBlaster                     # Flow B alone
-git submodule update --init --recursive zephyr-chipyard-sw   # Flow A
+git submodule update --init ModelBlaster                     # both flows
+git submodule update --init --recursive zephyr-chipyard-sw   # Flow A's Zephyr BSP
 ```
 
 ## If something is missing

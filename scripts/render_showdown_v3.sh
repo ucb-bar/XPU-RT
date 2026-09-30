@@ -6,7 +6,7 @@
 # Environment:
 #   CELL          which display pair: tall1005 (default; 1.0 m/s, seed 1005) | tall1008 | cal17 (no display dump exists for cal17)
 #   TUNED         where the hand-pinned ROS 2 arm appears: board | inb | none | all (default: all three renders)
-#   PAPER=1       the submitted figure's skeleton (--paper-form) instead of the composite
+#   PAPER=1       the paper-form skeleton (--paper-form) instead of the composite
 #   MAIN=1        also copy this cell's `board` render to the unsuffixed warehouse_showdown_v3* when CELL = MAIN_CELL
 #   MAIN_CELL     the cell that owns the unsuffixed name (default tall1005)
 #   DPI, PY       raster resolution (300) and the host interpreter (.venv/bin/python)
@@ -32,7 +32,7 @@ $PY scripts/make_measured_gantt_pair.py \
   --arm ros:ros:$RT/45_vanilla4_r1/trace.csv:$RT/45_vanilla4_r1/cpu.csv:$RT/45_vanilla4_r1/manifest.json \
   --window-ms 100 --skip-ms 400 --spec data/toplevel/wh_chain45_solve.json --out-prefix schedules/measured_gantt_v3 | cut -c1-160
 [ "$TUNED" = all ] && LIST="board inb none" || LIST=$TUNED
-SUF=""; PF=""; [ "${PAPER:-0}" = 1 ] && { SUF="_paper"; PF="--paper-form"; }     # PAPER=1: the submitted figure's skeleton
+SUF=""; PF=""; [ "${PAPER:-0}" = 1 ] && { SUF="_paper"; PF="--paper-form"; }     # PAPER=1: the paper-form skeleton
 for t in $LIST; do
   OUT=$R/refined/warehouse_showdown_v3${SUF}_${CELL}_${t}
   $PY scripts/showdown_v3_figure.py --cell $CELL --tuned $t --xpu-dir $XD --ros-dir $RD --scene-records $SC --dpi $DPI --out $OUT $PF ${DISPLAY_CRUISE:+--display-cruise $DISPLAY_CRUISE} $([ "$t" = board ] && [ -z "$PF" ] && echo --companion)

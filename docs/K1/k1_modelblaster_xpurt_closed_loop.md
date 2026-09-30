@@ -229,7 +229,7 @@ scalar reference, writes `"source": "reference"` into `kernel_picks.json`, and
 the build succeeds. This cost this project its headline numbers: yolov8_nano
 measured **0.81x against the scalar build** -- slower -- because 99.8% of it was
 scalar code paying a vector build's overhead, and DroNet's "2.51x" was really
-86.7% scalar. `scripts/check_kernel_coverage.py` now fails the build on this and
+86.7% scalar. `ModelBlaster/scripts/check_kernel_coverage.py` now fails the build on this and
 is wired into `run_xpurt_k1.sh`; override with `MB_KERNEL_COVERAGE=warn` only
 while iterating. Weight by measured time, not dispatch count -- DroNet's
 fallback was 13% by count and 86.7% by time.
@@ -306,8 +306,8 @@ invocation), so the board needs no libraries, no runtime and no `.vmfb` tree.
 
 ```bash
 cd "$MB_ROOT"
-PROFILE_OUT_ROOT="$XPURT_ROOT/gen_mb/profile" \
-  bash scripts/run_model_k1.sh mlp_control int8 rvv_x60 0
+PROFILE_OUT_ROOT="$XPURT_ROOT/gen/mb/profile" \
+  bash ModelBlaster/scripts/run_model_k1.sh mlp_control int8 rvv_x60 0
 #                              <model>      <quant> <target> <cpu>
 ```
 
@@ -324,7 +324,7 @@ ModelBlaster/build/k1/<model>/<quant>/{weights,io}.npz
 ModelBlaster/build/k1/<model>/<quant>/generated/      the generated C
 ModelBlaster/build/k1/<model>_<quant>_<target>_harness   the riscv64 static ELF
 ModelBlaster/build/k1/<model>/<quant>/profile_k1.csv  per-dispatch ticks
-$XPURT_ROOT/gen_mb/profile/<backend>/spacemit_x60/<model>/<model>.<quant>/<spec>/topo_<cpu>/results.csv
+$XPURT_ROOT/gen/mb/profile/<backend>/spacemit_x60/<model>/<model>.<quant>/<spec>/topo_<cpu>/results.csv
 ```
 
 `--platform linux` is what swaps `rdcycle` for `rdtime`; without it the binary
@@ -360,14 +360,14 @@ XPU-RT's profile loader looks for
 So a profile tree is only findable if its parent directory is literally named
 `profile`. The existing ModelBlaster profiles in this repo were written to
 `gen/profile_mb/…`, which **no `gen_root` can address** — verified. Either write
-new profiles to `$XPURT_ROOT/gen_mb/profile` as above, or expose the old tree
+new profiles to `$XPURT_ROOT/gen/mb/profile` as above, or expose the old tree
 under that name:
 
 ```bash
-mkdir -p "$XPURT_ROOT/gen_mb" && ln -s ../gen/profile_mb "$XPURT_ROOT/gen_mb/profile"
+mkdir -p "$XPURT_ROOT/gen/mb" && ln -s ../gen/profile_mb "$XPURT_ROOT/gen/mb/profile"
 ```
 
-`gen_mb` rather than `gen`: `gen/profile` is the retired IREE tree, and mixing
+`gen/mb` rather than `gen`: `gen/profile` is the retired IREE tree, and mixing
 timings from two different runtimes in one profile database is exactly the class
 of error [§11](#11-the-retired-ireemerlin-path) exists to prevent.
 
@@ -376,7 +376,7 @@ of error [§11](#11-the-retired-ireemerlin-path) exists to prevent.
 ```bash
 export LLM_PROVIDER=codex
 export CODEX_CALLS_LOG=artifacts/k1_run/codex_calls.jsonl
-BACKEND=llm bash scripts/run_model_k1.sh mlp_control int8 rvv_x60 0
+BACKEND=llm bash ModelBlaster/scripts/run_model_k1.sh mlp_control int8 rvv_x60 0
 ```
 
 `BACKEND` selects `generate_kernels --backend {reference,llm}`; the default,
@@ -416,7 +416,7 @@ export MODELBLASTER_YOLOV8N_NC=2                       # its class count
 export MODELBLASTER_YOLOV8N_INPUT=64x96                # H x W; `96` = square
 export MODELBLASTER_YOLOV8N_CALIB_DIR=/path/to/dataset/images/val
 export MODELBLASTER_YOLOV8N_CALIB_IMAGE=/path/to/dataset/images/val/one.png
-bash scripts/run_model_k1.sh yolov8_nano int8 rvv_x60 0
+bash ModelBlaster/scripts/run_model_k1.sh yolov8_nano int8 rvv_x60 0
 ```
 
 ### The three that must agree
@@ -497,10 +497,10 @@ export PYTHONPATH="$MB_ROOT/src:$MB_ROOT"
 for m in mlp_control dronet; do
   $PY -m modelblaster.pipeline.emit_dispatch_graph \
       --ir "build/k1/$m/int8/graph.json" \
-      --out-root "$XPURT_ROOT/gen_mb/vmfb" \
+      --out-root "$XPURT_ROOT/gen/mb/vmfb" \
       --target spacemit_x60 --hw rvv_x60
 done
-# -> gen_mb/vmfb/<model>/spacemit_x60/rvv_x60/<model>.int8/<model>.int8_dispatch_graph.json
+# -> gen/mb/vmfb/<model>/spacemit_x60/rvv_x60/<model>.int8/<model>.int8_dispatch_graph.json
 ```
 
 The `vmfb` directory name is a fossil of the IREE layout that XPU-RT's
@@ -516,13 +516,13 @@ example — 4 MLP-class + DroNet on 8 cores, single-core profiles:
   "machines":   { "cpu_p": 8 },                 // ONE pool -- see the trap below
   "profile_hw": { "cpu_p": "rvv_x60" },
   "profile": { "target": "spacemit_x60", "topo_tag": "topo_0",
-               "topo_tag_override": true, "gen_root": "gen_mb" }
+               "topo_tag_override": true, "gen_root": "gen/mb" }
 },
 "scheduler": { "machine_combination_mode": "singletons", "use_profiled": true, ... },
 "networks": {
   "mlp_control": { "id": 0, "identifier": "mlp_control", "period": 10,
                    "window_duration": 10,
-                   "dispatch_deps_path": "gen_mb/vmfb/mlp_control/spacemit_x60/rvv_x60/mlp_control.int8/mlp_control.int8_dispatch_graph.json" },
+                   "dispatch_deps_path": "gen/mb/vmfb/mlp_control/spacemit_x60/rvv_x60/mlp_control.int8/mlp_control.int8_dispatch_graph.json" },
   "dronet":      { "id": 1, "identifier": "dronet", "period": 33.3, ... }
 }
 ```
@@ -600,7 +600,7 @@ One command does generate → ingest → walker → cross-build → deploy → r
 
 ```bash
 cd "$MB_ROOT"
-CORE_KINDS=rvv bash scripts/run_xpurt_k1.sh \
+CORE_KINDS=rvv bash ModelBlaster/scripts/run_xpurt_k1.sh \
     --schedule "$XPURT_ROOT/schedules/scheduled_networks_k1_mb_greedy_profiled.json" \
     --models mlp_control,dronet \
     --backends rvv_x60
@@ -682,7 +682,7 @@ greps the stdout for `MODELBLASTER_VERIFY|max_abs_err|FAIL|PASS`; read it.
 ### The measured Gantt
 
 ```bash
-$PY scripts/plot_xpurt_trace.py \
+$PY ModelBlaster/scripts/plot_xpurt_trace.py \
     build/k1_xpurt/_gen/<schedule>/<schedule>_stdout.txt \
     --clock-mhz 24 --source k1 \
     --out plots/<schedule>_measured.png --csv artifacts/k1_run/<schedule>_trace.csv
@@ -703,7 +703,7 @@ durations and do not hit it.
 the predicted `SchedulerReport` and hand the result back to the advisor:
 
 ```bash
-$PY scripts/emit_measured_report.py \
+$PY ModelBlaster/scripts/emit_measured_report.py \
     --predicted-report "$XPURT_ROOT/schedules/<schedule>_report.json" \
     --trace  build/k1_xpurt/_gen/<schedule>/<schedule>_trace.csv \
     --out    artifacts/k1_run/<schedule>_measured.json \
@@ -831,7 +831,7 @@ person an afternoon.
 | the decision | search: `ModelBlaster/scripts/decision_loop.py` · **verdict: `scripts/compare_candidates.py`** |
 | advice → hint | `scripts/advice_to_{fusion,split,unfuse}_hint.py`, `advice_to_kernel_choice.py` |
 | the acceptance rule | `xpu-rt/candidate_objective.py` |
-| board bundles | `scripts/run_xpurt_bundle.py`, `run_bundle_firesim.sh` (FireSim-era) |
+| board bundles | `ModelBlaster/scripts/run_xpurt_bundle.py`, `run_bundle_firesim.sh` (FireSim-era) |
 
 `rewrite.py`, `bundle.py` and `granularity_loop.py` were absent from this branch
 for a while — they were added on `origin/xpurt-scheduler-advisor` and never
@@ -1135,7 +1135,7 @@ not exist on this path, and `choose_implementation` now has a live consumer.
 ## 9. What IME actually does
 
 Full record, with disassembly, in `artifacts/k1_run/ime_gate/FINDINGS.md`. The
-short version, because three earlier claims in this document were wrong:
+short version:
 
 * **The micro-tile is 4×4×8 and hardware-forced.** The spec's MAC-unit table is
   indexed by `vl*SEW`, not VLEN: at VLEN=256, SEW=8, `vl=32` → `M×N×K = 4×4×8`.
@@ -1353,7 +1353,7 @@ it. Nothing below is a step.
 | every timing 67× off | converted with 1.6 GHz instead of 24 MHz rdtime | `--profile-clock-mhz 24`, `--clock-mhz 24` |
 | `entries_done=0`, all-zero trace | `core_kind` ≠ backend tag (`rvv` vs `rvv_x60`) | set `CORE_KINDS` to the schedule's kind |
 | schedule uses only harts 0-3; cluster 1 idle | `CPU_P#n` and `CPU_E#n` alias to the same registry core | one pool: `"machines": {"cpu_p": 8}` |
-| solver reports "no profile found" | profile tree not under a directory named `profile` | `PROFILE_OUT_ROOT=$XPURT_ROOT/gen_mb/profile`, `gen_root: "gen_mb"` |
+| solver reports "no profile found" | profile tree not under a directory named `profile` | `PROFILE_OUT_ROOT=$XPURT_ROOT/gen/mb/profile`, `gen_root: "gen/mb"` |
 | a 4-core shard is never selected | `topo_tag_override: true` charges it the single-core cost | `topo_tag_override: false` with `machine_combination_mode: "shard"` |
 | `No module named 'modelblaster'` from CMake | `backend_rename` was invoked with `PYTHONPATH=<repo>/..`, which only works if the checkout dir is *named* `modelblaster` | fixed in `harness_xpurt_linux/CMakeLists.txt` (now `<repo>/src:<repo>`) |
 | `refusing to run: 'modelblaster' resolves to …` | an editable install points at a different checkout | fix `PYTHONPATH`/the install; do not bypass |
@@ -1373,8 +1373,8 @@ artifacts/k1_run/ime_gate/FINDINGS.md   what IME really does, with disassembly
 artifacts/agentic_branch_salvage.md     audit of the sibling branch; the label-provenance rule
 ModelBlaster/artifacts/agentic_fuse_split/WARNING.md   the bookkeeping-fiction speedup, kept verbatim
 ModelBlaster/cores/spacemit_k1.json     the measured board topology, machine-readable
-gen_mb/profile/<backend>/spacemit_x60/<model>/<model>.<quant>/<spec>/topo_<cpu>/results.csv
-gen_mb/vmfb/<model>/spacemit_x60/<backend>/<basename>/<basename>_dispatch_graph.json
+gen/mb/profile/<backend>/spacemit_x60/<model>/<model>.<quant>/<spec>/topo_<cpu>/results.csv
+gen/mb/vmfb/<model>/spacemit_x60/<backend>/<basename>/<basename>_dispatch_graph.json
 schedules/scheduled_<config>_<solver>_profiled{,_metrics,_report}.json
 ModelBlaster/build/k1/<model>/<quant>/          single-model IR, weights, generated C
 ModelBlaster/build/k1_xpurt/{<model>,_gen,_build}/   schedule-driven build tree

@@ -33,7 +33,7 @@ alone, which is the reason for the file boundaries.
 |---|---|---|
 | IR | `extract_graph.py` | `build/k1*/<model>/int8/graph.json` |
 | kernels | `generate_kernels.py` | `kernel_picks.json`, `kernels.c` |
-| profile | `run_model_k1.sh` → `profile_writer` | `gen_mb/profile/<impl>/…/results.csv` |
+| profile | `run_model_k1.sh` → `profile_writer` | `gen/mb/profile/<impl>/…/results.csv` |
 | schedule | `run_xpurt_schedule.py` | `schedules/scheduled_*.json` |
 | run | `run_xpurt_k1.sh` → `harness_xpurt` | `*_trace.csv` |
 | advice | `emit_compile_advice.py` | `compile_advice.json` |
@@ -341,10 +341,10 @@ present them as a completed flight model.
 
 [Vector PDF](../../results/k1_feedback_story/feedback_rich_capstone.pdf)
 
-Both displayed schedules pass the independent feasibility gate. CP-SAT uses a
-corrected microsecond time grid, so its starts remain conservative against the
-fractional measured dispatch durations; the earlier millisecond rounding bug
-is covered by a regression test. Greedy and CP-SAT share one qualified 60 ms
+Both displayed schedules pass the independent feasibility gate. CP-SAT solves on
+a microsecond time grid, so its starts remain conservative against the
+fractional measured dispatch durations; a regression test pins that grid
+resolution. Greedy and CP-SAT share one qualified 60 ms
 repeat frame containing complete instances of all five networks. Multi-hart
 work spans the physical lanes it holds—there is no invented
 `CPU#0+CPU#1` machine row—and genuine IME-capable dispatches are hatched.
@@ -412,19 +412,19 @@ DroNet's dispatch 0 (`conv2d_s8`, OC=32) split along OC, in a 3-model workload
 #    MB_IR is the whole point: copying the rewrite over graph.json and letting
 #    step 1/5 re-extract profiles the BASELINE and files it under the
 #    rewrite's name.
-#    gen_mb/profile is a SYMLINK and the profiler writes in place -- back up
+#    gen/mb/profile is a SYMLINK and the profiler writes in place -- back up
 #    the baseline results.csv first or you destroy what everything else was
 #    solved from.
 eval "$(scripts/setup_spacemit_toolchain.sh)"   # sets CROSS; see below
 MB_IR=artifacts/k1_run/round_B3_dronet_split/graph.split_x4.json \
-PROFILE_OUT_ROOT=$PWD/gen_mb/profile \
+PROFILE_OUT_ROOT=$PWD/gen/mb/profile \
   bash ModelBlaster/scripts/run_model_k1.sh dronet int8 rvv_x60 0
 #    GATE: stdout must say max_abs_err=0. A rewrite that changes the answer is
 #    ineligible and its timings mean nothing.
 
 # 2. file it under its own BASENAME, not its own model name, so DroNet stays
 #    in critical_models and the per-model terms remain name-comparable:
-#    gen_mb/profile/rvv_x60/spacemit_x60/dronet/dronet.split_x4.int8/…
+#    gen/mb/profile/rvv_x60/spacemit_x60/dronet/dronet.split_x4.int8/…
 
 # 3. re-emit the dispatch graph. emit_dispatch_graph takes its output path from
 #    ir["name"] and ir["quant"], so give the copy a distinct quant or it
@@ -570,8 +570,8 @@ costs can tell them apart.
 
 ```bash
 # both sides, same graph, same dispatch ids
-scripts/run_model_k1.sh ffn_block int8 rvv_x60 0
-scripts/run_model_k1.sh ffn_block int8 ime_x60 0
+ModelBlaster/scripts/run_model_k1.sh ffn_block int8 rvv_x60 0
+ModelBlaster/scripts/run_model_k1.sh ffn_block int8 ime_x60 0
 
 python scripts/run_xpurt_schedule.py --networks-json \
     data/toplevel/networks_k1_ffn_ime.json --solver greedy --profiled \
@@ -636,7 +636,7 @@ argument for choosing a width per dispatch.
 # one, and nothing downstream could tell.
 for spec in "0:1" "0,1:2" "0,1,2,3:4" "0,1,2,3,4,5,6,7:8"; do
   MB_CORES="${spec%:*}" MB_SHARD_FACTOR="${spec#*:}" ITERS=7 \
-    scripts/run_model_k1.sh dronet int8 rvv_x60 0
+    ModelBlaster/scripts/run_model_k1.sh dronet int8 rvv_x60 0
 done
 
 python scripts/plot_multicore_scaling.py --model dronet --model yolov8_nano_64x96
@@ -803,7 +803,7 @@ GCC 14.3   wrong AVL on a chained vsetvl            -> wrong answer, silent
 ```
 
 The only form correct under both is to pass the ELEMENT COUNT to every width,
-every time. `scripts/check_rvv_avl.py` refuses the other one.
+every time. `ModelBlaster/scripts/check_rvv_avl.py` refuses the other one.
 
 **`--staged-ir` for anything the loop produced.** A rewritten IR has no
 `--model` that can regenerate it, which is the entire point of the loop. The
@@ -846,7 +846,7 @@ The modules are not all named after the concepts.
 | the solver registry | `docs/Feature/solvers.md`, `xpu-rt/schedulers.py` |
 | what a spec's fields mean | `docs/Demo/workload_specs.md` |
 | runnable walkthroughs | `examples/` |
-| recreating the environment | `docs/environment.md` |
+| recreating the environment | `docs/Artifact/environment.md` |
 | running on the board | `docs/K1/k1_board.md` |
 
 ## 9. Examples

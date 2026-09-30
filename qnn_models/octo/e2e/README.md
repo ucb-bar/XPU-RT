@@ -9,7 +9,7 @@ what a robot can actually do. 44 distinct scheduler operating points x 4 SIMPLER
 ```
 
 No GPU, no network, no run tree needed for that — the inputs are the small JSON/TSV in
-`data/`. Everything heavier is documented in `docs/REPRODUCE.md`.
+`data/`. Everything heavier is documented in `docs/Artifact/REPRODUCE.md`.
 
 ## The result
 
@@ -75,7 +75,7 @@ each failed at its own native-rate control.
 ## Not in this repo
 
 `traces_torque2/` (688 MB per-tick traces), `g5grid/runs/` (133 MB summaries) and
-`runs_g40/` (151 MB). `docs/REPRODUCE.md` gives the tiers and the job scripts that
+`runs_g40/` (151 MB). `docs/Artifact/REPRODUCE.md` gives the tiers and the job scripts that
 regenerate them. `analysis/make_energy_cache.py` is the pattern for the rest: it reduces
 702 MB of traces to a 39 KB scalar cache, verified equal to the full computation at
 rtol 1e-12, so `fig_energy.py` reproduces from the repo alone.

@@ -37,7 +37,7 @@ FIGURE_SCRIPTS = ["scripts/showdown_v3_figure.py", "scripts/showdown_atlas.py", 
                   "scripts/showdown_paper10_figure.py", "scripts/story_figures.py"]
 STORY_NAMES = ("crash_position", "course_progress", "rate_speed_map", "ros_ladder", "seed_pairs", "latency_waterfall")
 # refined/ files that are figures without a sidecar this script verifies (named producers in the docs)
-REFINED_ALLOWLIST = ["warehouse_showdown_story",   # the figure as submitted (plots/fig_hil_showdown.pdf), from the pre-study composer sims/scripts/compose_warehouse_showdown.py
+REFINED_ALLOWLIST = ["warehouse_showdown_story",   # the Tier A render (plots/fig_hil_showdown.pdf), from the composer sims/scripts/compose_warehouse_showdown.py
                      "env_crash_map_*", "env_sweep", "hil_envelope_story_v3*", "deployment_layers", "throughput_latency",
                      # a Gantt-only render draws measured schedule rows and nothing else, so it has no
                      # showdown sidecar to re-derive: its provenance is the measured_gantt_*_metrics.json
@@ -844,7 +844,7 @@ def verify_paper10(m):
 
 
 def verify_paper(m):
-    """The paper's figure in its submitted layout (showdown_paper_figure.py): the display pair, the rate-injected envelope
+    """The paper's figure in its paper layout (showdown_paper_figure.py): the display pair, the rate-injected envelope
     and the unseen-course envelope re-counted from their CSVs, the two measured Gantt rows, the scene's own counts."""
     import csv as _csv
     fig = m["figure"]; check(os.path.exists(fig) and os.path.exists(fig.replace(".png", ".pdf")), f"paper figure on disk: {fig}")

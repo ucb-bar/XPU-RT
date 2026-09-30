@@ -42,8 +42,8 @@ why a pair is re-verified on the scene it flies and never carried over.
 
 ```bash
 MAX_SIMS=3 NEED_MB=10000 scripts/campaign_rate30.sh          # 30 Hz
-MAX_SIMS=3 NEED_MB=10000 scripts/campaign_rate3640.sh        # 36 and 40 Hz  -> the submitted figure
-MAX_SIMS=3 NEED_MB=10000 scripts/campaign_submitted_config.sh   # the submitted figure's own configuration
+MAX_SIMS=3 NEED_MB=10000 scripts/campaign_rate3640.sh        # 36 and 40 Hz  -> the paper figure
+MAX_SIMS=3 NEED_MB=10000 scripts/campaign_submitted_config.sh   # ROS 2 out of the box (vanilla_c50)
 ```
 
 Standard cell: course a, prop density 0.30, people 2.4 m, gain 0.0055, cruise 1.0–1.8 m/s, twelve
@@ -78,10 +78,10 @@ over. A pair is kept only when, on the scene it flies, XPU-RT completes and the 
 having entered the course (`ROS_GATES`; `verify_showdown_figure.py`'s `_compare_display_pair` is what
 accepts it). Seeds are ordered with the census's completing seeds first — a search order, not a
 selection: every attempt is logged and the pair is accepted on what the display flight itself does.
-`docs/Evaluation/showdown_rate_sweep_reproduction.md` §4 records the pair the submitted figure draws (cruise
+`docs/Evaluation/showdown_rate_sweep_reproduction.md` §4 records the pair the paper figure draws (cruise
 1.2 m/s, seed 1000).
 
-The dumps these write (`*_figdata/figure_data.npz`, 78–314 MB each) are ignored; the submitted
+The dumps these write (`*_figdata/figure_data.npz`, 78–314 MB each) are ignored; the paper
 figure's pair is archived as `results/codesign_feedback/archive_v3/display_dumps_r36.tar` (391 MB),
 listed in that directory's tracked `MANIFEST.sha256`. Without it, panels A, a–d and the telemetry row
 cannot be re-rendered at all; with it, unpack into

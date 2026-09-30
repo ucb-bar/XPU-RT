@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# The submitted figure's configuration, measured: ROS 2 with its control timer at 50 Hz.
+# ROS 2 out of the box (`vanilla_c50`), measured: its control timer at 50 Hz.
 #
 # WHY. fig_hil_showdown draws ROS 2 at 50 Hz control on 6 statically pinned cores, crashing while
 # XPU-RT completes -- and its panel I shows why: YOLO serial on one hart backs up to 112 ms, so the

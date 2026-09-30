@@ -3,7 +3,7 @@
 #
 # TIER 1 only: these read the small JSON/TSV in data/ and need no run tree, no GPU and
 # no network. Everything else in figures/ needs the 972 MB of raw runs that are NOT in
-# this repo -- see docs/REPRODUCE.md for the tiers and how to regenerate them.
+# this repo -- see docs/Artifact/REPRODUCE.md for the tiers and how to regenerate them.
 set -u
 cd "$(dirname "$0")/figures"
 FIGS=(fig_e2e_measured fig_e2e_heatmap fig_schmoo fig_energy

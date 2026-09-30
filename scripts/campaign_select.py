@@ -10,7 +10,7 @@ every (gain policy, cruise speed) cell with each arm's outcome, then the cell th
     often as the ROS arm and at least 3 times in total;
   * at least half of the ROS arm's flights cross a gate before they crash -- the figure shows a
     baseline that gets into the course and loses it, not one that never leaves the start;
-  * among qualifying cells, prefer cruise 1.4 (the submitted configuration), then the slowest
+  * among qualifying cells, prefer cruise 1.4 (the paper figure's cruise), then the slowest
     ROS cadence that qualifies (it is the one the measured chain implies at the camera rate the
     schedule is designed for), then the fixed-gain policy.
 

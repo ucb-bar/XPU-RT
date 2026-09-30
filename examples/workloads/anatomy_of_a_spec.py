@@ -58,8 +58,8 @@ the resulting file sat on disk under the baseline's name."""),
     ("gen_root",
      "which profile tree the costs come from.",
      """
-`gen_mb` is ModelBlaster's measured tree; `gen` is the retired IREE one.
-Mixing them compares timings from two different runtimes. `gen_mb/profile` is
+`gen/mb` is ModelBlaster's measured tree; `gen` is the retired IREE one.
+Mixing them compares timings from two different runtimes. `gen/mb/profile` is
 a SYMLINK to `gen/profile_mb`, which is worth knowing because `find` does not
 follow it and will report an empty tree."""),
 

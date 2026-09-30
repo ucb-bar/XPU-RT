@@ -54,7 +54,7 @@ MIN_N = 36                      # an arm configuration needs this many surviving
 #
 #   vanilla4x2  the unpinned two-YOLO-node arrangement over 30/36/40 Hz cameras. A narrow span --
 #               33.3 down to 25.0 Hz -- because above 40 Hz this arrangement stops gaining.
-#   cp3         the pinned six-core deployment the submitted figure drew, over 15/25/30/45 Hz
+#   cp3         the pinned six-core deployment the Tier A showdown drew, over 15/25/30/45 Hz
 #               cameras (campaign_cp3_ladder). Wider span and it is the arm the paper's baseline
 #               claims are about, so the sweep and the baseline are the same deployment rather than
 #               a neighbouring one borrowed to make the point.

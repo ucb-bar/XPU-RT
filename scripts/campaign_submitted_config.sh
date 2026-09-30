@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# The submitted figure's configuration, flown with real ROS 2 data.
+# ROS 2 out of the box (`vanilla_c50`), flown with real ROS 2 data.
 #
 # fig_hil_showdown was drawn with a modelled baseline. Its panel I describes what that baseline was:
 # ROS 2 with a 50 Hz control timer whose YOLO runs serially on one hart and backs up, so control

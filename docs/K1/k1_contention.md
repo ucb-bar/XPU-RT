@@ -38,10 +38,10 @@ arms with more co-runners land inside that same band, and are not monotonic in
 co-runner count — `other_cluster x1` measured 1.061 while `other_cluster x4`
 measured 1.039, which cannot be physical and is therefore noise.
 
-## Three ways this measurement was wrong before it was right
+## Three checks the measurement has to pass
 
-Each was caught by a check, and each would have produced a publishable-looking
-number.
+Each is enforced by the harness, and each guards a way a plausible-looking number
+could be produced without it.
 
 **1. The co-runner was not where it said it was.** A co-runner respawned per
 inference spends most of its wall time in fork, exec, loader and page faults —
@@ -63,11 +63,11 @@ off-target load — which is exactly why the first sweep reported 1.011× and
 surviving co-runner on a clean board and refused to continue — permanently.
 The bracket trick (`[d]ronet…`) matches the process and not the check.
 
-**3. The design was unpaired.** Two solo runs twenty minutes apart differed by
+**3. The design is paired.** Two solo runs twenty minutes apart differ by
 2.6% with nothing else on the board. Against effects of 1–6% that is not a
-correction, it is the whole signal. Solo is now re-measured immediately before
-every arm, and each arm records its own drift against the sweep reference
-(`solo_drift_vs_reference`, now 0.996–1.002). An arm whose drift is the size
+correction, it is the whole signal. Solo is therefore re-measured immediately
+before every arm, and each arm records its own drift against the sweep reference
+(`solo_drift_vs_reference`, 0.996–1.002 in the shipped sweep). An arm whose drift is the size
 of its effect is not evidence and a reader cannot tell without that number.
 
 ## What is NOT claimed

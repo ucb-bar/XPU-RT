@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """The ROS 2 model-fidelity figures, re-derived by re-running their producer from the traces.
 
-`ros_model_fidelity_figure.py` draws the ROS 2 baseline at three tiers -- the submitted analytical model,
+`ros_model_fidelity_figure.py` draws the ROS 2 baseline at three tiers -- the analytical (Tier A) model,
 the same recurrence on board-profiled costs, the board -- and records in each stem's `_metrics.json`
 every number it drew: per (arm, rate) row the three tiers' camera->goal latency and control rate, the
-residual statistics and which rows they exclude, the submitted metric on each input set, the control-rate
+residual statistics and which rows they exclude, the Tier A metric on each input set, the control-rate
 literal and the file it was read from, the census and every flight record behind the story's panels,
 the tier-B timeline, and the sha256 of every input.
 

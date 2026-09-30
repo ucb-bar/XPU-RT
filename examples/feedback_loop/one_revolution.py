@@ -51,9 +51,9 @@ def main() -> int:
     # --------------------------------------------------------------- 1 ----
     step(1, "PROFILE — already measured on the board, per core width")
     by_cores = compile_advice.load_profiles_by_cores_csv(
-        "gen_mb", "spacemit_x60", MODEL, BASENAME, "rvv_x60")
+        "gen/mb", "spacemit_x60", MODEL, BASENAME, "rvv_x60")
     if not by_cores:
-        print(f"    SKIP: no profiles for {MODEL} under gen_mb/profile")
+        print(f"    SKIP: no profiles for {MODEL} under gen/mb/profile")
         print("    See examples/k1_board/ for how they are produced.")
         return 0
     print(f"    core widths measured: {sorted(by_cores)}")

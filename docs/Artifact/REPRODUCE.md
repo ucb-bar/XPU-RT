@@ -5,10 +5,13 @@ schedule with XPU-RT, feed back what the *run* differs from the *scheduled Gantt
 with ModelBlaster, re-schedule, and close with an in-sim HIL drone-flight ablation. It is written to be
 **target-agnostic** — SpaceMiT K1 is the worked example, but the seams for a new SoC are called out.
 
-Deep references (this guide points to them, does not duplicate): `docs/the_loop.md` (the definitive loop
-doc), `docs/k1_modelblaster_xpurt_closed_loop.md` (operational runbook), `docs/board_calibration_codesign.md`
+The second-form showdown study (both arms measured on the K1, replayed cadences, environment sweep, feedback
+study, master table) has its own end-to-end recipe: `docs/Artifact/reproduction_full.md`.
+
+Deep references (this guide points to them, does not duplicate): `docs/Feature/the_loop.md` (the definitive loop
+doc), `docs/K1/k1_modelblaster_xpurt_closed_loop.md` (operational runbook), `docs/Feature/board_calibration_codesign.md`
 (the predicted-vs-actual runtime feedback), `XPU-RT/hil/README` (the HIL bridge). Per-figure commands live in
-`docs/figure_runbook.md`.
+`docs/Evaluation/figure_runbook.md`.
 
 > **Honest scope.** The **scheduling-lever loop** (shard, IME width, board-calibration re-solve) is a genuine
 > closed loop. The **graph-rewrite arm** (fuse/unfuse/split via ModelBlaster) is real per-verb on the board
@@ -21,25 +24,20 @@ doc), `docs/k1_modelblaster_xpurt_closed_loop.md` (operational runbook), `docs/b
 
 ## 0. Environment (two interpreters)
 
-The scheduler and the Isaac flight sim have separate environments.
-
-| Role | Interpreter | Needs |
-|---|---|---|
-| Scheduler + ModelBlaster + figures | XPU-RT venv: `/scratch2/agustin/XPU-RT/.venv/bin/python` | OR-Tools (CP-SAT), cvxpy + a MILP backend (MOSEK/others), numpy, matplotlib |
-| Isaac flight sim | conda env: `/scratch2/agustin/miniforge3/envs/env_isaaclab/bin/python` | Isaac Sim / IsaacLab (source added to path by the eval scripts), torch |
-
-Always `export XPURT_CPSAT_WORKERS=0` before any CP-SAT solve — the default (1 worker) cripples it.
-On a fresh machine: create the XPU-RT venv from the repo requirements (`docs/xpurt_env_setup.md`), install
-IsaacLab per its own install, and point the sim scripts at the IsaacLab source.
+`docs/Artifact/environment.md` §Environments is the one description: the host venv from `requirements-host.txt`
+(`$HOST_PY`: scheduler, ModelBlaster, figures, verifiers) and the Isaac Sim / IsaacLab conda env from
+`requirements-isaac.txt` (`$ISAAC_PY`: the flight sim), the machine-path variables `scripts/env.sh` sets
+(`REPO`, `SIM_TREE`, `HOST_PY`, `ISAAC_PY`, `RES`; overrides in `scripts/env.local.sh`), and the CP-SAT
+worker setting (`export XPURT_CPSAT_WORKERS=0` before a solve run by hand).
 
 ---
 
 ## 1. The loop, stage by stage (one command each)
 
-Run from the repo root `/scratch2/agustin/XPU-RT` (scheduler side) unless noted.
+Run from the repo root (`$REPO` in `scripts/env.sh`; scheduler side) unless noted.
 
 **(1) Profile the target** → per-dispatch cost model. ModelBlaster generates kernels + a dispatch graph and
-IREE/`iree-benchmark-module` times each dispatch, producing the profiled CSVs under `gen_mb/…`. The scheduler
+IREE/`iree-benchmark-module` times each dispatch, producing the profiled CSVs under `gen/mb/…`. The scheduler
 reads them via `xpu-rt/profile_loader.py`. (For a new target, this is the main thing you regenerate — see §2.)
 
 **(2) Schedule** with any solver:
@@ -63,7 +61,7 @@ export XPURT_CPSAT_WORKERS=0
 .venv/bin/python scripts/run_xpurt_schedule.py --networks-json <spec> --solver milp --scheduler cpsat \
   --profiled --board-calibration    # scales each dispatch at the profile-load boundary (profile_loader.py)
 ```
-(See `docs/board_calibration_codesign.md`. `scripts/evaluate_exact_cycle_board.py` validates a recalibrated
+(See `docs/Feature/board_calibration_codesign.md`. `scripts/evaluate_exact_cycle_board.py` validates a recalibrated
 schedule against ≥10 real board runs.)
 
 **(5) Adjust AOT + re-schedule automatically** — the driver that ties (2)–(4) into rounds:
@@ -91,7 +89,7 @@ The calibration-aware variant (CP-SAT + `--board-calibration` every round) is
 `ceil(latency/control_dt)` steps (ZOH). Grid driver (5 speeds × 4 rates × 6 seeds = 120 flights):
 `ISAAC_PY=<env_isaaclab>/bin/python bash scripts/hil_ablation_grid.sh`; scatter:
 `scripts/hil_ablation_scatter.py --csv results/codesign_feedback/hil_ablation.csv` (a pre-run CSV is committed
-so the scatter re-renders without the GPU sweep). See `docs/figure_runbook.md` §2.
+so the scatter re-renders without the GPU sweep). See `docs/Evaluation/figure_runbook.md` §2.
 
 ---
 
@@ -102,7 +100,7 @@ retarget from K1 to another SoC:
 
 1. **Kernels + profiles**: regenerate ModelBlaster kernels for the new target and re-profile — `.venv/bin/python
    ModelBlaster/pipeline/generate_kernels.py --backend reference|llm --target <your_target>` then time each
-   dispatch. Output goes under `gen_mb/…/<target>/…`; the scheduler finds it through `xpu-rt/profile_loader.py`
+   dispatch. Output goes under `gen/mb/…/<target>/…`; the scheduler finds it through `xpu-rt/profile_loader.py`
    (the profile CSV layout is keyed by `network/dispatch_id`).
 2. **Machine/topology in the workload spec**: set `hardware.machines` (e.g. `cpu_p`, `cpu_e` counts),
    `hardware.profile.target`, `profile_hw`, and `machine_combination_mode` in `data/toplevel/<spec>.json` to
@@ -135,24 +133,24 @@ bash scripts/make_all_codesign_figures.sh          # rebuilds the headline figur
 ```
 Notes which steps need the GPU (the warehouse mega plots + the HIL scatter re-run Isaac; the schedule Gantts,
 solver-win, and evolution plot are CPU-only from cached schedules). Per-figure commands + inputs are in
-`docs/figure_runbook.md`.
+`docs/Evaluation/figure_runbook.md`.
 
 ## 4. Relevant files — where to look for each concern (code map)
 
 | Concern | Start here |
 |---|---|
 | **Schedule a workload** | `scripts/run_xpurt_schedule.py` (entry; flags `--solver {milp,greedy}`, `--scheduler {cpsat,mosek,…}`, `--profiled`, `--board-calibration`, `--emit-feedback`) → `xpu-rt/scheduler_cpsat.py`, `xpu-rt/scheduler.py` (MOSEK MILP), `xpu-rt/greedy_scheduler.py` |
-| **Cost model / profiles** | `xpu-rt/profile_loader.py` (`load_profiled_processing_times`; the `--board-calibration` scaling at `base_t`); profile CSVs under `gen_mb/…/<target>/…` |
-| **The AOT feedback loop** | doc `docs/the_loop.md`; drivers `scripts/run_codesign_loop.py` (auto, levers shard/IME/unfuse), `scratchpad/auto_feedback_loop.py` *(LOST — never committed; use `scripts/run_codesign_loop.py`)* (CP-SAT + board-cal every round) |
+| **Cost model / profiles** | `xpu-rt/profile_loader.py` (`load_profiled_processing_times`; the `--board-calibration` scaling at `base_t`); profile CSVs under `gen/mb/…/<target>/…` |
+| **The AOT feedback loop** | doc `docs/Feature/the_loop.md`; drivers `scripts/run_codesign_loop.py` (auto, levers shard/IME/unfuse), `scratchpad/auto_feedback_loop.py` *(LOST — never committed; use `scripts/run_codesign_loop.py`)* (CP-SAT + board-cal every round) |
 | **Feedback emission** | `xpu-rt/feedback.py` (`--emit-feedback` → `xpurt_feedback.json`), `xpu-rt/compile_advice.py` + `scripts/emit_compile_advice.py` (`compile_advice.json`, verbs split/fuse/unfuse/shard/choose_impl) |
 | **Feedback consume / corroborate** | `xpu-rt/feedback_join.py`, `xpu-rt/advice_join.py` (identity-safety) |
 | **Graph rewrite (ModelBlaster)** | bridges `scripts/advice_to_{fusion,split,unfuse,shard}_hint.py`, `advice_to_kernel_choice.py` → `ModelBlaster/pipeline/apply_*_hint.py` → `ModelBlaster/pipeline/generate_kernels.py` |
-| **Runtime feedback (run vs Gantt, +31%)** | doc `docs/board_calibration_codesign.md`; `results/codesign_feedback/k1_board_calibration.json`; validate on board with `scripts/evaluate_exact_cycle_board.py` |
+| **Runtime feedback (run vs Gantt, +31%)** | doc `docs/Feature/board_calibration_codesign.md`; `results/codesign_feedback/k1_board_calibration.json`; validate on board with `scripts/evaluate_exact_cycle_board.py` |
 | **Isaac warehouse flight** | `sims/scripts/sweep_rate_demo.py` (metrics/ablation), `sims/scripts/record_sensor_demo.py` (video + `--dump_figure_data`), task `sims/isaaclab_tasks/warehouse_nav/` (`HANDOFF.md`, `SPEC.md`) |
 | **HIL bridge (mock target)** | `hil/` (`hil_host_isaac.py`, `hil_target_mock.py`, `run_hil_pipeline.sh`, `README`) |
-| **Figures** | `scripts/compose_solver_win.py`, `scripts/gen_schedule_evolution.py` + `scripts/compose_schedule_evolution.py` (the 3rd mega plot), `scripts/hil_ablation_grid.sh` + `scripts/hil_ablation_scatter.py`, `scripts/plot_solver_gantt_annotated.py`, `sims/scripts/compose_mega_figure.py`; regenerate via `scripts/make_all_codesign_figures.sh`; per-figure recipes in `docs/figure_runbook.md` |
-| **Solvers reference** | `docs/solvers.md` (which `--solver`/`--scheduler` combos exist; MOSEK non-convergence caveat) |
-| **Workload spec format** | `docs/workload_specs.md`; examples in `data/toplevel/*.json` |
+| **Figures** | `scripts/compose_solver_win.py`, `scripts/gen_schedule_evolution.py` + `scripts/compose_schedule_evolution.py` (the 3rd mega plot), `scripts/hil_ablation_grid.sh` + `scripts/hil_ablation_scatter.py`, `scripts/plot_solver_gantt_annotated.py`, `sims/scripts/compose_mega_figure.py`; regenerate via `scripts/make_all_codesign_figures.sh`; per-figure recipes in `docs/Evaluation/figure_runbook.md` |
+| **Solvers reference** | `docs/Feature/solvers.md` (which `--solver`/`--scheduler` combos exist; MOSEK non-convergence caveat) |
+| **Workload spec format** | `docs/Demo/workload_specs.md`; examples in `data/toplevel/*.json` |
 
 ## 5. Run each experiment from scratch
 
@@ -165,7 +163,7 @@ for s in greedy "milp --scheduler cpsat --time-limit 900"; do
 done
 .venv/bin/python scripts/compose_solver_win.py --greedy <greedy.json> --cpsat <cpsat.json> --spec <spec>
 ```
-Read `_metrics.json` (`deadline_miss_count`, `makespan_ms`) + `_report.json` (`solver_status`). See `docs/solvers.md`.
+Read `_metrics.json` (`deadline_miss_count`, `makespan_ms`) + `_report.json` (`solver_status`). See `docs/Feature/solvers.md`.
 
 **B. The AOT feedback loop** (og → levers → runtime feedback, each round re-solved):
 ```
@@ -174,8 +172,8 @@ Read `_metrics.json` (`deadline_miss_count`, `makespan_ms`) + `_report.json` (`s
 .venv/bin/python scripts/emit_compile_advice.py …          # compile_advice.json from measurements
 # graph rewrites (driver-mediated): scripts/advice_to_<verb>_hint.py → ModelBlaster/pipeline/apply_<verb>_hint.py
 ```
-Full walk-through + the nine-term acceptance rule: `docs/the_loop.md`; operational board runbook:
-`docs/k1_modelblaster_xpurt_closed_loop.md`.
+Full walk-through + the nine-term acceptance rule: `docs/Feature/the_loop.md`; operational board runbook:
+`docs/K1/k1_modelblaster_xpurt_closed_loop.md`.
 
 The **"Gantt after Gantt" mega figure** of this same story (og → +shard+IME → runtime feedback exposes board
 misses → re-schedule recovers them; deadline-miss trajectory 4→0→4→0) is

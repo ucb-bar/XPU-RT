@@ -588,7 +588,7 @@ def rescale_fonts(ax, k, row_label_pt=None, tick_pt=None):
 
 # ---------------------------------------------------------------------------------------------------- main
 def paper_form(a, fz, base, X, R, xxyz, rxyz, xt, rt, tnorm, people, gates, hx, hr, moments, near_miss, hit, bg, bg_note, bg_std, rows, cells, cells_rich, b_arms, board_arms, fam, n_set_aside, n_set_aside_rich, xpu_dir, ros_dir, display_cruise, out, gain_note):
-    """The submitted figure's skeleton with the measured content: A top-down | [B envelope; C generalisation | D mechanism],
+    """The paper figure's skeleton with the measured content: A top-down | [B envelope; C generalisation | D mechanism],
     a–d strips, E body rate | F camera rate on the K1 | G where the work lands | H added load, I the measured Gantt rows."""
     H_in = a.width_in * 0.80
     fig = plt.figure(figsize=(a.width_in, H_in))
@@ -686,11 +686,11 @@ def main():
     ap.add_argument("--gain", type=float, default=0.0055, help="the fixed gain of the flight cells drawn in B/C/D'")
     ap.add_argument("--gantt-prefix", default=os.path.join(REPO, "schedules", "measured_gantt_v3"))
     ap.add_argument("--gantt-rows", nargs="+", default=["xpu:CP-SAT:xpu", "xpu2:greedy:xpu2", "ros8:ROS 2 8-core:ros8", "ros:ROS 2 vanilla:ros"])
-    # canvas convention of the submitted figure: 27 in wide, 14 pt type (≈ 3.7 pt at the 7.1 in print width, read zoomed)
+    # canvas convention of the paper figure: 27 in wide, 14 pt type (≈ 3.7 pt at the 7.1 in print width, read zoomed)
     ap.add_argument("--width-in", type=float, default=26.0); ap.add_argument("--min-print-pt", type=float, default=3.6); ap.add_argument("--print-width-in", type=float, default=7.1)
     ap.add_argument("--dpi", type=int, default=300); ap.add_argument("--path-start", type=int, default=85)
     ap.add_argument("--out", default=None); ap.add_argument("--companion", action="store_true", help="also render the column-width companion (F + H + J)")
-    ap.add_argument("--paper-form", action="store_true", help="the submitted figure's skeleton: top-down + envelope/generalisation/mechanism column, strips, a four-panel row, the Gantt")
+    ap.add_argument("--paper-form", action="store_true", help="the paper-form skeleton: top-down + envelope/generalisation/mechanism column, strips, a four-panel row, the Gantt")
     a = ap.parse_args()
     cells_dir = {"tall1005": ("campaign_v2/display_same/xpu_s1005_figdata", "campaign_v2/display_same/ros_s1005_figdata", 1.0),
                  "tall1008": ("campaign_v2/display_v3/xpu_s1008_figdata", "campaign_v2/display_v3/ros_s1008_figdata", 1.2),

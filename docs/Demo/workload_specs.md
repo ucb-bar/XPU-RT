@@ -17,13 +17,13 @@ mode is not.
   "hardware": {
     "machines":    { "CPU_P": 4, "CPU_E": 4 },
     "profile_hw":  { "cpu_p": "rvv_x60", "cpu_e": "rvv_x60" },
-    "profile":     { "gen_root": "gen_mb", "topo_tag_override": false }
+    "profile":     { "gen_root": "gen/mb", "topo_tag_override": false }
   },
   "scheduler": { "enable_impls": false },
   "networks": {
     "dronet": {
       "id": 1,
-      "dispatch_deps_path": "gen_mb/vmfb/.../dronet.int8_dispatch_graph.json",
+      "dispatch_deps_path": "gen/mb/vmfb/.../dronet.int8_dispatch_graph.json",
       "period": 33.3,
       "window_duration": 33.3
     }
@@ -77,10 +77,10 @@ graphs, not VMFBs. Renaming it would touch ~20 specs to change nothing.
 
 ## `gen_root` — which profile tree
 
-`gen_mb` is ModelBlaster's measured tree; `gen` is the retired IREE one.
+`gen/mb` is ModelBlaster's measured tree; `gen` is the retired IREE one.
 Mixing them compares timings from two different runtimes.
 
-`gen_mb/profile` is a **symlink** to `gen/profile_mb`. Worth knowing because
+`gen/mb/profile` is a **symlink** to `gen/profile_mb`. Worth knowing because
 `find` does not follow symlinks by default and will report the tree as empty.
 
 ## `topo_tag_override` — may the solver pick a core width?

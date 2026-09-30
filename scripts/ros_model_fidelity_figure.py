@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """The ROS 2 baseline at three tiers of evidence, drawn so the tiers can be read against each other.
 
-The warehouse showdown was submitted with an ANALYTICAL ROS 2 arm (tier A): `scripts/ros_pinning_model.py`,
+Tier A is the ANALYTICAL ROS 2 arm, `scripts/ros_pinning_model.py`:
 static per-node partitions, serial node graphs, periodic release, free middleware, per-node costs taken
 from XPU-RT's own schedule. The same recurrence costed from the board's own ROS 2 C++ traces is tier B,
 `scripts/ros_pinning_profiled.py`; the board runs themselves (`results/codesign_feedback/ros_traced/`)
@@ -12,17 +12,17 @@ field of `ros_pinning_profiled.table()` / `submitted_spec_response()` or of `ros
   three_tier        per (arm, camera rate) row: camera->goal latency and control cadence, A and B
                     predicted against C measured, saturated rows drawn hollow and kept out of the
                     residual statistics (the recurrence has no queue term; `predict()` names one)
-  submitted_metric  the submitted figure's own metric -- instance-2 perception response at the 22 ms
-                    period against the 23 ms budget -- on the submitted / recost / profiled inputs, and
+  submitted_metric  the Tier A showdown's own metric -- instance-2 perception response at the 22 ms
+                    period against the 23 ms budget -- on the Tier A / recost / profiled inputs, and
                     the control-rate label the figure printed: a 12.40 ms response passed on the
                     composer's command line and the 50 Hz the zero-order hold turns it into. That number
                     is the profile-PREDICTED worst response of `dronet` under a per-network partition
                     model of a different four-network workload (`networks_k1_tri_exact_100ms.json`,
-                    recorded in the XPU-RT checkout's `results/microros_baseline_k1/microros_baseline_k1.json`,
-                    which is not in this tree); the flight workload has no dronet and its control node
-                    responds in 0.083 ms. It is drawn against the tier-B prediction and the measured pinned arm the paper text
-                    describes (per-network pinning, control on its own 100 Hz timer: `p3`)
-  story             the submitted story's skeleton recomposed on tier B. No flight replays a tier-B
+                    recorded in `results/codesign_feedback/microros_baseline_k1/microros_baseline_k1.json`);
+                    the flight workload has no dronet and its control node
+                    responds in 0.083 ms. It is drawn against the tier-B prediction and the measured pinned arm
+                    (per-network pinning, control on its own 100 Hz timer: `p3`)
+  story             the story layout recomposed on tier B. No flight replays a tier-B
                     cadence, so the flight panels are the MEASURED arm whose timing tier B predicts
                     (`ros_p345.csv`, the p3 arm at the 45 Hz camera) against the XPU-RT arm it was
                     censused with, every flight of the census drawn rather than one display pair; the
@@ -86,14 +86,14 @@ TIER = {"A": {"badge": "Analytical model", "fc": "#6b6b6b", "data": "#8a8a8a", "
         "C": {"badge": "Measured on K1", "fc": "#1d3557", "data": C_ROS, "marker": "o"}}
 
 # the configuration the paper's text describes -- one core set per network, control on its own 100 Hz
-# timer -- at the camera rate the submitted figure's schedule was laid out on (22 ms ~ 45 Hz)
+# timer -- at the camera rate the Tier A showdown's schedule was laid out on (22 ms ~ 45 Hz)
 PAPER_ARM, PAPER_HZ = "p3", 45
 XPU_TRACE, ROS_TRACE = "xpu_a_cpsat_hard.csv", "ros_p345.csv"
 CENSUS_CSV = os.path.join(RES, "campaign_percep", "campaign.csv")
 RECORDS = os.path.join(RES, "campaign_percep", "records")
 GANTT_PREFIX = os.path.join(REPO, "schedules", "measured_gantt_v3")
 SUBMITTED_SIDECAR = os.path.join(RES, "warehouse_showdown_board_metrics.json")
-# the prediction the submitted figure's two control responses (4.89 and 12.40 ms) come from, tracked with
+# the prediction the Tier A showdown's two control responses (4.89 and 12.40 ms) come from, tracked with
 # the README it was produced with. When it is absent the sidecar says so and the drawn literal falls back to
 # ros_pinning_model.CONTROL_RATE_PANEL, which holds the same two numbers.
 LITERAL_SOURCE = os.environ.get("RMF_LITERAL_SOURCE",

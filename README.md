@@ -4,7 +4,7 @@
 
 **XPU-RT** is an adaptable full-stack end-to-end (E2E) compilation and scheduling flow for efficient mapping of robotic multi-model workloads onto heterogeneous shared-memory SoCs.
 
-This project is under active development. If you would love to contribute or if you find any issues, please do so by opening a [pull request](https://github.com/ucb-bar/XPURT/pulls) or [filing an issue](https://github.com/ucb-bar/XPURT/issues) on GitHub.
+This project is under active development. If you would love to contribute or if you find any issues, please do so by opening a [pull request](https://github.com/ucb-bar/XPU-RT/pulls) or [filing an issue](https://github.com/ucb-bar/XPU-RT/issues) on GitHub.
 
 ## Framework model: bring your own compiler
 
@@ -16,7 +16,7 @@ per-op kernels according to the schedule's core assignment can sit on the
 
 | flow | compiler / codegen | target | profiling | docs |
 |---|---|---|---|---|
-| **A — chipyard** | PyTorch → quantized Zephyr/RISC-V; curated + LLM-agentic kernel-gen | chipyard (Saturn/Gemmini, RISC-V) | spike / FireSim | [Flow A section below](#flow-a-modelblaster-as-the-compiler-backend), [`zephyr-chipyard-sw/modelblaster/README.md`](ModelBlaster/README.md) ("Workflow: integrating with XPURT"), [`docs/Firesim/end_to_end_xpurt_firesim.md`](docs/Firesim/end_to_end_xpurt_firesim.md) |
+| **A — chipyard** | PyTorch → quantized Zephyr/RISC-V; curated + LLM-agentic kernel-gen | chipyard (Saturn/Gemmini, RISC-V) | spike / FireSim | [Flow A section below](#flow-a-modelblaster-as-the-compiler-backend), [`ModelBlaster/README.md`](ModelBlaster/README.md) ("Workflow: integrating with XPURT"), [`docs/Firesim/end_to_end_xpurt_firesim.md`](docs/Firesim/end_to_end_xpurt_firesim.md) |
 | **B — SpaceMiT K1** | the same ModelBlaster codegen, cross-compiled for Linux/riscv64 | SpaceMiT K1 (BananaPi), 8 harts + IME | on-device, over ssh | [Flow B section below](#flow-b-modelblaster-on-the-spacemit-k1-board), [`docs/Feature/the_loop.md`](docs/Feature/the_loop.md) |
 
 Both flows feed the same `xpu-rt/scheduler.py` and read/write the same
@@ -31,18 +31,43 @@ same reason a road can keep a Roman route: every reader already speaks it.
 
 ### Start here
 
+* **[`artifact/README.md`](artifact/README.md)** — the evaluation artifact: the steps in order,
+  what each needs (the K1 board, a GPU, or nothing), and the claims it verifies. If you are
+  evaluating the paper, start here.
+* **[`docs/README.md`](docs/README.md)** — the index of every page under `docs/`, grouped by
+  topic.
+* **The no-hardware gate** — re-derives every recorded number and verifies the audited figures from
+  the committed data, on the host CPU alone (about 45 s):
+
+  ```bash
+  bash artifact/verify_no_hardware.sh                 # figure stems + the repo-wide checks
+  SKIP_FIGURES=1 bash artifact/verify_no_hardware.sh  # the repo-wide checks only
+  ```
+
+  The interpreter it uses is set up as [`docs/Artifact/environment.md`](docs/Artifact/environment.md) describes.
 * **[`docs/Feature/the_loop.md`](docs/Feature/the_loop.md)** — the index: every arrow of the
   compiler↔scheduler cycle and which script owns it. If you have been away,
   read this one.
-* **[`docs/codesign_loop_reproduction.md`](docs/codesign_loop_reproduction.md)** — how to
+* **[`docs/Feature/codesign_loop_reproduction.md`](docs/Feature/codesign_loop_reproduction.md)** — how to
   RUN the loop: the four drivers (`run_codesign_loop.py`,
   `run_modelblaster_arm.py`, `run_board_round.py`, `loop_over_workloads.py`),
   which stages need the board, the environment recipe, and the traps. Start here
   if you are looking for "the automated script".
-* **[`docs/environment.md`](docs/environment.md)** — recreating the
-  environment. Two flows, two environments, and neither is merlin's `.venv`.
+* **[`docs/Evaluation/measurements_and_ablations.md`](docs/Evaluation/measurements_and_ablations.md)** — how to
+  CHECK the loop: reproducing the nine K1 board measurements, the ablation of the
+  experiments (which rungs are at stake and reachable, and why the earlier ones were
+  not), and the ablation of the feedback (the inner/outer 2x2, which grid is the one to
+  read, and what it actually found). Start here if you are looking for "does this hold
+  up".
+* **[`docs/Baselines/ros_baseline_reproduction.md`](docs/Baselines/ros_baseline_reproduction.md)** — the ROS 2
+  baseline: staging the ModelBlaster kernels onto the board, building the nodes against them,
+  and the three measurements (chain latency, control cadence, middleware cost), with the scope
+  each claim carries.
+* **[`docs/Artifact/environment.md`](docs/Artifact/environment.md)** — recreating the
+  environment: the two interpreters (`requirements-host.txt`, `requirements-isaac.txt`),
+  the machine paths (`scripts/env.sh`), and the chipyard / K1 flows.
   (The working uv recipe, including the `highspy` pin that keeps cvxpy and
-  ortools from colliding, is in `docs/codesign_loop_reproduction.md`.)
+  ortools from colliding, is in `docs/Feature/codesign_loop_reproduction.md`.)
 * **[`docs/K1/k1_board.md`](docs/K1/k1_board.md)** — running on the K1: the
   commands, the timings, the two compiler traps, and what to do when it
   breaks.
@@ -73,7 +98,7 @@ for the certificate, checked-in evidence, and exact reproduction command.
   on the Saturn-Gemmini-Q31 path (Flow A).
 * [`docs/Demo/mlp_dronet_yolo_spike_reproduction.md`](docs/Demo/mlp_dronet_yolo_spike_reproduction.md)
   — a simpler, no-FireSim variant of Flow A: same ModelBlaster codegen and
-  checkout (`zephyr-chipyard-sw/modelblaster/`), profiled entirely on
+  checkout (`ModelBlaster/`), profiled entirely on
   spike with the `greedy`/`greedy_periodic` solver (no MOSEK license
   needed). Driven by the same one-command script as Flow A,
   `scripts/repro_workload.sh <spec.json>`, which installs everything it
@@ -85,7 +110,7 @@ for the certificate, checked-in evidence, and exact reproduction command.
   predicted-vs-actual gantts from `plot_xpurt_trace.py`. Includes a
   stage-by-stage diff against the standard modelblaster flow and a map to
   the key files.
-* [`zephyr-chipyard-sw/modelblaster/examples/microros_demo/ROS_FLOW.md`](ModelBlaster/examples/microros_demo/ROS_FLOW.md)
+* [`ModelBlaster/examples/microros_demo/ROS_FLOW.md`](ModelBlaster/examples/microros_demo/ROS_FLOW.md)
   — micro-ROS fixed-pinning baseline flow (the reference against which
   the scheduler is benchmarked).
 * [`docs/Feature/the_loop.md`](docs/Feature/the_loop.md)
@@ -121,7 +146,7 @@ width, and run `ModelBlaster/scripts/check_rvv_avl.py`.
 ### 1) Profile each (model, backend) pair on the board
 
 ```bash
-PROFILE_OUT_ROOT=$PWD/gen_mb/profile \
+PROFILE_OUT_ROOT=$PWD/gen/mb/profile \
   bash ModelBlaster/scripts/run_model_k1.sh dronet int8 rvv_x60 0
 ```
 
@@ -327,7 +352,7 @@ any method; `auto` says so rather than returning its pick silently.
 
 Beyond the constructive pickers, `--solver pso`, `sa` and `cpsat` exist and
 are documented in
-[`docs/scheduler_solver_study.md`](docs/scheduler_solver_study.md), along with
+[`docs/Feature/scheduler_solver_study.md`](docs/Feature/scheduler_solver_study.md), along with
 the cvxpy backend comparison (`--cvxpy-solver`) and a 30-workload generated
 corpus. Short version: on a fixed 677-op instance the metaheuristics match the
 best heuristic and never beat it; CP-SAT gets within 2.3% in 180 s, on an
@@ -368,41 +393,29 @@ same `xpu-rt/scheduler.py` as Flow B — only the compiler and target change.
 
 ### Repository layout
 
-ModelBlaster ships as a git submodule **nested inside `zephyr-chipyard-sw`**
-(its canonical location — the same one the spike-only reproduction flow
-uses), not at the top level:
+ModelBlaster is a top-level git submodule of this repository, `ModelBlaster/`, and both flows build
+from it:
 
 ```bash
-git submodule update --init --recursive zephyr-chipyard-sw   # pulls in modelblaster (+ KernelBlaster)
+git submodule update --init ModelBlaster
 ```
 
 ```text
 XPU-RT/                          (this repo)
 ├── ModelBlaster/                submodule — the compiler, for BOTH flows
-└── zephyr-chipyard-sw/          submodule — Zephyr BSP + samples
-    └── modelblaster/            submodule — the same repo, same commit
+└── zephyr-chipyard-sw/          submodule — Zephyr BSP + samples (Flow A)
 ```
 
-**Two paths, one repo, and they should always name the same commit.**
-ModelBlaster is reachable as XPU-RT's own top-level submodule (Flow B, and
-what `scripts/install_xpurt_deps.sh` prefers) and again through
-`zephyr-chipyard-sw` (Flow A's spike/firesim builds). Two checkouts of one
-upstream at *different* commits means the two flows compile different kernels
-from the same op names, with nothing to say so — so when you bump one, bump
-the other. `git submodule update --init ModelBlaster` is enough for Flow B on
-its own; an uninitialised submodule is an empty directory, not an error, which
-is exactly how that goes unnoticed.
+An uninitialised submodule is an empty directory, not an error, so check that `ModelBlaster/` has
+content before building.
 
 ModelBlaster's own scripts (`scripts/run_xpurt_scheduler*.py`,
-`benchmarks/runners/firesim.py`, `examples/xpurt_demo/run.sh`, ...) default to
-finding XPU-RT as a **sibling** checkout (`XPURT_ROOT` defaults to
-`../XPU-RT`) — that assumption predates the submodule and no longer holds
-once ModelBlaster is nested *inside* XPU-RT (two levels deep, inside
-`zephyr-chipyard-sw`). Set `XPURT_ROOT` to the XPU-RT root explicitly when
-working from the submodule:
+`benchmarks/runners/firesim.py`, `examples/xpurt_demo/run.sh`, ...) find XPU-RT through `XPURT_ROOT`,
+which defaults to a **sibling** checkout (`../XPU-RT`). Inside this repository XPU-RT is the parent
+directory, so set it explicitly when working from the submodule:
 
 ```bash
-export XPURT_ROOT="$(cd ../.. && pwd)"   # run from inside zephyr-chipyard-sw/modelblaster
+export XPURT_ROOT="$(cd .. && pwd)"   # run from inside ModelBlaster/
 ```
 
 (No `pip install` of the `xpurt` package is required either way — the
@@ -416,7 +429,7 @@ workload needs on spike or FireSim — this is what fills in the per-op cycle
 data the scheduler bridge reads in step 2:
 
 ```bash
-cd zephyr-chipyard-sw/modelblaster
+cd ModelBlaster
 QUANT=int8 TARGET=rvv        RUNNER=firesim bash examples/dronet/run.sh
 QUANT=int8 TARGET=gemmini_q31 RUNNER=firesim bash examples/dronet/run.sh
 # ...one run per (model, backend) pair in the workload
@@ -445,15 +458,15 @@ requires a license file (`MOSEKLM_LICENSE_FILE`) from mosek.com.
 
 (modelblaster's own `pyproject.toml` also declares a `scheduler` extra meant
 for `uv sync --extra scheduler` + `uv run` — currently broken for this
-nested-submodule layout: `uv.lock` resolution pulls in every
+submodule layout: `uv.lock` resolution pulls in every
 `[tool.uv.sources]` entry regardless of which extra you sync, including an
 unrelated `smolvla`-extra path (lerobot) that isn't
 checked out by default. Plain `python3` in the `zephyr` env, as below, is
 the reliable path today.)
 
 ```bash
-cd zephyr-chipyard-sw/modelblaster
-export XPURT_ROOT="$(cd ../.. && pwd)"
+cd ModelBlaster
+export XPURT_ROOT="$(cd .. && pwd)"
 
 # single hetero workload
 PYTHONPATH=. python3 -m scripts.run_xpurt_scheduler \
@@ -490,53 +503,56 @@ timeline.
 
 | var | default | used by |
 |---|---|---|
-| `XPURT_ROOT` | `../XPU-RT` (a **sibling-checkout default** — override to `../..` when running from `zephyr-chipyard-sw/modelblaster`) | `scripts/run_xpurt_scheduler.py`, `scripts/run_xpurt_scheduler_multi.py`, `scripts/find_min_periodic_makespan*.py`, `benchmarks/runners/firesim.py`, `examples/xpurt_demo/run.sh` |
+| `XPURT_ROOT` | `../XPU-RT` (a **sibling-checkout default** — override to `..` when running from `ModelBlaster/`) | `scripts/run_xpurt_scheduler.py`, `scripts/run_xpurt_scheduler_multi.py`, `scripts/find_min_periodic_makespan*.py`, `benchmarks/runners/firesim.py`, `examples/xpurt_demo/run.sh` |
 | `XPURT_PYTHON` | the `xpu-rt-schedule` conda env (derived from `CONDA_EXE`), else `python3` | `scripts/find_min_periodic_makespan_mosek.py` (needs cvxpy + MOSEK) |
 
-This submodule reference is pinned to a commit (standard submodule
-semantics). Because it is nested, bumping it means updating
-`modelblaster` inside `zephyr-chipyard-sw`, committing that, then bumping the
-`zephyr-chipyard-sw` pointer in this repo.
+The submodule is pinned to a commit (standard submodule semantics): bumping it means committing in
+`ModelBlaster/` and then committing the new pointer here.
 
 For the full ModelBlaster-side workflow (profiling knobs, workload JSON
 schema, models in scope), see
-[`zephyr-chipyard-sw/modelblaster/README.md`](ModelBlaster/README.md), section
+[`ModelBlaster/README.md`](ModelBlaster/README.md), section
 "Workflow: integrating with XPURT."
 
 ## Repository Map
 
-```text
-XPU-RT/
-├── xpu-rt/                    # Python scheduler core modules
-│   ├── scheduler.py
-│   ├── workload.py
-│   ├── workload_factory.py
-│   ├── packing.py
-│   ├── plot.py
-│   ├── schedule_validation.py
-│   └── pytorch_workload/      # Sample model artifacts + dispatch JSON inputs
-├── scripts/                   # Python entry points for experiments/scheduling
-├── runtime/                   # K1 board scripts (Flow B)
-│   └── scripts/               #   deploy_k1, verify_ime_build, contention, cost_by_pred
-├── data/                      # Collected benchmark/profile/scheduling outputs
-├── tools/                     # Fetched artifacts (cross toolchain) — gitignored
-├── ModelBlaster/               # Git submodule — the compiler, for BOTH flows
-├── zephyr-chipyard-sw/         # Git submodule — Zephyr BSP + samples
-│   └── modelblaster/           #   the SAME repo again, and it should be the same commit
-│       └── third_party/KernelBlaster/  # nested submodule — originating research project
-├── env.yml                     # cvxpy+MOSEK conda env ("xpu-rt-schedule") for
-                                 #   ModelBlaster's own MOSEK bridge scripts (Flow A)
-└── pyproject.toml              # xpu-rt's own deps (`pip install -e .`); see
-                                 #   scripts/install_xpurt_deps.sh for the
-                                 #   spike-only reproducible-flow's dependency set
-```
+Every top-level directory. Where a directory has its own `README.md`, it is linked.
 
+| directory | what it holds |
+|---|---|
+| `xpu-rt/` | the Python scheduler core (`scheduler.py`, `workload*.py`, `profile_loader.py`, the solvers) and its tests |
+| `scripts/` | entry points: scheduling, the co-design loop, the board campaigns, the verifiers, the figure scripts (`scripts/attic/` holds retired ones) |
+| `sims/` | the Isaac Lab flight simulator: tasks, models, training, the flight and figure drivers under `sims/scripts/`; `sims/IsaacLab` is a submodule |
+| [`artifact/`](artifact/README.md) | the evaluation artifact: ordered steps, the no-hardware gate (`verify_no_hardware.sh`), generated per-figure and per-deployment bundles under `implementations/` |
+| [`docs/`](docs/README.md) | every reproduction and reference page |
+| [`board/`](board/README.md) | code that runs on the SpaceMiT K1: the traced ROS 2 baseline nodes and the per-core samplers |
+| [`runtime/`](runtime/README.md) | the K1 board tools (deploy, IME build check, contention, cost-by-predecessor), all over ssh |
+| `results/` | measured and derived results; `results/codesign_feedback/` is the co-design study (board traces under `ros_traced/` and `xpurt_long/`, cadence traces, campaigns, `refined/` figures and their sidecars) |
+| `schedules/` | solved schedules (`scheduled_*.json`, `cmp_*`, `best*`) the board executed or the figures draw |
+| `data/` | workload specs (`data/toplevel/`), the hardware and model banks (`data/banks/`), profile dumps, and generated tables such as `data/ros_arms.json` |
+| [`gen/`](gen/README.md) | per-dispatch profiles: FireSim / spike targets at the top level; the K1 trees in `gen/mb/` (ModelBlaster dispatch graphs, IR, hybrid profiles), `gen/mb_cal/` (board-calibrated YOLO), `gen/mb_shard/` and `gen/mb_shard_nav/` (per-width shard tables), `gen/mb_force/` (matrix engine forced on); `gen/clk25/` is the 25 MHz clock-invariance control |
+| [`examples/`](examples/README.md) | runnable examples, one per topic (`examples/run_all.py`) |
+| `tests/` | repository-level tests (`pytest` from the root also collects `xpu-rt/tests/`) |
+| `benchmarks/` | the freshness-validity evaluation (`benchmarks/freshness_eval/`) |
+| [`qnn_models/`](qnn_models/README.md), [`qnn_scheduler/`](qnn_scheduler/README.md) | Flow C: models exported to QNN and the heterogeneous schedule on a QRB5165 |
+| [`runs/`](runs/README.md) | run notes and traces cited by the Qualcomm and FPGA pages |
+| [`plots/`](plots/README.md) | figures for the Qualcomm and FireSim pages (the co-design figures live in `results/codesign_feedback/refined/`) |
+| `attic/` | retired pages kept verbatim (a past review, the commit-message archive); not recipes |
+| [`ModelBlaster/`](ModelBlaster/README.md) | submodule — the compiler / codegen for both flows |
+| `zephyr-chipyard-sw/` | submodule — Zephyr BSP and samples (Flow A) |
+| `hw/chipyard` | submodule — the Chipyard SoC generator (Flow A hardware) |
+| `tools/`, `datasets/`, `out/` | local and gitignored: the fetched cross toolchain, training datasets ([`docs/Artifact/external_data.md`](docs/Artifact/external_data.md)), example outputs |
+
+Top-level files: `pyproject.toml` (xpu-rt's own dependencies, `pip install -e .`),
+`requirements-host.txt` and `requirements-isaac.txt` (the two frozen interpreters,
+[`docs/Artifact/environment.md`](docs/Artifact/environment.md)), `env.yml`, `conftest.py` (makes `pytest` at the root
+import `xpu-rt/` and `scripts/`).
 
 ### Data/Artifact Flow
 
 1. **Profile.** ModelBlaster's `run_model_k1.sh` (Flow B, on the board) or the
    spike/firesim runners (Flow A) write an IREE-shaped `results.csv` under
-   `gen_mb/profile/<impl>/<target>/<model>/<basename>/<topo_tag>/`. The
+   `gen/mb/profile/<impl>/<target>/<model>/<basename>/<topo_tag>/`. The
    `topo_tag` records which harts the run used, derived from `MB_CORES` in the
    same place as the pool width and the affinity mask, so a profile cannot
    claim a core count it did not run on.
@@ -556,11 +572,10 @@ XPU-RT/
 
 ### Data/Artifact Flow Between This Repo and `ModelBlaster` (Flow A)
 
-ModelBlaster is a submodule nested in `zephyr-chipyard-sw/modelblaster` — but its
-own scripts still reach back into XPU-RT via the `XPURT_ROOT` env var and a
-`[tool.uv.sources]` entry rather than a relative import, so
-`XPURT_ROOT` needs to be set to `../..` (not left at its sibling-checkout
-default) when running from inside the submodule. See
+ModelBlaster is the top-level submodule `ModelBlaster/`; its own scripts reach back into XPU-RT via the
+`XPURT_ROOT` env var and a `[tool.uv.sources]` entry rather than a relative import, so `XPURT_ROOT`
+needs to be set to `..` (not left at its sibling-checkout default) when running from inside the
+submodule. See
 ["Flow A: ModelBlaster as the compiler backend"](#flow-a-modelblaster-as-the-compiler-backend)
 above.
 

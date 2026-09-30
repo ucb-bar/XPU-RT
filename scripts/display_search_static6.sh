@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # The displayed pair for the figure that reproduces the SUBMITTED figure's baseline deployment.
 #
-# Arms as scripts/campaign_static6.sh flew them: the static 6-core partition the submitted figure's
+# Arms as scripts/campaign_static6.sh flew them: the static 6-core partition the Tier A showdown's
 # panel I drew -- a four-hart YOLO pool on the P cluster, nav and control each pinned to one further
 # hart, two harts never touched -- at 30.7 ms camera->goal with control in the goal callback at 30 Hz,
 # against the scheduled arm given no placement instruction, 26.75 ms with control on its own 100 Hz

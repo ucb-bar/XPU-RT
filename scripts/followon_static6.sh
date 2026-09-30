@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Everything the submitted-equivalent figure still needs from the GPU after its census, in order.
+# Everything the per-node-pinning figure still needs from the GPU after its census, in order.
 #
-# The baseline here is the deployment the submitted figure's panel I actually drew: `cp3`, a static
+# The baseline here is the deployment the Tier A showdown's panel I actually drew: `cp3`, a static
 # partition with a four-hart YOLO pool, nav and control each pinned to one further hart, and two harts
 # never touched. Its cadence is the same 30 Hz as the 8-core arm (control gap 33.40 ms on both), so the
 # flights differ from the free30 form only in which baseline deployment the schedule panel shows.

@@ -3,7 +3,7 @@
 Every command here was run on 2026-08-29 against the board. Timings are from
 that session, so they tell you what "normal" looks like.
 
-Setup lives in [`environment.md`](../environment.md); this is the operational
+Setup lives in [`environment.md`](../Artifact/environment.md); this is the operational
 page. [`the_loop.md`](../Feature/the_loop.md) is the index for what the pieces mean.
 
 ## The board
@@ -54,7 +54,7 @@ The board is shared. Check before you take it.
 ## Profile one model
 
 ```bash
-PY=$PWD/.venv/bin/python PROFILE_OUT_ROOT=$PWD/gen_mb/profile ITERS=3 \
+PY=$PWD/.venv/bin/python PROFILE_OUT_ROOT=$PWD/gen/mb/profile ITERS=3 \
     bash ModelBlaster/scripts/run_model_k1.sh ffn_block int8 rvv_x60 0
 ```
 
@@ -69,14 +69,14 @@ on every run and the profile is only written if it passes:
 ```
 
 Output lands as an IREE-shaped `results.csv` under
-`gen_mb/profile/<impl>/<target>/<model>/<basename>/<spec>/<topo_tag>/`. The
+`gen/mb/profile/<impl>/<target>/<model>/<basename>/<spec>/<topo_tag>/`. The
 schema outlived the IREE path because it is what `profile_loader.py` reads.
 
 ### Several harts
 
 ```bash
 MB_CORES=0,1,2,3 ITERS=7 PY=$PWD/.venv/bin/python \
-  PROFILE_OUT_ROOT=$PWD/gen_mb/profile \
+  PROFILE_OUT_ROOT=$PWD/gen/mb/profile \
   bash ModelBlaster/scripts/run_model_k1.sh dronet int8 rvv_x60 0
 ```
 
@@ -221,7 +221,7 @@ ModelBlaster/scripts/check_rvv_avl.py     # refuses the chained form
 | `undeclared identifier ..._rvv_x60` | an emitter calling `_weight_name` without `backend` |
 | `fatal error: model.h` | header staging; fixed in both harnesses, re-run cmake clean |
 | profile written but suspiciously fast | check the `topo_` tag matches `MB_CORES` |
-| empty profile tree from `find` | `gen_mb/profile` is a **symlink**; `find` does not follow it |
+| empty profile tree from `find` | `gen/mb/profile` is a **symlink**; `find` does not follow it |
 | board "busy" but nothing running | you read `/proc/loadavg`; use per-CPU `/proc/stat` |
 | every solver returns the same schedule | the workload is uncontended — that is the answer, not a bug |
 

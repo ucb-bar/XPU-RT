@@ -70,7 +70,7 @@ git submodule update --init sims/IsaacLab
 
 ## 2. Build the `xpurt` conda environment
 
-Follow **[`docs/xpurt_env_setup.md`](../xpurt_env_setup.md)** end to end. It
+Follow **[`docs/Artifact/xpurt_env_setup.md`](../Artifact/xpurt_env_setup.md)** end to end. It
 covers installing Isaac Sim, running IsaacLab's installer against the
 vendored submodule, and the project-specific extras (ultralytics, imageio,
 matplotlib) — including version pins and an EULA-acceptance step that are
