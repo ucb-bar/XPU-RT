@@ -1,0 +1,1538 @@
+{
+ "baseline_seed4": {
+  "artifacts_rc": 0,
+  "artifacts_s": 0.1,
+  "solver": "milp",
+  "solve_s": 1.9,
+  "sched_rc": 0,
+  "schedule": "schedules/scheduled_baseline_seed4_profiled.json",
+  "makespan_line": "Makespan (non-periodic): 0.00 ms",
+  "sched_makespan_nonperiodic_ms": 0.0,
+  "status": "run",
+  "runtime_rc": 0,
+  "dispatch_table_sha256": "ceca1d5ab6ac5da9813a09d0f315ec8bc936257fb3506b0f6d28e83b5b91a475",
+  "runtime_main_sha256": "7165655f8c1484e96428db5cc1f90dfbba72de073441ebe01b0956e25ab5e5c3",
+  "n_entries": 12,
+  "table_predicted_makespan_ms": 20.107,
+  "placement": {
+   "dronet_a/dronet_full": {
+    "dsp": 3
+   },
+   "mlp_control/mlp_control_full": {
+    "cpu": 6
+   },
+   "dronet_b/dronet_full": {
+    "dsp": 3
+   }
+  },
+  "lane_entry_counts": {
+   "cpu": 6,
+   "dsp": 6
+  },
+  "contexts": [
+   "ctx_dronet_full_hta__Dsp.bin",
+   "ctx_mlp_control_fp32__Cpu.bin"
+  ],
+  "predicate7_excluded_placements": [],
+  "stage_rc": 0,
+  "predicate6_missing_contexts": [],
+  "reps": {
+   "rep1": {
+    "ok": true,
+    "entries_ran": 12,
+    "entries_total": 12,
+    "wall_ms": 20.043,
+    "predicted_ms": 20.107,
+    "ratio": 1.0,
+    "bringup_lines": [
+     "[bringup] DSP  /root/qnn_runtime_ctx/ctx_dronet_full_hta__Dsp.bin \u2192 1 graph(s): dronet_full_hta",
+     "[bringup] CPU  /root/qnn_runtime_ctx/ctx_mlp_control_fp32__Cpu.bin \u2192 1 graph(s): mlp_control_fp32"
+    ],
+    "bringup_missing": [],
+    "iterations": [
+     "[main] iteration 1/2 wall=20.038 ms",
+     "[main] iteration 2/2 wall=20.043 ms"
+    ],
+    "per_tile": {
+     "dronet_a/dronet_full@dsp": {
+      "pred_ms": 0.645,
+      "n": 3,
+      "actual_p50_ms": 0.771,
+      "actual_min_ms": 0.758,
+      "actual_max_ms": 0.873,
+      "ratio_p50": 1.195
+     },
+     "mlp_control/mlp_control_full@cpu": {
+      "pred_ms": 0.107,
+      "n": 6,
+      "actual_p50_ms": 0.04,
+      "actual_min_ms": 0.035,
+      "actual_max_ms": 0.048,
+      "ratio_p50": 0.374
+     },
+     "dronet_b/dronet_full@dsp": {
+      "pred_ms": 0.645,
+      "n": 3,
+      "actual_p50_ms": 0.74,
+      "actual_min_ms": 0.703,
+      "actual_max_ms": 0.801,
+      "ratio_p50": 1.147
+     }
+    },
+    "trace_rows": 12,
+    "trace_ctx_pairs": [
+     "dronet_a/dronet_full/dsp/ctx_dronet_full_hta__Dsp.bin",
+     "dronet_b/dronet_full/dsp/ctx_dronet_full_hta__Dsp.bin",
+     "mlp_control/mlp_control_full/cpu/ctx_mlp_control_fp32__Cpu.bin"
+    ],
+    "lock_wait_s": 0.27,
+    "lock_probe_rc": 0,
+    "wall_s": 5.5,
+    "flow_c_rc": 0
+   },
+   "rep2": {
+    "ok": true,
+    "entries_ran": 12,
+    "entries_total": 12,
+    "wall_ms": 20.039,
+    "predicted_ms": 20.107,
+    "ratio": 1.0,
+    "bringup_lines": [
+     "[bringup] DSP  /root/qnn_runtime_ctx/ctx_dronet_full_hta__Dsp.bin \u2192 1 graph(s): dronet_full_hta",
+     "[bringup] CPU  /root/qnn_runtime_ctx/ctx_mlp_control_fp32__Cpu.bin \u2192 1 graph(s): mlp_control_fp32"
+    ],
+    "bringup_missing": [],
+    "iterations": [
+     "[main] iteration 1/2 wall=20.040 ms",
+     "[main] iteration 2/2 wall=20.039 ms"
+    ],
+    "per_tile": {
+     "dronet_a/dronet_full@dsp": {
+      "pred_ms": 0.645,
+      "n": 3,
+      "actual_p50_ms": 0.795,
+      "actual_min_ms": 0.693,
+      "actual_max_ms": 0.803,
+      "ratio_p50": 1.233
+     },
+     "mlp_control/mlp_control_full@cpu": {
+      "pred_ms": 0.107,
+      "n": 6,
+      "actual_p50_ms": 0.034,
+      "actual_min_ms": 0.032,
+      "actual_max_ms": 0.038,
+      "ratio_p50": 0.318
+     },
+     "dronet_b/dronet_full@dsp": {
+      "pred_ms": 0.645,
+      "n": 3,
+      "actual_p50_ms": 0.79,
+      "actual_min_ms": 0.772,
+      "actual_max_ms": 0.901,
+      "ratio_p50": 1.225
+     }
+    },
+    "trace_rows": 12,
+    "trace_ctx_pairs": [
+     "dronet_a/dronet_full/dsp/ctx_dronet_full_hta__Dsp.bin",
+     "dronet_b/dronet_full/dsp/ctx_dronet_full_hta__Dsp.bin",
+     "mlp_control/mlp_control_full/cpu/ctx_mlp_control_fp32__Cpu.bin"
+    ],
+    "lock_wait_s": 0.32,
+    "lock_probe_rc": 0,
+    "wall_s": 5.4,
+    "flow_c_rc": 0
+   },
+   "rep3": {
+    "ok": true,
+    "entries_ran": 12,
+    "entries_total": 12,
+    "wall_ms": 20.04,
+    "predicted_ms": 20.107,
+    "ratio": 1.0,
+    "bringup_lines": [
+     "[bringup] DSP  /root/qnn_runtime_ctx/ctx_dronet_full_hta__Dsp.bin \u2192 1 graph(s): dronet_full_hta",
+     "[bringup] CPU  /root/qnn_runtime_ctx/ctx_mlp_control_fp32__Cpu.bin \u2192 1 graph(s): mlp_control_fp32"
+    ],
+    "bringup_missing": [],
+    "iterations": [
+     "[main] iteration 1/2 wall=20.039 ms",
+     "[main] iteration 2/2 wall=20.040 ms"
+    ],
+    "per_tile": {
+     "dronet_a/dronet_full@dsp": {
+      "pred_ms": 0.645,
+      "n": 3,
+      "actual_p50_ms": 0.793,
+      "actual_min_ms": 0.759,
+      "actual_max_ms": 0.891,
+      "ratio_p50": 1.229
+     },
+     "mlp_control/mlp_control_full@cpu": {
+      "pred_ms": 0.107,
+      "n": 6,
+      "actual_p50_ms": 0.0345,
+      "actual_min_ms": 0.033,
+      "actual_max_ms": 0.037,
+      "ratio_p50": 0.322
+     },
+     "dronet_b/dronet_full@dsp": {
+      "pred_ms": 0.645,
+      "n": 3,
+      "actual_p50_ms": 0.83,
+      "actual_min_ms": 0.755,
+      "actual_max_ms": 0.881,
+      "ratio_p50": 1.287
+     }
+    },
+    "trace_rows": 12,
+    "trace_ctx_pairs": [
+     "dronet_a/dronet_full/dsp/ctx_dronet_full_hta__Dsp.bin",
+     "dronet_b/dronet_full/dsp/ctx_dronet_full_hta__Dsp.bin",
+     "mlp_control/mlp_control_full/cpu/ctx_mlp_control_fp32__Cpu.bin"
+    ],
+    "lock_wait_s": 0.29,
+    "lock_probe_rc": 0,
+    "wall_s": 5.5,
+    "flow_c_rc": 0
+   }
+  }
+ },
+ "baseline_seed5": {
+  "artifacts_rc": 0,
+  "artifacts_s": 0.1,
+  "solver": "milp",
+  "solve_s": 1.8,
+  "sched_rc": 0,
+  "schedule": "schedules/scheduled_baseline_seed5_profiled.json",
+  "makespan_line": "Makespan (non-periodic): 0.00 ms",
+  "sched_makespan_nonperiodic_ms": 0.0,
+  "status": "run",
+  "runtime_rc": 0,
+  "dispatch_table_sha256": "3c478c8083e9ce487c91eb3cbb3bf680cc30e7c21a0a0dc93dc2abe889aba4e0",
+  "runtime_main_sha256": "7165655f8c1484e96428db5cc1f90dfbba72de073441ebe01b0956e25ab5e5c3",
+  "n_entries": 12,
+  "table_predicted_makespan_ms": 48.107,
+  "placement": {
+   "dronet/dronet_full": {
+    "dsp": 2,
+    "hta": 1
+   },
+   "mlp_control/mlp_control_full": {
+    "cpu": 9
+   }
+  },
+  "lane_entry_counts": {
+   "cpu": 9,
+   "dsp": 2,
+   "hta": 1
+  },
+  "contexts": [
+   "ctx_dronet_full_hta__Dsp.bin",
+   "ctx_dronet_full_hta__Hta.bin",
+   "ctx_mlp_control_fp32__Cpu.bin"
+  ],
+  "predicate7_excluded_placements": [],
+  "predicate6_missing_contexts": [],
+  "reps": {
+   "rep1": {
+    "ok": true,
+    "entries_ran": 12,
+    "entries_total": 12,
+    "wall_ms": 48.041,
+    "predicted_ms": 48.107,
+    "ratio": 1.0,
+    "bringup_lines": [
+     "[bringup] DSP  /root/qnn_runtime_ctx/ctx_dronet_full_hta__Dsp.bin \u2192 1 graph(s): dronet_full_hta",
+     "[bringup] CPU  /root/qnn_runtime_ctx/ctx_mlp_control_fp32__Cpu.bin \u2192 1 graph(s): mlp_control_fp32",
+     "[bringup] HTA  /root/qnn_runtime_ctx/ctx_dronet_full_hta__Hta.bin \u2192 1 graph(s): dronet_full_hta"
+    ],
+    "bringup_missing": [],
+    "iterations": [
+     "[main] iteration 1/2 wall=48.042 ms",
+     "11,mlp_control,8,0,qnn_graph,mlp_control_full,cpu,5,48.000000,0.1[main] iteration 2/2 wall=48.041 ms"
+    ],
+    "per_tile": {
+     "dronet/dronet_full@dsp": {
+      "pred_ms": 0.645,
+      "n": 2,
+      "actual_p50_ms": 0.9505,
+      "actual_min_ms": 0.914,
+      "actual_max_ms": 0.987,
+      "ratio_p50": 1.474
+     },
+     "mlp_control/mlp_control_full@cpu": {
+      "pred_ms": 0.107,
+      "n": 8,
+      "actual_p50_ms": 0.037,
+      "actual_min_ms": 0.036,
+      "actual_max_ms": 0.042,
+      "ratio_p50": 0.346
+     },
+     "dronet/dronet_full@hta": {
+      "pred_ms": 2.03,
+      "n": 1,
+      "actual_p50_ms": 1.992,
+      "actual_min_ms": 1.992,
+      "actual_max_ms": 1.992,
+      "ratio_p50": 0.981
+     }
+    },
+    "trace_rows": 13,
+    "trace_ctx_pairs": [
+     "dronet/dronet_full/dsp/ctx_dronet_full_hta__Dsp.bin",
+     "dronet/dronet_full/hta/ctx_dronet_full_hta__Hta.bin",
+     "mlp_control/mlp_control_full/cpu/ctx_mlp_control_fp32__Cpu.bin"
+    ],
+    "lock_wait_s": 0.37,
+    "lock_probe_rc": 0,
+    "wall_s": 5.6,
+    "flow_c_rc": 0
+   },
+   "rep2": {
+    "ok": true,
+    "entries_ran": 12,
+    "entries_total": 12,
+    "wall_ms": 48.042,
+    "predicted_ms": 48.107,
+    "ratio": 1.0,
+    "bringup_lines": [
+     "[bringup] DSP  /root/qnn_runtime_ctx/ctx_dronet_full_hta__Dsp.bin \u2192 1 graph(s): dronet_full_hta",
+     "[bringup] CPU  /root/qnn_runtime_ctx/ctx_mlp_control_fp32__Cpu.bin \u2192 1 graph(s): mlp_control_fp32",
+     "[bringup] HTA  /root/qnn_runtime_ctx/ctx_dronet_full_hta__Hta.bin \u2192 1 graph(s): dronet_full_hta"
+    ],
+    "bringup_missing": [],
+    "iterations": [
+     "[main] iteration 1/2 wall=48.043 ms",
+     "[main] iteration 2/2 wall=48.042 ms"
+    ],
+    "per_tile": {
+     "dronet/dronet_full@dsp": {
+      "pred_ms": 0.645,
+      "n": 2,
+      "actual_p50_ms": 0.8525,
+      "actual_min_ms": 0.845,
+      "actual_max_ms": 0.86,
+      "ratio_p50": 1.322
+     },
+     "mlp_control/mlp_control_full@cpu": {
+      "pred_ms": 0.107,
+      "n": 9,
+      "actual_p50_ms": 0.042,
+      "actual_min_ms": 0.035,
+      "actual_max_ms": 0.063,
+      "ratio_p50": 0.393
+     },
+     "dronet/dronet_full@hta": {
+      "pred_ms": 2.03,
+      "n": 1,
+      "actual_p50_ms": 1.698,
+      "actual_min_ms": 1.698,
+      "actual_max_ms": 1.698,
+      "ratio_p50": 0.836
+     }
+    },
+    "trace_rows": 12,
+    "trace_ctx_pairs": [
+     "dronet/dronet_full/dsp/ctx_dronet_full_hta__Dsp.bin",
+     "dronet/dronet_full/hta/ctx_dronet_full_hta__Hta.bin",
+     "mlp_control/mlp_control_full/cpu/ctx_mlp_control_fp32__Cpu.bin"
+    ],
+    "lock_wait_s": 0.27,
+    "lock_probe_rc": 0,
+    "wall_s": 5.6,
+    "flow_c_rc": 0
+   },
+   "rep3": {
+    "ok": true,
+    "entries_ran": 12,
+    "entries_total": 12,
+    "wall_ms": 48.046,
+    "predicted_ms": 48.107,
+    "ratio": 1.0,
+    "bringup_lines": [
+     "[bringup] DSP  /root/qnn_runtime_ctx/ctx_dronet_full_hta__Dsp.bin \u2192 1 graph(s): dronet_full_hta",
+     "[bringup] CPU  /root/qnn_runtime_ctx/ctx_mlp_control_fp32__Cpu.bin \u2192 1 graph(s): mlp_control_fp32",
+     "[bringup] HTA  /root/qnn_runtime_ctx/ctx_dronet_full_hta__Hta.bin \u2192 1 graph(s): dronet_full_hta"
+    ],
+    "bringup_missing": [],
+    "iterations": [
+     "[main] iteration 1/2 wall=48.045 ms",
+     "[main] iteration 2/2 wall=48.046 ms"
+    ],
+    "per_tile": {
+     "dronet/dronet_full@dsp": {
+      "pred_ms": 0.645,
+      "n": 2,
+      "actual_p50_ms": 0.867,
+      "actual_min_ms": 0.855,
+      "actual_max_ms": 0.879,
+      "ratio_p50": 1.344
+     },
+     "mlp_control/mlp_control_full@cpu": {
+      "pred_ms": 0.107,
+      "n": 9,
+      "actual_p50_ms": 0.039,
+      "actual_min_ms": 0.036,
+      "actual_max_ms": 0.045,
+      "ratio_p50": 0.364
+     },
+     "dronet/dronet_full@hta": {
+      "pred_ms": 2.03,
+      "n": 1,
+      "actual_p50_ms": 1.733,
+      "actual_min_ms": 1.733,
+      "actual_max_ms": 1.733,
+      "ratio_p50": 0.854
+     }
+    },
+    "trace_rows": 12,
+    "trace_ctx_pairs": [
+     "dronet/dronet_full/dsp/ctx_dronet_full_hta__Dsp.bin",
+     "dronet/dronet_full/hta/ctx_dronet_full_hta__Hta.bin",
+     "mlp_control/mlp_control_full/cpu/ctx_mlp_control_fp32__Cpu.bin"
+    ],
+    "lock_wait_s": 0.28,
+    "lock_probe_rc": 0,
+    "wall_s": 5.6,
+    "flow_c_rc": 0
+   }
+  }
+ },
+ "baseline_seed7": {
+  "artifacts_rc": 0,
+  "artifacts_s": 0.1,
+  "solver": "milp",
+  "solve_s": 1.8,
+  "sched_rc": 0,
+  "schedule": "schedules/scheduled_baseline_seed7_profiled.json",
+  "makespan_line": "Makespan (non-periodic): 0.00 ms",
+  "sched_makespan_nonperiodic_ms": 0.0,
+  "status": "run",
+  "runtime_rc": 0,
+  "dispatch_table_sha256": "a879fa2ea48fd08c5d680edc8be3734b3b68e4e65d1ac650b7b46902cdb2c57b",
+  "runtime_main_sha256": "7165655f8c1484e96428db5cc1f90dfbba72de073441ebe01b0956e25ab5e5c3",
+  "n_entries": 6,
+  "table_predicted_makespan_ms": 16.645,
+  "placement": {
+   "dronet/dronet_full": {
+    "dsp": 3
+   },
+   "mlp_control/mlp_control_full": {
+    "cpu": 3
+   }
+  },
+  "lane_entry_counts": {
+   "cpu": 3,
+   "dsp": 3
+  },
+  "contexts": [
+   "ctx_dronet_full_hta__Dsp.bin",
+   "ctx_mlp_control_fp32__Cpu.bin"
+  ],
+  "predicate7_excluded_placements": [],
+  "predicate6_missing_contexts": [],
+  "reps": {
+   "rep1": {
+    "ok": true,
+    "entries_ran": 6,
+    "entries_total": 6,
+    "wall_ms": 18.183,
+    "predicted_ms": 16.645,
+    "ratio": 1.09,
+    "bringup_lines": [
+     "[bringup] DSP  /root/qnn_runtime_ctx/ctx_dronet_full_hta__Dsp.bin \u2192 1 graph(s): dronet_full_hta",
+     "[bringup] CPU  /root/qnn_runtime_ctx/ctx_mlp_control_fp32__Cpu.bin \u2192 1 graph(s): mlp_control_fp32"
+    ],
+    "bringup_missing": [],
+    "iterations": [
+     "[main] iteration 1/2 wall=16.609 ms",
+     "[main] iteration 2/2 wall=18.183 ms"
+    ],
+    "per_tile": {
+     "dronet/dronet_full@dsp": {
+      "pred_ms": 0.645,
+      "n": 3,
+      "actual_p50_ms": 2.179,
+      "actual_min_ms": 0.707,
+      "actual_max_ms": 2.279,
+      "ratio_p50": 3.378
+     },
+     "mlp_control/mlp_control_full@cpu": {
+      "pred_ms": 0.107,
+      "n": 3,
+      "actual_p50_ms": 0.043,
+      "actual_min_ms": 0.039,
+      "actual_max_ms": 0.05,
+      "ratio_p50": 0.402
+     }
+    },
+    "trace_rows": 6,
+    "trace_ctx_pairs": [
+     "dronet/dronet_full/dsp/ctx_dronet_full_hta__Dsp.bin",
+     "mlp_control/mlp_control_full/cpu/ctx_mlp_control_fp32__Cpu.bin"
+    ],
+    "lock_wait_s": 0.36,
+    "lock_probe_rc": 0,
+    "wall_s": 5.5,
+    "flow_c_rc": 0
+   },
+   "rep2": {
+    "ok": true,
+    "entries_ran": 6,
+    "entries_total": 6,
+    "wall_ms": 18.261,
+    "predicted_ms": 16.645,
+    "ratio": 1.1,
+    "bringup_lines": [
+     "[bringup] DSP  /root/qnn_runtime_ctx/ctx_dronet_full_hta__Dsp.bin \u2192 1 graph(s): dronet_full_hta",
+     "[bringup] CPU  /root/qnn_runtime_ctx/ctx_mlp_control_fp32__Cpu.bin \u2192 1 graph(s): mlp_control_fp32"
+    ],
+    "bringup_missing": [],
+    "iterations": [
+     "[main] iteration 1/2 wall=18.334 ms",
+     "[main] iteration 2/2 wall=18.261 ms"
+    ],
+    "per_tile": {
+     "dronet/dronet_full@dsp": {
+      "pred_ms": 0.645,
+      "n": 3,
+      "actual_p50_ms": 0.694,
+      "actual_min_ms": 0.595,
+      "actual_max_ms": 2.227,
+      "ratio_p50": 1.076
+     },
+     "mlp_control/mlp_control_full@cpu": {
+      "pred_ms": 0.107,
+      "n": 3,
+      "actual_p50_ms": 0.048,
+      "actual_min_ms": 0.046,
+      "actual_max_ms": 0.05,
+      "ratio_p50": 0.449
+     }
+    },
+    "trace_rows": 6,
+    "trace_ctx_pairs": [
+     "dronet/dronet_full/dsp/ctx_dronet_full_hta__Dsp.bin",
+     "mlp_control/mlp_control_full/cpu/ctx_mlp_control_fp32__Cpu.bin"
+    ],
+    "lock_wait_s": 0.34,
+    "lock_probe_rc": 0,
+    "wall_s": 5.6,
+    "flow_c_rc": 0
+   },
+   "rep3": {
+    "ok": true,
+    "entries_ran": 6,
+    "entries_total": 6,
+    "wall_ms": 18.193,
+    "predicted_ms": 16.645,
+    "ratio": 1.09,
+    "bringup_lines": [
+     "[bringup] DSP  /root/qnn_runtime_ctx/ctx_dronet_full_hta__Dsp.bin \u2192 1 graph(s): dronet_full_hta",
+     "[bringup] CPU  /root/qnn_runtime_ctx/ctx_mlp_control_fp32__Cpu.bin \u2192 1 graph(s): mlp_control_fp32"
+    ],
+    "bringup_missing": [],
+    "iterations": [
+     "[main] iteration 1/2 wall=16.617 ms",
+     "[main] iteration 2/2 wall=18.193 ms"
+    ],
+    "per_tile": {
+     "dronet/dronet_full@dsp": {
+      "pred_ms": 0.645,
+      "n": 3,
+      "actual_p50_ms": 2.118,
+      "actual_min_ms": 0.715,
+      "actual_max_ms": 2.19,
+      "ratio_p50": 3.284
+     },
+     "mlp_control/mlp_control_full@cpu": {
+      "pred_ms": 0.107,
+      "n": 3,
+      "actual_p50_ms": 0.047,
+      "actual_min_ms": 0.045,
+      "actual_max_ms": 0.048,
+      "ratio_p50": 0.439
+     }
+    },
+    "trace_rows": 6,
+    "trace_ctx_pairs": [
+     "dronet/dronet_full/dsp/ctx_dronet_full_hta__Dsp.bin",
+     "mlp_control/mlp_control_full/cpu/ctx_mlp_control_fp32__Cpu.bin"
+    ],
+    "lock_wait_s": 0.35,
+    "lock_probe_rc": 0,
+    "wall_s": 5.5,
+    "flow_c_rc": 0
+   }
+  }
+ },
+ "fused_seed4": {
+  "artifacts_rc": 0,
+  "artifacts_s": 0.1,
+  "solver": "milp",
+  "solve_s": 1.9,
+  "sched_rc": 0,
+  "schedule": "schedules/scheduled_fused_seed4_profiled.json",
+  "makespan_line": "Makespan (non-periodic): 0.00 ms",
+  "sched_makespan_nonperiodic_ms": 0.0,
+  "status": "run",
+  "runtime_rc": 0,
+  "dispatch_table_sha256": "3dab31cc71e8ef239a268cfb175449101dc08062da8fcc088be9ae7614932b53",
+  "runtime_main_sha256": "7165655f8c1484e96428db5cc1f90dfbba72de073441ebe01b0956e25ab5e5c3",
+  "n_entries": 15,
+  "table_predicted_makespan_ms": 20.107,
+  "placement": {
+   "fused_split/fused_depth_conv": {
+    "hta": 2,
+    "dsp": 1
+   },
+   "mlp_control/mlp_control_full": {
+    "dsp": 3,
+    "cpu": 3
+   },
+   "fused_split/fused_vision_conv": {
+    "dsp": 1,
+    "hta": 2
+   },
+   "fused_split/fused_tail": {
+    "dsp": 1,
+    "cpu": 2
+   }
+  },
+  "lane_entry_counts": {
+   "cpu": 5,
+   "dsp": 6,
+   "hta": 4
+  },
+  "contexts": [
+   "ctx_fused_depth_conv__Dsp.bin",
+   "ctx_fused_depth_conv__Hta.bin",
+   "ctx_fused_tail_from_conv__Dsp.bin",
+   "ctx_fused_tail_from_conv_fp32__Cpu.bin",
+   "ctx_fused_vision_conv__Dsp.bin",
+   "ctx_fused_vision_conv__Hta.bin",
+   "ctx_mlp_control__Dsp.bin",
+   "ctx_mlp_control_fp32__Cpu.bin"
+  ],
+  "predicate7_excluded_placements": [],
+  "stage_rc": 0,
+  "predicate6_missing_contexts": [],
+  "reps": {
+   "rep1": {
+    "ok": true,
+    "entries_ran": 15,
+    "entries_total": 15,
+    "wall_ms": 20.451,
+    "predicted_ms": 20.107,
+    "ratio": 1.02,
+    "bringup_lines": [
+     "[bringup] HTA  /root/qnn_runtime_ctx/ctx_fused_depth_conv__Hta.bin \u2192 1 graph(s): fused_depth_conv",
+     "[bringup] DSP  /root/qnn_runtime_ctx/ctx_mlp_control__Dsp.bin \u2192 1 graph(s): mlp_control",
+     "[bringup] DSP  /root/qnn_runtime_ctx/ctx_fused_vision_conv__Dsp.bin \u2192 1 graph(s): fused_vision_conv",
+     "[bringup] DSP  /root/qnn_runtime_ctx/ctx_fused_tail_from_conv__Dsp.bin \u2192 1 graph(s): fused_tail_from_conv",
+     "[bringup] CPU  /root/qnn_runtime_ctx/ctx_mlp_control_fp32__Cpu.bin \u2192 1 graph(s): mlp_control_fp32",
+     "[bringup] HTA  /root/qnn_runtime_ctx/ctx_fused_vision_conv__Hta.bin \u2192 1 graph(s): fused_vision_conv",
+     "[bringup] DSP  /root/qnn_runtime_ctx/ctx_fused_depth_conv__Dsp.bin \u2192 1 graph(s): fused_depth_conv",
+     "[bringup] CPU  /root/qnn_runtime_ctx/ctx_fused_tail_from_conv_fp32__Cpu.bin \u2192 1 graph(s): fused_tail_from_conv"
+    ],
+    "bringup_missing": [],
+    "iterations": [
+     "[main] iteration 1/2 wall=20.454 ms",
+     "[main] iteration 2/2 wall=20.451 ms"
+    ],
+    "per_tile": {
+     "fused_split/fused_depth_conv@hta": {
+      "pred_ms": 1.568,
+      "n": 2,
+      "actual_p50_ms": 0.759,
+      "actual_min_ms": 0.564,
+      "actual_max_ms": 0.954,
+      "ratio_p50": 0.484
+     },
+     "mlp_control/mlp_control_full@dsp": {
+      "pred_ms": 0.589,
+      "n": 3,
+      "actual_p50_ms": 0.545,
+      "actual_min_ms": 0.474,
+      "actual_max_ms": 0.58,
+      "ratio_p50": 0.925
+     },
+     "fused_split/fused_vision_conv@dsp": {
+      "pred_ms": 0.459,
+      "n": 1,
+      "actual_p50_ms": 0.746,
+      "actual_min_ms": 0.746,
+      "actual_max_ms": 0.746,
+      "ratio_p50": 1.625
+     },
+     "fused_split/fused_tail@dsp": {
+      "pred_ms": 4.303,
+      "n": 1,
+      "actual_p50_ms": 3.409,
+      "actual_min_ms": 3.409,
+      "actual_max_ms": 3.409,
+      "ratio_p50": 0.792
+     },
+     "mlp_control/mlp_control_full@cpu": {
+      "pred_ms": 0.107,
+      "n": 3,
+      "actual_p50_ms": 0.054,
+      "actual_min_ms": 0.05,
+      "actual_max_ms": 0.057,
+      "ratio_p50": 0.505
+     },
+     "fused_split/fused_vision_conv@hta": {
+      "pred_ms": 0.931,
+      "n": 2,
+      "actual_p50_ms": 0.868,
+      "actual_min_ms": 0.79,
+      "actual_max_ms": 0.946,
+      "ratio_p50": 0.932
+     },
+     "fused_split/fused_depth_conv@dsp": {
+      "pred_ms": 0.392,
+      "n": 1,
+      "actual_p50_ms": 0.731,
+      "actual_min_ms": 0.731,
+      "actual_max_ms": 0.731,
+      "ratio_p50": 1.865
+     },
+     "fused_split/fused_tail@cpu": {
+      "pred_ms": 0.354,
+      "n": 2,
+      "actual_p50_ms": 2.0015,
+      "actual_min_ms": 0.795,
+      "actual_max_ms": 3.208,
+      "ratio_p50": 5.654
+     }
+    },
+    "trace_rows": 15,
+    "trace_ctx_pairs": [
+     "fused_split/fused_depth_conv/dsp/ctx_fused_depth_conv__Dsp.bin",
+     "fused_split/fused_depth_conv/hta/ctx_fused_depth_conv__Hta.bin",
+     "fused_split/fused_tail/cpu/ctx_fused_tail_from_conv_fp32__Cpu.bin",
+     "fused_split/fused_tail/dsp/ctx_fused_tail_from_conv__Dsp.bin",
+     "fused_split/fused_vision_conv/dsp/ctx_fused_vision_conv__Dsp.bin",
+     "fused_split/fused_vision_conv/hta/ctx_fused_vision_conv__Hta.bin",
+     "mlp_control/mlp_control_full/cpu/ctx_mlp_control_fp32__Cpu.bin",
+     "mlp_control/mlp_control_full/dsp/ctx_mlp_control__Dsp.bin"
+    ],
+    "lock_wait_s": 0.3,
+    "lock_probe_rc": 0,
+    "wall_s": 4.5,
+    "flow_c_rc": 0
+   },
+   "rep2": {
+    "ok": true,
+    "entries_ran": 15,
+    "entries_total": 15,
+    "wall_ms": 20.459,
+    "predicted_ms": 20.107,
+    "ratio": 1.02,
+    "bringup_lines": [
+     "[bringup] HTA  /root/qnn_runtime_ctx/ctx_fused_depth_conv__Hta.bin \u2192 1 graph(s): fused_depth_conv",
+     "[bringup] DSP  /root/qnn_runtime_ctx/ctx_mlp_control__Dsp.bin \u2192 1 graph(s): mlp_control",
+     "[bringup] DSP  /root/qnn_runtime_ctx/ctx_fused_vision_conv__Dsp.bin \u2192 1 graph(s): fused_vision_conv",
+     "[bringup] DSP  /root/qnn_runtime_ctx/ctx_fused_tail_from_conv__Dsp.bin \u2192 1 graph(s): fused_tail_from_conv",
+     "[bringup] CPU  /root/qnn_runtime_ctx/ctx_mlp_control_fp32__Cpu.bin \u2192 1 graph(s): mlp_control_fp32",
+     "[bringup] HTA  /root/qnn_runtime_ctx/ctx_fused_vision_conv__Hta.bin \u2192 1 graph(s): fused_vision_conv",
+     "[bringup] DSP  /root/qnn_runtime_ctx/ctx_fused_depth_conv__Dsp.bin \u2192 1 graph(s): fused_depth_conv",
+     "[bringup] CPU  /root/qnn_runtime_ctx/ctx_fused_tail_from_conv_fp32__Cpu.bin \u2192 1 graph(s): fused_tail_from_conv"
+    ],
+    "bringup_missing": [],
+    "iterations": [
+     "[main] iteration 1/2 wall=20.408 ms",
+     "[main] iteration 2/2 wall=20.459 ms"
+    ],
+    "per_tile": {
+     "fused_split/fused_depth_conv@hta": {
+      "pred_ms": 1.568,
+      "n": 2,
+      "actual_p50_ms": 0.5885,
+      "actual_min_ms": 0.558,
+      "actual_max_ms": 0.619,
+      "ratio_p50": 0.375
+     },
+     "mlp_control/mlp_control_full@dsp": {
+      "pred_ms": 0.589,
+      "n": 3,
+      "actual_p50_ms": 0.593,
+      "actual_min_ms": 0.448,
+      "actual_max_ms": 0.596,
+      "ratio_p50": 1.007
+     },
+     "fused_split/fused_vision_conv@dsp": {
+      "pred_ms": 0.459,
+      "n": 1,
+      "actual_p50_ms": 0.753,
+      "actual_min_ms": 0.753,
+      "actual_max_ms": 0.753,
+      "ratio_p50": 1.641
+     },
+     "fused_split/fused_tail@dsp": {
+      "pred_ms": 4.303,
+      "n": 1,
+      "actual_p50_ms": 3.326,
+      "actual_min_ms": 3.326,
+      "actual_max_ms": 3.326,
+      "ratio_p50": 0.773
+     },
+     "mlp_control/mlp_control_full@cpu": {
+      "pred_ms": 0.107,
+      "n": 3,
+      "actual_p50_ms": 0.053,
+      "actual_min_ms": 0.048,
+      "actual_max_ms": 0.06,
+      "ratio_p50": 0.495
+     },
+     "fused_split/fused_vision_conv@hta": {
+      "pred_ms": 0.931,
+      "n": 2,
+      "actual_p50_ms": 0.892,
+      "actual_min_ms": 0.725,
+      "actual_max_ms": 1.059,
+      "ratio_p50": 0.958
+     },
+     "fused_split/fused_depth_conv@dsp": {
+      "pred_ms": 0.392,
+      "n": 1,
+      "actual_p50_ms": 0.677,
+      "actual_min_ms": 0.677,
+      "actual_max_ms": 0.677,
+      "ratio_p50": 1.727
+     },
+     "fused_split/fused_tail@cpu": {
+      "pred_ms": 0.354,
+      "n": 2,
+      "actual_p50_ms": 2.116,
+      "actual_min_ms": 0.805,
+      "actual_max_ms": 3.427,
+      "ratio_p50": 5.977
+     }
+    },
+    "trace_rows": 15,
+    "trace_ctx_pairs": [
+     "fused_split/fused_depth_conv/dsp/ctx_fused_depth_conv__Dsp.bin",
+     "fused_split/fused_depth_conv/hta/ctx_fused_depth_conv__Hta.bin",
+     "fused_split/fused_tail/cpu/ctx_fused_tail_from_conv_fp32__Cpu.bin",
+     "fused_split/fused_tail/dsp/ctx_fused_tail_from_conv__Dsp.bin",
+     "fused_split/fused_vision_conv/dsp/ctx_fused_vision_conv__Dsp.bin",
+     "fused_split/fused_vision_conv/hta/ctx_fused_vision_conv__Hta.bin",
+     "mlp_control/mlp_control_full/cpu/ctx_mlp_control_fp32__Cpu.bin",
+     "mlp_control/mlp_control_full/dsp/ctx_mlp_control__Dsp.bin"
+    ],
+    "lock_wait_s": 0.35,
+    "lock_probe_rc": 0,
+    "wall_s": 5.4,
+    "flow_c_rc": 0
+   },
+   "rep3": {
+    "ok": true,
+    "entries_ran": 15,
+    "entries_total": 15,
+    "wall_ms": 20.469,
+    "predicted_ms": 20.107,
+    "ratio": 1.02,
+    "bringup_lines": [
+     "[bringup] HTA  /root/qnn_runtime_ctx/ctx_fused_depth_conv__Hta.bin \u2192 1 graph(s): fused_depth_conv",
+     "[bringup] DSP  /root/qnn_runtime_ctx/ctx_mlp_control__Dsp.bin \u2192 1 graph(s): mlp_control",
+     "[bringup] DSP  /root/qnn_runtime_ctx/ctx_fused_vision_conv__Dsp.bin \u2192 1 graph(s): fused_vision_conv",
+     "[bringup] DSP  /root/qnn_runtime_ctx/ctx_fused_tail_from_conv__Dsp.bin \u2192 1 graph(s): fused_tail_from_conv",
+     "[bringup] CPU  /root/qnn_runtime_ctx/ctx_mlp_control_fp32__Cpu.bin \u2192 1 graph(s): mlp_control_fp32",
+     "[bringup] HTA  /root/qnn_runtime_ctx/ctx_fused_vision_conv__Hta.bin \u2192 1 graph(s): fused_vision_conv",
+     "[bringup] DSP  /root/qnn_runtime_ctx/ctx_fused_depth_conv__Dsp.bin \u2192 1 graph(s): fused_depth_conv",
+     "[bringup] CPU  /root/qnn_runtime_ctx/ctx_fused_tail_from_conv_fp32__Cpu.bin \u2192 1 graph(s): fused_tail_from_conv"
+    ],
+    "bringup_missing": [],
+    "iterations": [
+     "[main] iteration 1/2 wall=20.427 ms",
+     "[main] iteration 2/2 wall=20.469 ms"
+    ],
+    "per_tile": {
+     "fused_split/fused_depth_conv@hta": {
+      "pred_ms": 1.568,
+      "n": 2,
+      "actual_p50_ms": 0.4475,
+      "actual_min_ms": 0.359,
+      "actual_max_ms": 0.536,
+      "ratio_p50": 0.285
+     },
+     "mlp_control/mlp_control_full@dsp": {
+      "pred_ms": 0.589,
+      "n": 3,
+      "actual_p50_ms": 0.468,
+      "actual_min_ms": 0.367,
+      "actual_max_ms": 0.711,
+      "ratio_p50": 0.795
+     },
+     "fused_split/fused_vision_conv@dsp": {
+      "pred_ms": 0.459,
+      "n": 1,
+      "actual_p50_ms": 0.779,
+      "actual_min_ms": 0.779,
+      "actual_max_ms": 0.779,
+      "ratio_p50": 1.697
+     },
+     "fused_split/fused_tail@dsp": {
+      "pred_ms": 4.303,
+      "n": 1,
+      "actual_p50_ms": 3.442,
+      "actual_min_ms": 3.442,
+      "actual_max_ms": 3.442,
+      "ratio_p50": 0.8
+     },
+     "mlp_control/mlp_control_full@cpu": {
+      "pred_ms": 0.107,
+      "n": 3,
+      "actual_p50_ms": 0.053,
+      "actual_min_ms": 0.048,
+      "actual_max_ms": 0.062,
+      "ratio_p50": 0.495
+     },
+     "fused_split/fused_vision_conv@hta": {
+      "pred_ms": 0.931,
+      "n": 2,
+      "actual_p50_ms": 0.825,
+      "actual_min_ms": 0.467,
+      "actual_max_ms": 1.183,
+      "ratio_p50": 0.886
+     },
+     "fused_split/fused_depth_conv@dsp": {
+      "pred_ms": 0.392,
+      "n": 1,
+      "actual_p50_ms": 0.422,
+      "actual_min_ms": 0.422,
+      "actual_max_ms": 0.422,
+      "ratio_p50": 1.077
+     },
+     "fused_split/fused_tail@cpu": {
+      "pred_ms": 0.354,
+      "n": 2,
+      "actual_p50_ms": 2.1395,
+      "actual_min_ms": 0.811,
+      "actual_max_ms": 3.468,
+      "ratio_p50": 6.044
+     }
+    },
+    "trace_rows": 15,
+    "trace_ctx_pairs": [
+     "fused_split/fused_depth_conv/dsp/ctx_fused_depth_conv__Dsp.bin",
+     "fused_split/fused_depth_conv/hta/ctx_fused_depth_conv__Hta.bin",
+     "fused_split/fused_tail/cpu/ctx_fused_tail_from_conv_fp32__Cpu.bin",
+     "fused_split/fused_tail/dsp/ctx_fused_tail_from_conv__Dsp.bin",
+     "fused_split/fused_vision_conv/dsp/ctx_fused_vision_conv__Dsp.bin",
+     "fused_split/fused_vision_conv/hta/ctx_fused_vision_conv__Hta.bin",
+     "mlp_control/mlp_control_full/cpu/ctx_mlp_control_fp32__Cpu.bin",
+     "mlp_control/mlp_control_full/dsp/ctx_mlp_control__Dsp.bin"
+    ],
+    "lock_wait_s": 0.34,
+    "lock_probe_rc": 0,
+    "wall_s": 8.6,
+    "flow_c_rc": 0
+   }
+  }
+ },
+ "fused_seed5": {
+  "artifacts_rc": 0,
+  "artifacts_s": 0.1,
+  "solver": "milp",
+  "solve_s": 2.0,
+  "sched_rc": 0,
+  "schedule": "schedules/scheduled_fused_seed5_profiled.json",
+  "makespan_line": "Makespan (non-periodic): 0.00 ms",
+  "sched_makespan_nonperiodic_ms": 0.0,
+  "status": "run",
+  "runtime_rc": 0,
+  "dispatch_table_sha256": "407145e9a314ee07b1fad5d37c3c9f99539b2bd989b48eab1633701b6d59b5a3",
+  "runtime_main_sha256": "7165655f8c1484e96428db5cc1f90dfbba72de073441ebe01b0956e25ab5e5c3",
+  "n_entries": 18,
+  "table_predicted_makespan_ms": 48.107,
+  "placement": {
+   "fused_split/fused_vision_conv": {
+    "hta": 3
+   },
+   "mlp_control/mlp_control_full": {
+    "cpu": 9
+   },
+   "fused_split/fused_depth_conv": {
+    "hta": 3
+   },
+   "fused_split/fused_tail": {
+    "dsp": 3
+   }
+  },
+  "lane_entry_counts": {
+   "cpu": 9,
+   "dsp": 3,
+   "hta": 6
+  },
+  "contexts": [
+   "ctx_fused_depth_conv__Hta.bin",
+   "ctx_fused_tail_from_conv__Dsp.bin",
+   "ctx_fused_vision_conv__Hta.bin",
+   "ctx_mlp_control_fp32__Cpu.bin"
+  ],
+  "predicate7_excluded_placements": [],
+  "predicate6_missing_contexts": [],
+  "reps": {
+   "rep1": {
+    "ok": true,
+    "entries_ran": 18,
+    "entries_total": 18,
+    "wall_ms": 49.023,
+    "predicted_ms": 48.107,
+    "ratio": 1.02,
+    "bringup_lines": [
+     "[bringup] HTA  /root/qnn_runtime_ctx/ctx_fused_vision_conv__Hta.bin \u2192 1 graph(s): fused_vision_conv",
+     "[bringup] CPU  /root/qnn_runtime_ctx/ctx_mlp_control_fp32__Cpu.bin \u2192 1 graph(s): mlp_control_fp32",
+     "[bringup] HTA  /root/qnn_runtime_ctx/ctx_fused_depth_conv__Hta.bin \u2192 1 graph(s): fused_depth_conv",
+     "[bringup] DSP  /root/qnn_runtime_ctx/ctx_fused_tail_from_conv__Dsp.bin \u2192 1 graph(s): fused_tail_from_conv"
+    ],
+    "bringup_missing": [],
+    "iterations": [
+     "[main] iteration 1/2 wall=48.708 ms",
+     "[main] iteration 2/2 wall=49.023 ms"
+    ],
+    "per_tile": {
+     "fused_split/fused_vision_conv@hta": {
+      "pred_ms": 0.931,
+      "n": 3,
+      "actual_p50_ms": 1.258,
+      "actual_min_ms": 0.779,
+      "actual_max_ms": 3.176,
+      "ratio_p50": 1.351
+     },
+     "mlp_control/mlp_control_full@cpu": {
+      "pred_ms": 0.107,
+      "n": 9,
+      "actual_p50_ms": 0.054,
+      "actual_min_ms": 0.039,
+      "actual_max_ms": 0.081,
+      "ratio_p50": 0.505
+     },
+     "fused_split/fused_depth_conv@hta": {
+      "pred_ms": 1.568,
+      "n": 3,
+      "actual_p50_ms": 3.057,
+      "actual_min_ms": 0.973,
+      "actual_max_ms": 3.13,
+      "ratio_p50": 1.95
+     },
+     "fused_split/fused_tail@dsp": {
+      "pred_ms": 4.303,
+      "n": 3,
+      "actual_p50_ms": 3.532,
+      "actual_min_ms": 3.484,
+      "actual_max_ms": 3.634,
+      "ratio_p50": 0.821
+     }
+    },
+    "trace_rows": 18,
+    "trace_ctx_pairs": [
+     "fused_split/fused_depth_conv/hta/ctx_fused_depth_conv__Hta.bin",
+     "fused_split/fused_tail/dsp/ctx_fused_tail_from_conv__Dsp.bin",
+     "fused_split/fused_vision_conv/hta/ctx_fused_vision_conv__Hta.bin",
+     "mlp_control/mlp_control_full/cpu/ctx_mlp_control_fp32__Cpu.bin"
+    ],
+    "lock_wait_s": 0.37,
+    "lock_probe_rc": 0,
+    "wall_s": 4.4,
+    "flow_c_rc": 0
+   },
+   "rep2": {
+    "ok": true,
+    "entries_ran": 18,
+    "entries_total": 18,
+    "wall_ms": 48.046,
+    "predicted_ms": 48.107,
+    "ratio": 1.0,
+    "bringup_lines": [
+     "[bringup] HTA  /root/qnn_runtime_ctx/ctx_fused_vision_conv__Hta.bin \u2192 1 graph(s): fused_vision_conv",
+     "[bringup] CPU  /root/qnn_runtime_ctx/ctx_mlp_control_fp32__Cpu.bin \u2192 1 graph(s): mlp_control_fp32",
+     "[bringup] HTA  /root/qnn_runtime_ctx/ctx_fused_depth_conv__Hta.bin \u2192 1 graph(s): fused_depth_conv",
+     "[bringup] DSP  /root/qnn_runtime_ctx/ctx_fused_tail_from_conv__Dsp.bin \u2192 1 graph(s): fused_tail_from_conv"
+    ],
+    "bringup_missing": [],
+    "iterations": [
+     "[main] iteration 1/2 wall=48.044 ms",
+     "[main] iteration 2/2 wall=48.046 ms"
+    ],
+    "per_tile": {
+     "fused_split/fused_vision_conv@hta": {
+      "pred_ms": 0.931,
+      "n": 3,
+      "actual_p50_ms": 1.147,
+      "actual_min_ms": 1.026,
+      "actual_max_ms": 1.232,
+      "ratio_p50": 1.232
+     },
+     "mlp_control/mlp_control_full@cpu": {
+      "pred_ms": 0.107,
+      "n": 9,
+      "actual_p50_ms": 0.053,
+      "actual_min_ms": 0.04,
+      "actual_max_ms": 0.057,
+      "ratio_p50": 0.495
+     },
+     "fused_split/fused_depth_conv@hta": {
+      "pred_ms": 1.568,
+      "n": 3,
+      "actual_p50_ms": 1.165,
+      "actual_min_ms": 1.062,
+      "actual_max_ms": 1.712,
+      "ratio_p50": 0.743
+     },
+     "fused_split/fused_tail@dsp": {
+      "pred_ms": 4.303,
+      "n": 3,
+      "actual_p50_ms": 3.545,
+      "actual_min_ms": 3.514,
+      "actual_max_ms": 3.85,
+      "ratio_p50": 0.824
+     }
+    },
+    "trace_rows": 18,
+    "trace_ctx_pairs": [
+     "fused_split/fused_depth_conv/hta/ctx_fused_depth_conv__Hta.bin",
+     "fused_split/fused_tail/dsp/ctx_fused_tail_from_conv__Dsp.bin",
+     "fused_split/fused_vision_conv/hta/ctx_fused_vision_conv__Hta.bin",
+     "mlp_control/mlp_control_full/cpu/ctx_mlp_control_fp32__Cpu.bin"
+    ],
+    "lock_wait_s": 0.34,
+    "lock_probe_rc": 0,
+    "wall_s": 4.4,
+    "flow_c_rc": 0
+   },
+   "rep3": {
+    "ok": true,
+    "entries_ran": 18,
+    "entries_total": 18,
+    "wall_ms": 48.048,
+    "predicted_ms": 48.107,
+    "ratio": 1.0,
+    "bringup_lines": [
+     "[bringup] HTA  /root/qnn_runtime_ctx/ctx_fused_vision_conv__Hta.bin \u2192 1 graph(s): fused_vision_conv",
+     "[bringup] CPU  /root/qnn_runtime_ctx/ctx_mlp_control_fp32__Cpu.bin \u2192 1 graph(s): mlp_control_fp32",
+     "[bringup] HTA  /root/qnn_runtime_ctx/ctx_fused_depth_conv__Hta.bin \u2192 1 graph(s): fused_depth_conv",
+     "[bringup] DSP  /root/qnn_runtime_ctx/ctx_fused_tail_from_conv__Dsp.bin \u2192 1 graph(s): fused_tail_from_conv"
+    ],
+    "bringup_missing": [],
+    "iterations": [
+     "[main] iteration 1/2 wall=48.046 ms",
+     "[main] iteration 2/2 wall=48.048 ms"
+    ],
+    "per_tile": {
+     "fused_split/fused_vision_conv@hta": {
+      "pred_ms": 0.931,
+      "n": 3,
+      "actual_p50_ms": 1.242,
+      "actual_min_ms": 0.899,
+      "actual_max_ms": 1.392,
+      "ratio_p50": 1.334
+     },
+     "mlp_control/mlp_control_full@cpu": {
+      "pred_ms": 0.107,
+      "n": 9,
+      "actual_p50_ms": 0.055,
+      "actual_min_ms": 0.041,
+      "actual_max_ms": 0.06,
+      "ratio_p50": 0.514
+     },
+     "fused_split/fused_depth_conv@hta": {
+      "pred_ms": 1.568,
+      "n": 3,
+      "actual_p50_ms": 0.82,
+      "actual_min_ms": 0.802,
+      "actual_max_ms": 1.075,
+      "ratio_p50": 0.523
+     },
+     "fused_split/fused_tail@dsp": {
+      "pred_ms": 4.303,
+      "n": 3,
+      "actual_p50_ms": 3.55,
+      "actual_min_ms": 3.515,
+      "actual_max_ms": 3.594,
+      "ratio_p50": 0.825
+     }
+    },
+    "trace_rows": 18,
+    "trace_ctx_pairs": [
+     "fused_split/fused_depth_conv/hta/ctx_fused_depth_conv__Hta.bin",
+     "fused_split/fused_tail/dsp/ctx_fused_tail_from_conv__Dsp.bin",
+     "fused_split/fused_vision_conv/hta/ctx_fused_vision_conv__Hta.bin",
+     "mlp_control/mlp_control_full/cpu/ctx_mlp_control_fp32__Cpu.bin"
+    ],
+    "lock_wait_s": 0.32,
+    "lock_probe_rc": 0,
+    "wall_s": 6.7,
+    "flow_c_rc": 0
+   }
+  }
+ },
+ "fused_seed7": {
+  "artifacts_rc": 0,
+  "artifacts_s": 0.1,
+  "solver": "milp",
+  "solve_s": 1.8,
+  "sched_rc": 0,
+  "schedule": "schedules/scheduled_fused_seed7_profiled.json",
+  "makespan_line": "Makespan (non-periodic): 0.00 ms",
+  "sched_makespan_nonperiodic_ms": 0.0,
+  "status": "run",
+  "runtime_rc": 0,
+  "dispatch_table_sha256": "d21ea2b4d935da7d59685a11cd569e5a8507ffeda058b52e7eeb58e2adb9d53f",
+  "runtime_main_sha256": "7165655f8c1484e96428db5cc1f90dfbba72de073441ebe01b0956e25ab5e5c3",
+  "n_entries": 12,
+  "table_predicted_makespan_ms": 16.813,
+  "placement": {
+   "fused_split/fused_vision_conv": {
+    "dsp": 2,
+    "hta": 1
+   },
+   "fused_split/fused_depth_conv": {
+    "dsp": 1,
+    "hta": 1,
+    "cpu": 1
+   },
+   "mlp_control/mlp_control_full": {
+    "cpu": 2,
+    "dsp": 1
+   },
+   "fused_split/fused_tail": {
+    "cpu": 3
+   }
+  },
+  "lane_entry_counts": {
+   "cpu": 6,
+   "dsp": 4,
+   "hta": 2
+  },
+  "contexts": [
+   "ctx_fused_depth_conv__Cpu.bin",
+   "ctx_fused_depth_conv__Dsp.bin",
+   "ctx_fused_depth_conv__Hta.bin",
+   "ctx_fused_tail_from_conv_fp32__Cpu.bin",
+   "ctx_fused_vision_conv__Dsp.bin",
+   "ctx_fused_vision_conv__Hta.bin",
+   "ctx_mlp_control__Dsp.bin",
+   "ctx_mlp_control_fp32__Cpu.bin"
+  ],
+  "predicate7_excluded_placements": [],
+  "predicate6_missing_contexts": [],
+  "reps": {
+   "rep1": {
+    "ok": true,
+    "entries_ran": 12,
+    "entries_total": 12,
+    "wall_ms": 18.974,
+    "predicted_ms": 16.813,
+    "ratio": 1.13,
+    "bringup_lines": [
+     "[bringup] DSP  /root/qnn_runtime_ctx/ctx_fused_vision_conv__Dsp.bin \u2192 1 graph(s): fused_vision_conv",
+     "[bringup] DSP  /root/qnn_runtime_ctx/ctx_fused_depth_conv__Dsp.bin \u2192 1 graph(s): fused_depth_conv",
+     "[bringup] CPU  /root/qnn_runtime_ctx/ctx_mlp_control_fp32__Cpu.bin \u2192 1 graph(s): mlp_control_fp32",
+     "[bringup] CPU  /root/qnn_runtime_ctx/ctx_fused_tail_from_conv_fp32__Cpu.bin \u2192 1 graph(s): fused_tail_from_conv",
+     "[bringup] HTA  /root/qnn_runtime_ctx/ctx_fused_vision_conv__Hta.bin \u2192 1 graph(s): fused_vision_conv",
+     "[bringup] HTA  /root/qnn_runtime_ctx/ctx_fused_depth_conv__Hta.bin \u2192 1 graph(s): fused_depth_conv",
+     "[bringup] DSP  /root/qnn_runtime_ctx/ctx_mlp_control__Dsp.bin \u2192 1 graph(s): mlp_control",
+     "[bringup] CPU  /root/qnn_runtime_ctx/ctx_fused_depth_conv__Cpu.bin \u2192 1 graph(s): fused_depth_conv"
+    ],
+    "bringup_missing": [],
+    "iterations": [
+     "[main] iteration 1/2 wall=18.971 ms",
+     "[main] iteration 2/2 wall=18.974 ms"
+    ],
+    "per_tile": {
+     "fused_split/fused_vision_conv@dsp": {
+      "pred_ms": 0.459,
+      "n": 2,
+      "actual_p50_ms": 0.5445,
+      "actual_min_ms": 0.511,
+      "actual_max_ms": 0.578,
+      "ratio_p50": 1.186
+     },
+     "fused_split/fused_depth_conv@dsp": {
+      "pred_ms": 0.392,
+      "n": 1,
+      "actual_p50_ms": 0.531,
+      "actual_min_ms": 0.531,
+      "actual_max_ms": 0.531,
+      "ratio_p50": 1.355
+     },
+     "mlp_control/mlp_control_full@cpu": {
+      "pred_ms": 0.107,
+      "n": 2,
+      "actual_p50_ms": 0.0685,
+      "actual_min_ms": 0.062,
+      "actual_max_ms": 0.075,
+      "ratio_p50": 0.64
+     },
+     "fused_split/fused_tail@cpu": {
+      "pred_ms": 0.354,
+      "n": 3,
+      "actual_p50_ms": 1.013,
+      "actual_min_ms": 0.591,
+      "actual_max_ms": 2.289,
+      "ratio_p50": 2.862
+     },
+     "fused_split/fused_vision_conv@hta": {
+      "pred_ms": 0.931,
+      "n": 1,
+      "actual_p50_ms": 0.969,
+      "actual_min_ms": 0.969,
+      "actual_max_ms": 0.969,
+      "ratio_p50": 1.041
+     },
+     "fused_split/fused_depth_conv@hta": {
+      "pred_ms": 1.568,
+      "n": 1,
+      "actual_p50_ms": 0.58,
+      "actual_min_ms": 0.58,
+      "actual_max_ms": 0.58,
+      "ratio_p50": 0.37
+     },
+     "mlp_control/mlp_control_full@dsp": {
+      "pred_ms": 0.589,
+      "n": 1,
+      "actual_p50_ms": 0.495,
+      "actual_min_ms": 0.495,
+      "actual_max_ms": 0.495,
+      "ratio_p50": 0.84
+     },
+     "fused_split/fused_depth_conv@cpu": {
+      "pred_ms": 0.014,
+      "n": 1,
+      "actual_p50_ms": 0.205,
+      "actual_min_ms": 0.205,
+      "actual_max_ms": 0.205,
+      "ratio_p50": 14.643
+     }
+    },
+    "trace_rows": 12,
+    "trace_ctx_pairs": [
+     "fused_split/fused_depth_conv/cpu/ctx_fused_depth_conv__Cpu.bin",
+     "fused_split/fused_depth_conv/dsp/ctx_fused_depth_conv__Dsp.bin",
+     "fused_split/fused_depth_conv/hta/ctx_fused_depth_conv__Hta.bin",
+     "fused_split/fused_tail/cpu/ctx_fused_tail_from_conv_fp32__Cpu.bin",
+     "fused_split/fused_vision_conv/dsp/ctx_fused_vision_conv__Dsp.bin",
+     "fused_split/fused_vision_conv/hta/ctx_fused_vision_conv__Hta.bin",
+     "mlp_control/mlp_control_full/cpu/ctx_mlp_control_fp32__Cpu.bin",
+     "mlp_control/mlp_control_full/dsp/ctx_mlp_control__Dsp.bin"
+    ],
+    "lock_wait_s": 0.29,
+    "lock_probe_rc": 0,
+    "wall_s": 7.5,
+    "flow_c_rc": 0
+   },
+   "rep2": {
+    "ok": true,
+    "entries_ran": 12,
+    "entries_total": 12,
+    "wall_ms": 19.034,
+    "predicted_ms": 16.813,
+    "ratio": 1.13,
+    "bringup_lines": [
+     "[bringup] DSP  /root/qnn_runtime_ctx/ctx_fused_vision_conv__Dsp.bin \u2192 1 graph(s): fused_vision_conv",
+     "[bringup] DSP  /root/qnn_runtime_ctx/ctx_fused_depth_conv__Dsp.bin \u2192 1 graph(s): fused_depth_conv",
+     "[bringup] CPU  /root/qnn_runtime_ctx/ctx_mlp_control_fp32__Cpu.bin \u2192 1 graph(s): mlp_control_fp32",
+     "[bringup] CPU  /root/qnn_runtime_ctx/ctx_fused_tail_from_conv_fp32__Cpu.bin \u2192 1 graph(s): fused_tail_from_conv",
+     "[bringup] HTA  /root/qnn_runtime_ctx/ctx_fused_vision_conv__Hta.bin \u2192 1 graph(s): fused_vision_conv",
+     "[bringup] HTA  /root/qnn_runtime_ctx/ctx_fused_depth_conv__Hta.bin \u2192 1 graph(s): fused_depth_conv",
+     "[bringup] DSP  /root/qnn_runtime_ctx/ctx_mlp_control__Dsp.bin \u2192 1 graph(s): mlp_control",
+     "[bringup] CPU  /root/qnn_runtime_ctx/ctx_fused_depth_conv__Cpu.bin \u2192 1 graph(s): fused_depth_conv"
+    ],
+    "bringup_missing": [],
+    "iterations": [
+     "[main] iteration 1/2 wall=19.009 ms",
+     "[main] iteration 2/2 wall=19.034 ms"
+    ],
+    "per_tile": {
+     "fused_split/fused_vision_conv@dsp": {
+      "pred_ms": 0.459,
+      "n": 2,
+      "actual_p50_ms": 0.561,
+      "actual_min_ms": 0.532,
+      "actual_max_ms": 0.59,
+      "ratio_p50": 1.222
+     },
+     "fused_split/fused_depth_conv@dsp": {
+      "pred_ms": 0.392,
+      "n": 1,
+      "actual_p50_ms": 0.576,
+      "actual_min_ms": 0.576,
+      "actual_max_ms": 0.576,
+      "ratio_p50": 1.469
+     },
+     "mlp_control/mlp_control_full@cpu": {
+      "pred_ms": 0.107,
+      "n": 2,
+      "actual_p50_ms": 0.0595,
+      "actual_min_ms": 0.053,
+      "actual_max_ms": 0.066,
+      "ratio_p50": 0.556
+     },
+     "fused_split/fused_tail@cpu": {
+      "pred_ms": 0.354,
+      "n": 3,
+      "actual_p50_ms": 1.102,
+      "actual_min_ms": 0.976,
+      "actual_max_ms": 2.335,
+      "ratio_p50": 3.113
+     },
+     "fused_split/fused_vision_conv@hta": {
+      "pred_ms": 0.931,
+      "n": 1,
+      "actual_p50_ms": 1.095,
+      "actual_min_ms": 1.095,
+      "actual_max_ms": 1.095,
+      "ratio_p50": 1.176
+     },
+     "fused_split/fused_depth_conv@hta": {
+      "pred_ms": 1.568,
+      "n": 1,
+      "actual_p50_ms": 1.06,
+      "actual_min_ms": 1.06,
+      "actual_max_ms": 1.06,
+      "ratio_p50": 0.676
+     },
+     "mlp_control/mlp_control_full@dsp": {
+      "pred_ms": 0.589,
+      "n": 1,
+      "actual_p50_ms": 0.858,
+      "actual_min_ms": 0.858,
+      "actual_max_ms": 0.858,
+      "ratio_p50": 1.457
+     },
+     "fused_split/fused_depth_conv@cpu": {
+      "pred_ms": 0.014,
+      "n": 1,
+      "actual_p50_ms": 0.217,
+      "actual_min_ms": 0.217,
+      "actual_max_ms": 0.217,
+      "ratio_p50": 15.5
+     }
+    },
+    "trace_rows": 12,
+    "trace_ctx_pairs": [
+     "fused_split/fused_depth_conv/cpu/ctx_fused_depth_conv__Cpu.bin",
+     "fused_split/fused_depth_conv/dsp/ctx_fused_depth_conv__Dsp.bin",
+     "fused_split/fused_depth_conv/hta/ctx_fused_depth_conv__Hta.bin",
+     "fused_split/fused_tail/cpu/ctx_fused_tail_from_conv_fp32__Cpu.bin",
+     "fused_split/fused_vision_conv/dsp/ctx_fused_vision_conv__Dsp.bin",
+     "fused_split/fused_vision_conv/hta/ctx_fused_vision_conv__Hta.bin",
+     "mlp_control/mlp_control_full/cpu/ctx_mlp_control_fp32__Cpu.bin",
+     "mlp_control/mlp_control_full/dsp/ctx_mlp_control__Dsp.bin"
+    ],
+    "lock_wait_s": 0.36,
+    "lock_probe_rc": 0,
+    "wall_s": 7.4,
+    "flow_c_rc": 0
+   },
+   "rep3": {
+    "ok": true,
+    "entries_ran": 12,
+    "entries_total": 12,
+    "wall_ms": 18.822,
+    "predicted_ms": 16.813,
+    "ratio": 1.12,
+    "bringup_lines": [
+     "[bringup] DSP  /root/qnn_runtime_ctx/ctx_fused_vision_conv__Dsp.bin \u2192 1 graph(s): fused_vision_conv",
+     "[bringup] DSP  /root/qnn_runtime_ctx/ctx_fused_depth_conv__Dsp.bin \u2192 1 graph(s): fused_depth_conv",
+     "[bringup] CPU  /root/qnn_runtime_ctx/ctx_mlp_control_fp32__Cpu.bin \u2192 1 graph(s): mlp_control_fp32",
+     "[bringup] CPU  /root/qnn_runtime_ctx/ctx_fused_tail_from_conv_fp32__Cpu.bin \u2192 1 graph(s): fused_tail_from_conv",
+     "[bringup] HTA  /root/qnn_runtime_ctx/ctx_fused_vision_conv__Hta.bin \u2192 1 graph(s): fused_vision_conv",
+     "[bringup] HTA  /root/qnn_runtime_ctx/ctx_fused_depth_conv__Hta.bin \u2192 1 graph(s): fused_depth_conv",
+     "[bringup] DSP  /root/qnn_runtime_ctx/ctx_mlp_control__Dsp.bin \u2192 1 graph(s): mlp_control",
+     "[bringup] CPU  /root/qnn_runtime_ctx/ctx_fused_depth_conv__Cpu.bin \u2192 1 graph(s): fused_depth_conv"
+    ],
+    "bringup_missing": [],
+    "iterations": [
+     "[main] iteration 1/2 wall=18.990 ms",
+     "[main] iteration 2/2 wall=18.822 ms"
+    ],
+    "per_tile": {
+     "fused_split/fused_vision_conv@dsp": {
+      "pred_ms": 0.459,
+      "n": 2,
+      "actual_p50_ms": 0.4625,
+      "actual_min_ms": 0.406,
+      "actual_max_ms": 0.519,
+      "ratio_p50": 1.008
+     },
+     "fused_split/fused_depth_conv@dsp": {
+      "pred_ms": 0.392,
+      "n": 1,
+      "actual_p50_ms": 0.501,
+      "actual_min_ms": 0.501,
+      "actual_max_ms": 0.501,
+      "ratio_p50": 1.278
+     },
+     "mlp_control/mlp_control_full@cpu": {
+      "pred_ms": 0.107,
+      "n": 2,
+      "actual_p50_ms": 0.0555,
+      "actual_min_ms": 0.05,
+      "actual_max_ms": 0.061,
+      "ratio_p50": 0.519
+     },
+     "fused_split/fused_tail@cpu": {
+      "pred_ms": 0.354,
+      "n": 3,
+      "actual_p50_ms": 1.028,
+      "actual_min_ms": 0.574,
+      "actual_max_ms": 2.313,
+      "ratio_p50": 2.904
+     },
+     "fused_split/fused_vision_conv@hta": {
+      "pred_ms": 0.931,
+      "n": 1,
+      "actual_p50_ms": 1.306,
+      "actual_min_ms": 1.306,
+      "actual_max_ms": 1.306,
+      "ratio_p50": 1.403
+     },
+     "fused_split/fused_depth_conv@hta": {
+      "pred_ms": 1.568,
+      "n": 1,
+      "actual_p50_ms": 1.179,
+      "actual_min_ms": 1.179,
+      "actual_max_ms": 1.179,
+      "ratio_p50": 0.752
+     },
+     "mlp_control/mlp_control_full@dsp": {
+      "pred_ms": 0.589,
+      "n": 1,
+      "actual_p50_ms": 0.743,
+      "actual_min_ms": 0.743,
+      "actual_max_ms": 0.743,
+      "ratio_p50": 1.261
+     },
+     "fused_split/fused_depth_conv@cpu": {
+      "pred_ms": 0.014,
+      "n": 1,
+      "actual_p50_ms": 0.041,
+      "actual_min_ms": 0.041,
+      "actual_max_ms": 0.041,
+      "ratio_p50": 2.929
+     }
+    },
+    "trace_rows": 13,
+    "trace_ctx_pairs": [
+     "fused_split/fused_depth_conv/cpu/ctx_fused_depth_conv__Cpu.bin",
+     "fused_split/fused_depth_conv/dsp/ctx_fused_depth_conv__Dsp.bin",
+     "fused_split/fused_depth_conv/hta/ctx_fused_depth_conv__Hta.bin",
+     "fused_split/fused_tail/cpu/ctx_fused_tail_from_conv_fp32__Cpu.bin",
+     "fused_split/fused_vision_conv/dsp/ctx_fused_vision_conv__Dsp.bin",
+     "fused_split/fused_vision_conv/hta/ctx_fused_vision_conv__Hta.bin",
+     "mlp_control/mlp_control_full/cpu/ctx_mlp_control_fp32__Cpu.bin",
+     "mlp_control/mlp_control_full/dsp/ctx_mlp_control__Dsp.bin"
+    ],
+    "lock_wait_s": 0.36,
+    "lock_probe_rc": 0,
+    "wall_s": 7.4,
+    "flow_c_rc": 0
+   }
+  }
+ }
+}

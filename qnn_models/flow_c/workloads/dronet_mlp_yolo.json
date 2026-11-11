@@ -1,0 +1,17 @@
+{
+  "name": "flowc_3way_qrb5165",
+  "_comment": "The same three networks the RISC-V flow runs (mlp_control, dronet, yolo), on the QRB5165's three lanes. dronet and mlp_control are ingested from modelblaster's model zoo — one PyTorch definition, one checkpoint, feeding both flows. yolov8n comes in through the graph_json door because the network that exists on this board is the 640x640 ultralytics export behind the QNN converter, not modelblaster's 64x64 yolov8_nano.",
+  "target": "qrb5165_flowc",
+  "board": "qrb5165_v66",
+  "registry": "cores/qrb5165_qnn.json",
+  "measurements": "measurements/qrb5165_v66.json",
+  "slots": {"CPU_P": "hta", "CPU_E": "dsp", "CPU_X": "cpu"},
+  "ctx_dir": "/root/qnn_runtime_ctx",
+  "networks": [
+    {"name": "dronet",      "bindings": "bindings/dronet.json",      "period": 5,
+     "onnx_input_name": "input"},
+    {"name": "mlp_control", "bindings": "bindings/mlp_control.json", "period": 2,
+     "onnx_input_name": "obs"},
+    {"name": "yolov8n",     "bindings": "bindings/yolov8n.json"}
+  ]
+}

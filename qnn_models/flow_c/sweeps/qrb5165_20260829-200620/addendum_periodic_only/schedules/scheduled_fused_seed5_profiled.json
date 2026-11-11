@@ -1,0 +1,256 @@
+{
+  "dot_file": "combined_schedule_periodic.json",
+  "dispatches": {
+    "mlp_control0_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_X#0",
+      "start_time": 3.5577557513337927,
+      "duration": 0.107,
+      "job_name": "mlp_control0",
+      "module_name": "mlp_control$dispatch_0_HTA_qnn_graph_ir_ops7"
+    },
+    "mlp_control1_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_X#0",
+      "start_time": 9.53463214974969,
+      "duration": 0.107,
+      "job_name": "mlp_control1",
+      "module_name": "mlp_control$dispatch_0_HTA_qnn_graph_ir_ops7",
+      "time_dependency": "mlp_control0_dispatch_0"
+    },
+    "mlp_control2_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_X#0",
+      "start_time": 15.606485876095253,
+      "duration": 0.107,
+      "job_name": "mlp_control2",
+      "module_name": "mlp_control$dispatch_0_HTA_qnn_graph_ir_ops7",
+      "time_dependency": "mlp_control1_dispatch_0"
+    },
+    "mlp_control3_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_X#0",
+      "start_time": 21.8930000000247,
+      "duration": 0.107,
+      "job_name": "mlp_control3",
+      "module_name": "mlp_control$dispatch_0_HTA_qnn_graph_ir_ops7",
+      "time_dependency": "mlp_control2_dispatch_0"
+    },
+    "mlp_control4_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_X#0",
+      "start_time": 27.595752179202847,
+      "duration": 0.107,
+      "job_name": "mlp_control4",
+      "module_name": "mlp_control$dispatch_0_HTA_qnn_graph_ir_ops7",
+      "time_dependency": "mlp_control3_dispatch_0"
+    },
+    "mlp_control5_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_X#0",
+      "start_time": 33.60087787502565,
+      "duration": 0.107,
+      "job_name": "mlp_control5",
+      "module_name": "mlp_control$dispatch_0_HTA_qnn_graph_ir_ops7",
+      "time_dependency": "mlp_control4_dispatch_0"
+    },
+    "mlp_control6_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_X#0",
+      "start_time": 39.638414247758305,
+      "duration": 0.107,
+      "job_name": "mlp_control6",
+      "module_name": "mlp_control$dispatch_0_HTA_qnn_graph_ir_ops7",
+      "time_dependency": "mlp_control5_dispatch_0"
+    },
+    "mlp_control7_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_X#0",
+      "start_time": 45.78111617537179,
+      "duration": 0.107,
+      "job_name": "mlp_control7",
+      "module_name": "mlp_control$dispatch_0_HTA_qnn_graph_ir_ops7",
+      "time_dependency": "mlp_control6_dispatch_0"
+    },
+    "mlp_control8_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_X#0",
+      "start_time": 48.0,
+      "duration": 0.107,
+      "job_name": "mlp_control8",
+      "module_name": "mlp_control$dispatch_0_HTA_qnn_graph_ir_ops7",
+      "time_dependency": "mlp_control7_dispatch_0"
+    },
+    "fused_split0_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_P#0",
+      "start_time": -0.0,
+      "duration": 0.931,
+      "job_name": "fused_split0",
+      "module_name": "fused_split$dispatch_0_HTA_qnn_graph_ir_ops4"
+    },
+    "fused_split0_dispatch_1": {
+      "id": 1,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_P#0",
+      "start_time": 8.129000000053324,
+      "duration": 1.568,
+      "job_name": "fused_split0",
+      "module_name": "fused_split$dispatch_1_HTA_qnn_graph_ir_ops2",
+      "time_dependency": "fused_split0_dispatch_0"
+    },
+    "fused_split0_dispatch_2": {
+      "id": 2,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "fused_split0_dispatch_0",
+        "fused_split0_dispatch_1"
+      ],
+      "hardware_target": "CPU_E#0",
+      "start_time": 9.697000000037775,
+      "duration": 4.303,
+      "job_name": "fused_split0",
+      "module_name": "fused_split$dispatch_2_HTA_qnn_graph_ir_ops10"
+    },
+    "fused_split1_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_P#0",
+      "start_time": 18.0,
+      "duration": 0.931,
+      "job_name": "fused_split1",
+      "module_name": "fused_split$dispatch_0_HTA_qnn_graph_ir_ops4",
+      "time_dependency": "fused_split0_dispatch_1"
+    },
+    "fused_split1_dispatch_1": {
+      "id": 1,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_P#0",
+      "start_time": 26.129,
+      "duration": 1.568,
+      "job_name": "fused_split1",
+      "module_name": "fused_split$dispatch_1_HTA_qnn_graph_ir_ops2",
+      "time_dependency": "fused_split1_dispatch_0"
+    },
+    "fused_split1_dispatch_2": {
+      "id": 2,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "fused_split1_dispatch_0",
+        "fused_split1_dispatch_1"
+      ],
+      "hardware_target": "CPU_E#0",
+      "start_time": 27.697000000000003,
+      "duration": 4.303,
+      "job_name": "fused_split1",
+      "module_name": "fused_split$dispatch_2_HTA_qnn_graph_ir_ops10",
+      "time_dependency": "fused_split0_dispatch_2"
+    },
+    "fused_split2_dispatch_0": {
+      "id": 0,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_P#0",
+      "start_time": 36.0,
+      "duration": 0.931,
+      "job_name": "fused_split2",
+      "module_name": "fused_split$dispatch_0_HTA_qnn_graph_ir_ops4",
+      "time_dependency": "fused_split1_dispatch_1"
+    },
+    "fused_split2_dispatch_1": {
+      "id": 1,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [],
+      "hardware_target": "CPU_P#0",
+      "start_time": 42.23600000002778,
+      "duration": 1.568,
+      "job_name": "fused_split2",
+      "module_name": "fused_split$dispatch_1_HTA_qnn_graph_ir_ops2",
+      "time_dependency": "fused_split2_dispatch_0"
+    },
+    "fused_split2_dispatch_2": {
+      "id": 2,
+      "ordinal": 1,
+      "total": 1,
+      "dependencies": [
+        "fused_split2_dispatch_0",
+        "fused_split2_dispatch_1"
+      ],
+      "hardware_target": "CPU_E#0",
+      "start_time": 43.803999999982715,
+      "duration": 4.303,
+      "job_name": "fused_split2",
+      "module_name": "fused_split$dispatch_2_HTA_qnn_graph_ir_ops10",
+      "time_dependency": "fused_split1_dispatch_2"
+    }
+  },
+  "metadata": {
+    "makespan": 48.107,
+    "num_operations": 18,
+    "machines": [
+      "CPU_P#0",
+      "CPU_E#0",
+      "CPU_X#0"
+    ],
+    "machine_combinations": [
+      [
+        "CPU_P#0"
+      ],
+      [
+        "CPU_E#0"
+      ],
+      [
+        "CPU_X#0"
+      ]
+    ],
+    "profile_hw": {
+      "CPU_P": "HTA",
+      "CPU_E": "DSP",
+      "CPU_X": "CPU"
+    },
+    "periodic_networks": {
+      "mlp_control": 6.021,
+      "fused_split": 18.0
+    }
+  }
+}

@@ -1,0 +1,164 @@
+{
+  "network": "fused_full",
+  "ir": {
+    "source": "pytorch:fused_full",
+    "quant": "int8"
+  },
+  "_comment": "FusedSensorNet as two independent conv branches plus the LSTM tail -- the same shape flow_c's fused_split ships, now derived rather than transcribed: branch-mode slicing gives tiles 0 and 1 depends_on: [] and the tail the non-contiguous range [[8,9],[14,90]] (the vision Flatten+FC interleaves with the depth branch in topological order). Honest caveat, measured: in ISOLATION this split does not pay for its concurrency. The branches are 0.150 ms (vision) and 0.048 ms (depth) on CPU int8, less than the 0.367 ms DSP / 0.540 ms HTA dispatch that overlapping them would cost, so the best isolated assignment runs both on the CPU lane back to back: 0.548 ms makespan, against 0.452 ms for the contiguous fused_k3_convs slice set which folds the vision FC in with the depth convs. The split is still the right manifest for a shared schedule, because those CPU cells are the ones flow_c measures at ~5.6x in situ, and both branches here compose on HTA (0.607 / 0.540 ms) where the contiguous variant's second tile does not.",
+  "_provenance": {
+    "study": "qnn_models/slicing_study",
+    "experiment_label": "fused_par_conv",
+    "cut_id": "48b2eb0b106d",
+    "slice_mode": "branch",
+    "tile_outputs": [
+      [
+        "/vision_cnn/vision_cnn.7/Relu_output_0"
+      ],
+      [
+        "/depth_conv/depth_conv.3/Relu_output_0"
+      ]
+    ],
+    "independent_tile_pairs": [
+      [
+        0,
+        1
+      ]
+    ],
+    "source_onnx": "qnn_models/flow_c/gen/onnx/fused_full.onnx",
+    "source_onnx_sha256": "45a9e5a5607861c3d3321503b18e50b11a1444bb7f103bed7a8385ce3be451c5",
+    "journal": "qnn_models/slicing_study/experiments.jsonl",
+    "board_ctx_dir": "/root/slicing_study/ctx",
+    "reproduce": "python3 qnn_models/slicing_study/slice_experiment.py --network fused_full --name fused_par_conv --tile /vision_cnn/vision_cnn.7/Relu_output_0 --tile /depth_conv/depth_conv.3/Relu_output_0",
+    "statistic": "median of per-sweep median_us, performance governor, CPU cells unmasked",
+    "op_index_space": "flow_c IR, taken from flow_c/bindings/fused_split.json, which already declares exactly this tile structure (two conv branches + LSTM tail) in IR space. The branch-mode ONNX partition derived here reproduces that structure independently -- tiles 0 and 1 come out with depends_on: [] and the tail with the non-contiguous ONNX range [[8,9],[14,90]] -- so the IR ranges are adopted rather than re-derived; the flow_c IR cached in gen/ir/fused_full carries dependency edges inconsistent with that manifest's indexing and was not trusted. _ops_onnx_nodes records the ONNX node ranges the artifacts were sliced from."
+  },
+  "bindings": [
+    {
+      "id": 0,
+      "name": "fused_vision_conv",
+      "ops": {
+        "ranges": [
+          [
+            0,
+            3
+          ]
+        ]
+      },
+      "source_onnx": "slicing_study/gen/fused_full/fused_par_conv__48b2eb0b106d/tile0.onnx",
+      "backends": {
+        "hta": {
+          "ctx": "ctx_fused_par_conv_t0_int8__hta.bin",
+          "graph": "fused_par_conv_t0",
+          "precision": "int8",
+          "measured_us": 763.3
+        },
+        "dsp": {
+          "ctx": "ctx_fused_par_conv_t0_int8__dsp.bin",
+          "graph": "fused_par_conv_t0",
+          "precision": "int8",
+          "measured_us": 455.3
+        },
+        "cpu": {
+          "ctx": "ctx_fused_par_conv_t0_int8__cpu.bin",
+          "graph": "fused_par_conv_t0",
+          "precision": "int8",
+          "measured_us": 164.8
+        }
+      },
+      "_ops_onnx_nodes": [
+        [
+          0,
+          7
+        ]
+      ]
+    },
+    {
+      "id": 1,
+      "name": "fused_depth_conv",
+      "ops": {
+        "ranges": [
+          [
+            6,
+            7
+          ]
+        ]
+      },
+      "source_onnx": "slicing_study/gen/fused_full/fused_par_conv__48b2eb0b106d/tile1.onnx",
+      "backends": {
+        "hta": {
+          "ctx": "ctx_fused_par_conv_t1_int8__hta.bin",
+          "graph": "fused_par_conv_t1",
+          "precision": "int8",
+          "measured_us": 919.2
+        },
+        "dsp": {
+          "ctx": "ctx_fused_par_conv_t1_int8__dsp.bin",
+          "graph": "fused_par_conv_t1",
+          "precision": "int8",
+          "measured_us": 398.6
+        },
+        "cpu": {
+          "ctx": "ctx_fused_par_conv_t1_int8__cpu.bin",
+          "graph": "fused_par_conv_t1",
+          "precision": "int8",
+          "measured_us": 48.3
+        }
+      },
+      "_ops_onnx_nodes": [
+        [
+          10,
+          13
+        ]
+      ]
+    },
+    {
+      "id": 2,
+      "name": "fused_tail",
+      "ops": {
+        "ranges": [
+          [
+            4,
+            5
+          ],
+          [
+            8,
+            15
+          ]
+        ]
+      },
+      "depends_on": [
+        0,
+        1
+      ],
+      "source_onnx": "slicing_study/gen/fused_full/fused_par_conv__48b2eb0b106d/tile2.onnx",
+      "backends": {
+        "dsp": {
+          "ctx": "ctx_fused_par_conv_t2_int8__dsp.bin",
+          "graph": "fused_par_conv_t2",
+          "precision": "int8",
+          "measured_us": 3279.1
+        },
+        "cpu": {
+          "ctx": "ctx_fused_par_conv_t2_fp32__cpu.bin",
+          "graph": "fused_par_conv_t2",
+          "precision": "fp32",
+          "measured_us": 334.9
+        }
+      },
+      "compose_blocked": {
+        "hta@int8": "unsupported op Transpose",
+        "cpu@int8": "validation failed for Reshape"
+      },
+      "_ops_onnx_nodes": [
+        [
+          8,
+          9
+        ],
+        [
+          14,
+          90
+        ]
+      ]
+    }
+  ]
+}

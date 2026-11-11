@@ -1,0 +1,32 @@
+{
+ "name": "3net_dronet4_mlp4_yolo1",
+ "_comment": "RoSE 3net workload shape '3net_dronet4_mlp4_yolo1' on the QRB5165's three pinning lanes. Ported from networks_3net_dronet_v2.json by qnn_models/flow_c/sweeps/<this sweep>/scripts/xpurt3net.py: the networks, periods, windows and instance counts are verbatim; the FireSim machine (gemmini_q31 / V256D128_rvv) is replaced by this board's hta + dsp + cpu, one of each, and yolov8_nano by the 640x640 yolov8n this board actually has. Absolute latencies are NOT comparable with the FireSim originals. The lane set is exactly the one the ROS pinning baseline may choose from, so the two sides see the same machine.",
+ "target": "qrb5165_flowc",
+ "board": "qrb5165_v66",
+ "registry": "cores/qrb5165_qnn.json",
+ "measurements": "measurements/qrb5165_v66.json",
+ "slots": {
+  "CPU_P": "hta",
+  "CPU_E": "dsp",
+  "CPU_X": "cpu"
+ },
+ "ctx_dir": "/root/qnn_runtime_ctx",
+ "networks": [
+  {
+   "name": "mlp_control",
+   "bindings": "bindings/mlp_control.json",
+   "period": 10,
+   "onnx_input_name": "obs"
+  },
+  {
+   "name": "yolov8n",
+   "bindings": "bindings/yolov8n.json"
+  },
+  {
+   "name": "dronet",
+   "bindings": "bindings/dronet.json",
+   "period": 10,
+   "onnx_input_name": "input"
+  }
+ ]
+}

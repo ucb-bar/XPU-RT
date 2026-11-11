@@ -1,0 +1,1312 @@
+{
+ "what": "Oracle gap study: proven bounds on the wl_sweep objective.",
+ "baseline_commit": "5c66592e (flow-c-qnn-qrb5165)",
+ "objective": "max completion over non-periodic operations (all operations if none is non-periodic), over schedules with misses == 0",
+ "lower_bounds": {
+  "networks_scale_ladder_hetero": {
+   "ops": 126,
+   "n_machines": 2,
+   "n_combos": 2,
+   "periodic": 0,
+   "baseline_best": 97.163,
+   "baseline_best_method": "cpsat",
+   "cp_bound": 97.1634,
+   "instance_infeasible": false,
+   "infeasible_detail": null,
+   "area_bound": 97.1634,
+   "area_detail": "critical path already meets the known solution",
+   "secs": 0.0
+  },
+  "networks_scale_ladder_gempair": {
+   "ops": 126,
+   "n_machines": 2,
+   "n_combos": 3,
+   "periodic": 0,
+   "baseline_best": 98.589,
+   "baseline_best_method": "heft",
+   "cp_bound": 98.589,
+   "instance_infeasible": false,
+   "infeasible_detail": null,
+   "area_bound": 98.589,
+   "area_detail": "critical path already meets the known solution",
+   "secs": 0.0
+  },
+  "networks_scale_ladder_rvvpair": {
+   "ops": 126,
+   "n_machines": 2,
+   "n_combos": 3,
+   "periodic": 0,
+   "baseline_best": 97.37,
+   "baseline_best_method": "heft",
+   "cp_bound": 97.3703,
+   "instance_infeasible": false,
+   "infeasible_detail": null,
+   "area_bound": 97.3703,
+   "area_detail": "critical path already meets the known solution",
+   "secs": 0.0
+  },
+  "networks_scale_ladder_quad": {
+   "ops": 126,
+   "n_machines": 4,
+   "n_combos": 6,
+   "periodic": 0,
+   "baseline_best": 97.163,
+   "baseline_best_method": "heft",
+   "cp_bound": 97.1634,
+   "instance_infeasible": false,
+   "infeasible_detail": null,
+   "area_bound": 97.1634,
+   "area_detail": "critical path already meets the known solution",
+   "secs": 0.0
+  },
+  "networks_control_mix_hetero": {
+   "ops": 295,
+   "n_machines": 2,
+   "n_combos": 2,
+   "periodic": 140,
+   "baseline_best": 37.246,
+   "baseline_best_method": "cpsat:warm",
+   "cp_bound": 32.6022,
+   "instance_infeasible": false,
+   "infeasible_detail": null,
+   "area_bound": 36.3753,
+   "area_detail": "LP over 460 window rows is infeasible; binding windows: [28.30,36.25] on CPU_P#0 short by 0.003 ms (49 ops pinned inside); total unavoidable overrun 0.003 ms; no single all-machine window is over on its own; the refutation needs the per-machine LP",
+   "secs": 2.9
+  },
+  "networks_control_mix_gempair": {
+   "ops": 295,
+   "n_machines": 2,
+   "n_combos": 3,
+   "periodic": 140,
+   "baseline_best": 56.985,
+   "baseline_best_method": "cpsat:warm",
+   "cp_bound": 48.7398,
+   "instance_infeasible": false,
+   "infeasible_detail": null,
+   "area_bound": 51.7351,
+   "area_detail": "LP over 624 window rows is infeasible; binding windows: [43.76,51.74] on CPU_P#0 short by 0.025 ms (59 ops pinned inside); total unavoidable overrun 0.025 ms; no single all-machine window is over on its own; the refutation needs the per-machine LP",
+   "secs": 4.2
+  },
+  "networks_control_mix_rvvpair": {
+   "ops": 295,
+   "n_machines": 2,
+   "n_combos": 3,
+   "periodic": 140,
+   "baseline_best": 91.462,
+   "baseline_best_method": "cpsat:warm",
+   "cp_bound": 71.0383,
+   "instance_infeasible": false,
+   "infeasible_detail": null,
+   "area_bound": 81.5493,
+   "area_detail": "LP over 546 window rows is infeasible; binding windows: [53.73,81.55] on CPU_E#0 short by 0.023 ms (61 ops pinned inside); total unavoidable overrun 0.023 ms; no single all-machine window is over on its own; the refutation needs the per-machine LP",
+   "secs": 9.9
+  },
+  "networks_control_mix_quad": {
+   "ops": 295,
+   "n_machines": 4,
+   "n_combos": 6,
+   "periodic": 140,
+   "baseline_best": 33.62,
+   "baseline_best_method": "pso",
+   "cp_bound": 32.6022,
+   "instance_infeasible": false,
+   "infeasible_detail": null,
+   "area_bound": 32.6022,
+   "area_detail": "critical path",
+   "secs": 16.7
+  },
+  "networks_saturation_hetero": {
+   "ops": 393,
+   "n_machines": 2,
+   "n_combos": 2,
+   "periodic": 238,
+   "baseline_best": 104.418,
+   "baseline_best_method": "cpsat:warm",
+   "cp_bound": 72.2008,
+   "instance_infeasible": false,
+   "infeasible_detail": null,
+   "area_bound": 79.1382,
+   "area_detail": "LP over 618 window rows is infeasible; binding windows: [61.14,78.96] on CPU_P#0 short by 0.009 ms (52 ops pinned inside); total unavoidable overrun 0.009 ms; no single all-machine window is over on its own; the refutation needs the per-machine LP",
+   "secs": 7.3
+  },
+  "networks_saturation_gempair": {
+   "ops": 393,
+   "n_machines": 2,
+   "n_combos": 3,
+   "periodic": 238,
+   "baseline_best": 156.544,
+   "baseline_best_method": "cpsat:warm",
+   "cp_bound": 105.6099,
+   "instance_infeasible": false,
+   "infeasible_detail": null,
+   "area_bound": 117.1621,
+   "area_detail": "LP over 732 window rows is infeasible; binding windows: [0.00,50.76] on CPU_P#1 short by 0.012 ms (213 ops pinned inside); total unavoidable overrun 0.012 ms; tightest all-machine window [0.000,50.762]: 213 ops need 101.536 ms of machine-time, 2 machines supply 101.524 -- OVER by 0.012 ms",
+   "secs": 21.4
+  },
+  "networks_saturation_rvvpair": {
+   "ops": 393,
+   "n_machines": 2,
+   "n_combos": 3,
+   "periodic": 238,
+   "baseline_best": 170.954,
+   "baseline_best_method": "cpsat:warm",
+   "cp_bound": 149.3375,
+   "instance_infeasible": false,
+   "infeasible_detail": null,
+   "area_bound": 170.9118,
+   "area_detail": "LP over 672 window rows is infeasible; binding windows: [114.66,170.91] on CPU_E#1 short by 0.016 ms (59 ops pinned inside); total unavoidable overrun 0.016 ms; no single all-machine window is over on its own; the refutation needs the per-machine LP",
+   "secs": 14.0
+  },
+  "networks_saturation_quad": {
+   "ops": 393,
+   "n_machines": 4,
+   "n_combos": 6,
+   "periodic": 238,
+   "baseline_best": 73.515,
+   "baseline_best_method": "cpsat:warm",
+   "cp_bound": 72.2008,
+   "instance_infeasible": false,
+   "infeasible_detail": null,
+   "area_bound": 72.2008,
+   "area_detail": "critical path",
+   "secs": 29.2
+  },
+  "networks_tight_loop_hetero": {
+   "ops": 252,
+   "n_machines": 2,
+   "n_combos": 2,
+   "periodic": 252,
+   "baseline_best": null,
+   "baseline_best_method": null,
+   "cp_bound": 45.6706,
+   "instance_infeasible": true,
+   "infeasible_detail": "op 230: head 42.052 + mindur 0.001 > deadline 10.854",
+   "secs": 0.0
+  },
+  "networks_tight_loop_gempair": {
+   "ops": 252,
+   "n_machines": 2,
+   "n_combos": 3,
+   "periodic": 252,
+   "baseline_best": null,
+   "baseline_best_method": null,
+   "cp_bound": 42.0994,
+   "instance_infeasible": true,
+   "infeasible_detail": "op 188: head 35.255 + mindur 0.001 > deadline 2.281",
+   "secs": 0.0
+  },
+  "networks_tight_loop_rvvpair": {
+   "ops": 252,
+   "n_machines": 2,
+   "n_combos": 3,
+   "periodic": 252,
+   "baseline_best": null,
+   "baseline_best_method": null,
+   "cp_bound": 45.8161,
+   "instance_infeasible": true,
+   "infeasible_detail": "op 251: head 45.815 + mindur 0.001 > deadline 14.472",
+   "secs": 0.0
+  },
+  "networks_tight_loop_quad": {
+   "ops": 252,
+   "n_machines": 4,
+   "n_combos": 6,
+   "periodic": 252,
+   "baseline_best": null,
+   "baseline_best_method": null,
+   "cp_bound": 45.6706,
+   "instance_infeasible": true,
+   "infeasible_detail": "op 230: head 42.052 + mindur 0.001 > deadline 10.854",
+   "secs": 0.0
+  },
+  "networks_vint_intro_hetero": {
+   "ops": 661,
+   "n_machines": 2,
+   "n_combos": 2,
+   "periodic": 56,
+   "baseline_best": 4019.968,
+   "baseline_best_method": "sa",
+   "cp_bound": 3750.825,
+   "instance_infeasible": false,
+   "infeasible_detail": null,
+   "area_bound": 3750.825,
+   "area_detail": "critical path",
+   "secs": 23.8
+  },
+  "networks_vint_intro_gempair": {
+   "ops": 661,
+   "n_machines": 2,
+   "n_combos": 3,
+   "periodic": 56,
+   "baseline_best": 3754.051,
+   "baseline_best_method": "heft_edf",
+   "cp_bound": 3754.0515,
+   "instance_infeasible": false,
+   "infeasible_detail": null,
+   "area_bound": 3754.0515,
+   "area_detail": "critical path already meets the known solution",
+   "secs": 0.0
+  },
+  "networks_vint_intro_rvvpair": {
+   "ops": 661,
+   "n_machines": 2,
+   "n_combos": 3,
+   "periodic": 56,
+   "baseline_best": 11068.076,
+   "baseline_best_method": "cpsat:warm",
+   "cp_bound": 11068.0777,
+   "instance_infeasible": false,
+   "infeasible_detail": null,
+   "area_bound": 11068.0777,
+   "area_detail": "critical path already meets the known solution",
+   "secs": 0.0
+  },
+  "networks_vint_intro_quad": {
+   "ops": 661,
+   "n_machines": 4,
+   "n_combos": 6,
+   "periodic": 56,
+   "baseline_best": 3750.825,
+   "baseline_best_method": "heft",
+   "cp_bound": 3750.825,
+   "instance_infeasible": false,
+   "infeasible_detail": null,
+   "area_bound": 3750.825,
+   "area_detail": "critical path already meets the known solution",
+   "secs": 0.1
+  },
+  "networks_vint_multi_hetero": {
+   "ops": 745,
+   "n_machines": 2,
+   "n_combos": 2,
+   "periodic": 140,
+   "baseline_best": 4208.463,
+   "baseline_best_method": "cpsat:warm",
+   "cp_bound": 3750.825,
+   "instance_infeasible": false,
+   "infeasible_detail": null,
+   "area_bound": 3750.825,
+   "area_detail": "critical path",
+   "secs": 27.4
+  },
+  "networks_vint_multi_gempair": {
+   "ops": 745,
+   "n_machines": 2,
+   "n_combos": 3,
+   "periodic": 140,
+   "baseline_best": 3874.091,
+   "baseline_best_method": "heft_edf",
+   "cp_bound": 3754.0515,
+   "instance_infeasible": false,
+   "infeasible_detail": null,
+   "area_bound": 3754.0515,
+   "area_detail": "critical path",
+   "secs": 26.8
+  },
+  "networks_vint_multi_rvvpair": {
+   "ops": 745,
+   "n_machines": 2,
+   "n_combos": 3,
+   "periodic": 140,
+   "baseline_best": 11263.608,
+   "baseline_best_method": "cpsat:warm",
+   "cp_bound": 11068.0777,
+   "instance_infeasible": false,
+   "infeasible_detail": null,
+   "area_bound": 11068.0777,
+   "area_detail": "critical path",
+   "secs": 88.1
+  },
+  "networks_vint_multi_quad": {
+   "ops": 745,
+   "n_machines": 4,
+   "n_combos": 6,
+   "periodic": 140,
+   "baseline_best": 3750.825,
+   "baseline_best_method": "heft",
+   "cp_bound": 3750.825,
+   "instance_infeasible": false,
+   "infeasible_detail": null,
+   "area_bound": 3750.825,
+   "area_detail": "critical path already meets the known solution",
+   "secs": 0.1
+  }
+ },
+ "max_effort_runs": {
+  "networks_control_mix_gempair": [
+   {
+    "spec": "networks_control_mix_gempair",
+    "seed": 0,
+    "time_limit": 120.0,
+    "wall_s": 120.44,
+    "warm_from": "heft_edf",
+    "warm_objective": 60.07357600000003,
+    "heuristics": [
+     {
+      "method": "greedy",
+      "objective": 62.7699,
+      "misses": 0,
+      "all_ops": 79.3705,
+      "wall_s": 0.02
+     },
+     {
+      "method": "greedy_periodic",
+      "objective": 58.3209,
+      "misses": 58,
+      "all_ops": 79.3705,
+      "wall_s": 0.02
+     },
+     {
+      "method": "greedy_reserved",
+      "objective": 60.6818,
+      "misses": 91,
+      "all_ops": 79.7484,
+      "wall_s": 0.02
+     },
+     {
+      "method": "decomposed",
+      "objective": 62.3976,
+      "misses": 0,
+      "all_ops": 79.3705,
+      "wall_s": 0.01
+     },
+     {
+      "method": "heft",
+      "objective": 54.0742,
+      "misses": 14,
+      "all_ops": 79.3705,
+      "wall_s": 0.02
+     },
+     {
+      "method": "heft_edf",
+      "objective": 60.0736,
+      "misses": 0,
+      "all_ops": 79.3705,
+      "wall_s": 0.01
+     },
+     {
+      "method": "pso",
+      "objective": 61.6099,
+      "misses": 0,
+      "all_ops": 79.3705,
+      "wall_s": 7.3
+     },
+     {
+      "method": "sa",
+      "objective": 60.1406,
+      "misses": 0,
+      "all_ops": 79.7472,
+      "wall_s": 22.37
+     }
+    ],
+    "cpsat": {
+     "status": "FEASIBLE",
+     "objective": 56.795,
+     "best_bound": 4.861,
+     "gap": 0.9144114798837926,
+     "wall": 120.01092600822449,
+     "time_limit": 120.0
+    },
+    "error": null,
+    "objective": 56.7952,
+    "misses": 0,
+    "all_ops": 79.7462
+   },
+   {
+    "spec": "networks_control_mix_gempair",
+    "seed": 0,
+    "time_limit": 1800.0,
+    "wall_s": 1800.61,
+    "warm_from": "heft_edf",
+    "warm_objective": 60.07357600000003,
+    "heuristics": [
+     {
+      "method": "greedy",
+      "objective": 62.7699,
+      "misses": 0,
+      "all_ops": 79.3705,
+      "wall_s": 0.02
+     },
+     {
+      "method": "greedy_periodic",
+      "objective": 58.3209,
+      "misses": 58,
+      "all_ops": 79.3705,
+      "wall_s": 0.02
+     },
+     {
+      "method": "greedy_reserved",
+      "objective": 60.6818,
+      "misses": 91,
+      "all_ops": 79.7484,
+      "wall_s": 0.03
+     },
+     {
+      "method": "decomposed",
+      "objective": 62.3976,
+      "misses": 0,
+      "all_ops": 79.3705,
+      "wall_s": 0.02
+     },
+     {
+      "method": "heft",
+      "objective": 54.0742,
+      "misses": 14,
+      "all_ops": 79.3705,
+      "wall_s": 0.03
+     },
+     {
+      "method": "heft_edf",
+      "objective": 60.0736,
+      "misses": 0,
+      "all_ops": 79.3705,
+      "wall_s": 0.02
+     },
+     {
+      "method": "pso",
+      "objective": 61.6099,
+      "misses": 0,
+      "all_ops": 79.3705,
+      "wall_s": 9.64
+     },
+     {
+      "method": "sa",
+      "objective": 60.1406,
+      "misses": 0,
+      "all_ops": 79.7472,
+      "wall_s": 27.17
+     }
+    ],
+    "cpsat": {
+     "status": "FEASIBLE",
+     "objective": 51.75,
+     "best_bound": 32.3,
+     "gap": 0.37584541062801935,
+     "wall": 1800.0748600959778,
+     "time_limit": 1800.0
+    },
+    "error": null,
+    "objective": 51.7502,
+    "misses": 0,
+    "all_ops": 79.6192
+   },
+   {
+    "spec": "networks_control_mix_gempair",
+    "seed": 1,
+    "time_limit": 1800.0,
+    "wall_s": 1800.78,
+    "warm_from": "heft_edf",
+    "warm_objective": 60.07357600000003,
+    "heuristics": [
+     {
+      "method": "greedy",
+      "objective": 62.7699,
+      "misses": 0,
+      "all_ops": 79.3705,
+      "wall_s": 0.02
+     },
+     {
+      "method": "greedy_periodic",
+      "objective": 58.3209,
+      "misses": 58,
+      "all_ops": 79.3705,
+      "wall_s": 0.02
+     },
+     {
+      "method": "greedy_reserved",
+      "objective": 60.6818,
+      "misses": 91,
+      "all_ops": 79.7484,
+      "wall_s": 0.03
+     },
+     {
+      "method": "decomposed",
+      "objective": 62.3976,
+      "misses": 0,
+      "all_ops": 79.3705,
+      "wall_s": 0.02
+     },
+     {
+      "method": "heft",
+      "objective": 54.0742,
+      "misses": 14,
+      "all_ops": 79.3705,
+      "wall_s": 0.03
+     },
+     {
+      "method": "heft_edf",
+      "objective": 60.0736,
+      "misses": 0,
+      "all_ops": 79.3705,
+      "wall_s": 0.02
+     },
+     {
+      "method": "pso",
+      "objective": 61.6099,
+      "misses": 0,
+      "all_ops": 79.3705,
+      "wall_s": 10.94
+     },
+     {
+      "method": "sa",
+      "objective": 60.1406,
+      "misses": 0,
+      "all_ops": 79.7472,
+      "wall_s": 27.66
+     }
+    ],
+    "cpsat": {
+     "status": "FEASIBLE",
+     "objective": 51.75,
+     "best_bound": 35.3,
+     "gap": 0.3178743961352657,
+     "wall": 1800.2877550125122,
+     "time_limit": 1800.0
+    },
+    "error": null,
+    "objective": 51.7502,
+    "misses": 0,
+    "all_ops": 79.5062
+   },
+   {
+    "spec": "networks_control_mix_gempair",
+    "seed": 2,
+    "time_limit": 1800.0,
+    "wall_s": 1800.68,
+    "warm_from": "heft_edf",
+    "warm_objective": 60.07357600000003,
+    "heuristics": [
+     {
+      "method": "greedy",
+      "objective": 62.7699,
+      "misses": 0,
+      "all_ops": 79.3705,
+      "wall_s": 0.02
+     },
+     {
+      "method": "greedy_periodic",
+      "objective": 58.3209,
+      "misses": 58,
+      "all_ops": 79.3705,
+      "wall_s": 0.02
+     },
+     {
+      "method": "greedy_reserved",
+      "objective": 60.6818,
+      "misses": 91,
+      "all_ops": 79.7484,
+      "wall_s": 0.03
+     },
+     {
+      "method": "decomposed",
+      "objective": 62.3976,
+      "misses": 0,
+      "all_ops": 79.3705,
+      "wall_s": 0.02
+     },
+     {
+      "method": "heft",
+      "objective": 54.0742,
+      "misses": 14,
+      "all_ops": 79.3705,
+      "wall_s": 0.03
+     },
+     {
+      "method": "heft_edf",
+      "objective": 60.0736,
+      "misses": 0,
+      "all_ops": 79.3705,
+      "wall_s": 0.02
+     },
+     {
+      "method": "pso",
+      "objective": 61.6099,
+      "misses": 0,
+      "all_ops": 79.3705,
+      "wall_s": 9.9
+     },
+     {
+      "method": "sa",
+      "objective": 60.1406,
+      "misses": 0,
+      "all_ops": 79.7472,
+      "wall_s": 26.59
+     }
+    ],
+    "cpsat": {
+     "status": "FEASIBLE",
+     "objective": 51.751,
+     "best_bound": 32.747,
+     "gap": 0.3672199571022782,
+     "wall": 1800.1547091007233,
+     "time_limit": 1800.0
+    },
+    "error": null,
+    "objective": 51.7512,
+    "misses": 0,
+    "all_ops": 79.5062
+   }
+  ],
+  "networks_control_mix_quad": [
+   {
+    "spec": "networks_control_mix_quad",
+    "seed": 0,
+    "time_limit": 120.0,
+    "wall_s": 15.88,
+    "warm_from": "pso",
+    "warm_objective": 33.620073999999995,
+    "heuristics": [
+     {
+      "method": "greedy",
+      "objective": 39.1597,
+      "misses": 0,
+      "all_ops": 121.1622,
+      "wall_s": 0.03
+     },
+     {
+      "method": "greedy_periodic",
+      "objective": 37.0389,
+      "misses": 56,
+      "all_ops": 121.1622,
+      "wall_s": 0.03
+     },
+     {
+      "method": "greedy_reserved",
+      "objective": 37.5135,
+      "misses": 56,
+      "all_ops": 121.2776,
+      "wall_s": 0.03
+     },
+     {
+      "method": "decomposed",
+      "objective": 37.283,
+      "misses": 0,
+      "all_ops": 121.1622,
+      "wall_s": 0.02
+     },
+     {
+      "method": "heft",
+      "objective": 33.6348,
+      "misses": 0,
+      "all_ops": 121.1622,
+      "wall_s": 0.01
+     },
+     {
+      "method": "heft_edf",
+      "objective": 36.1195,
+      "misses": 0,
+      "all_ops": 121.1622,
+      "wall_s": 0.02
+     },
+     {
+      "method": "pso",
+      "objective": 33.6201,
+      "misses": 0,
+      "all_ops": 121.1622,
+      "wall_s": 5.33
+     },
+     {
+      "method": "sa",
+      "objective": 33.6348,
+      "misses": 0,
+      "all_ops": 121.1622,
+      "wall_s": 15.94
+     }
+    ],
+    "cpsat": {
+     "status": "OPTIMAL",
+     "objective": 33.383,
+     "best_bound": 33.383,
+     "gap": 0.0,
+     "wall": 15.413488149642944,
+     "time_limit": 120.0
+    },
+    "error": null,
+    "objective": 33.383,
+    "misses": 0,
+    "all_ops": 121.162
+   }
+  ],
+  "networks_saturation_hetero": [
+   {
+    "spec": "networks_saturation_hetero",
+    "seed": 0,
+    "time_limit": 120.0,
+    "wall_s": 120.43,
+    "warm_from": "pso",
+    "warm_objective": 111.50270599999998,
+    "heuristics": [
+     {
+      "method": "greedy",
+      "objective": 120.807,
+      "misses": 0,
+      "all_ops": 120.807,
+      "wall_s": 0.02
+     },
+     {
+      "method": "greedy_periodic",
+      "objective": 110.1409,
+      "misses": 164,
+      "all_ops": 111.9078,
+      "wall_s": 0.02
+     },
+     {
+      "method": "greedy_reserved",
+      "objective": 106.8394,
+      "misses": 146,
+      "all_ops": 110.4447,
+      "wall_s": 0.02
+     },
+     {
+      "method": "decomposed",
+      "objective": 136.6584,
+      "misses": 0,
+      "all_ops": 136.6584,
+      "wall_s": 0.02
+     },
+     {
+      "method": "heft",
+      "objective": 86.9382,
+      "misses": 44,
+      "all_ops": 99.7463,
+      "wall_s": 0.01
+     },
+     {
+      "method": "heft_edf",
+      "objective": 115.8352,
+      "misses": 0,
+      "all_ops": 115.8352,
+      "wall_s": 0.01
+     },
+     {
+      "method": "pso",
+      "objective": 111.5027,
+      "misses": 0,
+      "all_ops": 111.5027,
+      "wall_s": 8.82
+     },
+     {
+      "method": "sa",
+      "objective": 120.807,
+      "misses": 0,
+      "all_ops": 120.807,
+      "wall_s": 27.63
+     }
+    ],
+    "cpsat": {
+     "status": "FEASIBLE",
+     "objective": 99.68,
+     "best_bound": 6.665,
+     "gap": 0.9331360353130016,
+     "wall": 120.02622938156128,
+     "time_limit": 120.0
+    },
+    "error": null,
+    "objective": 99.6795,
+    "misses": 0,
+    "all_ops": 109.6235
+   },
+   {
+    "spec": "networks_saturation_hetero",
+    "seed": 0,
+    "time_limit": 1800.0,
+    "wall_s": 1800.59,
+    "warm_from": "pso",
+    "warm_objective": 111.50270599999998,
+    "heuristics": [
+     {
+      "method": "greedy",
+      "objective": 120.807,
+      "misses": 0,
+      "all_ops": 120.807,
+      "wall_s": 0.03
+     },
+     {
+      "method": "greedy_periodic",
+      "objective": 110.1409,
+      "misses": 164,
+      "all_ops": 111.9078,
+      "wall_s": 0.03
+     },
+     {
+      "method": "greedy_reserved",
+      "objective": 106.8394,
+      "misses": 146,
+      "all_ops": 110.4447,
+      "wall_s": 0.06
+     },
+     {
+      "method": "decomposed",
+      "objective": 136.6584,
+      "misses": 0,
+      "all_ops": 136.6584,
+      "wall_s": 0.02
+     },
+     {
+      "method": "heft",
+      "objective": 86.9382,
+      "misses": 44,
+      "all_ops": 99.7463,
+      "wall_s": 0.01
+     },
+     {
+      "method": "heft_edf",
+      "objective": 115.8352,
+      "misses": 0,
+      "all_ops": 115.8352,
+      "wall_s": 0.01
+     },
+     {
+      "method": "pso",
+      "objective": 111.5027,
+      "misses": 0,
+      "all_ops": 111.5027,
+      "wall_s": 13.4
+     },
+     {
+      "method": "sa",
+      "objective": 120.807,
+      "misses": 0,
+      "all_ops": 120.807,
+      "wall_s": 30.0
+     }
+    ],
+    "cpsat": {
+     "status": "FEASIBLE",
+     "objective": 86.237,
+     "best_bound": 19.763,
+     "gap": 0.7708292264341292,
+     "wall": 1800.0694890022278,
+     "time_limit": 1800.0
+    },
+    "error": null,
+    "objective": 86.2372,
+    "misses": 0,
+    "all_ops": 105.8411
+   }
+  ],
+  "networks_saturation_quad": [
+   {
+    "spec": "networks_saturation_quad",
+    "seed": 0,
+    "time_limit": 120.0,
+    "wall_s": 44.65,
+    "warm_from": "pso",
+    "warm_objective": 75.44321400000003,
+    "heuristics": [
+     {
+      "method": "greedy",
+      "objective": 92.4397,
+      "misses": 0,
+      "all_ops": 99.745,
+      "wall_s": 0.05
+     },
+     {
+      "method": "greedy_periodic",
+      "objective": 92.7581,
+      "misses": 189,
+      "all_ops": 99.745,
+      "wall_s": 0.06
+     },
+     {
+      "method": "greedy_reserved",
+      "objective": 99.0811,
+      "misses": 189,
+      "all_ops": 99.8883,
+      "wall_s": 0.07
+     },
+     {
+      "method": "decomposed",
+      "objective": 90.5619,
+      "misses": 0,
+      "all_ops": 99.745,
+      "wall_s": 0.03
+     },
+     {
+      "method": "heft",
+      "objective": 75.5439,
+      "misses": 0,
+      "all_ops": 99.745,
+      "wall_s": 0.02
+     },
+     {
+      "method": "heft_edf",
+      "objective": 86.6172,
+      "misses": 0,
+      "all_ops": 99.745,
+      "wall_s": 0.02
+     },
+     {
+      "method": "pso",
+      "objective": 75.4432,
+      "misses": 0,
+      "all_ops": 99.745,
+      "wall_s": 9.03
+     },
+     {
+      "method": "sa",
+      "objective": 75.5439,
+      "misses": 0,
+      "all_ops": 99.745,
+      "wall_s": 26.28
+     }
+    ],
+    "cpsat": {
+     "status": "OPTIMAL",
+     "objective": 73.515,
+     "best_bound": 73.515,
+     "gap": 0.0,
+     "wall": 44.155550956726074,
+     "time_limit": 120.0
+    },
+    "error": null,
+    "objective": 73.5152,
+    "misses": 0,
+    "all_ops": 113.9455
+   }
+  ],
+  "networks_scale_ladder_hetero": [
+   {
+    "spec": "networks_scale_ladder_hetero",
+    "seed": 0,
+    "time_limit": 60.0,
+    "wall_s": 0.58,
+    "warm_from": "heft",
+    "warm_objective": 97.16356199999998,
+    "heuristics": [
+     {
+      "method": "greedy",
+      "objective": 111.3492,
+      "misses": 0,
+      "all_ops": 111.3492,
+      "wall_s": 0.0
+     },
+     {
+      "method": "greedy_periodic",
+      "objective": 111.3492,
+      "misses": 0,
+      "all_ops": 111.3492,
+      "wall_s": 0.0
+     },
+     {
+      "method": "greedy_reserved",
+      "objective": 111.3492,
+      "misses": 0,
+      "all_ops": 111.3492,
+      "wall_s": 0.0
+     },
+     {
+      "method": "decomposed",
+      "objective": 111.3492,
+      "misses": 0,
+      "all_ops": 111.3492,
+      "wall_s": 0.0
+     },
+     {
+      "method": "heft",
+      "objective": 97.1636,
+      "misses": 0,
+      "all_ops": 97.1636,
+      "wall_s": 0.0
+     },
+     {
+      "method": "heft_edf",
+      "objective": 97.1636,
+      "misses": 0,
+      "all_ops": 97.1636,
+      "wall_s": 0.0
+     },
+     {
+      "method": "pso",
+      "objective": 97.1636,
+      "misses": 0,
+      "all_ops": 97.1636,
+      "wall_s": 1.93
+     },
+     {
+      "method": "sa",
+      "objective": 97.1636,
+      "misses": 0,
+      "all_ops": 97.1636,
+      "wall_s": 4.98
+     }
+    ],
+    "cpsat": {
+     "status": "OPTIMAL",
+     "objective": 97.163,
+     "best_bound": 97.163,
+     "gap": 0.0,
+     "wall": 0.14422059059143066,
+     "time_limit": 60.0
+    },
+    "error": null,
+    "objective": 97.163,
+    "misses": 0,
+    "all_ops": 97.163
+   }
+  ],
+  "networks_scale_ladder_quad": [
+   {
+    "spec": "networks_scale_ladder_quad",
+    "seed": 0,
+    "time_limit": 120.0,
+    "wall_s": 1.09,
+    "warm_from": "heft",
+    "warm_objective": 97.16336299999999,
+    "heuristics": [
+     {
+      "method": "greedy",
+      "objective": 109.6346,
+      "misses": 0,
+      "all_ops": 109.6346,
+      "wall_s": 0.01
+     },
+     {
+      "method": "greedy_periodic",
+      "objective": 109.6346,
+      "misses": 0,
+      "all_ops": 109.6346,
+      "wall_s": 0.01
+     },
+     {
+      "method": "greedy_reserved",
+      "objective": 109.6346,
+      "misses": 0,
+      "all_ops": 109.6346,
+      "wall_s": 0.01
+     },
+     {
+      "method": "decomposed",
+      "objective": 109.6346,
+      "misses": 0,
+      "all_ops": 109.6346,
+      "wall_s": 0.01
+     },
+     {
+      "method": "heft",
+      "objective": 97.1634,
+      "misses": 0,
+      "all_ops": 97.1634,
+      "wall_s": 0.0
+     },
+     {
+      "method": "heft_edf",
+      "objective": 97.1634,
+      "misses": 0,
+      "all_ops": 97.1634,
+      "wall_s": 0.0
+     },
+     {
+      "method": "pso",
+      "objective": 97.1634,
+      "misses": 0,
+      "all_ops": 97.1634,
+      "wall_s": 1.63
+     },
+     {
+      "method": "sa",
+      "objective": 97.1634,
+      "misses": 0,
+      "all_ops": 97.1634,
+      "wall_s": 4.97
+     }
+    ],
+    "cpsat": {
+     "status": "OPTIMAL",
+     "objective": 97.163,
+     "best_bound": 97.163,
+     "gap": 0.0,
+     "wall": 0.694735050201416,
+     "time_limit": 120.0
+    },
+    "error": null,
+    "objective": 97.1627,
+    "misses": 0,
+    "all_ops": 97.1627
+   }
+  ],
+  "networks_tight_loop_quad": [
+   {
+    "spec": "networks_tight_loop_quad",
+    "seed": 0,
+    "time_limit": 120.0,
+    "wall_s": 0.45,
+    "warm_from": null,
+    "warm_objective": null,
+    "heuristics": [
+     {
+      "method": "greedy",
+      "objective": 84.3378,
+      "misses": 84,
+      "all_ops": 84.3378,
+      "wall_s": 0.02
+     },
+     {
+      "method": "greedy_periodic",
+      "objective": 84.3378,
+      "misses": 84,
+      "all_ops": 84.3378,
+      "wall_s": 0.02
+     },
+     {
+      "method": "greedy_reserved",
+      "objective": 84.3378,
+      "misses": 84,
+      "all_ops": 84.3378,
+      "wall_s": 0.02
+     },
+     {
+      "method": "decomposed",
+      "objective": 64.2678,
+      "misses": 252,
+      "all_ops": 64.2678,
+      "wall_s": 0.06
+     },
+     {
+      "method": "heft",
+      "objective": 45.9164,
+      "misses": 84,
+      "all_ops": 45.9164,
+      "wall_s": 0.01
+     },
+     {
+      "method": "heft_edf",
+      "objective": 73.438,
+      "misses": 84,
+      "all_ops": 73.438,
+      "wall_s": 0.01
+     },
+     {
+      "method": "pso",
+      "objective": 45.9164,
+      "misses": 84,
+      "all_ops": 45.9164,
+      "wall_s": 5.47
+     },
+     {
+      "method": "sa",
+      "objective": 45.9164,
+      "misses": 84,
+      "all_ops": 45.9164,
+      "wall_s": 14.15
+     }
+    ],
+    "cpsat": {},
+    "error": "RuntimeError: cpsat returned INFEASIBLE with no solution"
+   }
+  ]
+ },
+ "cpsat_decision_bisections": {
+  "networks_control_mix_quad": {
+   "spec": "networks_control_mix_quad",
+   "cpsat_decision_lb": 32.602,
+   "detail": "input",
+   "interval_hi": 33.383,
+   "time_limit": 30.0,
+   "trace": [
+    {
+     "status": "NO_VERDICT",
+     "wall_s": 0.52,
+     "T": 32.9925
+    }
+   ]
+  },
+  "networks_saturation_hetero": {
+   "spec": "networks_saturation_hetero",
+   "cpsat_decision_lb": 79.15,
+   "detail": "input",
+   "interval_hi": 99.68,
+   "time_limit": 300.0,
+   "trace": [
+    {
+     "status": "UNKNOWN",
+     "bounded": true,
+     "limit_us": 89415,
+     "solver_wall": 300.0727286338806,
+     "wall_s": 300.59,
+     "T": 89.415
+    }
+   ]
+  }
+ },
+ "cpsat_optimality_refutations": {
+  "networks_control_mix_quad": {
+   "T": 33.382,
+   "status": "INFEASIBLE",
+   "wall": 11.35
+  },
+  "networks_saturation_quad": {
+   "T": 73.514,
+   "status": "INFEASIBLE",
+   "wall": 30.25
+  },
+  "networks_scale_ladder_hetero": {
+   "T": 97.162,
+   "status": "INFEASIBLE",
+   "wall": 2.02
+  },
+  "networks_scale_ladder_quad": {
+   "T": 97.162,
+   "status": "INFEASIBLE",
+   "wall": 1.16
+  }
+ },
+ "cpsat_decisions_that_proved_nothing": {
+  "networks_control_mix_gempair": {
+   "51.749": {
+    "status": "UNKNOWN",
+    "bounded": true,
+    "limit_us": 51749,
+    "solver_wall": 600.0381464958191,
+    "wall_s": 600.48,
+    "T": 51.749
+   },
+   "51.7449": {
+    "status": "UNKNOWN",
+    "bounded": true,
+    "limit_us": 51744,
+    "solver_wall": 600.028115272522,
+    "wall_s": 600.55,
+    "T": 51.7449
+   }
+  },
+  "networks_saturation_hetero": {
+   "83.0": {
+    "status": "UNKNOWN",
+    "bounded": true,
+    "limit_us": 83000,
+    "solver_wall": 900.0621564388275,
+    "wall_s": 900.53,
+    "T": 83.0
+   },
+   "best_refuted": 79.1465
+  }
+ },
+ "mosek_cross_check": {
+  "networks_scale_ladder_quad": {
+   "objective": 97.1634,
+   "misses": 0,
+   "mosek_bound": 97.163363
+  },
+  "networks_control_mix_hetero": {
+   "objective": 42.0078,
+   "misses": 0,
+   "mosek_bound": 33.19257661906
+  },
+  "networks_control_mix_gempair": {
+   "objective": 60.0736,
+   "misses": 0,
+   "mosek_bound": 48.739785
+  },
+  "networks_saturation_hetero": {
+   "objective": 115.8316,
+   "misses": 0,
+   "mosek_bound": 72.3095252638
+  },
+  "networks_scale_ladder_hetero": {
+   "objective": 97.1636,
+   "misses": 0,
+   "mosek_bound": 97.163363
+  }
+ }
+}

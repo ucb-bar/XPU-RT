@@ -1,0 +1,20 @@
+{
+  "name": "smolvla_vision_bundle",
+  "_comment": "Flow C port of the smolVLA vision encoder at BUNDLE granularity -- 173 tiles, the only decomposition that reaches HTA (50 tiles). Target 2272.3 ms, the best physically-supported configuration; the published 1083.6 ms assumes whole segments run on HTA at the price of their extracted convs, and no ctx_dsp_seg_NN__Hta.bin exists. Contexts live where the smolVLA pipeline staged them, not in the shared ctx dir. Measurements are a separate file so the port cannot perturb the sweep's cost model.",
+  "target": "qrb5165_smolvla",
+  "board": "qrb5165_v66",
+  "registry": "cores/qrb5165_qnn.json",
+  "measurements": "measurements/qrb5165_v66_smolvla.json",
+  "slots": {
+    "CPU_P": "hta",
+    "CPU_E": "dsp",
+    "CPU_X": "cpu"
+  },
+  "ctx_dir": "/root/models/smolvlm_vision_v3/ctx",
+  "networks": [
+    {
+      "name": "smolvlm_vision",
+      "bindings": "bindings/smolvlm_vision_bundle.json"
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+% Caption for cand_c20_combined.png.
+
+\caption{\textbf{Schedule choice sets both task success and actuator energy.}
+\textbf{(A)} The curated ladder on the two widowx scenes: six schedules,
+30 seeds of 24 episodes each, ordered reference-first then by release period and
+labelled with measured period\,/\,observation latency. Boxes are quartiles over
+seeds, dots individual seeds, diamonds the mean. Inset frames are the end states
+of a successful and a failed rollout. \textbf{(B)} The same measurement opened
+out to all 44 CP-SAT operating points and all four workloads: success against
+calibrated energy (left), and success on the (period, window) grid, one panel per
+workload on its own gradient (right). Stars mark each workload's best schedule by
+success. Hatched cells are propagated from a twin whose CP-SAT schedule is
+identical to within 0.04\,ms of latency; $\times$ and ? mark infeasible and
+unsolved within the solver budget. \emph{Colour means different things in the two
+halves}---the arm in (A), the workload in (B)---which is what the A/B split
+marks. Energy is calibrated to joules and applied per episode,
+$E = c\int\!\sum\tau_{\mathrm{grav}}^2\,dt + P_{\mathrm{idle}}T$, with
+$c=0.827\,\mathrm{W/(N\,m)^2}$ and $P_{\mathrm{idle}}=4.61$\,W derived from
+ROBOTIS' published stall torque and current for the Dynamixel XM430-W350; the
+google constants are a proxy and those series are drawn hollow, since
+$P_{\mathrm{idle}}$ dominates their result and calibration does not preserve
+their ordering. Plotted energy is the quasi-static lower bound: the raw
+$\int\!\sum\tau^2dt$ proxy cannot be converted at face value because the
+simulated PD torque runs about 76$\times$ the physical requirement. Derivation in
+\texttt{calib/ENERGY\_CALIBRATION.md}.}

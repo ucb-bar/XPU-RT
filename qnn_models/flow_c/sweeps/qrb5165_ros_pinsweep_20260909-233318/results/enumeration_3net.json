@@ -1,0 +1,158 @@
+{
+ "_comment": "The 3net arm: RoSE's fifteen 3-network FireSim configs collapse to these distinct workload shapes on this board, because the machine axis (gempair/rvvpair/hetero) is a count of identical cores and this board has one of each kind. Full enumeration everywhere.",
+ "source_dir": "/scratch/dima/rose-infra/RoSE/soc/sw/xpu-rt/data/toplevel",
+ "cost_provenance": {
+  "dronet/cpu": "gen/profile/CPU/qrb5165_flowc/dronet/dronet.int8/dronet_qrb5165_flowc_CPU_dronet.int8/topo_0/results.csv",
+  "dronet/dsp": "gen/profile/DSP/qrb5165_flowc/dronet/dronet.int8/dronet_qrb5165_flowc_DSP_dronet.int8/topo_0/results.csv",
+  "dronet/hta": "gen/profile/HTA/qrb5165_flowc/dronet/dronet.int8/dronet_qrb5165_flowc_HTA_dronet.int8/topo_0/results.csv",
+  "mlp_control/cpu": "gen/profile/CPU/qrb5165_flowc/mlp_control/mlp_control.int8/mlp_control_qrb5165_flowc_CPU_mlp_control.int8/topo_0/results.csv",
+  "mlp_control/dsp": "gen/profile/DSP/qrb5165_flowc/mlp_control/mlp_control.int8/mlp_control_qrb5165_flowc_DSP_mlp_control.int8/topo_0/results.csv",
+  "yolov8n/cpu": "gen/profile/CPU/qrb5165_flowc/yolov8n/yolov8n.int8/yolov8n_qrb5165_flowc_CPU_yolov8n.int8/topo_0/results.csv",
+  "yolov8n/dsp": "gen/profile/DSP/qrb5165_flowc/yolov8n/yolov8n.int8/yolov8n_qrb5165_flowc_DSP_yolov8n.int8/topo_0/results.csv",
+  "fused_full/cpu": "gen/profile/CPU/qrb5165_flowc/fused_full/fused_full.int8/fused_full_qrb5165_flowc_CPU_fused_full.int8/topo_0/results.csv",
+  "fused_full/dsp": "gen/profile/DSP/qrb5165_flowc/fused_full/fused_full.int8/fused_full_qrb5165_flowc_DSP_fused_full.int8/topo_0/results.csv"
+ },
+ "cells": [
+  {
+   "cell": "3net_dronet1_mlp2",
+   "sources": [
+    "3net_pairs/networks_3net_smallb_hetero.json"
+   ],
+   "n_legal": 6,
+   "measured": 6,
+   "mode": "full",
+   "best": "mlp_control@cpu_dronet@cpu",
+   "best_ms": 10.066,
+   "best_np_ms": 10.066,
+   "worst": "mlp_control@dsp_dronet@hta",
+   "worst_ms": 10.685,
+   "spread": 1.0615
+  },
+  {
+   "cell": "3net_dronet1_mlp2_yolo1",
+   "sources": [
+    "3net_pairs/networks_3net_small_gempair.json",
+    "3net_pairs/networks_3net_small_hetero.json",
+    "3net_pairs/networks_3net_small_rvvpair.json"
+   ],
+   "n_legal": 12,
+   "measured": 12,
+   "mode": "full",
+   "best": "mlp_control@cpu_dronet@cpu_yolov8n@dsp",
+   "best_ms": 28.644,
+   "best_np_ms": 28.644,
+   "worst": "mlp_control@cpu_dronet@cpu_yolov8n@cpu",
+   "worst_ms": 80.937,
+   "spread": 2.8256
+  },
+  {
+   "cell": "3net_dronet2_mlp8_yolo1",
+   "sources": [
+    "networks_3net_dronet_ctl.json"
+   ],
+   "n_legal": 12,
+   "measured": 12,
+   "mode": "full",
+   "best": "mlp_control@cpu_yolov8n@dsp_dronet@dsp",
+   "best_ms": 70.645,
+   "best_np_ms": 28.644,
+   "worst": "mlp_control@cpu_yolov8n@cpu_dronet@cpu",
+   "worst_ms": 88.331,
+   "spread": 1.2504
+  },
+  {
+   "cell": "3net_dronet4_mlp4_yolo1",
+   "sources": [
+    "networks_3net_dronet_v2.json"
+   ],
+   "n_legal": 12,
+   "measured": 12,
+   "mode": "full",
+   "best": "mlp_control@cpu_yolov8n@dsp_dronet@dsp",
+   "best_ms": 31.224,
+   "best_np_ms": 28.644,
+   "worst": "mlp_control@cpu_yolov8n@cpu_dronet@cpu",
+   "worst_ms": 102.063,
+   "spread": 3.2687
+  },
+  {
+   "cell": "3net_dronet4_mlp8_yolo1",
+   "sources": [
+    "3net_pairs/networks_3net_gempair.json",
+    "3net_pairs/networks_3net_hetero.json",
+    "3net_pairs/networks_3net_rvvpair.json",
+    "networks_3net_milpfair.json"
+   ],
+   "n_legal": 12,
+   "measured": 12,
+   "mode": "full",
+   "best": "mlp_control@cpu_dronet@cpu_yolov8n@dsp",
+   "best_ms": 70.066,
+   "best_np_ms": 28.644,
+   "worst": "mlp_control@cpu_dronet@cpu_yolov8n@cpu",
+   "worst_ms": 102.327,
+   "spread": 1.4604
+  },
+  {
+   "cell": "3net_dronet8_mlp16_yolo1",
+   "sources": [
+    "networks_3net_armA.json",
+    "networks_3net_armB.json"
+   ],
+   "n_legal": 12,
+   "measured": 12,
+   "mode": "full",
+   "best": "mlp_control@cpu_dronet@cpu_yolov8n@cpu",
+   "best_ms": 150.066,
+   "best_np_ms": 80.871,
+   "worst": "mlp_control@dsp_dronet@hta_yolov8n@dsp",
+   "worst_ms": 150.685,
+   "spread": 1.0041
+  },
+  {
+   "cell": "3net_fused2_mlp8_yolo1",
+   "sources": [
+    "networks_3net_fused.json"
+   ],
+   "n_legal": 8,
+   "measured": 8,
+   "mode": "full",
+   "best": "mlp_control@dsp_fused_full@cpu_yolov8n@dsp",
+   "best_ms": 71.147,
+   "best_np_ms": 29.329,
+   "worst": "mlp_control@cpu_fused_full@cpu_yolov8n@cpu",
+   "worst_ms": 76.629,
+   "spread": 1.0771
+  },
+  {
+   "cell": "3net_fused4_mlp4_yolo1",
+   "sources": [
+    "networks_3net_fused_v2.json"
+   ],
+   "n_legal": 8,
+   "measured": 8,
+   "mode": "full",
+   "best": "mlp_control@cpu_fused_full@cpu_yolov8n@dsp",
+   "best_ms": 31.213,
+   "best_np_ms": 28.644,
+   "worst": "mlp_control@cpu_fused_full@cpu_yolov8n@cpu",
+   "worst_ms": 78.659,
+   "spread": 2.5201
+  },
+  {
+   "cell": "3net_mlp2",
+   "sources": [
+    "3net_pairs/networks_3net_tiny_hetero.json"
+   ],
+   "n_legal": 2,
+   "measured": 2,
+   "mode": "full",
+   "best": "mlp_control@cpu",
+   "best_ms": 10.066,
+   "best_np_ms": 10.066,
+   "worst": "mlp_control@dsp",
+   "worst_ms": 10.685,
+   "spread": 1.0615
+  }
+ ]
+}

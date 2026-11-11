@@ -1,0 +1,151 @@
+### 1. matched pair: baseline vs fused
+
+seed   ops b/f   solver b/f                  pred b    pred f      d% |     act b     act f      d%     spread b/f
+0       20/23    milp       /milp             67.57     66.34    -1.8 |     82.98     83.23     0.3   2.31/  0.86
+1       25/35    milp       /milp             79.57     84.57     6.3 |     93.09     98.87     6.2   2.69/  4.24
+2       26/32    milp       /milp             73.34     73.34     0.0 |     90.48     86.56    -4.3   7.82/  6.59
+3       16/19    milp       /milp             48.40     44.02    -9.0 |     52.68     48.37    -8.2   3.94/  0.16
+4      REJECTED both arms: ['no non-periodic work: nothing to pack against the periodic load']
+5      REJECTED both arms: ['no non-periodic work: nothing to pack against the periodic load']
+6       30/35    milp       /milp             91.69     84.30    -8.1 |    109.31     98.64    -9.8   4.64/  5.41
+7      REJECTED both arms: ['no non-periodic work: nothing to pack against the periodic load']
+
+### 2/3. ViNT: fused vs fused_vint (identical periodic set + identical yolov8n set)
+
+seed 0:
+  fused       ops  23  entries  23  horizon    42.0  solver milp            pred     66.34  act     83.23  ratio  1.250  lanes {'cpu': 9, 'dsp': 10, 'hta': 4}
+  fused_vint  ops  40  entries  40  horizon    78.9  solver milp            pred     94.34  act    103.55  ratio  1.100  lanes {'cpu': 15, 'dsp': 15, 'hta': 10}
+
+seed 1:
+  fused       ops  35  entries  35  horizon    47.7  solver milp            pred     84.57  act     98.87  ratio  1.170  lanes {'cpu': 20, 'dsp': 9, 'hta': 6}
+  fused_vint  ops  57  entries  57  horizon    88.4  solver milp            pred    116.63  act    127.12  ratio  1.090  lanes {'cpu': 25, 'dsp': 20, 'hta': 12}
+
+
+### per-tile predicted vs actual, pooled over all run points
+
+tile@lane                           n pts   pred ms    act ms    ratio        ratio range
+dronet_full@cpu                         2     6.998    10.154    1.451     1.20 .. 1.70    
+dronet_full@dsp                         7     0.645     1.215    1.884     1.29 .. 3.12    
+dronet_full@hta                         7     2.030     1.814    0.894     0.68 .. 7.11    
+fused_depth_conv@cpu                    7     0.014     0.137    9.786     5.07 .. 19.21   
+fused_depth_conv@dsp                    4     0.392     0.742    1.893     1.17 .. 3.47    
+fused_depth_conv@hta                    4     1.568     0.880    0.561     0.43 .. 0.66    
+fused_tail@cpu                          7     0.354     1.374    3.881     2.63 .. 8.45    
+fused_tail@dsp                          4     4.303     3.406    0.792     0.76 .. 0.81    
+fused_vision_conv@dsp                   6     0.459     0.855    1.862     1.06 .. 3.56    
+fused_vision_conv@hta                   7     0.931     1.122    1.205     1.12 .. 1.28    
+mlp_control_full@cpu                   12     0.107     0.069    0.645     0.53 .. 0.90    
+mlp_control_full@dsp                    8     0.589     0.669    1.135     0.65 .. 2.68    
+vint_decoder@cpu                        2    37.826    22.592    0.597     0.59 .. 0.60    
+vint_encoders@dsp                       2    14.213    16.084    1.132     1.12 .. 1.14    
+yolov8n_backbone@dsp                   11    13.267    13.191    0.994     0.89 .. 1.18    
+yolov8n_backbone@hta                   38    13.909    13.951    1.003     0.88 .. 2.04    
+yolov8n_head@cpu                        8    39.464    52.166    1.322     1.24 .. 1.45    
+yolov8n_head@dsp                       41    15.377    17.468    1.136     0.99 .. 1.76    
+
+### makespan ratio per point (actual / predicted), medians over 3 reps
+
+point                  solver             pred ms reps (ms)                             median   ratio                  lock wait s
+baseline_seed0         milp                 67.57 [85.192, 82.978, 82.882]               82.98   1.230            [0.8, 0.35, 0.32]
+baseline_seed1         milp                 79.57 [93.087, 92.133, 94.822]               93.09   1.170           [0.31, 0.32, 0.29]
+baseline_seed2         milp                 73.34 [90.482, 94.247, 86.424]               90.48   1.230           [0.44, 0.37, 0.31]
+baseline_seed3         milp                 48.40 [56.071, 52.128, 52.677]               52.68   1.090           [0.32, 0.29, 0.32]
+baseline_seed4         REJECTED
+baseline_seed5         REJECTED
+baseline_seed6         milp                 91.69 [109.312, 106.472, 111.109]           109.31   1.190           [0.31, 0.33, 0.31]
+baseline_seed7         REJECTED
+fused_seed0            milp                 66.34 [82.778, 83.229, 83.638]               83.23   1.250           [0.29, 0.33, 0.37]
+fused_seed1            milp                 84.57 [99.661, 95.425, 98.871]               98.87   1.170            [0.36, 0.36, 0.3]
+fused_seed2            milp                 73.34 [90.179, 83.59, 86.558]                86.56   1.180           [0.38, 0.33, 0.33]
+fused_seed3            milp                 44.02 [48.517, 48.359, 48.371]               48.37   1.100           [0.36, 0.31, 0.28]
+fused_seed4            REJECTED
+fused_seed5            REJECTED
+fused_seed6            milp                 84.30 [97.778, 98.635, 103.191]              98.64   1.170           [0.35, 0.28, 0.29]
+fused_seed7            REJECTED
+fused_vint_seed0       milp                 94.34 [113.679, 102.433, 103.551]           103.55   1.100           [0.28, 0.28, 0.37]
+fused_vint_seed1       milp                116.63 [127.12, 126.911, 132.663]            127.12   1.090            [0.38, 0.34, 0.3]
+### mlp_control punctuality and CPU-lane load, by arm (medians over 3 reps)
+
+point                 mlp n  exec p50  exec p90  exec max  late p50  late max |  cpu busy ms  dsp busy  hta busy     wall
+baseline_seed0            6     0.082     0.109     0.995     0.015    10.095 |        52.60     75.05     59.23    82.98
+baseline_seed1           10     0.067     1.213     1.602     0.017    11.742 |        69.89     89.45     70.79    93.09
+baseline_seed2           15     0.075     1.185     2.777     0.352    12.592 |        66.88     76.66     54.85    90.48
+baseline_seed3            6     0.065     0.093     0.094     0.010     0.059 |         0.42     48.80     19.46    52.68
+baseline_seed6           10     0.064     0.240     0.244     0.007     0.052 |        57.99    102.79     61.81   109.31
+fused_seed0               6     0.106     0.906     0.956     2.132    14.486 |        54.43     81.72     53.47    83.23
+fused_seed1              10     0.068     0.088     0.179     0.020     7.400 |        62.62     89.11     59.18    98.87
+fused_seed2              15     0.066     0.383     0.659     0.016     8.140 |        53.00     75.56     43.64    86.56
+fused_seed3               6     0.060     0.088     0.123     0.015     0.221 |         6.10     47.99     18.70    48.37
+fused_seed6              10     0.079     0.149     0.540     0.036    12.109 |        73.23     86.13     66.55    98.63
+fused_vint_seed0         12     0.127     0.675     2.436     0.768    23.668 |        32.76    101.01     67.18   103.55
+fused_vint_seed1         18     0.074     0.608     0.820     0.016     6.689 |        32.17    117.43     81.46   127.12
+
+### matched arms: what the fused_split substitution actually buys
+
+seed  mlp exec p50 b/f       mlp late max b/f       cpu busy b/f         wall b/f            
+0         0.082 /    0.106      10.095 /   14.486      52.60 /   54.43     82.98 /   83.23
+1         0.067 /    0.068      11.742 /    7.400      69.89 /   62.62     93.09 /   98.87
+2         0.075 /    0.066      12.592 /    8.140      66.88 /   53.00     90.48 /   86.56
+3         0.065 /    0.060       0.059 /    0.221       0.42 /    6.10     52.68 /   48.37
+6         0.064 /    0.079       0.052 /   12.109      57.99 /   73.23    109.31 /   98.63
+
+### what bounds the makespan (last entry to finish, median rep)
+
+baseline_seed0       last = yolov8n_d/yolov8n_head@dsp ends   82.98 ms (pred end   67.57)
+baseline_seed1       last = yolov8n_d/yolov8n_head@cpu ends   92.13 ms (pred end   79.57)
+baseline_seed2       last = yolov8n_c/yolov8n_head@cpu ends   94.25 ms (pred end   69.57)
+baseline_seed3       last = yolov8n_a/yolov8n_head@dsp ends   52.13 ms (pred end   48.40)
+baseline_seed6       last = yolov8n_c/yolov8n_head@dsp ends  106.47 ms (pred end   91.69)
+fused_seed0          last = yolov8n_d/yolov8n_head@dsp ends   83.23 ms (pred end   66.34)
+fused_seed1          last = yolov8n_b/yolov8n_head@cpu ends   95.42 ms (pred end   84.57)
+fused_seed2          last = yolov8n_b/yolov8n_head@cpu ends   83.59 ms (pred end   72.57)
+fused_seed3          last = yolov8n_b/yolov8n_head@dsp ends   48.36 ms (pred end   44.02)
+fused_seed6          last = yolov8n_e/yolov8n_head@cpu ends   98.63 ms (pred end   84.30)
+fused_vint_seed0     last = yolov8n_a/yolov8n_head@dsp ends  102.43 ms (pred end   94.34)  vint busy   37.55 ms on ['cpu', 'dsp']
+fused_vint_seed1     last = yolov8n_e/yolov8n_head@dsp ends  126.91 ms (pred end  116.63)  vint busy   42.68 ms on ['cpu', 'dsp']
+
+### ViNT arm vs its matched fused arm: where the extra time goes
+
+seed 0:  wall 83.23 -> 103.55 ms  (+20.32)
+          cpu busy   54.43 ->   32.76   dsp   81.72 ->  101.01   hta   53.47 ->   67.18
+          mlp exec p50 0.106 -> 0.127 ms, late max 14.486 -> 23.668 ms
+seed 1:  wall 98.87 -> 127.12 ms  (+28.25)
+          cpu busy   62.62 ->   32.17   dsp   89.11 ->  117.43   hta   59.18 ->   81.46
+          mlp exec p50 0.068 -> 0.074 ms, late max 7.400 -> 6.689 ms
+
+### per-lane over/under-prediction, summed over every entry of every run point
+
+  cpu    492 entries  predicted    1301.2 ms  actual    1709.9 ms  ratio 1.314
+  dsp    342 entries  predicted    2569.0 ms  actual    2992.3 ms  ratio 1.165
+  hta    240 entries  predicted    1763.9 ms  actual    1926.5 ms  ratio 1.092
+
+### placement of the yolov8n head, by point (which lane the solver chose)
+
+baseline_seed0       yolov8n_head: 3 on dsp, 1 on cpu
+baseline_seed1       yolov8n_head: 4 on dsp, 1 on cpu
+baseline_seed2       yolov8n_head: 3 on dsp, 1 on cpu
+baseline_seed3       yolov8n_head: 2 on dsp, 0 on cpu
+baseline_seed6       yolov8n_head: 4 on dsp, 1 on cpu
+fused_seed0          yolov8n_head: 3 on dsp, 1 on cpu   |  fused_tail: 1 dsp, 2 cpu
+fused_seed1          yolov8n_head: 4 on dsp, 1 on cpu   |  fused_tail: 0 dsp, 5 cpu
+fused_seed2          yolov8n_head: 3 on dsp, 1 on cpu   |  fused_tail: 1 dsp, 2 cpu
+fused_seed3          yolov8n_head: 2 on dsp, 0 on cpu   |  fused_tail: 0 dsp, 3 cpu
+fused_seed6          yolov8n_head: 4 on dsp, 1 on cpu   |  fused_tail: 0 dsp, 5 cpu
+fused_vint_seed0     yolov8n_head: 4 on dsp, 0 on cpu   |  fused_tail: 2 dsp, 4 cpu
+fused_vint_seed1     yolov8n_head: 5 on dsp, 0 on cpu   |  fused_tail: 1 dsp, 8 cpu
+
+### mlp_control deadline behaviour (instance i due by start+i*period+window)
+
+point                 period  window    n   misses (median rep)   worst overrun ms
+baseline_seed0             7       5    6             1 / 6                  7.195
+baseline_seed1             5       3   10             3 / 10                11.048
+baseline_seed2             3       2   15             6 / 15                13.188
+baseline_seed3             6       3    6             3 / 6                  0.025
+baseline_seed6             5       4   10             0 / 10                -3.735
+fused_seed0                7       5    6             2 / 6                  9.574
+fused_seed1                5       3   10             2 / 10                 6.461
+fused_seed2                3       2   15             3 / 15                 8.238
+fused_seed3                6       3    6             0 / 6                 -0.004
+fused_seed6                5       4   10             5 / 10                 8.649
+fused_vint_seed0           7       5   12             5 / 12                19.204
+fused_vint_seed1           5       3   18             4 / 18                 5.133

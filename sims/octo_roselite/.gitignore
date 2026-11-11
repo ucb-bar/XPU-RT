@@ -1,0 +1,29 @@
+# Generated artefacts and raw trace data are NOT tracked. Everything here is
+# source: harness, sweep orchestration, analysis and figure generators.
+#
+# The data these scripts consume lives outside the repo, on the machine that
+# produced it (see README.md for paths and sizes). It is ~3 GB of per-episode
+# .npy/.npz/.json plus rendered .png/.mp4, which does not belong in git and can
+# be regenerated from the scripts here given GPU time.
+*.png
+*.jpg
+*.jpeg
+*.mp4
+*.svg
+*.npy
+*.npz
+*.pyc
+__pycache__/
+.frames/
+# per-cell trace output (energy2.json, summary.json, ep*_bodies.json)
+traces_*/
+plane3_runs/
+plane3_archive/
+runs/
+runs_*/
+videos/
+videos_*/
+smoke_*/
+scan_local/
+gate/
+gate2/

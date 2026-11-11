@@ -1,0 +1,3884 @@
+{
+ "dronet_sa": {
+  "hta": {
+   "source": "dronet_sa_hta",
+   "source_net": "dronet_sa_hta",
+   "backend_key": "hta",
+   "precision": "int8",
+   "us": 2592.9,
+   "passes": [
+    1604.8,
+    2598.6,
+    2596.1,
+    2592.9,
+    1595.8
+   ],
+   "ctx": "ctx_s10_dronet_sa_hta_int8__Hta.bin",
+   "graph": "dronet_sa_hta",
+   "numerics": "preserving",
+   "rewrite_chain": [
+    "onnxsim",
+    "bn_to_mul_add",
+    "flatten_gemm_to_conv"
+   ],
+   "candidates": [
+    {
+     "source": "dronet_sa_hta",
+     "source_net": "dronet_sa_hta",
+     "backend_key": "hta",
+     "precision": "int8",
+     "us": 2592.9,
+     "passes": [
+      1604.8,
+      2598.6,
+      2596.1,
+      2592.9,
+      1595.8
+     ],
+     "ctx": "ctx_s10_dronet_sa_hta_int8__Hta.bin",
+     "graph": "dronet_sa_hta",
+     "numerics": "preserving",
+     "rewrite_chain": [
+      "onnxsim",
+      "bn_to_mul_add",
+      "flatten_gemm_to_conv"
+     ]
+    }
+   ]
+  },
+  "dsp": {
+   "source": "dronet_sa_hta",
+   "source_net": "dronet_sa_hta",
+   "backend_key": "dsp",
+   "precision": "int8",
+   "us": 627.2,
+   "passes": [
+    602.6,
+    627.2,
+    665.6,
+    883.9,
+    581.7
+   ],
+   "ctx": "ctx_s10_dronet_sa_hta_int8__Dsp.bin",
+   "graph": "dronet_sa_hta",
+   "numerics": "preserving",
+   "rewrite_chain": [
+    "onnxsim",
+    "bn_to_mul_add",
+    "flatten_gemm_to_conv"
+   ],
+   "candidates": [
+    {
+     "source": "base",
+     "source_net": "dronet_sa",
+     "backend_key": "dsp",
+     "precision": "int8",
+     "us": 702.1,
+     "passes": [
+      535.4,
+      899.9,
+      803.5,
+      535.2,
+      702.1
+     ],
+     "ctx": "ctx_s10_dronet_sa_int8__Dsp.bin",
+     "graph": "dronet_sa",
+     "numerics": "preserving",
+     "rewrite_chain": null
+    },
+    {
+     "source": "dronet_sa_hta",
+     "source_net": "dronet_sa_hta",
+     "backend_key": "dsp",
+     "precision": "int8",
+     "us": 627.2,
+     "passes": [
+      602.6,
+      627.2,
+      665.6,
+      883.9,
+      581.7
+     ],
+     "ctx": "ctx_s10_dronet_sa_hta_int8__Dsp.bin",
+     "graph": "dronet_sa_hta",
+     "numerics": "preserving",
+     "rewrite_chain": [
+      "onnxsim",
+      "bn_to_mul_add",
+      "flatten_gemm_to_conv"
+     ]
+    }
+   ]
+  },
+  "cpu": {
+   "source": "base",
+   "source_net": "dronet_sa",
+   "backend_key": "cpu",
+   "precision": "fp32",
+   "us": 860.1,
+   "passes": [
+    860.1,
+    961.0,
+    835.8,
+    797.6,
+    869.9
+   ],
+   "ctx": "ctx_s10_dronet_sa_fp32__Cpu.bin",
+   "graph": "dronet_sa",
+   "numerics": "preserving",
+   "rewrite_chain": null,
+   "candidates": [
+    {
+     "source": "base",
+     "source_net": "dronet_sa",
+     "backend_key": "cpu",
+     "precision": "fp32",
+     "us": 860.1,
+     "passes": [
+      860.1,
+      961.0,
+      835.8,
+      797.6,
+      869.9
+     ],
+     "ctx": "ctx_s10_dronet_sa_fp32__Cpu.bin",
+     "graph": "dronet_sa",
+     "numerics": "preserving",
+     "rewrite_chain": null
+    },
+    {
+     "source": "base",
+     "source_net": "dronet_sa",
+     "backend_key": "cpu@int8",
+     "precision": "int8",
+     "us": 5024.0,
+     "passes": [
+      4991.2,
+      4991.2,
+      5686.8,
+      5686.8,
+      4927.5,
+      4927.5,
+      5232.0,
+      5232.0,
+      5024.0,
+      5024.0
+     ],
+     "ctx": "ctx_s10_dronet_sa_int8__CpuInt8.bin",
+     "graph": "dronet_sa",
+     "numerics": "preserving",
+     "rewrite_chain": null
+    },
+    {
+     "source": "dronet_sa_hta",
+     "source_net": "dronet_sa_hta",
+     "backend_key": "cpu",
+     "precision": "fp32",
+     "us": 960.4,
+     "passes": [
+      916.9,
+      815.2,
+      994.9,
+      1032.7,
+      960.4
+     ],
+     "ctx": "ctx_s10_dronet_sa_hta_fp32__Cpu.bin",
+     "graph": "dronet_sa_hta",
+     "numerics": "preserving",
+     "rewrite_chain": [
+      "onnxsim",
+      "bn_to_mul_add",
+      "flatten_gemm_to_conv"
+     ]
+    },
+    {
+     "source": "dronet_sa_hta",
+     "source_net": "dronet_sa_hta",
+     "backend_key": "cpu@int8",
+     "precision": "int8",
+     "us": 5156.2,
+     "passes": [
+      5365.6,
+      4995.3,
+      5529.8,
+      5000.5,
+      5156.2
+     ],
+     "ctx": "ctx_s10_dronet_sa_hta_int8__CpuInt8.bin",
+     "graph": "dronet_sa_hta",
+     "numerics": "preserving",
+     "rewrite_chain": [
+      "onnxsim",
+      "bn_to_mul_add",
+      "flatten_gemm_to_conv"
+     ]
+    }
+   ]
+  },
+  "gpu": {
+   "source": "dronet_sa_hta",
+   "source_net": "dronet_sa_hta",
+   "backend_key": "gpu",
+   "precision": "fp16",
+   "us": 1404.0,
+   "passes": [
+    1372.9,
+    1432.2,
+    1394.4,
+    1406.8,
+    1404.0
+   ],
+   "ctx": "ctx_s10_dronet_sa_hta_fp16__Gpu.bin",
+   "graph": "dronet_sa_hta",
+   "numerics": "preserving",
+   "rewrite_chain": [
+    "onnxsim",
+    "bn_to_mul_add",
+    "flatten_gemm_to_conv"
+   ],
+   "candidates": [
+    {
+     "source": "base",
+     "source_net": "dronet_sa",
+     "backend_key": "gpu",
+     "precision": "fp16",
+     "us": 1444.8,
+     "passes": [
+      1398.6,
+      1444.8,
+      1409.2,
+      1476.2,
+      1542.1
+     ],
+     "ctx": "ctx_s10_dronet_sa_fp16__Gpu.bin",
+     "graph": "dronet_sa",
+     "numerics": "preserving",
+     "rewrite_chain": null
+    },
+    {
+     "source": "dronet_sa_hta",
+     "source_net": "dronet_sa_hta",
+     "backend_key": "gpu",
+     "precision": "fp16",
+     "us": 1404.0,
+     "passes": [
+      1372.9,
+      1432.2,
+      1394.4,
+      1406.8,
+      1404.0
+     ],
+     "ctx": "ctx_s10_dronet_sa_hta_fp16__Gpu.bin",
+     "graph": "dronet_sa_hta",
+     "numerics": "preserving",
+     "rewrite_chain": [
+      "onnxsim",
+      "bn_to_mul_add",
+      "flatten_gemm_to_conv"
+     ]
+    }
+   ]
+  }
+ },
+ "dronet_sb": {
+  "hta": {
+   "source": "dronet_sb_hta",
+   "source_net": "dronet_sb_hta",
+   "backend_key": "hta",
+   "precision": "int8",
+   "us": 2614.5,
+   "passes": [
+    2817.7,
+    2608.4,
+    2619.2,
+    2614.5,
+    2606.5
+   ],
+   "ctx": "ctx_s10_dronet_sb_hta_int8__Hta.bin",
+   "graph": "dronet_sb_hta",
+   "numerics": "preserving",
+   "rewrite_chain": [
+    "onnxsim",
+    "bn_to_mul_add",
+    "flatten_gemm_to_conv"
+   ],
+   "candidates": [
+    {
+     "source": "dronet_sb_hta",
+     "source_net": "dronet_sb_hta",
+     "backend_key": "hta",
+     "precision": "int8",
+     "us": 2614.5,
+     "passes": [
+      2817.7,
+      2608.4,
+      2619.2,
+      2614.5,
+      2606.5
+     ],
+     "ctx": "ctx_s10_dronet_sb_hta_int8__Hta.bin",
+     "graph": "dronet_sb_hta",
+     "numerics": "preserving",
+     "rewrite_chain": [
+      "onnxsim",
+      "bn_to_mul_add",
+      "flatten_gemm_to_conv"
+     ]
+    }
+   ]
+  },
+  "dsp": {
+   "source": "dronet_sb_hta",
+   "source_net": "dronet_sb_hta",
+   "backend_key": "dsp",
+   "precision": "int8",
+   "us": 592.3,
+   "passes": [
+    575.3,
+    656.1,
+    563.1,
+    592.3,
+    826.0
+   ],
+   "ctx": "ctx_s10_dronet_sb_hta_int8__Dsp.bin",
+   "graph": "dronet_sb_hta",
+   "numerics": "preserving",
+   "rewrite_chain": [
+    "onnxsim",
+    "bn_to_mul_add",
+    "flatten_gemm_to_conv"
+   ],
+   "candidates": [
+    {
+     "source": "base",
+     "source_net": "dronet_sb",
+     "backend_key": "dsp",
+     "precision": "int8",
+     "us": 672.9,
+     "passes": [
+      672.9,
+      908.1,
+      665.5,
+      588.0,
+      675.0
+     ],
+     "ctx": "ctx_s10_dronet_sb_int8__Dsp.bin",
+     "graph": "dronet_sb",
+     "numerics": "preserving",
+     "rewrite_chain": null
+    },
+    {
+     "source": "dronet_sb_hta",
+     "source_net": "dronet_sb_hta",
+     "backend_key": "dsp",
+     "precision": "int8",
+     "us": 592.3,
+     "passes": [
+      575.3,
+      656.1,
+      563.1,
+      592.3,
+      826.0
+     ],
+     "ctx": "ctx_s10_dronet_sb_hta_int8__Dsp.bin",
+     "graph": "dronet_sb_hta",
+     "numerics": "preserving",
+     "rewrite_chain": [
+      "onnxsim",
+      "bn_to_mul_add",
+      "flatten_gemm_to_conv"
+     ]
+    }
+   ]
+  },
+  "cpu": {
+   "source": "dronet_sb_hta",
+   "source_net": "dronet_sb_hta",
+   "backend_key": "cpu",
+   "precision": "fp32",
+   "us": 1309.7,
+   "passes": [
+    1629.2,
+    1309.7,
+    1218.6,
+    1130.1,
+    1496.5
+   ],
+   "ctx": "ctx_s10_dronet_sb_hta_fp32__Cpu.bin",
+   "graph": "dronet_sb_hta",
+   "numerics": "preserving",
+   "rewrite_chain": [
+    "onnxsim",
+    "bn_to_mul_add",
+    "flatten_gemm_to_conv"
+   ],
+   "candidates": [
+    {
+     "source": "base",
+     "source_net": "dronet_sb",
+     "backend_key": "cpu",
+     "precision": "fp32",
+     "us": 1364.0,
+     "passes": [
+      1518.6,
+      1188.6,
+      1299.2,
+      1364.0,
+      1955.4
+     ],
+     "ctx": "ctx_s10_dronet_sb_fp32__Cpu.bin",
+     "graph": "dronet_sb",
+     "numerics": "preserving",
+     "rewrite_chain": null
+    },
+    {
+     "source": "base",
+     "source_net": "dronet_sb",
+     "backend_key": "cpu@int8",
+     "precision": "int8",
+     "us": 7231.4,
+     "passes": [
+      7231.4,
+      7231.4,
+      7123.5,
+      7123.5,
+      7944.8,
+      7944.8,
+      7161.2,
+      7161.2,
+      7425.5,
+      7425.5
+     ],
+     "ctx": "ctx_s10_dronet_sb_int8__CpuInt8.bin",
+     "graph": "dronet_sb",
+     "numerics": "preserving",
+     "rewrite_chain": null
+    },
+    {
+     "source": "dronet_sb_hta",
+     "source_net": "dronet_sb_hta",
+     "backend_key": "cpu",
+     "precision": "fp32",
+     "us": 1309.7,
+     "passes": [
+      1629.2,
+      1309.7,
+      1218.6,
+      1130.1,
+      1496.5
+     ],
+     "ctx": "ctx_s10_dronet_sb_hta_fp32__Cpu.bin",
+     "graph": "dronet_sb_hta",
+     "numerics": "preserving",
+     "rewrite_chain": [
+      "onnxsim",
+      "bn_to_mul_add",
+      "flatten_gemm_to_conv"
+     ]
+    },
+    {
+     "source": "dronet_sb_hta",
+     "source_net": "dronet_sb_hta",
+     "backend_key": "cpu@int8",
+     "precision": "int8",
+     "us": 6238.2,
+     "passes": [
+      6238.2,
+      6407.6,
+      6179.4,
+      6237.2,
+      6329.6
+     ],
+     "ctx": "ctx_s10_dronet_sb_hta_int8__CpuInt8.bin",
+     "graph": "dronet_sb_hta",
+     "numerics": "preserving",
+     "rewrite_chain": [
+      "onnxsim",
+      "bn_to_mul_add",
+      "flatten_gemm_to_conv"
+     ]
+    }
+   ]
+  },
+  "gpu": {
+   "source": "base",
+   "source_net": "dronet_sb",
+   "backend_key": "gpu",
+   "precision": "fp16",
+   "us": 1481.1,
+   "passes": [
+    1481.1,
+    1466.0,
+    1435.8,
+    1482.8,
+    1505.3
+   ],
+   "ctx": "ctx_s10_dronet_sb_fp16__Gpu.bin",
+   "graph": "dronet_sb",
+   "numerics": "preserving",
+   "rewrite_chain": null,
+   "candidates": [
+    {
+     "source": "base",
+     "source_net": "dronet_sb",
+     "backend_key": "gpu",
+     "precision": "fp16",
+     "us": 1481.1,
+     "passes": [
+      1481.1,
+      1466.0,
+      1435.8,
+      1482.8,
+      1505.3
+     ],
+     "ctx": "ctx_s10_dronet_sb_fp16__Gpu.bin",
+     "graph": "dronet_sb",
+     "numerics": "preserving",
+     "rewrite_chain": null
+    },
+    {
+     "source": "dronet_sb_hta",
+     "source_net": "dronet_sb_hta",
+     "backend_key": "gpu",
+     "precision": "fp16",
+     "us": 1635.2,
+     "passes": [
+      1714.4,
+      1597.0,
+      1635.2,
+      1684.6,
+      1635.2
+     ],
+     "ctx": "ctx_s10_dronet_sb_hta_fp16__Gpu.bin",
+     "graph": "dronet_sb_hta",
+     "numerics": "preserving",
+     "rewrite_chain": [
+      "onnxsim",
+      "bn_to_mul_add",
+      "flatten_gemm_to_conv"
+     ]
+    }
+   ]
+  }
+ },
+ "dronet_sc": {
+  "hta": {
+   "source": "dronet_sc_hta",
+   "source_net": "dronet_sc_hta",
+   "backend_key": "hta",
+   "precision": "int8",
+   "us": 2632.7,
+   "passes": [
+    2636.1,
+    2644.0,
+    2271.1,
+    2460.3,
+    2632.7
+   ],
+   "ctx": "ctx_s10_dronet_sc_hta_int8__Hta.bin",
+   "graph": "dronet_sc_hta",
+   "numerics": "preserving",
+   "rewrite_chain": [
+    "onnxsim",
+    "bn_to_mul_add",
+    "flatten_gemm_to_conv"
+   ],
+   "candidates": [
+    {
+     "source": "dronet_sc_hta",
+     "source_net": "dronet_sc_hta",
+     "backend_key": "hta",
+     "precision": "int8",
+     "us": 2632.7,
+     "passes": [
+      2636.1,
+      2644.0,
+      2271.1,
+      2460.3,
+      2632.7
+     ],
+     "ctx": "ctx_s10_dronet_sc_hta_int8__Hta.bin",
+     "graph": "dronet_sc_hta",
+     "numerics": "preserving",
+     "rewrite_chain": [
+      "onnxsim",
+      "bn_to_mul_add",
+      "flatten_gemm_to_conv"
+     ]
+    }
+   ]
+  },
+  "dsp": {
+   "source": "dronet_sc_hta",
+   "source_net": "dronet_sc_hta",
+   "backend_key": "dsp",
+   "precision": "int8",
+   "us": 667.0,
+   "passes": [
+    667.0,
+    673.1,
+    592.2,
+    670.7,
+    649.1
+   ],
+   "ctx": "ctx_s10_dronet_sc_hta_int8__Dsp.bin",
+   "graph": "dronet_sc_hta",
+   "numerics": "preserving",
+   "rewrite_chain": [
+    "onnxsim",
+    "bn_to_mul_add",
+    "flatten_gemm_to_conv"
+   ],
+   "candidates": [
+    {
+     "source": "base",
+     "source_net": "dronet_sc",
+     "backend_key": "dsp",
+     "precision": "int8",
+     "us": 691.0,
+     "passes": [
+      2666.4,
+      645.5,
+      829.8,
+      691.0,
+      585.1
+     ],
+     "ctx": "ctx_s10_dronet_sc_int8__Dsp.bin",
+     "graph": "dronet_sc",
+     "numerics": "preserving",
+     "rewrite_chain": null
+    },
+    {
+     "source": "dronet_sc_hta",
+     "source_net": "dronet_sc_hta",
+     "backend_key": "dsp",
+     "precision": "int8",
+     "us": 667.0,
+     "passes": [
+      667.0,
+      673.1,
+      592.2,
+      670.7,
+      649.1
+     ],
+     "ctx": "ctx_s10_dronet_sc_hta_int8__Dsp.bin",
+     "graph": "dronet_sc_hta",
+     "numerics": "preserving",
+     "rewrite_chain": [
+      "onnxsim",
+      "bn_to_mul_add",
+      "flatten_gemm_to_conv"
+     ]
+    }
+   ]
+  },
+  "cpu": {
+   "source": "dronet_sc_hta",
+   "source_net": "dronet_sc_hta",
+   "backend_key": "cpu",
+   "precision": "fp32",
+   "us": 1211.8,
+   "passes": [
+    1120.1,
+    1211.8,
+    1262.0,
+    1189.6,
+    1237.3
+   ],
+   "ctx": "ctx_s10_dronet_sc_hta_fp32__Cpu.bin",
+   "graph": "dronet_sc_hta",
+   "numerics": "preserving",
+   "rewrite_chain": [
+    "onnxsim",
+    "bn_to_mul_add",
+    "flatten_gemm_to_conv"
+   ],
+   "candidates": [
+    {
+     "source": "base",
+     "source_net": "dronet_sc",
+     "backend_key": "cpu",
+     "precision": "fp32",
+     "us": 1256.6,
+     "passes": [
+      1233.4,
+      1671.9,
+      1199.2,
+      1256.6,
+      1290.3
+     ],
+     "ctx": "ctx_s10_dronet_sc_fp32__Cpu.bin",
+     "graph": "dronet_sc",
+     "numerics": "preserving",
+     "rewrite_chain": null
+    },
+    {
+     "source": "base",
+     "source_net": "dronet_sc",
+     "backend_key": "cpu@int8",
+     "precision": "int8",
+     "us": 7332.4,
+     "passes": [
+      7802.8,
+      7802.8,
+      7332.4,
+      7332.4,
+      7666.0,
+      7666.0,
+      7276.2,
+      7276.2,
+      7253.8,
+      7253.8
+     ],
+     "ctx": "ctx_s10_dronet_sc_int8__CpuInt8.bin",
+     "graph": "dronet_sc",
+     "numerics": "preserving",
+     "rewrite_chain": null
+    },
+    {
+     "source": "dronet_sc_hta",
+     "source_net": "dronet_sc_hta",
+     "backend_key": "cpu",
+     "precision": "fp32",
+     "us": 1211.8,
+     "passes": [
+      1120.1,
+      1211.8,
+      1262.0,
+      1189.6,
+      1237.3
+     ],
+     "ctx": "ctx_s10_dronet_sc_hta_fp32__Cpu.bin",
+     "graph": "dronet_sc_hta",
+     "numerics": "preserving",
+     "rewrite_chain": [
+      "onnxsim",
+      "bn_to_mul_add",
+      "flatten_gemm_to_conv"
+     ]
+    },
+    {
+     "source": "dronet_sc_hta",
+     "source_net": "dronet_sc_hta",
+     "backend_key": "cpu@int8",
+     "precision": "int8",
+     "us": 6686.4,
+     "passes": [
+      6747.8,
+      6686.4,
+      6675.7,
+      6720.9,
+      6441.0
+     ],
+     "ctx": "ctx_s10_dronet_sc_hta_int8__CpuInt8.bin",
+     "graph": "dronet_sc_hta",
+     "numerics": "preserving",
+     "rewrite_chain": [
+      "onnxsim",
+      "bn_to_mul_add",
+      "flatten_gemm_to_conv"
+     ]
+    }
+   ]
+  },
+  "gpu": {
+   "source": "base",
+   "source_net": "dronet_sc",
+   "backend_key": "gpu",
+   "precision": "fp16",
+   "us": 1522.3,
+   "passes": [
+    1529.2,
+    1485.1,
+    1472.4,
+    1522.3,
+    1549.1
+   ],
+   "ctx": "ctx_s10_dronet_sc_fp16__Gpu.bin",
+   "graph": "dronet_sc",
+   "numerics": "preserving",
+   "rewrite_chain": null,
+   "candidates": [
+    {
+     "source": "base",
+     "source_net": "dronet_sc",
+     "backend_key": "gpu",
+     "precision": "fp16",
+     "us": 1522.3,
+     "passes": [
+      1529.2,
+      1485.1,
+      1472.4,
+      1522.3,
+      1549.1
+     ],
+     "ctx": "ctx_s10_dronet_sc_fp16__Gpu.bin",
+     "graph": "dronet_sc",
+     "numerics": "preserving",
+     "rewrite_chain": null
+    },
+    {
+     "source": "dronet_sc_hta",
+     "source_net": "dronet_sc_hta",
+     "backend_key": "gpu",
+     "precision": "fp16",
+     "us": 1680.0,
+     "passes": [
+      1748.1,
+      1680.0,
+      1627.4,
+      1663.5,
+      1682.1
+     ],
+     "ctx": "ctx_s10_dronet_sc_hta_fp16__Gpu.bin",
+     "graph": "dronet_sc_hta",
+     "numerics": "preserving",
+     "rewrite_chain": [
+      "onnxsim",
+      "bn_to_mul_add",
+      "flatten_gemm_to_conv"
+     ]
+    }
+   ]
+  }
+ },
+ "dronet_sd": {
+  "hta": {
+   "source": "dronet_sd_hta",
+   "source_net": "dronet_sd_hta",
+   "backend_key": "hta",
+   "precision": "int8",
+   "us": 2666.6,
+   "passes": [
+    2681.7,
+    2321.7,
+    2666.6,
+    2844.5,
+    2665.2
+   ],
+   "ctx": "ctx_s10_dronet_sd_hta_int8__Hta.bin",
+   "graph": "dronet_sd_hta",
+   "numerics": "preserving",
+   "rewrite_chain": [
+    "onnxsim",
+    "bn_to_mul_add",
+    "flatten_gemm_to_conv"
+   ],
+   "candidates": [
+    {
+     "source": "dronet_sd_hta",
+     "source_net": "dronet_sd_hta",
+     "backend_key": "hta",
+     "precision": "int8",
+     "us": 2666.6,
+     "passes": [
+      2681.7,
+      2321.7,
+      2666.6,
+      2844.5,
+      2665.2
+     ],
+     "ctx": "ctx_s10_dronet_sd_hta_int8__Hta.bin",
+     "graph": "dronet_sd_hta",
+     "numerics": "preserving",
+     "rewrite_chain": [
+      "onnxsim",
+      "bn_to_mul_add",
+      "flatten_gemm_to_conv"
+     ]
+    }
+   ]
+  },
+  "dsp": {
+   "source": "base",
+   "source_net": "dronet_sd",
+   "backend_key": "dsp",
+   "precision": "int8",
+   "us": 672.4,
+   "passes": [
+    645.9,
+    645.5,
+    728.7,
+    788.9,
+    672.4
+   ],
+   "ctx": "ctx_s10_dronet_sd_int8__Dsp.bin",
+   "graph": "dronet_sd",
+   "numerics": "preserving",
+   "rewrite_chain": null,
+   "candidates": [
+    {
+     "source": "base",
+     "source_net": "dronet_sd",
+     "backend_key": "dsp",
+     "precision": "int8",
+     "us": 672.4,
+     "passes": [
+      645.9,
+      645.5,
+      728.7,
+      788.9,
+      672.4
+     ],
+     "ctx": "ctx_s10_dronet_sd_int8__Dsp.bin",
+     "graph": "dronet_sd",
+     "numerics": "preserving",
+     "rewrite_chain": null
+    },
+    {
+     "source": "dronet_sd_hta",
+     "source_net": "dronet_sd_hta",
+     "backend_key": "dsp",
+     "precision": "int8",
+     "us": 693.7,
+     "passes": [
+      606.6,
+      693.7,
+      894.2,
+      646.4,
+      701.6
+     ],
+     "ctx": "ctx_s10_dronet_sd_hta_int8__Dsp.bin",
+     "graph": "dronet_sd_hta",
+     "numerics": "preserving",
+     "rewrite_chain": [
+      "onnxsim",
+      "bn_to_mul_add",
+      "flatten_gemm_to_conv"
+     ]
+    }
+   ]
+  },
+  "cpu": {
+   "source": "base",
+   "source_net": "dronet_sd",
+   "backend_key": "cpu",
+   "precision": "fp32",
+   "us": 1474.2,
+   "passes": [
+    1444.8,
+    1474.2,
+    1428.8,
+    1483.3,
+    2022.7
+   ],
+   "ctx": "ctx_s10_dronet_sd_fp32__Cpu.bin",
+   "graph": "dronet_sd",
+   "numerics": "preserving",
+   "rewrite_chain": null,
+   "candidates": [
+    {
+     "source": "base",
+     "source_net": "dronet_sd",
+     "backend_key": "cpu",
+     "precision": "fp32",
+     "us": 1474.2,
+     "passes": [
+      1444.8,
+      1474.2,
+      1428.8,
+      1483.3,
+      2022.7
+     ],
+     "ctx": "ctx_s10_dronet_sd_fp32__Cpu.bin",
+     "graph": "dronet_sd",
+     "numerics": "preserving",
+     "rewrite_chain": null
+    },
+    {
+     "source": "base",
+     "source_net": "dronet_sd",
+     "backend_key": "cpu@int8",
+     "precision": "int8",
+     "us": 9850.9,
+     "passes": [
+      9909.9,
+      9909.9,
+      9529.9,
+      9529.9,
+      9312.6,
+      9312.6,
+      10143.8,
+      10143.8,
+      9850.9,
+      9850.9
+     ],
+     "ctx": "ctx_s10_dronet_sd_int8__CpuInt8.bin",
+     "graph": "dronet_sd",
+     "numerics": "preserving",
+     "rewrite_chain": null
+    },
+    {
+     "source": "dronet_sd_hta",
+     "source_net": "dronet_sd_hta",
+     "backend_key": "cpu",
+     "precision": "fp32",
+     "us": 1666.4,
+     "passes": [
+      1560.5,
+      1814.7,
+      1631.1,
+      2100.5,
+      1666.4
+     ],
+     "ctx": "ctx_s10_dronet_sd_hta_fp32__Cpu.bin",
+     "graph": "dronet_sd_hta",
+     "numerics": "preserving",
+     "rewrite_chain": [
+      "onnxsim",
+      "bn_to_mul_add",
+      "flatten_gemm_to_conv"
+     ]
+    },
+    {
+     "source": "dronet_sd_hta",
+     "source_net": "dronet_sd_hta",
+     "backend_key": "cpu@int8",
+     "precision": "int8",
+     "us": 7199.2,
+     "passes": [
+      7226.9,
+      7025.1,
+      7382.6,
+      7199.2,
+      7025.4
+     ],
+     "ctx": "ctx_s10_dronet_sd_hta_int8__CpuInt8.bin",
+     "graph": "dronet_sd_hta",
+     "numerics": "preserving",
+     "rewrite_chain": [
+      "onnxsim",
+      "bn_to_mul_add",
+      "flatten_gemm_to_conv"
+     ]
+    }
+   ]
+  },
+  "gpu": {
+   "source": "base",
+   "source_net": "dronet_sd",
+   "backend_key": "gpu",
+   "precision": "fp16",
+   "us": 1530.3,
+   "passes": [
+    1500.8,
+    1546.5,
+    1605.8,
+    1530.3,
+    1517.9
+   ],
+   "ctx": "ctx_s10_dronet_sd_fp16__Gpu.bin",
+   "graph": "dronet_sd",
+   "numerics": "preserving",
+   "rewrite_chain": null,
+   "candidates": [
+    {
+     "source": "base",
+     "source_net": "dronet_sd",
+     "backend_key": "gpu",
+     "precision": "fp16",
+     "us": 1530.3,
+     "passes": [
+      1500.8,
+      1546.5,
+      1605.8,
+      1530.3,
+      1517.9
+     ],
+     "ctx": "ctx_s10_dronet_sd_fp16__Gpu.bin",
+     "graph": "dronet_sd",
+     "numerics": "preserving",
+     "rewrite_chain": null
+    },
+    {
+     "source": "dronet_sd_hta",
+     "source_net": "dronet_sd_hta",
+     "backend_key": "gpu",
+     "precision": "fp16",
+     "us": 2050.9,
+     "passes": [
+      2092.6,
+      2050.9,
+      2038.8,
+      2027.0,
+      2087.5
+     ],
+     "ctx": "ctx_s10_dronet_sd_hta_fp16__Gpu.bin",
+     "graph": "dronet_sd_hta",
+     "numerics": "preserving",
+     "rewrite_chain": [
+      "onnxsim",
+      "bn_to_mul_add",
+      "flatten_gemm_to_conv"
+     ]
+    }
+   ]
+  }
+ },
+ "dronet_se": {
+  "hta": {
+   "source": "dronet_se_hta",
+   "source_net": "dronet_se_hta",
+   "backend_key": "hta",
+   "precision": "int8",
+   "us": 2787.7,
+   "passes": [
+    2984.0,
+    2787.7,
+    2990.3,
+    2242.7,
+    2099.8
+   ],
+   "ctx": "ctx_s10_dronet_se_hta_int8__Hta.bin",
+   "graph": "dronet_se_hta",
+   "numerics": "preserving",
+   "rewrite_chain": [
+    "onnxsim",
+    "bn_to_mul_add",
+    "flatten_gemm_to_conv"
+   ],
+   "candidates": [
+    {
+     "source": "dronet_se_hta",
+     "source_net": "dronet_se_hta",
+     "backend_key": "hta",
+     "precision": "int8",
+     "us": 2787.7,
+     "passes": [
+      2984.0,
+      2787.7,
+      2990.3,
+      2242.7,
+      2099.8
+     ],
+     "ctx": "ctx_s10_dronet_se_hta_int8__Hta.bin",
+     "graph": "dronet_se_hta",
+     "numerics": "preserving",
+     "rewrite_chain": [
+      "onnxsim",
+      "bn_to_mul_add",
+      "flatten_gemm_to_conv"
+     ]
+    }
+   ]
+  },
+  "dsp": {
+   "source": "base",
+   "source_net": "dronet_se",
+   "backend_key": "dsp",
+   "precision": "int8",
+   "us": 838.4,
+   "passes": [
+    885.4,
+    765.8,
+    825.8,
+    838.4,
+    916.5
+   ],
+   "ctx": "ctx_s10_dronet_se_int8__Dsp.bin",
+   "graph": "dronet_se",
+   "numerics": "preserving",
+   "rewrite_chain": null,
+   "candidates": [
+    {
+     "source": "base",
+     "source_net": "dronet_se",
+     "backend_key": "dsp",
+     "precision": "int8",
+     "us": 838.4,
+     "passes": [
+      885.4,
+      765.8,
+      825.8,
+      838.4,
+      916.5
+     ],
+     "ctx": "ctx_s10_dronet_se_int8__Dsp.bin",
+     "graph": "dronet_se",
+     "numerics": "preserving",
+     "rewrite_chain": null
+    },
+    {
+     "source": "dronet_se_hta",
+     "source_net": "dronet_se_hta",
+     "backend_key": "dsp",
+     "precision": "int8",
+     "us": 2946.8,
+     "passes": [
+      2946.8,
+      3079.3,
+      3033.8,
+      1434.0,
+      2908.8
+     ],
+     "ctx": "ctx_s10_dronet_se_hta_int8__Dsp.bin",
+     "graph": "dronet_se_hta",
+     "numerics": "preserving",
+     "rewrite_chain": [
+      "onnxsim",
+      "bn_to_mul_add",
+      "flatten_gemm_to_conv"
+     ]
+    }
+   ]
+  },
+  "cpu": {
+   "source": "dronet_se_hta",
+   "source_net": "dronet_se_hta",
+   "backend_key": "cpu@int8",
+   "precision": "int8",
+   "us": 1452.5,
+   "passes": [
+    1445.1,
+    1510.1,
+    1447.7,
+    1452.5,
+    1504.1
+   ],
+   "ctx": "ctx_s10_dronet_se_hta_int8__CpuInt8.bin",
+   "graph": "dronet_se_hta",
+   "numerics": "preserving",
+   "rewrite_chain": [
+    "onnxsim",
+    "bn_to_mul_add",
+    "flatten_gemm_to_conv"
+   ],
+   "candidates": [
+    {
+     "source": "base",
+     "source_net": "dronet_se",
+     "backend_key": "cpu",
+     "precision": "fp32",
+     "us": 1871.0,
+     "passes": [
+      1871.0,
+      2480.7,
+      1772.9,
+      1831.4,
+      2101.4
+     ],
+     "ctx": "ctx_s10_dronet_se_fp32__Cpu.bin",
+     "graph": "dronet_se",
+     "numerics": "preserving",
+     "rewrite_chain": null
+    },
+    {
+     "source": "base",
+     "source_net": "dronet_se",
+     "backend_key": "cpu@int8",
+     "precision": "int8",
+     "us": 9743.0,
+     "passes": [
+      9743.0,
+      9743.0,
+      10124.5,
+      10124.5,
+      9600.6,
+      9600.6,
+      9980.5,
+      9980.5,
+      9563.7,
+      9563.7
+     ],
+     "ctx": "ctx_s10_dronet_se_int8__CpuInt8.bin",
+     "graph": "dronet_se",
+     "numerics": "preserving",
+     "rewrite_chain": null
+    },
+    {
+     "source": "dronet_se_hta",
+     "source_net": "dronet_se_hta",
+     "backend_key": "cpu",
+     "precision": "fp32",
+     "us": 1870.6,
+     "passes": [
+      1792.8,
+      2049.7,
+      1744.9,
+      1921.2,
+      1870.6
+     ],
+     "ctx": "ctx_s10_dronet_se_hta_fp32__Cpu.bin",
+     "graph": "dronet_se_hta",
+     "numerics": "preserving",
+     "rewrite_chain": [
+      "onnxsim",
+      "bn_to_mul_add",
+      "flatten_gemm_to_conv"
+     ]
+    },
+    {
+     "source": "dronet_se_hta",
+     "source_net": "dronet_se_hta",
+     "backend_key": "cpu@int8",
+     "precision": "int8",
+     "us": 1452.5,
+     "passes": [
+      1445.1,
+      1510.1,
+      1447.7,
+      1452.5,
+      1504.1
+     ],
+     "ctx": "ctx_s10_dronet_se_hta_int8__CpuInt8.bin",
+     "graph": "dronet_se_hta",
+     "numerics": "preserving",
+     "rewrite_chain": [
+      "onnxsim",
+      "bn_to_mul_add",
+      "flatten_gemm_to_conv"
+     ]
+    }
+   ]
+  },
+  "gpu": {
+   "source": "base",
+   "source_net": "dronet_se",
+   "backend_key": "gpu",
+   "precision": "fp16",
+   "us": 1658.8,
+   "passes": [
+    1635.3,
+    1683.2,
+    1673.4,
+    1641.5,
+    1658.8
+   ],
+   "ctx": "ctx_s10_dronet_se_fp16__Gpu.bin",
+   "graph": "dronet_se",
+   "numerics": "preserving",
+   "rewrite_chain": null,
+   "candidates": [
+    {
+     "source": "base",
+     "source_net": "dronet_se",
+     "backend_key": "gpu",
+     "precision": "fp16",
+     "us": 1658.8,
+     "passes": [
+      1635.3,
+      1683.2,
+      1673.4,
+      1641.5,
+      1658.8
+     ],
+     "ctx": "ctx_s10_dronet_se_fp16__Gpu.bin",
+     "graph": "dronet_se",
+     "numerics": "preserving",
+     "rewrite_chain": null
+    },
+    {
+     "source": "dronet_se_hta",
+     "source_net": "dronet_se_hta",
+     "backend_key": "gpu",
+     "precision": "fp16",
+     "us": 2630.4,
+     "passes": [
+      2641.9,
+      2569.2,
+      2611.2,
+      2630.4,
+      2640.5
+     ],
+     "ctx": "ctx_s10_dronet_se_hta_fp16__Gpu.bin",
+     "graph": "dronet_se_hta",
+     "numerics": "preserving",
+     "rewrite_chain": [
+      "onnxsim",
+      "bn_to_mul_add",
+      "flatten_gemm_to_conv"
+     ]
+    }
+   ]
+  }
+ },
+ "dronet_sf": {
+  "hta": {
+   "source": "dronet_sf_hta",
+   "source_net": "dronet_sf_hta",
+   "backend_key": "hta",
+   "precision": "int8",
+   "us": 1922.6,
+   "passes": [
+    2990.6,
+    2909.7,
+    1900.6,
+    1922.6,
+    1840.5
+   ],
+   "ctx": "ctx_s10_dronet_sf_hta_int8__Hta.bin",
+   "graph": "dronet_sf_hta",
+   "numerics": "preserving",
+   "rewrite_chain": [
+    "onnxsim",
+    "bn_to_mul_add",
+    "flatten_gemm_to_conv"
+   ],
+   "candidates": [
+    {
+     "source": "dronet_sf_hta",
+     "source_net": "dronet_sf_hta",
+     "backend_key": "hta",
+     "precision": "int8",
+     "us": 1922.6,
+     "passes": [
+      2990.6,
+      2909.7,
+      1900.6,
+      1922.6,
+      1840.5
+     ],
+     "ctx": "ctx_s10_dronet_sf_hta_int8__Hta.bin",
+     "graph": "dronet_sf_hta",
+     "numerics": "preserving",
+     "rewrite_chain": [
+      "onnxsim",
+      "bn_to_mul_add",
+      "flatten_gemm_to_conv"
+     ]
+    }
+   ]
+  },
+  "dsp": {
+   "source": "dronet_sf_hta",
+   "source_net": "dronet_sf_hta",
+   "backend_key": "dsp",
+   "precision": "int8",
+   "us": 810.0,
+   "passes": [
+    821.4,
+    1052.4,
+    738.8,
+    794.8,
+    810.0
+   ],
+   "ctx": "ctx_s10_dronet_sf_hta_int8__Dsp.bin",
+   "graph": "dronet_sf_hta",
+   "numerics": "preserving",
+   "rewrite_chain": [
+    "onnxsim",
+    "bn_to_mul_add",
+    "flatten_gemm_to_conv"
+   ],
+   "candidates": [
+    {
+     "source": "base",
+     "source_net": "dronet_sf",
+     "backend_key": "dsp",
+     "precision": "int8",
+     "us": 881.1,
+     "passes": [
+      881.1,
+      790.9,
+      2766.6,
+      865.4,
+      899.3
+     ],
+     "ctx": "ctx_s10_dronet_sf_int8__Dsp.bin",
+     "graph": "dronet_sf",
+     "numerics": "preserving",
+     "rewrite_chain": null
+    },
+    {
+     "source": "dronet_sf_hta",
+     "source_net": "dronet_sf_hta",
+     "backend_key": "dsp",
+     "precision": "int8",
+     "us": 810.0,
+     "passes": [
+      821.4,
+      1052.4,
+      738.8,
+      794.8,
+      810.0
+     ],
+     "ctx": "ctx_s10_dronet_sf_hta_int8__Dsp.bin",
+     "graph": "dronet_sf_hta",
+     "numerics": "preserving",
+     "rewrite_chain": [
+      "onnxsim",
+      "bn_to_mul_add",
+      "flatten_gemm_to_conv"
+     ]
+    }
+   ]
+  },
+  "cpu": {
+   "source": "dronet_sf_hta",
+   "source_net": "dronet_sf_hta",
+   "backend_key": "cpu",
+   "precision": "fp32",
+   "us": 1990.3,
+   "passes": [
+    1873.9,
+    1866.1,
+    2066.6,
+    1990.3,
+    2098.0
+   ],
+   "ctx": "ctx_s10_dronet_sf_hta_fp32__Cpu.bin",
+   "graph": "dronet_sf_hta",
+   "numerics": "preserving",
+   "rewrite_chain": [
+    "onnxsim",
+    "bn_to_mul_add",
+    "flatten_gemm_to_conv"
+   ],
+   "candidates": [
+    {
+     "source": "base",
+     "source_net": "dronet_sf",
+     "backend_key": "cpu",
+     "precision": "fp32",
+     "us": 2144.3,
+     "passes": [
+      2144.3,
+      2644.7,
+      1894.3,
+      2506.3,
+      2032.9
+     ],
+     "ctx": "ctx_s10_dronet_sf_fp32__Cpu.bin",
+     "graph": "dronet_sf",
+     "numerics": "preserving",
+     "rewrite_chain": null
+    },
+    {
+     "source": "base",
+     "source_net": "dronet_sf",
+     "backend_key": "cpu@int8",
+     "precision": "int8",
+     "us": 10299.8,
+     "passes": [
+      10936.4,
+      10936.4,
+      9789.3,
+      9789.3,
+      10299.8,
+      10299.8,
+      10417.1,
+      10417.1,
+      9762.0,
+      9762.0
+     ],
+     "ctx": "ctx_s10_dronet_sf_int8__CpuInt8.bin",
+     "graph": "dronet_sf",
+     "numerics": "preserving",
+     "rewrite_chain": null
+    },
+    {
+     "source": "dronet_sf_hta",
+     "source_net": "dronet_sf_hta",
+     "backend_key": "cpu",
+     "precision": "fp32",
+     "us": 1990.3,
+     "passes": [
+      1873.9,
+      1866.1,
+      2066.6,
+      1990.3,
+      2098.0
+     ],
+     "ctx": "ctx_s10_dronet_sf_hta_fp32__Cpu.bin",
+     "graph": "dronet_sf_hta",
+     "numerics": "preserving",
+     "rewrite_chain": [
+      "onnxsim",
+      "bn_to_mul_add",
+      "flatten_gemm_to_conv"
+     ]
+    },
+    {
+     "source": "dronet_sf_hta",
+     "source_net": "dronet_sf_hta",
+     "backend_key": "cpu@int8",
+     "precision": "int8",
+     "us": 7474.2,
+     "passes": [
+      7474.2,
+      7476.8,
+      7382.8,
+      7721.5,
+      7350.6
+     ],
+     "ctx": "ctx_s10_dronet_sf_hta_int8__CpuInt8.bin",
+     "graph": "dronet_sf_hta",
+     "numerics": "preserving",
+     "rewrite_chain": [
+      "onnxsim",
+      "bn_to_mul_add",
+      "flatten_gemm_to_conv"
+     ]
+    }
+   ]
+  },
+  "gpu": {
+   "source": "base",
+   "source_net": "dronet_sf",
+   "backend_key": "gpu",
+   "precision": "fp16",
+   "us": 1693.6,
+   "passes": [
+    1663.5,
+    1735.1,
+    1683.0,
+    1693.6,
+    1752.5
+   ],
+   "ctx": "ctx_s10_dronet_sf_fp16__Gpu.bin",
+   "graph": "dronet_sf",
+   "numerics": "preserving",
+   "rewrite_chain": null,
+   "candidates": [
+    {
+     "source": "base",
+     "source_net": "dronet_sf",
+     "backend_key": "gpu",
+     "precision": "fp16",
+     "us": 1693.6,
+     "passes": [
+      1663.5,
+      1735.1,
+      1683.0,
+      1693.6,
+      1752.5
+     ],
+     "ctx": "ctx_s10_dronet_sf_fp16__Gpu.bin",
+     "graph": "dronet_sf",
+     "numerics": "preserving",
+     "rewrite_chain": null
+    },
+    {
+     "source": "dronet_sf_hta",
+     "source_net": "dronet_sf_hta",
+     "backend_key": "gpu",
+     "precision": "fp16",
+     "us": 2604.8,
+     "passes": [
+      2564.5,
+      2604.8,
+      2645.0,
+      2699.2,
+      2569.2
+     ],
+     "ctx": "ctx_s10_dronet_sf_hta_fp16__Gpu.bin",
+     "graph": "dronet_sf_hta",
+     "numerics": "preserving",
+     "rewrite_chain": [
+      "onnxsim",
+      "bn_to_mul_add",
+      "flatten_gemm_to_conv"
+     ]
+    }
+   ]
+  }
+ },
+ "dronet_sg": {
+  "hta": {
+   "source": "dronet_sg_hta",
+   "source_net": "dronet_sg_hta",
+   "backend_key": "hta",
+   "precision": "int8",
+   "us": 1997.6,
+   "passes": [
+    1934.4,
+    1997.6,
+    2637.8,
+    1926.6,
+    2183.6
+   ],
+   "ctx": "ctx_s10_dronet_sg_hta_int8__Hta.bin",
+   "graph": "dronet_sg_hta",
+   "numerics": "preserving",
+   "rewrite_chain": [
+    "onnxsim",
+    "bn_to_mul_add",
+    "flatten_gemm_to_conv"
+   ],
+   "candidates": [
+    {
+     "source": "dronet_sg_hta",
+     "source_net": "dronet_sg_hta",
+     "backend_key": "hta",
+     "precision": "int8",
+     "us": 1997.6,
+     "passes": [
+      1934.4,
+      1997.6,
+      2637.8,
+      1926.6,
+      2183.6
+     ],
+     "ctx": "ctx_s10_dronet_sg_hta_int8__Hta.bin",
+     "graph": "dronet_sg_hta",
+     "numerics": "preserving",
+     "rewrite_chain": [
+      "onnxsim",
+      "bn_to_mul_add",
+      "flatten_gemm_to_conv"
+     ]
+    }
+   ]
+  },
+  "dsp": {
+   "source": "dronet_sg_hta",
+   "source_net": "dronet_sg_hta",
+   "backend_key": "dsp",
+   "precision": "int8",
+   "us": 882.0,
+   "passes": [
+    2858.0,
+    1027.2,
+    882.0,
+    820.0,
+    841.3
+   ],
+   "ctx": "ctx_s10_dronet_sg_hta_int8__Dsp.bin",
+   "graph": "dronet_sg_hta",
+   "numerics": "preserving",
+   "rewrite_chain": [
+    "onnxsim",
+    "bn_to_mul_add",
+    "flatten_gemm_to_conv"
+   ],
+   "candidates": [
+    {
+     "source": "base",
+     "source_net": "dronet_sg",
+     "backend_key": "dsp",
+     "precision": "int8",
+     "us": 1077.4,
+     "passes": [
+      948.0,
+      1077.4,
+      2798.5,
+      2824.1,
+      948.9
+     ],
+     "ctx": "ctx_s10_dronet_sg_int8__Dsp.bin",
+     "graph": "dronet_sg",
+     "numerics": "preserving",
+     "rewrite_chain": null
+    },
+    {
+     "source": "dronet_sg_hta",
+     "source_net": "dronet_sg_hta",
+     "backend_key": "dsp",
+     "precision": "int8",
+     "us": 882.0,
+     "passes": [
+      2858.0,
+      1027.2,
+      882.0,
+      820.0,
+      841.3
+     ],
+     "ctx": "ctx_s10_dronet_sg_hta_int8__Dsp.bin",
+     "graph": "dronet_sg_hta",
+     "numerics": "preserving",
+     "rewrite_chain": [
+      "onnxsim",
+      "bn_to_mul_add",
+      "flatten_gemm_to_conv"
+     ]
+    }
+   ]
+  },
+  "cpu": {
+   "source": "dronet_sg_hta",
+   "source_net": "dronet_sg_hta",
+   "backend_key": "cpu",
+   "precision": "fp32",
+   "us": 2497.1,
+   "passes": [
+    2497.1,
+    3078.3,
+    3639.3,
+    2395.3,
+    2396.6
+   ],
+   "ctx": "ctx_s10_dronet_sg_hta_fp32__Cpu.bin",
+   "graph": "dronet_sg_hta",
+   "numerics": "preserving",
+   "rewrite_chain": [
+    "onnxsim",
+    "bn_to_mul_add",
+    "flatten_gemm_to_conv"
+   ],
+   "candidates": [
+    {
+     "source": "base",
+     "source_net": "dronet_sg",
+     "backend_key": "cpu",
+     "precision": "fp32",
+     "us": 2604.9,
+     "passes": [
+      3025.4,
+      2604.9,
+      2321.3,
+      2553.3,
+      2977.6
+     ],
+     "ctx": "ctx_s10_dronet_sg_fp32__Cpu.bin",
+     "graph": "dronet_sg",
+     "numerics": "preserving",
+     "rewrite_chain": null
+    },
+    {
+     "source": "base",
+     "source_net": "dronet_sg",
+     "backend_key": "cpu@int8",
+     "precision": "int8",
+     "us": 10693.2,
+     "passes": [
+      10849.1,
+      10849.1,
+      10117.0,
+      10117.0,
+      9947.5,
+      9947.5,
+      10693.2,
+      10693.2,
+      10747.5,
+      10747.5
+     ],
+     "ctx": "ctx_s10_dronet_sg_int8__CpuInt8.bin",
+     "graph": "dronet_sg",
+     "numerics": "preserving",
+     "rewrite_chain": null
+    },
+    {
+     "source": "dronet_sg_hta",
+     "source_net": "dronet_sg_hta",
+     "backend_key": "cpu",
+     "precision": "fp32",
+     "us": 2497.1,
+     "passes": [
+      2497.1,
+      3078.3,
+      3639.3,
+      2395.3,
+      2396.6
+     ],
+     "ctx": "ctx_s10_dronet_sg_hta_fp32__Cpu.bin",
+     "graph": "dronet_sg_hta",
+     "numerics": "preserving",
+     "rewrite_chain": [
+      "onnxsim",
+      "bn_to_mul_add",
+      "flatten_gemm_to_conv"
+     ]
+    },
+    {
+     "source": "dronet_sg_hta",
+     "source_net": "dronet_sg_hta",
+     "backend_key": "cpu@int8",
+     "precision": "int8",
+     "us": 7653.1,
+     "passes": [
+      7524.9,
+      7777.3,
+      7728.9,
+      7427.3,
+      7653.1
+     ],
+     "ctx": "ctx_s10_dronet_sg_hta_int8__CpuInt8.bin",
+     "graph": "dronet_sg_hta",
+     "numerics": "preserving",
+     "rewrite_chain": [
+      "onnxsim",
+      "bn_to_mul_add",
+      "flatten_gemm_to_conv"
+     ]
+    }
+   ]
+  },
+  "gpu": {
+   "source": "base",
+   "source_net": "dronet_sg",
+   "backend_key": "gpu",
+   "precision": "fp16",
+   "us": 1876.9,
+   "passes": [
+    1907.5,
+    1875.8,
+    1832.0,
+    1938.0,
+    1876.9
+   ],
+   "ctx": "ctx_s10_dronet_sg_fp16__Gpu.bin",
+   "graph": "dronet_sg",
+   "numerics": "preserving",
+   "rewrite_chain": null,
+   "candidates": [
+    {
+     "source": "base",
+     "source_net": "dronet_sg",
+     "backend_key": "gpu",
+     "precision": "fp16",
+     "us": 1876.9,
+     "passes": [
+      1907.5,
+      1875.8,
+      1832.0,
+      1938.0,
+      1876.9
+     ],
+     "ctx": "ctx_s10_dronet_sg_fp16__Gpu.bin",
+     "graph": "dronet_sg",
+     "numerics": "preserving",
+     "rewrite_chain": null
+    },
+    {
+     "source": "dronet_sg_hta",
+     "source_net": "dronet_sg_hta",
+     "backend_key": "gpu",
+     "precision": "fp16",
+     "us": 3233.9,
+     "passes": [
+      3181.8,
+      3154.1,
+      3253.9,
+      3233.9,
+      3245.7
+     ],
+     "ctx": "ctx_s10_dronet_sg_hta_fp16__Gpu.bin",
+     "graph": "dronet_sg_hta",
+     "numerics": "preserving",
+     "rewrite_chain": [
+      "onnxsim",
+      "bn_to_mul_add",
+      "flatten_gemm_to_conv"
+     ]
+    }
+   ]
+  }
+ },
+ "mlp_control_sa": {
+  "dsp": {
+   "source": "base",
+   "source_net": "mlp_control_sa",
+   "backend_key": "dsp",
+   "precision": "int8",
+   "us": 522.4,
+   "passes": [
+    428.9,
+    533.1,
+    426.1,
+    767.3,
+    522.4
+   ],
+   "ctx": "ctx_s10_mlp_control_sa_int8__Dsp.bin",
+   "graph": "mlp_control_sa",
+   "numerics": "preserving",
+   "rewrite_chain": null,
+   "candidates": [
+    {
+     "source": "base",
+     "source_net": "mlp_control_sa",
+     "backend_key": "dsp",
+     "precision": "int8",
+     "us": 522.4,
+     "passes": [
+      428.9,
+      533.1,
+      426.1,
+      767.3,
+      522.4
+     ],
+     "ctx": "ctx_s10_mlp_control_sa_int8__Dsp.bin",
+     "graph": "mlp_control_sa",
+     "numerics": "preserving",
+     "rewrite_chain": null
+    }
+   ]
+  },
+  "cpu": {
+   "source": "base",
+   "source_net": "mlp_control_sa",
+   "backend_key": "cpu",
+   "precision": "fp32",
+   "us": 59.8,
+   "passes": [
+    60.0,
+    59.8,
+    59.8,
+    64.2,
+    59.2
+   ],
+   "ctx": "ctx_s10_mlp_control_sa_fp32__Cpu.bin",
+   "graph": "mlp_control_sa",
+   "numerics": "preserving",
+   "rewrite_chain": null,
+   "candidates": [
+    {
+     "source": "base",
+     "source_net": "mlp_control_sa",
+     "backend_key": "cpu",
+     "precision": "fp32",
+     "us": 59.8,
+     "passes": [
+      60.0,
+      59.8,
+      59.8,
+      64.2,
+      59.2
+     ],
+     "ctx": "ctx_s10_mlp_control_sa_fp32__Cpu.bin",
+     "graph": "mlp_control_sa",
+     "numerics": "preserving",
+     "rewrite_chain": null
+    },
+    {
+     "source": "base",
+     "source_net": "mlp_control_sa",
+     "backend_key": "cpu@int8",
+     "precision": "int8",
+     "us": 61.7,
+     "passes": [
+      62.0,
+      62.0,
+      61.7,
+      61.7,
+      61.4,
+      61.4,
+      61.9,
+      61.9,
+      60.7,
+      60.7
+     ],
+     "ctx": "ctx_s10_mlp_control_sa_int8__CpuInt8.bin",
+     "graph": "mlp_control_sa",
+     "numerics": "preserving",
+     "rewrite_chain": null
+    }
+   ]
+  },
+  "gpu": {
+   "source": "base",
+   "source_net": "mlp_control_sa",
+   "backend_key": "gpu",
+   "precision": "fp16",
+   "us": 451.3,
+   "passes": [
+    451.3,
+    490.2,
+    440.8,
+    435.2,
+    453.7
+   ],
+   "ctx": "ctx_s10_mlp_control_sa_fp16__Gpu.bin",
+   "graph": "mlp_control_sa",
+   "numerics": "preserving",
+   "rewrite_chain": null,
+   "candidates": [
+    {
+     "source": "base",
+     "source_net": "mlp_control_sa",
+     "backend_key": "gpu",
+     "precision": "fp16",
+     "us": 451.3,
+     "passes": [
+      451.3,
+      490.2,
+      440.8,
+      435.2,
+      453.7
+     ],
+     "ctx": "ctx_s10_mlp_control_sa_fp16__Gpu.bin",
+     "graph": "mlp_control_sa",
+     "numerics": "preserving",
+     "rewrite_chain": null
+    }
+   ]
+  }
+ },
+ "mlp_control_sb": {
+  "dsp": {
+   "source": "base",
+   "source_net": "mlp_control_sb",
+   "backend_key": "dsp",
+   "precision": "int8",
+   "us": 516.0,
+   "passes": [
+    516.0,
+    523.1,
+    431.3,
+    565.9,
+    426.9
+   ],
+   "ctx": "ctx_s10_mlp_control_sb_int8__Dsp.bin",
+   "graph": "mlp_control_sb",
+   "numerics": "preserving",
+   "rewrite_chain": null,
+   "candidates": [
+    {
+     "source": "base",
+     "source_net": "mlp_control_sb",
+     "backend_key": "dsp",
+     "precision": "int8",
+     "us": 516.0,
+     "passes": [
+      516.0,
+      523.1,
+      431.3,
+      565.9,
+      426.9
+     ],
+     "ctx": "ctx_s10_mlp_control_sb_int8__Dsp.bin",
+     "graph": "mlp_control_sb",
+     "numerics": "preserving",
+     "rewrite_chain": null
+    }
+   ]
+  },
+  "cpu": {
+   "source": "base",
+   "source_net": "mlp_control_sb",
+   "backend_key": "cpu",
+   "precision": "fp32",
+   "us": 65.7,
+   "passes": [
+    65.7,
+    66.3,
+    65.9,
+    65.0,
+    65.5
+   ],
+   "ctx": "ctx_s10_mlp_control_sb_fp32__Cpu.bin",
+   "graph": "mlp_control_sb",
+   "numerics": "preserving",
+   "rewrite_chain": null,
+   "candidates": [
+    {
+     "source": "base",
+     "source_net": "mlp_control_sb",
+     "backend_key": "cpu",
+     "precision": "fp32",
+     "us": 65.7,
+     "passes": [
+      65.7,
+      66.3,
+      65.9,
+      65.0,
+      65.5
+     ],
+     "ctx": "ctx_s10_mlp_control_sb_fp32__Cpu.bin",
+     "graph": "mlp_control_sb",
+     "numerics": "preserving",
+     "rewrite_chain": null
+    },
+    {
+     "source": "base",
+     "source_net": "mlp_control_sb",
+     "backend_key": "cpu@int8",
+     "precision": "int8",
+     "us": 66.2,
+     "passes": [
+      66.1,
+      66.1,
+      66.2,
+      66.2,
+      67.0,
+      67.0,
+      66.2,
+      66.2,
+      65.7,
+      65.7
+     ],
+     "ctx": "ctx_s10_mlp_control_sb_int8__CpuInt8.bin",
+     "graph": "mlp_control_sb",
+     "numerics": "preserving",
+     "rewrite_chain": null
+    }
+   ]
+  },
+  "gpu": {
+   "source": "base",
+   "source_net": "mlp_control_sb",
+   "backend_key": "gpu",
+   "precision": "fp16",
+   "us": 439.4,
+   "passes": [
+    439.4,
+    526.4,
+    434.3,
+    437.9,
+    442.5
+   ],
+   "ctx": "ctx_s10_mlp_control_sb_fp16__Gpu.bin",
+   "graph": "mlp_control_sb",
+   "numerics": "preserving",
+   "rewrite_chain": null,
+   "candidates": [
+    {
+     "source": "base",
+     "source_net": "mlp_control_sb",
+     "backend_key": "gpu",
+     "precision": "fp16",
+     "us": 439.4,
+     "passes": [
+      439.4,
+      526.4,
+      434.3,
+      437.9,
+      442.5
+     ],
+     "ctx": "ctx_s10_mlp_control_sb_fp16__Gpu.bin",
+     "graph": "mlp_control_sb",
+     "numerics": "preserving",
+     "rewrite_chain": null
+    }
+   ]
+  }
+ },
+ "mlp_control_sd": {
+  "dsp": {
+   "source": "base",
+   "source_net": "mlp_control_sd",
+   "backend_key": "dsp",
+   "precision": "int8",
+   "us": 523.6,
+   "passes": [
+    579.8,
+    426.5,
+    524.3,
+    523.6,
+    422.1
+   ],
+   "ctx": "ctx_s10_mlp_control_sd_int8__Dsp.bin",
+   "graph": "mlp_control_sd",
+   "numerics": "preserving",
+   "rewrite_chain": null,
+   "candidates": [
+    {
+     "source": "base",
+     "source_net": "mlp_control_sd",
+     "backend_key": "dsp",
+     "precision": "int8",
+     "us": 523.6,
+     "passes": [
+      579.8,
+      426.5,
+      524.3,
+      523.6,
+      422.1
+     ],
+     "ctx": "ctx_s10_mlp_control_sd_int8__Dsp.bin",
+     "graph": "mlp_control_sd",
+     "numerics": "preserving",
+     "rewrite_chain": null
+    }
+   ]
+  },
+  "cpu": {
+   "source": "base",
+   "source_net": "mlp_control_sd",
+   "backend_key": "cpu@int8",
+   "precision": "int8",
+   "us": 110.2,
+   "passes": [
+    111.1,
+    111.1,
+    111.7,
+    111.7,
+    110.1,
+    110.1,
+    110.2,
+    110.2,
+    109.6,
+    109.6
+   ],
+   "ctx": "ctx_s10_mlp_control_sd_int8__CpuInt8.bin",
+   "graph": "mlp_control_sd",
+   "numerics": "preserving",
+   "rewrite_chain": null,
+   "candidates": [
+    {
+     "source": "base",
+     "source_net": "mlp_control_sd",
+     "backend_key": "cpu",
+     "precision": "fp32",
+     "us": 115.1,
+     "passes": [
+      114.2,
+      116.3,
+      115.7,
+      115.1,
+      114.4
+     ],
+     "ctx": "ctx_s10_mlp_control_sd_fp32__Cpu.bin",
+     "graph": "mlp_control_sd",
+     "numerics": "preserving",
+     "rewrite_chain": null
+    },
+    {
+     "source": "base",
+     "source_net": "mlp_control_sd",
+     "backend_key": "cpu@int8",
+     "precision": "int8",
+     "us": 110.2,
+     "passes": [
+      111.1,
+      111.1,
+      111.7,
+      111.7,
+      110.1,
+      110.1,
+      110.2,
+      110.2,
+      109.6,
+      109.6
+     ],
+     "ctx": "ctx_s10_mlp_control_sd_int8__CpuInt8.bin",
+     "graph": "mlp_control_sd",
+     "numerics": "preserving",
+     "rewrite_chain": null
+    }
+   ]
+  },
+  "gpu": {
+   "source": "base",
+   "source_net": "mlp_control_sd",
+   "backend_key": "gpu",
+   "precision": "fp16",
+   "us": 445.0,
+   "passes": [
+    429.9,
+    462.8,
+    435.0,
+    458.5,
+    445.0
+   ],
+   "ctx": "ctx_s10_mlp_control_sd_fp16__Gpu.bin",
+   "graph": "mlp_control_sd",
+   "numerics": "preserving",
+   "rewrite_chain": null,
+   "candidates": [
+    {
+     "source": "base",
+     "source_net": "mlp_control_sd",
+     "backend_key": "gpu",
+     "precision": "fp16",
+     "us": 445.0,
+     "passes": [
+      429.9,
+      462.8,
+      435.0,
+      458.5,
+      445.0
+     ],
+     "ctx": "ctx_s10_mlp_control_sd_fp16__Gpu.bin",
+     "graph": "mlp_control_sd",
+     "numerics": "preserving",
+     "rewrite_chain": null
+    }
+   ]
+  }
+ },
+ "mlp_control_sf": {
+  "dsp": {
+   "source": "base",
+   "source_net": "mlp_control_sf",
+   "backend_key": "dsp",
+   "precision": "int8",
+   "us": 527.1,
+   "passes": [
+    443.7,
+    527.1,
+    533.5,
+    767.4,
+    443.7
+   ],
+   "ctx": "ctx_s10_mlp_control_sf_int8__Dsp.bin",
+   "graph": "mlp_control_sf",
+   "numerics": "preserving",
+   "rewrite_chain": null,
+   "candidates": [
+    {
+     "source": "base",
+     "source_net": "mlp_control_sf",
+     "backend_key": "dsp",
+     "precision": "int8",
+     "us": 527.1,
+     "passes": [
+      443.7,
+      527.1,
+      533.5,
+      767.4,
+      443.7
+     ],
+     "ctx": "ctx_s10_mlp_control_sf_int8__Dsp.bin",
+     "graph": "mlp_control_sf",
+     "numerics": "preserving",
+     "rewrite_chain": null
+    },
+    {
+     "source": "mlp_control_sf_htaprobe",
+     "source_net": "mlp_control_sf_htaprobe",
+     "backend_key": "dsp",
+     "precision": "int8",
+     "us": 455.9,
+     "passes": [
+      432.8,
+      763.4,
+      434.9,
+      487.8,
+      455.9
+     ],
+     "ctx": "ctx_s10_mlp_control_sf_htaprobe_int8__Dsp.bin",
+     "graph": "mlp_control_sf_htaprobe",
+     "numerics": "changing",
+     "rewrite_chain": [
+      "onnxsim",
+      "elu_to_relu"
+     ]
+    }
+   ]
+  },
+  "cpu": {
+   "source": "base",
+   "source_net": "mlp_control_sf",
+   "backend_key": "cpu",
+   "precision": "fp32",
+   "us": 176.1,
+   "passes": [
+    182.5,
+    169.9,
+    475.3,
+    176.1,
+    171.3
+   ],
+   "ctx": "ctx_s10_mlp_control_sf_fp32__Cpu.bin",
+   "graph": "mlp_control_sf",
+   "numerics": "preserving",
+   "rewrite_chain": null,
+   "candidates": [
+    {
+     "source": "base",
+     "source_net": "mlp_control_sf",
+     "backend_key": "cpu",
+     "precision": "fp32",
+     "us": 176.1,
+     "passes": [
+      182.5,
+      169.9,
+      475.3,
+      176.1,
+      171.3
+     ],
+     "ctx": "ctx_s10_mlp_control_sf_fp32__Cpu.bin",
+     "graph": "mlp_control_sf",
+     "numerics": "preserving",
+     "rewrite_chain": null
+    },
+    {
+     "source": "base",
+     "source_net": "mlp_control_sf",
+     "backend_key": "cpu@int8",
+     "precision": "int8",
+     "us": 178.6,
+     "passes": [
+      176.8,
+      176.8,
+      182.3,
+      182.3,
+      178.6,
+      178.6,
+      177.5,
+      177.5,
+      179.2,
+      179.2
+     ],
+     "ctx": "ctx_s10_mlp_control_sf_int8__CpuInt8.bin",
+     "graph": "mlp_control_sf",
+     "numerics": "preserving",
+     "rewrite_chain": null
+    },
+    {
+     "source": "mlp_control_sf_htaprobe",
+     "source_net": "mlp_control_sf_htaprobe",
+     "backend_key": "cpu",
+     "precision": "fp32",
+     "us": 157.7,
+     "passes": [
+      150.0,
+      153.5,
+      175.8,
+      159.9,
+      157.7
+     ],
+     "ctx": "ctx_s10_mlp_control_sf_htaprobe_fp32__Cpu.bin",
+     "graph": "mlp_control_sf_htaprobe",
+     "numerics": "changing",
+     "rewrite_chain": [
+      "onnxsim",
+      "elu_to_relu"
+     ]
+    },
+    {
+     "source": "mlp_control_sf_htaprobe",
+     "source_net": "mlp_control_sf_htaprobe",
+     "backend_key": "cpu@int8",
+     "precision": "int8",
+     "us": 403.5,
+     "passes": [
+      415.3,
+      406.2,
+      403.5,
+      401.1,
+      399.9
+     ],
+     "ctx": "ctx_s10_mlp_control_sf_htaprobe_int8__CpuInt8.bin",
+     "graph": "mlp_control_sf_htaprobe",
+     "numerics": "changing",
+     "rewrite_chain": [
+      "onnxsim",
+      "elu_to_relu"
+     ]
+    }
+   ]
+  },
+  "gpu": {
+   "source": "base",
+   "source_net": "mlp_control_sf",
+   "backend_key": "gpu",
+   "precision": "fp16",
+   "us": 446.5,
+   "passes": [
+    428.7,
+    471.2,
+    447.6,
+    446.5,
+    443.7
+   ],
+   "ctx": "ctx_s10_mlp_control_sf_fp16__Gpu.bin",
+   "graph": "mlp_control_sf",
+   "numerics": "preserving",
+   "rewrite_chain": null,
+   "candidates": [
+    {
+     "source": "base",
+     "source_net": "mlp_control_sf",
+     "backend_key": "gpu",
+     "precision": "fp16",
+     "us": 446.5,
+     "passes": [
+      428.7,
+      471.2,
+      447.6,
+      446.5,
+      443.7
+     ],
+     "ctx": "ctx_s10_mlp_control_sf_fp16__Gpu.bin",
+     "graph": "mlp_control_sf",
+     "numerics": "preserving",
+     "rewrite_chain": null
+    },
+    {
+     "source": "mlp_control_sf_htaprobe",
+     "source_net": "mlp_control_sf_htaprobe",
+     "backend_key": "gpu",
+     "precision": "fp16",
+     "us": 439.8,
+     "passes": [
+      447.4,
+      439.8,
+      443.7,
+      439.4,
+      425.9
+     ],
+     "ctx": "ctx_s10_mlp_control_sf_htaprobe_fp16__Gpu.bin",
+     "graph": "mlp_control_sf_htaprobe",
+     "numerics": "changing",
+     "rewrite_chain": [
+      "onnxsim",
+      "elu_to_relu"
+     ]
+    }
+   ]
+  }
+ },
+ "yolov8_nano_sc": {
+  "hta": {
+   "source": "yolov8_nano_sc_hta",
+   "source_net": "yolov8_nano_sc_hta",
+   "backend_key": "hta",
+   "precision": "int8",
+   "us": 7927.8,
+   "passes": [
+    7921.2,
+    7719.9,
+    8031.5,
+    8120.8,
+    7927.8
+   ],
+   "ctx": "ctx_s10_yolov8_nano_sc_hta_int8__Hta.bin",
+   "graph": "yolov8_nano_sc_hta",
+   "numerics": "preserving",
+   "rewrite_chain": [
+    "onnxsim",
+    "channel_slice_to_conv1x1"
+   ],
+   "candidates": [
+    {
+     "source": "yolov8_nano_sc_hta",
+     "source_net": "yolov8_nano_sc_hta",
+     "backend_key": "hta",
+     "precision": "int8",
+     "us": 7927.8,
+     "passes": [
+      7921.2,
+      7719.9,
+      8031.5,
+      8120.8,
+      7927.8
+     ],
+     "ctx": "ctx_s10_yolov8_nano_sc_hta_int8__Hta.bin",
+     "graph": "yolov8_nano_sc_hta",
+     "numerics": "preserving",
+     "rewrite_chain": [
+      "onnxsim",
+      "channel_slice_to_conv1x1"
+     ]
+    }
+   ]
+  },
+  "dsp": {
+   "source": "yolov8_nano_sc_hta",
+   "source_net": "yolov8_nano_sc_hta",
+   "backend_key": "dsp",
+   "precision": "int8",
+   "us": 3460.8,
+   "passes": [
+    3460.8,
+    5128.8,
+    5131.6,
+    3108.0,
+    3072.1
+   ],
+   "ctx": "ctx_s10_yolov8_nano_sc_hta_int8__Dsp.bin",
+   "graph": "yolov8_nano_sc_hta",
+   "numerics": "preserving",
+   "rewrite_chain": [
+    "onnxsim",
+    "channel_slice_to_conv1x1"
+   ],
+   "candidates": [
+    {
+     "source": "base",
+     "source_net": "yolov8_nano_sc",
+     "backend_key": "dsp",
+     "precision": "int8",
+     "us": 4065.4,
+     "passes": [
+      3742.1,
+      4002.9,
+      4366.2,
+      4780.9,
+      4065.4
+     ],
+     "ctx": "ctx_s10_yolov8_nano_sc_int8__Dsp.bin",
+     "graph": "yolov8_nano_sc",
+     "numerics": "preserving",
+     "rewrite_chain": null
+    },
+    {
+     "source": "yolov8_nano_sc_hta",
+     "source_net": "yolov8_nano_sc_hta",
+     "backend_key": "dsp",
+     "precision": "int8",
+     "us": 3460.8,
+     "passes": [
+      3460.8,
+      5128.8,
+      5131.6,
+      3108.0,
+      3072.1
+     ],
+     "ctx": "ctx_s10_yolov8_nano_sc_hta_int8__Dsp.bin",
+     "graph": "yolov8_nano_sc_hta",
+     "numerics": "preserving",
+     "rewrite_chain": [
+      "onnxsim",
+      "channel_slice_to_conv1x1"
+     ]
+    }
+   ]
+  },
+  "cpu": {
+   "source": "base",
+   "source_net": "yolov8_nano_sc",
+   "backend_key": "cpu@int8",
+   "precision": "int8",
+   "us": 3887.2,
+   "passes": [
+    3887.8,
+    3887.8,
+    3887.2,
+    3887.2,
+    3882.6,
+    3882.6,
+    3892.0,
+    3892.0,
+    3874.0,
+    3874.0
+   ],
+   "ctx": "ctx_s10_yolov8_nano_sc_int8__CpuInt8.bin",
+   "graph": "yolov8_nano_sc",
+   "numerics": "preserving",
+   "rewrite_chain": null,
+   "candidates": [
+    {
+     "source": "base",
+     "source_net": "yolov8_nano_sc",
+     "backend_key": "cpu",
+     "precision": "fp32",
+     "us": 17772.5,
+     "passes": [
+      17840.4,
+      20114.3,
+      17772.5,
+      15060.0,
+      15059.3
+     ],
+     "ctx": "ctx_s10_yolov8_nano_sc_fp32__Cpu.bin",
+     "graph": "yolov8_nano_sc",
+     "numerics": "preserving",
+     "rewrite_chain": null
+    },
+    {
+     "source": "base",
+     "source_net": "yolov8_nano_sc",
+     "backend_key": "cpu@int8",
+     "precision": "int8",
+     "us": 3887.2,
+     "passes": [
+      3887.8,
+      3887.8,
+      3887.2,
+      3887.2,
+      3882.6,
+      3882.6,
+      3892.0,
+      3892.0,
+      3874.0,
+      3874.0
+     ],
+     "ctx": "ctx_s10_yolov8_nano_sc_int8__CpuInt8.bin",
+     "graph": "yolov8_nano_sc",
+     "numerics": "preserving",
+     "rewrite_chain": null
+    },
+    {
+     "source": "yolov8_nano_sc_hta",
+     "source_net": "yolov8_nano_sc_hta",
+     "backend_key": "cpu",
+     "precision": "fp32",
+     "us": 16890.8,
+     "passes": [
+      16890.8,
+      18539.9,
+      16864.2,
+      21117.8,
+      15645.5
+     ],
+     "ctx": "ctx_s10_yolov8_nano_sc_hta_fp32__Cpu.bin",
+     "graph": "yolov8_nano_sc_hta",
+     "numerics": "preserving",
+     "rewrite_chain": [
+      "onnxsim",
+      "channel_slice_to_conv1x1"
+     ]
+    },
+    {
+     "source": "yolov8_nano_sc_hta",
+     "source_net": "yolov8_nano_sc_hta",
+     "backend_key": "cpu@int8",
+     "precision": "int8",
+     "us": 3957.8,
+     "passes": [
+      3976.0,
+      3971.9,
+      3947.5,
+      3957.8,
+      3942.9
+     ],
+     "ctx": "ctx_s10_yolov8_nano_sc_hta_int8__CpuInt8.bin",
+     "graph": "yolov8_nano_sc_hta",
+     "numerics": "preserving",
+     "rewrite_chain": [
+      "onnxsim",
+      "channel_slice_to_conv1x1"
+     ]
+    }
+   ]
+  },
+  "gpu": {
+   "source": "base",
+   "source_net": "yolov8_nano_sc",
+   "backend_key": "gpu",
+   "precision": "fp16",
+   "us": 14936.0,
+   "passes": [
+    14936.0,
+    14936.1,
+    14934.7,
+    14960.2,
+    14873.4
+   ],
+   "ctx": "ctx_s10_yolov8_nano_sc_fp16__Gpu.bin",
+   "graph": "yolov8_nano_sc",
+   "numerics": "preserving",
+   "rewrite_chain": null,
+   "candidates": [
+    {
+     "source": "base",
+     "source_net": "yolov8_nano_sc",
+     "backend_key": "gpu",
+     "precision": "fp16",
+     "us": 14936.0,
+     "passes": [
+      14936.0,
+      14936.1,
+      14934.7,
+      14960.2,
+      14873.4
+     ],
+     "ctx": "ctx_s10_yolov8_nano_sc_fp16__Gpu.bin",
+     "graph": "yolov8_nano_sc",
+     "numerics": "preserving",
+     "rewrite_chain": null
+    },
+    {
+     "source": "yolov8_nano_sc_hta",
+     "source_net": "yolov8_nano_sc_hta",
+     "backend_key": "gpu",
+     "precision": "fp16",
+     "us": 15130.5,
+     "passes": [
+      15080.0,
+      15161.4,
+      15130.5,
+      15108.5,
+      15200.4
+     ],
+     "ctx": "ctx_s10_yolov8_nano_sc_hta_fp16__Gpu.bin",
+     "graph": "yolov8_nano_sc_hta",
+     "numerics": "preserving",
+     "rewrite_chain": [
+      "onnxsim",
+      "channel_slice_to_conv1x1"
+     ]
+    }
+   ]
+  }
+ },
+ "yolov8_nano_se": {
+  "hta": {
+   "source": "yolov8_nano_se_hta",
+   "source_net": "yolov8_nano_se_hta",
+   "backend_key": "hta",
+   "precision": "int8",
+   "us": 8507.8,
+   "passes": [
+    8507.8,
+    8509.8,
+    8511.3,
+    8493.6,
+    8439.3
+   ],
+   "ctx": "ctx_s10_yolov8_nano_se_hta_int8__Hta.bin",
+   "graph": "yolov8_nano_se_hta",
+   "numerics": "preserving",
+   "rewrite_chain": [
+    "onnxsim",
+    "channel_slice_to_conv1x1"
+   ],
+   "candidates": [
+    {
+     "source": "yolov8_nano_se_hta",
+     "source_net": "yolov8_nano_se_hta",
+     "backend_key": "hta",
+     "precision": "int8",
+     "us": 8507.8,
+     "passes": [
+      8507.8,
+      8509.8,
+      8511.3,
+      8493.6,
+      8439.3
+     ],
+     "ctx": "ctx_s10_yolov8_nano_se_hta_int8__Hta.bin",
+     "graph": "yolov8_nano_se_hta",
+     "numerics": "preserving",
+     "rewrite_chain": [
+      "onnxsim",
+      "channel_slice_to_conv1x1"
+     ]
+    }
+   ]
+  },
+  "dsp": {
+   "source": "yolov8_nano_se_hta",
+   "source_net": "yolov8_nano_se_hta",
+   "backend_key": "dsp",
+   "precision": "int8",
+   "us": 5151.5,
+   "passes": [
+    3834.0,
+    6221.1,
+    6131.6,
+    4617.0,
+    5151.5
+   ],
+   "ctx": "ctx_s10_yolov8_nano_se_hta_int8__Dsp.bin",
+   "graph": "yolov8_nano_se_hta",
+   "numerics": "preserving",
+   "rewrite_chain": [
+    "onnxsim",
+    "channel_slice_to_conv1x1"
+   ],
+   "candidates": [
+    {
+     "source": "base",
+     "source_net": "yolov8_nano_se",
+     "backend_key": "dsp",
+     "precision": "int8",
+     "us": 7428.6,
+     "passes": [
+      7405.6,
+      7428.6,
+      7482.5,
+      7208.2,
+      7607.0
+     ],
+     "ctx": "ctx_s10_yolov8_nano_se_int8__Dsp.bin",
+     "graph": "yolov8_nano_se",
+     "numerics": "preserving",
+     "rewrite_chain": null
+    },
+    {
+     "source": "yolov8_nano_se_hta",
+     "source_net": "yolov8_nano_se_hta",
+     "backend_key": "dsp",
+     "precision": "int8",
+     "us": 5151.5,
+     "passes": [
+      3834.0,
+      6221.1,
+      6131.6,
+      4617.0,
+      5151.5
+     ],
+     "ctx": "ctx_s10_yolov8_nano_se_hta_int8__Dsp.bin",
+     "graph": "yolov8_nano_se_hta",
+     "numerics": "preserving",
+     "rewrite_chain": [
+      "onnxsim",
+      "channel_slice_to_conv1x1"
+     ]
+    }
+   ]
+  },
+  "cpu": {
+   "source": "base",
+   "source_net": "yolov8_nano_se",
+   "backend_key": "cpu@int8",
+   "precision": "int8",
+   "us": 6805.1,
+   "passes": [
+    6787.2,
+    6787.2,
+    6805.1,
+    6805.1,
+    6841.8,
+    6841.8,
+    6811.1,
+    6811.1,
+    6755.5,
+    6755.5
+   ],
+   "ctx": "ctx_s10_yolov8_nano_se_int8__CpuInt8.bin",
+   "graph": "yolov8_nano_se",
+   "numerics": "preserving",
+   "rewrite_chain": null,
+   "candidates": [
+    {
+     "source": "base",
+     "source_net": "yolov8_nano_se",
+     "backend_key": "cpu",
+     "precision": "fp32",
+     "us": 28869.9,
+     "passes": [
+      28869.9,
+      25087.5,
+      26425.3,
+      29045.9,
+      29602.5
+     ],
+     "ctx": "ctx_s10_yolov8_nano_se_fp32__Cpu.bin",
+     "graph": "yolov8_nano_se",
+     "numerics": "preserving",
+     "rewrite_chain": null
+    },
+    {
+     "source": "base",
+     "source_net": "yolov8_nano_se",
+     "backend_key": "cpu@int8",
+     "precision": "int8",
+     "us": 6805.1,
+     "passes": [
+      6787.2,
+      6787.2,
+      6805.1,
+      6805.1,
+      6841.8,
+      6841.8,
+      6811.1,
+      6811.1,
+      6755.5,
+      6755.5
+     ],
+     "ctx": "ctx_s10_yolov8_nano_se_int8__CpuInt8.bin",
+     "graph": "yolov8_nano_se",
+     "numerics": "preserving",
+     "rewrite_chain": null
+    },
+    {
+     "source": "yolov8_nano_se_hta",
+     "source_net": "yolov8_nano_se_hta",
+     "backend_key": "cpu",
+     "precision": "fp32",
+     "us": 26933.0,
+     "passes": [
+      26933.0,
+      26586.5,
+      31450.8,
+      26727.8,
+      27419.2
+     ],
+     "ctx": "ctx_s10_yolov8_nano_se_hta_fp32__Cpu.bin",
+     "graph": "yolov8_nano_se_hta",
+     "numerics": "preserving",
+     "rewrite_chain": [
+      "onnxsim",
+      "channel_slice_to_conv1x1"
+     ]
+    },
+    {
+     "source": "yolov8_nano_se_hta",
+     "source_net": "yolov8_nano_se_hta",
+     "backend_key": "cpu@int8",
+     "precision": "int8",
+     "us": 6908.9,
+     "passes": [
+      6876.7,
+      6919.0,
+      6908.9,
+      6919.1,
+      6902.7
+     ],
+     "ctx": "ctx_s10_yolov8_nano_se_hta_int8__CpuInt8.bin",
+     "graph": "yolov8_nano_se_hta",
+     "numerics": "preserving",
+     "rewrite_chain": [
+      "onnxsim",
+      "channel_slice_to_conv1x1"
+     ]
+    }
+   ]
+  },
+  "gpu": {
+   "source": "base",
+   "source_net": "yolov8_nano_se",
+   "backend_key": "gpu",
+   "precision": "fp16",
+   "us": 20072.3,
+   "passes": [
+    20082.3,
+    20072.3,
+    20043.4,
+    20075.1,
+    20002.9
+   ],
+   "ctx": "ctx_s10_yolov8_nano_se_fp16__Gpu.bin",
+   "graph": "yolov8_nano_se",
+   "numerics": "preserving",
+   "rewrite_chain": null,
+   "candidates": [
+    {
+     "source": "base",
+     "source_net": "yolov8_nano_se",
+     "backend_key": "gpu",
+     "precision": "fp16",
+     "us": 20072.3,
+     "passes": [
+      20082.3,
+      20072.3,
+      20043.4,
+      20075.1,
+      20002.9
+     ],
+     "ctx": "ctx_s10_yolov8_nano_se_fp16__Gpu.bin",
+     "graph": "yolov8_nano_se",
+     "numerics": "preserving",
+     "rewrite_chain": null
+    },
+    {
+     "source": "yolov8_nano_se_hta",
+     "source_net": "yolov8_nano_se_hta",
+     "backend_key": "gpu",
+     "precision": "fp16",
+     "us": 20263.3,
+     "passes": [
+      20322.0,
+      20260.5,
+      20284.9,
+      20263.3,
+      20234.6
+     ],
+     "ctx": "ctx_s10_yolov8_nano_se_hta_fp16__Gpu.bin",
+     "graph": "yolov8_nano_se_hta",
+     "numerics": "preserving",
+     "rewrite_chain": [
+      "onnxsim",
+      "channel_slice_to_conv1x1"
+     ]
+    }
+   ]
+  }
+ },
+ "yolov8_nano_sf": {
+  "hta": {
+   "source": "yolov8_nano_sf_hta",
+   "source_net": "yolov8_nano_sf_hta",
+   "backend_key": "hta",
+   "precision": "int8",
+   "us": 8681.0,
+   "passes": [
+    8681.0,
+    8716.2,
+    8707.8,
+    8678.3,
+    8624.4
+   ],
+   "ctx": "ctx_s10_yolov8_nano_sf_hta_int8__Hta.bin",
+   "graph": "yolov8_nano_sf_hta",
+   "numerics": "preserving",
+   "rewrite_chain": [
+    "onnxsim",
+    "channel_slice_to_conv1x1"
+   ],
+   "candidates": [
+    {
+     "source": "yolov8_nano_sf_hta",
+     "source_net": "yolov8_nano_sf_hta",
+     "backend_key": "hta",
+     "precision": "int8",
+     "us": 8681.0,
+     "passes": [
+      8681.0,
+      8716.2,
+      8707.8,
+      8678.3,
+      8624.4
+     ],
+     "ctx": "ctx_s10_yolov8_nano_sf_hta_int8__Hta.bin",
+     "graph": "yolov8_nano_sf_hta",
+     "numerics": "preserving",
+     "rewrite_chain": [
+      "onnxsim",
+      "channel_slice_to_conv1x1"
+     ]
+    }
+   ]
+  },
+  "dsp": {
+   "source": "yolov8_nano_sf_hta",
+   "source_net": "yolov8_nano_sf_hta",
+   "backend_key": "dsp",
+   "precision": "int8",
+   "us": 6797.6,
+   "passes": [
+    6797.6,
+    6749.7,
+    6509.9,
+    6880.8,
+    6865.8
+   ],
+   "ctx": "ctx_s10_yolov8_nano_sf_hta_int8__Dsp.bin",
+   "graph": "yolov8_nano_sf_hta",
+   "numerics": "preserving",
+   "rewrite_chain": [
+    "onnxsim",
+    "channel_slice_to_conv1x1"
+   ],
+   "candidates": [
+    {
+     "source": "base",
+     "source_net": "yolov8_nano_sf",
+     "backend_key": "dsp",
+     "precision": "int8",
+     "us": 8620.8,
+     "passes": [
+      8620.8,
+      8695.9,
+      8105.0,
+      8625.6,
+      7611.6
+     ],
+     "ctx": "ctx_s10_yolov8_nano_sf_int8__Dsp.bin",
+     "graph": "yolov8_nano_sf",
+     "numerics": "preserving",
+     "rewrite_chain": null
+    },
+    {
+     "source": "yolov8_nano_sf_hta",
+     "source_net": "yolov8_nano_sf_hta",
+     "backend_key": "dsp",
+     "precision": "int8",
+     "us": 6797.6,
+     "passes": [
+      6797.6,
+      6749.7,
+      6509.9,
+      6880.8,
+      6865.8
+     ],
+     "ctx": "ctx_s10_yolov8_nano_sf_hta_int8__Dsp.bin",
+     "graph": "yolov8_nano_sf_hta",
+     "numerics": "preserving",
+     "rewrite_chain": [
+      "onnxsim",
+      "channel_slice_to_conv1x1"
+     ]
+    }
+   ]
+  },
+  "cpu": {
+   "source": "base",
+   "source_net": "yolov8_nano_sf",
+   "backend_key": "cpu@int8",
+   "precision": "int8",
+   "us": 8665.5,
+   "passes": [
+    8655.5,
+    8655.5,
+    8670.2,
+    8670.2,
+    8665.5,
+    8665.5,
+    8683.6,
+    8683.6,
+    8641.2,
+    8641.2
+   ],
+   "ctx": "ctx_s10_yolov8_nano_sf_int8__CpuInt8.bin",
+   "graph": "yolov8_nano_sf",
+   "numerics": "preserving",
+   "rewrite_chain": null,
+   "candidates": [
+    {
+     "source": "base",
+     "source_net": "yolov8_nano_sf",
+     "backend_key": "cpu",
+     "precision": "fp32",
+     "us": 32449.0,
+     "passes": [
+      31584.2,
+      43413.4,
+      34465.7,
+      32449.0,
+      32260.2
+     ],
+     "ctx": "ctx_s10_yolov8_nano_sf_fp32__Cpu.bin",
+     "graph": "yolov8_nano_sf",
+     "numerics": "preserving",
+     "rewrite_chain": null
+    },
+    {
+     "source": "base",
+     "source_net": "yolov8_nano_sf",
+     "backend_key": "cpu@int8",
+     "precision": "int8",
+     "us": 8665.5,
+     "passes": [
+      8655.5,
+      8655.5,
+      8670.2,
+      8670.2,
+      8665.5,
+      8665.5,
+      8683.6,
+      8683.6,
+      8641.2,
+      8641.2
+     ],
+     "ctx": "ctx_s10_yolov8_nano_sf_int8__CpuInt8.bin",
+     "graph": "yolov8_nano_sf",
+     "numerics": "preserving",
+     "rewrite_chain": null
+    },
+    {
+     "source": "yolov8_nano_sf_hta",
+     "source_net": "yolov8_nano_sf_hta",
+     "backend_key": "cpu",
+     "precision": "fp32",
+     "us": 33329.9,
+     "passes": [
+      32694.7,
+      33067.6,
+      33329.9,
+      38357.2,
+      33335.3
+     ],
+     "ctx": "ctx_s10_yolov8_nano_sf_hta_fp32__Cpu.bin",
+     "graph": "yolov8_nano_sf_hta",
+     "numerics": "preserving",
+     "rewrite_chain": [
+      "onnxsim",
+      "channel_slice_to_conv1x1"
+     ]
+    },
+    {
+     "source": "yolov8_nano_sf_hta",
+     "source_net": "yolov8_nano_sf_hta",
+     "backend_key": "cpu@int8",
+     "precision": "int8",
+     "us": 8878.6,
+     "passes": [
+      8858.2,
+      8878.6,
+      8893.5,
+      8860.9,
+      8899.7
+     ],
+     "ctx": "ctx_s10_yolov8_nano_sf_hta_int8__CpuInt8.bin",
+     "graph": "yolov8_nano_sf_hta",
+     "numerics": "preserving",
+     "rewrite_chain": [
+      "onnxsim",
+      "channel_slice_to_conv1x1"
+     ]
+    }
+   ]
+  },
+  "gpu": {
+   "source": "base",
+   "source_net": "yolov8_nano_sf",
+   "backend_key": "gpu",
+   "precision": "fp16",
+   "us": 26067.3,
+   "passes": [
+    26046.8,
+    26166.7,
+    26067.3,
+    26182.1,
+    26049.7
+   ],
+   "ctx": "ctx_s10_yolov8_nano_sf_fp16__Gpu.bin",
+   "graph": "yolov8_nano_sf",
+   "numerics": "preserving",
+   "rewrite_chain": null,
+   "candidates": [
+    {
+     "source": "base",
+     "source_net": "yolov8_nano_sf",
+     "backend_key": "gpu",
+     "precision": "fp16",
+     "us": 26067.3,
+     "passes": [
+      26046.8,
+      26166.7,
+      26067.3,
+      26182.1,
+      26049.7
+     ],
+     "ctx": "ctx_s10_yolov8_nano_sf_fp16__Gpu.bin",
+     "graph": "yolov8_nano_sf",
+     "numerics": "preserving",
+     "rewrite_chain": null
+    },
+    {
+     "source": "yolov8_nano_sf_hta",
+     "source_net": "yolov8_nano_sf_hta",
+     "backend_key": "gpu",
+     "precision": "fp16",
+     "us": 26478.8,
+     "passes": [
+      26451.6,
+      26478.8,
+      26469.1,
+      26492.0,
+      26590.1
+     ],
+     "ctx": "ctx_s10_yolov8_nano_sf_hta_fp16__Gpu.bin",
+     "graph": "yolov8_nano_sf_hta",
+     "numerics": "preserving",
+     "rewrite_chain": [
+      "onnxsim",
+      "channel_slice_to_conv1x1"
+     ]
+    }
+   ]
+  }
+ },
+ "yolov8_nano_sh": {
+  "hta": {
+   "source": "yolov8_nano_sh_hta",
+   "source_net": "yolov8_nano_sh_hta",
+   "backend_key": "hta",
+   "precision": "int8",
+   "us": 10001.1,
+   "passes": [
+    10012.1,
+    10013.2,
+    9820.0,
+    10001.1,
+    9736.2
+   ],
+   "ctx": "ctx_s10_yolov8_nano_sh_hta_int8__Hta.bin",
+   "graph": "yolov8_nano_sh_hta",
+   "numerics": "preserving",
+   "rewrite_chain": [
+    "onnxsim",
+    "channel_slice_to_conv1x1"
+   ],
+   "candidates": [
+    {
+     "source": "yolov8_nano_sh_hta",
+     "source_net": "yolov8_nano_sh_hta",
+     "backend_key": "hta",
+     "precision": "int8",
+     "us": 10001.1,
+     "passes": [
+      10012.1,
+      10013.2,
+      9820.0,
+      10001.1,
+      9736.2
+     ],
+     "ctx": "ctx_s10_yolov8_nano_sh_hta_int8__Hta.bin",
+     "graph": "yolov8_nano_sh_hta",
+     "numerics": "preserving",
+     "rewrite_chain": [
+      "onnxsim",
+      "channel_slice_to_conv1x1"
+     ]
+    }
+   ]
+  },
+  "dsp": {
+   "source": "yolov8_nano_sh_hta",
+   "source_net": "yolov8_nano_sh_hta",
+   "backend_key": "dsp",
+   "precision": "int8",
+   "us": 8691.1,
+   "passes": [
+    8736.7,
+    8778.0,
+    8482.8,
+    8691.1,
+    8532.5
+   ],
+   "ctx": "ctx_s10_yolov8_nano_sh_hta_int8__Dsp.bin",
+   "graph": "yolov8_nano_sh_hta",
+   "numerics": "preserving",
+   "rewrite_chain": [
+    "onnxsim",
+    "channel_slice_to_conv1x1"
+   ],
+   "candidates": [
+    {
+     "source": "base",
+     "source_net": "yolov8_nano_sh",
+     "backend_key": "dsp",
+     "precision": "int8",
+     "us": 11466.7,
+     "passes": [
+      11466.7,
+      11077.9,
+      11477.8,
+      10890.1,
+      12690.4
+     ],
+     "ctx": "ctx_s10_yolov8_nano_sh_int8__Dsp.bin",
+     "graph": "yolov8_nano_sh",
+     "numerics": "preserving",
+     "rewrite_chain": null
+    },
+    {
+     "source": "yolov8_nano_sh_hta",
+     "source_net": "yolov8_nano_sh_hta",
+     "backend_key": "dsp",
+     "precision": "int8",
+     "us": 8691.1,
+     "passes": [
+      8736.7,
+      8778.0,
+      8482.8,
+      8691.1,
+      8532.5
+     ],
+     "ctx": "ctx_s10_yolov8_nano_sh_hta_int8__Dsp.bin",
+     "graph": "yolov8_nano_sh_hta",
+     "numerics": "preserving",
+     "rewrite_chain": [
+      "onnxsim",
+      "channel_slice_to_conv1x1"
+     ]
+    }
+   ]
+  },
+  "cpu": {
+   "source": "base",
+   "source_net": "yolov8_nano_sh",
+   "backend_key": "cpu@int8",
+   "precision": "int8",
+   "us": 16627.4,
+   "passes": [
+    16659.8,
+    16659.8,
+    16627.4,
+    16627.4,
+    16598.8,
+    16598.8,
+    16670.1,
+    16670.1,
+    16597.4,
+    16597.4
+   ],
+   "ctx": "ctx_s10_yolov8_nano_sh_int8__CpuInt8.bin",
+   "graph": "yolov8_nano_sh",
+   "numerics": "preserving",
+   "rewrite_chain": null,
+   "candidates": [
+    {
+     "source": "base",
+     "source_net": "yolov8_nano_sh",
+     "backend_key": "cpu",
+     "precision": "fp32",
+     "us": 60294.9,
+     "passes": [
+      60544.5,
+      60049.9,
+      71552.8,
+      60294.9,
+      58119.6
+     ],
+     "ctx": "ctx_s10_yolov8_nano_sh_fp32__Cpu.bin",
+     "graph": "yolov8_nano_sh",
+     "numerics": "preserving",
+     "rewrite_chain": null
+    },
+    {
+     "source": "base",
+     "source_net": "yolov8_nano_sh",
+     "backend_key": "cpu@int8",
+     "precision": "int8",
+     "us": 16627.4,
+     "passes": [
+      16659.8,
+      16659.8,
+      16627.4,
+      16627.4,
+      16598.8,
+      16598.8,
+      16670.1,
+      16670.1,
+      16597.4,
+      16597.4
+     ],
+     "ctx": "ctx_s10_yolov8_nano_sh_int8__CpuInt8.bin",
+     "graph": "yolov8_nano_sh",
+     "numerics": "preserving",
+     "rewrite_chain": null
+    },
+    {
+     "source": "yolov8_nano_sh_hta",
+     "source_net": "yolov8_nano_sh_hta",
+     "backend_key": "cpu",
+     "precision": "fp32",
+     "us": 64217.2,
+     "passes": [
+      64217.2,
+      78929.2,
+      60095.9,
+      63997.6,
+      78333.3
+     ],
+     "ctx": "ctx_s10_yolov8_nano_sh_hta_fp32__Cpu.bin",
+     "graph": "yolov8_nano_sh_hta",
+     "numerics": "preserving",
+     "rewrite_chain": [
+      "onnxsim",
+      "channel_slice_to_conv1x1"
+     ]
+    },
+    {
+     "source": "yolov8_nano_sh_hta",
+     "source_net": "yolov8_nano_sh_hta",
+     "backend_key": "cpu@int8",
+     "precision": "int8",
+     "us": 16811.7,
+     "passes": [
+      16811.7,
+      16807.6,
+      16760.2,
+      16870.5,
+      16813.0
+     ],
+     "ctx": "ctx_s10_yolov8_nano_sh_hta_int8__CpuInt8.bin",
+     "graph": "yolov8_nano_sh_hta",
+     "numerics": "preserving",
+     "rewrite_chain": [
+      "onnxsim",
+      "channel_slice_to_conv1x1"
+     ]
+    }
+   ]
+  },
+  "gpu": {
+   "source": "base",
+   "source_net": "yolov8_nano_sh",
+   "backend_key": "gpu",
+   "precision": "fp16",
+   "us": 41916.9,
+   "passes": [
+    41763.1,
+    41830.6,
+    41990.3,
+    42043.0,
+    41916.9
+   ],
+   "ctx": "ctx_s10_yolov8_nano_sh_fp16__Gpu.bin",
+   "graph": "yolov8_nano_sh",
+   "numerics": "preserving",
+   "rewrite_chain": null,
+   "candidates": [
+    {
+     "source": "base",
+     "source_net": "yolov8_nano_sh",
+     "backend_key": "gpu",
+     "precision": "fp16",
+     "us": 41916.9,
+     "passes": [
+      41763.1,
+      41830.6,
+      41990.3,
+      42043.0,
+      41916.9
+     ],
+     "ctx": "ctx_s10_yolov8_nano_sh_fp16__Gpu.bin",
+     "graph": "yolov8_nano_sh",
+     "numerics": "preserving",
+     "rewrite_chain": null
+    },
+    {
+     "source": "yolov8_nano_sh_hta",
+     "source_net": "yolov8_nano_sh_hta",
+     "backend_key": "gpu",
+     "precision": "fp16",
+     "us": 42224.9,
+     "passes": [
+      42520.2,
+      42224.9,
+      42074.4,
+      42409.5,
+      42221.7
+     ],
+     "ctx": "ctx_s10_yolov8_nano_sh_hta_fp16__Gpu.bin",
+     "graph": "yolov8_nano_sh_hta",
+     "numerics": "preserving",
+     "rewrite_chain": [
+      "onnxsim",
+      "channel_slice_to_conv1x1"
+     ]
+    }
+   ]
+  }
+ },
+ "fastdepth": {
+  "hta": {
+   "source": "base",
+   "source_net": "fastdepth",
+   "backend_key": "hta",
+   "precision": "int8",
+   "us": 3745.6,
+   "passes": [
+    3730.3,
+    3769.9,
+    3745.6,
+    3746.8,
+    3731.1
+   ],
+   "ctx": "ctx_s10_fastdepth_int8__Hta.bin",
+   "graph": "fastdepth",
+   "numerics": "preserving",
+   "rewrite_chain": null,
+   "candidates": [
+    {
+     "source": "base",
+     "source_net": "fastdepth",
+     "backend_key": "hta",
+     "precision": "int8",
+     "us": 3745.6,
+     "passes": [
+      3730.3,
+      3769.9,
+      3745.6,
+      3746.8,
+      3731.1
+     ],
+     "ctx": "ctx_s10_fastdepth_int8__Hta.bin",
+     "graph": "fastdepth",
+     "numerics": "preserving",
+     "rewrite_chain": null
+    }
+   ]
+  },
+  "dsp": {
+   "source": "base",
+   "source_net": "fastdepth",
+   "backend_key": "dsp",
+   "precision": "int8",
+   "us": 2821.8,
+   "passes": [
+    2821.8,
+    4588.8,
+    2941.1,
+    2751.7,
+    2626.2
+   ],
+   "ctx": "ctx_s10_fastdepth_int8__Dsp.bin",
+   "graph": "fastdepth",
+   "numerics": "preserving",
+   "rewrite_chain": null,
+   "candidates": [
+    {
+     "source": "base",
+     "source_net": "fastdepth",
+     "backend_key": "dsp",
+     "precision": "int8",
+     "us": 2821.8,
+     "passes": [
+      2821.8,
+      4588.8,
+      2941.1,
+      2751.7,
+      2626.2
+     ],
+     "ctx": "ctx_s10_fastdepth_int8__Dsp.bin",
+     "graph": "fastdepth",
+     "numerics": "preserving",
+     "rewrite_chain": null
+    }
+   ]
+  },
+  "cpu": {
+   "source": "base",
+   "source_net": "fastdepth",
+   "backend_key": "cpu@int8",
+   "precision": "int8",
+   "us": 3643.1,
+   "passes": [
+    3639.3,
+    3639.3,
+    3643.1,
+    3643.1,
+    3645.1,
+    3645.1,
+    3642.5,
+    3642.5,
+    3651.2,
+    3651.2
+   ],
+   "ctx": "ctx_s10_fastdepth_int8__CpuInt8.bin",
+   "graph": "fastdepth",
+   "numerics": "preserving",
+   "rewrite_chain": null,
+   "candidates": [
+    {
+     "source": "base",
+     "source_net": "fastdepth",
+     "backend_key": "cpu",
+     "precision": "fp32",
+     "us": 6469.2,
+     "passes": [
+      6466.1,
+      6846.4,
+      6469.2,
+      6448.3,
+      7392.2
+     ],
+     "ctx": "ctx_s10_fastdepth_fp32__Cpu.bin",
+     "graph": "fastdepth",
+     "numerics": "preserving",
+     "rewrite_chain": null
+    },
+    {
+     "source": "base",
+     "source_net": "fastdepth",
+     "backend_key": "cpu@int8",
+     "precision": "int8",
+     "us": 3643.1,
+     "passes": [
+      3639.3,
+      3639.3,
+      3643.1,
+      3643.1,
+      3645.1,
+      3645.1,
+      3642.5,
+      3642.5,
+      3651.2,
+      3651.2
+     ],
+     "ctx": "ctx_s10_fastdepth_int8__CpuInt8.bin",
+     "graph": "fastdepth",
+     "numerics": "preserving",
+     "rewrite_chain": null
+    }
+   ]
+  },
+  "gpu": {
+   "source": "base",
+   "source_net": "fastdepth",
+   "backend_key": "gpu",
+   "precision": "fp16",
+   "us": 3624.1,
+   "passes": [
+    3646.1,
+    3600.3,
+    3624.1,
+    3579.2,
+    3628.9
+   ],
+   "ctx": "ctx_s10_fastdepth_fp16__Gpu.bin",
+   "graph": "fastdepth",
+   "numerics": "preserving",
+   "rewrite_chain": null,
+   "candidates": [
+    {
+     "source": "base",
+     "source_net": "fastdepth",
+     "backend_key": "gpu",
+     "precision": "fp16",
+     "us": 3624.1,
+     "passes": [
+      3646.1,
+      3600.3,
+      3624.1,
+      3579.2,
+      3628.9
+     ],
+     "ctx": "ctx_s10_fastdepth_fp16__Gpu.bin",
+     "graph": "fastdepth",
+     "numerics": "preserving",
+     "rewrite_chain": null
+    }
+   ]
+  }
+ }
+}

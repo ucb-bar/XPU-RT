@@ -1,0 +1,42 @@
+{
+ "_comment": "Octo-small-1.5 int8 mixed placement (octo_mix3), PIPELINED AT THE LANE-BUSY FLOOR, 10 instances. Same 110 ms release cadence as networks_octo_pipe3fast_qrb5165.json but twice as many instances, so that a board run spends proportionally less of its wall on pipeline fill and drain and the MEASURED sustained throughput is not a 5-instance transient. 710 dispatches; the runtime still loads only the 52 single-graph contexts, because instances of the same segment share one loaded ctx. PERFORMANCE VEHICLE: int8 Octo readout cos 0.793 vs the JAX golden; wall-clock only.",
+ "hardware": {
+  "machines": {
+   "cpu_p": 1,
+   "cpu_e": 1,
+   "cpu_x": 1
+  },
+  "profile_hw": {
+   "cpu_p": "HTA",
+   "cpu_e": "DSP",
+   "cpu_x": "CPU"
+  },
+  "profile": {
+   "target": "qrb5165_v66",
+   "topo_tag": "topo_0",
+   "topo_tag_override": true,
+   "gen_root": "gen"
+  },
+  "p_core_speedup": 1.0
+ },
+ "scheduler": {
+  "random_seed": 42,
+  "solver_verbosity": 0,
+  "time_limit": 30,
+  "use_profiled": true,
+  "prune_periodic": true,
+  "restrict_makespan_to_nonperiodic": false,
+  "enforce_same_processor_combinations": false
+ },
+ "networks": {
+  "octo": {
+   "id": 0,
+   "identifier": "octo",
+   "dispatch_deps_path": "gen/qnn_vmfb/octo_mix3/qrb5165_v66/CPU/octo_mix3.int8/octo_mix3.int8_dispatch_graph.json",
+   "period": 110,
+   "window_duration": 800,
+   "num_instances": 10
+  }
+ },
+ "edges": []
+}

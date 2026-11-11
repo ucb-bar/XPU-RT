@@ -1,0 +1,54 @@
+{
+ "_comment": "RoSE 3net workload shape '3net_dronet8_mlp16_yolo1' on the QRB5165's three pinning lanes. Ported from networks_3net_armA.json, networks_3net_armB.json by qnn_models/flow_c/sweeps/<this sweep>/scripts/xpurt3net.py: the networks, periods, windows and instance counts are verbatim; the FireSim machine (gemmini_q31 / V256D128_rvv) is replaced by this board's hta + dsp + cpu, one of each, and yolov8_nano by the 640x640 yolov8n this board actually has. Absolute latencies are NOT comparable with the FireSim originals. The lane set is exactly the one the ROS pinning baseline may choose from, so the two sides see the same machine.",
+ "hardware": {
+  "machines": {
+   "cpu_p": 1,
+   "cpu_e": 1,
+   "cpu_x": 1
+  },
+  "profile_hw": {
+   "cpu_p": "HTA",
+   "cpu_e": "DSP",
+   "cpu_x": "CPU"
+  },
+  "profile": {
+   "target": "qrb5165_flowc",
+   "topo_tag": "topo_0",
+   "topo_tag_override": false,
+   "gen_root": "gen"
+  },
+  "p_core_speedup": 1.0
+ },
+ "scheduler": {
+  "random_seed": 42,
+  "solver_verbosity": 2,
+  "time_limit": 120,
+  "use_profiled": true,
+  "prune_periodic": true,
+  "restrict_makespan_to_nonperiodic": false
+ },
+ "networks": {
+  "mlp_control": {
+   "id": 0,
+   "identifier": "mlp_control",
+   "dispatch_deps_path": "gen/qnn_vmfb/mlp_control/qrb5165_flowc/CPU/mlp_control.int8/mlp_control.int8_dispatch_graph.json",
+   "num_instances": 16,
+   "period": 10,
+   "window_duration": 10
+  },
+  "dronet": {
+   "id": 1,
+   "identifier": "dronet",
+   "dispatch_deps_path": "gen/qnn_vmfb/dronet/qrb5165_flowc/CPU/dronet.int8/dronet.int8_dispatch_graph.json",
+   "num_instances": 8,
+   "period": 20,
+   "window_duration": 20
+  },
+  "yolov8n": {
+   "id": 2,
+   "identifier": "yolov8n",
+   "dispatch_deps_path": "gen/qnn_vmfb/yolov8n/qrb5165_flowc/CPU/yolov8n.int8/yolov8n.int8_dispatch_graph.json",
+   "num_instances": 1
+  }
+ }
+}

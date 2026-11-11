@@ -1,0 +1,134 @@
+{
+ "greedy": {
+  "usable": 40,
+  "of": 40,
+  "usable_pct": 100.0,
+  "mean": 0.0,
+  "median": 0.0,
+  "p25": 0.0,
+  "p75": 0.0,
+  "worst": 0.0,
+  "best": 0.0
+ },
+ "greedy_periodic": {
+  "usable": 39,
+  "of": 40,
+  "usable_pct": 97.5,
+  "mean": 4.886,
+  "median": 0.0,
+  "p25": 0.0,
+  "p75": 0.0,
+  "worst": 0.0,
+  "best": 75.712
+ },
+ "greedy_reserved": {
+  "usable": 39,
+  "of": 40,
+  "usable_pct": 97.5,
+  "mean": 5.292,
+  "median": 0.0,
+  "p25": 0.0,
+  "p75": 0.0,
+  "worst": 0.0,
+  "best": 75.712
+ },
+ "decomposed": {
+  "usable": 40,
+  "of": 40,
+  "usable_pct": 100.0,
+  "mean": -0.879,
+  "median": 0.0,
+  "p25": 0.0,
+  "p75": 0.0,
+  "worst": -35.158,
+  "best": 0.0
+ },
+ "heft": {
+  "usable": 36,
+  "of": 40,
+  "usable_pct": 90.0,
+  "mean": 9.084,
+  "median": 0.0,
+  "p25": 0.0,
+  "p75": 14.065,
+  "worst": -21.808,
+  "best": 60.333
+ },
+ "heft_edf": {
+  "usable": 40,
+  "of": 40,
+  "usable_pct": 100.0,
+  "mean": 11.956,
+  "median": 0.0,
+  "p25": 0.0,
+  "p75": 16.753,
+  "worst": -21.808,
+  "best": 75.712
+ },
+ "pso": {
+  "usable": 40,
+  "of": 40,
+  "usable_pct": 100.0,
+  "mean": 13.722,
+  "median": 1.071,
+  "p25": 0.0,
+  "p75": 16.753,
+  "worst": 0.0,
+  "best": 76.381
+ },
+ "sa": {
+  "usable": 40,
+  "of": 40,
+  "usable_pct": 100.0,
+  "mean": 13.722,
+  "median": 1.071,
+  "p25": 0.0,
+  "p75": 16.753,
+  "worst": 0.0,
+  "best": 76.381
+ },
+ "cpsat": {
+  "usable": 40,
+  "of": 40,
+  "usable_pct": 100.0,
+  "mean": 13.722,
+  "median": 1.071,
+  "p25": 0.0,
+  "p75": 16.753,
+  "worst": 0.0,
+  "best": 76.381
+ },
+ "cpsat:warm": {
+  "usable": 40,
+  "of": 40,
+  "usable_pct": 100.0,
+  "mean": 13.722,
+  "median": 1.071,
+  "p25": 0.0,
+  "p75": 16.753,
+  "worst": 0.0,
+  "best": 76.381
+ },
+ "best-of-fast": {
+  "usable": 40,
+  "of": 40,
+  "usable_pct": 100.0,
+  "mean": 13.009,
+  "median": 0.0,
+  "p25": 0.0,
+  "p75": 16.753,
+  "worst": 0.0,
+  "best": 75.712
+ },
+ "cpsat:warmbest": {
+  "usable": 40,
+  "of": 40,
+  "usable_pct": 100.0,
+  "mean": 13.722,
+  "median": 1.071,
+  "p25": 0.0,
+  "p75": 16.753,
+  "worst": 0.0,
+  "best": 76.381
+ }
+}

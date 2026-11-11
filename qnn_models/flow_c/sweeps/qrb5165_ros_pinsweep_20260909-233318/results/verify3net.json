@@ -1,0 +1,624 @@
+{
+ "_comment": "Path-equivalence check for the 3net arm. Every solver that `run_xpurt_schedule.py` can express is re-emitted through sched_algo_sweep10's `fpga/emit_schedule.py --prune-periodic`, and the dispatch hashes must match -- otherwise `cpsat:warmbest`, which only the latter can produce, would be a different experiment from the schedules it is compared against. `mask_changes_schedule` reports whether masking the undeclared cells moved the answer.",
+ "solvers": [
+  "greedy",
+  "heft_edf",
+  "cpsat",
+  "cpsat:warmbest"
+ ],
+ "mismatches": 4,
+ "rows": [
+  {
+   "shape": "3net_dronet1_mlp2",
+   "solver": "greedy",
+   "path": "schedules/scheduled_networks_3net_dronet1_mlp2_greedy_profiled.json",
+   "hash": "daf061a1762710da4ae8dfeeae633e707612c4d353cfbc2b2b337ff8486202e8",
+   "emit_masked": "daf061a1762710da4ae8dfeeae633e707612c4d353cfbc2b2b337ff8486202e8",
+   "emit_masked_masked_cells": [
+    "mlp_control0_dispatch_0@hta"
+   ],
+   "emit_masked_objective": 10.066,
+   "emit_unmasked": "daf061a1762710da4ae8dfeeae633e707612c4d353cfbc2b2b337ff8486202e8",
+   "emit_unmasked_masked_cells": [],
+   "emit_unmasked_objective": 10.066,
+   "paths_agree": true,
+   "mask_changes_schedule": false
+  },
+  {
+   "shape": "3net_dronet1_mlp2",
+   "solver": "heft_edf",
+   "path": "schedules/scheduled_networks_3net_dronet1_mlp2_heft_edf_profiled.json",
+   "hash": "daf061a1762710da4ae8dfeeae633e707612c4d353cfbc2b2b337ff8486202e8",
+   "emit_masked": "daf061a1762710da4ae8dfeeae633e707612c4d353cfbc2b2b337ff8486202e8",
+   "emit_masked_masked_cells": [
+    "mlp_control0_dispatch_0@hta"
+   ],
+   "emit_masked_objective": 10.066,
+   "emit_unmasked": "daf061a1762710da4ae8dfeeae633e707612c4d353cfbc2b2b337ff8486202e8",
+   "emit_unmasked_masked_cells": [],
+   "emit_unmasked_objective": 10.066,
+   "paths_agree": true,
+   "mask_changes_schedule": false
+  },
+  {
+   "shape": "3net_dronet1_mlp2",
+   "solver": "cpsat",
+   "path": "schedules/scheduled_networks_3net_dronet1_mlp2_cpsat_profiled.json",
+   "hash": "ab0ab65bd24e34e4d229e4cae5d070a5ba5de258501482b65b56457db1f098fc",
+   "emit_masked": "ab0ab65bd24e34e4d229e4cae5d070a5ba5de258501482b65b56457db1f098fc",
+   "emit_masked_masked_cells": [
+    "mlp_control0_dispatch_0@hta"
+   ],
+   "emit_masked_objective": 10.066,
+   "emit_unmasked": "daf061a1762710da4ae8dfeeae633e707612c4d353cfbc2b2b337ff8486202e8",
+   "emit_unmasked_masked_cells": [],
+   "emit_unmasked_objective": 10.066,
+   "paths_agree": true,
+   "mask_changes_schedule": true
+  },
+  {
+   "shape": "3net_dronet1_mlp2",
+   "solver": "cpsat:warmbest",
+   "path": "schedules/scheduled_networks_3net_dronet1_mlp2_cpsat-warmbest_profiled.json",
+   "hash": "daf061a1762710da4ae8dfeeae633e707612c4d353cfbc2b2b337ff8486202e8",
+   "emit_masked": "daf061a1762710da4ae8dfeeae633e707612c4d353cfbc2b2b337ff8486202e8",
+   "emit_masked_masked_cells": [
+    "mlp_control0_dispatch_0@hta"
+   ],
+   "emit_masked_objective": 10.066,
+   "emit_unmasked": "daf061a1762710da4ae8dfeeae633e707612c4d353cfbc2b2b337ff8486202e8",
+   "emit_unmasked_masked_cells": [],
+   "emit_unmasked_objective": 10.066,
+   "paths_agree": true,
+   "mask_changes_schedule": false
+  },
+  {
+   "shape": "3net_dronet1_mlp2_yolo1",
+   "solver": "greedy",
+   "path": "schedules/scheduled_networks_3net_dronet1_mlp2_yolo1_greedy_profiled.json",
+   "hash": "242196582cfe7b9a8b5f05390bea292856a17f4ff2b258d7a1a964028b8af278",
+   "emit_masked": "242196582cfe7b9a8b5f05390bea292856a17f4ff2b258d7a1a964028b8af278",
+   "emit_masked_masked_cells": [
+    "mlp_control0_dispatch_0@hta",
+    "yolov8n_dispatch_1@hta"
+   ],
+   "emit_masked_objective": 29.286,
+   "emit_unmasked": "242196582cfe7b9a8b5f05390bea292856a17f4ff2b258d7a1a964028b8af278",
+   "emit_unmasked_masked_cells": [],
+   "emit_unmasked_objective": 29.286,
+   "paths_agree": true,
+   "mask_changes_schedule": false
+  },
+  {
+   "shape": "3net_dronet1_mlp2_yolo1",
+   "solver": "heft_edf",
+   "path": "schedules/scheduled_networks_3net_dronet1_mlp2_yolo1_heft_edf_profiled.json",
+   "hash": "f90b189e845769193f16d6bdc09f65d02f3cef48a8d320fec7fea9cf3a730521",
+   "emit_masked": "f90b189e845769193f16d6bdc09f65d02f3cef48a8d320fec7fea9cf3a730521",
+   "emit_masked_masked_cells": [
+    "mlp_control0_dispatch_0@hta",
+    "yolov8n_dispatch_1@hta"
+   ],
+   "emit_masked_objective": 28.644,
+   "emit_unmasked": "f90b189e845769193f16d6bdc09f65d02f3cef48a8d320fec7fea9cf3a730521",
+   "emit_unmasked_masked_cells": [],
+   "emit_unmasked_objective": 28.644,
+   "paths_agree": true,
+   "mask_changes_schedule": false
+  },
+  {
+   "shape": "3net_dronet1_mlp2_yolo1",
+   "solver": "cpsat",
+   "path": "schedules/scheduled_networks_3net_dronet1_mlp2_yolo1_cpsat_profiled.json",
+   "hash": "f90b189e845769193f16d6bdc09f65d02f3cef48a8d320fec7fea9cf3a730521",
+   "emit_masked": "f90b189e845769193f16d6bdc09f65d02f3cef48a8d320fec7fea9cf3a730521",
+   "emit_masked_masked_cells": [
+    "mlp_control0_dispatch_0@hta",
+    "yolov8n_dispatch_1@hta"
+   ],
+   "emit_masked_objective": 28.644,
+   "emit_unmasked": "f90b189e845769193f16d6bdc09f65d02f3cef48a8d320fec7fea9cf3a730521",
+   "emit_unmasked_masked_cells": [],
+   "emit_unmasked_objective": 28.644,
+   "paths_agree": true,
+   "mask_changes_schedule": false
+  },
+  {
+   "shape": "3net_dronet1_mlp2_yolo1",
+   "solver": "cpsat:warmbest",
+   "path": "schedules/scheduled_networks_3net_dronet1_mlp2_yolo1_cpsat-warmbest_profiled.json",
+   "hash": "f90b189e845769193f16d6bdc09f65d02f3cef48a8d320fec7fea9cf3a730521",
+   "emit_masked": "f90b189e845769193f16d6bdc09f65d02f3cef48a8d320fec7fea9cf3a730521",
+   "emit_masked_masked_cells": [
+    "mlp_control0_dispatch_0@hta",
+    "yolov8n_dispatch_1@hta"
+   ],
+   "emit_masked_objective": 28.644,
+   "emit_unmasked": "f90b189e845769193f16d6bdc09f65d02f3cef48a8d320fec7fea9cf3a730521",
+   "emit_unmasked_masked_cells": [],
+   "emit_unmasked_objective": 28.644,
+   "paths_agree": true,
+   "mask_changes_schedule": false
+  },
+  {
+   "shape": "3net_dronet2_mlp8_yolo1",
+   "solver": "greedy",
+   "path": "schedules/scheduled_networks_3net_dronet2_mlp8_yolo1_greedy_profiled.json",
+   "hash": "c00d6cc403c63b4c3b1980bd9fe3aabd32a7dede9146ee276f9c647a5523838b",
+   "emit_masked": "c00d6cc403c63b4c3b1980bd9fe3aabd32a7dede9146ee276f9c647a5523838b",
+   "emit_masked_masked_cells": [
+    "mlp_control0_dispatch_0@hta",
+    "yolov8n_dispatch_1@hta"
+   ],
+   "emit_masked_objective": 29.286,
+   "emit_unmasked": "c00d6cc403c63b4c3b1980bd9fe3aabd32a7dede9146ee276f9c647a5523838b",
+   "emit_unmasked_masked_cells": [],
+   "emit_unmasked_objective": 29.286,
+   "paths_agree": true,
+   "mask_changes_schedule": false
+  },
+  {
+   "shape": "3net_dronet2_mlp8_yolo1",
+   "solver": "heft_edf",
+   "path": "schedules/scheduled_networks_3net_dronet2_mlp8_yolo1_heft_edf_profiled.json",
+   "hash": "afe937528e4dc69078e4a6be9aaee801660d5e11266f85256d3cfb04524ab7c1",
+   "emit_masked": "afe937528e4dc69078e4a6be9aaee801660d5e11266f85256d3cfb04524ab7c1",
+   "emit_masked_masked_cells": [
+    "mlp_control0_dispatch_0@hta",
+    "yolov8n_dispatch_1@hta"
+   ],
+   "emit_masked_objective": 28.644,
+   "emit_unmasked": "afe937528e4dc69078e4a6be9aaee801660d5e11266f85256d3cfb04524ab7c1",
+   "emit_unmasked_masked_cells": [],
+   "emit_unmasked_objective": 28.644,
+   "paths_agree": true,
+   "mask_changes_schedule": false
+  },
+  {
+   "shape": "3net_dronet2_mlp8_yolo1",
+   "solver": "cpsat",
+   "path": "schedules/scheduled_networks_3net_dronet2_mlp8_yolo1_cpsat_profiled.json",
+   "hash": "24ada196083bd7ebfa6489a88d1c4d4bdcaa7f60d04d7a47c89f70557800879f",
+   "emit_masked": "afe937528e4dc69078e4a6be9aaee801660d5e11266f85256d3cfb04524ab7c1",
+   "emit_masked_masked_cells": [
+    "mlp_control0_dispatch_0@hta",
+    "yolov8n_dispatch_1@hta"
+   ],
+   "emit_masked_objective": 28.644,
+   "emit_unmasked": "afe937528e4dc69078e4a6be9aaee801660d5e11266f85256d3cfb04524ab7c1",
+   "emit_unmasked_masked_cells": [],
+   "emit_unmasked_objective": 28.644,
+   "paths_agree": false,
+   "mask_changes_schedule": false
+  },
+  {
+   "shape": "3net_dronet2_mlp8_yolo1",
+   "solver": "cpsat:warmbest",
+   "path": "schedules/scheduled_networks_3net_dronet2_mlp8_yolo1_cpsat-warmbest_profiled.json",
+   "hash": "afe937528e4dc69078e4a6be9aaee801660d5e11266f85256d3cfb04524ab7c1",
+   "emit_masked": "afe937528e4dc69078e4a6be9aaee801660d5e11266f85256d3cfb04524ab7c1",
+   "emit_masked_masked_cells": [
+    "mlp_control0_dispatch_0@hta",
+    "yolov8n_dispatch_1@hta"
+   ],
+   "emit_masked_objective": 28.644,
+   "emit_unmasked": "afe937528e4dc69078e4a6be9aaee801660d5e11266f85256d3cfb04524ab7c1",
+   "emit_unmasked_masked_cells": [],
+   "emit_unmasked_objective": 28.644,
+   "paths_agree": true,
+   "mask_changes_schedule": false
+  },
+  {
+   "shape": "3net_dronet4_mlp4_yolo1",
+   "solver": "greedy",
+   "path": "schedules/scheduled_networks_3net_dronet4_mlp4_yolo1_greedy_profiled.json",
+   "hash": "01bffa21c660da65857517f78b7abbe8332a6087cc2229f287fde37b6fe984d1",
+   "emit_masked": "01bffa21c660da65857517f78b7abbe8332a6087cc2229f287fde37b6fe984d1",
+   "emit_masked_masked_cells": [
+    "mlp_control0_dispatch_0@hta",
+    "yolov8n_dispatch_1@hta"
+   ],
+   "emit_masked_objective": 46.022,
+   "emit_unmasked": "01bffa21c660da65857517f78b7abbe8332a6087cc2229f287fde37b6fe984d1",
+   "emit_unmasked_masked_cells": [],
+   "emit_unmasked_objective": 46.022,
+   "paths_agree": true,
+   "mask_changes_schedule": false
+  },
+  {
+   "shape": "3net_dronet4_mlp4_yolo1",
+   "solver": "heft_edf",
+   "path": "schedules/scheduled_networks_3net_dronet4_mlp4_yolo1_heft_edf_profiled.json",
+   "hash": "59fd4910b22667936b8e50cfdc94facfa902102d5ff0947b9e47a28e73f833c1",
+   "emit_masked": "59fd4910b22667936b8e50cfdc94facfa902102d5ff0947b9e47a28e73f833c1",
+   "emit_masked_masked_cells": [
+    "mlp_control0_dispatch_0@hta",
+    "yolov8n_dispatch_1@hta"
+   ],
+   "emit_masked_objective": 28.644,
+   "emit_unmasked": "59fd4910b22667936b8e50cfdc94facfa902102d5ff0947b9e47a28e73f833c1",
+   "emit_unmasked_masked_cells": [],
+   "emit_unmasked_objective": 28.644,
+   "paths_agree": true,
+   "mask_changes_schedule": false
+  },
+  {
+   "shape": "3net_dronet4_mlp4_yolo1",
+   "solver": "cpsat",
+   "path": "schedules/scheduled_networks_3net_dronet4_mlp4_yolo1_cpsat_profiled.json",
+   "hash": "6feb27512d221ae6eedb9654d1970a1bfc1581e3d7e33d7113a6ee9f1562cfc7",
+   "emit_masked": "59fd4910b22667936b8e50cfdc94facfa902102d5ff0947b9e47a28e73f833c1",
+   "emit_masked_masked_cells": [
+    "mlp_control0_dispatch_0@hta",
+    "yolov8n_dispatch_1@hta"
+   ],
+   "emit_masked_objective": 28.644,
+   "emit_unmasked": "59fd4910b22667936b8e50cfdc94facfa902102d5ff0947b9e47a28e73f833c1",
+   "emit_unmasked_masked_cells": [],
+   "emit_unmasked_objective": 28.644,
+   "paths_agree": false,
+   "mask_changes_schedule": false
+  },
+  {
+   "shape": "3net_dronet4_mlp4_yolo1",
+   "solver": "cpsat:warmbest",
+   "path": "schedules/scheduled_networks_3net_dronet4_mlp4_yolo1_cpsat-warmbest_profiled.json",
+   "hash": "59fd4910b22667936b8e50cfdc94facfa902102d5ff0947b9e47a28e73f833c1",
+   "emit_masked": "59fd4910b22667936b8e50cfdc94facfa902102d5ff0947b9e47a28e73f833c1",
+   "emit_masked_masked_cells": [
+    "mlp_control0_dispatch_0@hta",
+    "yolov8n_dispatch_1@hta"
+   ],
+   "emit_masked_objective": 28.644,
+   "emit_unmasked": "59fd4910b22667936b8e50cfdc94facfa902102d5ff0947b9e47a28e73f833c1",
+   "emit_unmasked_masked_cells": [],
+   "emit_unmasked_objective": 28.644,
+   "paths_agree": true,
+   "mask_changes_schedule": false
+  },
+  {
+   "shape": "3net_dronet4_mlp8_yolo1",
+   "solver": "greedy",
+   "path": "schedules/scheduled_networks_3net_dronet4_mlp8_yolo1_greedy_profiled.json",
+   "hash": "c8830fd2a6915132550a8fbb3528c4421a27a0d36532752e6fbe8d55960ac485",
+   "emit_masked": "c8830fd2a6915132550a8fbb3528c4421a27a0d36532752e6fbe8d55960ac485",
+   "emit_masked_masked_cells": [
+    "mlp_control0_dispatch_0@hta",
+    "yolov8n_dispatch_1@hta"
+   ],
+   "emit_masked_objective": 36.022,
+   "emit_unmasked": "c8830fd2a6915132550a8fbb3528c4421a27a0d36532752e6fbe8d55960ac485",
+   "emit_unmasked_masked_cells": [],
+   "emit_unmasked_objective": 36.022,
+   "paths_agree": true,
+   "mask_changes_schedule": false
+  },
+  {
+   "shape": "3net_dronet4_mlp8_yolo1",
+   "solver": "heft_edf",
+   "path": "schedules/scheduled_networks_3net_dronet4_mlp8_yolo1_heft_edf_profiled.json",
+   "hash": "64a1eb101ae69e72e801913472269b70df3ceda046251a1c0fbd80bee8dcf3bd",
+   "emit_masked": "64a1eb101ae69e72e801913472269b70df3ceda046251a1c0fbd80bee8dcf3bd",
+   "emit_masked_masked_cells": [
+    "mlp_control0_dispatch_0@hta",
+    "yolov8n_dispatch_1@hta"
+   ],
+   "emit_masked_objective": 28.644,
+   "emit_unmasked": "64a1eb101ae69e72e801913472269b70df3ceda046251a1c0fbd80bee8dcf3bd",
+   "emit_unmasked_masked_cells": [],
+   "emit_unmasked_objective": 28.644,
+   "paths_agree": true,
+   "mask_changes_schedule": false
+  },
+  {
+   "shape": "3net_dronet4_mlp8_yolo1",
+   "solver": "cpsat",
+   "path": "schedules/scheduled_networks_3net_dronet4_mlp8_yolo1_cpsat_profiled.json",
+   "hash": "e4155940dcccf0b662a13ef1fe917ae1d8ed08bc34ba2d9dbade88b0742708d9",
+   "emit_masked": "64a1eb101ae69e72e801913472269b70df3ceda046251a1c0fbd80bee8dcf3bd",
+   "emit_masked_masked_cells": [
+    "mlp_control0_dispatch_0@hta",
+    "yolov8n_dispatch_1@hta"
+   ],
+   "emit_masked_objective": 28.644,
+   "emit_unmasked": "2f6f87937c784e5c7b711ffd340ca4b374671bae2dd7331e8c2ef6c633a4e767",
+   "emit_unmasked_masked_cells": [],
+   "emit_unmasked_objective": 28.644,
+   "paths_agree": false,
+   "mask_changes_schedule": true
+  },
+  {
+   "shape": "3net_dronet4_mlp8_yolo1",
+   "solver": "cpsat:warmbest",
+   "path": "schedules/scheduled_networks_3net_dronet4_mlp8_yolo1_cpsat-warmbest_profiled.json",
+   "hash": "64a1eb101ae69e72e801913472269b70df3ceda046251a1c0fbd80bee8dcf3bd",
+   "emit_masked": "64a1eb101ae69e72e801913472269b70df3ceda046251a1c0fbd80bee8dcf3bd",
+   "emit_masked_masked_cells": [
+    "mlp_control0_dispatch_0@hta",
+    "yolov8n_dispatch_1@hta"
+   ],
+   "emit_masked_objective": 28.644,
+   "emit_unmasked": "64a1eb101ae69e72e801913472269b70df3ceda046251a1c0fbd80bee8dcf3bd",
+   "emit_unmasked_masked_cells": [],
+   "emit_unmasked_objective": 28.644,
+   "paths_agree": true,
+   "mask_changes_schedule": false
+  },
+  {
+   "shape": "3net_dronet8_mlp16_yolo1",
+   "solver": "greedy",
+   "path": "schedules/scheduled_networks_3net_dronet8_mlp16_yolo1_greedy_profiled.json",
+   "hash": "c8830fd2a6915132550a8fbb3528c4421a27a0d36532752e6fbe8d55960ac485",
+   "emit_masked": "c8830fd2a6915132550a8fbb3528c4421a27a0d36532752e6fbe8d55960ac485",
+   "emit_masked_masked_cells": [
+    "mlp_control0_dispatch_0@hta",
+    "yolov8n_dispatch_1@hta"
+   ],
+   "emit_masked_objective": 36.022,
+   "emit_unmasked": "c8830fd2a6915132550a8fbb3528c4421a27a0d36532752e6fbe8d55960ac485",
+   "emit_unmasked_masked_cells": [],
+   "emit_unmasked_objective": 36.022,
+   "paths_agree": true,
+   "mask_changes_schedule": false
+  },
+  {
+   "shape": "3net_dronet8_mlp16_yolo1",
+   "solver": "heft_edf",
+   "path": "schedules/scheduled_networks_3net_dronet8_mlp16_yolo1_heft_edf_profiled.json",
+   "hash": "64a1eb101ae69e72e801913472269b70df3ceda046251a1c0fbd80bee8dcf3bd",
+   "emit_masked": "64a1eb101ae69e72e801913472269b70df3ceda046251a1c0fbd80bee8dcf3bd",
+   "emit_masked_masked_cells": [
+    "mlp_control0_dispatch_0@hta",
+    "yolov8n_dispatch_1@hta"
+   ],
+   "emit_masked_objective": 28.644,
+   "emit_unmasked": "64a1eb101ae69e72e801913472269b70df3ceda046251a1c0fbd80bee8dcf3bd",
+   "emit_unmasked_masked_cells": [],
+   "emit_unmasked_objective": 28.644,
+   "paths_agree": true,
+   "mask_changes_schedule": false
+  },
+  {
+   "shape": "3net_dronet8_mlp16_yolo1",
+   "solver": "cpsat",
+   "path": "schedules/scheduled_networks_3net_dronet8_mlp16_yolo1_cpsat_profiled.json",
+   "hash": "ed7a605dd7764eb648075b35136f0344b7b773662fc4f10034c0b4155a2a8a63",
+   "emit_masked": "64a1eb101ae69e72e801913472269b70df3ceda046251a1c0fbd80bee8dcf3bd",
+   "emit_masked_masked_cells": [
+    "mlp_control0_dispatch_0@hta",
+    "yolov8n_dispatch_1@hta"
+   ],
+   "emit_masked_objective": 28.644,
+   "emit_unmasked": "2f6f87937c784e5c7b711ffd340ca4b374671bae2dd7331e8c2ef6c633a4e767",
+   "emit_unmasked_masked_cells": [],
+   "emit_unmasked_objective": 28.644,
+   "paths_agree": false,
+   "mask_changes_schedule": true
+  },
+  {
+   "shape": "3net_dronet8_mlp16_yolo1",
+   "solver": "cpsat:warmbest",
+   "path": "schedules/scheduled_networks_3net_dronet8_mlp16_yolo1_cpsat-warmbest_profiled.json",
+   "hash": "64a1eb101ae69e72e801913472269b70df3ceda046251a1c0fbd80bee8dcf3bd",
+   "emit_masked": "64a1eb101ae69e72e801913472269b70df3ceda046251a1c0fbd80bee8dcf3bd",
+   "emit_masked_masked_cells": [
+    "mlp_control0_dispatch_0@hta",
+    "yolov8n_dispatch_1@hta"
+   ],
+   "emit_masked_objective": 28.644,
+   "emit_unmasked": "64a1eb101ae69e72e801913472269b70df3ceda046251a1c0fbd80bee8dcf3bd",
+   "emit_unmasked_masked_cells": [],
+   "emit_unmasked_objective": 28.644,
+   "paths_agree": true,
+   "mask_changes_schedule": false
+  },
+  {
+   "shape": "3net_fused2_mlp8_yolo1",
+   "solver": "greedy",
+   "path": "schedules/scheduled_networks_3net_fused2_mlp8_yolo1_greedy_profiled.json",
+   "hash": "d1201503dd3574a8cb350840cca0f308a7b2ac568e635c2844c22c2f22c68c93",
+   "emit_masked": "d1201503dd3574a8cb350840cca0f308a7b2ac568e635c2844c22c2f22c68c93",
+   "emit_masked_masked_cells": [
+    "fused_full0_dispatch_0@hta",
+    "mlp_control0_dispatch_0@hta",
+    "yolov8n_dispatch_1@hta"
+   ],
+   "emit_masked_objective": 28.644,
+   "emit_unmasked": "d1201503dd3574a8cb350840cca0f308a7b2ac568e635c2844c22c2f22c68c93",
+   "emit_unmasked_masked_cells": [],
+   "emit_unmasked_objective": 28.644,
+   "paths_agree": true,
+   "mask_changes_schedule": false
+  },
+  {
+   "shape": "3net_fused2_mlp8_yolo1",
+   "solver": "heft_edf",
+   "path": "schedules/scheduled_networks_3net_fused2_mlp8_yolo1_heft_edf_profiled.json",
+   "hash": "d1201503dd3574a8cb350840cca0f308a7b2ac568e635c2844c22c2f22c68c93",
+   "emit_masked": "d1201503dd3574a8cb350840cca0f308a7b2ac568e635c2844c22c2f22c68c93",
+   "emit_masked_masked_cells": [
+    "fused_full0_dispatch_0@hta",
+    "mlp_control0_dispatch_0@hta",
+    "yolov8n_dispatch_1@hta"
+   ],
+   "emit_masked_objective": 28.644,
+   "emit_unmasked": "d1201503dd3574a8cb350840cca0f308a7b2ac568e635c2844c22c2f22c68c93",
+   "emit_unmasked_masked_cells": [],
+   "emit_unmasked_objective": 28.644,
+   "paths_agree": true,
+   "mask_changes_schedule": false
+  },
+  {
+   "shape": "3net_fused2_mlp8_yolo1",
+   "solver": "cpsat",
+   "path": "schedules/scheduled_networks_3net_fused2_mlp8_yolo1_cpsat_profiled.json",
+   "hash": "d1201503dd3574a8cb350840cca0f308a7b2ac568e635c2844c22c2f22c68c93",
+   "emit_masked": "d1201503dd3574a8cb350840cca0f308a7b2ac568e635c2844c22c2f22c68c93",
+   "emit_masked_masked_cells": [
+    "fused_full0_dispatch_0@hta",
+    "mlp_control0_dispatch_0@hta",
+    "yolov8n_dispatch_1@hta"
+   ],
+   "emit_masked_objective": 28.644,
+   "emit_unmasked": "d1201503dd3574a8cb350840cca0f308a7b2ac568e635c2844c22c2f22c68c93",
+   "emit_unmasked_masked_cells": [],
+   "emit_unmasked_objective": 28.644,
+   "paths_agree": true,
+   "mask_changes_schedule": false
+  },
+  {
+   "shape": "3net_fused2_mlp8_yolo1",
+   "solver": "cpsat:warmbest",
+   "path": "schedules/scheduled_networks_3net_fused2_mlp8_yolo1_cpsat-warmbest_profiled.json",
+   "hash": "d1201503dd3574a8cb350840cca0f308a7b2ac568e635c2844c22c2f22c68c93",
+   "emit_masked": "d1201503dd3574a8cb350840cca0f308a7b2ac568e635c2844c22c2f22c68c93",
+   "emit_masked_masked_cells": [
+    "fused_full0_dispatch_0@hta",
+    "mlp_control0_dispatch_0@hta",
+    "yolov8n_dispatch_1@hta"
+   ],
+   "emit_masked_objective": 28.644,
+   "emit_unmasked": "d1201503dd3574a8cb350840cca0f308a7b2ac568e635c2844c22c2f22c68c93",
+   "emit_unmasked_masked_cells": [],
+   "emit_unmasked_objective": 28.644,
+   "paths_agree": true,
+   "mask_changes_schedule": false
+  },
+  {
+   "shape": "3net_fused4_mlp4_yolo1",
+   "solver": "greedy",
+   "path": "schedules/scheduled_networks_3net_fused4_mlp4_yolo1_greedy_profiled.json",
+   "hash": "d1e89b84dc0778227473c8603105ce761f4236c0d06e6f19db8a42665b89acaf",
+   "emit_masked": "d1e89b84dc0778227473c8603105ce761f4236c0d06e6f19db8a42665b89acaf",
+   "emit_masked_masked_cells": [
+    "fused_full0_dispatch_0@hta",
+    "mlp_control0_dispatch_0@hta",
+    "yolov8n_dispatch_1@hta"
+   ],
+   "emit_masked_objective": 28.644,
+   "emit_unmasked": "d1e89b84dc0778227473c8603105ce761f4236c0d06e6f19db8a42665b89acaf",
+   "emit_unmasked_masked_cells": [],
+   "emit_unmasked_objective": 28.644,
+   "paths_agree": true,
+   "mask_changes_schedule": false
+  },
+  {
+   "shape": "3net_fused4_mlp4_yolo1",
+   "solver": "heft_edf",
+   "path": "schedules/scheduled_networks_3net_fused4_mlp4_yolo1_heft_edf_profiled.json",
+   "hash": "02c73a9bb28702850a5494d870529bbf9ee848a18cbb00104dbc5717978a8a8f",
+   "emit_masked": "02c73a9bb28702850a5494d870529bbf9ee848a18cbb00104dbc5717978a8a8f",
+   "emit_masked_masked_cells": [
+    "fused_full0_dispatch_0@hta",
+    "mlp_control0_dispatch_0@hta",
+    "yolov8n_dispatch_1@hta"
+   ],
+   "emit_masked_objective": 28.644,
+   "emit_unmasked": "02c73a9bb28702850a5494d870529bbf9ee848a18cbb00104dbc5717978a8a8f",
+   "emit_unmasked_masked_cells": [],
+   "emit_unmasked_objective": 28.644,
+   "paths_agree": true,
+   "mask_changes_schedule": false
+  },
+  {
+   "shape": "3net_fused4_mlp4_yolo1",
+   "solver": "cpsat",
+   "path": "schedules/scheduled_networks_3net_fused4_mlp4_yolo1_cpsat_profiled.json",
+   "hash": "d1e89b84dc0778227473c8603105ce761f4236c0d06e6f19db8a42665b89acaf",
+   "emit_masked": "d1e89b84dc0778227473c8603105ce761f4236c0d06e6f19db8a42665b89acaf",
+   "emit_masked_masked_cells": [
+    "fused_full0_dispatch_0@hta",
+    "mlp_control0_dispatch_0@hta",
+    "yolov8n_dispatch_1@hta"
+   ],
+   "emit_masked_objective": 28.644,
+   "emit_unmasked": "02c73a9bb28702850a5494d870529bbf9ee848a18cbb00104dbc5717978a8a8f",
+   "emit_unmasked_masked_cells": [],
+   "emit_unmasked_objective": 28.644,
+   "paths_agree": true,
+   "mask_changes_schedule": true
+  },
+  {
+   "shape": "3net_fused4_mlp4_yolo1",
+   "solver": "cpsat:warmbest",
+   "path": "schedules/scheduled_networks_3net_fused4_mlp4_yolo1_cpsat-warmbest_profiled.json",
+   "hash": "d1e89b84dc0778227473c8603105ce761f4236c0d06e6f19db8a42665b89acaf",
+   "emit_masked": "d1e89b84dc0778227473c8603105ce761f4236c0d06e6f19db8a42665b89acaf",
+   "emit_masked_masked_cells": [
+    "fused_full0_dispatch_0@hta",
+    "mlp_control0_dispatch_0@hta",
+    "yolov8n_dispatch_1@hta"
+   ],
+   "emit_masked_objective": 28.644,
+   "emit_unmasked": "d1e89b84dc0778227473c8603105ce761f4236c0d06e6f19db8a42665b89acaf",
+   "emit_unmasked_masked_cells": [],
+   "emit_unmasked_objective": 28.644,
+   "paths_agree": true,
+   "mask_changes_schedule": false
+  },
+  {
+   "shape": "3net_mlp2",
+   "solver": "greedy",
+   "path": "schedules/scheduled_networks_3net_mlp2_greedy_profiled.json",
+   "hash": "8e51ab02cd987741c830672d7962b815c988f5fdc12e11f37f3e2cea66a126b9",
+   "emit_masked": "8e51ab02cd987741c830672d7962b815c988f5fdc12e11f37f3e2cea66a126b9",
+   "emit_masked_masked_cells": [
+    "mlp_control0_dispatch_0@hta"
+   ],
+   "emit_masked_objective": 10.066,
+   "emit_unmasked": "8e51ab02cd987741c830672d7962b815c988f5fdc12e11f37f3e2cea66a126b9",
+   "emit_unmasked_masked_cells": [],
+   "emit_unmasked_objective": 10.066,
+   "paths_agree": true,
+   "mask_changes_schedule": false
+  },
+  {
+   "shape": "3net_mlp2",
+   "solver": "heft_edf",
+   "path": "schedules/scheduled_networks_3net_mlp2_heft_edf_profiled.json",
+   "hash": "8e51ab02cd987741c830672d7962b815c988f5fdc12e11f37f3e2cea66a126b9",
+   "emit_masked": "8e51ab02cd987741c830672d7962b815c988f5fdc12e11f37f3e2cea66a126b9",
+   "emit_masked_masked_cells": [
+    "mlp_control0_dispatch_0@hta"
+   ],
+   "emit_masked_objective": 10.066,
+   "emit_unmasked": "8e51ab02cd987741c830672d7962b815c988f5fdc12e11f37f3e2cea66a126b9",
+   "emit_unmasked_masked_cells": [],
+   "emit_unmasked_objective": 10.066,
+   "paths_agree": true,
+   "mask_changes_schedule": false
+  },
+  {
+   "shape": "3net_mlp2",
+   "solver": "cpsat",
+   "path": "schedules/scheduled_networks_3net_mlp2_cpsat_profiled.json",
+   "hash": "8e51ab02cd987741c830672d7962b815c988f5fdc12e11f37f3e2cea66a126b9",
+   "emit_masked": "8e51ab02cd987741c830672d7962b815c988f5fdc12e11f37f3e2cea66a126b9",
+   "emit_masked_masked_cells": [
+    "mlp_control0_dispatch_0@hta"
+   ],
+   "emit_masked_objective": 10.066,
+   "emit_unmasked": "8e51ab02cd987741c830672d7962b815c988f5fdc12e11f37f3e2cea66a126b9",
+   "emit_unmasked_masked_cells": [],
+   "emit_unmasked_objective": 10.066,
+   "paths_agree": true,
+   "mask_changes_schedule": false
+  },
+  {
+   "shape": "3net_mlp2",
+   "solver": "cpsat:warmbest",
+   "path": "schedules/scheduled_networks_3net_mlp2_cpsat-warmbest_profiled.json",
+   "hash": "8e51ab02cd987741c830672d7962b815c988f5fdc12e11f37f3e2cea66a126b9",
+   "emit_masked": "8e51ab02cd987741c830672d7962b815c988f5fdc12e11f37f3e2cea66a126b9",
+   "emit_masked_masked_cells": [
+    "mlp_control0_dispatch_0@hta"
+   ],
+   "emit_masked_objective": 10.066,
+   "emit_unmasked": "8e51ab02cd987741c830672d7962b815c988f5fdc12e11f37f3e2cea66a126b9",
+   "emit_unmasked_masked_cells": [],
+   "emit_unmasked_objective": 10.066,
+   "paths_agree": true,
+   "mask_changes_schedule": false
+  }
+ ]
+}

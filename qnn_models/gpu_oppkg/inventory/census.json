@@ -1,0 +1,299 @@
+{
+  "dronet_fp32": {
+    "num_nodes": 29,
+    "op_types": {
+      "Conv2d": 10,
+      "ElementWiseNeuron": 8,
+      "Batchnorm": 3,
+      "Eltwise_Binary": 3,
+      "FullyConnected": 2,
+      "Pool": 1,
+      "Transpose": 1,
+      "Reshape": 1
+    },
+    "dtypes_per_op": {
+      "Batchnorm": [
+        "fp32"
+      ],
+      "Conv2d": [
+        "fp32"
+      ],
+      "ElementWiseNeuron": [
+        "fp32"
+      ],
+      "Eltwise_Binary": [
+        "fp32"
+      ],
+      "FullyConnected": [
+        "fp32"
+      ],
+      "Pool": [
+        "fp32"
+      ],
+      "Reshape": [
+        "fp32"
+      ],
+      "Transpose": [
+        "fp32"
+      ]
+    },
+    "first_node": "/conv_modules.0/Conv"
+  },
+  "dronet_int8": {
+    "num_nodes": 29,
+    "op_types": {
+      "Conv2d": 10,
+      "ElementWiseNeuron": 8,
+      "Batchnorm": 3,
+      "Eltwise_Binary": 3,
+      "FullyConnected": 2,
+      "Pool": 1,
+      "Transpose": 1,
+      "Reshape": 1
+    },
+    "dtypes_per_op": {
+      "Batchnorm": [
+        "uFxp8"
+      ],
+      "Conv2d": [
+        "uFxp8"
+      ],
+      "ElementWiseNeuron": [
+        "uFxp8"
+      ],
+      "Eltwise_Binary": [
+        "uFxp8"
+      ],
+      "FullyConnected": [
+        "uFxp8"
+      ],
+      "Pool": [
+        "uFxp8"
+      ],
+      "Reshape": [
+        "uFxp8"
+      ],
+      "Transpose": [
+        "uFxp8"
+      ]
+    },
+    "first_node": "/conv_modules.0/Conv"
+  },
+  "fused_full_fp32": {
+    "num_nodes": 27,
+    "op_types": {
+      "Conv2d": 6,
+      "ElementWiseNeuron": 6,
+      "Reshape": 6,
+      "FullyConnected": 3,
+      "Lstm": 3,
+      "Transpose": 2,
+      "Concat": 1
+    },
+    "dtypes_per_op": {
+      "Concat": [
+        "fp32"
+      ],
+      "Conv2d": [
+        "fp32"
+      ],
+      "ElementWiseNeuron": [
+        "fp32"
+      ],
+      "FullyConnected": [
+        "fp32"
+      ],
+      "Lstm": [
+        "fp32"
+      ],
+      "Reshape": [
+        "fp32"
+      ],
+      "Transpose": [
+        "fp32"
+      ]
+    },
+    "first_node": "/vision_cnn/vision_cnn.0/Conv"
+  },
+  "fused_full_int8": {
+    "num_nodes": 30,
+    "op_types": {
+      "Conv2d": 6,
+      "ElementWiseNeuron": 6,
+      "Reshape": 6,
+      "FullyConnected": 3,
+      "Convert": 3,
+      "Lstm": 3,
+      "Transpose": 2,
+      "Concat": 1
+    },
+    "dtypes_per_op": {
+      "Concat": [
+        "uFxp8"
+      ],
+      "Conv2d": [
+        "uFxp8"
+      ],
+      "Convert": [
+        "sFxp16",
+        "uFxp8"
+      ],
+      "ElementWiseNeuron": [
+        "uFxp8"
+      ],
+      "FullyConnected": [
+        "uFxp8"
+      ],
+      "Lstm": [
+        "fp32",
+        "sFxp16",
+        "sFxp32",
+        "uFxp8"
+      ],
+      "Reshape": [
+        "sFxp16",
+        "uFxp8"
+      ],
+      "Transpose": [
+        "uFxp8"
+      ]
+    },
+    "first_node": "/vision_cnn/vision_cnn.0/Conv"
+  },
+  "mlp_control_fp32": {
+    "num_nodes": 7,
+    "op_types": {
+      "FullyConnected": 4,
+      "ElementWiseNeuron": 3
+    },
+    "dtypes_per_op": {
+      "ElementWiseNeuron": [
+        "fp32"
+      ],
+      "FullyConnected": [
+        "fp32"
+      ]
+    },
+    "first_node": "/mlp/mlp.0/Gemm"
+  },
+  "mlp_control_int8": {
+    "num_nodes": 7,
+    "op_types": {
+      "FullyConnected": 4,
+      "ElementWiseNeuron": 3
+    },
+    "dtypes_per_op": {
+      "ElementWiseNeuron": [
+        "uFxp8"
+      ],
+      "FullyConnected": [
+        "uFxp8"
+      ]
+    },
+    "first_node": "/mlp/mlp.0/Gemm"
+  },
+  "yolov8n_fp32": {
+    "num_nodes": 272,
+    "op_types": {
+      "Eltwise_Binary": 69,
+      "Conv2d": 64,
+      "ElementWiseNeuron": 58,
+      "Transpose": 25,
+      "StridedSlice": 18,
+      "Concat": 17,
+      "Reshape": 8,
+      "Pad": 7,
+      "Pool": 3,
+      "Resize": 2,
+      "Softmax": 1
+    },
+    "dtypes_per_op": {
+      "Concat": [
+        "fp32"
+      ],
+      "Conv2d": [
+        "fp32"
+      ],
+      "ElementWiseNeuron": [
+        "fp32"
+      ],
+      "Eltwise_Binary": [
+        "fp32"
+      ],
+      "Pad": [
+        "fp32"
+      ],
+      "Pool": [
+        "fp32"
+      ],
+      "Reshape": [
+        "fp32"
+      ],
+      "Resize": [
+        "fp32"
+      ],
+      "Softmax": [
+        "fp32"
+      ],
+      "StridedSlice": [
+        "fp32"
+      ],
+      "Transpose": [
+        "fp32"
+      ]
+    },
+    "first_node": "pad_0"
+  },
+  "yolov8n_int8": {
+    "num_nodes": 272,
+    "op_types": {
+      "Eltwise_Binary": 69,
+      "Conv2d": 64,
+      "ElementWiseNeuron": 58,
+      "Transpose": 25,
+      "StridedSlice": 18,
+      "Concat": 17,
+      "Reshape": 8,
+      "Pad": 7,
+      "Pool": 3,
+      "Resize": 2,
+      "Softmax": 1
+    },
+    "dtypes_per_op": {
+      "Concat": [
+        "uFxp8"
+      ],
+      "Conv2d": [
+        "uFxp8"
+      ],
+      "ElementWiseNeuron": [
+        "uFxp8"
+      ],
+      "Eltwise_Binary": [
+        "uFxp8"
+      ],
+      "Pad": [
+        "uFxp8"
+      ],
+      "Pool": [
+        "uFxp8"
+      ],
+      "Reshape": [
+        "uFxp8"
+      ],
+      "Resize": [
+        "uFxp8"
+      ],
+      "Softmax": [
+        "uFxp8"
+      ],
+      "StridedSlice": [
+        "uFxp8"
+      ],
+      "Transpose": [
+        "uFxp8"
+      ]
+    },
+    "first_node": "pad_0"
+  }
+}

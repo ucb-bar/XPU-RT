@@ -1,0 +1,36 @@
+{
+  "network": "dronet",
+  "ir": {
+    "source": "pytorch:dronet",
+    "quant": "int8"
+  },
+  "_comment": "Whole-network tile. The DLC behind it is dronet_full_hta (BN-rewritten + conv head + trailing Reshape dropped) so the graph composes on HTA; op-level correspondence to the PyTorch IR is therefore structural, not name-by-name. Splitting dronet into its 7 residual blocks measured 3.49 ms summed vs 0.92 ms whole on dsp \u2014 per-dispatch cost dominates at this size.",
+  "bindings": [
+    {
+      "id": 0,
+      "name": "dronet_full",
+      "ops": "all",
+      "backends": {
+        "hta": {
+          "ctx": "ctx_dronet_full_hta__Hta.bin",
+          "graph": "dronet_full_hta"
+        },
+        "dsp": {
+          "ctx": "ctx_dronet_full_hta__Dsp.bin",
+          "graph": "dronet_full_hta"
+        },
+        "cpu": {
+          "ctx": "ctx_dronet_full_hta__Cpu.bin",
+          "graph": "dronet_full_hta"
+        }
+      }
+    }
+  ],
+  "lowering": [
+    "fold_batchnorm_into_conv",
+    "fuse_activation_into_conv",
+    "conv_head_for_fc",
+    "drop_trailing_views"
+  ],
+  "lowering_note": "dronet_full_hta.onnx: BatchNorm folded offline into the conv weights (optimization_flow.md #6 \u2014 the plain export does not fold and HTA then rejects the graph), FC head re-expressed as 1x1 conv (#8), trailing Reshape dropped (#11)."
+}

@@ -1,0 +1,37 @@
+{
+  "name": "flowc_4way_qrb5165",
+  "_comment": "The 3-way workload plus modelblaster's FusedSensorNet (fused_full) at 20 ms \u2014 vision CNN + ToF depth conv + 3-layer LSTM + head, converted to a DLC by this flow from the same PyTorch module modelblaster's own codegen consumes.",
+  "target": "qrb5165_flowc",
+  "board": "qrb5165_v66",
+  "registry": "cores/qrb5165_qnn.json",
+  "measurements": "measurements/qrb5165_v66.json",
+  "slots": {
+    "CPU_P": "hta",
+    "CPU_E": "dsp",
+    "CPU_X": "cpu"
+  },
+  "ctx_dir": "/root/qnn_runtime_ctx",
+  "networks": [
+    {
+      "name": "dronet",
+      "bindings": "bindings/dronet.json",
+      "period": 5,
+      "onnx_input_name": "input"
+    },
+    {
+      "name": "mlp_control",
+      "bindings": "bindings/mlp_control.json",
+      "period": 2,
+      "onnx_input_name": "obs"
+    },
+    {
+      "name": "yolov8n",
+      "bindings": "bindings/yolov8n.json"
+    },
+    {
+      "name": "fused_full",
+      "bindings": "bindings/fused_full.json",
+      "period": 20
+    }
+  ]
+}

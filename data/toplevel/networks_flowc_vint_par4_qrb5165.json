@@ -1,0 +1,48 @@
+{
+  "_comment": "ViNT with branch-parallel encoders (obs and goal encoders are independent) across four lanes, decoder on the GPU. Combines the slicing study's 3-tile cut with the fp16 GPU lane.",
+  "hardware": {
+    "machines": {
+      "cpu_p": 1,
+      "cpu_e": 1,
+      "cpu_x": 1,
+      "cpu_g": 1
+    },
+    "profile_hw": {
+      "cpu_p": "HTA",
+      "cpu_e": "DSP",
+      "cpu_x": "CPU",
+      "cpu_g": "GPU"
+    },
+    "profile": {
+      "target": "qrb5165_flowc",
+      "topo_tag": "topo_0",
+      "topo_tag_override": false,
+      "gen_root": "gen"
+    },
+    "p_core_speedup": 1.0
+  },
+  "scheduler": {
+    "random_seed": 42,
+    "solver_verbosity": 0,
+    "time_limit": 60,
+    "use_profiled": true,
+    "prune_periodic": true,
+    "restrict_makespan_to_nonperiodic": true
+  },
+  "networks": {
+    "vint_par": {
+      "id": 0,
+      "identifier": "vint_par",
+      "dispatch_deps_path": "gen/qnn_vmfb/vint_par/qrb5165_flowc/CPU/vint_par.int8/vint_par.int8_dispatch_graph.json"
+    },
+    "mlp_control": {
+      "id": 1,
+      "identifier": "mlp_control",
+      "dispatch_deps_path": "gen/qnn_vmfb/mlp_control/qrb5165_flowc/CPU/mlp_control.int8/mlp_control.int8_dispatch_graph.json",
+      "period": 2,
+      "window_duration": 2,
+      "num_instances": 26
+    }
+  },
+  "edges": []
+}

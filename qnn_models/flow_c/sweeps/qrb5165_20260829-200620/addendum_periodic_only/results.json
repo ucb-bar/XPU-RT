@@ -1,0 +1,998 @@
+[
+ {
+  "point": "baseline_seed4",
+  "arm": "baseline",
+  "seed": 4,
+  "status": "run",
+  "validation_problems": [
+   "no non-periodic work: nothing to pack against the periodic load"
+  ],
+  "max_ops": 800,
+  "op_count": 12,
+  "horizon_ms": 24.0,
+  "hyperperiod_ms": 8,
+  "periodic": 3,
+  "nonperiodic": 0,
+  "networks": {
+   "mlp_control": {
+    "period": 4,
+    "window_duration": 3,
+    "num_instances": 6
+   },
+   "dronet_a": {
+    "period": 8,
+    "window_duration": 2,
+    "num_instances": 3
+   },
+   "dronet_b": {
+    "period": 8,
+    "window_duration": 3,
+    "num_instances": 3
+   }
+  },
+  "workload": "workloads/baseline_seed4.json",
+  "flowc_spec": "workloads/baseline_seed4.flowc.json",
+  "solver": "milp",
+  "solver_status": "optimal",
+  "milp_timed_out_s": null,
+  "solve_s": 1.9,
+  "schedule": "schedules/scheduled_baseline_seed4_profiled.json",
+  "sched_makespan_nonperiodic_ms": 0.0,
+  "sched_makespan_all_ms": null,
+  "predicted_makespan_ms": 20.107,
+  "n_entries": 12,
+  "dispatch_table_sha256": "ceca1d5ab6ac5da9813a09d0f315ec8bc936257fb3506b0f6d28e83b5b91a475",
+  "runtime_main_sha256": "7165655f8c1484e96428db5cc1f90dfbba72de073441ebe01b0956e25ab5e5c3",
+  "lane_entry_counts": {
+   "cpu": 6,
+   "dsp": 6
+  },
+  "lane_placement": {
+   "dronet_a/dronet_full": {
+    "dsp": 3
+   },
+   "mlp_control/mlp_control_full": {
+    "cpu": 6
+   },
+   "dronet_b/dronet_full": {
+    "dsp": 3
+   }
+  },
+  "contexts": [
+   "ctx_dronet_full_hta__Dsp.bin",
+   "ctx_mlp_control_fp32__Cpu.bin"
+  ],
+  "provenance": {
+   "cost_model_sha256": "b4f1a68455ef50f67d5cb585ca92c706552ce3b3cdd094cf26dd5ea529311d81",
+   "predicate6_missing_contexts": [],
+   "predicate7_excluded_placements": [],
+   "table_vs_manifest_mismatches": null,
+   "trace_vs_table": {},
+   "bringup_lines_unavailable": "deploy_and_run.sh's `exec {lockfd}> /tmp/qnn_board.lock 2>/dev/null` redirects the board-side shell's stderr for the rest of the script, so no [bringup] line reaches run.log. Replaced by predicate 6 (contexts verified staged before the run), the N/N entry count (the runtime skips entries whose context is missing), and trace_vs_table above, which checks the ctx actually used per entry. See verify_provenance.py."
+  },
+  "reps": {
+   "rep1": {
+    "wall_ms": 20.043,
+    "ratio": 1.0,
+    "entries": "12/12",
+    "lock_wait_s": 0.27,
+    "run_wall_s": 5.5,
+    "iterations": [
+     "[main] iteration 1/2 wall=20.038 ms",
+     "[main] iteration 2/2 wall=20.043 ms"
+    ],
+    "ok": true
+   },
+   "rep2": {
+    "wall_ms": 20.039,
+    "ratio": 1.0,
+    "entries": "12/12",
+    "lock_wait_s": 0.32,
+    "run_wall_s": 5.4,
+    "iterations": [
+     "[main] iteration 1/2 wall=20.040 ms",
+     "[main] iteration 2/2 wall=20.039 ms"
+    ],
+    "ok": true
+   },
+   "rep3": {
+    "wall_ms": 20.04,
+    "ratio": 1.0,
+    "entries": "12/12",
+    "lock_wait_s": 0.29,
+    "run_wall_s": 5.5,
+    "iterations": [
+     "[main] iteration 1/2 wall=20.039 ms",
+     "[main] iteration 2/2 wall=20.040 ms"
+    ],
+    "ok": true
+   }
+  },
+  "governor": "performance during run (flow_c.py run --tuned), restored to schedutil after each rep",
+  "warmup": "FLOWC_ITERATIONS=2; the reported trace is walk 2",
+  "actual_makespan_ms": [
+   20.043,
+   20.039,
+   20.04
+  ],
+  "actual_makespan_median_ms": 20.04,
+  "actual_makespan_spread_ms": 0.004,
+  "ratio_per_rep": [
+   1.0,
+   1.0,
+   1.0
+  ],
+  "ratio_median": 1.0,
+  "lock_wait_s": [
+   0.27,
+   0.32,
+   0.29
+  ],
+  "lock_wait_exceeds_run": [
+   true,
+   true,
+   true
+  ],
+  "per_tile": {
+   "dronet_a/dronet_full@dsp": {
+    "predicted_ms": 0.645,
+    "actual_p50_ms": 0.793,
+    "ratio": 1.229,
+    "reps": 3
+   },
+   "dronet_b/dronet_full@dsp": {
+    "predicted_ms": 0.645,
+    "actual_p50_ms": 0.79,
+    "ratio": 1.225,
+    "reps": 3
+   },
+   "mlp_control/mlp_control_full@cpu": {
+    "predicted_ms": 0.107,
+    "actual_p50_ms": 0.0345,
+    "ratio": 0.322,
+    "reps": 3
+   }
+  }
+ },
+ {
+  "point": "baseline_seed5",
+  "arm": "baseline",
+  "seed": 5,
+  "status": "run",
+  "validation_problems": [
+   "no non-periodic work: nothing to pack against the periodic load"
+  ],
+  "max_ops": 800,
+  "op_count": 12,
+  "horizon_ms": 54.0,
+  "hyperperiod_ms": 18,
+  "periodic": 2,
+  "nonperiodic": 0,
+  "networks": {
+   "mlp_control": {
+    "period": 6,
+    "window_duration": 4,
+    "num_instances": 9
+   },
+   "dronet": {
+    "period": 18,
+    "window_duration": 14,
+    "num_instances": 3
+   }
+  },
+  "workload": "workloads/baseline_seed5.json",
+  "flowc_spec": "workloads/baseline_seed5.flowc.json",
+  "solver": "milp",
+  "solver_status": "optimal",
+  "milp_timed_out_s": null,
+  "solve_s": 1.8,
+  "schedule": "schedules/scheduled_baseline_seed5_profiled.json",
+  "sched_makespan_nonperiodic_ms": 0.0,
+  "sched_makespan_all_ms": null,
+  "predicted_makespan_ms": 48.107,
+  "n_entries": 12,
+  "dispatch_table_sha256": "3c478c8083e9ce487c91eb3cbb3bf680cc30e7c21a0a0dc93dc2abe889aba4e0",
+  "runtime_main_sha256": "7165655f8c1484e96428db5cc1f90dfbba72de073441ebe01b0956e25ab5e5c3",
+  "lane_entry_counts": {
+   "cpu": 9,
+   "dsp": 2,
+   "hta": 1
+  },
+  "lane_placement": {
+   "dronet/dronet_full": {
+    "dsp": 2,
+    "hta": 1
+   },
+   "mlp_control/mlp_control_full": {
+    "cpu": 9
+   }
+  },
+  "contexts": [
+   "ctx_dronet_full_hta__Dsp.bin",
+   "ctx_dronet_full_hta__Hta.bin",
+   "ctx_mlp_control_fp32__Cpu.bin"
+  ],
+  "provenance": {
+   "cost_model_sha256": "b4f1a68455ef50f67d5cb585ca92c706552ce3b3cdd094cf26dd5ea529311d81",
+   "predicate6_missing_contexts": [],
+   "predicate7_excluded_placements": [],
+   "table_vs_manifest_mismatches": null,
+   "trace_vs_table": {},
+   "bringup_lines_unavailable": "deploy_and_run.sh's `exec {lockfd}> /tmp/qnn_board.lock 2>/dev/null` redirects the board-side shell's stderr for the rest of the script, so no [bringup] line reaches run.log. Replaced by predicate 6 (contexts verified staged before the run), the N/N entry count (the runtime skips entries whose context is missing), and trace_vs_table above, which checks the ctx actually used per entry. See verify_provenance.py."
+  },
+  "reps": {
+   "rep1": {
+    "wall_ms": 48.041,
+    "ratio": 1.0,
+    "entries": "12/12",
+    "lock_wait_s": 0.37,
+    "run_wall_s": 5.6,
+    "iterations": [
+     "[main] iteration 1/2 wall=48.042 ms",
+     "11,mlp_control,8,0,qnn_graph,mlp_control_full,cpu,5,48.000000,0.1[main] iteration 2/2 wall=48.041 ms"
+    ],
+    "ok": true
+   },
+   "rep2": {
+    "wall_ms": 48.042,
+    "ratio": 1.0,
+    "entries": "12/12",
+    "lock_wait_s": 0.27,
+    "run_wall_s": 5.6,
+    "iterations": [
+     "[main] iteration 1/2 wall=48.043 ms",
+     "[main] iteration 2/2 wall=48.042 ms"
+    ],
+    "ok": true
+   },
+   "rep3": {
+    "wall_ms": 48.046,
+    "ratio": 1.0,
+    "entries": "12/12",
+    "lock_wait_s": 0.28,
+    "run_wall_s": 5.6,
+    "iterations": [
+     "[main] iteration 1/2 wall=48.045 ms",
+     "[main] iteration 2/2 wall=48.046 ms"
+    ],
+    "ok": true
+   }
+  },
+  "governor": "performance during run (flow_c.py run --tuned), restored to schedutil after each rep",
+  "warmup": "FLOWC_ITERATIONS=2; the reported trace is walk 2",
+  "actual_makespan_ms": [
+   48.041,
+   48.042,
+   48.046
+  ],
+  "actual_makespan_median_ms": 48.042,
+  "actual_makespan_spread_ms": 0.005,
+  "ratio_per_rep": [
+   1.0,
+   1.0,
+   1.0
+  ],
+  "ratio_median": 1.0,
+  "lock_wait_s": [
+   0.37,
+   0.27,
+   0.28
+  ],
+  "lock_wait_exceeds_run": [
+   true,
+   true,
+   true
+  ],
+  "per_tile": {
+   "dronet/dronet_full@dsp": {
+    "predicted_ms": 0.645,
+    "actual_p50_ms": 0.867,
+    "ratio": 1.344,
+    "reps": 3
+   },
+   "dronet/dronet_full@hta": {
+    "predicted_ms": 2.03,
+    "actual_p50_ms": 1.733,
+    "ratio": 0.854,
+    "reps": 3
+   },
+   "mlp_control/mlp_control_full@cpu": {
+    "predicted_ms": 0.107,
+    "actual_p50_ms": 0.039,
+    "ratio": 0.364,
+    "reps": 3
+   }
+  }
+ },
+ {
+  "point": "baseline_seed7",
+  "arm": "baseline",
+  "seed": 7,
+  "status": "run",
+  "validation_problems": [
+   "no non-periodic work: nothing to pack against the periodic load"
+  ],
+  "max_ops": 800,
+  "op_count": 6,
+  "horizon_ms": 24.0,
+  "hyperperiod_ms": 8,
+  "periodic": 2,
+  "nonperiodic": 0,
+  "networks": {
+   "mlp_control": {
+    "period": 8,
+    "window_duration": 5,
+    "num_instances": 3
+   },
+   "dronet": {
+    "period": 8,
+    "window_duration": 6,
+    "num_instances": 3
+   }
+  },
+  "workload": "workloads/baseline_seed7.json",
+  "flowc_spec": "workloads/baseline_seed7.flowc.json",
+  "solver": "milp",
+  "solver_status": "optimal",
+  "milp_timed_out_s": null,
+  "solve_s": 1.8,
+  "schedule": "schedules/scheduled_baseline_seed7_profiled.json",
+  "sched_makespan_nonperiodic_ms": 0.0,
+  "sched_makespan_all_ms": null,
+  "predicted_makespan_ms": 16.645,
+  "n_entries": 6,
+  "dispatch_table_sha256": "a879fa2ea48fd08c5d680edc8be3734b3b68e4e65d1ac650b7b46902cdb2c57b",
+  "runtime_main_sha256": "7165655f8c1484e96428db5cc1f90dfbba72de073441ebe01b0956e25ab5e5c3",
+  "lane_entry_counts": {
+   "cpu": 3,
+   "dsp": 3
+  },
+  "lane_placement": {
+   "dronet/dronet_full": {
+    "dsp": 3
+   },
+   "mlp_control/mlp_control_full": {
+    "cpu": 3
+   }
+  },
+  "contexts": [
+   "ctx_dronet_full_hta__Dsp.bin",
+   "ctx_mlp_control_fp32__Cpu.bin"
+  ],
+  "provenance": {
+   "cost_model_sha256": "b4f1a68455ef50f67d5cb585ca92c706552ce3b3cdd094cf26dd5ea529311d81",
+   "predicate6_missing_contexts": [],
+   "predicate7_excluded_placements": [],
+   "table_vs_manifest_mismatches": null,
+   "trace_vs_table": {},
+   "bringup_lines_unavailable": "deploy_and_run.sh's `exec {lockfd}> /tmp/qnn_board.lock 2>/dev/null` redirects the board-side shell's stderr for the rest of the script, so no [bringup] line reaches run.log. Replaced by predicate 6 (contexts verified staged before the run), the N/N entry count (the runtime skips entries whose context is missing), and trace_vs_table above, which checks the ctx actually used per entry. See verify_provenance.py."
+  },
+  "reps": {
+   "rep1": {
+    "wall_ms": 18.183,
+    "ratio": 1.09,
+    "entries": "6/6",
+    "lock_wait_s": 0.36,
+    "run_wall_s": 5.5,
+    "iterations": [
+     "[main] iteration 1/2 wall=16.609 ms",
+     "[main] iteration 2/2 wall=18.183 ms"
+    ],
+    "ok": true
+   },
+   "rep2": {
+    "wall_ms": 18.261,
+    "ratio": 1.1,
+    "entries": "6/6",
+    "lock_wait_s": 0.34,
+    "run_wall_s": 5.6,
+    "iterations": [
+     "[main] iteration 1/2 wall=18.334 ms",
+     "[main] iteration 2/2 wall=18.261 ms"
+    ],
+    "ok": true
+   },
+   "rep3": {
+    "wall_ms": 18.193,
+    "ratio": 1.09,
+    "entries": "6/6",
+    "lock_wait_s": 0.35,
+    "run_wall_s": 5.5,
+    "iterations": [
+     "[main] iteration 1/2 wall=16.617 ms",
+     "[main] iteration 2/2 wall=18.193 ms"
+    ],
+    "ok": true
+   }
+  },
+  "governor": "performance during run (flow_c.py run --tuned), restored to schedutil after each rep",
+  "warmup": "FLOWC_ITERATIONS=2; the reported trace is walk 2",
+  "actual_makespan_ms": [
+   18.183,
+   18.261,
+   18.193
+  ],
+  "actual_makespan_median_ms": 18.193,
+  "actual_makespan_spread_ms": 0.078,
+  "ratio_per_rep": [
+   1.09,
+   1.1,
+   1.09
+  ],
+  "ratio_median": 1.09,
+  "lock_wait_s": [
+   0.36,
+   0.34,
+   0.35
+  ],
+  "lock_wait_exceeds_run": [
+   true,
+   true,
+   true
+  ],
+  "per_tile": {
+   "dronet/dronet_full@dsp": {
+    "predicted_ms": 0.645,
+    "actual_p50_ms": 2.118,
+    "ratio": 3.284,
+    "reps": 3
+   },
+   "mlp_control/mlp_control_full@cpu": {
+    "predicted_ms": 0.107,
+    "actual_p50_ms": 0.047,
+    "ratio": 0.439,
+    "reps": 3
+   }
+  }
+ },
+ {
+  "point": "fused_seed4",
+  "arm": "fused",
+  "seed": 4,
+  "status": "run",
+  "validation_problems": [
+   "no non-periodic work: nothing to pack against the periodic load"
+  ],
+  "max_ops": 800,
+  "op_count": 15,
+  "horizon_ms": 24.0,
+  "hyperperiod_ms": 8,
+  "periodic": 2,
+  "nonperiodic": 0,
+  "networks": {
+   "mlp_control": {
+    "period": 4,
+    "window_duration": 3,
+    "num_instances": 6
+   },
+   "fused_split": {
+    "period": 8,
+    "window_duration": 6,
+    "num_instances": 3
+   }
+  },
+  "workload": "workloads/fused_seed4.json",
+  "flowc_spec": "workloads/fused_seed4.flowc.json",
+  "solver": "milp",
+  "solver_status": "optimal",
+  "milp_timed_out_s": null,
+  "solve_s": 1.9,
+  "schedule": "schedules/scheduled_fused_seed4_profiled.json",
+  "sched_makespan_nonperiodic_ms": 0.0,
+  "sched_makespan_all_ms": null,
+  "predicted_makespan_ms": 20.107,
+  "n_entries": 15,
+  "dispatch_table_sha256": "3dab31cc71e8ef239a268cfb175449101dc08062da8fcc088be9ae7614932b53",
+  "runtime_main_sha256": "7165655f8c1484e96428db5cc1f90dfbba72de073441ebe01b0956e25ab5e5c3",
+  "lane_entry_counts": {
+   "cpu": 5,
+   "dsp": 6,
+   "hta": 4
+  },
+  "lane_placement": {
+   "fused_split/fused_depth_conv": {
+    "hta": 2,
+    "dsp": 1
+   },
+   "mlp_control/mlp_control_full": {
+    "dsp": 3,
+    "cpu": 3
+   },
+   "fused_split/fused_vision_conv": {
+    "dsp": 1,
+    "hta": 2
+   },
+   "fused_split/fused_tail": {
+    "dsp": 1,
+    "cpu": 2
+   }
+  },
+  "contexts": [
+   "ctx_fused_depth_conv__Dsp.bin",
+   "ctx_fused_depth_conv__Hta.bin",
+   "ctx_fused_tail_from_conv__Dsp.bin",
+   "ctx_fused_tail_from_conv_fp32__Cpu.bin",
+   "ctx_fused_vision_conv__Dsp.bin",
+   "ctx_fused_vision_conv__Hta.bin",
+   "ctx_mlp_control__Dsp.bin",
+   "ctx_mlp_control_fp32__Cpu.bin"
+  ],
+  "provenance": {
+   "cost_model_sha256": "b4f1a68455ef50f67d5cb585ca92c706552ce3b3cdd094cf26dd5ea529311d81",
+   "predicate6_missing_contexts": [],
+   "predicate7_excluded_placements": [],
+   "table_vs_manifest_mismatches": null,
+   "trace_vs_table": {},
+   "bringup_lines_unavailable": "deploy_and_run.sh's `exec {lockfd}> /tmp/qnn_board.lock 2>/dev/null` redirects the board-side shell's stderr for the rest of the script, so no [bringup] line reaches run.log. Replaced by predicate 6 (contexts verified staged before the run), the N/N entry count (the runtime skips entries whose context is missing), and trace_vs_table above, which checks the ctx actually used per entry. See verify_provenance.py."
+  },
+  "reps": {
+   "rep1": {
+    "wall_ms": 20.451,
+    "ratio": 1.02,
+    "entries": "15/15",
+    "lock_wait_s": 0.3,
+    "run_wall_s": 4.5,
+    "iterations": [
+     "[main] iteration 1/2 wall=20.454 ms",
+     "[main] iteration 2/2 wall=20.451 ms"
+    ],
+    "ok": true
+   },
+   "rep2": {
+    "wall_ms": 20.459,
+    "ratio": 1.02,
+    "entries": "15/15",
+    "lock_wait_s": 0.35,
+    "run_wall_s": 5.4,
+    "iterations": [
+     "[main] iteration 1/2 wall=20.408 ms",
+     "[main] iteration 2/2 wall=20.459 ms"
+    ],
+    "ok": true
+   },
+   "rep3": {
+    "wall_ms": 20.469,
+    "ratio": 1.02,
+    "entries": "15/15",
+    "lock_wait_s": 0.34,
+    "run_wall_s": 8.6,
+    "iterations": [
+     "[main] iteration 1/2 wall=20.427 ms",
+     "[main] iteration 2/2 wall=20.469 ms"
+    ],
+    "ok": true
+   }
+  },
+  "governor": "performance during run (flow_c.py run --tuned), restored to schedutil after each rep",
+  "warmup": "FLOWC_ITERATIONS=2; the reported trace is walk 2",
+  "actual_makespan_ms": [
+   20.451,
+   20.459,
+   20.469
+  ],
+  "actual_makespan_median_ms": 20.459,
+  "actual_makespan_spread_ms": 0.018,
+  "ratio_per_rep": [
+   1.02,
+   1.02,
+   1.02
+  ],
+  "ratio_median": 1.02,
+  "lock_wait_s": [
+   0.3,
+   0.35,
+   0.34
+  ],
+  "lock_wait_exceeds_run": [
+   true,
+   true,
+   true
+  ],
+  "per_tile": {
+   "fused_split/fused_depth_conv@dsp": {
+    "predicted_ms": 0.392,
+    "actual_p50_ms": 0.677,
+    "ratio": 1.727,
+    "reps": 3
+   },
+   "fused_split/fused_depth_conv@hta": {
+    "predicted_ms": 1.568,
+    "actual_p50_ms": 0.5885,
+    "ratio": 0.375,
+    "reps": 3
+   },
+   "fused_split/fused_tail@cpu": {
+    "predicted_ms": 0.354,
+    "actual_p50_ms": 2.116,
+    "ratio": 5.977,
+    "reps": 3
+   },
+   "fused_split/fused_tail@dsp": {
+    "predicted_ms": 4.303,
+    "actual_p50_ms": 3.409,
+    "ratio": 0.792,
+    "reps": 3
+   },
+   "fused_split/fused_vision_conv@dsp": {
+    "predicted_ms": 0.459,
+    "actual_p50_ms": 0.753,
+    "ratio": 1.641,
+    "reps": 3
+   },
+   "fused_split/fused_vision_conv@hta": {
+    "predicted_ms": 0.931,
+    "actual_p50_ms": 0.868,
+    "ratio": 0.932,
+    "reps": 3
+   },
+   "mlp_control/mlp_control_full@cpu": {
+    "predicted_ms": 0.107,
+    "actual_p50_ms": 0.053,
+    "ratio": 0.495,
+    "reps": 3
+   },
+   "mlp_control/mlp_control_full@dsp": {
+    "predicted_ms": 0.589,
+    "actual_p50_ms": 0.545,
+    "ratio": 0.925,
+    "reps": 3
+   }
+  }
+ },
+ {
+  "point": "fused_seed5",
+  "arm": "fused",
+  "seed": 5,
+  "status": "run",
+  "validation_problems": [
+   "no non-periodic work: nothing to pack against the periodic load"
+  ],
+  "max_ops": 800,
+  "op_count": 18,
+  "horizon_ms": 54.0,
+  "hyperperiod_ms": 18,
+  "periodic": 2,
+  "nonperiodic": 0,
+  "networks": {
+   "mlp_control": {
+    "period": 6,
+    "window_duration": 4,
+    "num_instances": 9
+   },
+   "fused_split": {
+    "period": 18,
+    "window_duration": 14,
+    "num_instances": 3
+   }
+  },
+  "workload": "workloads/fused_seed5.json",
+  "flowc_spec": "workloads/fused_seed5.flowc.json",
+  "solver": "milp",
+  "solver_status": "optimal",
+  "milp_timed_out_s": null,
+  "solve_s": 2.0,
+  "schedule": "schedules/scheduled_fused_seed5_profiled.json",
+  "sched_makespan_nonperiodic_ms": 0.0,
+  "sched_makespan_all_ms": null,
+  "predicted_makespan_ms": 48.107,
+  "n_entries": 18,
+  "dispatch_table_sha256": "407145e9a314ee07b1fad5d37c3c9f99539b2bd989b48eab1633701b6d59b5a3",
+  "runtime_main_sha256": "7165655f8c1484e96428db5cc1f90dfbba72de073441ebe01b0956e25ab5e5c3",
+  "lane_entry_counts": {
+   "cpu": 9,
+   "dsp": 3,
+   "hta": 6
+  },
+  "lane_placement": {
+   "fused_split/fused_vision_conv": {
+    "hta": 3
+   },
+   "mlp_control/mlp_control_full": {
+    "cpu": 9
+   },
+   "fused_split/fused_depth_conv": {
+    "hta": 3
+   },
+   "fused_split/fused_tail": {
+    "dsp": 3
+   }
+  },
+  "contexts": [
+   "ctx_fused_depth_conv__Hta.bin",
+   "ctx_fused_tail_from_conv__Dsp.bin",
+   "ctx_fused_vision_conv__Hta.bin",
+   "ctx_mlp_control_fp32__Cpu.bin"
+  ],
+  "provenance": {
+   "cost_model_sha256": "b4f1a68455ef50f67d5cb585ca92c706552ce3b3cdd094cf26dd5ea529311d81",
+   "predicate6_missing_contexts": [],
+   "predicate7_excluded_placements": [],
+   "table_vs_manifest_mismatches": null,
+   "trace_vs_table": {},
+   "bringup_lines_unavailable": "deploy_and_run.sh's `exec {lockfd}> /tmp/qnn_board.lock 2>/dev/null` redirects the board-side shell's stderr for the rest of the script, so no [bringup] line reaches run.log. Replaced by predicate 6 (contexts verified staged before the run), the N/N entry count (the runtime skips entries whose context is missing), and trace_vs_table above, which checks the ctx actually used per entry. See verify_provenance.py."
+  },
+  "reps": {
+   "rep1": {
+    "wall_ms": 49.023,
+    "ratio": 1.02,
+    "entries": "18/18",
+    "lock_wait_s": 0.37,
+    "run_wall_s": 4.4,
+    "iterations": [
+     "[main] iteration 1/2 wall=48.708 ms",
+     "[main] iteration 2/2 wall=49.023 ms"
+    ],
+    "ok": true
+   },
+   "rep2": {
+    "wall_ms": 48.046,
+    "ratio": 1.0,
+    "entries": "18/18",
+    "lock_wait_s": 0.34,
+    "run_wall_s": 4.4,
+    "iterations": [
+     "[main] iteration 1/2 wall=48.044 ms",
+     "[main] iteration 2/2 wall=48.046 ms"
+    ],
+    "ok": true
+   },
+   "rep3": {
+    "wall_ms": 48.048,
+    "ratio": 1.0,
+    "entries": "18/18",
+    "lock_wait_s": 0.32,
+    "run_wall_s": 6.7,
+    "iterations": [
+     "[main] iteration 1/2 wall=48.046 ms",
+     "[main] iteration 2/2 wall=48.048 ms"
+    ],
+    "ok": true
+   }
+  },
+  "governor": "performance during run (flow_c.py run --tuned), restored to schedutil after each rep",
+  "warmup": "FLOWC_ITERATIONS=2; the reported trace is walk 2",
+  "actual_makespan_ms": [
+   49.023,
+   48.046,
+   48.048
+  ],
+  "actual_makespan_median_ms": 48.048,
+  "actual_makespan_spread_ms": 0.977,
+  "ratio_per_rep": [
+   1.02,
+   1.0,
+   1.0
+  ],
+  "ratio_median": 1.0,
+  "lock_wait_s": [
+   0.37,
+   0.34,
+   0.32
+  ],
+  "lock_wait_exceeds_run": [
+   true,
+   true,
+   true
+  ],
+  "per_tile": {
+   "fused_split/fused_depth_conv@hta": {
+    "predicted_ms": 1.568,
+    "actual_p50_ms": 1.165,
+    "ratio": 0.743,
+    "reps": 3
+   },
+   "fused_split/fused_tail@dsp": {
+    "predicted_ms": 4.303,
+    "actual_p50_ms": 3.545,
+    "ratio": 0.824,
+    "reps": 3
+   },
+   "fused_split/fused_vision_conv@hta": {
+    "predicted_ms": 0.931,
+    "actual_p50_ms": 1.242,
+    "ratio": 1.334,
+    "reps": 3
+   },
+   "mlp_control/mlp_control_full@cpu": {
+    "predicted_ms": 0.107,
+    "actual_p50_ms": 0.054,
+    "ratio": 0.505,
+    "reps": 3
+   }
+  }
+ },
+ {
+  "point": "fused_seed7",
+  "arm": "fused",
+  "seed": 7,
+  "status": "run",
+  "validation_problems": [
+   "no non-periodic work: nothing to pack against the periodic load"
+  ],
+  "max_ops": 800,
+  "op_count": 12,
+  "horizon_ms": 24.0,
+  "hyperperiod_ms": 8,
+  "periodic": 2,
+  "nonperiodic": 0,
+  "networks": {
+   "mlp_control": {
+    "period": 8,
+    "window_duration": 5,
+    "num_instances": 3
+   },
+   "fused_split": {
+    "period": 8,
+    "window_duration": 6,
+    "num_instances": 3
+   }
+  },
+  "workload": "workloads/fused_seed7.json",
+  "flowc_spec": "workloads/fused_seed7.flowc.json",
+  "solver": "milp",
+  "solver_status": "optimal",
+  "milp_timed_out_s": null,
+  "solve_s": 1.8,
+  "schedule": "schedules/scheduled_fused_seed7_profiled.json",
+  "sched_makespan_nonperiodic_ms": 0.0,
+  "sched_makespan_all_ms": null,
+  "predicted_makespan_ms": 16.813,
+  "n_entries": 12,
+  "dispatch_table_sha256": "d21ea2b4d935da7d59685a11cd569e5a8507ffeda058b52e7eeb58e2adb9d53f",
+  "runtime_main_sha256": "7165655f8c1484e96428db5cc1f90dfbba72de073441ebe01b0956e25ab5e5c3",
+  "lane_entry_counts": {
+   "cpu": 6,
+   "dsp": 4,
+   "hta": 2
+  },
+  "lane_placement": {
+   "fused_split/fused_vision_conv": {
+    "dsp": 2,
+    "hta": 1
+   },
+   "fused_split/fused_depth_conv": {
+    "dsp": 1,
+    "hta": 1,
+    "cpu": 1
+   },
+   "mlp_control/mlp_control_full": {
+    "cpu": 2,
+    "dsp": 1
+   },
+   "fused_split/fused_tail": {
+    "cpu": 3
+   }
+  },
+  "contexts": [
+   "ctx_fused_depth_conv__Cpu.bin",
+   "ctx_fused_depth_conv__Dsp.bin",
+   "ctx_fused_depth_conv__Hta.bin",
+   "ctx_fused_tail_from_conv_fp32__Cpu.bin",
+   "ctx_fused_vision_conv__Dsp.bin",
+   "ctx_fused_vision_conv__Hta.bin",
+   "ctx_mlp_control__Dsp.bin",
+   "ctx_mlp_control_fp32__Cpu.bin"
+  ],
+  "provenance": {
+   "cost_model_sha256": "b4f1a68455ef50f67d5cb585ca92c706552ce3b3cdd094cf26dd5ea529311d81",
+   "predicate6_missing_contexts": [],
+   "predicate7_excluded_placements": [],
+   "table_vs_manifest_mismatches": null,
+   "trace_vs_table": {},
+   "bringup_lines_unavailable": "deploy_and_run.sh's `exec {lockfd}> /tmp/qnn_board.lock 2>/dev/null` redirects the board-side shell's stderr for the rest of the script, so no [bringup] line reaches run.log. Replaced by predicate 6 (contexts verified staged before the run), the N/N entry count (the runtime skips entries whose context is missing), and trace_vs_table above, which checks the ctx actually used per entry. See verify_provenance.py."
+  },
+  "reps": {
+   "rep1": {
+    "wall_ms": 18.974,
+    "ratio": 1.13,
+    "entries": "12/12",
+    "lock_wait_s": 0.29,
+    "run_wall_s": 7.5,
+    "iterations": [
+     "[main] iteration 1/2 wall=18.971 ms",
+     "[main] iteration 2/2 wall=18.974 ms"
+    ],
+    "ok": true
+   },
+   "rep2": {
+    "wall_ms": 19.034,
+    "ratio": 1.13,
+    "entries": "12/12",
+    "lock_wait_s": 0.36,
+    "run_wall_s": 7.4,
+    "iterations": [
+     "[main] iteration 1/2 wall=19.009 ms",
+     "[main] iteration 2/2 wall=19.034 ms"
+    ],
+    "ok": true
+   },
+   "rep3": {
+    "wall_ms": 18.822,
+    "ratio": 1.12,
+    "entries": "12/12",
+    "lock_wait_s": 0.36,
+    "run_wall_s": 7.4,
+    "iterations": [
+     "[main] iteration 1/2 wall=18.990 ms",
+     "[main] iteration 2/2 wall=18.822 ms"
+    ],
+    "ok": true
+   }
+  },
+  "governor": "performance during run (flow_c.py run --tuned), restored to schedutil after each rep",
+  "warmup": "FLOWC_ITERATIONS=2; the reported trace is walk 2",
+  "actual_makespan_ms": [
+   18.974,
+   19.034,
+   18.822
+  ],
+  "actual_makespan_median_ms": 18.974,
+  "actual_makespan_spread_ms": 0.212,
+  "ratio_per_rep": [
+   1.13,
+   1.13,
+   1.12
+  ],
+  "ratio_median": 1.13,
+  "lock_wait_s": [
+   0.29,
+   0.36,
+   0.36
+  ],
+  "lock_wait_exceeds_run": [
+   true,
+   true,
+   true
+  ],
+  "per_tile": {
+   "fused_split/fused_depth_conv@cpu": {
+    "predicted_ms": 0.014,
+    "actual_p50_ms": 0.205,
+    "ratio": 14.643,
+    "reps": 3
+   },
+   "fused_split/fused_depth_conv@dsp": {
+    "predicted_ms": 0.392,
+    "actual_p50_ms": 0.531,
+    "ratio": 1.355,
+    "reps": 3
+   },
+   "fused_split/fused_depth_conv@hta": {
+    "predicted_ms": 1.568,
+    "actual_p50_ms": 1.06,
+    "ratio": 0.676,
+    "reps": 3
+   },
+   "fused_split/fused_tail@cpu": {
+    "predicted_ms": 0.354,
+    "actual_p50_ms": 1.028,
+    "ratio": 2.904,
+    "reps": 3
+   },
+   "fused_split/fused_vision_conv@dsp": {
+    "predicted_ms": 0.459,
+    "actual_p50_ms": 0.5445,
+    "ratio": 1.186,
+    "reps": 3
+   },
+   "fused_split/fused_vision_conv@hta": {
+    "predicted_ms": 0.931,
+    "actual_p50_ms": 1.095,
+    "ratio": 1.176,
+    "reps": 3
+   },
+   "mlp_control/mlp_control_full@cpu": {
+    "predicted_ms": 0.107,
+    "actual_p50_ms": 0.0595,
+    "ratio": 0.556,
+    "reps": 3
+   },
+   "mlp_control/mlp_control_full@dsp": {
+    "predicted_ms": 0.589,
+    "actual_p50_ms": 0.743,
+    "ratio": 1.261,
+    "reps": 3
+   }
+  }
+ }
+]

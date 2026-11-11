@@ -1,0 +1,26 @@
+# Raw artifacts and measurement data are NOT committed; everything needed to
+# replicate the experiment is (scripts, specs, bindings, SETUP.md, ANALYSIS.md,
+# the frozen cost model, provenance, and the per-cell result tables).
+gen/
+plots/
+runs/
+runtimes/
+logs/
+measurements/*_raw.json
+__pycache__/
+*.pyc
+results/*.png
+# Regenerable from the frozen cost model by reproduce.py: the per-job solve
+# records and the emitted schedules. results/phase3_all_results.json and
+# results/phase4_results.json carry everything the write-ups and the
+# reproduction check are held against.
+raw/
+schedules/
+results/phase4_state.json
+results/phase1_state.json
+results/phase1r_state.json
+
+# Derived from the committed results JSONs by analysis/mk_qrb5165_csv.py.
+analysis/results.csv
+analysis/nondiscriminating.json
+analysis/measured/

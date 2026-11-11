@@ -1,0 +1,179 @@
+========================================================================================================
+1. TRANSFER COST -- measured boundary handoff, per entry
+========================================================================================================
+  The runtime memcpy's every output tensor into a mutex-guarded cache after
+  execute (hout), and searches that cache for every input tensor before
+  execute (hin). Both sit OUTSIDE actual_start..actual_end, so neither the
+  tile cost cells nor the MILP (transfer_times = zeros) account for them.
+
+  entries instrumented   609
+  total execute time       3331.051 ms
+  total handoff-in            4.048 ms   (0.12% of execute)
+  total handoff-out          62.252 ms   (1.87% of execute)
+  total handoff              66.300 ms   (1.99% of execute)
+
+  --- per tile: what it copies and what that costs ---
+network/tile@lane                               n  exec p50   hin p50  hout p50    in KiB   out KiB   h/exec
+yolov8n_b/yolov8n_backbone@dsp                  3    14.185    0.0007    0.4298       0.0     700.0     3.0%
+yolov8n_c/yolov8n_head@dsp                     12    17.961    0.0025    0.3791       0.0     689.1     2.1%
+yolov8n_e/yolov8n_head@dsp                      6    17.468    0.0031    0.3617       0.0     689.1     2.1%
+yolov8n_a/yolov8n_backbone@hta                 12    14.428    0.0006    0.3560       0.0     700.0     2.5%
+yolov8n_a/yolov8n_head@dsp                     18    17.268    0.0035    0.3525       0.0     689.1     2.1%
+yolov8n_b/yolov8n_head@dsp                     12    18.573    0.0026    0.3470       0.0     689.1     1.9%
+yolov8n_d/yolov8n_head@dsp                     15    17.099    0.0021    0.3387       0.0     689.1     2.0%
+yolov8n_d/yolov8n_backbone@hta                 15    13.683    0.0010    0.3039       0.0     700.0     2.2%
+yolov8n_b/yolov8n_head@cpu                      6    51.968    0.0020    0.2368       0.0     689.1     0.5%
+yolov8n_a/yolov8n_backbone@dsp                  6    13.602    0.0011    0.1566       0.0     700.0     1.2%
+yolov8n_c/yolov8n_backbone@hta                 12    13.421    0.0008    0.1125       0.0     700.0     0.8%
+yolov8n_c/yolov8n_head@cpu                      3    54.418    0.0026    0.1088       0.0     689.1     0.2%
+yolov8n_c/yolov8n_backbone@dsp                  3    13.907    0.0014    0.1044       0.0     700.0     0.8%
+yolov8n_b/yolov8n_backbone@hta                 15    13.466    0.0006    0.0974       0.0     700.0     0.7%
+yolov8n_e/yolov8n_backbone@hta                  6    13.070    0.0011    0.0818       0.0     700.0     0.6%
+vint/vint_encoders@dsp                          6    15.876    0.0010    0.0044       0.0       3.5     0.0%
+fused_split/fused_tail@dsp                     12     3.238    0.0028    0.0024       2.5       0.0     0.2%
+vint/vint_decoder@cpu                           6    25.692    0.0017    0.0024       0.0       0.0     0.0%
+fused_split/fused_depth_conv@dsp               24     0.514    0.0013    0.0020       0.0       1.0     0.6%
+dronet_b/dronet_full@hta                        9     1.691    0.0008    0.0020       0.0       0.0     0.2%
+fused_split/fused_vision_conv@dsp              39     0.679    0.0008    0.0018       0.0       1.5     0.4%
+dronet_b/dronet_full@dsp                        9     1.057    0.0009    0.0017       0.0       0.0     0.2%
+fused_split/fused_depth_conv@hta               15     0.847    0.0006    0.0017       0.0       1.0     0.3%
+fused_split/fused_tail@cpu                     66     1.259    0.0026    0.0016       0.0       0.0     0.3%
+dronet_a/dronet_full@hta                        9     1.660    0.0010    0.0016       0.0       0.0     0.2%
+mlp_control/mlp_control_full@dsp               42     0.692    0.0015    0.0016       0.0       0.0     0.5%
+dronet_a/dronet_full@dsp                        9     1.817    0.0007    0.0016       0.0       0.0     0.1%
+fused_split/fused_vision_conv@hta              39     1.066    0.0007    0.0016       0.0       1.5     0.2%
+fused_split/fused_depth_conv@cpu               39     0.106    0.0008    0.0014       0.0       1.0     2.1%
+mlp_control/mlp_control_full@cpu              141     0.076    0.0010    0.0009       0.0       0.0     2.5%
+
+  --- cost vs bytes: is the copy bandwidth-bound? ---
+output bytes (pow2 bucket)         n   hout p50 ms     GiB/s
+                         2 B    48        0.0017      0.00
+                         4 B    48        0.0017      0.00
+                         8 B    66        0.0016      0.00
+                        16 B   141        0.0009      0.02
+                     1,024 B   156        0.0017      0.57
+                     2,048 B     6        0.0044      0.43
+                   524,288 B   144        0.3144      1.55
+
+========================================================================================================
+2. WHAT THE SCHEDULER MODELS FOR TRANSFER
+========================================================================================================
+  scripts/run_xpurt_schedule.py:244
+      transfer_times = np.zeros((n_cores, n_cores))
+  Every cross-lane edge therefore contributes exactly 0 to a predicted start.
+  scheduler.py does consume the matrix -- constraint (3) adds
+      t[i] >= t[pred] + dur[pred] + max_transfer_time
+  so the mechanism exists and is wired; it is only ever fed zeros.
+
+point                  rep     handoff ms  execute ms  handoff/exec
+baseline_seed0         rep1         2.103     195.699         1.07%
+baseline_seed0         rep2         1.535     178.778         0.86%
+baseline_seed0         rep3        18.025     174.231        10.35%
+baseline_seed3         rep1         1.409      76.796         1.83%
+baseline_seed3         rep2         1.336      73.468         1.82%
+baseline_seed3         rep3         0.708      70.256         1.01%
+fused_seed0            rep1         2.091     191.916         1.09%
+fused_seed0            rep2         7.023     188.236         3.73%
+fused_seed0            rep3         3.015     183.705         1.64%
+fused_seed1            rep1         2.929     208.877         1.40%
+fused_seed1            rep2         3.045     210.560         1.45%
+fused_seed1            rep3         2.507     212.713         1.18%
+fused_seed7            rep1         0.025      10.488         0.24%
+fused_seed7            rep2         0.027       9.532         0.28%
+fused_seed7            rep3         0.025       8.446         0.30%
+fused_vint_seed0       rep1         6.033     216.921         2.78%
+fused_vint_seed0       rep2         1.622     204.681         0.79%
+fused_vint_seed0       rep3         3.384     199.876         1.69%
+fused_vint_seed1       rep1         3.303     235.476         1.40%
+fused_vint_seed1       rep2         2.697     244.251         1.10%
+fused_vint_seed1       rep3         3.458     236.145         1.46%
+
+========================================================================================================
+3. PLACEMENT -- where every tile actually ran
+========================================================================================================
+tile                          hta    dsp    cpu   total  lanes used  distribution
+mlp_control_full                0     30    148     178           2  cpu=83%  dsp=17%
+yolov8n_backbone               45     14      0      59           2  hta=76%  dsp=24%
+yolov8n_head                    0     49     10      59           2  dsp=83%  cpu=17%
+dronet_full                    21     30      3      54           3  dsp=56%  hta=39%  cpu=6%
+fused_vision_conv              28     18      0      46           2  hta=61%  dsp=39%
+fused_depth_conv               13      9     24      46           3  cpu=52%  hta=28%  dsp=20%
+fused_tail                      0     10     36      46           2  cpu=78%  dsp=22%
+vint_encoders                   0      2      0       2           1  dsp=100%
+vint_decoder                    0      0      2       2           1  cpu=100%
+
+========================================================================================================
+4. CAPABILITY ENVELOPE -- eligible lanes vs lanes actually used
+========================================================================================================
+tile                       eligible lanes         used                   unused capability
+mlp_control_full           cpu,dsp                cpu,dsp                (all used)
+yolov8n_backbone           cpu,dsp,hta            dsp,hta                cpu
+yolov8n_head               cpu,dsp                cpu,dsp                (all used)
+dronet_full                cpu,dsp,hta            cpu,dsp,hta            (all used)
+fused_vision_conv          cpu,dsp,hta            dsp,hta                cpu
+fused_depth_conv           cpu,dsp,hta            cpu,dsp,hta            (all used)
+fused_tail                 cpu,dsp                cpu,dsp                (all used)
+vint_encoders              cpu,dsp                dsp                    cpu
+vint_decoder               cpu,gpu                cpu                    gpu
+
+========================================================================================================
+5. PLACEMENT STABILITY -- does a tile keep its lane across workloads?
+========================================================================================================
+tile                        points  modal lane  modal share  per-point majority lane
+yolov8n_backbone                59         hta          76%  hta:45  dsp:14
+yolov8n_head                    59         dsp          83%  dsp:49  cpu:10
+mlp_control_full                21         cpu          95%  cpu:20  dsp:1
+dronet_full                     15         dsp          60%  dsp:9  hta:5  cpu:1
+fused_vision_conv               11         hta          55%  hta:6  dsp:5
+fused_depth_conv                11         cpu          64%  cpu:7  hta:3  dsp:1
+fused_tail                      11         cpu          91%  cpu:10  dsp:1
+vint_encoders                    2         dsp         100%  dsp:2
+vint_decoder                     2         cpu         100%  cpu:2
+
+  4/9 tiles keep one lane in >=90% of points; 5 migrate
+    yolov8n_backbone         {'hta': 45, 'dsp': 14}
+    yolov8n_head             {'dsp': 49, 'cpu': 10}
+    dronet_full              {'hta': 5, 'dsp': 9, 'cpu': 1}
+    fused_vision_conv        {'dsp': 5, 'hta': 6}
+    fused_depth_conv         {'cpu': 7, 'hta': 3, 'dsp': 1}
+
+========================================================================================================
+6. PLACEMENT QUALITY -- chosen lane vs the fastest eligible lane
+========================================================================================================
+cell                                       fastest lane   cost ms | placed on                  excess
+dronet/dronet_full                                  dsp     1.035 | dspx30 htax21 cpux3           +34.2 ms
+fused_split/fused_depth_conv                        cpu     0.147 | cpux24 htax13 dspx9           +15.8 ms
+fused_split/fused_tail                              cpu     1.627 | cpux36 dspx10                 +17.8 ms
+fused_split/fused_vision_conv                       dsp     0.765 | htax28 dspx18                  +9.6 ms
+mlp_control/mlp_control_full                        cpu     0.067 | cpux148 dspx30                +18.6 ms
+vint/vint_decoder                                   gpu    16.425 | cpux2                         +42.8 ms
+vint/vint_encoders                                  dsp    14.213 | dspx2                          +0.0 ms
+yolov8n/yolov8n_backbone                            dsp    13.188 | htax45 dspx14                 +37.3 ms
+yolov8n/yolov8n_head                                dsp    17.652 | dspx49 cpux10                +345.1 ms
+
+  total cost of not always using the fastest lane: +521.3 ms across all placements
+  (this is the price of parallelism -- a lane can only run one tile at a time,
+   so spilling to a slower lane is often correct)
+
+========================================================================================================
+7. WASTED TRANSFER -- copies nothing consumes
+========================================================================================================
+tile                   role             n  cached MiB  read MiB   put ms   get ms  output ever read?
+yolov8n_backbone       source          72      49.219     0.000   31.360    1.406  yes
+yolov8n_head           terminal        72      48.450     8.203   23.984    1.154  NO -- pure waste
+fused_vision_conv      source          78       0.114     0.000    5.316    0.069  yes
+mlp_control_full       isolated       183       0.002     0.000    1.175    0.393  NO -- pure waste
+fused_tail             terminal        78       0.001     0.025    0.150    0.221  NO -- pure waste
+fused_depth_conv       source          78       0.076     0.000    0.144    0.756  yes
+dronet_full            isolated        36       0.000     0.000    0.073    0.032  NO -- pure waste
+vint_encoders          source           6       0.021     0.000    0.035    0.006  yes
+vint_decoder           terminal         6       0.000     0.000    0.015    0.012  NO -- pure waste
+
+  cache lookups               921, of which 57 hit  (6.2%)
+  bytes cached                97.88 MiB
+  bytes ever read back         8.23 MiB  (8.41% of cached)
+  copies for terminal tiles  25.397 ms of 66.300 ms (38.3%) -- structurally unreadable, 48.5 MiB
+
+  data log  -> /scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c/transfer_study/data_log.json
+  entries   -> /scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c/transfer_study/data_log_entries.csv (609 rows)
+  placements-> /scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c/transfer_study/data_log_placements.csv (243 rows)

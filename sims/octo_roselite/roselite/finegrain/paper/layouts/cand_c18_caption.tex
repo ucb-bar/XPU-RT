@@ -1,0 +1,20 @@
+% Caption for cand_c18_widowx_calibrated.png.
+% Numbers verified against calib/calibrated_curated.tsv and recomputed per episode.
+
+\caption{\textbf{Success and actuator energy across the schedule ladder, two
+widowx scenes.} Arms run reference-first, then by release period; each is
+labelled with its measured period and observation latency. Success is a
+30-seed distribution of 24-episode rates. Energy is calibrated to joules rather
+than reported as the raw $\int\!\sum\tau^2\,dt$ proxy: the simulated PD torque
+runs about 76$\times$ the torque the same trajectory physically requires
+(148\,N\,m rms against 1.94\,N\,m of gravity and Coriolis, saturating 20\% of
+substeps under a 200\,N\,m limit on a shoulder that stalls at 8.2\,N\,m), so the
+proxy cannot be converted at face value. Plotted is the quasi-static lower
+bound, $0.827\,\mathrm{W/(N\,m)^2}\times\int\!\sum\tau_{\mathrm{grav}}^2\,dt +
+4.61\,\mathrm{W}\times T$, with $R/K^2$ derived from ROBOTIS' published stall
+torque and current for the Dynamixel XM430-W350. The supply-rail upper bound is
+763--1440\,J on eggplant and 197--720\,J on spoon. Calibration preserves the
+ordering on both scenes but compresses the magnitudes: the un-scheduled baseline
+costs 1.71--1.89$\times$ the reference arm on eggplant, not the 3.36$\times$ the
+raw proxy implies. Inset frames are the end states of a successful and a failed
+rollout. Full derivation in \texttt{calib/ENERGY\_CALIBRATION.md}.}

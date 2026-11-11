@@ -1,0 +1,680 @@
+{
+	"model.cpp": "/work/qnn_models/gpu_oppkg/model/mlp_qt______.cpp",
+	"model.bin": "/work/qnn_models/gpu_oppkg/model/mlp_qt______.bin",
+	"converter_command": "qnn-onnx-converter; act_bitwidth=8; act_quantizer=tf; act_quantizer_calibration=min-max; act_quantizer_schema=asymmetric; adjust_nms_features_dims=True; algorithms=[]; align_matmul_ranks=True; apply_masked_softmax=uncompressed; arch_checker=False; backend=None; batch=None; bias_bitwidth=8; calc_static_encodings=False; converter_op_package_lib=; copyright_file=None; custom_io=; custom_op_config_paths=None; debug=-1; defer_loading=False; define_symbol=None; disable_batchnorm_folding=False; disable_defer_loading=False; disable_node_validation=False; disable_qnn_op_config_validation=False; disable_relu_squashing=False; dry_run=None; dumpIR=False; dump_custom_io_config_template=; dump_encoding_json=False; dump_inferred_model=False; dump_ir=; dump_ir_optimizer_config_template=False; dump_optimization_pass_mode_config=False; dump_pass_trace_info=False; dump_qairt_io_config_yaml=; dump_qairt_quantizer_command=None; dump_value_info=False; enable_framework_trace=False; enable_match_gathernd=False; enable_match_topk=False; enable_per_row_quantized_bias=False; exclude_named_tensors=False; expand_gru_op_structure=True; expand_lstm_op_structure=False; expand_sparse_op_structure=False; export_format=cpp; extract_color_transform=True; float_bias_bitwidth=0; float_bias_bw=0; float_bitwidth=32; float_bw=32; float_fallback=False; force_prune_cast_ops=False; handle_gather_negative_indices=True; ignore_encodings=False; include_data_invariant_ops=False; inject_cast_for_gather=True; input_dim=None; input_dtype=[]; input_encoding=[]; input_layout=[]; input_list=/work/qnn_models/runtime/gen/mlp_control_full/calib_list.txt; input_type=[]; ir_optimizer_config=; keep_disconnected_nodes=False; keep_int64_inputs=False; keep_quant_nodes=False; keep_weights_quantized=False; match_caffe_ssd_to_tf=True; model_version=None; multi_time_steps_gru=False; multi_time_steps_lstm=False; no_simplification=False; op_package_lib=; optimization_pass_mode=ir_optimizer_mainline; optimization_pass_mode_config=; out_names=['output']; overwrite_model_prefix=False; pack_4_bit_weights=False; package_name=qti.aisw; packed_masked_softmax_inputs=[]; packed_max_seq=1; param_quantizer=None; param_quantizer_calibration=min-max; param_quantizer_schema=asymmetric; percentile_calibration_value=99.99; perform_axes_to_spatial_first_order=True; perform_layout_transformation=False; prepare_inputs_as_params=False; preprocess_roi_pool_inputs=True; preserve_io=[]; preserve_onnx_output_order=False; quantization_overrides=; quantizer_log=None; quantizer_log_level=LogLevel.NONE; restrict_quantization_steps=[]; squash_box_decoder=True; unroll_gru_time_steps=True; unroll_lstm_time_steps=True; use_aimet_quantizer=False; use_convert_quantization_nodes=False; use_dynamic_16_bit_weights=False; use_native_dtype=False; use_native_input_files=False; use_native_output_files=False; use_per_channel_quantization=False; use_per_row_quantization=False; use_quantize_v2=False; validate_models=False; weights_bitwidth=8",
+	"copyright_str": "",
+	"op_types": [
+		"ElementWiseNeuron",
+		"FullyConnected"
+	],
+	"graph": {
+		"tensors": {
+			"obs": {
+				"id": 1,
+				"type": 0,
+				"dataFormat": 0,
+				"data_type": 1032,
+				"unquantized_data_type": 562,
+				"permute_order_to_src": [
+					0,
+					1
+				],
+				"quant_params": {
+					"definition": 1,
+					"encoding": 0,
+					"is_overridden": false,
+					"scale_offset": {
+						"bitwidth": 8,
+						"minimum": -2.555175542831421,
+						"maximum": 2.3809590339660646,
+						"scale": 0.019357390701770784,
+						"offset": -132,
+						"is_symmetric": false,
+						"is_fixed_point": true
+					}
+				},
+				"dims": [
+					1,
+					16
+				],
+				"is_dynamic_dims": [],
+				"is_quantizable": true,
+				"is_updateable": false
+			},
+			"output": {
+				"id": 16,
+				"type": 1,
+				"dataFormat": 0,
+				"data_type": 1032,
+				"unquantized_data_type": 562,
+				"permute_order_to_src": [
+					0,
+					1
+				],
+				"quant_params": {
+					"definition": 1,
+					"encoding": 0,
+					"is_overridden": false,
+					"scale_offset": {
+						"bitwidth": 8,
+						"minimum": -4.866004467010498,
+						"maximum": 26.154773712158204,
+						"scale": 0.12165010720491409,
+						"offset": -40,
+						"is_symmetric": false,
+						"is_fixed_point": true
+					}
+				},
+				"dims": [
+					1,
+					4
+				],
+				"is_dynamic_dims": [],
+				"is_quantizable": true,
+				"is_updateable": false
+			},
+			"_mlp_mlp_0_Gemm_output_0": {
+				"id": 4,
+				"type": 3,
+				"dataFormat": 0,
+				"data_type": 1032,
+				"unquantized_data_type": 562,
+				"permute_order_to_src": [
+					0,
+					1
+				],
+				"quant_params": {
+					"definition": 1,
+					"encoding": 0,
+					"is_overridden": false,
+					"scale_offset": {
+						"bitwidth": 8,
+						"minimum": -6.408829212188721,
+						"maximum": 7.679544925689697,
+						"scale": 0.055248524993658069,
+						"offset": -116,
+						"is_symmetric": false,
+						"is_fixed_point": true
+					}
+				},
+				"dims": [
+					1,
+					256
+				],
+				"is_dynamic_dims": [],
+				"is_quantizable": true,
+				"is_updateable": false
+			},
+			"_mlp_mlp_1_Elu_output_0": {
+				"id": 5,
+				"type": 3,
+				"dataFormat": 0,
+				"data_type": 1032,
+				"unquantized_data_type": 562,
+				"permute_order_to_src": [
+					0,
+					1
+				],
+				"quant_params": {
+					"definition": 1,
+					"encoding": 0,
+					"is_overridden": false,
+					"scale_offset": {
+						"bitwidth": 8,
+						"minimum": -0.9884223341941834,
+						"maximum": 7.702877521514893,
+						"scale": 0.0340835265815258,
+						"offset": -29,
+						"is_symmetric": false,
+						"is_fixed_point": true
+					}
+				},
+				"dims": [
+					1,
+					256
+				],
+				"is_dynamic_dims": [],
+				"is_quantizable": true,
+				"is_updateable": false
+			},
+			"_mlp_mlp_2_Gemm_output_0": {
+				"id": 8,
+				"type": 3,
+				"dataFormat": 0,
+				"data_type": 1032,
+				"unquantized_data_type": 562,
+				"permute_order_to_src": [
+					0,
+					1
+				],
+				"quant_params": {
+					"definition": 1,
+					"encoding": 0,
+					"is_overridden": false,
+					"scale_offset": {
+						"bitwidth": 8,
+						"minimum": -33.84895706176758,
+						"maximum": 20.437105178833009,
+						"scale": 0.2128865122795105,
+						"offset": -159,
+						"is_symmetric": false,
+						"is_fixed_point": true
+					}
+				},
+				"dims": [
+					1,
+					128
+				],
+				"is_dynamic_dims": [],
+				"is_quantizable": true,
+				"is_updateable": false
+			},
+			"_mlp_mlp_3_Elu_output_0": {
+				"id": 9,
+				"type": 3,
+				"dataFormat": 0,
+				"data_type": 1032,
+				"unquantized_data_type": 562,
+				"permute_order_to_src": [
+					0,
+					1
+				],
+				"quant_params": {
+					"definition": 1,
+					"encoding": 0,
+					"is_overridden": false,
+					"scale_offset": {
+						"bitwidth": 8,
+						"minimum": -1.005707025527954,
+						"maximum": 20.36556625366211,
+						"scale": 0.08380891382694245,
+						"offset": -12,
+						"is_symmetric": false,
+						"is_fixed_point": true
+					}
+				},
+				"dims": [
+					1,
+					128
+				],
+				"is_dynamic_dims": [],
+				"is_quantizable": true,
+				"is_updateable": false
+			},
+			"_mlp_mlp_4_Gemm_output_0": {
+				"id": 12,
+				"type": 3,
+				"dataFormat": 0,
+				"data_type": 1032,
+				"unquantized_data_type": 562,
+				"permute_order_to_src": [
+					0,
+					1
+				],
+				"quant_params": {
+					"definition": 1,
+					"encoding": 0,
+					"is_overridden": false,
+					"scale_offset": {
+						"bitwidth": 8,
+						"minimum": -22.495986938476564,
+						"maximum": 19.683988571166993,
+						"scale": 0.16541166603565217,
+						"offset": -136,
+						"is_symmetric": false,
+						"is_fixed_point": true
+					}
+				},
+				"dims": [
+					1,
+					64
+				],
+				"is_dynamic_dims": [],
+				"is_quantizable": true,
+				"is_updateable": false
+			},
+			"_mlp_mlp_5_Elu_output_0": {
+				"id": 13,
+				"type": 3,
+				"dataFormat": 0,
+				"data_type": 1032,
+				"unquantized_data_type": 562,
+				"permute_order_to_src": [
+					0,
+					1
+				],
+				"quant_params": {
+					"definition": 1,
+					"encoding": 0,
+					"is_overridden": false,
+					"scale_offset": {
+						"bitwidth": 8,
+						"minimum": -0.9758341908454895,
+						"maximum": 19.760643005371095,
+						"scale": 0.08131951838731766,
+						"offset": -12,
+						"is_symmetric": false,
+						"is_fixed_point": true
+					}
+				},
+				"dims": [
+					1,
+					64
+				],
+				"is_dynamic_dims": [],
+				"is_quantizable": true,
+				"is_updateable": false
+			},
+			"mlp_0_bias": {
+				"id": 2,
+				"type": 4,
+				"dataFormat": 0,
+				"data_type": 1032,
+				"unquantized_data_type": 562,
+				"permute_order_to_src": [],
+				"quant_params": {
+					"definition": 1,
+					"encoding": 0,
+					"is_overridden": false,
+					"scale_offset": {
+						"bitwidth": 8,
+						"minimum": -0.39783257246017458,
+						"maximum": 0.49205607175827029,
+						"scale": 0.003489759285002947,
+						"offset": -114,
+						"is_symmetric": false,
+						"is_fixed_point": true
+					}
+				},
+				"dims": [
+					256
+				],
+				"is_dynamic_dims": [],
+				"is_quantizable": true,
+				"is_updateable": false,
+				"params_count": "256 (0.55%)"
+			},
+			"mlp_0_weight_permute": {
+				"id": 1,
+				"type": 4,
+				"dataFormat": 0,
+				"data_type": 1032,
+				"unquantized_data_type": 562,
+				"permute_order_to_src": [],
+				"quant_params": {
+					"definition": 1,
+					"encoding": 0,
+					"is_overridden": false,
+					"scale_offset": {
+						"bitwidth": 8,
+						"minimum": -3.172334909439087,
+						"maximum": 3.1475508213043215,
+						"scale": 0.024783866479992868,
+						"offset": -128,
+						"is_symmetric": false,
+						"is_fixed_point": true
+					}
+				},
+				"dims": [
+					256,
+					16
+				],
+				"is_dynamic_dims": [],
+				"is_quantizable": true,
+				"is_updateable": false,
+				"params_count": "4096 (8.95%)"
+			},
+			"mlp_2_bias": {
+				"id": 4,
+				"type": 4,
+				"dataFormat": 0,
+				"data_type": 1032,
+				"unquantized_data_type": 562,
+				"permute_order_to_src": [],
+				"quant_params": {
+					"definition": 1,
+					"encoding": 0,
+					"is_overridden": false,
+					"scale_offset": {
+						"bitwidth": 8,
+						"minimum": -0.5034318566322327,
+						"maximum": 0.14166925847530366,
+						"scale": 0.002529808320105076,
+						"offset": -199,
+						"is_symmetric": false,
+						"is_fixed_point": true
+					}
+				},
+				"dims": [
+					128
+				],
+				"is_dynamic_dims": [],
+				"is_quantizable": true,
+				"is_updateable": false,
+				"params_count": "128 (0.27%)"
+			},
+			"mlp_2_weight_permute": {
+				"id": 3,
+				"type": 4,
+				"dataFormat": 0,
+				"data_type": 1032,
+				"unquantized_data_type": 562,
+				"permute_order_to_src": [],
+				"quant_params": {
+					"definition": 1,
+					"encoding": 0,
+					"is_overridden": false,
+					"scale_offset": {
+						"bitwidth": 8,
+						"minimum": -0.9155449867248535,
+						"maximum": 0.6204022169113159,
+						"scale": 0.006023322232067585,
+						"offset": -152,
+						"is_symmetric": false,
+						"is_fixed_point": true
+					}
+				},
+				"dims": [
+					128,
+					256
+				],
+				"is_dynamic_dims": [],
+				"is_quantizable": true,
+				"is_updateable": false,
+				"params_count": "32768 (71.6%)"
+			},
+			"mlp_4_bias": {
+				"id": 6,
+				"type": 4,
+				"dataFormat": 0,
+				"data_type": 1032,
+				"unquantized_data_type": 562,
+				"permute_order_to_src": [],
+				"quant_params": {
+					"definition": 1,
+					"encoding": 0,
+					"is_overridden": false,
+					"scale_offset": {
+						"bitwidth": 8,
+						"minimum": -0.3824172019958496,
+						"maximum": 0.06490567326545716,
+						"scale": 0.0017542074201628566,
+						"offset": -218,
+						"is_symmetric": false,
+						"is_fixed_point": true
+					}
+				},
+				"dims": [
+					64
+				],
+				"is_dynamic_dims": [],
+				"is_quantizable": true,
+				"is_updateable": false,
+				"params_count": "64 (0.13%)"
+			},
+			"mlp_4_weight_permute": {
+				"id": 5,
+				"type": 4,
+				"dataFormat": 0,
+				"data_type": 1032,
+				"unquantized_data_type": 562,
+				"permute_order_to_src": [],
+				"quant_params": {
+					"definition": 1,
+					"encoding": 0,
+					"is_overridden": false,
+					"scale_offset": {
+						"bitwidth": 8,
+						"minimum": -0.389078825712204,
+						"maximum": 0.3741142451763153,
+						"scale": 0.0029929140582680704,
+						"offset": -130,
+						"is_symmetric": false,
+						"is_fixed_point": true
+					}
+				},
+				"dims": [
+					64,
+					128
+				],
+				"is_dynamic_dims": [],
+				"is_quantizable": true,
+				"is_updateable": false,
+				"params_count": "8192 (17.9%)"
+			},
+			"mlp_6_bias": {
+				"id": 8,
+				"type": 4,
+				"dataFormat": 0,
+				"data_type": 1032,
+				"unquantized_data_type": 562,
+				"permute_order_to_src": [],
+				"quant_params": {
+					"definition": 1,
+					"encoding": 0,
+					"is_overridden": false,
+					"scale_offset": {
+						"bitwidth": 8,
+						"minimum": -0.02751283533871174,
+						"maximum": 0.005425065755844116,
+						"scale": 0.00012916824198327959,
+						"offset": -213,
+						"is_symmetric": false,
+						"is_fixed_point": true
+					}
+				},
+				"dims": [
+					4
+				],
+				"is_dynamic_dims": [],
+				"is_quantizable": true,
+				"is_updateable": false,
+				"params_count": "4 (0.00%)"
+			},
+			"mlp_6_weight_permute": {
+				"id": 7,
+				"type": 4,
+				"dataFormat": 0,
+				"data_type": 1032,
+				"unquantized_data_type": 562,
+				"permute_order_to_src": [],
+				"quant_params": {
+					"definition": 1,
+					"encoding": 0,
+					"is_overridden": false,
+					"scale_offset": {
+						"bitwidth": 8,
+						"minimum": -0.2594375014305115,
+						"maximum": 0.41562944650650027,
+						"scale": 0.0026473214384168388,
+						"offset": -98,
+						"is_symmetric": false,
+						"is_fixed_point": true
+					}
+				},
+				"dims": [
+					4,
+					64
+				],
+				"is_dynamic_dims": [],
+				"is_quantizable": true,
+				"is_updateable": false,
+				"params_count": "256 (0.55%)"
+			}
+		},
+		"nodes": {
+			"_mlp_mlp_0_Gemm": {
+				"package": "qti.aisw",
+				"type": "FullyConnected",
+				"tensor_params": {},
+				"scalar_params": {
+					"packageName": {
+						"1544": "qti.aisw"
+					}
+				},
+				"param_map": {
+					"packageName": 2
+				},
+				"input_names": [
+					"obs",
+					"mlp_0_weight_permute",
+					"mlp_0_bias"
+				],
+				"output_names": [
+					"_mlp_mlp_0_Gemm_output_0"
+				],
+				"macs_per_inference": "0"
+			},
+			"_mlp_mlp_1_Elu": {
+				"package": "qti.aisw",
+				"type": "ElementWiseNeuron",
+				"tensor_params": {},
+				"scalar_params": {
+					"alpha": {
+						"562": 1.0
+					},
+					"operation": {
+						"306": 0
+					},
+					"packageName": {
+						"1544": "qti.aisw"
+					}
+				},
+				"param_map": {
+					"alpha": 1,
+					"operation": 1,
+					"packageName": 2
+				},
+				"input_names": [
+					"_mlp_mlp_0_Gemm_output_0"
+				],
+				"output_names": [
+					"_mlp_mlp_1_Elu_output_0"
+				],
+				"macs_per_inference": "0"
+			},
+			"_mlp_mlp_2_Gemm": {
+				"package": "qti.aisw",
+				"type": "FullyConnected",
+				"tensor_params": {},
+				"scalar_params": {
+					"packageName": {
+						"1544": "qti.aisw"
+					}
+				},
+				"param_map": {
+					"packageName": 2
+				},
+				"input_names": [
+					"_mlp_mlp_1_Elu_output_0",
+					"mlp_2_weight_permute",
+					"mlp_2_bias"
+				],
+				"output_names": [
+					"_mlp_mlp_2_Gemm_output_0"
+				],
+				"macs_per_inference": "0"
+			},
+			"_mlp_mlp_3_Elu": {
+				"package": "qti.aisw",
+				"type": "ElementWiseNeuron",
+				"tensor_params": {},
+				"scalar_params": {
+					"alpha": {
+						"562": 1.0
+					},
+					"operation": {
+						"306": 0
+					},
+					"packageName": {
+						"1544": "qti.aisw"
+					}
+				},
+				"param_map": {
+					"alpha": 1,
+					"operation": 1,
+					"packageName": 2
+				},
+				"input_names": [
+					"_mlp_mlp_2_Gemm_output_0"
+				],
+				"output_names": [
+					"_mlp_mlp_3_Elu_output_0"
+				],
+				"macs_per_inference": "0"
+			},
+			"_mlp_mlp_4_Gemm": {
+				"package": "qti.aisw",
+				"type": "FullyConnected",
+				"tensor_params": {},
+				"scalar_params": {
+					"packageName": {
+						"1544": "qti.aisw"
+					}
+				},
+				"param_map": {
+					"packageName": 2
+				},
+				"input_names": [
+					"_mlp_mlp_3_Elu_output_0",
+					"mlp_4_weight_permute",
+					"mlp_4_bias"
+				],
+				"output_names": [
+					"_mlp_mlp_4_Gemm_output_0"
+				],
+				"macs_per_inference": "0"
+			},
+			"_mlp_mlp_5_Elu": {
+				"package": "qti.aisw",
+				"type": "ElementWiseNeuron",
+				"tensor_params": {},
+				"scalar_params": {
+					"alpha": {
+						"562": 1.0
+					},
+					"operation": {
+						"306": 0
+					},
+					"packageName": {
+						"1544": "qti.aisw"
+					}
+				},
+				"param_map": {
+					"alpha": 1,
+					"operation": 1,
+					"packageName": 2
+				},
+				"input_names": [
+					"_mlp_mlp_4_Gemm_output_0"
+				],
+				"output_names": [
+					"_mlp_mlp_5_Elu_output_0"
+				],
+				"macs_per_inference": "0"
+			},
+			"_mlp_mlp_6_Gemm": {
+				"package": "qti.aisw",
+				"type": "FullyConnected",
+				"tensor_params": {},
+				"scalar_params": {
+					"packageName": {
+						"1544": "qti.aisw"
+					}
+				},
+				"param_map": {
+					"packageName": 2
+				},
+				"input_names": [
+					"_mlp_mlp_5_Elu_output_0",
+					"mlp_6_weight_permute",
+					"mlp_6_bias"
+				],
+				"output_names": [
+					"output"
+				],
+				"macs_per_inference": "0"
+			}
+		}
+	}
+}

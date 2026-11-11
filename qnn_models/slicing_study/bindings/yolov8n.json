@@ -1,0 +1,128 @@
+{
+  "network": "yolov8n",
+  "ir": {
+    "source": "onnx:yolov8n_nosplit",
+    "quant": "int8"
+  },
+  "_comment": "Three tiles: backbone+FPN neck (ops 0-136), detect-head convs (137-224), DFL decode (225-240). Two measured facts drive it. (1) HTA needs the Split -> 2x Conv1x1 rewrite (optimizations.md #14) before any tile composes at all: sliced straight from yolov8n.onnx, both the whole net and the backbone are rejected with 'unsupported op Split'. (2) With that rewrite the HTA-able prefix runs to op 136, not op 102 where the partitioner cut -- the neck's two Resize ops compose on HTA (15.581 ms for ops 0-136), and the real HTA blocker is the Transpose the converter emits for the detect head's Reshape ops. The cut costs latency and buys lane balance: whole-network is 25.376 ms on the DSP, this slice set is 30.489 ms of critical path but only 7.879 ms of DSP occupancy, with 15.581 ms on HTA and 7.288 ms on CPU. If yolov8n's own latency is the objective and the DSP is free, use one tile instead.",
+  "_provenance": {
+    "study": "qnn_models/slicing_study",
+    "experiment_label": "yolons_k3_neck_dfl",
+    "cut_id": "95eb077a4b72",
+    "source_onnx": "qnn_models/yolov8n_nosplit.onnx",
+    "source_onnx_sha256": "7820f978c4782c4207717cd1186ed6a62df372978a09ff9bfe585f46ca4d5c1b",
+    "boundary_tensors": [
+      "/model.15/cv2/act/Mul_output_0",
+      "/model.22/Concat_1_output_0"
+    ],
+    "journal": "qnn_models/slicing_study/experiments.jsonl",
+    "board_ctx_dir": "/root/slicing_study/ctx",
+    "reproduce": "python3 qnn_models/slicing_study/slice_experiment.py --network yolov8n_nosplit --name yolons_k3_neck_dfl --cut /model.15/cv2/act/Mul_output_0 /model.22/Concat_1_output_0",
+    "statistic": "median of per-sweep median_us, performance governor, CPU cells unmasked",
+    "op_index_space": "ONNX node indices into qnn_models/yolov8n_nosplit.onnx (241 nodes). flow_c's shipped yolov8n.json indexes a 249-op QNN-route IR instead; the tile BOUNDARY agrees across both (see flow_c/README.md), the op numbering does not. Remap before dropping into flow_c."
+  },
+  "bindings": [
+    {
+      "id": 0,
+      "name": "yolov8n_t0",
+      "ops": {
+        "ranges": [
+          [
+            0,
+            136
+          ]
+        ]
+      },
+      "source_onnx": "slicing_study/gen/yolov8n_nosplit/yolons_k3_neck_dfl__95eb077a4b72/tile0.onnx",
+      "backends": {
+        "hta": {
+          "ctx": "ctx_yolons_k3_neck_dfl_t0_int8__hta.bin",
+          "graph": "yolons_k3_neck_dfl_t0",
+          "precision": "int8",
+          "measured_us": 15580.8
+        },
+        "dsp": {
+          "ctx": "ctx_yolons_k3_neck_dfl_t0_int8__dsp.bin",
+          "graph": "yolons_k3_neck_dfl_t0",
+          "precision": "int8",
+          "measured_us": 15321.7
+        },
+        "cpu": {
+          "ctx": "ctx_yolons_k3_neck_dfl_t0_int8__cpu.bin",
+          "graph": "yolons_k3_neck_dfl_t0",
+          "precision": "int8",
+          "measured_us": 43584.8
+        }
+      }
+    },
+    {
+      "id": 1,
+      "name": "yolov8n_t1",
+      "ops": {
+        "ranges": [
+          [
+            137,
+            224
+          ]
+        ]
+      },
+      "depends_on": [
+        0
+      ],
+      "source_onnx": "slicing_study/gen/yolov8n_nosplit/yolons_k3_neck_dfl__95eb077a4b72/tile1.onnx",
+      "backends": {
+        "dsp": {
+          "ctx": "ctx_yolons_k3_neck_dfl_t1_int8__dsp.bin",
+          "graph": "yolons_k3_neck_dfl_t1",
+          "precision": "int8",
+          "measured_us": 7879.3
+        },
+        "cpu": {
+          "ctx": "ctx_yolons_k3_neck_dfl_t1_int8__cpu.bin",
+          "graph": "yolons_k3_neck_dfl_t1",
+          "precision": "int8",
+          "measured_us": 24209.8
+        }
+      },
+      "compose_blocked": {
+        "hta@int8": "unsupported op Transpose"
+      }
+    },
+    {
+      "id": 2,
+      "name": "yolov8n_t2",
+      "ops": {
+        "ranges": [
+          [
+            225,
+            240
+          ]
+        ]
+      },
+      "depends_on": [
+        1
+      ],
+      "source_onnx": "slicing_study/gen/yolov8n_nosplit/yolons_k3_neck_dfl__95eb077a4b72/tile2.onnx",
+      "backends": {
+        "dsp": {
+          "ctx": "ctx_yolons_k3_neck_dfl_t2_int8__dsp.bin",
+          "graph": "yolons_k3_neck_dfl_t2",
+          "precision": "int8",
+          "measured_us": 11861.0
+        },
+        "cpu": {
+          "ctx": "ctx_yolons_k3_neck_dfl_t2_int8__cpu.bin",
+          "graph": "yolons_k3_neck_dfl_t2",
+          "precision": "int8",
+          "measured_us": 7288.2
+        }
+      },
+      "compose_blocked": {
+        "hta@int8": "unsupported op Transpose"
+      }
+    }
+  ],
+  "lowering": [
+    "split_to_conv1x1"
+  ]
+}

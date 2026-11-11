@@ -1,0 +1,213 @@
+{
+ "spec": "networks_yolov8_only_spike",
+ "ops": 212,
+ "rows": [
+  {
+   "solver": "greedy_reserved",
+   "budget": 0,
+   "objective": 628.939,
+   "misses": 0,
+   "wall_s": 0.01,
+   "status": "heuristic",
+   "bound": null
+  },
+  {
+   "solver": "heft",
+   "budget": 0,
+   "objective": 628.142,
+   "misses": 0,
+   "wall_s": 0.01,
+   "status": "heuristic",
+   "bound": null
+  },
+  {
+   "solver": "heft_edf",
+   "budget": 0,
+   "objective": 628.142,
+   "misses": 0,
+   "wall_s": 0.01,
+   "status": "heuristic",
+   "bound": null
+  },
+  {
+   "solver": "cpsat",
+   "budget": 15.0,
+   "objective": 615.81,
+   "misses": 0,
+   "wall_s": 15.5,
+   "status": "FEASIBLE",
+   "bound": 584.79
+  },
+  {
+   "solver": "cpsat",
+   "budget": 60.0,
+   "objective": 615.55,
+   "misses": 0,
+   "wall_s": 60.5,
+   "status": "FEASIBLE",
+   "bound": 584.79
+  },
+  {
+   "solver": "cpsat",
+   "budget": 120.0,
+   "objective": 615.309,
+   "misses": 0,
+   "wall_s": 120.4,
+   "status": "FEASIBLE",
+   "bound": 584.8
+  },
+  {
+   "solver": "cpsat",
+   "budget": 300.0,
+   "objective": 610.716,
+   "misses": 0,
+   "wall_s": 300.5,
+   "status": "FEASIBLE",
+   "bound": 585.74
+  },
+  {
+   "solver": "cpsat",
+   "budget": 600.0,
+   "objective": 610.705,
+   "misses": 0,
+   "wall_s": 600.4,
+   "status": "FEASIBLE",
+   "bound": 597.58
+  },
+  {
+   "solver": "milp:MOSEK",
+   "budget": 15.0,
+   "objective": 628.524,
+   "misses": 0,
+   "wall_s": 26.0,
+   "status": "milp",
+   "bound": null
+  },
+  {
+   "solver": "milp:MOSEK",
+   "budget": 60.0,
+   "objective": 620.029,
+   "misses": 0,
+   "wall_s": 70.0,
+   "status": "milp",
+   "bound": null
+  },
+  {
+   "solver": "milp:MOSEK",
+   "budget": 120.0,
+   "objective": 620.029,
+   "misses": 0,
+   "wall_s": 130.5,
+   "status": "milp",
+   "bound": null
+  },
+  {
+   "solver": "milp:MOSEK",
+   "budget": 300.0,
+   "objective": 615.006,
+   "misses": 0,
+   "wall_s": 312.5,
+   "status": "milp",
+   "bound": null
+  },
+  {
+   "solver": "milp:MOSEK",
+   "budget": 600.0,
+   "objective": 615.006,
+   "misses": 0,
+   "wall_s": 612.2,
+   "status": "milp",
+   "bound": null
+  },
+  {
+   "solver": "milp:HIGHS",
+   "budget": 15.0,
+   "objective": 1707.658,
+   "misses": 0,
+   "wall_s": 27.7,
+   "status": "milp",
+   "bound": null
+  },
+  {
+   "solver": "milp:HIGHS",
+   "budget": 60.0,
+   "objective": 1707.658,
+   "misses": 0,
+   "wall_s": 71.8,
+   "status": "milp",
+   "bound": null
+  },
+  {
+   "solver": "milp:HIGHS",
+   "budget": 120.0,
+   "objective": 1707.658,
+   "misses": 0,
+   "wall_s": 131.1,
+   "status": "milp",
+   "bound": null
+  },
+  {
+   "solver": "milp:HIGHS",
+   "budget": 300.0,
+   "objective": 1707.658,
+   "misses": 0,
+   "wall_s": 313.0,
+   "status": "milp",
+   "bound": null
+  },
+  {
+   "solver": "milp:HIGHS",
+   "budget": 600.0,
+   "objective": 911.557,
+   "misses": 0,
+   "wall_s": 609.3,
+   "status": "milp",
+   "bound": null
+  },
+  {
+   "solver": "milp:SCIPY",
+   "budget": 15.0,
+   "objective": 22096.918,
+   "misses": 0,
+   "wall_s": 24.7,
+   "status": "milp",
+   "bound": null
+  },
+  {
+   "solver": "milp:SCIPY",
+   "budget": 60.0,
+   "objective": 22096.918,
+   "misses": 0,
+   "wall_s": 69.6,
+   "status": "milp",
+   "bound": null
+  },
+  {
+   "solver": "milp:SCIPY",
+   "budget": 120.0,
+   "objective": 22096.918,
+   "misses": 0,
+   "wall_s": 129.1,
+   "status": "milp",
+   "bound": null
+  },
+  {
+   "solver": "milp:SCIPY",
+   "budget": 300.0,
+   "objective": 22096.918,
+   "misses": 0,
+   "wall_s": 309.5,
+   "status": "milp",
+   "bound": null
+  },
+  {
+   "solver": "milp:SCIPY",
+   "budget": 600.0,
+   "objective": 22096.918,
+   "misses": 0,
+   "wall_s": 609.4,
+   "status": "milp",
+   "bound": null
+  }
+ ]
+}

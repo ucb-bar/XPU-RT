@@ -1,0 +1,103 @@
+{
+  "network": "fused_split",
+  "ir": {
+    "source": "pytorch:fused_full",
+    "quant": "int8"
+  },
+  "_comment": "FusedSensorNet cut into its two parallel conv branches and the LSTM tail. The monolith composes on DSP int8 and CPU fp32 only \u2014 HTA rejects the whole graph on the Transpose the Flatten lowers to, and the CPU op package rejects the quantized Reshape in the LSTM tail. Cutting before the Flatten moves both conv branches onto HTA (and CPU int8), which is the point: the tail is 0.37 ms of CPU fp32, so the network stops needing several milliseconds of contended CPU. Sub-DLCs are sliced with onnx.utils.extract_model at the branch outputs; the tail's IR ops are not contiguous because the two branches interleave.",
+  "bindings": [
+    {
+      "id": 0,
+      "name": "fused_vision_conv",
+      "ops": {
+        "ranges": [
+          [
+            0,
+            3
+          ]
+        ]
+      },
+      "source_onnx": "flow_c/gen/convert/tiles/fused_vision_conv.onnx",
+      "backends": {
+        "hta": {
+          "ctx": "ctx_fused_vision_conv__Hta.bin",
+          "graph": "fused_vision_conv",
+          "precision": "int8"
+        },
+        "dsp": {
+          "ctx": "ctx_fused_vision_conv__Dsp.bin",
+          "graph": "fused_vision_conv",
+          "precision": "int8"
+        },
+        "cpu": {
+          "ctx": "ctx_fused_vision_conv__Cpu.bin",
+          "graph": "fused_vision_conv",
+          "precision": "int8"
+        }
+      }
+    },
+    {
+      "id": 1,
+      "name": "fused_depth_conv",
+      "ops": {
+        "ranges": [
+          [
+            6,
+            7
+          ]
+        ]
+      },
+      "source_onnx": "flow_c/gen/convert/tiles/fused_depth_conv.onnx",
+      "backends": {
+        "hta": {
+          "ctx": "ctx_fused_depth_conv__Hta.bin",
+          "graph": "fused_depth_conv",
+          "precision": "int8"
+        },
+        "dsp": {
+          "ctx": "ctx_fused_depth_conv__Dsp.bin",
+          "graph": "fused_depth_conv",
+          "precision": "int8"
+        },
+        "cpu": {
+          "ctx": "ctx_fused_depth_conv__Cpu.bin",
+          "graph": "fused_depth_conv",
+          "precision": "int8"
+        }
+      }
+    },
+    {
+      "id": 2,
+      "name": "fused_tail",
+      "ops": {
+        "ranges": [
+          [
+            4,
+            5
+          ],
+          [
+            8,
+            15
+          ]
+        ]
+      },
+      "depends_on": [
+        0,
+        1
+      ],
+      "source_onnx": "flow_c/gen/convert/tiles/fused_tail_from_conv.onnx",
+      "backends": {
+        "dsp": {
+          "ctx": "ctx_fused_tail_from_conv__Dsp.bin",
+          "graph": "fused_tail_from_conv",
+          "precision": "int8"
+        },
+        "cpu": {
+          "ctx": "ctx_fused_tail_from_conv_fp32__Cpu.bin",
+          "graph": "fused_tail_from_conv",
+          "precision": "fp32"
+        }
+      }
+    }
+  ]
+}

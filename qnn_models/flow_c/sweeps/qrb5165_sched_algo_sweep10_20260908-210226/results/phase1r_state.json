@@ -1,0 +1,1656 @@
+{
+ "dronet_sc_hta": {
+  "id": "dronet_sc_hta",
+  "base": "dronet_sc",
+  "family": "dronet",
+  "rewrite_chain": [
+   "onnxsim",
+   "bn_to_mul_add",
+   "flatten_gemm_to_conv"
+  ],
+  "rationale": "HTA rejects Batchnorm; dronet's BNs follow the residual Add so there is nothing to fold them into, and the Flatten before the two heads is what the converter turns into the Transpose HTA also rejects.",
+  "zoo": "/scratch/dima/rose-infra/RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
+  "rewrite": {
+   "chain": [
+    "onnxsim",
+    "bn_to_mul_add",
+    "flatten_gemm_to_conv"
+   ],
+   "numerics": "preserving",
+   "steps": [
+    {
+     "rewrite": "onnxsim",
+     "numerics": "preserving",
+     "nodes_before": 36,
+     "nodes_after": 28
+    },
+    {
+     "rewrite": "bn_to_mul_add",
+     "numerics": "preserving",
+     "rewritten": 3
+    },
+    {
+     "rewrite": "flatten_gemm_to_conv",
+     "numerics": "preserving",
+     "rewritten": 2,
+     "abandoned": []
+    }
+   ],
+   "nodes": 30,
+   "op_types": {
+    "Conv": 12,
+    "MaxPool": 1,
+    "Mul": 3,
+    "Add": 6,
+    "Relu": 7,
+    "Sigmoid": 1
+   }
+  },
+  "numerics": "preserving",
+  "onnx": "gen/onnx/dronet_sc_hta.onnx",
+  "onnx_bytes": 1248759,
+  "inputs": {
+   "input": [
+    1,
+    3,
+    64,
+    64
+   ]
+  },
+  "graph_json": "gen/ir/dronet_sc_hta/int8/graph.json",
+  "ir_ops": 30,
+  "ir_op_kinds": {
+   "conv2d_s8": 12,
+   "maxpool2d": 1,
+   "mul_s8": 3,
+   "add_s8": 6,
+   "relu": 7,
+   "sigmoid_s8": 1
+  },
+  "ir_source": "scripts/ir_from_onnx.py (graph_json door: the rewritten graph is no longer the PyTorch IR)",
+  "dlc_rc": 0,
+  "dlc_bytes": 1269100,
+  "macs": 3994177,
+  "dlc_input_names": [
+   "input"
+  ],
+  "dlc_input_dims": [
+   [
+    1,
+    64,
+    64,
+    3
+   ]
+  ],
+  "dlc_graph_name": "dronet_sc_hta",
+  "calib": {
+   "n": 10,
+   "seed": 0,
+   "dims": [
+    [
+     1,
+     64,
+     64,
+     3
+    ]
+   ]
+  },
+  "quant_rc": 0,
+  "qdlc_bytes": 346108,
+  "stage": "composed",
+  "compose_board_s": 2.4,
+  "compose": {
+   "hta": {
+    "status": "ok",
+    "precision": "int8",
+    "ctx": "ctx_s10_dronet_sc_hta_int8__Hta.bin",
+    "bytes": 393880,
+    "compose_ms": 95
+   },
+   "dsp": {
+    "status": "ok",
+    "precision": "int8",
+    "ctx": "ctx_s10_dronet_sc_hta_int8__Dsp.bin",
+    "bytes": 332160,
+    "compose_ms": 1202
+   },
+   "cpu": {
+    "status": "ok",
+    "precision": "fp32",
+    "ctx": "ctx_s10_dronet_sc_hta_fp32__Cpu.bin",
+    "bytes": 1263656,
+    "compose_ms": 47
+   },
+   "cpu@int8": {
+    "status": "ok",
+    "precision": "int8",
+    "ctx": "ctx_s10_dronet_sc_hta_int8__CpuInt8.bin",
+    "bytes": 336904,
+    "compose_ms": 36
+   },
+   "gpu": {
+    "status": "ok",
+    "precision": "fp16",
+    "ctx": "ctx_s10_dronet_sc_hta_fp16__Gpu.bin",
+    "bytes": 1381312,
+    "compose_ms": 601
+   }
+  },
+  "board_df": "/dev/root        98G   55G   44G  56% /",
+  "compose_stdout_tail": "RESULT hta OK 393880 95\nRESULT dsp OK 332160 1202\nRESULT cpu OK 1263656 47\nRESULT cpu@int8 OK 336904 36\nRESULT gpu OK 1381312 601\n/dev/root        98G   55G   44G  56% /\n",
+  "build_s": 9.1
+ },
+ "dronet_sa_hta": {
+  "id": "dronet_sa_hta",
+  "base": "dronet_sa",
+  "family": "dronet",
+  "rewrite_chain": [
+   "onnxsim",
+   "bn_to_mul_add",
+   "flatten_gemm_to_conv"
+  ],
+  "rationale": "HTA rejects Batchnorm; dronet's BNs follow the residual Add so there is nothing to fold them into, and the Flatten before the two heads is what the converter turns into the Transpose HTA also rejects.",
+  "zoo": "/scratch/dima/rose-infra/RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
+  "rewrite": {
+   "chain": [
+    "onnxsim",
+    "bn_to_mul_add",
+    "flatten_gemm_to_conv"
+   ],
+   "numerics": "preserving",
+   "steps": [
+    {
+     "rewrite": "onnxsim",
+     "numerics": "preserving",
+     "nodes_before": 36,
+     "nodes_after": 28
+    },
+    {
+     "rewrite": "bn_to_mul_add",
+     "numerics": "preserving",
+     "rewritten": 3
+    },
+    {
+     "rewrite": "flatten_gemm_to_conv",
+     "numerics": "preserving",
+     "rewritten": 2,
+     "abandoned": []
+    }
+   ],
+   "nodes": 30,
+   "op_types": {
+    "Conv": 12,
+    "MaxPool": 1,
+    "Mul": 3,
+    "Add": 6,
+    "Relu": 7,
+    "Sigmoid": 1
+   }
+  },
+  "numerics": "preserving",
+  "onnx": "gen/onnx/dronet_sa_hta.onnx",
+  "onnx_bytes": 1242615,
+  "inputs": {
+   "input": [
+    1,
+    3,
+    32,
+    32
+   ]
+  },
+  "graph_json": "gen/ir/dronet_sa_hta/int8/graph.json",
+  "ir_ops": 30,
+  "ir_op_kinds": {
+   "conv2d_s8": 12,
+   "maxpool2d": 1,
+   "mul_s8": 3,
+   "add_s8": 6,
+   "relu": 7,
+   "sigmoid_s8": 1
+  },
+  "ir_source": "scripts/ir_from_onnx.py (graph_json door: the rewritten graph is no longer the PyTorch IR)",
+  "dlc_rc": 0,
+  "dlc_bytes": 1266028,
+  "macs": 998081,
+  "dlc_input_names": [
+   "input"
+  ],
+  "dlc_input_dims": [
+   [
+    1,
+    32,
+    32,
+    3
+   ]
+  ],
+  "dlc_graph_name": "dronet_sa_hta",
+  "calib": {
+   "n": 10,
+   "seed": 0,
+   "dims": [
+    [
+     1,
+     32,
+     32,
+     3
+    ]
+   ]
+  },
+  "quant_rc": 0,
+  "qdlc_bytes": 345340,
+  "stage": "composed",
+  "compose_board_s": 2.4,
+  "compose": {
+   "hta": {
+    "status": "ok",
+    "precision": "int8",
+    "ctx": "ctx_s10_dronet_sa_hta_int8__Hta.bin",
+    "bytes": 361112,
+    "compose_ms": 71
+   },
+   "dsp": {
+    "status": "ok",
+    "precision": "int8",
+    "ctx": "ctx_s10_dronet_sa_hta_int8__Dsp.bin",
+    "bytes": 331392,
+    "compose_ms": 1205
+   },
+   "cpu": {
+    "status": "ok",
+    "precision": "fp32",
+    "ctx": "ctx_s10_dronet_sa_hta_fp32__Cpu.bin",
+    "bytes": 1260584,
+    "compose_ms": 51
+   },
+   "cpu@int8": {
+    "status": "ok",
+    "precision": "int8",
+    "ctx": "ctx_s10_dronet_sa_hta_int8__CpuInt8.bin",
+    "bytes": 336136,
+    "compose_ms": 45
+   },
+   "gpu": {
+    "status": "ok",
+    "precision": "fp16",
+    "ctx": "ctx_s10_dronet_sa_hta_fp16__Gpu.bin",
+    "bytes": 1369560,
+    "compose_ms": 568
+   }
+  },
+  "board_df": "/dev/root        98G   55G   44G  56% /",
+  "compose_stdout_tail": "RESULT hta OK 361112 71\nRESULT dsp OK 331392 1205\nRESULT cpu OK 1260584 51\nRESULT cpu@int8 OK 336136 45\nRESULT gpu OK 1369560 568\n/dev/root        98G   55G   44G  56% /\n",
+  "build_s": 7.5
+ },
+ "dronet_sb_hta": {
+  "id": "dronet_sb_hta",
+  "base": "dronet_sb",
+  "family": "dronet",
+  "rewrite_chain": [
+   "onnxsim",
+   "bn_to_mul_add",
+   "flatten_gemm_to_conv"
+  ],
+  "rationale": "HTA rejects Batchnorm; dronet's BNs follow the residual Add so there is nothing to fold them into, and the Flatten before the two heads is what the converter turns into the Transpose HTA also rejects.",
+  "zoo": "/scratch/dima/rose-infra/RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
+  "rewrite": {
+   "chain": [
+    "onnxsim",
+    "bn_to_mul_add",
+    "flatten_gemm_to_conv"
+   ],
+   "numerics": "preserving",
+   "steps": [
+    {
+     "rewrite": "onnxsim",
+     "numerics": "preserving",
+     "nodes_before": 36,
+     "nodes_after": 28
+    },
+    {
+     "rewrite": "bn_to_mul_add",
+     "numerics": "preserving",
+     "rewritten": 3
+    },
+    {
+     "rewrite": "flatten_gemm_to_conv",
+     "numerics": "preserving",
+     "rewritten": 2,
+     "abandoned": []
+    }
+   ],
+   "nodes": 30,
+   "op_types": {
+    "Conv": 12,
+    "MaxPool": 1,
+    "Mul": 3,
+    "Add": 6,
+    "Relu": 7,
+    "Sigmoid": 1
+   }
+  },
+  "numerics": "preserving",
+  "onnx": "gen/onnx/dronet_sb_hta.onnx",
+  "onnx_bytes": 1248759,
+  "inputs": {
+   "input": [
+    1,
+    3,
+    48,
+    48
+   ]
+  },
+  "graph_json": "gen/ir/dronet_sb_hta/int8/graph.json",
+  "ir_ops": 30,
+  "ir_op_kinds": {
+   "conv2d_s8": 12,
+   "maxpool2d": 1,
+   "mul_s8": 3,
+   "add_s8": 6,
+   "relu": 7,
+   "sigmoid_s8": 1
+  },
+  "ir_source": "scripts/ir_from_onnx.py (graph_json door: the rewritten graph is no longer the PyTorch IR)",
+  "dlc_rc": 0,
+  "dlc_bytes": 1269100,
+  "macs": 2648897,
+  "dlc_input_names": [
+   "input"
+  ],
+  "dlc_input_dims": [
+   [
+    1,
+    48,
+    48,
+    3
+   ]
+  ],
+  "dlc_graph_name": "dronet_sb_hta",
+  "calib": {
+   "n": 10,
+   "seed": 0,
+   "dims": [
+    [
+     1,
+     48,
+     48,
+     3
+    ]
+   ]
+  },
+  "quant_rc": 0,
+  "qdlc_bytes": 346108,
+  "stage": "composed",
+  "compose_board_s": 2.4,
+  "compose": {
+   "hta": {
+    "status": "ok",
+    "precision": "int8",
+    "ctx": "ctx_s10_dronet_sb_hta_int8__Hta.bin",
+    "bytes": 389784,
+    "compose_ms": 78
+   },
+   "dsp": {
+    "status": "ok",
+    "precision": "int8",
+    "ctx": "ctx_s10_dronet_sb_hta_int8__Dsp.bin",
+    "bytes": 332160,
+    "compose_ms": 1250
+   },
+   "cpu": {
+    "status": "ok",
+    "precision": "fp32",
+    "ctx": "ctx_s10_dronet_sb_hta_fp32__Cpu.bin",
+    "bytes": 1263656,
+    "compose_ms": 66
+   },
+   "cpu@int8": {
+    "status": "ok",
+    "precision": "int8",
+    "ctx": "ctx_s10_dronet_sb_hta_int8__CpuInt8.bin",
+    "bytes": 336904,
+    "compose_ms": 45
+   },
+   "gpu": {
+    "status": "ok",
+    "precision": "fp16",
+    "ctx": "ctx_s10_dronet_sb_hta_fp16__Gpu.bin",
+    "bytes": 1381312,
+    "compose_ms": 568
+   }
+  },
+  "board_df": "/dev/root        98G   55G   44G  56% /",
+  "compose_stdout_tail": "RESULT hta OK 389784 78\nRESULT dsp OK 332160 1250\nRESULT cpu OK 1263656 66\nRESULT cpu@int8 OK 336904 45\nRESULT gpu OK 1381312 568\n/dev/root        98G   55G   44G  56% /\n",
+  "build_s": 7.0
+ },
+ "dronet_sd_hta": {
+  "id": "dronet_sd_hta",
+  "base": "dronet_sd",
+  "family": "dronet",
+  "rewrite_chain": [
+   "onnxsim",
+   "bn_to_mul_add",
+   "flatten_gemm_to_conv"
+  ],
+  "rationale": "HTA rejects Batchnorm; dronet's BNs follow the residual Add so there is nothing to fold them into, and the Flatten before the two heads is what the converter turns into the Transpose HTA also rejects.",
+  "zoo": "/scratch/dima/rose-infra/RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
+  "rewrite": {
+   "chain": [
+    "onnxsim",
+    "bn_to_mul_add",
+    "flatten_gemm_to_conv"
+   ],
+   "numerics": "preserving",
+   "steps": [
+    {
+     "rewrite": "onnxsim",
+     "numerics": "preserving",
+     "nodes_before": 36,
+     "nodes_after": 28
+    },
+    {
+     "rewrite": "bn_to_mul_add",
+     "numerics": "preserving",
+     "rewritten": 3
+    },
+    {
+     "rewrite": "flatten_gemm_to_conv",
+     "numerics": "preserving",
+     "rewritten": 2,
+     "abandoned": []
+    }
+   ],
+   "nodes": 30,
+   "op_types": {
+    "Conv": 12,
+    "MaxPool": 1,
+    "Mul": 3,
+    "Add": 6,
+    "Relu": 7,
+    "Sigmoid": 1
+   }
+  },
+  "numerics": "preserving",
+  "onnx": "gen/onnx/dronet_sd_hta.onnx",
+  "onnx_bytes": 1258999,
+  "inputs": {
+   "input": [
+    1,
+    3,
+    80,
+    80
+   ]
+  },
+  "graph_json": "gen/ir/dronet_sd_hta/int8/graph.json",
+  "ir_ops": 30,
+  "ir_op_kinds": {
+   "conv2d_s8": 12,
+   "maxpool2d": 1,
+   "mul_s8": 3,
+   "add_s8": 6,
+   "relu": 7,
+   "sigmoid_s8": 1
+  },
+  "ir_source": "scripts/ir_from_onnx.py (graph_json door: the rewritten graph is no longer the PyTorch IR)",
+  "dlc_rc": 0,
+  "dlc_bytes": 1274220,
+  "macs": 6874049,
+  "dlc_input_names": [
+   "input"
+  ],
+  "dlc_input_dims": [
+   [
+    1,
+    80,
+    80,
+    3
+   ]
+  ],
+  "dlc_graph_name": "dronet_sd_hta",
+  "calib": {
+   "n": 10,
+   "seed": 0,
+   "dims": [
+    [
+     1,
+     80,
+     80,
+     3
+    ]
+   ]
+  },
+  "quant_rc": 0,
+  "qdlc_bytes": 347388,
+  "stage": "composed",
+  "compose_board_s": 2.4,
+  "compose": {
+   "hta": {
+    "status": "ok",
+    "precision": "int8",
+    "ctx": "ctx_s10_dronet_sd_hta_int8__Hta.bin",
+    "bytes": 443032,
+    "compose_ms": 75
+   },
+   "dsp": {
+    "status": "ok",
+    "precision": "int8",
+    "ctx": "ctx_s10_dronet_sd_hta_int8__Dsp.bin",
+    "bytes": 333440,
+    "compose_ms": 1205
+   },
+   "cpu": {
+    "status": "ok",
+    "precision": "fp32",
+    "ctx": "ctx_s10_dronet_sd_hta_fp32__Cpu.bin",
+    "bytes": 1268776,
+    "compose_ms": 75
+   },
+   "cpu@int8": {
+    "status": "ok",
+    "precision": "int8",
+    "ctx": "ctx_s10_dronet_sd_hta_int8__CpuInt8.bin",
+    "bytes": 338192,
+    "compose_ms": 35
+   },
+   "gpu": {
+    "status": "ok",
+    "precision": "fp16",
+    "ctx": "ctx_s10_dronet_sd_hta_fp16__Gpu.bin",
+    "bytes": 1401896,
+    "compose_ms": 566
+   }
+  },
+  "board_df": "/dev/root        98G   55G   44G  56% /",
+  "compose_stdout_tail": "RESULT hta OK 443032 75\nRESULT dsp OK 333440 1205\nRESULT cpu OK 1268776 75\nRESULT cpu@int8 OK 338192 35\nRESULT gpu OK 1401896 566\n/dev/root        98G   55G   44G  56% /\n",
+  "build_s": 7.2
+ },
+ "dronet_se_hta": {
+  "id": "dronet_se_hta",
+  "base": "dronet_se",
+  "family": "dronet",
+  "rewrite_chain": [
+   "onnxsim",
+   "bn_to_mul_add",
+   "flatten_gemm_to_conv"
+  ],
+  "rationale": "HTA rejects Batchnorm; dronet's BNs follow the residual Add so there is nothing to fold them into, and the Flatten before the two heads is what the converter turns into the Transpose HTA also rejects.",
+  "zoo": "/scratch/dima/rose-infra/RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
+  "rewrite": {
+   "chain": [
+    "onnxsim",
+    "bn_to_mul_add",
+    "flatten_gemm_to_conv"
+   ],
+   "numerics": "preserving",
+   "steps": [
+    {
+     "rewrite": "onnxsim",
+     "numerics": "preserving",
+     "nodes_before": 28,
+     "nodes_after": 28
+    },
+    {
+     "rewrite": "bn_to_mul_add",
+     "numerics": "preserving",
+     "rewritten": 3
+    },
+    {
+     "rewrite": "flatten_gemm_to_conv",
+     "numerics": "preserving",
+     "rewritten": 2,
+     "abandoned": []
+    }
+   ],
+   "nodes": 30,
+   "op_types": {
+    "Conv": 12,
+    "MaxPool": 1,
+    "Mul": 3,
+    "Add": 6,
+    "Relu": 7,
+    "Sigmoid": 1
+   }
+  },
+  "numerics": "preserving",
+  "onnx": "gen/onnx/dronet_se_hta.onnx",
+  "onnx_bytes": 1274894,
+  "inputs": {
+   "input": [
+    1,
+    3,
+    112,
+    112
+   ]
+  },
+  "graph_json": "gen/ir/dronet_se_hta/int8/graph.json",
+  "ir_ops": 30,
+  "ir_op_kinds": {
+   "conv2d_s8": 12,
+   "maxpool2d": 1,
+   "mul_s8": 3,
+   "add_s8": 6,
+   "relu": 7,
+   "sigmoid_s8": 1
+  },
+  "ir_source": "scripts/ir_from_onnx.py (graph_json door: the rewritten graph is no longer the PyTorch IR)",
+  "dlc_rc": 0,
+  "dlc_bytes": 1284460,
+  "macs": 13130017,
+  "dlc_input_names": [
+   "input"
+  ],
+  "dlc_input_dims": [
+   [
+    1,
+    112,
+    112,
+    3
+   ]
+  ],
+  "dlc_graph_name": "dronet_se_hta",
+  "calib": {
+   "n": 10,
+   "seed": 0,
+   "dims": [
+    [
+     1,
+     112,
+     112,
+     3
+    ]
+   ]
+  },
+  "quant_rc": 0,
+  "qdlc_bytes": 351844,
+  "stage": "composed",
+  "compose_board_s": 2.4,
+  "compose": {
+   "hta": {
+    "status": "ok",
+    "precision": "int8",
+    "ctx": "ctx_s10_dronet_se_hta_int8__Hta.bin",
+    "bytes": 553792,
+    "compose_ms": 75
+   },
+   "dsp": {
+    "status": "ok",
+    "precision": "int8",
+    "ctx": "ctx_s10_dronet_se_hta_int8__Dsp.bin",
+    "bytes": 337952,
+    "compose_ms": 1207
+   },
+   "cpu": {
+    "status": "ok",
+    "precision": "fp32",
+    "ctx": "ctx_s10_dronet_se_hta_fp32__Cpu.bin",
+    "bytes": 1278720,
+    "compose_ms": 52
+   },
+   "cpu@int8": {
+    "status": "ok",
+    "precision": "int8",
+    "ctx": "ctx_s10_dronet_se_hta_int8__CpuInt8.bin",
+    "bytes": 341728,
+    "compose_ms": 41
+   },
+   "gpu": {
+    "status": "ok",
+    "precision": "fp16",
+    "ctx": "ctx_s10_dronet_se_hta_fp16__Gpu.bin",
+    "bytes": 1438104,
+    "compose_ms": 593
+   }
+  },
+  "board_df": "/dev/root        98G   55G   44G  56% /",
+  "compose_stdout_tail": "RESULT hta OK 553792 75\nRESULT dsp OK 337952 1207\nRESULT cpu OK 1278720 52\nRESULT cpu@int8 OK 341728 41\nRESULT gpu OK 1438104 593\n/dev/root        98G   55G   44G  56% /\n",
+  "build_s": 7.3
+ },
+ "dronet_sf_hta": {
+  "id": "dronet_sf_hta",
+  "base": "dronet_sf",
+  "family": "dronet",
+  "rewrite_chain": [
+   "onnxsim",
+   "bn_to_mul_add",
+   "flatten_gemm_to_conv"
+  ],
+  "rationale": "HTA rejects Batchnorm; dronet's BNs follow the residual Add so there is nothing to fold them into, and the Flatten before the two heads is what the converter turns into the Transpose HTA also rejects.",
+  "zoo": "/scratch/dima/rose-infra/RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
+  "rewrite": {
+   "chain": [
+    "onnxsim",
+    "bn_to_mul_add",
+    "flatten_gemm_to_conv"
+   ],
+   "numerics": "preserving",
+   "steps": [
+    {
+     "rewrite": "onnxsim",
+     "numerics": "preserving",
+     "nodes_before": 36,
+     "nodes_after": 28
+    },
+    {
+     "rewrite": "bn_to_mul_add",
+     "numerics": "preserving",
+     "rewritten": 3
+    },
+    {
+     "rewrite": "flatten_gemm_to_conv",
+     "numerics": "preserving",
+     "rewritten": 2,
+     "abandoned": []
+    }
+   ],
+   "nodes": 30,
+   "op_types": {
+    "Conv": 12,
+    "MaxPool": 1,
+    "Mul": 3,
+    "Add": 6,
+    "Relu": 7,
+    "Sigmoid": 1
+   }
+  },
+  "numerics": "preserving",
+  "onnx": "gen/onnx/dronet_sf_hta.onnx",
+  "onnx_bytes": 1273337,
+  "inputs": {
+   "input": [
+    1,
+    3,
+    128,
+    128
+   ]
+  },
+  "graph_json": "gen/ir/dronet_sf_hta/int8/graph.json",
+  "ir_ops": 30,
+  "ir_op_kinds": {
+   "conv2d_s8": 12,
+   "maxpool2d": 1,
+   "mul_s8": 3,
+   "add_s8": 6,
+   "relu": 7,
+   "sigmoid_s8": 1
+  },
+  "ir_source": "scripts/ir_from_onnx.py (graph_json door: the rewritten graph is no longer the PyTorch IR)",
+  "dlc_rc": 0,
+  "dlc_bytes": 1281388,
+  "macs": 15980609,
+  "dlc_input_names": [
+   "input"
+  ],
+  "dlc_input_dims": [
+   [
+    1,
+    128,
+    128,
+    3
+   ]
+  ],
+  "dlc_graph_name": "dronet_sf_hta",
+  "calib": {
+   "n": 10,
+   "seed": 0,
+   "dims": [
+    [
+     1,
+     128,
+     128,
+     3
+    ]
+   ]
+  },
+  "quant_rc": 0,
+  "qdlc_bytes": 349180,
+  "stage": "composed",
+  "compose_board_s": 2.4,
+  "compose": {
+   "hta": {
+    "status": "ok",
+    "precision": "int8",
+    "ctx": "ctx_s10_dronet_sf_hta_int8__Hta.bin",
+    "bytes": 524952,
+    "compose_ms": 78
+   },
+   "dsp": {
+    "status": "ok",
+    "precision": "int8",
+    "ctx": "ctx_s10_dronet_sf_hta_int8__Dsp.bin",
+    "bytes": 335232,
+    "compose_ms": 1218
+   },
+   "cpu": {
+    "status": "ok",
+    "precision": "fp32",
+    "ctx": "ctx_s10_dronet_sf_hta_fp32__Cpu.bin",
+    "bytes": 1275944,
+    "compose_ms": 50
+   },
+   "cpu@int8": {
+    "status": "ok",
+    "precision": "int8",
+    "ctx": "ctx_s10_dronet_sf_hta_int8__CpuInt8.bin",
+    "bytes": 339976,
+    "compose_ms": 43
+   },
+   "gpu": {
+    "status": "ok",
+    "precision": "fp16",
+    "ctx": "ctx_s10_dronet_sf_hta_fp16__Gpu.bin",
+    "bytes": 1430464,
+    "compose_ms": 572
+   }
+  },
+  "board_df": "/dev/root        98G   55G   44G  56% /",
+  "compose_stdout_tail": "RESULT hta OK 524952 78\nRESULT dsp OK 335232 1218\nRESULT cpu OK 1275944 50\nRESULT cpu@int8 OK 339976 43\nRESULT gpu OK 1430464 572\n/dev/root        98G   55G   44G  56% /\n",
+  "build_s": 7.8
+ },
+ "dronet_sg_hta": {
+  "id": "dronet_sg_hta",
+  "base": "dronet_sg",
+  "family": "dronet",
+  "rewrite_chain": [
+   "onnxsim",
+   "bn_to_mul_add",
+   "flatten_gemm_to_conv"
+  ],
+  "rationale": "HTA rejects Batchnorm; dronet's BNs follow the residual Add so there is nothing to fold them into, and the Flatten before the two heads is what the converter turns into the Transpose HTA also rejects.",
+  "zoo": "/scratch/dima/rose-infra/RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
+  "rewrite": {
+   "chain": [
+    "onnxsim",
+    "bn_to_mul_add",
+    "flatten_gemm_to_conv"
+   ],
+   "numerics": "preserving",
+   "steps": [
+    {
+     "rewrite": "onnxsim",
+     "numerics": "preserving",
+     "nodes_before": 36,
+     "nodes_after": 28
+    },
+    {
+     "rewrite": "bn_to_mul_add",
+     "numerics": "preserving",
+     "rewritten": 3
+    },
+    {
+     "rewrite": "flatten_gemm_to_conv",
+     "numerics": "preserving",
+     "rewritten": 2,
+     "abandoned": []
+    }
+   ],
+   "nodes": 30,
+   "op_types": {
+    "Conv": 12,
+    "MaxPool": 1,
+    "Mul": 3,
+    "Add": 6,
+    "Relu": 7,
+    "Sigmoid": 1
+   }
+  },
+  "numerics": "preserving",
+  "onnx": "gen/onnx/dronet_sg_hta.onnx",
+  "onnx_bytes": 1291769,
+  "inputs": {
+   "input": [
+    1,
+    3,
+    144,
+    144
+   ]
+  },
+  "graph_json": "gen/ir/dronet_sg_hta/int8/graph.json",
+  "ir_ops": 30,
+  "ir_op_kinds": {
+   "conv2d_s8": 12,
+   "maxpool2d": 1,
+   "mul_s8": 3,
+   "add_s8": 6,
+   "relu": 7,
+   "sigmoid_s8": 1
+  },
+  "ir_source": "scripts/ir_from_onnx.py (graph_json door: the rewritten graph is no longer the PyTorch IR)",
+  "dlc_rc": 0,
+  "dlc_bytes": 1290604,
+  "macs": 21318593,
+  "dlc_input_names": [
+   "input"
+  ],
+  "dlc_input_dims": [
+   [
+    1,
+    144,
+    144,
+    3
+   ]
+  ],
+  "dlc_graph_name": "dronet_sg_hta",
+  "calib": {
+   "n": 10,
+   "seed": 0,
+   "dims": [
+    [
+     1,
+     144,
+     144,
+     3
+    ]
+   ]
+  },
+  "quant_rc": 0,
+  "qdlc_bytes": 351460,
+  "stage": "composed",
+  "compose_board_s": 2.4,
+  "compose": {
+   "hta": {
+    "status": "ok",
+    "precision": "int8",
+    "ctx": "ctx_s10_dronet_sg_hta_int8__Hta.bin",
+    "bytes": 615064,
+    "compose_ms": 74
+   },
+   "dsp": {
+    "status": "ok",
+    "precision": "int8",
+    "ctx": "ctx_s10_dronet_sg_hta_int8__Dsp.bin",
+    "bytes": 337536,
+    "compose_ms": 1206
+   },
+   "cpu": {
+    "status": "ok",
+    "precision": "fp32",
+    "ctx": "ctx_s10_dronet_sg_hta_fp32__Cpu.bin",
+    "bytes": 1285160,
+    "compose_ms": 50
+   },
+   "cpu@int8": {
+    "status": "ok",
+    "precision": "int8",
+    "ctx": "ctx_s10_dronet_sg_hta_int8__CpuInt8.bin",
+    "bytes": 342280,
+    "compose_ms": 35
+   },
+   "gpu": {
+    "status": "ok",
+    "precision": "fp16",
+    "ctx": "ctx_s10_dronet_sg_hta_fp16__Gpu.bin",
+    "bytes": 1467328,
+    "compose_ms": 573
+   }
+  },
+  "board_df": "/dev/root        98G   55G   44G  56% /",
+  "compose_stdout_tail": "RESULT hta OK 615064 74\nRESULT dsp OK 337536 1206\nRESULT cpu OK 1285160 50\nRESULT cpu@int8 OK 342280 35\nRESULT gpu OK 1467328 573\n/dev/root        98G   55G   44G  56% /\n",
+  "build_s": 8.7
+ },
+ "yolov8_nano_sc_hta": {
+  "id": "yolov8_nano_sc_hta",
+  "base": "yolov8_nano_sc",
+  "family": "yolov8_nano",
+  "rewrite_chain": [
+   "onnxsim",
+   "channel_slice_to_conv1x1"
+  ],
+  "rationale": "HTA rejects StridedSlice, which is how the converter lowers the C2f channel chunk that modelblaster exports as a Slice pair. The 1x1 selector convolution computes the same tensor with an op HTA has.",
+  "zoo": "/scratch/dima/rose-infra/RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
+  "rewrite": {
+   "chain": [
+    "onnxsim",
+    "channel_slice_to_conv1x1"
+   ],
+   "numerics": "preserving",
+   "steps": [
+    {
+     "rewrite": "onnxsim",
+     "numerics": "preserving",
+     "nodes_before": 318,
+     "nodes_after": 220
+    },
+    {
+     "rewrite": "channel_slice_to_conv1x1",
+     "numerics": "preserving",
+     "rewritten": 16,
+     "skipped": [],
+     "n_skipped": 0
+    }
+   ],
+   "nodes": 220,
+   "op_types": {
+    "Conv": 79,
+    "Sigmoid": 57,
+    "Mul": 57,
+    "Add": 6,
+    "Concat": 16,
+    "MaxPool": 3,
+    "Resize": 2
+   }
+  },
+  "numerics": "preserving",
+  "onnx": "gen/onnx/yolov8_nano_sc_hta.onnx",
+  "onnx_bytes": 13414227,
+  "inputs": {
+   "input": [
+    1,
+    3,
+    128,
+    128
+   ]
+  },
+  "graph_json": "gen/ir/yolov8_nano_sc_hta/int8/graph.json",
+  "ir_ops": 220,
+  "ir_op_kinds": {
+   "conv2d_s8": 79,
+   "sigmoid_s8": 57,
+   "mul_s8": 57,
+   "add_s8": 6,
+   "concat": 16,
+   "maxpool2d": 3,
+   "resize": 2
+  },
+  "ir_source": "scripts/ir_from_onnx.py (graph_json door: the rewritten graph is no longer the PyTorch IR)",
+  "dlc_rc": 0,
+  "dlc_bytes": 13161940,
+  "macs": 184400896,
+  "dlc_input_names": [
+   "input"
+  ],
+  "dlc_input_dims": [
+   [
+    1,
+    128,
+    128,
+    3
+   ]
+  ],
+  "dlc_graph_name": "yolov8_nano_sc_hta",
+  "calib": {
+   "n": 10,
+   "seed": 0,
+   "dims": [
+    [
+     1,
+     128,
+     128,
+     3
+    ]
+   ]
+  },
+  "quant_rc": 0,
+  "qdlc_bytes": 3451780,
+  "stage": "composed",
+  "compose_board_s": 3.2,
+  "compose": {
+   "hta": {
+    "status": "ok",
+    "precision": "int8",
+    "ctx": "ctx_s10_yolov8_nano_sc_hta_int8__Hta.bin",
+    "bytes": 4645688,
+    "compose_ms": 335
+   },
+   "dsp": {
+    "status": "ok",
+    "precision": "int8",
+    "ctx": "ctx_s10_yolov8_nano_sc_hta_int8__Dsp.bin",
+    "bytes": 3525352,
+    "compose_ms": 1489
+   },
+   "cpu": {
+    "status": "ok",
+    "precision": "fp32",
+    "ctx": "ctx_s10_yolov8_nano_sc_hta_fp32__Cpu.bin",
+    "bytes": 13145712,
+    "compose_ms": 161
+   },
+   "cpu@int8": {
+    "status": "ok",
+    "precision": "int8",
+    "ctx": "ctx_s10_yolov8_nano_sc_hta_int8__CpuInt8.bin",
+    "bytes": 3430256,
+    "compose_ms": 73
+   },
+   "gpu": {
+    "status": "ok",
+    "precision": "fp16",
+    "ctx": "ctx_s10_yolov8_nano_sc_hta_fp16__Gpu.bin",
+    "bytes": 13750152,
+    "compose_ms": 718
+   }
+  },
+  "board_df": "/dev/root        98G   55G   44G  56% /",
+  "compose_stdout_tail": "RESULT hta OK 4645688 335\nRESULT dsp OK 3525352 1489\nRESULT cpu OK 13145712 161\nRESULT cpu@int8 OK 3430256 73\nRESULT gpu OK 13750152 718\n/dev/root        98G   55G   44G  56% /\n",
+  "build_s": 13.6
+ },
+ "yolov8_nano_se_hta": {
+  "id": "yolov8_nano_se_hta",
+  "base": "yolov8_nano_se",
+  "family": "yolov8_nano",
+  "rewrite_chain": [
+   "onnxsim",
+   "channel_slice_to_conv1x1"
+  ],
+  "rationale": "HTA rejects StridedSlice, which is how the converter lowers the C2f channel chunk that modelblaster exports as a Slice pair. The 1x1 selector convolution computes the same tensor with an op HTA has.",
+  "zoo": "/scratch/dima/rose-infra/RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
+  "rewrite": {
+   "chain": [
+    "onnxsim",
+    "channel_slice_to_conv1x1"
+   ],
+   "numerics": "preserving",
+   "steps": [
+    {
+     "rewrite": "onnxsim",
+     "numerics": "preserving",
+     "nodes_before": 318,
+     "nodes_after": 220
+    },
+    {
+     "rewrite": "channel_slice_to_conv1x1",
+     "numerics": "preserving",
+     "rewritten": 16,
+     "skipped": [],
+     "n_skipped": 0
+    }
+   ],
+   "nodes": 220,
+   "op_types": {
+    "Conv": 79,
+    "Sigmoid": 57,
+    "Mul": 57,
+    "Add": 6,
+    "Concat": 16,
+    "MaxPool": 3,
+    "Resize": 2
+   }
+  },
+  "numerics": "preserving",
+  "onnx": "gen/onnx/yolov8_nano_se_hta.onnx",
+  "onnx_bytes": 13414227,
+  "inputs": {
+   "input": [
+    1,
+    3,
+    192,
+    192
+   ]
+  },
+  "graph_json": "gen/ir/yolov8_nano_se_hta/int8/graph.json",
+  "ir_ops": 220,
+  "ir_op_kinds": {
+   "conv2d_s8": 79,
+   "sigmoid_s8": 57,
+   "mul_s8": 57,
+   "add_s8": 6,
+   "concat": 16,
+   "maxpool2d": 3,
+   "resize": 2
+  },
+  "ir_source": "scripts/ir_from_onnx.py (graph_json door: the rewritten graph is no longer the PyTorch IR)",
+  "dlc_rc": 0,
+  "dlc_bytes": 13161940,
+  "macs": 414902016,
+  "dlc_input_names": [
+   "input"
+  ],
+  "dlc_input_dims": [
+   [
+    1,
+    192,
+    192,
+    3
+   ]
+  ],
+  "dlc_graph_name": "yolov8_nano_se_hta",
+  "calib": {
+   "n": 10,
+   "seed": 0,
+   "dims": [
+    [
+     1,
+     192,
+     192,
+     3
+    ]
+   ]
+  },
+  "quant_rc": 0,
+  "qdlc_bytes": 3451780,
+  "stage": "composed",
+  "compose_board_s": 4.2,
+  "compose": {
+   "hta": {
+    "status": "ok",
+    "precision": "int8",
+    "ctx": "ctx_s10_yolov8_nano_se_hta_int8__Hta.bin",
+    "bytes": 5448504,
+    "compose_ms": 350
+   },
+   "dsp": {
+    "status": "ok",
+    "precision": "int8",
+    "ctx": "ctx_s10_yolov8_nano_se_hta_int8__Dsp.bin",
+    "bytes": 3525352,
+    "compose_ms": 2389
+   },
+   "cpu": {
+    "status": "ok",
+    "precision": "fp32",
+    "ctx": "ctx_s10_yolov8_nano_se_hta_fp32__Cpu.bin",
+    "bytes": 13145712,
+    "compose_ms": 155
+   },
+   "cpu@int8": {
+    "status": "ok",
+    "precision": "int8",
+    "ctx": "ctx_s10_yolov8_nano_se_hta_int8__CpuInt8.bin",
+    "bytes": 3430256,
+    "compose_ms": 77
+   },
+   "gpu": {
+    "status": "ok",
+    "precision": "fp16",
+    "ctx": "ctx_s10_yolov8_nano_se_hta_fp16__Gpu.bin",
+    "bytes": 13750224,
+    "compose_ms": 755
+   }
+  },
+  "board_df": "/dev/root        98G   55G   44G  56% /",
+  "compose_stdout_tail": "RESULT hta OK 5448504 350\nRESULT dsp OK 3525352 2389\nRESULT cpu OK 13145712 155\nRESULT cpu@int8 OK 3430256 77\nRESULT gpu OK 13750224 755\n/dev/root        98G   55G   44G  56% /\n",
+  "build_s": 15.8
+ },
+ "yolov8_nano_sf_hta": {
+  "id": "yolov8_nano_sf_hta",
+  "base": "yolov8_nano_sf",
+  "family": "yolov8_nano",
+  "rewrite_chain": [
+   "onnxsim",
+   "channel_slice_to_conv1x1"
+  ],
+  "rationale": "HTA rejects StridedSlice, which is how the converter lowers the C2f channel chunk that modelblaster exports as a Slice pair. The 1x1 selector convolution computes the same tensor with an op HTA has.",
+  "zoo": "/scratch/dima/rose-infra/RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
+  "rewrite": {
+   "chain": [
+    "onnxsim",
+    "channel_slice_to_conv1x1"
+   ],
+   "numerics": "preserving",
+   "steps": [
+    {
+     "rewrite": "onnxsim",
+     "numerics": "preserving",
+     "nodes_before": 318,
+     "nodes_after": 220
+    },
+    {
+     "rewrite": "channel_slice_to_conv1x1",
+     "numerics": "preserving",
+     "rewritten": 16,
+     "skipped": [],
+     "n_skipped": 0
+    }
+   ],
+   "nodes": 220,
+   "op_types": {
+    "Conv": 79,
+    "Sigmoid": 57,
+    "Mul": 57,
+    "Add": 6,
+    "Concat": 16,
+    "MaxPool": 3,
+    "Resize": 2
+   }
+  },
+  "numerics": "preserving",
+  "onnx": "gen/onnx/yolov8_nano_sf_hta.onnx",
+  "onnx_bytes": 13414227,
+  "inputs": {
+   "input": [
+    1,
+    3,
+    224,
+    224
+   ]
+  },
+  "graph_json": "gen/ir/yolov8_nano_sf_hta/int8/graph.json",
+  "ir_ops": 220,
+  "ir_op_kinds": {
+   "conv2d_s8": 79,
+   "sigmoid_s8": 57,
+   "mul_s8": 57,
+   "add_s8": 6,
+   "concat": 16,
+   "maxpool2d": 3,
+   "resize": 2
+  },
+  "ir_source": "scripts/ir_from_onnx.py (graph_json door: the rewritten graph is no longer the PyTorch IR)",
+  "dlc_rc": 0,
+  "dlc_bytes": 13161940,
+  "macs": 564727744,
+  "dlc_input_names": [
+   "input"
+  ],
+  "dlc_input_dims": [
+   [
+    1,
+    224,
+    224,
+    3
+   ]
+  ],
+  "dlc_graph_name": "yolov8_nano_sf_hta",
+  "calib": {
+   "n": 10,
+   "seed": 0,
+   "dims": [
+    [
+     1,
+     224,
+     224,
+     3
+    ]
+   ]
+  },
+  "quant_rc": 0,
+  "qdlc_bytes": 3451772,
+  "stage": "composed",
+  "compose_board_s": 4.0,
+  "compose": {
+   "hta": {
+    "status": "ok",
+    "precision": "int8",
+    "ctx": "ctx_s10_yolov8_nano_sf_hta_int8__Hta.bin",
+    "bytes": 5993272,
+    "compose_ms": 350
+   },
+   "dsp": {
+    "status": "ok",
+    "precision": "int8",
+    "ctx": "ctx_s10_yolov8_nano_sf_hta_int8__Dsp.bin",
+    "bytes": 3525352,
+    "compose_ms": 2264
+   },
+   "cpu": {
+    "status": "ok",
+    "precision": "fp32",
+    "ctx": "ctx_s10_yolov8_nano_sf_hta_fp32__Cpu.bin",
+    "bytes": 13145712,
+    "compose_ms": 160
+   },
+   "cpu@int8": {
+    "status": "ok",
+    "precision": "int8",
+    "ctx": "ctx_s10_yolov8_nano_sf_hta_int8__CpuInt8.bin",
+    "bytes": 3430256,
+    "compose_ms": 74
+   },
+   "gpu": {
+    "status": "ok",
+    "precision": "fp16",
+    "ctx": "ctx_s10_yolov8_nano_sf_hta_fp16__Gpu.bin",
+    "bytes": 13750152,
+    "compose_ms": 673
+   }
+  },
+  "board_df": "/dev/root        98G   55G   44G  57% /",
+  "compose_stdout_tail": "RESULT hta OK 5993272 350\nRESULT dsp OK 3525352 2264\nRESULT cpu OK 13145712 160\nRESULT cpu@int8 OK 3430256 74\nRESULT gpu OK 13750152 673\n/dev/root        98G   55G   44G  57% /\n",
+  "build_s": 15.5
+ },
+ "yolov8_nano_sh_hta": {
+  "id": "yolov8_nano_sh_hta",
+  "base": "yolov8_nano_sh",
+  "family": "yolov8_nano",
+  "rewrite_chain": [
+   "onnxsim",
+   "channel_slice_to_conv1x1"
+  ],
+  "rationale": "HTA rejects StridedSlice, which is how the converter lowers the C2f channel chunk that modelblaster exports as a Slice pair. The 1x1 selector convolution computes the same tensor with an op HTA has.",
+  "zoo": "/scratch/dima/rose-infra/RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
+  "rewrite": {
+   "chain": [
+    "onnxsim",
+    "channel_slice_to_conv1x1"
+   ],
+   "numerics": "preserving",
+   "steps": [
+    {
+     "rewrite": "onnxsim",
+     "numerics": "preserving",
+     "nodes_before": 318,
+     "nodes_after": 220
+    },
+    {
+     "rewrite": "channel_slice_to_conv1x1",
+     "numerics": "preserving",
+     "rewritten": 16,
+     "skipped": [],
+     "n_skipped": 0
+    }
+   ],
+   "nodes": 220,
+   "op_types": {
+    "Conv": 79,
+    "Sigmoid": 57,
+    "Mul": 57,
+    "Add": 6,
+    "Concat": 16,
+    "MaxPool": 3,
+    "Resize": 2
+   }
+  },
+  "numerics": "preserving",
+  "onnx": "gen/onnx/yolov8_nano_sh_hta.onnx",
+  "onnx_bytes": 13414233,
+  "inputs": {
+   "input": [
+    1,
+    3,
+    320,
+    320
+   ]
+  },
+  "graph_json": "gen/ir/yolov8_nano_sh_hta/int8/graph.json",
+  "ir_ops": 220,
+  "ir_op_kinds": {
+   "conv2d_s8": 79,
+   "sigmoid_s8": 57,
+   "mul_s8": 57,
+   "add_s8": 6,
+   "concat": 16,
+   "maxpool2d": 3,
+   "resize": 2
+  },
+  "ir_source": "scripts/ir_from_onnx.py (graph_json door: the rewritten graph is no longer the PyTorch IR)",
+  "dlc_rc": 0,
+  "dlc_bytes": 13161940,
+  "macs": 1152505600,
+  "dlc_input_names": [
+   "input"
+  ],
+  "dlc_input_dims": [
+   [
+    1,
+    320,
+    320,
+    3
+   ]
+  ],
+  "dlc_graph_name": "yolov8_nano_sh_hta",
+  "calib": {
+   "n": 10,
+   "seed": 0,
+   "dims": [
+    [
+     1,
+     320,
+     320,
+     3
+    ]
+   ]
+  },
+  "quant_rc": 0,
+  "qdlc_bytes": 3451772,
+  "stage": "composed",
+  "compose_board_s": 4.2,
+  "compose": {
+   "hta": {
+    "status": "ok",
+    "precision": "int8",
+    "ctx": "ctx_s10_yolov8_nano_sh_hta_int8__Hta.bin",
+    "bytes": 8119096,
+    "compose_ms": 381
+   },
+   "dsp": {
+    "status": "ok",
+    "precision": "int8",
+    "ctx": "ctx_s10_yolov8_nano_sh_hta_int8__Dsp.bin",
+    "bytes": 3525352,
+    "compose_ms": 2415
+   },
+   "cpu": {
+    "status": "ok",
+    "precision": "fp32",
+    "ctx": "ctx_s10_yolov8_nano_sh_hta_fp32__Cpu.bin",
+    "bytes": 13145712,
+    "compose_ms": 152
+   },
+   "cpu@int8": {
+    "status": "ok",
+    "precision": "int8",
+    "ctx": "ctx_s10_yolov8_nano_sh_hta_int8__CpuInt8.bin",
+    "bytes": 3430256,
+    "compose_ms": 68
+   },
+   "gpu": {
+    "status": "ok",
+    "precision": "fp16",
+    "ctx": "ctx_s10_yolov8_nano_sh_hta_fp16__Gpu.bin",
+    "bytes": 13750224,
+    "compose_ms": 736
+   }
+  },
+  "board_df": "/dev/root        98G   55G   43G  57% /",
+  "compose_stdout_tail": "RESULT hta OK 8119096 381\nRESULT dsp OK 3525352 2415\nRESULT cpu OK 13145712 152\nRESULT cpu@int8 OK 3430256 68\nRESULT gpu OK 13750224 736\n/dev/root        98G   55G   43G  57% /\n",
+  "build_s": 16.5
+ },
+ "mlp_control_sf_htaprobe": {
+  "id": "mlp_control_sf_htaprobe",
+  "base": "mlp_control_sf",
+  "family": "mlp_control",
+  "rewrite_chain": [
+   "onnxsim",
+   "elu_to_relu"
+  ],
+  "rationale": "NUMERICS-CHANGING probe. Elu has no frozen-constant linear equivalent, so substituting the activation is the only way mlp_control reaches HTA at all. Run on the largest rung only: if HTA loses there it loses on every smaller one, since HTA's dispatch floor is fixed.",
+  "zoo": "/scratch/dima/rose-infra/RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
+  "rewrite": {
+   "chain": [
+    "onnxsim",
+    "elu_to_relu"
+   ],
+   "numerics": "changing",
+   "steps": [
+    {
+     "rewrite": "onnxsim",
+     "numerics": "preserving",
+     "nodes_before": 7,
+     "nodes_after": 7
+    },
+    {
+     "rewrite": "elu_to_relu",
+     "numerics": "changing",
+     "rewritten": 3
+    }
+   ],
+   "nodes": 7,
+   "op_types": {
+    "Gemm": 4,
+    "Relu": 3
+   }
+  },
+  "numerics": "changing",
+  "onnx": "gen/onnx/mlp_control_sf_htaprobe.onnx",
+  "onnx_bytes": 695132,
+  "inputs": {
+   "input": [
+    1,
+    16
+   ]
+  },
+  "graph_json": "gen/ir/mlp_control_sf_htaprobe/int8/graph.json",
+  "ir_ops": 7,
+  "ir_op_kinds": {
+   "linear_s8": 4,
+   "relu": 3
+  },
+  "ir_source": "scripts/ir_from_onnx.py (graph_json door: the rewritten graph is no longer the PyTorch IR)",
+  "dlc_rc": 0,
+  "dlc_bytes": 703612,
+  "macs": 172547,
+  "dlc_input_names": [
+   "input"
+  ],
+  "dlc_input_dims": [
+   [
+    1,
+    16
+   ]
+  ],
+  "dlc_graph_name": "mlp_control_sf_htaprobe",
+  "calib": {
+   "n": 10,
+   "seed": 0,
+   "dims": [
+    [
+     1,
+     16
+    ]
+   ]
+  },
+  "quant_rc": 0,
+  "qdlc_bytes": 186300,
+  "stage": "composed",
+  "compose_board_s": 2.1,
+  "compose": {
+   "hta": {
+    "status": "ok",
+    "precision": "int8",
+    "ctx": "ctx_s10_mlp_control_sf_htaprobe_int8__Hta.bin",
+    "bytes": 199544,
+    "compose_ms": 61
+   },
+   "dsp": {
+    "status": "ok",
+    "precision": "int8",
+    "ctx": "ctx_s10_mlp_control_sf_htaprobe_int8__Dsp.bin",
+    "bytes": 182448,
+    "compose_ms": 1259
+   },
+   "cpu": {
+    "status": "ok",
+    "precision": "fp32",
+    "ctx": "ctx_s10_mlp_control_sf_htaprobe_fp32__Cpu.bin",
+    "bytes": 698904,
+    "compose_ms": 49
+   },
+   "cpu@int8": {
+    "status": "ok",
+    "precision": "int8",
+    "ctx": "ctx_s10_mlp_control_sf_htaprobe_int8__CpuInt8.bin",
+    "bytes": 178760,
+    "compose_ms": 40
+   },
+   "gpu": {
+    "status": "ok",
+    "precision": "fp16",
+    "ctx": "ctx_s10_mlp_control_sf_htaprobe_fp16__Gpu.bin",
+    "bytes": 765496,
+    "compose_ms": 242
+   }
+  },
+  "board_df": "/dev/root        98G   55G   43G  57% /",
+  "compose_stdout_tail": "RESULT hta OK 199544 61\nRESULT dsp OK 182448 1259\nRESULT cpu OK 698904 49\nRESULT cpu@int8 OK 178760 40\nRESULT gpu OK 765496 242\n/dev/root        98G   55G   43G  57% /\n",
+  "build_s": 6.7
+ }
+}
