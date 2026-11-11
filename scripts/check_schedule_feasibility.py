@@ -53,6 +53,18 @@ from schedule_trace import split_hardware_target  # noqa: E402
 #: is not a scheduling error, it is a schedule for a different machine.
 K1_HARTS_PER_CLUSTER = 4
 
+#: K3: two 8-core clusters (X100 = CPUs 0-7 -> CPU_P, A100 = CPUs 8-15 -> CPU_E),
+#: indexed per type, so the per-type bound is 8.
+K3_HARTS_PER_CLUSTER = 8
+
+#: `--board` -> (harts per cluster, check IME capabilities, kernel-glob suffix).
+#: K3 has no IME and no `*_x60` profile dirs (its are `rvv_k3_{x100,a100}`), so
+#: the K1 capability rule and the `<impl>_x60` kernel glob are not applicable.
+BOARDS = {
+    "k1": {"harts": K1_HARTS_PER_CLUSTER, "ime_rules": True},
+    "k3": {"harts": K3_HARTS_PER_CLUSTER, "ime_rules": False},
+}
+
 
 def intervals_by_machine(dispatches: Dict[str, dict]
                          ) -> Dict[str, List[Tuple[float, float, str]]]:
@@ -327,8 +339,12 @@ def find_missing_kernels(dispatches, gen_root="gen/mb", target="spacemit_x60"):
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--schedule", required=True)
-    ap.add_argument("--harts-per-cluster", type=int,
-                    default=K1_HARTS_PER_CLUSTER)
+    ap.add_argument("--board", choices=sorted(BOARDS), default="k1",
+                    help="k1 (default, unchanged): 4 harts per cluster, IME capability "
+                         "and *_x60 kernel checks. k3: 8 harts per type (CPU_P=X100, "
+                         "CPU_E=A100), no IME rules.")
+    ap.add_argument("--harts-per-cluster", type=int, default=None,
+                    help="override the board's per-cluster hart count")
     ap.add_argument("--tol-ms", type=float, default=1e-6,
                     help="overlap below this is float noise, not a conflict")
     ap.add_argument("--top", type=int, default=10)
@@ -339,6 +355,8 @@ def main() -> int:
                          "historical one; a spec solved against gen/mb_shard must say so, or "
                          "every ime dispatch is reported as having no kernel.")
     a = ap.parse_args()
+    board = BOARDS[a.board]
+    harts = a.harts_per_cluster if a.harts_per_cluster is not None else board["harts"]
 
     schedule = json.load(open(a.schedule))
     dispatches = schedule.get("dispatches") or {}
@@ -350,9 +368,13 @@ def main() -> int:
     overlaps = find_overlaps(by_machine, a.tol_ms)
     dep_bad = find_dependency_violations(dispatches, a.tol_ms)
     fwd = find_forward_edges(dispatches, a.tol_ms)
-    oor = find_out_of_range_targets(dispatches, a.harts_per_cluster)
-    illegal = find_illegal_implementations(dispatches)
-    nokernel = find_missing_kernels(dispatches, gen_root=a.gen_root)
+    oor = find_out_of_range_targets(dispatches, harts)
+    # K3 has no IME: an `impl` on a K3 schedule would be rvv, and K1's capability
+    # table / `<impl>_x60` profile glob describe a different machine. Skipping
+    # (rather than adapting) keeps the K1 path byte-identical.
+    illegal = find_illegal_implementations(dispatches) if board["ime_rules"] else []
+    nokernel = (find_missing_kernels(dispatches, gen_root=a.gen_root)
+                if board["ime_rules"] else [])
 
     makespan = max(float(d.get("start_time", 0.0)) + float(d.get("duration", 0.0))
                    for d in dispatches.values())

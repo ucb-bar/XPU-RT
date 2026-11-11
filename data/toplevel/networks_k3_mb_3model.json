@@ -1,0 +1,58 @@
+{
+ "_comment": "SpaceMiT K3 three-model workload (same periods/windows/instances as networks_k1_mb_3model_4hz.json). Machine mapping: cpu_p = X100 cluster = CPUs 0-7, cpu_e = A100 cluster = CPUs 8-15 (16 CPUs, shared memory). Each type is profiled separately (profile_hw rvv_k3_x100 / rvv_k3_a100) at widths 1/2/4/8 (topo_0, topo_0_1, topo_0_1_2_3, topo_0_1_2_3_4_5_6_7 -- width-relative tags, identical for both types); shard mode never mixes types in one dispatch. No IME, so enable_impls is off. Timer is 24 MHz.",
+ "_topo_comment": "topo_tag_override is false so each width block is costed from its own N-hart profile (topo tag derived from the combination); true would charge every block the 1-hart time.",
+ "_instances_comment": "num_instances pinned (as in the K1 spec) so solves stay comparable.",
+ "hardware": {
+  "machines": {
+   "cpu_p": 8,
+   "cpu_e": 8
+  },
+  "profile_hw": {
+   "cpu_p": "rvv_k3_x100",
+   "cpu_e": "rvv_k3_a100"
+  },
+  "profile": {
+   "target": "spacemit_k3",
+   "topo_tag_override": false,
+   "gen_root": "gen_mb"
+  },
+  "p_core_speedup": 1.0
+ },
+ "scheduler": {
+  "random_seed": 42,
+  "solver_verbosity": 1,
+  "time_limit": 120,
+  "use_profiled": true,
+  "prune_periodic": true,
+  "restrict_makespan_to_nonperiodic": false,
+  "machine_combination_mode": "shard",
+  "enable_impls": false
+ },
+ "networks": {
+  "mlp_control": {
+   "id": 0,
+   "identifier": "mlp_control",
+   "dispatch_deps_path": "gen_mb/vmfb/mlp_control/spacemit_k3/rvv_k3/mlp_control.int8/mlp_control.int8_dispatch_graph.json",
+   "period": 10,
+   "window_duration": 10,
+   "num_instances": 32
+  },
+  "dronet": {
+   "id": 1,
+   "identifier": "dronet",
+   "dispatch_deps_path": "gen_mb/vmfb/dronet/spacemit_k3/rvv_k3/dronet.int8/dronet.int8_dispatch_graph.json",
+   "period": 33.3,
+   "window_duration": 33.3,
+   "num_instances": 10
+  },
+  "yolov8_nano": {
+   "id": 2,
+   "identifier": "yolov8_nano",
+   "dispatch_deps_path": "gen_mb/vmfb/yolov8_nano/spacemit_k3/rvv_k3/yolov8_nano.int8/yolov8_nano.int8_dispatch_graph.json",
+   "period": 250.0,
+   "window_duration": 250.0,
+   "num_instances": 4
+  }
+ },
+ "edges": []
+}

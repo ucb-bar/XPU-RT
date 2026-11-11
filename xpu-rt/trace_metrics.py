@@ -75,10 +75,11 @@ def pct(xs: Sequence[float], p: float) -> float:
 #: `rdtime` on the K1. NOT the 1.6 GHz core clock and not 1 MHz -- the device
 #: tree's `timebase-frequency` is 24000000, and every cycles->time conversion in
 #: this project uses it.
-K1_RDTIME_HZ = 24_000_000.0
+K1_RDTIME_HZ = k1_trace.K1_RDTIME_HZ   # default; one source of truth
 
 
-def normalise_modelblaster(rows: List[dict]) -> List[dict]:
+def normalise_modelblaster(rows: List[dict],
+                           rdtime_hz: float = K1_RDTIME_HZ) -> List[dict]:
     """Map ModelBlaster's `harness_xpurt` trace onto this module's columns.
 
     Delegates to `k1_trace.normalise`, which owns the mapping for the whole
@@ -90,11 +91,11 @@ def normalise_modelblaster(rows: List[dict]) -> List[dict]:
     `summarise_trace` report "no queueing" for a run where it was simply never
     measured. Absent stays absent, and `queue_us` comes out None.
     """
-    return k1_trace.normalise(rows, fill_queue_delay=False)
+    return k1_trace.normalise(rows, fill_queue_delay=False, rdtime_hz=rdtime_hz)
 
 
-def read_trace(path: str) -> List[dict]:
-    return k1_trace.read(path, fill_queue_delay=False)
+def read_trace(path: str, rdtime_hz: float = K1_RDTIME_HZ) -> List[dict]:
+    return k1_trace.read(path, fill_queue_delay=False, rdtime_hz=rdtime_hz)
 
 
 def _held_cores(row: dict) -> List[str]:
