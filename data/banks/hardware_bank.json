@@ -204,12 +204,7 @@
     },
     "firesim_gemmini_q31": {
       "description": "FireSim rocket+saturn: gemmini_q31 p-core + V256D128 RVV e-core",
-      "available": false,
-      "unavailable_reason": [
-        "the sweep_v8 profiles now live in gen/profile (moved from",
-        "zephyr-chipyard-sw/gen/profile/sweep_v8), but the V256D128_rvv",
-        "mlp_control.fp32 profile is missing: re-profile it before enabling."
-      ],
+      "available": true,
       "machines": {
         "cpu_e": 1,
         "cpu_p": 1
@@ -223,7 +218,12 @@
         "target": "firesim_rocket_saturn",
         "topo_tag": "topo_0",
         "topo_tag_override": true
-      }
+      },
+      "profile_note": [
+        "V256D128_rvv mlp_control.fp32 (int8 ops; legacy basename) re-profiled 2026-11-11",
+        "on the local U250, 2026-08-01 dual-rocket-saturn-gemmini bitstream, one hart: linear_s8 =",
+        "curated rvv direct, elu_s8 = scalar reference; on-board output bit-exact vs golden."
+      ]
     },
     "firesim_gemmini": {
       "description": "FireSim rocket+saturn: gemmini p-core + RVV e-core",
