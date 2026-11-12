@@ -13,7 +13,7 @@
    "target": "firesim_f2_rocket_saturn",
    "topo_tag": "topo_0",
    "topo_tag_override": true,
-   "gen_root": "zephyr-chipyard-sw/gen"
+   "gen_root": "gen"
   },
   "p_core_speedup": 1.0
  },
@@ -29,7 +29,7 @@
   "mlp_control_sd": {
    "id": 0,
    "identifier": "mlp_control_sd",
-   "dispatch_deps_path": "zephyr-chipyard-sw/gen/vmfb/mlp_control_sd/firesim_f2_rocket_saturn/gemmini_q31/mlp_control_sd.fp32/mlp_control_sd.fp32_dispatch_graph.json",
+   "dispatch_deps_path": "gen/vmfb/mlp_control_sd/firesim_f2_rocket_saturn/gemmini_q31/mlp_control_sd.fp32/mlp_control_sd.fp32_dispatch_graph.json",
    "period": 0.328,
    "window_duration": 0.328,
    "num_instances": 8
@@ -37,7 +37,7 @@
   "dronet_se_wls": {
    "id": 1,
    "identifier": "dronet_se_wls",
-   "dispatch_deps_path": "zephyr-chipyard-sw/gen/vmfb/dronet_se_wls/firesim_f2_rocket_saturn/gemmini_q31/dronet_se_wls.int8/dronet_se_wls.int8_dispatch_graph.json",
+   "dispatch_deps_path": "gen/vmfb/dronet_se_wls/firesim_f2_rocket_saturn/gemmini_q31/dronet_se_wls.int8/dronet_se_wls.int8_dispatch_graph.json",
    "period": 39.56,
    "window_duration": 39.56,
    "num_instances": 4
@@ -45,7 +45,7 @@
   "yolov8_nano_sc_wls": {
    "id": 2,
    "identifier": "yolov8_nano_sc_wls",
-   "dispatch_deps_path": "zephyr-chipyard-sw/gen/vmfb/yolov8_nano_sc_wls/firesim_f2_rocket_saturn/gemmini_q31/yolov8_nano_sc_wls.int8/yolov8_nano_sc_wls.int8_dispatch_graph.json",
+   "dispatch_deps_path": "gen/vmfb/yolov8_nano_sc_wls/firesim_f2_rocket_saturn/gemmini_q31/yolov8_nano_sc_wls.int8/yolov8_nano_sc_wls.int8_dispatch_graph.json",
    "num_instances": 1
   }
  }

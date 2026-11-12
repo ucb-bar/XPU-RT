@@ -8,7 +8,7 @@
       "target": "spike",
       "topo_tag": "topo_0",
       "topo_tag_override": true,
-      "gen_root": "zephyr-chipyard-sw/modelblaster/gen"
+      "gen_root": "gen"
     },
     "p_core_speedup": 1.0
   },
@@ -26,7 +26,7 @@
     "dronet": {
       "id": 0,
       "identifier": "dronet",
-      "dispatch_deps_path": "zephyr-chipyard-sw/gen/vmfb/dronet/generic_riscv64/RVV/dronet.fp32/dronet.fp32_dispatch_graph.json"
+      "dispatch_deps_path": "gen/vmfb/dronet/generic_riscv64/RVV/dronet.fp32/dronet.fp32_dispatch_graph.json"
     }
   },
 

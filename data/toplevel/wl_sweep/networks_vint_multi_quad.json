@@ -13,7 +13,7 @@
    "target": "firesim_f2_rocket_saturn",
    "topo_tag": "topo_0",
    "topo_tag_override": true,
-   "gen_root": "zephyr-chipyard-sw/gen"
+   "gen_root": "gen"
   },
   "p_core_speedup": 1.0
  },
@@ -29,13 +29,13 @@
   "vint": {
    "id": 0,
    "identifier": "vint",
-   "dispatch_deps_path": "zephyr-chipyard-sw/gen/vmfb/vint/firesim_f2_rocket_saturn/gemmini_q31/vint.int8/vint.int8_dispatch_graph.json",
+   "dispatch_deps_path": "gen/vmfb/vint/firesim_f2_rocket_saturn/gemmini_q31/vint.int8/vint.int8_dispatch_graph.json",
    "num_instances": 1
   },
   "dronet_se": {
    "id": 1,
    "identifier": "dronet_se",
-   "dispatch_deps_path": "zephyr-chipyard-sw/gen/vmfb/dronet_se/firesim_f2_rocket_saturn/gemmini_q31/dronet_se.int8/dronet_se.int8_dispatch_graph.json",
+   "dispatch_deps_path": "gen/vmfb/dronet_se/firesim_f2_rocket_saturn/gemmini_q31/dronet_se.int8/dronet_se.int8_dispatch_graph.json",
    "period": 63.296,
    "window_duration": 63.296,
    "num_instances": 4
@@ -43,7 +43,7 @@
   "mlp_control_sd": {
    "id": 2,
    "identifier": "mlp_control_sd",
-   "dispatch_deps_path": "zephyr-chipyard-sw/gen/vmfb/mlp_control_sd/firesim_f2_rocket_saturn/gemmini_q31/mlp_control_sd.fp32/mlp_control_sd.fp32_dispatch_graph.json",
+   "dispatch_deps_path": "gen/vmfb/mlp_control_sd/firesim_f2_rocket_saturn/gemmini_q31/mlp_control_sd.fp32/mlp_control_sd.fp32_dispatch_graph.json",
    "period": 3.576,
    "window_duration": 3.576,
    "num_instances": 8

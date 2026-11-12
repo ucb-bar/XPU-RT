@@ -8,7 +8,7 @@
       "target": "spike",
       "topo_tag": "topo_0",
       "topo_tag_override": true,
-      "gen_root": "zephyr-chipyard-sw/modelblaster/gen"
+      "gen_root": "gen"
     },
     "p_core_speedup": 1.0
   },
@@ -26,7 +26,7 @@
     "mlp_control": {
       "id": 0,
       "identifier": "mlp_control",
-      "dispatch_deps_path": "zephyr-chipyard-sw/gen/vmfb/mlp_control/generic_riscv64/RVV/mlp_control.fp32/mlp_control.fp32_dispatch_graph.json"
+      "dispatch_deps_path": "gen/vmfb/mlp_control/generic_riscv64/RVV/mlp_control.fp32/mlp_control.fp32_dispatch_graph.json"
     }
   },
 

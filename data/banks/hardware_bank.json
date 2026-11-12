@@ -19,7 +19,7 @@
     "config it accepts is one the scheduler can also load.  A tree that lives",
     "elsewhere becomes reachable by symlinking it under <repo>/gen/profile",
     "(gen/profile/{RVV,scalar}/spike/* are tracked symlinks into",
-    "zephyr-chipyard-sw/modelblaster/gen/profile, which is what makes the",
+    "gen/profile, which is what makes the",
     "spike_* entries below available); `gen_root` still records where the",
     "profiling run actually writes, for repro_workload.sh and",
     "worst_case_nonperiodic_duration.py.",
@@ -142,7 +142,7 @@
         "cpu_p": "RVV"
       },
       "profile": {
-        "gen_root": "zephyr-chipyard-sw/modelblaster/gen",
+        "gen_root": "gen",
         "target": "spike",
         "topo_tag": "topo_0",
         "topo_tag_override": true
@@ -160,7 +160,7 @@
         "cpu_e": "scalar"
       },
       "profile": {
-        "gen_root": "zephyr-chipyard-sw/modelblaster/gen",
+        "gen_root": "gen",
         "target": "spike",
         "topo_tag": "topo_0",
         "topo_tag_override": true
@@ -178,7 +178,7 @@
         "cpu_e": "scalar"
       },
       "profile": {
-        "gen_root": "zephyr-chipyard-sw/modelblaster/gen",
+        "gen_root": "gen",
         "target": "spike",
         "topo_tag": "topo_0",
         "topo_tag_override": true
@@ -196,7 +196,7 @@
         "cpu_e": "scalar"
       },
       "profile": {
-        "gen_root": "zephyr-chipyard-sw/modelblaster/gen",
+        "gen_root": "gen",
         "target": "spike",
         "topo_tag": "topo_0",
         "topo_tag_override": true
@@ -206,9 +206,9 @@
       "description": "FireSim rocket+saturn: gemmini_q31 p-core + V256D128 RVV e-core",
       "available": false,
       "unavailable_reason": [
-        "profile CSVs live under zephyr-chipyard-sw/gen/profile/sweep_v8/,",
-        "which adds a sweep-name level find_profile_csv() does not expect.",
-        "gen/profile/gemmini_q31/firesim_rocket_saturn/ holds no results.csv."
+        "the sweep_v8 profiles now live in gen/profile (moved from",
+        "zephyr-chipyard-sw/gen/profile/sweep_v8), but the V256D128_rvv",
+        "mlp_control.fp32 profile is missing: re-profile it before enabling."
       ],
       "machines": {
         "cpu_e": 1,
@@ -219,7 +219,7 @@
         "cpu_p": "gemmini_q31"
       },
       "profile": {
-        "gen_root": "zephyr-chipyard-sw/gen",
+        "gen_root": "gen",
         "target": "firesim_rocket_saturn",
         "topo_tag": "topo_0",
         "topo_tag_override": true
@@ -240,7 +240,7 @@
         "cpu_p": "gemmini"
       },
       "profile": {
-        "gen_root": "zephyr-chipyard-sw/gen",
+        "gen_root": "gen",
         "target": "firesim_rocket_saturn",
         "topo_tag": "topo_0",
         "topo_tag_override": true
@@ -298,7 +298,7 @@
         "cpu_e": "V256D128_rvv"
       },
       "profile": {
-        "gen_root": ".",
+        "gen_root": "gen",
         "target": "firesim_f2_armB",
         "topo_tag": "topo_0",
         "topo_tag_override": true

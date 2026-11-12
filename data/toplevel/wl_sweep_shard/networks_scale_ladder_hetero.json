@@ -13,7 +13,7 @@
    "target": "firesim_f2_rocket_saturn",
    "topo_tag": "topo_0",
    "topo_tag_override": true,
-   "gen_root": "zephyr-chipyard-sw/gen"
+   "gen_root": "gen"
   },
   "p_core_speedup": 1.0
  },
@@ -29,37 +29,37 @@
   "dronet_sb_wls": {
    "id": 0,
    "identifier": "dronet_sb_wls",
-   "dispatch_deps_path": "zephyr-chipyard-sw/gen/vmfb/dronet_sb_wls/firesim_f2_rocket_saturn/gemmini_q31/dronet_sb_wls.int8/dronet_sb_wls.int8_dispatch_graph.json",
+   "dispatch_deps_path": "gen/vmfb/dronet_sb_wls/firesim_f2_rocket_saturn/gemmini_q31/dronet_sb_wls.int8/dronet_sb_wls.int8_dispatch_graph.json",
    "num_instances": 1
   },
   "dronet_sc_wls": {
    "id": 1,
    "identifier": "dronet_sc_wls",
-   "dispatch_deps_path": "zephyr-chipyard-sw/gen/vmfb/dronet_sc_wls/firesim_f2_rocket_saturn/gemmini_q31/dronet_sc_wls.int8/dronet_sc_wls.int8_dispatch_graph.json",
+   "dispatch_deps_path": "gen/vmfb/dronet_sc_wls/firesim_f2_rocket_saturn/gemmini_q31/dronet_sc_wls.int8/dronet_sc_wls.int8_dispatch_graph.json",
    "num_instances": 1
   },
   "dronet_sd_wls": {
    "id": 2,
    "identifier": "dronet_sd_wls",
-   "dispatch_deps_path": "zephyr-chipyard-sw/gen/vmfb/dronet_sd_wls/firesim_f2_rocket_saturn/gemmini_q31/dronet_sd_wls.int8/dronet_sd_wls.int8_dispatch_graph.json",
+   "dispatch_deps_path": "gen/vmfb/dronet_sd_wls/firesim_f2_rocket_saturn/gemmini_q31/dronet_sd_wls.int8/dronet_sd_wls.int8_dispatch_graph.json",
    "num_instances": 1
   },
   "dronet_se_wls": {
    "id": 3,
    "identifier": "dronet_se_wls",
-   "dispatch_deps_path": "zephyr-chipyard-sw/gen/vmfb/dronet_se_wls/firesim_f2_rocket_saturn/gemmini_q31/dronet_se_wls.int8/dronet_se_wls.int8_dispatch_graph.json",
+   "dispatch_deps_path": "gen/vmfb/dronet_se_wls/firesim_f2_rocket_saturn/gemmini_q31/dronet_se_wls.int8/dronet_se_wls.int8_dispatch_graph.json",
    "num_instances": 1
   },
   "dronet_sf_wls": {
    "id": 4,
    "identifier": "dronet_sf_wls",
-   "dispatch_deps_path": "zephyr-chipyard-sw/gen/vmfb/dronet_sf_wls/firesim_f2_rocket_saturn/gemmini_q31/dronet_sf_wls.int8/dronet_sf_wls.int8_dispatch_graph.json",
+   "dispatch_deps_path": "gen/vmfb/dronet_sf_wls/firesim_f2_rocket_saturn/gemmini_q31/dronet_sf_wls.int8/dronet_sf_wls.int8_dispatch_graph.json",
    "num_instances": 1
   },
   "dronet_sg_wls": {
    "id": 5,
    "identifier": "dronet_sg_wls",
-   "dispatch_deps_path": "zephyr-chipyard-sw/gen/vmfb/dronet_sg_wls/firesim_f2_rocket_saturn/gemmini_q31/dronet_sg_wls.int8/dronet_sg_wls.int8_dispatch_graph.json",
+   "dispatch_deps_path": "gen/vmfb/dronet_sg_wls/firesim_f2_rocket_saturn/gemmini_q31/dronet_sg_wls.int8/dronet_sg_wls.int8_dispatch_graph.json",
    "num_instances": 1
   }
  }

@@ -21,13 +21,13 @@
     "mlp_control": {
       "id": 0,
       "identifier": "mlp_control",
-      "dispatch_deps_path": "zephyr-chipyard-sw/gen/vmfb/mlp_control/generic_riscv64/RVV/mlp_control.fp32/mlp_control.fp32_dispatch_graph.json",
+      "dispatch_deps_path": "gen/vmfb/mlp_control/generic_riscv64/RVV/mlp_control.fp32/mlp_control.fp32_dispatch_graph.json",
       "preferred_hw": "RVV"
     },
     "dronet": {
       "id": 1,
       "identifier": "dronet",
-      "dispatch_deps_path": "zephyr-chipyard-sw/gen/vmfb/dronet/generic_riscv64/RVV/dronet.fp32/dronet.fp32_dispatch_graph.json",
+      "dispatch_deps_path": "gen/vmfb/dronet/generic_riscv64/RVV/dronet.fp32/dronet.fp32_dispatch_graph.json",
       "preferred_hw": "RVV"
     }
   },

@@ -8,7 +8,7 @@
       "target": "spike",
       "topo_tag": "topo_0",
       "topo_tag_override": true,
-      "gen_root": "zephyr-chipyard-sw/modelblaster/gen"
+      "gen_root": "gen"
     },
     "p_core_speedup": 1.0
   },
@@ -26,7 +26,7 @@
     "yolov8_nano": {
       "id": 0,
       "identifier": "yolov8_nano",
-      "dispatch_deps_path": "zephyr-chipyard-sw/gen/vmfb/yolov8_nano/generic_riscv64/RVV/yolov8_nano.fp32/yolov8_nano.fp32_dispatch_graph.json"
+      "dispatch_deps_path": "gen/vmfb/yolov8_nano/generic_riscv64/RVV/yolov8_nano.fp32/yolov8_nano.fp32_dispatch_graph.json"
     }
   },
 

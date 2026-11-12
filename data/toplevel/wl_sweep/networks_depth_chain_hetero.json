@@ -13,7 +13,7 @@
    "target": "firesim_f2_rocket_saturn",
    "topo_tag": "topo_0",
    "topo_tag_override": true,
-   "gen_root": "zephyr-chipyard-sw/gen"
+   "gen_root": "gen"
   },
   "p_core_speedup": 1.0
  },
@@ -29,7 +29,7 @@
   "fastdepth": {
    "id": 0,
    "identifier": "fastdepth",
-   "dispatch_deps_path": "zephyr-chipyard-sw/gen/vmfb/fastdepth/firesim_f2_rocket_saturn/gemmini_q31/fastdepth.int8/fastdepth.int8_dispatch_graph.json",
+   "dispatch_deps_path": "gen/vmfb/fastdepth/firesim_f2_rocket_saturn/gemmini_q31/fastdepth.int8/fastdepth.int8_dispatch_graph.json",
    "period": 359.972,
    "window_duration": 359.972,
    "num_instances": 2
@@ -37,7 +37,7 @@
   "dronet_sf": {
    "id": 1,
    "identifier": "dronet_sf",
-   "dispatch_deps_path": "zephyr-chipyard-sw/gen/vmfb/dronet_sf/firesim_f2_rocket_saturn/gemmini_q31/dronet_sf.int8/dronet_sf.int8_dispatch_graph.json",
+   "dispatch_deps_path": "gen/vmfb/dronet_sf/firesim_f2_rocket_saturn/gemmini_q31/dronet_sf.int8/dronet_sf.int8_dispatch_graph.json",
    "period": 359.972,
    "window_duration": 359.972,
    "num_instances": 2

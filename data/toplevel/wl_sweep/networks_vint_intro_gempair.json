@@ -13,7 +13,7 @@
    "target": "firesim_f2_rocket_saturn",
    "topo_tag": "topo_0",
    "topo_tag_override": true,
-   "gen_root": "zephyr-chipyard-sw/gen"
+   "gen_root": "gen"
   },
   "p_core_speedup": 1.0
  },
@@ -29,13 +29,13 @@
   "vint": {
    "id": 0,
    "identifier": "vint",
-   "dispatch_deps_path": "zephyr-chipyard-sw/gen/vmfb/vint/firesim_f2_rocket_saturn/gemmini_q31/vint.int8/vint.int8_dispatch_graph.json",
+   "dispatch_deps_path": "gen/vmfb/vint/firesim_f2_rocket_saturn/gemmini_q31/vint.int8/vint.int8_dispatch_graph.json",
    "num_instances": 1
   },
   "mlp_control_sf": {
    "id": 1,
    "identifier": "mlp_control_sf",
-   "dispatch_deps_path": "zephyr-chipyard-sw/gen/vmfb/mlp_control_sf/firesim_f2_rocket_saturn/gemmini_q31/mlp_control_sf.fp32/mlp_control_sf.fp32_dispatch_graph.json",
+   "dispatch_deps_path": "gen/vmfb/mlp_control_sf/firesim_f2_rocket_saturn/gemmini_q31/mlp_control_sf.fp32/mlp_control_sf.fp32_dispatch_graph.json",
    "period": 12.439,
    "window_duration": 12.439,
    "num_instances": 8

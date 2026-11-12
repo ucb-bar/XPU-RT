@@ -92,6 +92,15 @@ def resolve_dispatch_deps_path(repo_base_path: str, dispatch_deps_path: str) -> 
         os.path.join(repo_base_path, normalized),
     ]
 
+    # One generated-artifact root: <repo>/gen, or $XPURT_GEN_ROOT (e.g. a data
+    # repo checkout). Specs written before the move pointed into the
+    # zephyr-chipyard-sw / modelblaster submodules' gen trees; map those too.
+    gen_root = os.environ.get("XPURT_GEN_ROOT") or os.path.join(repo_base_path, "gen")
+    for old in ("zephyr-chipyard-sw/modelblaster/gen/", "zephyr-chipyard-sw/gen/", "gen/"):
+        if normalized.startswith(old):
+            candidates.append(os.path.join(gen_root, normalized[len(old):]))
+            break
+
     legacy_prefix = "src/pytorch_workload/samples/"
     if normalized.startswith(legacy_prefix):
         candidates.append(

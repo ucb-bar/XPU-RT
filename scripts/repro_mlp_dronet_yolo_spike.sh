@@ -183,16 +183,17 @@ else
 fi
 
 # --- Step 3: bridge profile data into the top-level repo (doc section 3) --
-log "step 3/5: bridging profile data (gen_root symlink workaround)"
+log "step 3/5: copying profile data into gen/profile"
 cd "${TOP_ROOT}"
-mkdir -p gen/profile/RVV/spike gen/profile/scalar/spike
+GEN_PROFILE="${XPURT_GEN_ROOT:-${TOP_ROOT}/gen}/profile"
 for mq in "${MODEL_QUANTS[@]}"; do
     model="${mq%%:*}"
     for hwdir in RVV scalar; do
-        link="gen/profile/${hwdir}/spike/${model}"
-        if [[ ! -L "${link}" ]]; then
-            ln -s "${MB_ROOT}/gen/profile/${hwdir}/spike/${model}" "${link}"
-        fi
+        src="${MB_ROOT}/gen/profile/${hwdir}/spike/${model}"
+        [[ -d "${src}" ]] || continue
+        mkdir -p "${GEN_PROFILE}/${hwdir}/spike"
+        rm -rf "${GEN_PROFILE}/${hwdir}/spike/${model}"
+        cp -r "${src}" "${GEN_PROFILE}/${hwdir}/spike/${model}"
     done
 done
 

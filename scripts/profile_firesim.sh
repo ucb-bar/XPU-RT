@@ -12,13 +12,11 @@
 #   2. Runs the multi_demo harness on FireSim with profile-CSV emission
 #      enabled, single-hart pool (matches the xpurt runtime's per-kind
 #      NULL-pool path), int8 quant.
-#   3. Output CSV lands at
-#        zephyr-chipyard-sw/gen/profile/sweep_v8/<HW>/<TARGET>/<network>/<basename>/<input_tag>/<topo>/results.csv
+#   3. Output CSV lands directly in the one generated-artifact root:
+#        gen/profile/<HW>/<TARGET>/<network>/<basename>/<input_tag>/<topo>/results.csv
 #      where HW="RVV" for backend=rvv, "gemmini" for backend=gemmini.
-#   4. Auto-creates the repo-root profile-tree symlink at
-#        gen/profile/<HW>/<TARGET>/<network>/<basename>
-#      so profile_loader (which reads under <repo_root>/gen/profile)
-#      finds it without manual ln -s.
+#      If PROFILE_OUT_ROOT points elsewhere, the result is COPIED into
+#      gen/profile (no symlinks into the submodules).
 #
 # Usage:
 #   bash scripts/profile_firesim.sh <network> <backend> [topo]
@@ -36,7 +34,7 @@
 #                     (default: firesim_chipyard_dual_gemmini.conf for
 #                     backend=gemmini OR rvv on dual-rocket-saturn-gemmini;
 #                     firesim_chipyard.conf otherwise).
-#   PROFILE_OUT_ROOT  default: zephyr-chipyard-sw/gen/profile/sweep_v8
+#   PROFILE_OUT_ROOT  default: <repo>/gen/profile (or $XPURT_GEN_ROOT/profile)
 #   PROFILE_CPU       default: firesim_rocket_saturn (the profile-target
 #                     name baked into the schedule input JSON's
 #                     hardware.profile.target field).
@@ -109,7 +107,7 @@ esac
 # bitstream.
 DEFAULT_FS_CONF="firesim_chipyard_dual_gemmini.conf"
 FIRESIM_CONF="${FIRESIM_CONF:-${DEFAULT_FS_CONF}}"
-PROFILE_OUT_ROOT="${PROFILE_OUT_ROOT:-${SUBMODULE}/gen/profile/sweep_v8}"
+PROFILE_OUT_ROOT="${PROFILE_OUT_ROOT:-${XPURT_GEN_ROOT:-${REPO_ROOT}/gen}/profile}"
 PROFILE_CPU="${PROFILE_CPU:-firesim_rocket_saturn}"
 FORCE_REGEN="${FORCE_REGEN:-0}"
 FIRESIM_TIMEOUT="${FIRESIM_TIMEOUT:-2400}"
@@ -167,18 +165,14 @@ if [[ ! -f "${SUBMODULE_CSV}" ]]; then
 fi
 echo "[profile_firesim] CSV: ${SUBMODULE_CSV}"
 
-# 3) Wire the repo-root symlink. profile_loader reads
-#    <repo_root>/gen/profile/<HW>/<TARGET>/<network>/<basename>/...
-# but the new CSV lives under zephyr-chipyard-sw/gen/profile/sweep_v8/...
-# so the repo-root path must be a symlink into the submodule's tree.
-REPO_PROFILE_DIR="${REPO_ROOT}/gen/profile/${HW}/${PROFILE_CPU}/${NETWORK}"
-mkdir -p "${REPO_PROFILE_DIR}"
-LINK_TARGET="../../../../../zephyr-chipyard-sw/gen/profile/sweep_v8/${HW}/${PROFILE_CPU}/${NETWORK}/${BASENAME}"
-if [[ ! -L "${REPO_PROFILE_DIR}/${BASENAME}" || "$(readlink "${REPO_PROFILE_DIR}/${BASENAME}")" != "${LINK_TARGET}" ]]; then
-    ln -sfn "${LINK_TARGET}" "${REPO_PROFILE_DIR}/${BASENAME}"
-    echo "[profile_firesim] symlink: ${REPO_PROFILE_DIR}/${BASENAME} -> ${LINK_TARGET}"
-else
-    echo "[profile_firesim] symlink already in place"
+# 3) Make sure the CSV is under <repo>/gen/profile, where profile_loader reads.
+#    Copy (never symlink) when PROFILE_OUT_ROOT was overridden elsewhere.
+GEN_PROFILE="${XPURT_GEN_ROOT:-${REPO_ROOT}/gen}/profile"
+REPO_PROFILE_DIR="${GEN_PROFILE}/${HW}/${PROFILE_CPU}/${NETWORK}"
+if [[ "$(realpath -m "${PROFILE_OUT_ROOT}")" != "$(realpath -m "${GEN_PROFILE}")" ]]; then
+    mkdir -p "${REPO_PROFILE_DIR}/${BASENAME}/${INPUT_TAG}"
+    cp -r "$(dirname "${SUBMODULE_CSV}")" "${REPO_PROFILE_DIR}/${BASENAME}/${INPUT_TAG}/"
+    echo "[profile_firesim] copied into ${REPO_PROFILE_DIR}/${BASENAME}"
 fi
 
 # 4) Sanity check: profile_loader-visible CSV resolves through the symlink.

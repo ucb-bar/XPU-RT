@@ -102,7 +102,9 @@ def find_profile_csv(
 
     We pick the most recently modified match.
     """
-    profile_root = os.path.join(repo_base_path, "gen", "profile")
+    profile_root = os.path.join(
+        os.environ.get("XPURT_GEN_ROOT") or os.path.join(repo_base_path, "gen"),
+        "profile")
 
     # New layout (with input_tag subdir).
     pat1 = os.path.join(profile_root, hw, target, model, basename, "*", topo_tag, "results.csv")

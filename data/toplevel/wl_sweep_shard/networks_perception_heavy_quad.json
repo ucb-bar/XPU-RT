@@ -13,7 +13,7 @@
    "target": "firesim_f2_rocket_saturn",
    "topo_tag": "topo_0",
    "topo_tag_override": true,
-   "gen_root": "zephyr-chipyard-sw/gen"
+   "gen_root": "gen"
   },
   "p_core_speedup": 1.0
  },
@@ -29,13 +29,13 @@
   "yolov8_nano_sf_wls": {
    "id": 0,
    "identifier": "yolov8_nano_sf_wls",
-   "dispatch_deps_path": "zephyr-chipyard-sw/gen/vmfb/yolov8_nano_sf_wls/firesim_f2_rocket_saturn/gemmini_q31/yolov8_nano_sf_wls.int8/yolov8_nano_sf_wls.int8_dispatch_graph.json",
+   "dispatch_deps_path": "gen/vmfb/yolov8_nano_sf_wls/firesim_f2_rocket_saturn/gemmini_q31/yolov8_nano_sf_wls.int8/yolov8_nano_sf_wls.int8_dispatch_graph.json",
    "num_instances": 1
   },
   "mlp_control_sd": {
    "id": 1,
    "identifier": "mlp_control_sd",
-   "dispatch_deps_path": "zephyr-chipyard-sw/gen/vmfb/mlp_control_sd/firesim_f2_rocket_saturn/gemmini_q31/mlp_control_sd.fp32/mlp_control_sd.fp32_dispatch_graph.json",
+   "dispatch_deps_path": "gen/vmfb/mlp_control_sd/firesim_f2_rocket_saturn/gemmini_q31/mlp_control_sd.fp32/mlp_control_sd.fp32_dispatch_graph.json",
    "period": 4.768,
    "window_duration": 4.768,
    "num_instances": 4
