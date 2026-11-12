@@ -213,7 +213,7 @@ def schedule_iree_networks(
     repo_base_path = os.path.abspath(os.path.join(script_dir, '..'))
 
     if networks_json_path is None:
-        networks_json_path = os.path.join(repo_base_path, 'data', 'toplevel', 'networks_periodic_profile.json')
+        raise SystemExit("pass a workload spec (--networks-json data/toplevel/<spec>.json)")
     if not os.path.isabs(networks_json_path):
         networks_json_path = os.path.join(repo_base_path, networks_json_path)
 
@@ -976,8 +976,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "--networks-json",
         type=str,
-        default="data/toplevel/networks_periodic_profile.json",
-        help="Path to the top-level networks dependencies JSON file (default: data/toplevel/networks_periodic_profile.json)"
+        required=True,
+        help="Path to the top-level workload spec JSON (e.g. data/toplevel/networks_mlp10_dronet20_yolov8_firesim_static_q31profile.json)"
     )
     parser.add_argument(
         "--solver",

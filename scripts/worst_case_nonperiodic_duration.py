@@ -18,10 +18,10 @@ worst-case time once per node (sequential "every op runs on the slower core").
 
 Usage:
   python scripts/worst_case_nonperiodic_duration.py \\
-    --networks-json data/toplevel/networks_periodic_profile.json
+    --networks-json data/toplevel/<spec>.json
 
   python scripts/worst_case_nonperiodic_duration.py \\
-    --networks-json data/toplevel/networks_periodic_profile.json \\
+    --networks-json data/toplevel/<spec>.json \\
     --only mobilenet
 """
 
@@ -310,7 +310,7 @@ def main() -> None:
     parser.add_argument(
         "--networks-json",
         type=str,
-        default="data/toplevel/networks_periodic_profile.json",
+        required=True,
         help="Networks JSON (same shape as run_xpurt_schedule).",
     )
     parser.add_argument(

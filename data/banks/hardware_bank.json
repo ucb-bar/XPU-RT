@@ -286,28 +286,6 @@
         "topo_tag_override": true
       }
     },
-    "spacemit_x60_quad": {
-      "description": "SpaceMiT X60: RVV p-core + scalar e-core, 4-core topology",
-      "available": false,
-      "unavailable_reason": [
-        "the spacemit_x60 dispatch graphs referenced by data/toplevel are not",
-        "on disk (gen/vmfb/... and profiled/gen/vmfb/... are both missing),",
-        "and there is no gen/profile tree for this target."
-      ],
-      "machines": {
-        "CPU_E": 1,
-        "CPU_P": 1
-      },
-      "profile_hw": {
-        "cpu_e": "scalar",
-        "cpu_p": "RVV"
-      },
-      "profile": {
-        "gen_root": "profiled/gen",
-        "target": "spacemit_x60",
-        "topo_tag": "topo_0_1_2_3"
-      }
-    },
     "f2_gemmini_q31_opt": {
       "description": "AWS F2 SatGemDualSmall: gemmini_q31 p-core (hart 0) + Saturn V256D128 e-core (hart 1). Profiles from the OPTIMIZED kernel set -- conv2d_s8 = gemmini_tiled_conv (int8 mvout drain, MB_DRIFT_ATOL) on the p-core, curated RVV on the e-core.",
       "available": true,

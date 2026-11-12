@@ -21,10 +21,10 @@ Generalization:
 
 Usage:
   python scripts/worst_case_periodic_window_fraction.py \\
-    --networks-json data/toplevel/networks_periodic_profile.json
+    --networks-json data/toplevel/<spec>.json
 
   python scripts/worst_case_periodic_window_fraction.py \\
-    --networks-json data/toplevel/networks_periodic_profile.json \\
+    --networks-json data/toplevel/<spec>.json \\
     --only-identifier dronet
 """
 
@@ -77,7 +77,7 @@ def main() -> None:
     parser.add_argument(
         "--networks-json",
         type=str,
-        default="data/toplevel/networks_periodic_profile.json",
+        required=True,
     )
     parser.add_argument("--repo-root", type=str, default=_repo_root)
     parser.add_argument(
