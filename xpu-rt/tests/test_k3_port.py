@@ -137,3 +137,20 @@ class K3FeasibilityBoardFlag(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class K3CapabilitiesTests(unittest.TestCase):
+    """IME runs on every K3 CPU (measured), so an ime_* profile on either
+    kind must pass the config-time legality check that rejects it on the K1."""
+
+    def test_k3_accepts_ime_on_both_kinds(self):
+        from capabilities import check_profile_hw_map, capabilities_for_target
+        check_profile_hw_map({"cpu_p": "rvv_k3_x100", "cpu_e": "ime_k3_a100"},
+                             capabilities=capabilities_for_target("spacemit_k3"))
+
+    def test_k1_still_rejects_ime_on_cluster1(self):
+        from capabilities import (check_profile_hw_map, capabilities_for_target,
+                                  IllegalPlacement)
+        with self.assertRaises(IllegalPlacement):
+            check_profile_hw_map({"cpu_p": "rvv_x60", "cpu_e": "ime_x60"},
+                                 capabilities=capabilities_for_target("spacemit_x60"))

@@ -44,6 +44,29 @@ K1_CAPABILITIES: Dict[str, frozenset] = {
     "CPU_E": frozenset({"scalar", "rvv"}),          # cluster 1, cores 4-7
 }
 
+# SpaceMiT K3 (cpu_p = X100 CPUs 0-7, cpu_e = A100 CPUs 8-15). Measured on the
+# board with a per-CPU SIGILL probe (ModelBlaster/scripts/k3_ime_presence_probe.c,
+# artifacts/k3_probes/ime/): int8 smt.vmadot EXECUTES on all 16 CPUs (X100 tile
+# 4x8x4 at VLEN 256, A100 tile 8x16x8 at VLEN 1024). Unlike the K1, IME is not a
+# cluster-placement constraint here. (int4 is A100-only, but no profile_hw label
+# names an int4 implementation, so it needs no entry.)
+K3_CAPABILITIES: Dict[str, frozenset] = {
+    "CPU_P": frozenset({"scalar", "rvv", "ime"}),   # X100, CPUs 0-7
+    "CPU_E": frozenset({"scalar", "rvv", "ime"}),   # A100, CPUs 8-15
+}
+
+#: profile target -> capability table. Anything not listed keeps the K1 table,
+#: which is what every caller used before targets other than the K1 existed.
+CAPABILITIES_BY_TARGET: Dict[str, Dict[str, frozenset]] = {
+    "spacemit_k3": K3_CAPABILITIES,
+}
+
+
+def capabilities_for_target(profile_target: str | None) -> Dict[str, frozenset]:
+    """The capability table for a profile target (K1's for unknown targets)."""
+    return CAPABILITIES_BY_TARGET.get(profile_target or "", K1_CAPABILITIES)
+
+
 # Physical core ids per cluster, for affinity masks handed to the runtime.
 K1_CLUSTER_CORE_IDS: Dict[str, Tuple[int, ...]] = {
     "CPU_P": (0, 1, 2, 3),
