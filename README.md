@@ -8,26 +8,22 @@ This project is under active development. If you would love to contribute or if 
 
 ## Framework model: bring your own compiler
 
-The scheduler and runtime core (`xpu-rt/`, `runtime/`) are **plug-and-play** —
+The scheduler core (`xpu-rt/`) is **plug-and-play** —
 compiler- and codegen-agnostic. Anything that can (a) emit a per-op profile in
 the IREE dispatch-shape CSV schema and (b) build a single binary that dispatches
 per-op kernels according to the schedule's core assignment can sit on the
-"compiler" side of the flow. Two integrations exist today:
+"compiler" side of the flow:
 
 | flow | compiler / codegen | target | profiling | docs |
 |---|---|---|---|---|
 | **A — ModelBlaster** | PyTorch → quantized Zephyr/RISC-V; curated + LLM-agentic kernel-gen | chipyard (Saturn/Gemmini, RISC-V) | spike / FireSim | [Flow A section below](#flow-a-modelblaster-as-the-compiler-backend), [`zephyr-chipyard-sw/modelblaster/README.md`](zephyr-chipyard-sw/modelblaster/README.md) ("Workflow: integrating with XPURT"), [`docs/end_to_end_xpurt_firesim.md`](docs/end_to_end_xpurt_firesim.md) |
-| **B — merlin** *(this README)* | merlin → IREE → VMFB | SpacemiT (BananaPi) | on-device, via `profile_remote.sh` | sections below |
 
-Both flows feed the same `xpu-rt/scheduler.py` and read/write the same
-`gen/profile/.../results.csv` + `schedules/*.json` shapes — the compiler and
-target hardware are the only things that change. Flow B (merlin as the
-compiler backend) is documented in the sections immediately below; Flow A
-(ModelBlaster) has its own walkthrough further down, in
+The flow feeds `xpu-rt/scheduler.py` and reads/writes the
+`gen/profile/.../results.csv` + `schedules/*.json` shapes; any other compiler
+that produces the same two artifacts can be swapped in. Flow A brings its own
+compiler (ModelBlaster's codegen pipeline, including an LLM-driven kernel
+generator) and its own Zephyr/chipyard build+run path; its walkthrough is in
 ["Flow A: ModelBlaster as the compiler backend"](#flow-a-modelblaster-as-the-compiler-backend).
-Flow A brings its own compiler (ModelBlaster's codegen pipeline, including an
-LLM-driven kernel generator) and its own Zephyr/chipyard build+run path
-instead of merlin/IREE.
 
 ### Documentation
 
@@ -62,9 +58,8 @@ instead of merlin/IREE.
 * [`zephyr-chipyard-sw/modelblaster/examples/microros_demo/ROS_FLOW.md`](zephyr-chipyard-sw/modelblaster/examples/microros_demo/ROS_FLOW.md)
   — micro-ROS fixed-pinning baseline flow (the reference against which
   the scheduler is benchmarked).
-* The sections below cover the Merlin/SpacemiT path (BananaPi) — Flow B.
 
-## Flow B: merlin as the compiler backend
+## Getting started
 
 ### Repository Initialization
 
@@ -76,51 +71,35 @@ cd XPU-RT
 **Don't run `git submodule update --init --recursive` here** — two of this
 repo's top-level submodules, `hw/chipyard` and `sims/IsaacLab`, are very
 large (chipyard alone vendors 100+ of its own nested submodules) and
-neither is needed for either flow below; a recursive init will sit there
+neither is needed for the flows below; a recursive init will sit there
 for a very long time pulling in gigabytes you don't need, and may get
 effectively stuck on chipyard's own submodule tree. Initialize only what
-the flow you're following actually needs — Flow B's is the next section;
-Flow A's is in its own section further down.
+the flow you're following actually needs (Flow A's is in its own section
+further down).
 
-support used by XPU-RT. It ships as a git submodule under `merlin/`:
-
-```bash
-git submodule update --init merlin
-```
-```bash
-conda env create -f merlin/env_linux.yml
-conda activate merlin-dev
-uv sync
-```
-
-```bash
-bash setup.sh
-```
-```bash
-```
-
-For runtime-specific setup and usage details, see [runtime/README.md](runtime/README.md).
-
-#### Config your model parameters
-Create `data/toplevel/networks_periodic_profile.json` if there is none, and add entries like:
+#### Describe the workload
+A workload is a top-level JSON spec under `data/toplevel/` that lists the
+networks to co-schedule, for example
+[`data/toplevel/networks_mlp_dronet_yolo_spike.json`](data/toplevel/networks_mlp_dronet_yolo_spike.json):
 
 ```text
 "mlp": {
   "id": 1,
   "identifier":            # model name
-  "dispatch_deps_path":    # path to model json 
-  "period":                # Duration in millisec between excution windows (inverse of frequency)
-  "window_duration":       # Duration in millisec for model to finish after window start 
+  "dispatch_deps_path":    # path to the model's dispatch-graph JSON (under gen/vmfb/)
+  "period":                # Duration in millisec between execution windows (inverse of frequency)
+  "window_duration":       # Duration in millisec for model to finish after window start
 }
 ```
 
 ### Run XPU-RT Scheduler
-Run basic demos on top-level network graph:
 
 ```bash
-python scripts/run_xpurt_schedule.py --profiled
+python scripts/run_xpurt_schedule.py \
+    --networks-json data/toplevel/networks_mlp_dronet_yolo_spike.json --solver auto
 ```
-The optimal schedule of your workloads on your target will be found in `schedules/scheduled_networks_periodic_profiled.json` with visualization in 'plots/iree_combined_schedule_period.png' after it finishes.
+The schedule is written to `schedules/scheduled_<workload>[_<solver>]_profiled.json`
+and its plot to `plots/<workload>[_<solver>]_profiled.png`.
 
 #### Choosing a solver (`--solver`)
 
@@ -287,9 +266,8 @@ MOSEK is 2.8x better than HiGHS at equal time budget.
 ## Flow A: ModelBlaster as the compiler backend
 
 ModelBlaster brings PyTorch → quantized Zephyr/RISC-V codegen (curated
-kernels + an LLM-agentic kernel generator) instead of merlin/IREE, and
-profiles on spike/FireSim instead of a physical BananaPi. It plugs into the
-same `xpu-rt/scheduler.py` as Flow B — only the compiler and target change.
+kernels + an LLM-agentic kernel generator) and profiles on spike/FireSim.
+It plugs into `xpu-rt/scheduler.py` like any other compiler backend.
 
 ### Repository layout
 
@@ -303,7 +281,6 @@ git submodule update --init --recursive zephyr-chipyard-sw   # pulls in modelbla
 
 ```text
 XPU-RT/                          (this repo)
-├── merlin/                      submodule — Flow B compiler
 └── zephyr-chipyard-sw/          submodule — Zephyr BSP + samples
     └── modelblaster/            submodule — Flow A compiler
 ```
@@ -341,7 +318,7 @@ QUANT=int8 TARGET=gemmini_q31 RUNNER=firesim bash examples/dronet/run.sh
 
 ModelBlaster ships two scheduler bridge scripts that import `xpu-rt/scheduler.py`
 straight off this checkout (via `XPURT_ROOT`) and solve with MOSEK through cvxpy
-— the same MILP as Flow B's `scripts/run_xpurt_schedule.py`, just invoked from
+— the same MILP as `scripts/run_xpurt_schedule.py`, just invoked from
 the ModelBlaster side.
 
 **Deps:** install the `milp` extra into the same `zephyr` conda env used for
@@ -382,8 +359,7 @@ it is not installed and would be a reformulation, not a solver swap.
 for `uv sync --extra scheduler` + `uv run` — currently broken for this
 nested-submodule layout: `uv.lock` resolution pulls in every
 `[tool.uv.sources]` entry regardless of which extra you sync, including an
-unrelated `smolvla`-extra path (`merlin/third_party/lerobot`) that isn't
-checked out by default. Plain `python3` in the `zephyr` env, as below, is
+unrelated `smolvla`-extra path that isn't checked out by default. Plain `python3` in the `zephyr` env, as below, is
 the reliable path today.)
 
 ```bash
@@ -428,8 +404,8 @@ timeline.
 | `XPURT_ROOT` | `../XPU-RT` (a **sibling-checkout default** — override to `../..` when running from `zephyr-chipyard-sw/modelblaster`) | `scripts/run_xpurt_scheduler.py`, `scripts/run_xpurt_scheduler_multi.py`, `scripts/find_min_periodic_makespan*.py`, `benchmarks/runners/firesim.py`, `examples/xpurt_demo/run.sh` |
 | `XPURT_PYTHON` | the `xpu-rt-schedule` conda env (derived from `CONDA_EXE`), else `python3` | `scripts/find_min_periodic_makespan_mosek.py` (needs cvxpy + MOSEK) |
 
-Unlike `merlin`, this submodule reference *is* pinned to a commit (standard
-submodule semantics). Because it is nested, bumping it means updating
+This submodule reference is pinned to a commit (standard submodule
+semantics). Because it is nested, bumping it means updating
 `modelblaster` inside `zephyr-chipyard-sw`, committing that, then bumping the
 `zephyr-chipyard-sw` pointer in this repo.
 
@@ -452,7 +428,6 @@ XPU-RT/
 │   └── pytorch_workload/      # Sample model artifacts + dispatch JSON inputs
 ├── scripts/                   # Python entry points for experiments/scheduling
 ├── data/                      # Collected benchmark/profile/scheduling outputs
-├── merlin/                    # Git submodule (compiler/runtime/tooling upstream) — Flow B
 ├── zephyr-chipyard-sw/         # Git submodule — Zephyr BSP + samples
 │   └── modelblaster/           #   nested submodule (PyTorch->Zephyr/RISC-V pipeline) — Flow A
 │       └── third_party/KernelBlaster/  # nested submodule — originating research project
@@ -464,21 +439,10 @@ XPU-RT/
 ```
 
 
-### File-Level Integration Points
-
-2. `runtime/scripts/compile_all_models.sh` -> compiles models under `merlin/models/...`
-
-### Data/Artifact Flow Between This Repo and `merlin`
-
-1. `runtime/scripts/compile_all_models.sh` generates VMFB + graph artifacts into `gen/vmfb/...` (using Merlin compiler).
-2. `runtime/scripts/profile_remote.sh` runs topology benchmarks remotely and writes CSV results to `gen/profile/...`.
-3. `scripts/run_xpurt_schedule.py` reads profiled CSVs from `gen/profile/...` and combines them with dispatch graph JSON inputs to produce schedules.
-4. Final scheduling outputs and logs are stored under `data/...` and script output directories.
-
 ### Data/Artifact Flow Between This Repo and `ModelBlaster` (Flow A)
 
 ModelBlaster is a submodule nested in `zephyr-chipyard-sw/modelblaster` — but its
-own scripts still reach back into XPU-RT via the `XPURT_ROOT`/`MERLIN_DIR` env
+own scripts still reach back into XPU-RT via the `XPURT_ROOT` env
 vars and a `[tool.uv.sources]` entry rather than a relative import, so
 `XPURT_ROOT` needs to be set to `../..` (not left at its sibling-checkout
 default) when running from inside the submodule. See
@@ -486,18 +450,16 @@ default) when running from inside the submodule. See
 above.
 
 1. ModelBlaster profiles each (model, backend) pair on spike/FireSim and emits
-   an IREE-shape `results.csv` (same schema `xpu-rt/profile_loader.py` expects
-   from the merlin path).
+   a `results.csv` in the dispatch-shape schema `xpu-rt/profile_loader.py` reads.
 2. `xpu-rt/scheduler.py` (imported live from this checkout via `XPURT_ROOT`)
-   reads those CSVs and computes a core-assignment schedule, same as Flow B.
+   reads those CSVs and computes a core-assignment schedule.
 3. ModelBlaster's `examples/xpurt_demo/run.sh` builds a single Zephyr ELF from
-   that schedule and runs it via `harness_xpurt/` — the chipyard/Zephyr
-   equivalent of merlin's VMFB dispatch runners.
+   that schedule and runs it via `harness_xpurt/`.
 
 ## Feedback-driven compilation: post-schedule granularity advisor
 
 Motivating case: you partition a model at the compiler's default dispatch
-granularity, profile it (Flow A or B), and the schedule xpu-rt computes still
+granularity, profile it, and the schedule xpu-rt computes still
 misses its deadline. Often that's because a **non-periodic** (best-effort)
 job got scheduled as one coarse, unfused dispatch that occupies a core far
 longer than a **periodic** job's period — if the two ever share a core, that
@@ -537,5 +499,4 @@ Two ways to get the signal:
 ## Notes
 
 1. The Python scheduler modules are sourced from `xpu-rt/*.py`; deps declared in `pyproject.toml` (`pip install -e .`).
-2. Runtime C tooling in `runtime/` is separate from Python scheduling code and is focused on Merlin/IREE integration.
-3. If submodule contents are missing, runtime build/profile scripts will fail early.
+2. If submodule contents are missing, the build/profile scripts will fail early.
