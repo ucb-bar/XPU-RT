@@ -1,0 +1,4670 @@
+{
+ "schema_version": 1,
+ "schedule_id": "scheduled_networks_k3_mb_3model_ime_greedy_profiled.json",
+ "advice": [
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 81,
+   "recommendation": "choose_implementation",
+   "priority": 1,
+   "confidence": "medium",
+   "constraints": {
+    "legal_resources": [
+     "k1_cluster0"
+    ]
+   },
+   "rationale": "ime_k3_a100 is 94.0% faster than rvv_k3_x100 for this dispatch (317us vs 5303us).",
+   "evidence": {
+    "service_time_us": 5303.42,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "baseline_median_us": 5303.42,
+    "proposed_impl": "ime_k3_a100",
+    "proposed_median_us": 316.62,
+    "gain_fraction": 0.9403,
+    "gain_ms": 4.9868,
+    "min_gain_ms_required": 0.05,
+    "baseline_cv_pct": null,
+    "op": "yolov8_nano$dispatch_81_rvv_k3_x100_conv2d_batchnorm2d_silu_s8_N1xIC80xIH20xIW20xOC80xOH20xOW20xKH3xKW3xSH1xSW1xPH1xPW1",
+    "baseline_kernel": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 80,
+   "recommendation": "choose_implementation",
+   "priority": 1,
+   "confidence": "medium",
+   "constraints": {
+    "legal_resources": [
+     "k1_cluster0"
+    ]
+   },
+   "rationale": "ime_k3_a100 is 93.5% faster than rvv_k3_x100 for this dispatch (275us vs 4207us).",
+   "evidence": {
+    "service_time_us": 4206.62,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "baseline_median_us": 4206.62,
+    "proposed_impl": "ime_k3_a100",
+    "proposed_median_us": 274.54,
+    "gain_fraction": 0.9347,
+    "gain_ms": 3.9321,
+    "min_gain_ms_required": 0.05,
+    "baseline_cv_pct": null,
+    "op": "yolov8_nano$dispatch_80_rvv_k3_x100_conv2d_batchnorm2d_silu_s8_N1xIC64xIH20xIW20xOC80xOH20xOW20xKH3xKW3xSH1xSW1xPH1xPW1",
+    "baseline_kernel": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 78,
+   "recommendation": "choose_implementation",
+   "priority": 1,
+   "confidence": "medium",
+   "constraints": {
+    "legal_resources": [
+     "k1_cluster0"
+    ]
+   },
+   "rationale": "ime_k3_a100 is 92.2% faster than rvv_k3_x100 for this dispatch (227us vs 2893us).",
+   "evidence": {
+    "service_time_us": 2892.62,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "baseline_median_us": 2892.62,
+    "proposed_impl": "ime_k3_a100",
+    "proposed_median_us": 226.96,
+    "gain_fraction": 0.9215,
+    "gain_ms": 2.6657,
+    "min_gain_ms_required": 0.05,
+    "baseline_cv_pct": null,
+    "op": "yolov8_nano$dispatch_78_rvv_k3_x100_conv2d_batchnorm2d_silu_s8_N1xIC64xIH20xIW20xOC64xOH20xOW20xKH3xKW3xSH1xSW1xPH1xPW1",
+    "baseline_kernel": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 77,
+   "recommendation": "choose_implementation",
+   "priority": 1,
+   "confidence": "medium",
+   "constraints": {
+    "legal_resources": [
+     "k1_cluster0"
+    ]
+   },
+   "rationale": "ime_k3_a100 is 90.7% faster than rvv_k3_x100 for this dispatch (267us vs 2888us).",
+   "evidence": {
+    "service_time_us": 2887.54,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "baseline_median_us": 2887.54,
+    "proposed_impl": "ime_k3_a100",
+    "proposed_median_us": 267.12,
+    "gain_fraction": 0.9075,
+    "gain_ms": 2.6204,
+    "min_gain_ms_required": 0.05,
+    "baseline_cv_pct": null,
+    "op": "yolov8_nano$dispatch_77_rvv_k3_x100_conv2d_batchnorm2d_silu_s8_N1xIC64xIH20xIW20xOC64xOH20xOW20xKH3xKW3xSH1xSW1xPH1xPW1",
+    "baseline_kernel": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 87,
+   "recommendation": "choose_implementation",
+   "priority": 1,
+   "confidence": "medium",
+   "constraints": {
+    "legal_resources": [
+     "k1_cluster0"
+    ]
+   },
+   "rationale": "ime_k3_a100 is 91.3% faster than rvv_k3_x100 for this dispatch (168us vs 1927us).",
+   "evidence": {
+    "service_time_us": 1927.0,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "baseline_median_us": 1927.0,
+    "proposed_impl": "ime_k3_a100",
+    "proposed_median_us": 167.96,
+    "gain_fraction": 0.9128,
+    "gain_ms": 1.759,
+    "min_gain_ms_required": 0.05,
+    "baseline_cv_pct": null,
+    "op": "yolov8_nano$dispatch_87_rvv_k3_x100_conv2d_batchnorm2d_silu_s8_N1xIC128xIH10xIW10xOC80xOH10xOW10xKH3xKW3xSH1xSW1xPH1xPW1",
+    "baseline_kernel": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 31,
+   "recommendation": "choose_implementation",
+   "priority": 1,
+   "confidence": "medium",
+   "constraints": {
+    "legal_resources": [
+     "k1_cluster0"
+    ]
+   },
+   "rationale": "ime_k3_a100 is 87.2% faster than rvv_k3_x100 for this dispatch (243us vs 1894us).",
+   "evidence": {
+    "service_time_us": 1893.79,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "baseline_median_us": 1893.79,
+    "proposed_impl": "ime_k3_a100",
+    "proposed_median_us": 243.25,
+    "gain_fraction": 0.8716,
+    "gain_ms": 1.6505,
+    "min_gain_ms_required": 0.05,
+    "baseline_cv_pct": null,
+    "op": "yolov8_nano$dispatch_31_rvv_k3_x100_conv2d_batchnorm2d_silu_s8_N1xIC128xIH10xIW10xOC256xOH5xOW5xKH3xKW3xSH2xSW2xPH1xPW1",
+    "baseline_kernel": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 55,
+   "recommendation": "choose_implementation",
+   "priority": 1,
+   "confidence": "medium",
+   "constraints": {
+    "legal_resources": [
+     "k1_cluster0"
+    ]
+   },
+   "rationale": "ime_k3_a100 is 80.4% faster than rvv_k3_x100 for this dispatch (349us vs 1775us).",
+   "evidence": {
+    "service_time_us": 1775.29,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "baseline_median_us": 1775.29,
+    "proposed_impl": "ime_k3_a100",
+    "proposed_median_us": 348.79,
+    "gain_fraction": 0.8035,
+    "gain_ms": 1.4265,
+    "min_gain_ms_required": 0.05,
+    "baseline_cv_pct": null,
+    "op": "yolov8_nano$dispatch_55_rvv_k3_x100_conv2d_batchnorm2d_silu_s8_N1xIC192xIH20xIW20xOC64xOH20xOW20xKH1xKW1xSH1xSW1xPH0xPW0",
+    "baseline_kernel": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 20,
+   "recommendation": "choose_implementation",
+   "priority": 1,
+   "confidence": "medium",
+   "constraints": {
+    "legal_resources": [
+     "k1_cluster0"
+    ]
+   },
+   "rationale": "ime_k3_a100 is 90.0% faster than rvv_k3_x100 for this dispatch (175us vs 1756us).",
+   "evidence": {
+    "service_time_us": 1756.17,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "baseline_median_us": 1756.17,
+    "proposed_impl": "ime_k3_a100",
+    "proposed_median_us": 174.92,
+    "gain_fraction": 0.9004,
+    "gain_ms": 1.5813,
+    "min_gain_ms_required": 0.05,
+    "baseline_cv_pct": null,
+    "op": "yolov8_nano$dispatch_20_rvv_k3_x100_conv2d_batchnorm2d_silu_s8_N1xIC64xIH20xIW20xOC128xOH10xOW10xKH3xKW3xSH2xSW2xPH1xPW1",
+    "baseline_kernel": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 9,
+   "recommendation": "choose_implementation",
+   "priority": 1,
+   "confidence": "medium",
+   "constraints": {
+    "legal_resources": [
+     "k1_cluster0"
+    ]
+   },
+   "rationale": "ime_k3_a100 is 87.9% faster than rvv_k3_x100 for this dispatch (210us vs 1733us).",
+   "evidence": {
+    "service_time_us": 1732.92,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "baseline_median_us": 1732.92,
+    "proposed_impl": "ime_k3_a100",
+    "proposed_median_us": 210.21,
+    "gain_fraction": 0.8787,
+    "gain_ms": 1.5227,
+    "min_gain_ms_required": 0.05,
+    "baseline_cv_pct": null,
+    "op": "yolov8_nano$dispatch_9_rvv_k3_x100_conv2d_batchnorm2d_silu_s8_N1xIC32xIH40xIW40xOC64xOH20xOW20xKH3xKW3xSH2xSW2xPH1xPW1",
+    "baseline_kernel": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 47,
+   "recommendation": "choose_implementation",
+   "priority": 1,
+   "confidence": "medium",
+   "constraints": {
+    "legal_resources": [
+     "k1_cluster0"
+    ]
+   },
+   "rationale": "ime_k3_a100 is 87.6% faster than rvv_k3_x100 for this dispatch (213us vs 1718us).",
+   "evidence": {
+    "service_time_us": 1717.54,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "baseline_median_us": 1717.54,
+    "proposed_impl": "ime_k3_a100",
+    "proposed_median_us": 212.83,
+    "gain_fraction": 0.8761,
+    "gain_ms": 1.5047,
+    "min_gain_ms_required": 0.05,
+    "baseline_cv_pct": null,
+    "op": "yolov8_nano$dispatch_47_rvv_k3_x100_conv2d_batchnorm2d_silu_s8_N1xIC384xIH10xIW10xOC128xOH10xOW10xKH1xKW1xSH1xSW1xPH0xPW0",
+    "baseline_kernel": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 1,
+   "recommendation": "choose_implementation",
+   "priority": 1,
+   "confidence": "medium",
+   "constraints": {
+    "legal_resources": [
+     "k1_cluster0"
+    ]
+   },
+   "rationale": "ime_k3_a100 is 78.6% faster than rvv_k3_x100 for this dispatch (329us vs 1535us).",
+   "evidence": {
+    "service_time_us": 1534.75,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "baseline_median_us": 1534.75,
+    "proposed_impl": "ime_k3_a100",
+    "proposed_median_us": 328.75,
+    "gain_fraction": 0.7858,
+    "gain_ms": 1.206,
+    "min_gain_ms_required": 0.05,
+    "baseline_cv_pct": null,
+    "op": "yolov8_nano$dispatch_1_rvv_k3_x100_conv2d_batchnorm2d_silu_s8_N1xIC16xIH80xIW80xOC32xOH40xOW40xKH3xKW3xSH2xSW2xPH1xPW1",
+    "baseline_kernel": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 19,
+   "recommendation": "choose_implementation",
+   "priority": 1,
+   "confidence": "medium",
+   "constraints": {
+    "legal_resources": [
+     "k1_cluster0"
+    ]
+   },
+   "rationale": "ime_k3_a100 is 81.1% faster than rvv_k3_x100 for this dispatch (263us vs 1388us).",
+   "evidence": {
+    "service_time_us": 1388.0,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "baseline_median_us": 1388.0,
+    "proposed_impl": "ime_k3_a100",
+    "proposed_median_us": 262.88,
+    "gain_fraction": 0.8106,
+    "gain_ms": 1.1251,
+    "min_gain_ms_required": 0.05,
+    "baseline_cv_pct": null,
+    "op": "yolov8_nano$dispatch_19_rvv_k3_x100_conv2d_batchnorm2d_silu_s8_N1xIC128xIH20xIW20xOC64xOH20xOW20xKH1xKW1xSH1xSW1xPH0xPW0",
+    "baseline_kernel": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 88,
+   "recommendation": "choose_implementation",
+   "priority": 1,
+   "confidence": "medium",
+   "constraints": {
+    "legal_resources": [
+     "k1_cluster0"
+    ]
+   },
+   "rationale": "ime_k3_a100 is 91.0% faster than rvv_k3_x100 for this dispatch (121us vs 1348us).",
+   "evidence": {
+    "service_time_us": 1347.83,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "baseline_median_us": 1347.83,
+    "proposed_impl": "ime_k3_a100",
+    "proposed_median_us": 121.46,
+    "gain_fraction": 0.9099,
+    "gain_ms": 1.2264,
+    "min_gain_ms_required": 0.05,
+    "baseline_cv_pct": null,
+    "op": "yolov8_nano$dispatch_88_rvv_k3_x100_conv2d_batchnorm2d_silu_s8_N1xIC80xIH10xIW10xOC80xOH10xOW10xKH3xKW3xSH1xSW1xPH1xPW1",
+    "baseline_kernel": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 0,
+   "recommendation": "choose_implementation",
+   "priority": 1,
+   "confidence": "medium",
+   "constraints": {
+    "legal_resources": [
+     "k1_cluster0"
+    ]
+   },
+   "rationale": "ime_k3_a100 is 36.9% faster than rvv_k3_x100 for this dispatch (835us vs 1323us).",
+   "evidence": {
+    "service_time_us": 1322.96,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "baseline_median_us": 1322.96,
+    "proposed_impl": "ime_k3_a100",
+    "proposed_median_us": 834.75,
+    "gain_fraction": 0.369,
+    "gain_ms": 0.4882,
+    "min_gain_ms_required": 0.05,
+    "baseline_cv_pct": null,
+    "op": "yolov8_nano$dispatch_0_rvv_k3_x100_conv2d_batchnorm2d_silu_s8_N1xIC3xIH160xIW160xOC16xOH80xOW80xKH3xKW3xSH2xSW2xPH1xPW1",
+    "baseline_kernel": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 84,
+   "recommendation": "choose_implementation",
+   "priority": 1,
+   "confidence": "medium",
+   "constraints": {
+    "legal_resources": [
+     "k1_cluster0"
+    ]
+   },
+   "rationale": "ime_k3_a100 is 88.9% faster than rvv_k3_x100 for this dispatch (146us vs 1315us).",
+   "evidence": {
+    "service_time_us": 1315.12,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "baseline_median_us": 1315.12,
+    "proposed_impl": "ime_k3_a100",
+    "proposed_median_us": 146.21,
+    "gain_fraction": 0.8888,
+    "gain_ms": 1.1689,
+    "min_gain_ms_required": 0.05,
+    "baseline_cv_pct": null,
+    "op": "yolov8_nano$dispatch_84_rvv_k3_x100_conv2d_batchnorm2d_silu_s8_N1xIC128xIH10xIW10xOC64xOH10xOW10xKH3xKW3xSH1xSW1xPH1xPW1",
+    "baseline_kernel": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 5,
+   "recommendation": "choose_implementation",
+   "priority": 1,
+   "confidence": "medium",
+   "constraints": {
+    "legal_resources": [
+     "k1_cluster0"
+    ]
+   },
+   "rationale": "ime_k3_a100 is 91.0% faster than rvv_k3_x100 for this dispatch (117us vs 1301us).",
+   "evidence": {
+    "service_time_us": 1300.58,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "baseline_median_us": 1300.58,
+    "proposed_impl": "ime_k3_a100",
+    "proposed_median_us": 117.42,
+    "gain_fraction": 0.9097,
+    "gain_ms": 1.1832,
+    "min_gain_ms_required": 0.05,
+    "baseline_cv_pct": null,
+    "op": "yolov8_nano$dispatch_5_rvv_k3_x100_conv2d_batchnorm2d_silu_s8_N1xIC16xIH40xIW40xOC16xOH40xOW40xKH3xKW3xSH1xSW1xPH1xPW1",
+    "baseline_kernel": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 4,
+   "recommendation": "choose_implementation",
+   "priority": 1,
+   "confidence": "medium",
+   "constraints": {
+    "legal_resources": [
+     "k1_cluster0"
+    ]
+   },
+   "rationale": "ime_k3_a100 is 90.7% faster than rvv_k3_x100 for this dispatch (119us vs 1276us).",
+   "evidence": {
+    "service_time_us": 1275.54,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "baseline_median_us": 1275.54,
+    "proposed_impl": "ime_k3_a100",
+    "proposed_median_us": 118.62,
+    "gain_fraction": 0.907,
+    "gain_ms": 1.1569,
+    "min_gain_ms_required": 0.05,
+    "baseline_cv_pct": null,
+    "op": "yolov8_nano$dispatch_4_rvv_k3_x100_conv2d_batchnorm2d_silu_s8_N1xIC16xIH40xIW40xOC16xOH40xOW40xKH3xKW3xSH1xSW1xPH1xPW1",
+    "baseline_kernel": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 44,
+   "recommendation": "choose_implementation",
+   "priority": 1,
+   "confidence": "medium",
+   "constraints": {
+    "legal_resources": [
+     "k1_cluster0"
+    ]
+   },
+   "rationale": "ime_k3_a100 is 86.6% faster than rvv_k3_x100 for this dispatch (161us vs 1201us).",
+   "evidence": {
+    "service_time_us": 1201.29,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "baseline_median_us": 1201.29,
+    "proposed_impl": "ime_k3_a100",
+    "proposed_median_us": 161.33,
+    "gain_fraction": 0.8657,
+    "gain_ms": 1.04,
+    "min_gain_ms_required": 0.05,
+    "baseline_cv_pct": null,
+    "op": "yolov8_nano$dispatch_44_rvv_k3_x100_conv2d_batchnorm2d_silu_s8_N1xIC512xIH5xIW5xOC256xOH5xOW5xKH1xKW1xSH1xSW1xPH0xPW0",
+    "baseline_kernel": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 60,
+   "recommendation": "choose_implementation",
+   "priority": 1,
+   "confidence": "medium",
+   "constraints": {
+    "legal_resources": [
+     "k1_cluster0"
+    ]
+   },
+   "rationale": "ime_k3_a100 is 81.8% faster than rvv_k3_x100 for this dispatch (218us vs 1198us).",
+   "evidence": {
+    "service_time_us": 1198.33,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "baseline_median_us": 1198.33,
+    "proposed_impl": "ime_k3_a100",
+    "proposed_median_us": 218.12,
+    "gain_fraction": 0.818,
+    "gain_ms": 0.9802,
+    "min_gain_ms_required": 0.05,
+    "baseline_cv_pct": null,
+    "op": "yolov8_nano$dispatch_60_rvv_k3_x100_conv2d_batchnorm2d_silu_s8_N1xIC96xIH20xIW20xOC64xOH20xOW20xKH1xKW1xSH1xSW1xPH0xPW0",
+    "baseline_kernel": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 30,
+   "recommendation": "choose_implementation",
+   "priority": 1,
+   "confidence": "medium",
+   "constraints": {
+    "legal_resources": [
+     "k1_cluster0"
+    ]
+   },
+   "rationale": "ime_k3_a100 is 86.5% faster than rvv_k3_x100 for this dispatch (154us vs 1142us).",
+   "evidence": {
+    "service_time_us": 1142.04,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "baseline_median_us": 1142.04,
+    "proposed_impl": "ime_k3_a100",
+    "proposed_median_us": 153.75,
+    "gain_fraction": 0.8654,
+    "gain_ms": 0.9883,
+    "min_gain_ms_required": 0.05,
+    "baseline_cv_pct": null,
+    "op": "yolov8_nano$dispatch_30_rvv_k3_x100_conv2d_batchnorm2d_silu_s8_N1xIC256xIH10xIW10xOC128xOH10xOW10xKH1xKW1xSH1xSW1xPH0xPW0",
+    "baseline_kernel": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 10,
+   "recommendation": "choose_implementation",
+   "priority": 1,
+   "confidence": "medium",
+   "constraints": {
+    "legal_resources": [
+     "k1_cluster0"
+    ]
+   },
+   "rationale": "ime_k3_a100 is 86.3% faster than rvv_k3_x100 for this dispatch (140us vs 1020us).",
+   "evidence": {
+    "service_time_us": 1019.92,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "baseline_median_us": 1019.92,
+    "proposed_impl": "ime_k3_a100",
+    "proposed_median_us": 139.83,
+    "gain_fraction": 0.8629,
+    "gain_ms": 0.8801,
+    "min_gain_ms_required": 0.05,
+    "baseline_cv_pct": null,
+    "op": "yolov8_nano$dispatch_10_rvv_k3_x100_conv2d_batchnorm2d_silu_s8_N1xIC64xIH20xIW20xOC64xOH20xOW20xKH1xKW1xSH1xSW1xPH0xPW0",
+    "baseline_kernel": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 38,
+   "recommendation": "choose_implementation",
+   "priority": 2,
+   "confidence": "medium",
+   "constraints": {
+    "legal_resources": [
+     "k1_cluster0"
+    ]
+   },
+   "rationale": "ime_k3_a100 is 85.8% faster than rvv_k3_x100 for this dispatch (137us vs 966us).",
+   "evidence": {
+    "service_time_us": 966.12,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "baseline_median_us": 966.12,
+    "proposed_impl": "ime_k3_a100",
+    "proposed_median_us": 137.08,
+    "gain_fraction": 0.8581,
+    "gain_ms": 0.829,
+    "min_gain_ms_required": 0.05,
+    "baseline_cv_pct": null,
+    "op": "yolov8_nano$dispatch_38_rvv_k3_x100_conv2d_batchnorm2d_silu_s8_N1xIC384xIH5xIW5xOC256xOH5xOW5xKH1xKW1xSH1xSW1xPH0xPW0",
+    "baseline_kernel": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 76,
+   "recommendation": "choose_implementation",
+   "priority": 2,
+   "confidence": "medium",
+   "constraints": {
+    "legal_resources": [
+     "k1_cluster0"
+    ]
+   },
+   "rationale": "ime_k3_a100 is 85.7% faster than rvv_k3_x100 for this dispatch (137us vs 960us).",
+   "evidence": {
+    "service_time_us": 960.04,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "baseline_median_us": 960.04,
+    "proposed_impl": "ime_k3_a100",
+    "proposed_median_us": 137.08,
+    "gain_fraction": 0.8572,
+    "gain_ms": 0.823,
+    "min_gain_ms_required": 0.05,
+    "baseline_cv_pct": null,
+    "op": "yolov8_nano$dispatch_76_rvv_k3_x100_conv2d_batchnorm2d_silu_s8_N1xIC384xIH5xIW5xOC256xOH5xOW5xKH1xKW1xSH1xSW1xPH0xPW0",
+    "baseline_kernel": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 71,
+   "recommendation": "choose_implementation",
+   "priority": 2,
+   "confidence": "medium",
+   "constraints": {
+    "legal_resources": [
+     "k1_cluster0"
+    ]
+   },
+   "rationale": "ime_k3_a100 is 85.7% faster than rvv_k3_x100 for this dispatch (137us vs 960us).",
+   "evidence": {
+    "service_time_us": 960.0,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "baseline_median_us": 960.0,
+    "proposed_impl": "ime_k3_a100",
+    "proposed_median_us": 136.83,
+    "gain_fraction": 0.8575,
+    "gain_ms": 0.8232,
+    "min_gain_ms_required": 0.05,
+    "baseline_cv_pct": null,
+    "op": "yolov8_nano$dispatch_71_rvv_k3_x100_conv2d_batchnorm2d_silu_s8_N1xIC384xIH5xIW5xOC256xOH5xOW5xKH1xKW1xSH1xSW1xPH0xPW0",
+    "baseline_kernel": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 52,
+   "recommendation": "choose_implementation",
+   "priority": 2,
+   "confidence": "medium",
+   "constraints": {
+    "legal_resources": [
+     "k1_cluster0"
+    ]
+   },
+   "rationale": "ime_k3_a100 is 86.8% faster than rvv_k3_x100 for this dispatch (125us vs 950us).",
+   "evidence": {
+    "service_time_us": 949.58,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "baseline_median_us": 949.58,
+    "proposed_impl": "ime_k3_a100",
+    "proposed_median_us": 125.21,
+    "gain_fraction": 0.8681,
+    "gain_ms": 0.8244,
+    "min_gain_ms_required": 0.05,
+    "baseline_cv_pct": null,
+    "op": "yolov8_nano$dispatch_52_rvv_k3_x100_conv2d_batchnorm2d_silu_s8_N1xIC192xIH10xIW10xOC128xOH10xOW10xKH1xKW1xSH1xSW1xPH0xPW0",
+    "baseline_kernel": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 68,
+   "recommendation": "choose_implementation",
+   "priority": 2,
+   "confidence": "medium",
+   "constraints": {
+    "legal_resources": [
+     "k1_cluster0"
+    ]
+   },
+   "rationale": "ime_k3_a100 is 86.7% faster than rvv_k3_x100 for this dispatch (126us vs 948us).",
+   "evidence": {
+    "service_time_us": 948.21,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "baseline_median_us": 948.21,
+    "proposed_impl": "ime_k3_a100",
+    "proposed_median_us": 126.21,
+    "gain_fraction": 0.8669,
+    "gain_ms": 0.822,
+    "min_gain_ms_required": 0.05,
+    "baseline_cv_pct": null,
+    "op": "yolov8_nano$dispatch_68_rvv_k3_x100_conv2d_batchnorm2d_silu_s8_N1xIC192xIH10xIW10xOC128xOH10xOW10xKH1xKW1xSH1xSW1xPH0xPW0",
+    "baseline_kernel": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 8,
+   "recommendation": "choose_implementation",
+   "priority": 2,
+   "confidence": "medium",
+   "constraints": {
+    "legal_resources": [
+     "k1_cluster0"
+    ]
+   },
+   "rationale": "ime_k3_a100 is 72.7% faster than rvv_k3_x100 for this dispatch (258us vs 948us).",
+   "evidence": {
+    "service_time_us": 947.92,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "baseline_median_us": 947.92,
+    "proposed_impl": "ime_k3_a100",
+    "proposed_median_us": 258.42,
+    "gain_fraction": 0.7274,
+    "gain_ms": 0.6895,
+    "min_gain_ms_required": 0.05,
+    "baseline_cv_pct": null,
+    "op": "yolov8_nano$dispatch_8_rvv_k3_x100_conv2d_batchnorm2d_silu_s8_N1xIC48xIH40xIW40xOC32xOH40xOW40xKH1xKW1xSH1xSW1xPH0xPW0",
+    "baseline_kernel": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 63,
+   "recommendation": "choose_implementation",
+   "priority": 2,
+   "confidence": "medium",
+   "constraints": {
+    "legal_resources": [
+     "k1_cluster0"
+    ]
+   },
+   "rationale": "ime_k3_a100 is 86.4% faster than rvv_k3_x100 for this dispatch (128us vs 947us).",
+   "evidence": {
+    "service_time_us": 946.96,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "baseline_median_us": 946.96,
+    "proposed_impl": "ime_k3_a100",
+    "proposed_median_us": 128.46,
+    "gain_fraction": 0.8643,
+    "gain_ms": 0.8185,
+    "min_gain_ms_required": 0.05,
+    "baseline_cv_pct": null,
+    "op": "yolov8_nano$dispatch_63_rvv_k3_x100_conv2d_batchnorm2d_silu_s8_N1xIC192xIH10xIW10xOC128xOH10xOW10xKH1xKW1xSH1xSW1xPH0xPW0",
+    "baseline_kernel": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 12,
+   "recommendation": "choose_implementation",
+   "priority": 2,
+   "confidence": "medium",
+   "constraints": {
+    "legal_resources": [
+     "k1_cluster0"
+    ]
+   },
+   "rationale": "ime_k3_a100 is 89.6% faster than rvv_k3_x100 for this dispatch (93us vs 899us).",
+   "evidence": {
+    "service_time_us": 899.04,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "baseline_median_us": 899.04,
+    "proposed_impl": "ime_k3_a100",
+    "proposed_median_us": 93.33,
+    "gain_fraction": 0.8962,
+    "gain_ms": 0.8057,
+    "min_gain_ms_required": 0.05,
+    "baseline_cv_pct": null,
+    "op": "yolov8_nano$dispatch_12_rvv_k3_x100_conv2d_batchnorm2d_silu_s8_N1xIC32xIH20xIW20xOC32xOH20xOW20xKH3xKW3xSH1xSW1xPH1xPW1",
+    "baseline_kernel": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 15,
+   "recommendation": "choose_implementation",
+   "priority": 2,
+   "confidence": "medium",
+   "constraints": {
+    "legal_resources": [
+     "k1_cluster0"
+    ]
+   },
+   "rationale": "ime_k3_a100 is 87.9% faster than rvv_k3_x100 for this dispatch (108us vs 896us).",
+   "evidence": {
+    "service_time_us": 895.67,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "baseline_median_us": 895.67,
+    "proposed_impl": "ime_k3_a100",
+    "proposed_median_us": 108.25,
+    "gain_fraction": 0.8791,
+    "gain_ms": 0.7874,
+    "min_gain_ms_required": 0.05,
+    "baseline_cv_pct": null,
+    "op": "yolov8_nano$dispatch_15_rvv_k3_x100_conv2d_batchnorm2d_silu_s8_N1xIC32xIH20xIW20xOC32xOH20xOW20xKH3xKW3xSH1xSW1xPH1xPW1",
+    "baseline_kernel": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 57,
+   "recommendation": "choose_implementation",
+   "priority": 2,
+   "confidence": "medium",
+   "constraints": {
+    "legal_resources": [
+     "k1_cluster0"
+    ]
+   },
+   "rationale": "ime_k3_a100 is 89.5% faster than rvv_k3_x100 for this dispatch (94us vs 894us).",
+   "evidence": {
+    "service_time_us": 894.08,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "baseline_median_us": 894.08,
+    "proposed_impl": "ime_k3_a100",
+    "proposed_median_us": 93.79,
+    "gain_fraction": 0.8951,
+    "gain_ms": 0.8003,
+    "min_gain_ms_required": 0.05,
+    "baseline_cv_pct": null,
+    "op": "yolov8_nano$dispatch_57_rvv_k3_x100_conv2d_batchnorm2d_silu_s8_N1xIC32xIH20xIW20xOC32xOH20xOW20xKH3xKW3xSH1xSW1xPH1xPW1",
+    "baseline_kernel": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 16,
+   "recommendation": "choose_implementation",
+   "priority": 2,
+   "confidence": "medium",
+   "constraints": {
+    "legal_resources": [
+     "k1_cluster0"
+    ]
+   },
+   "rationale": "ime_k3_a100 is 89.7% faster than rvv_k3_x100 for this dispatch (92us vs 893us).",
+   "evidence": {
+    "service_time_us": 893.17,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "baseline_median_us": 893.17,
+    "proposed_impl": "ime_k3_a100",
+    "proposed_median_us": 92.08,
+    "gain_fraction": 0.8969,
+    "gain_ms": 0.8011,
+    "min_gain_ms_required": 0.05,
+    "baseline_cv_pct": null,
+    "op": "yolov8_nano$dispatch_16_rvv_k3_x100_conv2d_batchnorm2d_silu_s8_N1xIC32xIH20xIW20xOC32xOH20xOW20xKH3xKW3xSH1xSW1xPH1xPW1",
+    "baseline_kernel": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 58,
+   "recommendation": "choose_implementation",
+   "priority": 2,
+   "confidence": "medium",
+   "constraints": {
+    "legal_resources": [
+     "k1_cluster0"
+    ]
+   },
+   "rationale": "ime_k3_a100 is 89.5% faster than rvv_k3_x100 for this dispatch (93us vs 893us).",
+   "evidence": {
+    "service_time_us": 892.67,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "baseline_median_us": 892.67,
+    "proposed_impl": "ime_k3_a100",
+    "proposed_median_us": 93.38,
+    "gain_fraction": 0.8954,
+    "gain_ms": 0.7993,
+    "min_gain_ms_required": 0.05,
+    "baseline_cv_pct": null,
+    "op": "yolov8_nano$dispatch_58_rvv_k3_x100_conv2d_batchnorm2d_silu_s8_N1xIC32xIH20xIW20xOC32xOH20xOW20xKH3xKW3xSH1xSW1xPH1xPW1",
+    "baseline_kernel": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 13,
+   "recommendation": "choose_implementation",
+   "priority": 2,
+   "confidence": "medium",
+   "constraints": {
+    "legal_resources": [
+     "k1_cluster0"
+    ]
+   },
+   "rationale": "ime_k3_a100 is 89.7% faster than rvv_k3_x100 for this dispatch (92us vs 893us).",
+   "evidence": {
+    "service_time_us": 892.54,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "baseline_median_us": 892.54,
+    "proposed_impl": "ime_k3_a100",
+    "proposed_median_us": 91.62,
+    "gain_fraction": 0.8973,
+    "gain_ms": 0.8009,
+    "min_gain_ms_required": 0.05,
+    "baseline_cv_pct": null,
+    "op": "yolov8_nano$dispatch_13_rvv_k3_x100_conv2d_batchnorm2d_silu_s8_N1xIC32xIH20xIW20xOC32xOH20xOW20xKH3xKW3xSH1xSW1xPH1xPW1",
+    "baseline_kernel": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 94,
+   "recommendation": "choose_implementation",
+   "priority": 2,
+   "confidence": "medium",
+   "constraints": {
+    "legal_resources": [
+     "k1_cluster0"
+    ]
+   },
+   "rationale": "ime_k3_a100 is 86.2% faster than rvv_k3_x100 for this dispatch (123us vs 891us).",
+   "evidence": {
+    "service_time_us": 891.46,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "baseline_median_us": 891.46,
+    "proposed_impl": "ime_k3_a100",
+    "proposed_median_us": 123.08,
+    "gain_fraction": 0.8619,
+    "gain_ms": 0.7684,
+    "min_gain_ms_required": 0.05,
+    "baseline_cv_pct": null,
+    "op": "yolov8_nano$dispatch_94_rvv_k3_x100_conv2d_batchnorm2d_silu_s8_N1xIC256xIH5xIW5xOC80xOH5xOW5xKH3xKW3xSH1xSW1xPH1xPW1",
+    "baseline_kernel": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 61,
+   "recommendation": "choose_implementation",
+   "priority": 2,
+   "confidence": "medium",
+   "constraints": {
+    "legal_resources": [
+     "k1_cluster0"
+    ]
+   },
+   "rationale": "ime_k3_a100 is 86.2% faster than rvv_k3_x100 for this dispatch (112us vs 813us).",
+   "evidence": {
+    "service_time_us": 813.08,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "baseline_median_us": 813.08,
+    "proposed_impl": "ime_k3_a100",
+    "proposed_median_us": 112.5,
+    "gain_fraction": 0.8616,
+    "gain_ms": 0.7006,
+    "min_gain_ms_required": 0.05,
+    "baseline_cv_pct": null,
+    "op": "yolov8_nano$dispatch_61_rvv_k3_x100_conv2d_batchnorm2d_silu_s8_N1xIC64xIH20xIW20xOC64xOH10xOW10xKH3xKW3xSH2xSW2xPH1xPW1",
+    "baseline_kernel": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 66,
+   "recommendation": "choose_implementation",
+   "priority": 2,
+   "confidence": "medium",
+   "constraints": {
+    "legal_resources": [
+     "k1_cluster0"
+    ]
+   },
+   "rationale": "ime_k3_a100 is 89.3% faster than rvv_k3_x100 for this dispatch (86us vs 803us).",
+   "evidence": {
+    "service_time_us": 802.79,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "baseline_median_us": 802.79,
+    "proposed_impl": "ime_k3_a100",
+    "proposed_median_us": 85.71,
+    "gain_fraction": 0.8932,
+    "gain_ms": 0.7171,
+    "min_gain_ms_required": 0.05,
+    "baseline_cv_pct": null,
+    "op": "yolov8_nano$dispatch_66_rvv_k3_x100_conv2d_batchnorm2d_silu_s8_N1xIC64xIH10xIW10xOC64xOH10xOW10xKH3xKW3xSH1xSW1xPH1xPW1",
+    "baseline_kernel": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 50,
+   "recommendation": "choose_implementation",
+   "priority": 2,
+   "confidence": "medium",
+   "constraints": {
+    "legal_resources": [
+     "k1_cluster0"
+    ]
+   },
+   "rationale": "ime_k3_a100 is 89.4% faster than rvv_k3_x100 for this dispatch (85us vs 801us).",
+   "evidence": {
+    "service_time_us": 801.38,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "baseline_median_us": 801.38,
+    "proposed_impl": "ime_k3_a100",
+    "proposed_median_us": 85.04,
+    "gain_fraction": 0.8939,
+    "gain_ms": 0.7163,
+    "min_gain_ms_required": 0.05,
+    "baseline_cv_pct": null,
+    "op": "yolov8_nano$dispatch_50_rvv_k3_x100_conv2d_batchnorm2d_silu_s8_N1xIC64xIH10xIW10xOC64xOH10xOW10xKH3xKW3xSH1xSW1xPH1xPW1",
+    "baseline_kernel": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 65,
+   "recommendation": "choose_implementation",
+   "priority": 2,
+   "confidence": "medium",
+   "constraints": {
+    "legal_resources": [
+     "k1_cluster0"
+    ]
+   },
+   "rationale": "ime_k3_a100 is 88.8% faster than rvv_k3_x100 for this dispatch (90us vs 800us).",
+   "evidence": {
+    "service_time_us": 799.88,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "baseline_median_us": 799.88,
+    "proposed_impl": "ime_k3_a100",
+    "proposed_median_us": 89.75,
+    "gain_fraction": 0.8878,
+    "gain_ms": 0.7101,
+    "min_gain_ms_required": 0.05,
+    "baseline_cv_pct": null,
+    "op": "yolov8_nano$dispatch_65_rvv_k3_x100_conv2d_batchnorm2d_silu_s8_N1xIC64xIH10xIW10xOC64xOH10xOW10xKH3xKW3xSH1xSW1xPH1xPW1",
+    "baseline_kernel": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 21,
+   "recommendation": "choose_implementation",
+   "priority": 2,
+   "confidence": "medium",
+   "constraints": {
+    "legal_resources": [
+     "k1_cluster0"
+    ]
+   },
+   "rationale": "ime_k3_a100 is 87.5% faster than rvv_k3_x100 for this dispatch (99us vs 789us).",
+   "evidence": {
+    "service_time_us": 789.25,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "baseline_median_us": 789.25,
+    "proposed_impl": "ime_k3_a100",
+    "proposed_median_us": 99.0,
+    "gain_fraction": 0.8746,
+    "gain_ms": 0.6903,
+    "min_gain_ms_required": 0.05,
+    "baseline_cv_pct": null,
+    "op": "yolov8_nano$dispatch_21_rvv_k3_x100_conv2d_batchnorm2d_silu_s8_N1xIC128xIH10xIW10xOC128xOH10xOW10xKH1xKW1xSH1xSW1xPH0xPW0",
+    "baseline_kernel": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 85,
+   "recommendation": "choose_implementation",
+   "priority": 2,
+   "confidence": "medium",
+   "constraints": {
+    "legal_resources": [
+     "k1_cluster0"
+    ]
+   },
+   "rationale": "ime_k3_a100 is 89.0% faster than rvv_k3_x100 for this dispatch (86us vs 784us).",
+   "evidence": {
+    "service_time_us": 783.71,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "baseline_median_us": 783.71,
+    "proposed_impl": "ime_k3_a100",
+    "proposed_median_us": 86.38,
+    "gain_fraction": 0.8898,
+    "gain_ms": 0.6973,
+    "min_gain_ms_required": 0.05,
+    "baseline_cv_pct": null,
+    "op": "yolov8_nano$dispatch_85_rvv_k3_x100_conv2d_batchnorm2d_silu_s8_N1xIC64xIH10xIW10xOC64xOH10xOW10xKH3xKW3xSH1xSW1xPH1xPW1",
+    "baseline_kernel": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 27,
+   "recommendation": "choose_implementation",
+   "priority": 2,
+   "confidence": "medium",
+   "constraints": {
+    "legal_resources": [
+     "k1_cluster0"
+    ]
+   },
+   "rationale": "ime_k3_a100 is 88.9% faster than rvv_k3_x100 for this dispatch (86us vs 781us).",
+   "evidence": {
+    "service_time_us": 781.12,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "baseline_median_us": 781.12,
+    "proposed_impl": "ime_k3_a100",
+    "proposed_median_us": 86.42,
+    "gain_fraction": 0.8894,
+    "gain_ms": 0.6947,
+    "min_gain_ms_required": 0.05,
+    "baseline_cv_pct": null,
+    "op": "yolov8_nano$dispatch_27_rvv_k3_x100_conv2d_batchnorm2d_silu_s8_N1xIC64xIH10xIW10xOC64xOH10xOW10xKH3xKW3xSH1xSW1xPH1xPW1",
+    "baseline_kernel": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 24,
+   "recommendation": "choose_implementation",
+   "priority": 2,
+   "confidence": "medium",
+   "constraints": {
+    "legal_resources": [
+     "k1_cluster0"
+    ]
+   },
+   "rationale": "ime_k3_a100 is 89.1% faster than rvv_k3_x100 for this dispatch (85us vs 781us).",
+   "evidence": {
+    "service_time_us": 781.04,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "baseline_median_us": 781.04,
+    "proposed_impl": "ime_k3_a100",
+    "proposed_median_us": 85.12,
+    "gain_fraction": 0.891,
+    "gain_ms": 0.6959,
+    "min_gain_ms_required": 0.05,
+    "baseline_cv_pct": null,
+    "op": "yolov8_nano$dispatch_24_rvv_k3_x100_conv2d_batchnorm2d_silu_s8_N1xIC64xIH10xIW10xOC64xOH10xOW10xKH3xKW3xSH1xSW1xPH1xPW1",
+    "baseline_kernel": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 26,
+   "recommendation": "choose_implementation",
+   "priority": 2,
+   "confidence": "medium",
+   "constraints": {
+    "legal_resources": [
+     "k1_cluster0"
+    ]
+   },
+   "rationale": "ime_k3_a100 is 88.7% faster than rvv_k3_x100 for this dispatch (89us vs 781us).",
+   "evidence": {
+    "service_time_us": 780.96,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "baseline_median_us": 780.96,
+    "proposed_impl": "ime_k3_a100",
+    "proposed_median_us": 88.58,
+    "gain_fraction": 0.8866,
+    "gain_ms": 0.6924,
+    "min_gain_ms_required": 0.05,
+    "baseline_cv_pct": null,
+    "op": "yolov8_nano$dispatch_26_rvv_k3_x100_conv2d_batchnorm2d_silu_s8_N1xIC64xIH10xIW10xOC64xOH10xOW10xKH3xKW3xSH1xSW1xPH1xPW1",
+    "baseline_kernel": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 23,
+   "recommendation": "choose_implementation",
+   "priority": 2,
+   "confidence": "medium",
+   "constraints": {
+    "legal_resources": [
+     "k1_cluster0"
+    ]
+   },
+   "rationale": "ime_k3_a100 is 88.7% faster than rvv_k3_x100 for this dispatch (88us vs 778us).",
+   "evidence": {
+    "service_time_us": 777.5,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "baseline_median_us": 777.5,
+    "proposed_impl": "ime_k3_a100",
+    "proposed_median_us": 87.54,
+    "gain_fraction": 0.8874,
+    "gain_ms": 0.69,
+    "min_gain_ms_required": 0.05,
+    "baseline_cv_pct": null,
+    "op": "yolov8_nano$dispatch_23_rvv_k3_x100_conv2d_batchnorm2d_silu_s8_N1xIC64xIH10xIW10xOC64xOH10xOW10xKH3xKW3xSH1xSW1xPH1xPW1",
+    "baseline_kernel": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 2,
+   "recommendation": "choose_implementation",
+   "priority": 2,
+   "confidence": "medium",
+   "constraints": {
+    "legal_resources": [
+     "k1_cluster0"
+    ]
+   },
+   "rationale": "ime_k3_a100 is 76.2% faster than rvv_k3_x100 for this dispatch (185us vs 775us).",
+   "evidence": {
+    "service_time_us": 775.17,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "baseline_median_us": 775.17,
+    "proposed_impl": "ime_k3_a100",
+    "proposed_median_us": 184.75,
+    "gain_fraction": 0.7617,
+    "gain_ms": 0.5904,
+    "min_gain_ms_required": 0.05,
+    "baseline_cv_pct": null,
+    "op": "yolov8_nano$dispatch_2_rvv_k3_x100_conv2d_batchnorm2d_silu_s8_N1xIC32xIH40xIW40xOC32xOH40xOW40xKH1xKW1xSH1xSW1xPH0xPW0",
+    "baseline_kernel": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 49,
+   "recommendation": "choose_implementation",
+   "priority": 2,
+   "confidence": "medium",
+   "constraints": {
+    "legal_resources": [
+     "k1_cluster0"
+    ]
+   },
+   "rationale": "ime_k3_a100 is 88.6% faster than rvv_k3_x100 for this dispatch (88us vs 774us).",
+   "evidence": {
+    "service_time_us": 773.88,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "baseline_median_us": 773.88,
+    "proposed_impl": "ime_k3_a100",
+    "proposed_median_us": 88.21,
+    "gain_fraction": 0.886,
+    "gain_ms": 0.6857,
+    "min_gain_ms_required": 0.05,
+    "baseline_cv_pct": null,
+    "op": "yolov8_nano$dispatch_49_rvv_k3_x100_conv2d_batchnorm2d_silu_s8_N1xIC64xIH10xIW10xOC64xOH10xOW10xKH3xKW3xSH1xSW1xPH1xPW1",
+    "baseline_kernel": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 74,
+   "recommendation": "choose_implementation",
+   "priority": 2,
+   "confidence": "medium",
+   "constraints": {
+    "legal_resources": [
+     "k1_cluster0"
+    ]
+   },
+   "rationale": "ime_k3_a100 is 85.6% faster than rvv_k3_x100 for this dispatch (110us vs 762us).",
+   "evidence": {
+    "service_time_us": 762.33,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "baseline_median_us": 762.33,
+    "proposed_impl": "ime_k3_a100",
+    "proposed_median_us": 109.58,
+    "gain_fraction": 0.8563,
+    "gain_ms": 0.6528,
+    "min_gain_ms_required": 0.05,
+    "baseline_cv_pct": null,
+    "op": "yolov8_nano$dispatch_74_rvv_k3_x100_conv2d_batchnorm2d_silu_s8_N1xIC128xIH5xIW5xOC128xOH5xOW5xKH3xKW3xSH1xSW1xPH1xPW1",
+    "baseline_kernel": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 69,
+   "recommendation": "choose_implementation",
+   "priority": 2,
+   "confidence": "medium",
+   "constraints": {
+    "legal_resources": [
+     "k1_cluster0"
+    ]
+   },
+   "rationale": "ime_k3_a100 is 81.8% faster than rvv_k3_x100 for this dispatch (137us vs 750us).",
+   "evidence": {
+    "service_time_us": 749.58,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "baseline_median_us": 749.58,
+    "proposed_impl": "ime_k3_a100",
+    "proposed_median_us": 136.62,
+    "gain_fraction": 0.8177,
+    "gain_ms": 0.613,
+    "min_gain_ms_required": 0.05,
+    "baseline_cv_pct": null,
+    "op": "yolov8_nano$dispatch_69_rvv_k3_x100_conv2d_batchnorm2d_silu_s8_N1xIC128xIH10xIW10xOC128xOH5xOW5xKH3xKW3xSH2xSW2xPH1xPW1",
+    "baseline_kernel": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 34,
+   "recommendation": "choose_implementation",
+   "priority": 2,
+   "confidence": "medium",
+   "constraints": {
+    "legal_resources": [
+     "k1_cluster0"
+    ]
+   },
+   "rationale": "ime_k3_a100 is 85.2% faster than rvv_k3_x100 for this dispatch (109us vs 738us).",
+   "evidence": {
+    "service_time_us": 737.5,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "baseline_median_us": 737.5,
+    "proposed_impl": "ime_k3_a100",
+    "proposed_median_us": 109.46,
+    "gain_fraction": 0.8516,
+    "gain_ms": 0.628,
+    "min_gain_ms_required": 0.05,
+    "baseline_cv_pct": null,
+    "op": "yolov8_nano$dispatch_34_rvv_k3_x100_conv2d_batchnorm2d_silu_s8_N1xIC128xIH5xIW5xOC128xOH5xOW5xKH3xKW3xSH1xSW1xPH1xPW1",
+    "baseline_kernel": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 73,
+   "recommendation": "choose_implementation",
+   "priority": 2,
+   "confidence": "medium",
+   "constraints": {
+    "legal_resources": [
+     "k1_cluster0"
+    ]
+   },
+   "rationale": "ime_k3_a100 is 84.8% faster than rvv_k3_x100 for this dispatch (112us vs 734us).",
+   "evidence": {
+    "service_time_us": 733.58,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "baseline_median_us": 733.58,
+    "proposed_impl": "ime_k3_a100",
+    "proposed_median_us": 111.5,
+    "gain_fraction": 0.848,
+    "gain_ms": 0.6221,
+    "min_gain_ms_required": 0.05,
+    "baseline_cv_pct": null,
+    "op": "yolov8_nano$dispatch_73_rvv_k3_x100_conv2d_batchnorm2d_silu_s8_N1xIC128xIH5xIW5xOC128xOH5xOW5xKH3xKW3xSH1xSW1xPH1xPW1",
+    "baseline_kernel": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 35,
+   "recommendation": "choose_implementation",
+   "priority": 2,
+   "confidence": "medium",
+   "constraints": {
+    "legal_resources": [
+     "k1_cluster0"
+    ]
+   },
+   "rationale": "ime_k3_a100 is 84.7% faster than rvv_k3_x100 for this dispatch (111us vs 725us).",
+   "evidence": {
+    "service_time_us": 724.58,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "baseline_median_us": 724.58,
+    "proposed_impl": "ime_k3_a100",
+    "proposed_median_us": 110.54,
+    "gain_fraction": 0.8474,
+    "gain_ms": 0.614,
+    "min_gain_ms_required": 0.05,
+    "baseline_cv_pct": null,
+    "op": "yolov8_nano$dispatch_35_rvv_k3_x100_conv2d_batchnorm2d_silu_s8_N1xIC128xIH5xIW5xOC128xOH5xOW5xKH3xKW3xSH1xSW1xPH1xPW1",
+    "baseline_kernel": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 82,
+   "recommendation": "choose_implementation",
+   "priority": 2,
+   "confidence": "medium",
+   "constraints": {
+    "legal_resources": [
+     "k1_cluster0"
+    ]
+   },
+   "rationale": "ime_k3_a100 is 79.6% faster than rvv_k3_x100 for this dispatch (141us vs 688us).",
+   "evidence": {
+    "service_time_us": 688.21,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "baseline_median_us": 688.21,
+    "proposed_impl": "ime_k3_a100",
+    "proposed_median_us": 140.54,
+    "gain_fraction": 0.7958,
+    "gain_ms": 0.5477,
+    "min_gain_ms_required": 0.05,
+    "baseline_cv_pct": null,
+    "op": "yolov8_nano$dispatch_82_rvv_k3_x100_conv2d_s8_N1xIC80xIH20xIW20xOC80xOH20xOW20xKH1xKW1xSH1xSW1xPH0xPW0",
+    "baseline_kernel": "curated[rvv]/rvv_vsmul_vnclip",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 32,
+   "recommendation": "choose_implementation",
+   "priority": 2,
+   "confidence": "medium",
+   "constraints": {
+    "legal_resources": [
+     "k1_cluster0"
+    ]
+   },
+   "rationale": "ime_k3_a100 is 84.1% faster than rvv_k3_x100 for this dispatch (104us vs 654us).",
+   "evidence": {
+    "service_time_us": 653.83,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "baseline_median_us": 653.83,
+    "proposed_impl": "ime_k3_a100",
+    "proposed_median_us": 104.12,
+    "gain_fraction": 0.8407,
+    "gain_ms": 0.5497,
+    "min_gain_ms_required": 0.05,
+    "baseline_cv_pct": null,
+    "op": "yolov8_nano$dispatch_32_rvv_k3_x100_conv2d_batchnorm2d_silu_s8_N1xIC256xIH5xIW5xOC256xOH5xOW5xKH1xKW1xSH1xSW1xPH0xPW0",
+    "baseline_kernel": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 91,
+   "recommendation": "choose_implementation",
+   "priority": 2,
+   "confidence": "medium",
+   "constraints": {
+    "legal_resources": [
+     "k1_cluster0"
+    ]
+   },
+   "rationale": "ime_k3_a100 is 82.5% faster than rvv_k3_x100 for this dispatch (107us vs 611us).",
+   "evidence": {
+    "service_time_us": 611.25,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "baseline_median_us": 611.25,
+    "proposed_impl": "ime_k3_a100",
+    "proposed_median_us": 106.75,
+    "gain_fraction": 0.8254,
+    "gain_ms": 0.5045,
+    "min_gain_ms_required": 0.05,
+    "baseline_cv_pct": null,
+    "op": "yolov8_nano$dispatch_91_rvv_k3_x100_conv2d_batchnorm2d_silu_s8_N1xIC256xIH5xIW5xOC64xOH5xOW5xKH3xKW3xSH1xSW1xPH1xPW1",
+    "baseline_kernel": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "dronet",
+   "dispatch_id": 0,
+   "recommendation": "choose_implementation",
+   "priority": 2,
+   "confidence": "medium",
+   "constraints": {
+    "legal_resources": [
+     "k1_cluster0"
+    ]
+   },
+   "rationale": "ime_k3_a100 is 34.3% faster than rvv_k3_x100 for this dispatch (377us vs 574us).",
+   "evidence": {
+    "service_time_us": 573.58,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "baseline_median_us": 573.58,
+    "proposed_impl": "ime_k3_a100",
+    "proposed_median_us": 377.0,
+    "gain_fraction": 0.3427,
+    "gain_ms": 0.1966,
+    "min_gain_ms_required": 0.05,
+    "baseline_cv_pct": null,
+    "op": "dronet$dispatch_0_rvv_k3_x100_conv2d_s8_N1xIC3xIH112xIW112xOC32xOH56xOW56xKH3xKW3xSH2xSW2xPH1xPW1",
+    "baseline_kernel": "curated[rvv]/rvv_vsmul_vnclip",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "dronet",
+   "dispatch_id": 3,
+   "recommendation": "choose_implementation",
+   "priority": 2,
+   "confidence": "medium",
+   "constraints": {
+    "legal_resources": [
+     "k1_cluster0"
+    ]
+   },
+   "rationale": "ime_k3_a100 is 81.6% faster than rvv_k3_x100 for this dispatch (86us vs 469us).",
+   "evidence": {
+    "service_time_us": 468.75,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "baseline_median_us": 468.75,
+    "proposed_impl": "ime_k3_a100",
+    "proposed_median_us": 86.21,
+    "gain_fraction": 0.8161,
+    "gain_ms": 0.3825,
+    "min_gain_ms_required": 0.05,
+    "baseline_cv_pct": null,
+    "op": "dronet$dispatch_3_rvv_k3_x100_conv2d_batchnorm2d_s8_N1xIC32xIH27xIW27xOC32xOH14xOW14xKH3xKW3xSH2xSW2xPH1xPW1",
+    "baseline_kernel": "curated[rvv]/rvv_oc_blocked_bn_epilogue",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 40,
+   "recommendation": "choose_implementation",
+   "priority": 2,
+   "confidence": "medium",
+   "constraints": {
+    "legal_resources": [
+     "k1_cluster0"
+    ]
+   },
+   "rationale": "ime_k3_a100 is 54.1% faster than rvv_k3_x100 for this dispatch (209us vs 455us).",
+   "evidence": {
+    "service_time_us": 455.29,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "baseline_median_us": 455.29,
+    "proposed_impl": "ime_k3_a100",
+    "proposed_median_us": 209.12,
+    "gain_fraction": 0.5407,
+    "gain_ms": 0.2462,
+    "min_gain_ms_required": 0.05,
+    "baseline_cv_pct": null,
+    "op": "yolov8_nano$dispatch_40_rvv_k3_x100_maxpool2d_s8_N1xC128xIH5xIW5xOH5xOW5xKH5xKW5xSH1xSW1xPH2xPW2xDH1xDW1",
+    "baseline_kernel": "curated[rvv]/direct",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 42,
+   "recommendation": "choose_implementation",
+   "priority": 2,
+   "confidence": "medium",
+   "constraints": {
+    "legal_resources": [
+     "k1_cluster0"
+    ]
+   },
+   "rationale": "ime_k3_a100 is 59.3% faster than rvv_k3_x100 for this dispatch (185us vs 454us).",
+   "evidence": {
+    "service_time_us": 453.83,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "baseline_median_us": 453.83,
+    "proposed_impl": "ime_k3_a100",
+    "proposed_median_us": 184.67,
+    "gain_fraction": 0.5931,
+    "gain_ms": 0.2692,
+    "min_gain_ms_required": 0.05,
+    "baseline_cv_pct": null,
+    "op": "yolov8_nano$dispatch_42_rvv_k3_x100_maxpool2d_s8_N1xC128xIH5xIW5xOH5xOW5xKH5xKW5xSH1xSW1xPH2xPW2xDH1xDW1",
+    "baseline_kernel": "curated[rvv]/direct",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 41,
+   "recommendation": "choose_implementation",
+   "priority": 2,
+   "confidence": "medium",
+   "constraints": {
+    "legal_resources": [
+     "k1_cluster0"
+    ]
+   },
+   "rationale": "ime_k3_a100 is 59.3% faster than rvv_k3_x100 for this dispatch (184us vs 454us).",
+   "evidence": {
+    "service_time_us": 453.71,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "baseline_median_us": 453.71,
+    "proposed_impl": "ime_k3_a100",
+    "proposed_median_us": 184.46,
+    "gain_fraction": 0.5934,
+    "gain_ms": 0.2692,
+    "min_gain_ms_required": 0.05,
+    "baseline_cv_pct": null,
+    "op": "yolov8_nano$dispatch_41_rvv_k3_x100_maxpool2d_s8_N1xC128xIH5xIW5xOH5xOW5xKH5xKW5xSH1xSW1xPH2xPW2xDH1xDW1",
+    "baseline_kernel": "curated[rvv]/direct",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "dronet",
+   "dispatch_id": 1,
+   "recommendation": "choose_implementation",
+   "priority": 2,
+   "confidence": "medium",
+   "constraints": {
+    "legal_resources": [
+     "k1_cluster0"
+    ]
+   },
+   "rationale": "ime_k3_a100 is 44.2% faster than rvv_k3_x100 for this dispatch (244us vs 437us).",
+   "evidence": {
+    "service_time_us": 437.33,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "baseline_median_us": 437.33,
+    "proposed_impl": "ime_k3_a100",
+    "proposed_median_us": 244.0,
+    "gain_fraction": 0.4421,
+    "gain_ms": 0.1933,
+    "min_gain_ms_required": 0.05,
+    "baseline_cv_pct": null,
+    "op": "dronet$dispatch_1_rvv_k3_x100_maxpool2d_s8_N1xC32xIH56xIW56xOH27xOW27xKH3xKW3xSH2xSW2xPH0xPW0xDH1xDW1",
+    "baseline_kernel": "curated[rvv]/direct",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 79,
+   "recommendation": "choose_implementation",
+   "priority": 2,
+   "confidence": "medium",
+   "constraints": {
+    "legal_resources": [
+     "k1_cluster0"
+    ]
+   },
+   "rationale": "ime_k3_a100 is 72.9% faster than rvv_k3_x100 for this dispatch (106us vs 392us).",
+   "evidence": {
+    "service_time_us": 391.67,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "baseline_median_us": 391.67,
+    "proposed_impl": "ime_k3_a100",
+    "proposed_median_us": 106.21,
+    "gain_fraction": 0.7288,
+    "gain_ms": 0.2855,
+    "min_gain_ms_required": 0.05,
+    "baseline_cv_pct": null,
+    "op": "yolov8_nano$dispatch_79_rvv_k3_x100_conv2d_s8_N1xIC64xIH20xIW20xOC64xOH20xOW20xKH1xKW1xSH1xSW1xPH0xPW0",
+    "baseline_kernel": "curated[rvv]/rvv_vsmul_vnclip",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "dronet",
+   "dispatch_id": 14,
+   "recommendation": "choose_implementation",
+   "priority": 2,
+   "confidence": "medium",
+   "constraints": {
+    "legal_resources": [
+     "k1_cluster0"
+    ]
+   },
+   "rationale": "ime_k3_a100 is 84.8% faster than rvv_k3_x100 for this dispatch (52us vs 344us).",
+   "evidence": {
+    "service_time_us": 343.92,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "baseline_median_us": 343.92,
+    "proposed_impl": "ime_k3_a100",
+    "proposed_median_us": 52.25,
+    "gain_fraction": 0.8481,
+    "gain_ms": 0.2917,
+    "min_gain_ms_required": 0.05,
+    "baseline_cv_pct": null,
+    "op": "dronet$dispatch_14_rvv_k3_x100_conv2d_s8_N1xIC128xIH4xIW4xOC128xOH4xOW4xKH3xKW3xSH1xSW1xPH1xPW1",
+    "baseline_kernel": "curated[rvv]/rvv_vsmul_vnclip",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 95,
+   "recommendation": "choose_implementation",
+   "priority": 2,
+   "confidence": "medium",
+   "constraints": {
+    "legal_resources": [
+     "k1_cluster0"
+    ]
+   },
+   "rationale": "ime_k3_a100 is 84.9% faster than rvv_k3_x100 for this dispatch (51us vs 337us).",
+   "evidence": {
+    "service_time_us": 337.38,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "baseline_median_us": 337.38,
+    "proposed_impl": "ime_k3_a100",
+    "proposed_median_us": 50.79,
+    "gain_fraction": 0.8494,
+    "gain_ms": 0.2866,
+    "min_gain_ms_required": 0.05,
+    "baseline_cv_pct": null,
+    "op": "yolov8_nano$dispatch_95_rvv_k3_x100_conv2d_batchnorm2d_silu_s8_N1xIC80xIH5xIW5xOC80xOH5xOW5xKH3xKW3xSH1xSW1xPH1xPW1",
+    "baseline_kernel": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 39,
+   "recommendation": "choose_implementation",
+   "priority": 2,
+   "confidence": "medium",
+   "constraints": {
+    "legal_resources": [
+     "k1_cluster0"
+    ]
+   },
+   "rationale": "ime_k3_a100 is 78.2% faster than rvv_k3_x100 for this dispatch (64us vs 294us).",
+   "evidence": {
+    "service_time_us": 294.29,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "baseline_median_us": 294.29,
+    "proposed_impl": "ime_k3_a100",
+    "proposed_median_us": 64.04,
+    "gain_fraction": 0.7824,
+    "gain_ms": 0.2303,
+    "min_gain_ms_required": 0.05,
+    "baseline_cv_pct": null,
+    "op": "yolov8_nano$dispatch_39_rvv_k3_x100_conv2d_batchnorm2d_silu_s8_N1xIC256xIH5xIW5xOC128xOH5xOW5xKH1xKW1xSH1xSW1xPH0xPW0",
+    "baseline_kernel": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "dronet",
+   "dispatch_id": 13,
+   "recommendation": "choose_implementation",
+   "priority": 2,
+   "confidence": "medium",
+   "constraints": {
+    "legal_resources": [
+     "k1_cluster0"
+    ]
+   },
+   "rationale": "ime_k3_a100 is 80.8% faster than rvv_k3_x100 for this dispatch (50us vs 261us).",
+   "evidence": {
+    "service_time_us": 261.38,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "baseline_median_us": 261.38,
+    "proposed_impl": "ime_k3_a100",
+    "proposed_median_us": 50.25,
+    "gain_fraction": 0.8077,
+    "gain_ms": 0.2111,
+    "min_gain_ms_required": 0.05,
+    "baseline_cv_pct": null,
+    "op": "dronet$dispatch_13_rvv_k3_x100_conv2d_batchnorm2d_s8_N1xIC64xIH7xIW7xOC128xOH4xOW4xKH3xKW3xSH2xSW2xPH1xPW1",
+    "baseline_kernel": "curated[rvv]/rvv_oc_blocked_bn_epilogue",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "dronet",
+   "dispatch_id": 8,
+   "recommendation": "choose_implementation",
+   "priority": 2,
+   "confidence": "medium",
+   "constraints": {
+    "legal_resources": [
+     "k1_cluster0"
+    ]
+   },
+   "rationale": "ime_k3_a100 is 84.7% faster than rvv_k3_x100 for this dispatch (38us vs 246us).",
+   "evidence": {
+    "service_time_us": 246.17,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "baseline_median_us": 246.17,
+    "proposed_impl": "ime_k3_a100",
+    "proposed_median_us": 37.54,
+    "gain_fraction": 0.8475,
+    "gain_ms": 0.2086,
+    "min_gain_ms_required": 0.05,
+    "baseline_cv_pct": null,
+    "op": "dronet$dispatch_8_rvv_k3_x100_conv2d_batchnorm2d_s8_N1xIC32xIH14xIW14xOC64xOH7xOW7xKH3xKW3xSH2xSW2xPH1xPW1",
+    "baseline_kernel": "curated[rvv]/rvv_oc_blocked_bn_epilogue",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "dronet",
+   "dispatch_id": 4,
+   "recommendation": "choose_implementation",
+   "priority": 2,
+   "confidence": "medium",
+   "constraints": {
+    "legal_resources": [
+     "k1_cluster0"
+    ]
+   },
+   "rationale": "ime_k3_a100 is 85.3% faster than rvv_k3_x100 for this dispatch (35us vs 237us).",
+   "evidence": {
+    "service_time_us": 236.75,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "baseline_median_us": 236.75,
+    "proposed_impl": "ime_k3_a100",
+    "proposed_median_us": 34.75,
+    "gain_fraction": 0.8532,
+    "gain_ms": 0.202,
+    "min_gain_ms_required": 0.05,
+    "baseline_cv_pct": null,
+    "op": "dronet$dispatch_4_rvv_k3_x100_conv2d_s8_N1xIC32xIH14xIW14xOC32xOH14xOW14xKH3xKW3xSH1xSW1xPH1xPW1",
+    "baseline_kernel": "curated[rvv]/rvv_vsmul_vnclip",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "dronet",
+   "dispatch_id": 9,
+   "recommendation": "choose_implementation",
+   "priority": 2,
+   "confidence": "medium",
+   "constraints": {
+    "legal_resources": [
+     "k1_cluster0"
+    ]
+   },
+   "rationale": "ime_k3_a100 is 87.9% faster than rvv_k3_x100 for this dispatch (28us vs 231us).",
+   "evidence": {
+    "service_time_us": 230.83,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "baseline_median_us": 230.83,
+    "proposed_impl": "ime_k3_a100",
+    "proposed_median_us": 27.83,
+    "gain_fraction": 0.8794,
+    "gain_ms": 0.203,
+    "min_gain_ms_required": 0.05,
+    "baseline_cv_pct": null,
+    "op": "dronet$dispatch_9_rvv_k3_x100_conv2d_s8_N1xIC64xIH7xIW7xOC64xOH7xOW7xKH3xKW3xSH1xSW1xPH1xPW1",
+    "baseline_kernel": "curated[rvv]/rvv_vsmul_vnclip",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 92,
+   "recommendation": "choose_implementation",
+   "priority": 2,
+   "confidence": "medium",
+   "constraints": {
+    "legal_resources": [
+     "k1_cluster0"
+    ]
+   },
+   "rationale": "ime_k3_a100 is 82.0% faster than rvv_k3_x100 for this dispatch (40us vs 220us).",
+   "evidence": {
+    "service_time_us": 220.5,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "baseline_median_us": 220.5,
+    "proposed_impl": "ime_k3_a100",
+    "proposed_median_us": 39.75,
+    "gain_fraction": 0.8197,
+    "gain_ms": 0.1807,
+    "min_gain_ms_required": 0.05,
+    "baseline_cv_pct": null,
+    "op": "yolov8_nano$dispatch_92_rvv_k3_x100_conv2d_batchnorm2d_silu_s8_N1xIC64xIH5xIW5xOC64xOH5xOW5xKH3xKW3xSH1xSW1xPH1xPW1",
+    "baseline_kernel": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 89,
+   "recommendation": "choose_implementation",
+   "priority": 2,
+   "confidence": "medium",
+   "constraints": {
+    "legal_resources": [
+     "k1_cluster0"
+    ]
+   },
+   "rationale": "ime_k3_a100 is 72.5% faster than rvv_k3_x100 for this dispatch (47us vs 172us).",
+   "evidence": {
+    "service_time_us": 171.75,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "baseline_median_us": 171.75,
+    "proposed_impl": "ime_k3_a100",
+    "proposed_median_us": 47.21,
+    "gain_fraction": 0.7251,
+    "gain_ms": 0.1245,
+    "min_gain_ms_required": 0.05,
+    "baseline_cv_pct": null,
+    "op": "yolov8_nano$dispatch_89_rvv_k3_x100_conv2d_s8_N1xIC80xIH10xIW10xOC80xOH10xOW10xKH1xKW1xSH1xSW1xPH0xPW0",
+    "baseline_kernel": "curated[rvv]/rvv_vsmul_vnclip",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 86,
+   "recommendation": "choose_implementation",
+   "priority": 2,
+   "confidence": "medium",
+   "constraints": {
+    "legal_resources": [
+     "k1_cluster0"
+    ]
+   },
+   "rationale": "ime_k3_a100 is 62.1% faster than rvv_k3_x100 for this dispatch (37us vs 98us).",
+   "evidence": {
+    "service_time_us": 98.0,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "baseline_median_us": 98.0,
+    "proposed_impl": "ime_k3_a100",
+    "proposed_median_us": 37.12,
+    "gain_fraction": 0.6212,
+    "gain_ms": 0.0609,
+    "min_gain_ms_required": 0.05,
+    "baseline_cv_pct": null,
+    "op": "yolov8_nano$dispatch_86_rvv_k3_x100_conv2d_s8_N1xIC64xIH10xIW10xOC64xOH10xOW10xKH1xKW1xSH1xSW1xPH0xPW0",
+    "baseline_kernel": "curated[rvv]/rvv_vsmul_vnclip",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 81,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "high",
+   "constraints": {},
+   "rationale": "conv2d_batchnorm2d_silu_s8 runs curated[rvv]/rvv_oc_blocked_bn_silu_epilogue and is too small a share of yolov8_nano to be worth a board rung; unfusing also loses the epilogue fusion and doubles the dispatch count.",
+   "evidence": {
+    "service_time_us": 5303.42,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "reason": "not a fallback, and constituents are not all covered",
+    "fused_impl": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "kind_runtime_share": 0.9496,
+    "op": "conv2d_batchnorm2d_silu_s8"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 80,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "high",
+   "constraints": {},
+   "rationale": "conv2d_batchnorm2d_silu_s8 runs curated[rvv]/rvv_oc_blocked_bn_silu_epilogue and is too small a share of yolov8_nano to be worth a board rung; unfusing also loses the epilogue fusion and doubles the dispatch count.",
+   "evidence": {
+    "service_time_us": 4206.62,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "reason": "not a fallback, and constituents are not all covered",
+    "fused_impl": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "kind_runtime_share": 0.9496,
+    "op": "conv2d_batchnorm2d_silu_s8"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 78,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "high",
+   "constraints": {},
+   "rationale": "conv2d_batchnorm2d_silu_s8 runs curated[rvv]/rvv_oc_blocked_bn_silu_epilogue and is too small a share of yolov8_nano to be worth a board rung; unfusing also loses the epilogue fusion and doubles the dispatch count.",
+   "evidence": {
+    "service_time_us": 2892.62,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "reason": "not a fallback, and constituents are not all covered",
+    "fused_impl": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "kind_runtime_share": 0.9496,
+    "op": "conv2d_batchnorm2d_silu_s8"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 77,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "high",
+   "constraints": {},
+   "rationale": "conv2d_batchnorm2d_silu_s8 runs curated[rvv]/rvv_oc_blocked_bn_silu_epilogue and is too small a share of yolov8_nano to be worth a board rung; unfusing also loses the epilogue fusion and doubles the dispatch count.",
+   "evidence": {
+    "service_time_us": 2887.54,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "reason": "not a fallback, and constituents are not all covered",
+    "fused_impl": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "kind_runtime_share": 0.9496,
+    "op": "conv2d_batchnorm2d_silu_s8"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 87,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "high",
+   "constraints": {},
+   "rationale": "conv2d_batchnorm2d_silu_s8 runs curated[rvv]/rvv_oc_blocked_bn_silu_epilogue and is too small a share of yolov8_nano to be worth a board rung; unfusing also loses the epilogue fusion and doubles the dispatch count.",
+   "evidence": {
+    "service_time_us": 1927.0,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "reason": "not a fallback, and constituents are not all covered",
+    "fused_impl": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "kind_runtime_share": 0.9496,
+    "op": "conv2d_batchnorm2d_silu_s8"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 31,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "high",
+   "constraints": {},
+   "rationale": "conv2d_batchnorm2d_silu_s8 runs curated[rvv]/rvv_oc_blocked_bn_silu_epilogue and is too small a share of yolov8_nano to be worth a board rung; unfusing also loses the epilogue fusion and doubles the dispatch count.",
+   "evidence": {
+    "service_time_us": 1893.79,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "reason": "not a fallback, and constituents are not all covered",
+    "fused_impl": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "kind_runtime_share": 0.9496,
+    "op": "conv2d_batchnorm2d_silu_s8"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 55,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "high",
+   "constraints": {},
+   "rationale": "conv2d_batchnorm2d_silu_s8 runs curated[rvv]/rvv_oc_blocked_bn_silu_epilogue and is too small a share of yolov8_nano to be worth a board rung; unfusing also loses the epilogue fusion and doubles the dispatch count.",
+   "evidence": {
+    "service_time_us": 1775.29,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "reason": "not a fallback, and constituents are not all covered",
+    "fused_impl": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "kind_runtime_share": 0.9496,
+    "op": "conv2d_batchnorm2d_silu_s8"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 20,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "high",
+   "constraints": {},
+   "rationale": "conv2d_batchnorm2d_silu_s8 runs curated[rvv]/rvv_oc_blocked_bn_silu_epilogue and is too small a share of yolov8_nano to be worth a board rung; unfusing also loses the epilogue fusion and doubles the dispatch count.",
+   "evidence": {
+    "service_time_us": 1756.17,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "reason": "not a fallback, and constituents are not all covered",
+    "fused_impl": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "kind_runtime_share": 0.9496,
+    "op": "conv2d_batchnorm2d_silu_s8"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 9,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "high",
+   "constraints": {},
+   "rationale": "conv2d_batchnorm2d_silu_s8 runs curated[rvv]/rvv_oc_blocked_bn_silu_epilogue and is too small a share of yolov8_nano to be worth a board rung; unfusing also loses the epilogue fusion and doubles the dispatch count.",
+   "evidence": {
+    "service_time_us": 1732.92,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "reason": "not a fallback, and constituents are not all covered",
+    "fused_impl": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "kind_runtime_share": 0.9496,
+    "op": "conv2d_batchnorm2d_silu_s8"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 47,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "high",
+   "constraints": {},
+   "rationale": "conv2d_batchnorm2d_silu_s8 runs curated[rvv]/rvv_oc_blocked_bn_silu_epilogue and is too small a share of yolov8_nano to be worth a board rung; unfusing also loses the epilogue fusion and doubles the dispatch count.",
+   "evidence": {
+    "service_time_us": 1717.54,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "reason": "not a fallback, and constituents are not all covered",
+    "fused_impl": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "kind_runtime_share": 0.9496,
+    "op": "conv2d_batchnorm2d_silu_s8"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 1,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "high",
+   "constraints": {},
+   "rationale": "conv2d_batchnorm2d_silu_s8 runs curated[rvv]/rvv_oc_blocked_bn_silu_epilogue and is too small a share of yolov8_nano to be worth a board rung; unfusing also loses the epilogue fusion and doubles the dispatch count.",
+   "evidence": {
+    "service_time_us": 1534.75,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "reason": "not a fallback, and constituents are not all covered",
+    "fused_impl": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "kind_runtime_share": 0.9496,
+    "op": "conv2d_batchnorm2d_silu_s8"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 19,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "high",
+   "constraints": {},
+   "rationale": "conv2d_batchnorm2d_silu_s8 runs curated[rvv]/rvv_oc_blocked_bn_silu_epilogue and is too small a share of yolov8_nano to be worth a board rung; unfusing also loses the epilogue fusion and doubles the dispatch count.",
+   "evidence": {
+    "service_time_us": 1388.0,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "reason": "not a fallback, and constituents are not all covered",
+    "fused_impl": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "kind_runtime_share": 0.9496,
+    "op": "conv2d_batchnorm2d_silu_s8"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 88,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "high",
+   "constraints": {},
+   "rationale": "conv2d_batchnorm2d_silu_s8 runs curated[rvv]/rvv_oc_blocked_bn_silu_epilogue and is too small a share of yolov8_nano to be worth a board rung; unfusing also loses the epilogue fusion and doubles the dispatch count.",
+   "evidence": {
+    "service_time_us": 1347.83,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "reason": "not a fallback, and constituents are not all covered",
+    "fused_impl": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "kind_runtime_share": 0.9496,
+    "op": "conv2d_batchnorm2d_silu_s8"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 0,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "high",
+   "constraints": {},
+   "rationale": "conv2d_batchnorm2d_silu_s8 runs curated[rvv]/rvv_oc_blocked_bn_silu_epilogue and is too small a share of yolov8_nano to be worth a board rung; unfusing also loses the epilogue fusion and doubles the dispatch count.",
+   "evidence": {
+    "service_time_us": 1322.96,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "reason": "not a fallback, and constituents are not all covered",
+    "fused_impl": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "kind_runtime_share": 0.9496,
+    "op": "conv2d_batchnorm2d_silu_s8"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 84,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "high",
+   "constraints": {},
+   "rationale": "conv2d_batchnorm2d_silu_s8 runs curated[rvv]/rvv_oc_blocked_bn_silu_epilogue and is too small a share of yolov8_nano to be worth a board rung; unfusing also loses the epilogue fusion and doubles the dispatch count.",
+   "evidence": {
+    "service_time_us": 1315.12,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "reason": "not a fallback, and constituents are not all covered",
+    "fused_impl": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "kind_runtime_share": 0.9496,
+    "op": "conv2d_batchnorm2d_silu_s8"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 5,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "high",
+   "constraints": {},
+   "rationale": "conv2d_batchnorm2d_silu_s8 runs curated[rvv]/rvv_oc_blocked_bn_silu_epilogue and is too small a share of yolov8_nano to be worth a board rung; unfusing also loses the epilogue fusion and doubles the dispatch count.",
+   "evidence": {
+    "service_time_us": 1300.58,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "reason": "not a fallback, and constituents are not all covered",
+    "fused_impl": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "kind_runtime_share": 0.9496,
+    "op": "conv2d_batchnorm2d_silu_s8"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 4,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "high",
+   "constraints": {},
+   "rationale": "conv2d_batchnorm2d_silu_s8 runs curated[rvv]/rvv_oc_blocked_bn_silu_epilogue and is too small a share of yolov8_nano to be worth a board rung; unfusing also loses the epilogue fusion and doubles the dispatch count.",
+   "evidence": {
+    "service_time_us": 1275.54,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "reason": "not a fallback, and constituents are not all covered",
+    "fused_impl": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "kind_runtime_share": 0.9496,
+    "op": "conv2d_batchnorm2d_silu_s8"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 44,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "high",
+   "constraints": {},
+   "rationale": "conv2d_batchnorm2d_silu_s8 runs curated[rvv]/rvv_oc_blocked_bn_silu_epilogue and is too small a share of yolov8_nano to be worth a board rung; unfusing also loses the epilogue fusion and doubles the dispatch count.",
+   "evidence": {
+    "service_time_us": 1201.29,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "reason": "not a fallback, and constituents are not all covered",
+    "fused_impl": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "kind_runtime_share": 0.9496,
+    "op": "conv2d_batchnorm2d_silu_s8"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 60,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "high",
+   "constraints": {},
+   "rationale": "conv2d_batchnorm2d_silu_s8 runs curated[rvv]/rvv_oc_blocked_bn_silu_epilogue and is too small a share of yolov8_nano to be worth a board rung; unfusing also loses the epilogue fusion and doubles the dispatch count.",
+   "evidence": {
+    "service_time_us": 1198.33,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "reason": "not a fallback, and constituents are not all covered",
+    "fused_impl": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "kind_runtime_share": 0.9496,
+    "op": "conv2d_batchnorm2d_silu_s8"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 30,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "high",
+   "constraints": {},
+   "rationale": "conv2d_batchnorm2d_silu_s8 runs curated[rvv]/rvv_oc_blocked_bn_silu_epilogue and is too small a share of yolov8_nano to be worth a board rung; unfusing also loses the epilogue fusion and doubles the dispatch count.",
+   "evidence": {
+    "service_time_us": 1142.04,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "reason": "not a fallback, and constituents are not all covered",
+    "fused_impl": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "kind_runtime_share": 0.9496,
+    "op": "conv2d_batchnorm2d_silu_s8"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 10,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "high",
+   "constraints": {},
+   "rationale": "conv2d_batchnorm2d_silu_s8 runs curated[rvv]/rvv_oc_blocked_bn_silu_epilogue and is too small a share of yolov8_nano to be worth a board rung; unfusing also loses the epilogue fusion and doubles the dispatch count.",
+   "evidence": {
+    "service_time_us": 1019.92,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "reason": "not a fallback, and constituents are not all covered",
+    "fused_impl": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "kind_runtime_share": 0.9496,
+    "op": "conv2d_batchnorm2d_silu_s8"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 38,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "high",
+   "constraints": {},
+   "rationale": "conv2d_batchnorm2d_silu_s8 runs curated[rvv]/rvv_oc_blocked_bn_silu_epilogue and is too small a share of yolov8_nano to be worth a board rung; unfusing also loses the epilogue fusion and doubles the dispatch count.",
+   "evidence": {
+    "service_time_us": 966.12,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "reason": "not a fallback, and constituents are not all covered",
+    "fused_impl": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "kind_runtime_share": 0.9496,
+    "op": "conv2d_batchnorm2d_silu_s8"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 76,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "high",
+   "constraints": {},
+   "rationale": "conv2d_batchnorm2d_silu_s8 runs curated[rvv]/rvv_oc_blocked_bn_silu_epilogue and is too small a share of yolov8_nano to be worth a board rung; unfusing also loses the epilogue fusion and doubles the dispatch count.",
+   "evidence": {
+    "service_time_us": 960.04,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "reason": "not a fallback, and constituents are not all covered",
+    "fused_impl": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "kind_runtime_share": 0.9496,
+    "op": "conv2d_batchnorm2d_silu_s8"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 71,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "high",
+   "constraints": {},
+   "rationale": "conv2d_batchnorm2d_silu_s8 runs curated[rvv]/rvv_oc_blocked_bn_silu_epilogue and is too small a share of yolov8_nano to be worth a board rung; unfusing also loses the epilogue fusion and doubles the dispatch count.",
+   "evidence": {
+    "service_time_us": 960.0,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "reason": "not a fallback, and constituents are not all covered",
+    "fused_impl": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "kind_runtime_share": 0.9496,
+    "op": "conv2d_batchnorm2d_silu_s8"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 52,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "high",
+   "constraints": {},
+   "rationale": "conv2d_batchnorm2d_silu_s8 runs curated[rvv]/rvv_oc_blocked_bn_silu_epilogue and is too small a share of yolov8_nano to be worth a board rung; unfusing also loses the epilogue fusion and doubles the dispatch count.",
+   "evidence": {
+    "service_time_us": 949.58,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "reason": "not a fallback, and constituents are not all covered",
+    "fused_impl": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "kind_runtime_share": 0.9496,
+    "op": "conv2d_batchnorm2d_silu_s8"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 68,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "high",
+   "constraints": {},
+   "rationale": "conv2d_batchnorm2d_silu_s8 runs curated[rvv]/rvv_oc_blocked_bn_silu_epilogue and is too small a share of yolov8_nano to be worth a board rung; unfusing also loses the epilogue fusion and doubles the dispatch count.",
+   "evidence": {
+    "service_time_us": 948.21,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "reason": "not a fallback, and constituents are not all covered",
+    "fused_impl": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "kind_runtime_share": 0.9496,
+    "op": "conv2d_batchnorm2d_silu_s8"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 8,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "high",
+   "constraints": {},
+   "rationale": "conv2d_batchnorm2d_silu_s8 runs curated[rvv]/rvv_oc_blocked_bn_silu_epilogue and is too small a share of yolov8_nano to be worth a board rung; unfusing also loses the epilogue fusion and doubles the dispatch count.",
+   "evidence": {
+    "service_time_us": 947.92,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "reason": "not a fallback, and constituents are not all covered",
+    "fused_impl": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "kind_runtime_share": 0.9496,
+    "op": "conv2d_batchnorm2d_silu_s8"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 63,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "high",
+   "constraints": {},
+   "rationale": "conv2d_batchnorm2d_silu_s8 runs curated[rvv]/rvv_oc_blocked_bn_silu_epilogue and is too small a share of yolov8_nano to be worth a board rung; unfusing also loses the epilogue fusion and doubles the dispatch count.",
+   "evidence": {
+    "service_time_us": 946.96,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "reason": "not a fallback, and constituents are not all covered",
+    "fused_impl": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "kind_runtime_share": 0.9496,
+    "op": "conv2d_batchnorm2d_silu_s8"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 12,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "high",
+   "constraints": {},
+   "rationale": "conv2d_batchnorm2d_silu_s8 runs curated[rvv]/rvv_oc_blocked_bn_silu_epilogue and is too small a share of yolov8_nano to be worth a board rung; unfusing also loses the epilogue fusion and doubles the dispatch count.",
+   "evidence": {
+    "service_time_us": 899.04,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "reason": "not a fallback, and constituents are not all covered",
+    "fused_impl": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "kind_runtime_share": 0.9496,
+    "op": "conv2d_batchnorm2d_silu_s8"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 15,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "high",
+   "constraints": {},
+   "rationale": "conv2d_batchnorm2d_silu_s8 runs curated[rvv]/rvv_oc_blocked_bn_silu_epilogue and is too small a share of yolov8_nano to be worth a board rung; unfusing also loses the epilogue fusion and doubles the dispatch count.",
+   "evidence": {
+    "service_time_us": 895.67,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "reason": "not a fallback, and constituents are not all covered",
+    "fused_impl": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "kind_runtime_share": 0.9496,
+    "op": "conv2d_batchnorm2d_silu_s8"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 57,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "high",
+   "constraints": {},
+   "rationale": "conv2d_batchnorm2d_silu_s8 runs curated[rvv]/rvv_oc_blocked_bn_silu_epilogue and is too small a share of yolov8_nano to be worth a board rung; unfusing also loses the epilogue fusion and doubles the dispatch count.",
+   "evidence": {
+    "service_time_us": 894.08,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "reason": "not a fallback, and constituents are not all covered",
+    "fused_impl": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "kind_runtime_share": 0.9496,
+    "op": "conv2d_batchnorm2d_silu_s8"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 16,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "high",
+   "constraints": {},
+   "rationale": "conv2d_batchnorm2d_silu_s8 runs curated[rvv]/rvv_oc_blocked_bn_silu_epilogue and is too small a share of yolov8_nano to be worth a board rung; unfusing also loses the epilogue fusion and doubles the dispatch count.",
+   "evidence": {
+    "service_time_us": 893.17,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "reason": "not a fallback, and constituents are not all covered",
+    "fused_impl": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "kind_runtime_share": 0.9496,
+    "op": "conv2d_batchnorm2d_silu_s8"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 58,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "high",
+   "constraints": {},
+   "rationale": "conv2d_batchnorm2d_silu_s8 runs curated[rvv]/rvv_oc_blocked_bn_silu_epilogue and is too small a share of yolov8_nano to be worth a board rung; unfusing also loses the epilogue fusion and doubles the dispatch count.",
+   "evidence": {
+    "service_time_us": 892.67,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "reason": "not a fallback, and constituents are not all covered",
+    "fused_impl": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "kind_runtime_share": 0.9496,
+    "op": "conv2d_batchnorm2d_silu_s8"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 13,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "high",
+   "constraints": {},
+   "rationale": "conv2d_batchnorm2d_silu_s8 runs curated[rvv]/rvv_oc_blocked_bn_silu_epilogue and is too small a share of yolov8_nano to be worth a board rung; unfusing also loses the epilogue fusion and doubles the dispatch count.",
+   "evidence": {
+    "service_time_us": 892.54,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "reason": "not a fallback, and constituents are not all covered",
+    "fused_impl": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "kind_runtime_share": 0.9496,
+    "op": "conv2d_batchnorm2d_silu_s8"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 94,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "high",
+   "constraints": {},
+   "rationale": "conv2d_batchnorm2d_silu_s8 runs curated[rvv]/rvv_oc_blocked_bn_silu_epilogue and is too small a share of yolov8_nano to be worth a board rung; unfusing also loses the epilogue fusion and doubles the dispatch count.",
+   "evidence": {
+    "service_time_us": 891.46,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "reason": "not a fallback, and constituents are not all covered",
+    "fused_impl": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "kind_runtime_share": 0.9496,
+    "op": "conv2d_batchnorm2d_silu_s8"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 61,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "high",
+   "constraints": {},
+   "rationale": "conv2d_batchnorm2d_silu_s8 runs curated[rvv]/rvv_oc_blocked_bn_silu_epilogue and is too small a share of yolov8_nano to be worth a board rung; unfusing also loses the epilogue fusion and doubles the dispatch count.",
+   "evidence": {
+    "service_time_us": 813.08,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "reason": "not a fallback, and constituents are not all covered",
+    "fused_impl": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "kind_runtime_share": 0.9496,
+    "op": "conv2d_batchnorm2d_silu_s8"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 66,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "high",
+   "constraints": {},
+   "rationale": "conv2d_batchnorm2d_silu_s8 runs curated[rvv]/rvv_oc_blocked_bn_silu_epilogue and is too small a share of yolov8_nano to be worth a board rung; unfusing also loses the epilogue fusion and doubles the dispatch count.",
+   "evidence": {
+    "service_time_us": 802.79,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "reason": "not a fallback, and constituents are not all covered",
+    "fused_impl": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "kind_runtime_share": 0.9496,
+    "op": "conv2d_batchnorm2d_silu_s8"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 50,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "high",
+   "constraints": {},
+   "rationale": "conv2d_batchnorm2d_silu_s8 runs curated[rvv]/rvv_oc_blocked_bn_silu_epilogue and is too small a share of yolov8_nano to be worth a board rung; unfusing also loses the epilogue fusion and doubles the dispatch count.",
+   "evidence": {
+    "service_time_us": 801.38,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "reason": "not a fallback, and constituents are not all covered",
+    "fused_impl": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "kind_runtime_share": 0.9496,
+    "op": "conv2d_batchnorm2d_silu_s8"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 65,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "high",
+   "constraints": {},
+   "rationale": "conv2d_batchnorm2d_silu_s8 runs curated[rvv]/rvv_oc_blocked_bn_silu_epilogue and is too small a share of yolov8_nano to be worth a board rung; unfusing also loses the epilogue fusion and doubles the dispatch count.",
+   "evidence": {
+    "service_time_us": 799.88,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "reason": "not a fallback, and constituents are not all covered",
+    "fused_impl": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "kind_runtime_share": 0.9496,
+    "op": "conv2d_batchnorm2d_silu_s8"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 21,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "high",
+   "constraints": {},
+   "rationale": "conv2d_batchnorm2d_silu_s8 runs curated[rvv]/rvv_oc_blocked_bn_silu_epilogue and is too small a share of yolov8_nano to be worth a board rung; unfusing also loses the epilogue fusion and doubles the dispatch count.",
+   "evidence": {
+    "service_time_us": 789.25,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "reason": "not a fallback, and constituents are not all covered",
+    "fused_impl": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "kind_runtime_share": 0.9496,
+    "op": "conv2d_batchnorm2d_silu_s8"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 85,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "high",
+   "constraints": {},
+   "rationale": "conv2d_batchnorm2d_silu_s8 runs curated[rvv]/rvv_oc_blocked_bn_silu_epilogue and is too small a share of yolov8_nano to be worth a board rung; unfusing also loses the epilogue fusion and doubles the dispatch count.",
+   "evidence": {
+    "service_time_us": 783.71,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "reason": "not a fallback, and constituents are not all covered",
+    "fused_impl": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "kind_runtime_share": 0.9496,
+    "op": "conv2d_batchnorm2d_silu_s8"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 27,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "high",
+   "constraints": {},
+   "rationale": "conv2d_batchnorm2d_silu_s8 runs curated[rvv]/rvv_oc_blocked_bn_silu_epilogue and is too small a share of yolov8_nano to be worth a board rung; unfusing also loses the epilogue fusion and doubles the dispatch count.",
+   "evidence": {
+    "service_time_us": 781.12,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "reason": "not a fallback, and constituents are not all covered",
+    "fused_impl": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "kind_runtime_share": 0.9496,
+    "op": "conv2d_batchnorm2d_silu_s8"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 24,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "high",
+   "constraints": {},
+   "rationale": "conv2d_batchnorm2d_silu_s8 runs curated[rvv]/rvv_oc_blocked_bn_silu_epilogue and is too small a share of yolov8_nano to be worth a board rung; unfusing also loses the epilogue fusion and doubles the dispatch count.",
+   "evidence": {
+    "service_time_us": 781.04,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "reason": "not a fallback, and constituents are not all covered",
+    "fused_impl": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "kind_runtime_share": 0.9496,
+    "op": "conv2d_batchnorm2d_silu_s8"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 26,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "high",
+   "constraints": {},
+   "rationale": "conv2d_batchnorm2d_silu_s8 runs curated[rvv]/rvv_oc_blocked_bn_silu_epilogue and is too small a share of yolov8_nano to be worth a board rung; unfusing also loses the epilogue fusion and doubles the dispatch count.",
+   "evidence": {
+    "service_time_us": 780.96,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "reason": "not a fallback, and constituents are not all covered",
+    "fused_impl": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "kind_runtime_share": 0.9496,
+    "op": "conv2d_batchnorm2d_silu_s8"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 23,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "high",
+   "constraints": {},
+   "rationale": "conv2d_batchnorm2d_silu_s8 runs curated[rvv]/rvv_oc_blocked_bn_silu_epilogue and is too small a share of yolov8_nano to be worth a board rung; unfusing also loses the epilogue fusion and doubles the dispatch count.",
+   "evidence": {
+    "service_time_us": 777.5,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "reason": "not a fallback, and constituents are not all covered",
+    "fused_impl": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "kind_runtime_share": 0.9496,
+    "op": "conv2d_batchnorm2d_silu_s8"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 2,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "high",
+   "constraints": {},
+   "rationale": "conv2d_batchnorm2d_silu_s8 runs curated[rvv]/rvv_oc_blocked_bn_silu_epilogue and is too small a share of yolov8_nano to be worth a board rung; unfusing also loses the epilogue fusion and doubles the dispatch count.",
+   "evidence": {
+    "service_time_us": 775.17,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "reason": "not a fallback, and constituents are not all covered",
+    "fused_impl": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "kind_runtime_share": 0.9496,
+    "op": "conv2d_batchnorm2d_silu_s8"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 49,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "high",
+   "constraints": {},
+   "rationale": "conv2d_batchnorm2d_silu_s8 runs curated[rvv]/rvv_oc_blocked_bn_silu_epilogue and is too small a share of yolov8_nano to be worth a board rung; unfusing also loses the epilogue fusion and doubles the dispatch count.",
+   "evidence": {
+    "service_time_us": 773.88,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "reason": "not a fallback, and constituents are not all covered",
+    "fused_impl": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "kind_runtime_share": 0.9496,
+    "op": "conv2d_batchnorm2d_silu_s8"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 74,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "high",
+   "constraints": {},
+   "rationale": "conv2d_batchnorm2d_silu_s8 runs curated[rvv]/rvv_oc_blocked_bn_silu_epilogue and is too small a share of yolov8_nano to be worth a board rung; unfusing also loses the epilogue fusion and doubles the dispatch count.",
+   "evidence": {
+    "service_time_us": 762.33,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "reason": "not a fallback, and constituents are not all covered",
+    "fused_impl": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "kind_runtime_share": 0.9496,
+    "op": "conv2d_batchnorm2d_silu_s8"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 69,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "high",
+   "constraints": {},
+   "rationale": "conv2d_batchnorm2d_silu_s8 runs curated[rvv]/rvv_oc_blocked_bn_silu_epilogue and is too small a share of yolov8_nano to be worth a board rung; unfusing also loses the epilogue fusion and doubles the dispatch count.",
+   "evidence": {
+    "service_time_us": 749.58,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "reason": "not a fallback, and constituents are not all covered",
+    "fused_impl": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "kind_runtime_share": 0.9496,
+    "op": "conv2d_batchnorm2d_silu_s8"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 34,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "high",
+   "constraints": {},
+   "rationale": "conv2d_batchnorm2d_silu_s8 runs curated[rvv]/rvv_oc_blocked_bn_silu_epilogue and is too small a share of yolov8_nano to be worth a board rung; unfusing also loses the epilogue fusion and doubles the dispatch count.",
+   "evidence": {
+    "service_time_us": 737.5,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "reason": "not a fallback, and constituents are not all covered",
+    "fused_impl": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "kind_runtime_share": 0.9496,
+    "op": "conv2d_batchnorm2d_silu_s8"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 73,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "high",
+   "constraints": {},
+   "rationale": "conv2d_batchnorm2d_silu_s8 runs curated[rvv]/rvv_oc_blocked_bn_silu_epilogue and is too small a share of yolov8_nano to be worth a board rung; unfusing also loses the epilogue fusion and doubles the dispatch count.",
+   "evidence": {
+    "service_time_us": 733.58,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "reason": "not a fallback, and constituents are not all covered",
+    "fused_impl": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "kind_runtime_share": 0.9496,
+    "op": "conv2d_batchnorm2d_silu_s8"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 35,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "high",
+   "constraints": {},
+   "rationale": "conv2d_batchnorm2d_silu_s8 runs curated[rvv]/rvv_oc_blocked_bn_silu_epilogue and is too small a share of yolov8_nano to be worth a board rung; unfusing also loses the epilogue fusion and doubles the dispatch count.",
+   "evidence": {
+    "service_time_us": 724.58,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "reason": "not a fallback, and constituents are not all covered",
+    "fused_impl": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "kind_runtime_share": 0.9496,
+    "op": "conv2d_batchnorm2d_silu_s8"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 32,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "high",
+   "constraints": {},
+   "rationale": "conv2d_batchnorm2d_silu_s8 runs curated[rvv]/rvv_oc_blocked_bn_silu_epilogue and is too small a share of yolov8_nano to be worth a board rung; unfusing also loses the epilogue fusion and doubles the dispatch count.",
+   "evidence": {
+    "service_time_us": 653.83,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "reason": "not a fallback, and constituents are not all covered",
+    "fused_impl": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "kind_runtime_share": 0.9496,
+    "op": "conv2d_batchnorm2d_silu_s8"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 91,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "high",
+   "constraints": {},
+   "rationale": "conv2d_batchnorm2d_silu_s8 runs curated[rvv]/rvv_oc_blocked_bn_silu_epilogue and is too small a share of yolov8_nano to be worth a board rung; unfusing also loses the epilogue fusion and doubles the dispatch count.",
+   "evidence": {
+    "service_time_us": 611.25,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "reason": "not a fallback, and constituents are not all covered",
+    "fused_impl": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "kind_runtime_share": 0.9496,
+    "op": "conv2d_batchnorm2d_silu_s8"
+   }
+  },
+  {
+   "model": "dronet",
+   "dispatch_id": 3,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "high",
+   "constraints": {},
+   "rationale": "conv2d_batchnorm2d_s8 runs curated[rvv]/rvv_oc_blocked_bn_epilogue and is too small a share of dronet to be worth a board rung; unfusing also loses the epilogue fusion and doubles the dispatch count.",
+   "evidence": {
+    "service_time_us": 468.75,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "reason": "not a fallback, and constituents are not all covered",
+    "fused_impl": "curated[rvv]/rvv_oc_blocked_bn_epilogue",
+    "kind_runtime_share": 0.3272,
+    "op": "conv2d_batchnorm2d_s8"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 95,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "high",
+   "constraints": {},
+   "rationale": "conv2d_batchnorm2d_silu_s8 runs curated[rvv]/rvv_oc_blocked_bn_silu_epilogue and is too small a share of yolov8_nano to be worth a board rung; unfusing also loses the epilogue fusion and doubles the dispatch count.",
+   "evidence": {
+    "service_time_us": 337.38,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "reason": "not a fallback, and constituents are not all covered",
+    "fused_impl": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "kind_runtime_share": 0.9496,
+    "op": "conv2d_batchnorm2d_silu_s8"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 39,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "high",
+   "constraints": {},
+   "rationale": "conv2d_batchnorm2d_silu_s8 runs curated[rvv]/rvv_oc_blocked_bn_silu_epilogue and is too small a share of yolov8_nano to be worth a board rung; unfusing also loses the epilogue fusion and doubles the dispatch count.",
+   "evidence": {
+    "service_time_us": 294.29,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "reason": "not a fallback, and constituents are not all covered",
+    "fused_impl": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "kind_runtime_share": 0.9496,
+    "op": "conv2d_batchnorm2d_silu_s8"
+   }
+  },
+  {
+   "model": "dronet",
+   "dispatch_id": 13,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "high",
+   "constraints": {},
+   "rationale": "conv2d_batchnorm2d_s8 runs curated[rvv]/rvv_oc_blocked_bn_epilogue and is too small a share of dronet to be worth a board rung; unfusing also loses the epilogue fusion and doubles the dispatch count.",
+   "evidence": {
+    "service_time_us": 261.38,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "reason": "not a fallback, and constituents are not all covered",
+    "fused_impl": "curated[rvv]/rvv_oc_blocked_bn_epilogue",
+    "kind_runtime_share": 0.3272,
+    "op": "conv2d_batchnorm2d_s8"
+   }
+  },
+  {
+   "model": "dronet",
+   "dispatch_id": 8,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "high",
+   "constraints": {},
+   "rationale": "conv2d_batchnorm2d_s8 runs curated[rvv]/rvv_oc_blocked_bn_epilogue and is too small a share of dronet to be worth a board rung; unfusing also loses the epilogue fusion and doubles the dispatch count.",
+   "evidence": {
+    "service_time_us": 246.17,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "reason": "not a fallback, and constituents are not all covered",
+    "fused_impl": "curated[rvv]/rvv_oc_blocked_bn_epilogue",
+    "kind_runtime_share": 0.3272,
+    "op": "conv2d_batchnorm2d_s8"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 92,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "high",
+   "constraints": {},
+   "rationale": "conv2d_batchnorm2d_silu_s8 runs curated[rvv]/rvv_oc_blocked_bn_silu_epilogue and is too small a share of yolov8_nano to be worth a board rung; unfusing also loses the epilogue fusion and doubles the dispatch count.",
+   "evidence": {
+    "service_time_us": 220.5,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "reason": "not a fallback, and constituents are not all covered",
+    "fused_impl": "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "kind_runtime_share": 0.9496,
+    "op": "conv2d_batchnorm2d_silu_s8"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 53,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "medium",
+   "constraints": {},
+   "rationale": "no measured alternative beats rvv_k3_x100 by 5% (best was rvv_k3_x100 at +0.0%).",
+   "evidence": {
+    "service_time_us": 142.67,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "best_alternative": "rvv_k3_x100",
+    "gain_fraction": 0.0,
+    "min_gain_required": 0.05,
+    "min_gain_ms_required": 0.05,
+    "gain_ms": 0.0,
+    "op": "yolov8_nano$dispatch_53_rvv_k3_x100_upsample_nearest_s8_N1xC128xIH10xIW10xscale2",
+    "baseline_kernel": "curated[rvv]/direct",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 6,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "medium",
+   "constraints": {},
+   "rationale": "no measured alternative beats rvv_k3_x100 by 5% (best was rvv_k3_x100 at +0.0%).",
+   "evidence": {
+    "service_time_us": 98.96,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "best_alternative": "rvv_k3_x100",
+    "gain_fraction": 0.0,
+    "min_gain_required": 0.05,
+    "min_gain_ms_required": 0.05,
+    "gain_ms": 0.0,
+    "op": "yolov8_nano$dispatch_6_rvv_k3_x100_add_s8_n25600",
+    "baseline_kernel": "curated[rvv]/rvv_frm_rmm",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 45,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "medium",
+   "constraints": {},
+   "rationale": "no measured alternative beats rvv_k3_x100 by 5% (best was rvv_k3_x100 at +0.0%).",
+   "evidence": {
+    "service_time_us": 93.5,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "best_alternative": "rvv_k3_x100",
+    "gain_fraction": 0.0,
+    "min_gain_required": 0.05,
+    "min_gain_ms_required": 0.05,
+    "gain_ms": 0.0,
+    "op": "yolov8_nano$dispatch_45_rvv_k3_x100_upsample_nearest_s8_N1xC256xIH5xIW5xscale2",
+    "baseline_kernel": "curated[rvv]/direct",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "dronet",
+   "dispatch_id": 5,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "medium",
+   "constraints": {},
+   "rationale": "no measured alternative beats rvv_k3_x100 by 5% (best was ime_k3_a100 at +0.8%).",
+   "evidence": {
+    "service_time_us": 55.54,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "best_alternative": "ime_k3_a100",
+    "gain_fraction": 0.0075,
+    "min_gain_required": 0.05,
+    "min_gain_ms_required": 0.05,
+    "gain_ms": 0.0004,
+    "op": "dronet$dispatch_5_rvv_k3_x100_conv2d_s8_N1xIC32xIH27xIW27xOC32xOH14xOW14xKH1xKW1xSH2xSW2xPH0xPW0",
+    "baseline_kernel": "curated[rvv]/rvv_vsmul_vnclip",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 54,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "medium",
+   "constraints": {},
+   "rationale": "no measured alternative beats rvv_k3_x100 by 5% (best was ime_k3_a100 at +22.9%).",
+   "evidence": {
+    "service_time_us": 52.29,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "best_alternative": "ime_k3_a100",
+    "gain_fraction": 0.2295,
+    "min_gain_required": 0.05,
+    "min_gain_ms_required": 0.05,
+    "gain_ms": 0.012,
+    "op": "yolov8_nano$dispatch_54_rvv_k3_x100_cat2_c1_s8_N1xH20xW20xC_inputs128|64xC_total192",
+    "baseline_kernel": "curated[rvv]/direct",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 14,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "medium",
+   "constraints": {},
+   "rationale": "no measured alternative beats rvv_k3_x100 by 5% (best was rvv_k3_x100 at +0.0%).",
+   "evidence": {
+    "service_time_us": 49.54,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "best_alternative": "rvv_k3_x100",
+    "gain_fraction": 0.0,
+    "min_gain_required": 0.05,
+    "min_gain_ms_required": 0.05,
+    "gain_ms": 0.0,
+    "op": "yolov8_nano$dispatch_14_rvv_k3_x100_add_s8_n12800",
+    "baseline_kernel": "curated[rvv]/rvv_frm_rmm",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 17,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "medium",
+   "constraints": {},
+   "rationale": "no measured alternative beats rvv_k3_x100 by 5% (best was rvv_k3_x100 at +0.0%).",
+   "evidence": {
+    "service_time_us": 49.54,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "best_alternative": "rvv_k3_x100",
+    "gain_fraction": 0.0,
+    "min_gain_required": 0.05,
+    "min_gain_ms_required": 0.05,
+    "gain_ms": 0.0,
+    "op": "yolov8_nano$dispatch_17_rvv_k3_x100_add_s8_n12800",
+    "baseline_kernel": "curated[rvv]/rvv_frm_rmm",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 7,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "medium",
+   "constraints": {},
+   "rationale": "no measured alternative beats rvv_k3_x100 by 5% (best was ime_k3_a100 at +13.5%).",
+   "evidence": {
+    "service_time_us": 44.25,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "best_alternative": "ime_k3_a100",
+    "gain_fraction": 0.1346,
+    "min_gain_required": 0.05,
+    "min_gain_ms_required": 0.05,
+    "gain_ms": 0.006,
+    "op": "yolov8_nano$dispatch_7_rvv_k3_x100_cat3_c1_s8_N1xH40xW40xC_inputs16|16|16xC_total48",
+    "baseline_kernel": "curated[rvv]/direct",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 96,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "medium",
+   "constraints": {},
+   "rationale": "no measured alternative beats rvv_k3_x100 by 5% (best was ime_k3_a100 at +60.4%).",
+   "evidence": {
+    "service_time_us": 43.88,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "best_alternative": "ime_k3_a100",
+    "gain_fraction": 0.604,
+    "min_gain_required": 0.05,
+    "min_gain_ms_required": 0.05,
+    "gain_ms": 0.0265,
+    "op": "yolov8_nano$dispatch_96_rvv_k3_x100_conv2d_s8_N1xIC80xIH5xIW5xOC80xOH5xOW5xKH1xKW1xSH1xSW1xPH0xPW0",
+    "baseline_kernel": "curated[rvv]/rvv_vsmul_vnclip",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 83,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "medium",
+   "constraints": {},
+   "rationale": "no measured alternative beats rvv_k3_x100 by 5% (best was rvv_k3_x100 at +0.0%).",
+   "evidence": {
+    "service_time_us": 39.17,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "best_alternative": "rvv_k3_x100",
+    "gain_fraction": 0.0,
+    "min_gain_required": 0.05,
+    "min_gain_ms_required": 0.05,
+    "gain_ms": 0.0,
+    "op": "yolov8_nano$dispatch_83_rvv_k3_x100_cat2_c1_s8_N1xH20xW20xC_inputs64|80xC_total144",
+    "baseline_kernel": "curated[rvv]/direct",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 18,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "medium",
+   "constraints": {},
+   "rationale": "no measured alternative beats rvv_k3_x100 by 5% (best was ime_k3_a100 at +26.8%).",
+   "evidence": {
+    "service_time_us": 32.38,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "best_alternative": "ime_k3_a100",
+    "gain_fraction": 0.2677,
+    "min_gain_required": 0.05,
+    "min_gain_ms_required": 0.05,
+    "gain_ms": 0.0087,
+    "op": "yolov8_nano$dispatch_18_rvv_k3_x100_cat4_c1_s8_N1xH20xW20xC_inputs32|32|32|32xC_total128",
+    "baseline_kernel": "curated[rvv]/direct",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "dronet",
+   "dispatch_id": 15,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "medium",
+   "constraints": {},
+   "rationale": "no measured alternative beats rvv_k3_x100 by 5% (best was ime_k3_a100 at +36.7%).",
+   "evidence": {
+    "service_time_us": 30.67,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "best_alternative": "ime_k3_a100",
+    "gain_fraction": 0.3668,
+    "min_gain_required": 0.05,
+    "min_gain_ms_required": 0.05,
+    "gain_ms": 0.0112,
+    "op": "dronet$dispatch_15_rvv_k3_x100_conv2d_s8_N1xIC64xIH7xIW7xOC128xOH4xOW4xKH1xKW1xSH2xSW2xPH0xPW0",
+    "baseline_kernel": "curated[rvv]/rvv_vsmul_vnclip",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 46,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "medium",
+   "constraints": {},
+   "rationale": "no measured alternative beats rvv_k3_x100 by 5% (best was rvv_k3_x100 at +0.0%).",
+   "evidence": {
+    "service_time_us": 30.08,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "best_alternative": "rvv_k3_x100",
+    "gain_fraction": 0.0,
+    "min_gain_required": 0.05,
+    "min_gain_ms_required": 0.05,
+    "gain_ms": 0.0,
+    "op": "yolov8_nano$dispatch_46_rvv_k3_x100_cat2_c1_s8_N1xH10xW10xC_inputs256|128xC_total384",
+    "baseline_kernel": "curated[rvv]/direct",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "dronet",
+   "dispatch_id": 10,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "medium",
+   "constraints": {},
+   "rationale": "no measured alternative beats rvv_k3_x100 by 5% (best was ime_k3_a100 at +23.6%).",
+   "evidence": {
+    "service_time_us": 28.38,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "best_alternative": "ime_k3_a100",
+    "gain_fraction": 0.2364,
+    "min_gain_required": 0.05,
+    "min_gain_ms_required": 0.05,
+    "gain_ms": 0.0067,
+    "op": "dronet$dispatch_10_rvv_k3_x100_conv2d_s8_N1xIC32xIH14xIW14xOC64xOH7xOW7xKH1xKW1xSH2xSW2xPH0xPW0",
+    "baseline_kernel": "curated[rvv]/rvv_vsmul_vnclip",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 93,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "medium",
+   "constraints": {},
+   "rationale": "no measured alternative beats rvv_k3_x100 by 5% (best was ime_k3_a100 at +46.2%).",
+   "evidence": {
+    "service_time_us": 25.0,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "best_alternative": "ime_k3_a100",
+    "gain_fraction": 0.4617,
+    "min_gain_required": 0.05,
+    "min_gain_ms_required": 0.05,
+    "gain_ms": 0.0115,
+    "op": "yolov8_nano$dispatch_93_rvv_k3_x100_conv2d_s8_N1xIC64xIH5xIW5xOC64xOH5xOW5xKH1xKW1xSH1xSW1xPH0xPW0",
+    "baseline_kernel": "curated[rvv]/rvv_vsmul_vnclip",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 59,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "medium",
+   "constraints": {},
+   "rationale": "no measured alternative beats rvv_k3_x100 by 5% (best was ime_k3_a100 at +3.2%).",
+   "evidence": {
+    "service_time_us": 24.88,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "best_alternative": "ime_k3_a100",
+    "gain_fraction": 0.0318,
+    "min_gain_required": 0.05,
+    "min_gain_ms_required": 0.05,
+    "gain_ms": 0.0008,
+    "op": "yolov8_nano$dispatch_59_rvv_k3_x100_cat3_c1_s8_N1xH20xW20xC_inputs32|32|32xC_total96",
+    "baseline_kernel": "curated[rvv]/direct",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 25,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "medium",
+   "constraints": {},
+   "rationale": "no measured alternative beats rvv_k3_x100 by 5% (best was rvv_k3_x100 at +0.0%).",
+   "evidence": {
+    "service_time_us": 24.83,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "best_alternative": "rvv_k3_x100",
+    "gain_fraction": 0.0,
+    "min_gain_required": 0.05,
+    "min_gain_ms_required": 0.05,
+    "gain_ms": 0.0,
+    "op": "yolov8_nano$dispatch_25_rvv_k3_x100_add_s8_n6400",
+    "baseline_kernel": "curated[rvv]/rvv_frm_rmm",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 28,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "medium",
+   "constraints": {},
+   "rationale": "no measured alternative beats rvv_k3_x100 by 5% (best was rvv_k3_x100 at +0.0%).",
+   "evidence": {
+    "service_time_us": 24.83,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "best_alternative": "rvv_k3_x100",
+    "gain_fraction": 0.0,
+    "min_gain_required": 0.05,
+    "min_gain_ms_required": 0.05,
+    "gain_ms": 0.0,
+    "op": "yolov8_nano$dispatch_28_rvv_k3_x100_add_s8_n6400",
+    "baseline_kernel": "curated[rvv]/rvv_frm_rmm",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "dronet",
+   "dispatch_id": 6,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "medium",
+   "constraints": {},
+   "rationale": "no measured alternative beats rvv_k3_x100 by 5% (best was rvv_k3_x100 at +0.0%).",
+   "evidence": {
+    "service_time_us": 24.17,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "best_alternative": "rvv_k3_x100",
+    "gain_fraction": 0.0,
+    "min_gain_required": 0.05,
+    "min_gain_ms_required": 0.05,
+    "gain_ms": 0.0,
+    "op": "dronet$dispatch_6_rvv_k3_x100_add_s8_n6272",
+    "baseline_kernel": "curated[rvv]/rvv_frm_rmm",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "dronet",
+   "dispatch_id": 2,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "medium",
+   "constraints": {},
+   "rationale": "no measured alternative beats rvv_k3_x100 by 5% (best was ime_k3_a100 at +27.7%).",
+   "evidence": {
+    "service_time_us": 16.54,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "best_alternative": "ime_k3_a100",
+    "gain_fraction": 0.2771,
+    "min_gain_required": 0.05,
+    "min_gain_ms_required": 0.05,
+    "gain_ms": 0.0046,
+    "op": "dronet$dispatch_2_rvv_k3_x100_batchnorm2d_s8_N1xC32xH27xW27",
+    "baseline_kernel": "curated[rvv]/direct",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 29,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "medium",
+   "constraints": {},
+   "rationale": "no measured alternative beats rvv_k3_x100 by 5% (best was ime_k3_a100 at +23.1%).",
+   "evidence": {
+    "service_time_us": 16.42,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "best_alternative": "ime_k3_a100",
+    "gain_fraction": 0.231,
+    "min_gain_required": 0.05,
+    "min_gain_ms_required": 0.05,
+    "gain_ms": 0.0038,
+    "op": "yolov8_nano$dispatch_29_rvv_k3_x100_cat4_c1_s8_N1xH10xW10xC_inputs64|64|64|64xC_total256",
+    "baseline_kernel": "curated[rvv]/direct",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 62,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "medium",
+   "constraints": {},
+   "rationale": "no measured alternative beats rvv_k3_x100 by 5% (best was rvv_k3_x100 at +0.0%).",
+   "evidence": {
+    "service_time_us": 15.12,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "best_alternative": "rvv_k3_x100",
+    "gain_fraction": 0.0,
+    "min_gain_required": 0.05,
+    "min_gain_ms_required": 0.05,
+    "gain_ms": 0.0,
+    "op": "yolov8_nano$dispatch_62_rvv_k3_x100_cat2_c1_s8_N1xH10xW10xC_inputs64|128xC_total192",
+    "baseline_kernel": "curated[rvv]/direct",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 70,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "medium",
+   "constraints": {},
+   "rationale": "no measured alternative beats rvv_k3_x100 by 5% (best was rvv_k3_x100 at +0.0%).",
+   "evidence": {
+    "service_time_us": 15.04,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "best_alternative": "rvv_k3_x100",
+    "gain_fraction": 0.0,
+    "min_gain_required": 0.05,
+    "min_gain_ms_required": 0.05,
+    "gain_ms": 0.0,
+    "op": "yolov8_nano$dispatch_70_rvv_k3_x100_cat2_c1_s8_N1xH5xW5xC_inputs128|256xC_total384",
+    "baseline_kernel": "curated[rvv]/direct",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 51,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "medium",
+   "constraints": {},
+   "rationale": "no measured alternative beats rvv_k3_x100 by 5% (best was rvv_k3_x100 at +0.0%).",
+   "evidence": {
+    "service_time_us": 14.58,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "best_alternative": "rvv_k3_x100",
+    "gain_fraction": 0.0,
+    "min_gain_required": 0.05,
+    "min_gain_ms_required": 0.05,
+    "gain_ms": 0.0,
+    "op": "yolov8_nano$dispatch_51_rvv_k3_x100_cat3_c1_s8_N1xH10xW10xC_inputs64|64|64xC_total192",
+    "baseline_kernel": "curated[rvv]/direct",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 67,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "medium",
+   "constraints": {},
+   "rationale": "no measured alternative beats rvv_k3_x100 by 5% (best was rvv_k3_x100 at +0.0%).",
+   "evidence": {
+    "service_time_us": 14.33,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "best_alternative": "rvv_k3_x100",
+    "gain_fraction": 0.0,
+    "min_gain_required": 0.05,
+    "min_gain_ms_required": 0.05,
+    "gain_ms": 0.0,
+    "op": "yolov8_nano$dispatch_67_rvv_k3_x100_cat3_c1_s8_N1xH10xW10xC_inputs64|64|64xC_total192",
+    "baseline_kernel": "curated[rvv]/direct",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 37,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "medium",
+   "constraints": {},
+   "rationale": "no measured alternative beats rvv_k3_x100 by 5% (best was rvv_k3_x100 at +0.0%).",
+   "evidence": {
+    "service_time_us": 14.25,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "best_alternative": "rvv_k3_x100",
+    "gain_fraction": 0.0,
+    "min_gain_required": 0.05,
+    "min_gain_ms_required": 0.05,
+    "gain_ms": 0.0,
+    "op": "yolov8_nano$dispatch_37_rvv_k3_x100_cat3_c1_s8_N1xH5xW5xC_inputs128|128|128xC_total384",
+    "baseline_kernel": "curated[rvv]/direct",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 75,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "medium",
+   "constraints": {},
+   "rationale": "no measured alternative beats rvv_k3_x100 by 5% (best was rvv_k3_x100 at +0.0%).",
+   "evidence": {
+    "service_time_us": 14.17,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "best_alternative": "rvv_k3_x100",
+    "gain_fraction": 0.0,
+    "min_gain_required": 0.05,
+    "min_gain_ms_required": 0.05,
+    "gain_ms": 0.0,
+    "op": "yolov8_nano$dispatch_75_rvv_k3_x100_cat3_c1_s8_N1xH5xW5xC_inputs128|128|128xC_total384",
+    "baseline_kernel": "curated[rvv]/direct",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 36,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "medium",
+   "constraints": {},
+   "rationale": "no measured alternative beats rvv_k3_x100 by 5% (best was rvv_k3_x100 at +0.0%).",
+   "evidence": {
+    "service_time_us": 12.42,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "best_alternative": "rvv_k3_x100",
+    "gain_fraction": 0.0,
+    "min_gain_required": 0.05,
+    "min_gain_ms_required": 0.05,
+    "gain_ms": 0.0,
+    "op": "yolov8_nano$dispatch_36_rvv_k3_x100_add_s8_n3200",
+    "baseline_kernel": "curated[rvv]/rvv_frm_rmm",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "dronet",
+   "dispatch_id": 11,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "medium",
+   "constraints": {},
+   "rationale": "no measured alternative beats rvv_k3_x100 by 5% (best was rvv_k3_x100 at +0.0%).",
+   "evidence": {
+    "service_time_us": 12.08,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "best_alternative": "rvv_k3_x100",
+    "gain_fraction": 0.0,
+    "min_gain_required": 0.05,
+    "min_gain_ms_required": 0.05,
+    "gain_ms": 0.0,
+    "op": "dronet$dispatch_11_rvv_k3_x100_add_s8_n3136",
+    "baseline_kernel": "curated[rvv]/rvv_frm_rmm",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 90,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "medium",
+   "constraints": {},
+   "rationale": "no measured alternative beats rvv_k3_x100 by 5% (best was rvv_k3_x100 at +0.0%).",
+   "evidence": {
+    "service_time_us": 11.42,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "best_alternative": "rvv_k3_x100",
+    "gain_fraction": 0.0,
+    "min_gain_required": 0.05,
+    "min_gain_ms_required": 0.05,
+    "gain_ms": 0.0,
+    "op": "yolov8_nano$dispatch_90_rvv_k3_x100_cat2_c1_s8_N1xH10xW10xC_inputs64|80xC_total144",
+    "baseline_kernel": "curated[rvv]/direct",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 43,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "medium",
+   "constraints": {},
+   "rationale": "no measured alternative beats rvv_k3_x100 by 5% (best was ime_k3_a100 at +8.6%).",
+   "evidence": {
+    "service_time_us": 8.21,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "best_alternative": "ime_k3_a100",
+    "gain_fraction": 0.0863,
+    "min_gain_required": 0.05,
+    "min_gain_ms_required": 0.05,
+    "gain_ms": 0.0007,
+    "op": "yolov8_nano$dispatch_43_rvv_k3_x100_cat4_c1_s8_N1xH5xW5xC_inputs128|128|128|128xC_total512",
+    "baseline_kernel": "curated[rvv]/direct",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "dronet",
+   "dispatch_id": 16,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "medium",
+   "constraints": {},
+   "rationale": "no measured alternative beats rvv_k3_x100 by 5% (best was rvv_k3_x100 at +0.0%).",
+   "evidence": {
+    "service_time_us": 7.92,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "best_alternative": "rvv_k3_x100",
+    "gain_fraction": 0.0,
+    "min_gain_required": 0.05,
+    "min_gain_ms_required": 0.05,
+    "gain_ms": 0.0,
+    "op": "dronet$dispatch_16_rvv_k3_x100_add_s8_n2048",
+    "baseline_kernel": "curated[rvv]/rvv_frm_rmm",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "mlp_control",
+   "dispatch_id": 1,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "medium",
+   "constraints": {},
+   "rationale": "no measured alternative beats rvv_k3_x100 by 5% (best was rvv_k3_x100 at +0.0%).",
+   "evidence": {
+    "service_time_us": 7.88,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "best_alternative": "rvv_k3_x100",
+    "gain_fraction": 0.0,
+    "min_gain_required": 0.05,
+    "min_gain_ms_required": 0.05,
+    "gain_ms": 0.0,
+    "op": "mlp_control$dispatch_1_rvv_k3_x100_elu_s8_n256",
+    "baseline_kernel": "curated[rvv]/rvv_memo_lut_gather",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "mlp_control",
+   "dispatch_id": 2,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "medium",
+   "constraints": {},
+   "rationale": "no measured alternative beats rvv_k3_x100 by 5% (best was rvv_k3_x100 at +0.0%).",
+   "evidence": {
+    "service_time_us": 6.62,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "best_alternative": "rvv_k3_x100",
+    "gain_fraction": 0.0,
+    "min_gain_required": 0.05,
+    "min_gain_ms_required": 0.05,
+    "gain_ms": 0.0,
+    "op": "mlp_control$dispatch_2_rvv_k3_x100_linear_s8_M1xK256xN128",
+    "baseline_kernel": "curated[rvv]/direct",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "dronet",
+   "dispatch_id": 7,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "medium",
+   "constraints": {},
+   "rationale": "no measured alternative beats rvv_k3_x100 by 5% (best was ime_k3_a100 at +29.7%).",
+   "evidence": {
+    "service_time_us": 5.75,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "best_alternative": "ime_k3_a100",
+    "gain_fraction": 0.297,
+    "min_gain_required": 0.05,
+    "min_gain_ms_required": 0.05,
+    "gain_ms": 0.0017,
+    "op": "dronet$dispatch_7_rvv_k3_x100_batchnorm2d_s8_N1xC32xH14xW14",
+    "baseline_kernel": "curated[rvv]/direct",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "yolov8_nano",
+   "dispatch_id": 97,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "medium",
+   "constraints": {},
+   "rationale": "no measured alternative beats rvv_k3_x100 by 5% (best was rvv_k3_x100 at +0.0%).",
+   "evidence": {
+    "service_time_us": 5.67,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "best_alternative": "rvv_k3_x100",
+    "gain_fraction": 0.0,
+    "min_gain_required": 0.05,
+    "min_gain_ms_required": 0.05,
+    "gain_ms": 0.0,
+    "op": "yolov8_nano$dispatch_97_rvv_k3_x100_cat2_c1_s8_N1xH5xW5xC_inputs64|80xC_total144",
+    "baseline_kernel": "curated[rvv]/direct",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "mlp_control",
+   "dispatch_id": 0,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "medium",
+   "constraints": {},
+   "rationale": "no measured alternative beats rvv_k3_x100 by 5% (best was ime_k3_a100 at +43.7%).",
+   "evidence": {
+    "service_time_us": 5.62,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "best_alternative": "ime_k3_a100",
+    "gain_fraction": 0.437,
+    "min_gain_required": 0.05,
+    "min_gain_ms_required": 0.05,
+    "gain_ms": 0.0025,
+    "op": "mlp_control$dispatch_0_rvv_k3_x100_linear_s8_M1xK16xN256",
+    "baseline_kernel": "curated[rvv]/direct",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "mlp_control",
+   "dispatch_id": 3,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "medium",
+   "constraints": {},
+   "rationale": "no measured alternative beats rvv_k3_x100 by 5% (best was rvv_k3_x100 at +0.0%).",
+   "evidence": {
+    "service_time_us": 4.54,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "best_alternative": "rvv_k3_x100",
+    "gain_fraction": 0.0,
+    "min_gain_required": 0.05,
+    "min_gain_ms_required": 0.05,
+    "gain_ms": 0.0,
+    "op": "mlp_control$dispatch_3_rvv_k3_x100_elu_s8_n128",
+    "baseline_kernel": "curated[rvv]/rvv_memo_lut_gather",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "dronet",
+   "dispatch_id": 12,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "medium",
+   "constraints": {},
+   "rationale": "no measured alternative beats rvv_k3_x100 by 5% (best was rvv_k3_x100 at +0.0%).",
+   "evidence": {
+    "service_time_us": 3.21,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "best_alternative": "rvv_k3_x100",
+    "gain_fraction": 0.0,
+    "min_gain_required": 0.05,
+    "min_gain_ms_required": 0.05,
+    "gain_ms": 0.0,
+    "op": "dronet$dispatch_12_rvv_k3_x100_batchnorm2d_s8_N1xC64xH7xW7",
+    "baseline_kernel": "curated[rvv]/direct",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "mlp_control",
+   "dispatch_id": 5,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "medium",
+   "constraints": {},
+   "rationale": "no measured alternative beats rvv_k3_x100 by 5% (best was rvv_k3_x100 at +0.0%).",
+   "evidence": {
+    "service_time_us": 2.96,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "best_alternative": "rvv_k3_x100",
+    "gain_fraction": 0.0,
+    "min_gain_required": 0.05,
+    "min_gain_ms_required": 0.05,
+    "gain_ms": 0.0,
+    "op": "mlp_control$dispatch_5_rvv_k3_x100_elu_s8_n64",
+    "baseline_kernel": "curated[rvv]/rvv_memo_lut_gather",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "mlp_control",
+   "dispatch_id": 4,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "medium",
+   "constraints": {},
+   "rationale": "no measured alternative beats rvv_k3_x100 by 5% (best was rvv_k3_x100 at +0.0%).",
+   "evidence": {
+    "service_time_us": 2.25,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "best_alternative": "rvv_k3_x100",
+    "gain_fraction": 0.0,
+    "min_gain_required": 0.05,
+    "min_gain_ms_required": 0.05,
+    "gain_ms": 0.0,
+    "op": "mlp_control$dispatch_4_rvv_k3_x100_linear_s8_M1xK128xN64",
+    "baseline_kernel": "curated[rvv]/direct",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "dronet",
+   "dispatch_id": 18,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "medium",
+   "constraints": {},
+   "rationale": "no measured alternative beats rvv_k3_x100 by 5% (best was rvv_k3_x100 at +0.0%).",
+   "evidence": {
+    "service_time_us": 0.38,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "best_alternative": "rvv_k3_x100",
+    "gain_fraction": 0.0,
+    "min_gain_required": 0.05,
+    "min_gain_ms_required": 0.05,
+    "gain_ms": 0.0,
+    "op": "dronet$dispatch_18_rvv_k3_x100_linear_s8_M1xK2048xN1",
+    "baseline_kernel": "curated[rvv]/direct",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "dronet",
+   "dispatch_id": 19,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "medium",
+   "constraints": {},
+   "rationale": "no measured alternative beats rvv_k3_x100 by 5% (best was rvv_k3_x100 at +0.0%).",
+   "evidence": {
+    "service_time_us": 0.33,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "best_alternative": "rvv_k3_x100",
+    "gain_fraction": 0.0,
+    "min_gain_required": 0.05,
+    "min_gain_ms_required": 0.05,
+    "gain_ms": 0.0,
+    "op": "dronet$dispatch_19_rvv_k3_x100_linear_s8_M1xK2048xN1",
+    "baseline_kernel": "curated[rvv]/direct",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "dronet",
+   "dispatch_id": 17,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "medium",
+   "constraints": {},
+   "rationale": "no measured alternative beats rvv_k3_x100 by 5% (best was rvv_k3_x100 at +0.0%).",
+   "evidence": {
+    "service_time_us": 0.17,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "best_alternative": "rvv_k3_x100",
+    "gain_fraction": 0.0,
+    "min_gain_required": 0.05,
+    "min_gain_ms_required": 0.05,
+    "gain_ms": 0.0,
+    "op": "dronet$dispatch_17_rvv_k3_x100_relu_s8_n2048",
+    "baseline_kernel": "curated[rvv]/direct",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "mlp_control",
+   "dispatch_id": 6,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "medium",
+   "constraints": {},
+   "rationale": "no measured alternative beats rvv_k3_x100 by 5% (best was rvv_k3_x100 at +0.0%).",
+   "evidence": {
+    "service_time_us": 0.12,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "best_alternative": "rvv_k3_x100",
+    "gain_fraction": 0.0,
+    "min_gain_required": 0.05,
+    "min_gain_ms_required": 0.05,
+    "gain_ms": 0.0,
+    "op": "mlp_control$dispatch_6_rvv_k3_x100_linear_s8_M1xK64xN4",
+    "baseline_kernel": "curated[rvv]/direct",
+    "stat_basis": "single_sample_mean"
+   }
+  },
+  {
+   "model": "dronet",
+   "dispatch_id": 20,
+   "recommendation": "unchanged",
+   "priority": 5,
+   "confidence": "medium",
+   "constraints": {},
+   "rationale": "no measured alternative beats rvv_k3_x100 by 5% (best was rvv_k3_x100 at +0.0%).",
+   "evidence": {
+    "service_time_us": 0.12,
+    "blocking_time_us": 0.0,
+    "periodic_free_slot_us": 0.0,
+    "deadline_misses_attributed": 0,
+    "on_critical_path": false,
+    "baseline_impl": "rvv_k3_x100",
+    "best_alternative": "rvv_k3_x100",
+    "gain_fraction": 0.0,
+    "min_gain_required": 0.05,
+    "min_gain_ms_required": 0.05,
+    "gain_ms": 0.0,
+    "op": "dronet$dispatch_20_rvv_k3_x100_sigmoid_s8_n1",
+    "baseline_kernel": "curated[rvv]/rvv_memo_lut_gather",
+    "stat_basis": "single_sample_mean"
+   }
+  }
+ ],
+ "notes": {
+  "mlp_control": {
+   "implementations_profiled": [
+    "ime_k3_a100",
+    "rvv_k3_x100"
+   ],
+   "n_dispatches": 7,
+   "total_median_ms": 0.03,
+   "linear_chain": true,
+   "stat_basis": [
+    "single_sample_mean"
+   ],
+   "baseline_implementations": [
+    "curated[rvv]/direct",
+    "curated[rvv]/rvv_memo_lut_gather"
+   ],
+   "profile_csv": [
+    "<agent-tmp>/genroot/profile/rvv_k3_x100/spacemit_k3/mlp_control/mlp_control.int8/mlp_control_spacemit_k3_rvv_k3_x100_mlp_control.int8/topo_0/results.csv"
+   ],
+   "core_counts_profiled": [
+    1,
+    2,
+    4,
+    8
+   ]
+  },
+  "dronet": {
+   "implementations_profiled": [
+    "ime_k3_a100",
+    "rvv_k3_x100"
+   ],
+   "n_dispatches": 21,
+   "total_median_ms": 2.984,
+   "linear_chain": false,
+   "stat_basis": [
+    "single_sample_mean"
+   ],
+   "baseline_implementations": [
+    "curated[rvv]/direct",
+    "curated[rvv]/rvv_frm_rmm",
+    "curated[rvv]/rvv_memo_lut_gather",
+    "curated[rvv]/rvv_oc_blocked_bn_epilogue",
+    "curated[rvv]/rvv_vsmul_vnclip"
+   ],
+   "profile_csv": [
+    "<agent-tmp>/genroot/profile/rvv_k3_x100/spacemit_k3/dronet/dronet.int8/dronet_spacemit_k3_rvv_k3_x100_dronet.int8/topo_0/results.csv"
+   ],
+   "core_counts_profiled": [
+    1,
+    2,
+    4,
+    8
+   ]
+  },
+  "yolov8_nano": {
+   "implementations_profiled": [
+    "ime_k3_a100",
+    "rvv_k3_x100"
+   ],
+   "n_dispatches": 90,
+   "total_median_ms": 71.991,
+   "linear_chain": false,
+   "stat_basis": [
+    "single_sample_mean"
+   ],
+   "baseline_implementations": [
+    "curated[rvv]/direct",
+    "curated[rvv]/rvv_frm_rmm",
+    "curated[rvv]/rvv_oc_blocked_bn_silu_epilogue",
+    "curated[rvv]/rvv_vsmul_vnclip"
+   ],
+   "profile_csv": [
+    "<agent-tmp>/genroot/profile/rvv_k3_x100/spacemit_k3/yolov8_nano/yolov8_nano.int8/yolov8_nano_spacemit_k3_rvv_k3_x100_yolov8_nano.int8/topo_0/results.csv"
+   ],
+   "core_counts_profiled": [
+    1,
+    2,
+    4,
+    8
+   ]
+  }
+ }
+}

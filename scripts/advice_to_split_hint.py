@@ -76,19 +76,63 @@ CONTRACT = bundle.SPLIT_CONTRACT
 #: stays runnable without ModelBlaster on the path;
 #: `xpu-rt/tests/test_advice_to_split_hint.py` asserts the two agree, so drift
 #: fails a test instead of producing refused hints.
+#: Pointwise kinds the applier tiles along a flat element range (axis E).
+#: Mirrors `apply_split_hint._POINTWISE_KINDS` (ModelBlaster merge branch).
+POINTWISE_KINDS = (
+    "add", "add_f16", "add_s8", "cast_f16_to_i8",
+    "cast_i8_to_f16", "elu", "elu_f16", "elu_s8",
+    "gelu", "gelu_exact", "gelu_exact_f16", "gelu_f16",
+    "gelu_s8", "hardsigmoid", "hardsigmoid_f16", "hardtanh",
+    "hardtanh_f16", "leaky_relu", "leaky_relu_f16", "leaky_relu_s8",
+    "log", "log_f16", "mul", "mul_f16",
+    "mul_s8", "relu", "relu6", "relu6_f16",
+    "relu6_s8", "relu_f16", "relu_s8", "selu",
+    "selu_f16", "sigmoid", "sigmoid_f16", "sigmoid_s8",
+    "silu", "silu_f16", "silu_s8", "softplus",
+    "softplus_f16", "softsign", "softsign_f16", "swish",
+    "swish_f16", "tanh", "tanh_f16",
+)
+
+#: Pool kinds tiled along channels (axis C). Mirrors `_POOL_C_KINDS`.
+POOL_C_KINDS = ("maxpool2d_s8",)
+
+#: The DEFAULT axis per kind (what the applier uses when a hint names none);
+#: mirrors `apply_split_hint._DEFAULT_AXIS`.
 SPLITTABLE_AXIS = {
     "linear_s8": "N",
     "conv2d_s8": "OC",
     "conv2d_batchnorm2d_s8": "OC",
     "conv2d_batchnorm2d_silu_s8": "OC",
+    **{k: "E" for k in POINTWISE_KINDS},
+    **{k: "C" for k in POOL_C_KINDS},
 }
+
+#: Every axis the applier accepts per kind (`_SPLITTABLE_BY_AXIS`), default
+#: first. OH exists for plain conv2d_s8 only; the fused convs have no row-window
+#: emitter. linear_s8 also takes M in this bridge (see main()).
+SPLITTABLE_AXES = {k: [a] for k, a in SPLITTABLE_AXIS.items()}
+SPLITTABLE_AXES["conv2d_s8"] = ["OC", "OH"]
+
+#: shape key holding the extent of each axis.
+AXIS_EXTENT_KEY = {"N": "N", "M": "M", "OC": "OC", "OH": "OH", "C": "C",
+                   "E": "n"}
+
+
+def axis_extent(shape: dict, axis: str) -> int:
+    """Extent of `axis` in an op shape. OH falls back to the conv formula."""
+    if axis == "OH" and not shape.get("OH"):
+        ih, kh, sh, ph = (int(shape.get(k, 0) or 0)
+                          for k in ("IH", "KH", "SH", "PH"))
+        return (ih + 2 * ph - kh) // sh + 1 if sh else 0
+    return int(shape.get(AXIS_EXTENT_KEY[axis], 0) or 0)
 
 
 def divisors_up_to(n: int, cap: int) -> list[int]:
     return [d for d in range(2, min(n, cap) + 1) if n % d == 0]
 
 
-def choose_n_splits(dim: int, n_needed: int, cap: int) -> tuple[Optional[int], bool]:
+def choose_n_splits(dim: int, n_needed: int, cap: int,
+                    tile_multiple: int = 1) -> tuple[Optional[int], bool]:
     """`(n_splits, reaches_target)` -- the smallest legal factor that meets the
     target, or the largest legal one below it.
 
@@ -96,7 +140,10 @@ def choose_n_splits(dim: int, n_needed: int, cap: int) -> tuple[Optional[int], b
     the piece toward the slot, and the loop measures the result either way. It
     is reported as not reaching the target rather than presented as if it did.
     """
-    legal = divisors_up_to(dim, cap)
+    # `tile_multiple`: keep every tile a multiple of this (16 for int8 convs on
+    # the K3 IME backend, whose packed-weight tiles are 16 wide).
+    legal = [d for d in divisors_up_to(dim, cap)
+             if (dim // d) % max(1, tile_multiple) == 0]
     if not legal:
         return None, False
     for d in legal:
@@ -115,6 +162,10 @@ def main() -> int:
                     help="cap on the split factor (default 4; 4-way OC "
                          "sharding was measured at +76%% total work, so the "
                          "return past this is small)")
+    ap.add_argument("--tile-multiple", type=int, default=1,
+                    help="require OC tiles to be a multiple of this (use 16 "
+                         "for int8 convs on the K3 IME backend); applies to "
+                         "the OC axis only. Default 1 (no constraint).")
     ap.add_argument("--skip-identity-check", action="store_true",
                     help="proceed even when no dispatch in the advice carries "
                          "a shape signature to confirm it came from this IR")
@@ -171,6 +222,7 @@ def main() -> int:
         op = by_id[did]
         kind = op["op"]
         axis = SPLITTABLE_AXIS.get(kind)
+        default_axis = axis
         if kind == "linear_s8":
             # WHICH AXIS IS EMITTABLE, not just which axis is splittable.
             # generate_skeleton refuses an N-split of a linear whose M > 1: the output
@@ -182,6 +234,7 @@ def main() -> int:
             # and weight/bias are shared unsliced. So: M when there is an M to cut.
             _m = int(op_shape(op).get("M", 1) or 1)
             axis = "M" if _m > 1 else "N"
+            default_axis = "N"
         if axis is None:
             print(f"REFUSED dispatch {did}: op kind {kind!r} is not "
                   f"split-capable (apply_split_hint accepts "
@@ -198,7 +251,17 @@ def main() -> int:
             continue
         if caveat:
             print(f"note dispatch {did}: {caveat}", file=sys.stderr)
-        dim = int(shape.get(axis, 0))
+        tmul = a.tile_multiple if axis == "OC" else 1
+        dim = axis_extent(shape, axis)
+        if (kind == "conv2d_s8" and "OH" in SPLITTABLE_AXES[kind]
+                and not divisors_up_to(dim, a.max_splits)
+                or (tmul > 1 and kind == "conv2d_s8" and not [
+                    d for d in divisors_up_to(dim, a.max_splits)
+                    if (dim // d) % tmul == 0])):
+            # OC cannot be tiled legally (too small / not a clean multiple):
+            # a plain conv can tile output rows instead.
+            axis, tmul = "OH", 1
+            dim = axis_extent(shape, axis)
         if dim < 2:
             print(f"REFUSED dispatch {did}: {axis}={dim} leaves nothing to "
                   f"tile", file=sys.stderr)
@@ -213,7 +276,7 @@ def main() -> int:
             refused += 1
             continue
         n_needed = max(2, math.ceil(svc_us / target_us))
-        n, reaches = choose_n_splits(dim, n_needed, a.max_splits)
+        n, reaches = choose_n_splits(dim, n_needed, a.max_splits, tmul)
         if n is None:
             print(f"REFUSED dispatch {did}: {axis}={dim} has no divisor in "
                   f"[2, {a.max_splits}]", file=sys.stderr)
@@ -225,15 +288,16 @@ def main() -> int:
                   f"--max-splits={a.max_splits} allows only {n}. Pass "
                   f"--allow-below-target to emit it anyway.", file=sys.stderr)
             continue
-        # `axis` is emitted only where it disambiguates. A conv hint carries no axis
-        # because OC is the applier's default and the only conv axis it implements;
-        # adding a redundant key would change every existing hint's bytes for nothing.
+        # `axis` is emitted only where it differs from the applier's default for
+        # the kind (linear M, conv OH); a redundant key would change every
+        # existing hint's bytes for nothing.
         entry = {"op": did, "n_splits": n}
-        if kind == "linear_s8":
+        if axis != default_axis:
             entry["axis"] = axis
         split_ops.append(entry)
         notes.append({
             "dispatch_id": did, "op": kind, "axis": axis, f"{axis}": dim,
+            "tile_multiple": tmul,
             "service_time_us": svc_us, "max_target_piece_us": target_us,
             "n_needed": n_needed, "n_splits": n,
             "reaches_target": reaches,
