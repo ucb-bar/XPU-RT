@@ -1,7 +1,0 @@
-# Regenerable test artifacts
-*.onnx
-*.npy
-*.raw
-*.bin
-dlcs/
-calibration/
