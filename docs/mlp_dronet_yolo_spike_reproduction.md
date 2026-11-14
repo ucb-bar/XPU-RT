@@ -30,8 +30,8 @@ host that doesn't hit either of the two host-specific toolchain gaps below
 
 ```bash
 # 1. Clone + init only the submodules this flow needs (not --recursive:
-#    that would also pull hw/chipyard [large, SSH-only] and sims/IsaacLab,
-#    neither of which this spike-only flow touches).
+#    that would also pull hw/chipyard [large, SSH-only], which this
+#    spike-only flow does not touch).
 git clone git@github.com:ucb-bar/XPU-RT.git
 cd XPU-RT
 git submodule update --init zephyr-chipyard-sw

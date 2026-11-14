@@ -68,10 +68,10 @@ git clone https://github.com/ucb-bar/XPU-RT.git
 cd XPU-RT
 ```
 
-**Don't run `git submodule update --init --recursive` here** — two of this
-repo's top-level submodules, `hw/chipyard` and `sims/IsaacLab`, are very
-large (chipyard alone vendors 100+ of its own nested submodules) and
-neither is needed for the flows below; a recursive init will sit there
+**Don't run `git submodule update --init --recursive` here** — one of this
+repo's top-level submodules, `hw/chipyard`, is very
+large (it vendors 100+ of its own nested submodules) and
+is not needed for the flows below; a recursive init will sit there
 for a very long time pulling in gigabytes you don't need, and may get
 effectively stuck on chipyard's own submodule tree. Initialize only what
 the flow you're following actually needs (Flow A's is in its own section
