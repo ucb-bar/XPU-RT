@@ -38,7 +38,7 @@ episodes on three tasks.
 | `roselite/finegrain/g5fine/reduce_torque3.py` | on-worker reduction to per-episode scalars |
 | `roselite/finegrain/g5grid/` | fleet orchestration: start/stop, job scripts, shard + launch, monitors, fetch, recovery |
 | `roselite/finegrain/paper/` | analysis and the paper figures |
-| `roselite/finegrain/paper/layouts/` | figure design exploration, 45 candidates + `LAYOUT_OPTIONS.md` |
+| `roselite/finegrain/paper/layouts/` | the manipulator-experiment main figure (`cand_c21_three.py`, caption `cand_c21_caption.tex`) and its palette `vocab.py` |
 | `roselite/finegrain/calib/` | energy calibration to joules from published actuator data |
 
 ## Key documents
@@ -50,7 +50,6 @@ episodes on three tasks.
 | `ENERGY_AUDIT.md` | why the original energy metric was invalid and what replaced it |
 | `calib/ENERGY_CALIBRATION.md` | conversion to joules, and why the raw torque integral cannot be converted at face value |
 | `g5grid/PROPAGATED_CELLS.md` | why 27 of the 108 grid cells are copies rather than measurements |
-| `paper/layouts/LAYOUT_OPTIONS.md` | figure design decisions and what was rejected |
 
 ## Reproducing
 

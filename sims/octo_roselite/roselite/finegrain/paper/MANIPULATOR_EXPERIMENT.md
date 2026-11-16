@@ -569,7 +569,6 @@ rather than as absent.
 | propagated-cell reasoning | `g5grid/PROPAGATED_CELLS.md` |
 | CP-SAT grid | `paper/grid_warm.json`, `paper/grid_greedy.json`, `paper/grid_e2e_success.json` |
 | main figure | `paper/layouts/cand_c21_three.py` → `.png`, caption `cand_c21_caption.tex` |
-| figure design record | `paper/layouts/LAYOUT_OPTIONS.md` |
 
 Total simulated evidence: **42,240 episodes** on the 44-point plane, plus the
 curated ladder at 30 seeds × 24 episodes × 6 arms × 3 tasks and 10 seeds
