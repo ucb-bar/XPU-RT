@@ -55,8 +55,7 @@ def _find_milp_python():
 
 
 MILP_PY = _find_milp_python()
-MOSEK_LIC = os.environ.get("MOSEKLM_LICENSE_FILE",
-                           os.path.expanduser("~/mosek/mosek.lic"))
+MOSEK_LIC = os.environ.get("MOSEKLM_LICENSE_FILE", "")  # set to your MOSEK licence file
 MILP_TIME_LIMIT = 300
 
 # Inputs (the frozen cost model, the generator module) always come from HERE.
@@ -173,7 +172,7 @@ def cmd_solve(args):
         # (b) solve. MILP first (SETUP: optimal at 66-86 ops), greedy_periodic
         #     on non-zero rc or on the 300 s limit.
         wl = os.path.join(OUT, "workloads", f"{pt}.json")
-        env = dict(os.environ, MOSEKLM_LICENSE_FILE=MOSEK_LIC)
+        env = dict(os.environ, **({"MOSEKLM_LICENSE_FILE": MOSEK_LIC} if MOSEK_LIC else {}))
         solver, sched_json, sres, dt = None, None, None, 0.0
         if MILP_PY is None and not args.greedy_only:
             sys.exit(

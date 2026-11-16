@@ -9,7 +9,7 @@ and two of the solvers are not deterministic.
 ## Environment
 
 The study runs in the `xpurt` conda env (cvxpy + MOSEK; a MOSEK licence at
-`~/mosek/mosek.lic` is needed for the `milp` rows):
+the file named by `MOSEKLM_LICENSE_FILE` is needed for the `milp` rows):
 
 ```bash
 XPURT=/path/to/XPU-RT      # this checkout

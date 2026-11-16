@@ -133,7 +133,7 @@ The FPGA sweep gates on the uartlog's embedded schedule name and
 ### Prerequisites
 
     XPURT_MILP_PYTHON   interpreter with cvxpy + mosek. REQUIRED.
-    MOSEKLM_LICENSE_FILE   defaults to ~/mosek/mosek.lic
+    MOSEKLM_LICENSE_FILE   must point at your MOSEK licence file (no default)
     QNN_BOARD_HOST      defaults to root@qrb5165 (needed from `stage` on)
 
 `drive.py` resolves the MILP interpreter from `$XPURT_MILP_PYTHON`, then a

@@ -101,7 +101,7 @@ image); that step is upstream of this flow and is not re-run here.
   existing env:
   ```bash
   python3 -m venv /tmp/milpenv && /tmp/milpenv/bin/pip install cvxpy mosek matplotlib
-  export MOSEKLM_LICENSE_FILE=$HOME/mosek/mosek.lic
+  export MOSEKLM_LICENSE_FILE=/path/to/mosek.lic
   ```
 
 ## 0. Environment
@@ -184,7 +184,7 @@ For the MILP schedule, run the solver directly with the cvxpy env:
 
 ```bash
 cd "${XPURT_ROOT}"
-MOSEKLM_LICENSE_FILE=$HOME/mosek/mosek.lic /tmp/milpenv/bin/python \
+MOSEKLM_LICENSE_FILE=/path/to/mosek.lic /tmp/milpenv/bin/python \
   scripts/run_xpurt_schedule.py \
     --networks-json data/toplevel/networks_flowc_3way_qrb5165.json \
     --solver milp --profiled --time-limit 300

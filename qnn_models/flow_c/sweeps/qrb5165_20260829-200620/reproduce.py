@@ -77,8 +77,9 @@ def check(need_board):
         ok = False
 
     lic = drv.MOSEK_LIC
-    print(f"{OK if os.path.exists(lic) else BAD} MOSEK licence     {lic}")
-    ok &= os.path.exists(lic)
+    have = bool(lic) and os.path.exists(lic)
+    print(f"{OK if have else BAD} MOSEK licence     " + (lic or "(set MOSEKLM_LICENSE_FILE)"))
+    ok &= have
 
     sched = os.path.join(REPO, "scripts", "run_xpurt_schedule.py")
     print(f"{OK if os.path.exists(sched) else BAD} xpu-rt scheduler  {os.path.relpath(sched, REPO)}")
