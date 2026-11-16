@@ -8,8 +8,8 @@
 #                   configuration validated for google (GOOGLE_FINE_MECHANISMS.md).
 #   MODE=fine    -- widowx 25 Hz / 40 ms; google refused (see that doc).
 #   MODE=trace   -- as native, but through trace_eval.py for the energy metrics.
-source /home/ubuntu/simpler/sim_eval/roselite/env.sh
-cd /home/ubuntu/simpler/sim_eval/roselite/finegrain
+source ../simpler/sim_eval/roselite/env.sh
+cd ../simpler/sim_eval/roselite/finegrain
 IFS=: read -r KEY TASK ARM MODE <<< "$1"
 case "$TASK" in
   egg)    T=widowx_put_eggplant_in_basket ;;
@@ -37,9 +37,9 @@ case "$MODE" in
   trace)  ACT="--actuation native"; OUTDIR=traces_phase2;  BIN=trace_eval.py ;;
   *) echo "bad mode $MODE"; exit 2 ;;
 esac
-OUT=/home/ubuntu/simpler/sim_eval/roselite/finegrain/${OUTDIR}/${KEY}
+OUT=../simpler/sim_eval/roselite/finegrain/${OUTDIR}/${KEY}
 mkdir -p "$(dirname "$OUT")"
 python "$BIN" --task "$T" --latency-ms "$LAT" $EXTRA $ACT \
        --init-rng "${RNG:-100}" --n "${NEP:-24}" --out "$OUT" \
-       > /home/ubuntu/simpler/logs/p2_${KEY}.log 2>&1
-echo "done ${KEY} rc=$? : $(grep -h 'SUCCESS RATE' /home/ubuntu/simpler/logs/p2_${KEY}.log | tail -1)"
+       > ../simpler/logs/p2_${KEY}.log 2>&1
+echo "done ${KEY} rc=$? : $(grep -h 'SUCCESS RATE' ../simpler/logs/p2_${KEY}.log | tail -1)"

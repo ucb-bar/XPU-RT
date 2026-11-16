@@ -24,8 +24,8 @@ Net effect: every ELF built from these schedules corresponds to exactly one row
 of `results/all_results.json`, with no harness difference in between.
 
 Usage:
-  XPURT_CODE_ROOT=/scratch2/dima/misc_sw/XPU-RT \
-  XPURT_DATA_ROOT=/scratch/dima/rose-infra/RoSE/soc/sw/xpu-rt \
+  XPURT_CODE_ROOT=./ \
+  XPURT_DATA_ROOT=../RoSE/soc/sw/xpu-rt/ \
   emit_schedule.py --arm wl_sweep --name networks_bimodal_gempair \
                    --solver pso --out /path/scheduled_x.json
 """

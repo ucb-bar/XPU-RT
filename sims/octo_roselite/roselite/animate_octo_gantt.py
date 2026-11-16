@@ -68,7 +68,7 @@ outputs drove the robot.
 
 Usage (see make_all_videos.sh for the exact deliverable invocations)::
 
-    T=/scratch2/dima/misc_sw/XPU-RT/qnn_models/octo/repro_runs
+    T=./qnn_models/octo/repro_runs
 
     # SERIAL (Task 2)
     python animate_octo_gantt.py \

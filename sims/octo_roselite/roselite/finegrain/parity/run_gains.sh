@@ -4,7 +4,7 @@
 # gains recover coke at the NATIVE rate, the same config at 27 Hz is a valid 40 ms google.
 set -u
 HERE=$(cd "$(dirname "$0")/.." && pwd)
-source /scratch2/dima/misc_sw/octo_work/sim_eval/roselite/env.sh
+source ../octo_work/sim_eval/roselite/env.sh
 cd "$HERE"; source parity/configs.sh
 N=${N:-12}; T=google_robot_pick_coke_can
 for G in 3 10; do

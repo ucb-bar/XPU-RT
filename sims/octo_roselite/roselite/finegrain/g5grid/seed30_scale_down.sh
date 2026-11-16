@@ -10,7 +10,7 @@ set -u; cd "$(dirname "$0")"; source seed30_hosts.sh
 MGR=ubuntu@3.88.218.39
 MSSH="ssh -o StrictHostKeyChecking=no -o ConnectTimeout=25 -o BatchMode=yes -i $HOME/.ssh/firesim.pem"
 KEEP="${KEEP:-i-043560448065532ff}"          # dima-smolvla-gpu
-FG=/home/ubuntu/simpler/sim_eval/roselite/finegrain
+FG=../simpler/sim_eval/roselite/finegrain
 MODE="${1:-check}"
 
 unred=$(for h in "${S30[@]}"; do

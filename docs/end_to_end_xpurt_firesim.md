@@ -19,7 +19,7 @@ zephyr-chipyard-sw/modelblaster/examples/xpurt_demo/<quant>/build/<targets>_fire
         │
         │  firesim runworkload (called by run.sh)
         ▼
-/scratch2/dima/chipyard-fsim/.../uartlog  (per-dispatch trace CSV)
+../chipyard-fsim/.../uartlog  (per-dispatch trace CSV)
         │
         │  modelblaster/scripts/plot_ros_trace.py / scripts/plot_scheduled_json.py
         ▼
@@ -150,7 +150,7 @@ BACKEND, QUANT, OPTIMIZE, RUNNER).
 **Run** (from `FreshScheduler` root):
 
 ```bash
-/scratch2/dima/miniforge3/envs/xpurt/bin/python scripts/run_xpurt_schedule.py \
+python3 scripts/run_xpurt_schedule.py \
   --networks-json data/toplevel/networks_<name>.json \
   --solver greedy \
   --profiled
@@ -190,7 +190,7 @@ cd zephyr-chipyard-sw
 source tools/miniforge3/etc/profile.d/conda.sh && conda activate zephyr
 source scripts/set_envvars_sdk.sh
 
-SCHEDULE_JSON=/scratch2/dima/misc_sw/FreshScheduler/schedules/scheduled_networks_<name>_<solver>_profiled.json \
+SCHEDULE_JSON=../FreshScheduler/schedules/scheduled_networks_<name>_<solver>_profiled.json \
   MODELS=<net1>,<net2>,...  \
   BACKENDS=gemmini_q31,rvv \
   QUANTS=int8,int8,fp32 \
@@ -223,7 +223,7 @@ What this does (per `modelblaster/examples/xpurt_demo/run.sh`):
 ### 4b. On AWS F2 (the `fq` job queue) — build only, run elsewhere
 
 `firesim_runner.py` drives `firesim infrasetup` + `runworkload` against
-a LOCAL chipyard tree (`/scratch2/dima/chipyard-fsim`, a U250 run farm).
+a LOCAL chipyard tree (`../chipyard-fsim/`, a U250 run farm).
 The F2 campaign does not use that path: the manager is
 `ubuntu@3.88.218.39` and the FPGA lanes are driven by `deploy/fpga_queue`.
 So stop the flow after the link step and submit the ELF yourself:
@@ -251,11 +251,11 @@ same knob in `examples/_run_lib.sh`). Then:
 
 ```bash
 MGR=ubuntu@3.88.218.39 ; KEY=~/.ssh/firesim.pem
-scp -i $KEY <elf> $MGR:/home/ubuntu/<name>.elf
+scp -i $KEY <elf> $MGR:$HOME/<name>.elf
 ssh -n -i $KEY $MGR "cd ~/fpga_queue && export FQ_SOCKET=/var/lib/fq/fq.sock && \
-  ./bin/fq submit --tree /home/ubuntu/chipyard-rose \
+  ./bin/fq submit --tree ../chipyard-rose/ \
      --hw-config f2_dual_small_norose_tacit_q31_60mhz \
-     --elf /home/ubuntu/<name>.elf --timeout 5400 --results /home/ubuntu/<name>_res"
+     --elf $HOME/<name>.elf --timeout 5400 --results $HOME/<name>_res"
 ```
 
 `experiments/profile_matrix.sh` in the RoSE repo is a working reference
@@ -279,12 +279,12 @@ stanza) because `BACKENDS` also contains `rvv`.
 The harness prints `MODELBLASTER_WALL_CYCLES [<net>]` per network (plus
 `MODELBLASTER_WALL_CYCLES_INST [<net>#<i>]` per periodic instance) when
 each finishes. On the local U250 path the raw uartlog lands at
-`/scratch2/dima/chipyard-fsim/sims/firesim/firesim_rundir/sim_slot_0/uartlog`;
+`../chipyard-fsim/sims/firesim/firesim_rundir/sim_slot_0/uartlog`;
 on the F2 path pull it out of the job's `--results` dir:
 
 ```bash
 ssh -n -i ~/.ssh/firesim.pem ubuntu@3.88.218.39 \
-  "find /home/ubuntu/<name>_res -name uartlog | head -1 | xargs -r cat" \
+  "find $HOME/<name>_res -name uartlog | head -1 | xargs -r cat" \
   > data/xpurt_<name>_q31_firesim.txt
 ```
 
@@ -320,7 +320,7 @@ Predicted-schedule-only Gantt (`plot_scheduled_json.py` takes a
 POSITIONAL json path and `--save`; there is no `--schedule/--actual/--out`):
 
 ```bash
-/scratch2/dima/miniforge3/envs/xpurt/bin/python scripts/plot_scheduled_json.py \
+python3 scripts/plot_scheduled_json.py \
   schedules/scheduled_networks_<name>_<solver>_profiled.json \
   --save plots/<name>_<solver>_predicted_schedule.png
 ```
@@ -366,7 +366,7 @@ python3 scripts/plot_microros_vs_xpurt.py \
 ## Pre-reqs (one time per shell)
 
 ```bash
-cd /scratch2/dima/misc_sw/FreshScheduler
+cd ../FreshScheduler
 
 # 1. Conda env + Zephyr SDK
 cd zephyr-chipyard-sw

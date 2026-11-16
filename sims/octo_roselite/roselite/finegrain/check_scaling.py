@@ -69,7 +69,7 @@ print(f"  drifting pivot (2 mm/sub-tick): max |dp| err = {worst_p_drift:.3e} m, 
 # ---- same check on the REAL octo action distribution ------------------------
 import glob
 _A = np.concatenate([np.load(f) for f in sorted(glob.glob(
-    "/scratch2/dima/misc_sw/octo_work/sim_eval/runs/"
+    "../octo_work/sim_eval/runs/"
     "widowx_put_eggplant_in_basket_octo-small_rng*/ep*_raw_actions.npy"))])
 _tr = np.linalg.norm(_A[:, :3], axis=1)
 _ang = np.array([euler2axangle(*a)[1] for a in _A[:, 3:6]])

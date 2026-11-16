@@ -54,7 +54,7 @@ from matplotlib.lines import Line2D
 
 OUT = Path(__file__).parent / "fig_schedule.png"
 RUNS = Path(os.environ.get(
-    "OCTO_REPRO_RUNS", "/scratch2/dima/misc_sw/XPU-RT/qnn_models/octo/repro_runs"))
+    "OCTO_REPRO_RUNS", "./qnn_models/octo/repro_runs"))
 
 LANES = ["CPU", "DSP", "HTA"]
 LANE_MACHINE = {"CPU": "CPU_X  (Cortex-X1)", "DSP": "CPU_E  (Hexagon DSP)",

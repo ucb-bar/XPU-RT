@@ -32,7 +32,7 @@ arm (`ENERGY_AUDIT.md` §4 is unchanged by any of this).
 ## 1. What SAPIEN 2.2.2 actually exposes
 
 Checked against the installed build (`sapien 2.2.2`,
-`/scratch2/dima/miniforge3/envs/octo_sim`), not against the documentation.
+`../miniforge3/envs/octo_sim`), not against the documentation.
 
 | candidate | verdict |
 |---|---|

@@ -496,7 +496,7 @@ Raw numbers are frozen in `scripts/solver_study/data/oracle_gap.json`
 CP-SAT status and bound, the decision refutations, and the MOSEK cross-check).
 
     export XPURT_CODE_ROOT=<this checkout>
-    export XPURT_DATA_ROOT=/scratch/dima/rose-infra/RoSE/soc/sw/xpu-rt
+    export XPURT_DATA_ROOT=../RoSE/soc/sw/xpu-rt/
     export XPURT_CPSAT_PYTHON=<a venv with ortools>/bin/python
     export XPURT_ORACLE_OUT=<a scratch dir>
 

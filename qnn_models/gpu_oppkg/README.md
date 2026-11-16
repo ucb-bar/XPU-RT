@@ -125,7 +125,7 @@ Host-side syntax check (any x86 box with the SDK):
 
 ```bash
 cd qnn_models/gpu_oppkg
-make QNN_SDK_ROOT=/scratch2/dima/misc_sw/qualcomm/qairt/2.45.0.260326 BUILD_DIR=build_host
+make QNN_SDK_ROOT=../qairt/2.45.0.260326 BUILD_DIR=build_host
 ```
 
 On the board (native g++ 9.4, aarch64-oe-linux — no cross toolchain needed):

@@ -8,8 +8,8 @@
 #
 # Argument: "TASK:ARM:SEED".
 # no `set -u`: env.sh sources conda, whose activate scripts reference unset vars.
-source /home/ubuntu/simpler/sim_eval/roselite/env.sh
-cd /home/ubuntu/simpler/sim_eval/roselite/finegrain
+source ../simpler/sim_eval/roselite/env.sh
+cd ../simpler/sim_eval/roselite/finegrain
 IFS=: read -r TASK ARM S <<< "$1"
 case "$TASK" in
   egg)   T=widowx_put_eggplant_in_basket ;;
@@ -27,14 +27,14 @@ case "$ARM" in                      # MEASURED latency / cadence, ungated
 esac
 EXTRA=""; [ "$PER" != auto ] && EXTRA="--issue-period-ms $PER"
 KEY=${TASK}_${ARM}_rng${S}
-OUT=/home/ubuntu/simpler/sim_eval/roselite/finegrain/traces_torque3/${KEY}
+OUT=../simpler/sim_eval/roselite/finegrain/traces_torque3/${KEY}
 [ -f "$OUT/energy2.json" ] && { echo "skip ${KEY} (already reduced)"; exit 0; }
-mkdir -p "$(dirname "$OUT")" /home/ubuntu/simpler/logs
+mkdir -p "$(dirname "$OUT")" ../simpler/logs
 python trace_eval2.py --task "$T" --latency-ms "$LAT" $EXTRA --init-rng "$S" --n 24 \
-       --out "$OUT" > /home/ubuntu/simpler/logs/t3s_${KEY}.log 2>&1
+       --out "$OUT" > ../simpler/logs/t3s_${KEY}.log 2>&1
 rc=$?
 [ $rc -ne 0 ] && { echo "FAIL ${KEY} rc=$rc"; exit $rc; }
-python reduce_torque3.py "$OUT" >> /home/ubuntu/simpler/logs/t3s_${KEY}.log 2>&1
+python reduce_torque3.py "$OUT" >> ../simpler/logs/t3s_${KEY}.log 2>&1
 rc=$?
 [ $rc -ne 0 ] && { echo "FAIL-REDUCE ${KEY} rc=$rc"; exit $rc; }
 echo "done ${KEY}"

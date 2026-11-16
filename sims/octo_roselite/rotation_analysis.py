@@ -18,7 +18,7 @@ LBL = ["dx", "dy", "dz", "droll", "dpitch", "dyaw", "grip"]
 print("=" * 78)
 print("A) BridgeV2 GROUND-TRUTH structure per action dim (MEASURED)")
 print("=" * 78)
-eps = pickle.load(open("/scratch2/dima/misc_sw/octo_work/bridge_episodes.pkl", "rb"))
+eps = pickle.load(open("../octo_work/bridge_episodes.pkl", "rb"))
 A = np.concatenate([np.asarray(e["actions"]) for e in eps], axis=0)
 print(f"{'dim':7s} {'std':>9s} {'lag1 autocorr':>14s}   <- persistence-baseline r ceiling proxy")
 for i, l in enumerate(LBL[:6]):
@@ -29,7 +29,7 @@ print()
 print("=" * 78)
 print("B) CLOSED-LOOP rotation drift test (MEASURED, SIMPLER rollouts)")
 print("=" * 78)
-runs = sorted(glob.glob("/scratch2/dima/misc_sw/octo_work/sim_eval/runs/*/"))
+runs = sorted(glob.glob("../octo_work/sim_eval/runs/*/"))
 print(f"{'run':52s} {'eps':>4s} {'steps':>6s} {'|cumrot|end':>12s} {'sum|rot|':>10s} {'ratio':>7s}")
 print("-" * 96)
 for r in runs:

@@ -146,7 +146,7 @@ sudo docker build -f Dockerfile.qnn-convert -t qnn-convert .
 
 **Qualcomm AI Engine Direct SDK** (QNN / QAIRT) v2.45.0:
 ```
-/scratch2/usr/misc_sw/qualcomm/qairt/2.45.0.260326/
+../qairt/2.45.0.260326/
 ├── bin/x86_64-linux-clang/
 │   ├── snpe-onnx-to-dlc        # ONNX -> DLC converter
 │   ├── snpe-tflite-to-dlc      # TFLite -> DLC converter

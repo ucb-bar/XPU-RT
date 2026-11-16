@@ -12,7 +12,7 @@
 #   ./recover_plane3.sh run     -- reduce them
 set -u; cd "$(dirname "$0")"; source drawer_hosts.sh
 MODE="${1:-count}"
-FG=/home/ubuntu/simpler/sim_eval/roselite/finegrain
+FG=../simpler/sim_eval/roselite/finegrain
 
 if [ "$MODE" = count ]; then
   for h in "${DR[@]}"; do
@@ -23,12 +23,12 @@ if [ "$MODE" = count ]; then
 fi
 
 for h in "${DR[@]}"; do
-  ( $SSH ubuntu@$h "source /home/ubuntu/simpler/sim_eval/roselite/env.sh; cd $FG || exit 1
+  ( $SSH ubuntu@$h "source ../simpler/sim_eval/roselite/env.sh; cd $FG || exit 1
       n=0; fail=0
       for x in plane3/*/; do
         [ -f \"\$x/summary.json\" ] || continue
         [ -f \"\$x/energy2.json\" ] && continue
-        if python reduce_torque3.py \"\$x\" >> /home/ubuntu/recover_plane3.log 2>&1; then n=\$((n+1)); else fail=\$((fail+1)); echo \"FAIL \$x\" >> /home/ubuntu/recover_plane3.log; fi
+        if python reduce_torque3.py \"\$x\" >> $HOME/recover_plane3.log 2>&1; then n=\$((n+1)); else fail=\$((fail+1)); echo \"FAIL \$x\" >> $HOME/recover_plane3.log; fi
       done
       echo \"$h reduced=\$n failed=\$fail\"" 2>/dev/null ) &
 done; wait

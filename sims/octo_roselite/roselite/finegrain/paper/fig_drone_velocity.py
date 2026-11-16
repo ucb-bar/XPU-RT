@@ -56,8 +56,7 @@ OUT = HERE / "fig_drone_velocity.png"
 # Extracted (read-only) copy of hil_data_package.zip (sha256 877f0a4a7575999d...).
 SRC = Path(os.environ.get(
     "HIL_PKG",
-    "/tmp/claude-1172/-scratch2-dima-misc-sw-XPU-RT/"
-    "d45883ec-3095-43b7-a110-0d9c3e82adac/scratchpad/hil/hil_data_package"))
+    "hil_data_package"))
 
 INK = "#16161C"
 TEAL, ORANGE, PLUM = "#0e6655", "#C77400", "#7A1250"

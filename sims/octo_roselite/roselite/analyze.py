@@ -3,8 +3,8 @@ plus the rotation-excursion failure-mode check."""
 import glob, json, math, os, sys
 import numpy as np
 
-RL = "/scratch2/dima/misc_sw/octo_work/sim_eval/roselite/runs"
-SE = "/scratch2/dima/misc_sw/octo_work/sim_eval/runs"
+RL = "../octo_work/sim_eval/roselite/runs"
+SE = "../octo_work/sim_eval/runs"
 
 
 def wilson(k, n, z=1.96):

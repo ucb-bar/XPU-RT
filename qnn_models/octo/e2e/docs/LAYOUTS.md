@@ -16,7 +16,7 @@ for f in fig_schedule fig_lane_balance fig_trajectory fig_grasp_failure; do pyth
 # each prints every number it drew, so the figure can be checked against stdout
 ```
 
-Board traces are read from `/scratch2/dima/misc_sw/XPU-RT/qnn_models/octo/repro_runs`,
+Board traces are read from `./qnn_models/octo/repro_runs`,
 overridable with `OCTO_REPRO_RUNS`. Sim data is read relative to the script
 (`../traces_torque`, `../g5fine/runs`).
 

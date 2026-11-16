@@ -3,11 +3,11 @@
 # board traces. Episode choices are fixed here so the clips are reproducible
 # even though the harness that recorded them is not.
 set -euo pipefail
-source /scratch2/dima/miniforge3/etc/profile.d/conda.sh
+source ../miniforge3/etc/profile.d/conda.sh
 conda activate octo_sim
-R=/scratch2/dima/misc_sw/octo_work/sim_eval/roselite
+R=../octo_work/sim_eval/roselite
 V=$R/videos
-T=/scratch2/dima/misc_sw/XPU-RT/qnn_models/octo/repro_runs
+T=./qnn_models/octo/repro_runs
 cd "$R"; mkdir -p "$V"
 
 L3="3-way CPU+DSP+HTA int8, median wall of 20 iterations (ungated_20260905-131037.log)"

@@ -5,13 +5,13 @@
 # compound in closed loop (verified: identical timing, different trajectory).
 # So the videos depict locally-rendered episodes of the same configuration.
 # No video in this pass; rendering every tick is ~5x slower and we only need outcomes.
-source /scratch2/dima/miniforge3/etc/profile.d/conda.sh
+source ../miniforge3/etc/profile.d/conda.sh
 conda activate octo_sim
 export VK_ICD_FILENAMES=/etc/vulkan/icd.d/nvidia_icd.json
 export XLA_PYTHON_CLIENT_PREALLOCATE=false
 export TOKENIZERS_PARALLELISM=false
-cd /scratch2/dima/misc_sw/octo_work/sim_eval/roselite/finegrain
-OUT=/scratch2/dima/misc_sw/octo_work/sim_eval/roselite/finegrain/scan_local
+cd ../octo_work/sim_eval/roselite/finegrain
+OUT=../octo_work/sim_eval/roselite/finegrain/scan_local
 mkdir -p "$OUT"
 run () {  # key task seed arm lat cadence
   python finegrain_eval_videosnap.py --task "$2" --latency-ms "$5" --issue-period-ms "$6" \

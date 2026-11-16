@@ -796,7 +796,7 @@ and the faster baseline is not always the one that holds its cadence.**
 ## 10. The 3net arm
 
 RoSE's fifteen 3-network configs
-(`/scratch/dima/rose-infra/RoSE/soc/sw/xpu-rt/data/toplevel/networks_3net_*.json`
+(`../RoSE/soc/sw/xpu-rt/data/toplevel/networks_3net_*.json`
 and `3net_pairs/`) are FireSim workloads over `mlp_control`, `dronet`,
 `yolov8_nano` and `fused_full`. What ports is the workload shape; what does not
 is the machine (`gemmini_q31` / `V256D128_rvv`) and the target bitstream.

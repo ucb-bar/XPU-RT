@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -u
 HERE=$(cd "$(dirname "$0")/.." && pwd)
-source /scratch2/dima/misc_sw/octo_work/sim_eval/roselite/env.sh
+source ../octo_work/sim_eval/roselite/env.sh
 cd "$HERE"
 N=${N:-12}
 for T in google_robot_pick_coke_can google_robot_close_drawer; do

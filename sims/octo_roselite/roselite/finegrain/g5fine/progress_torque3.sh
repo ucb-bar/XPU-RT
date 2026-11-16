@@ -9,8 +9,8 @@ set -u; cd "$(dirname "$0")"; source torque3_hosts.sh
 TMP=$(mktemp); RUN=0; ALL=0; FAIL=0
 for i in $(seq 0 24); do
   w=t$i; h=${HOSTS[$w]}
-  timeout 60 scp -q -i "$KEY" -o StrictHostKeyChecking=no probe_tq3.sh ubuntu@"$h":/home/ubuntu/simpler/probe_tq3.sh 2>/dev/null
-  r=$(timeout 40 $SSH -n ubuntu@"$h" "bash /home/ubuntu/simpler/probe_tq3.sh" 2>/dev/null)
+  timeout 60 scp -q -i "$KEY" -o StrictHostKeyChecking=no probe_tq3.sh ubuntu@"$h":../simpler/probe_tq3.sh 2>/dev/null
+  r=$(timeout 40 $SSH -n ubuntu@"$h" "bash ../simpler/probe_tq3.sh" 2>/dev/null)
   echo "$r" | sed -n 's/^KEY //p' | \
     grep -Ex '(egg|spoon|coke|drawer)_(lat0|pipe110fix|p105w300|p130w275|p150w300|pipe200fix|serial283|fp32_555|cpu685)' >> "$TMP"
   d=$(echo "$r" | grep -c '^KEY ')

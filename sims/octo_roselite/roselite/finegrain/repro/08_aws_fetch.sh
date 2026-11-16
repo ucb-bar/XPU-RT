@@ -8,7 +8,7 @@
 #
 # WHY --logs MATTERS BEFORE ANY PRUNE.  fetch.sh copies only summary.json.  The
 # per-job stdout (per-episode progress, the SUCCESS RATE lines, warnings) lives
-# only in /home/ubuntu/simpler/sim_eval/roselite/finegrain/logs/ on each box and
+# only in ../simpler/sim_eval/roselite/finegrain/logs/ on each box and
 # is destroyed with the root volume when an instance is terminated.
 #
 # Time: ~30 s (summaries) / a few minutes with --logs.
@@ -31,7 +31,7 @@ if [ "${1:-}" = "--logs" ]; then
   for w in $(printf '%s\n' "${!HOSTS[@]}" | sort); do
     h=${HOSTS[$w]}; mkdir -p "$G5FINE/logs/$w"
     rsync -a -e "$SSH" \
-      ubuntu@"$h":/home/ubuntu/simpler/sim_eval/roselite/finegrain/logs/ "$G5FINE/logs/$w/" 2>/dev/null \
+      ubuntu@"$h":../simpler/sim_eval/roselite/finegrain/logs/ "$G5FINE/logs/$w/" 2>/dev/null \
       && echo "$w logs: $(ls "$G5FINE/logs/$w" | wc -l) files" || echo "$w logs: UNREACHABLE"
   done
 fi
@@ -71,5 +71,5 @@ echo "Harness md5 must be identical on every worker AND equal to the local file.
 echo "  local: $(md5sum "$FINE/finegrain_eval.py" | cut -c1-12)"
 for w in $(printf '%s\n' "${!HOSTS[@]}" | sort); do
   echo "  $w:    $(timeout 40 $SSH -n ubuntu@"${HOSTS[$w]}" \
-     'md5sum /home/ubuntu/simpler/sim_eval/roselite/finegrain/finegrain_eval.py 2>/dev/null | cut -c1-12' 2>/dev/null)"
+     'md5sum ../simpler/sim_eval/roselite/finegrain/finegrain_eval.py 2>/dev/null | cut -c1-12' 2>/dev/null)"
 done

@@ -66,8 +66,8 @@ Pre-existing scripts they wrap, unchanged: `g5fine/{push,relaunch,launch,fetch}.
 ## 1. Install, from a bare machine
 
 ```bash
-ROOT=$HOME/simpler CONDA_ROOT=/scratch2/dima/miniforge3 \
-  /scratch2/dima/misc_sw/octo_work/sim_eval/roselite/finegrain/repro/01_setup_local.sh
+ROOT=$HOME/simpler CONDA_ROOT=../miniforge3/ \
+  ../octo_work/sim_eval/roselite/finegrain/repro/01_setup_local.sh
 ```
 
 ~40 minutes from bare. It ends with `SETUP OK`. Re-running when everything is
@@ -99,7 +99,7 @@ pip install "setuptools==80.10.2"
 
 **The AWS Deep Learning AMI ships no conda at all.** `ami-012ba162b9cd2729c` has
 the driver, CUDA and `/etc/vulkan/icd.d/nvidia_icd.json`, but no conda —
-`../g5/setup_simpler_g5.sh` assumes one at `/home/ubuntu/miniforge3`. That is what
+`../g5/setup_simpler_g5.sh` assumes one at `../miniforge3/`. That is what
 `../g5wide/bootstrap.sh` exists for: it installs **Miniforge3 24.11.3-2** and then
 hands off. `01_setup_local.sh` folds the same step in (it only installs if
 `$CONDA_ROOT/bin/conda` is missing).
@@ -142,7 +142,7 @@ comparison, and the gap is not small — closed-loop, 1.0 vs 1.5 is **52.8% vs
 `$CKPT`, default `hf://rail-berkeley/octo-small`. Also never extrapolate
 octo-small from octo-base: on spoon they are 47.2% and 12.5%.
 
-**This box is shared.** `/scratch2/dima/miniforge3`, env `octo_sim`, one TITAN RTX
+**This box is shared.** `../miniforge3/`, env `octo_sim`, one TITAN RTX
 (24 GB). Other people use the GPU. Check before choosing concurrency:
 
 ```bash
@@ -181,7 +181,7 @@ Both are fetched on first use, no separate step:
 
 * **Policy** — `OctoModel.load_pretrained("hf://rail-berkeley/octo-small")` pulls
   from HuggingFace into `$HF_HOME` (the workers set
-  `HF_HOME=/home/ubuntu/hf_cache`). ~1.4 GB. 136,670,604 parameters, of which
+  `HF_HOME=$HOME/hf_cache`). ~1.4 GB. 136,670,604 parameters, of which
   109,628,544 is the frozen T5-base text encoder.
 * **Environments** — `simpler_env.make(<task>)`. The scene/asset packs are
   downloaded by `01_setup_local.sh` step 5:

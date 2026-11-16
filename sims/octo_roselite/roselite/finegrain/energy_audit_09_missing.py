@@ -21,7 +21,7 @@ import numpy as np
 
 HERE = Path(__file__).parent
 SRC = HERE / "traces_torque2"
-URDF = Path("/scratch2/dima/misc_sw/octo_work/sim_eval/SimplerEnv/ManiSkill2_real2sim/"
+URDF = Path("../octo_work/sim_eval/SimplerEnv/ManiSkill2_real2sim/"
             "mani_skill2_real2sim/assets/descriptions/widowx_description/wx250s.urdf")
 
 root = ET.parse(URDF).getroot()

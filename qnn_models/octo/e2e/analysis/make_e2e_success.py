@@ -24,7 +24,7 @@ consumes this file must filter to source=="measured" before computing a statisti
 import json, glob, collections, re
 from pathlib import Path
 
-HERE = Path("/scratch2/dima/misc_sw/octo_work/sim_eval/roselite/finegrain")
+HERE = Path("../octo_work/sim_eval/roselite/finegrain")
 TOL = 0.6
 TASKS = ["egg", "spoon", "coke"]
 

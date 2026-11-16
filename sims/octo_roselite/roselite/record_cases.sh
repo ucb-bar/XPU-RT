@@ -5,8 +5,8 @@
 # runs/lat*_from_arrival_ens-none_rng*, so writing these here would silently
 # fold extra episodes into the published RESULTS.txt aggregation.
 set -euo pipefail
-source /scratch2/dima/misc_sw/octo_work/sim_eval/roselite/env.sh
-R=/scratch2/dima/misc_sw/octo_work/sim_eval/roselite
+source ../octo_work/sim_eval/roselite/env.sh
+R=../octo_work/sim_eval/roselite
 V=$R/runs_video
 cd $R
 

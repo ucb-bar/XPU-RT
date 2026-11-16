@@ -1,11 +1,11 @@
 #!/bin/bash
 # Compose the forest-trail layout for every rendered ladder video:
 # rollout on top, MEASURED QRB5165 lane gantt below with a sweeping playhead.
-source /scratch2/dima/miniforge3/etc/profile.d/conda.sh
+source ../miniforge3/etc/profile.d/conda.sh
 conda activate octo_sim
-cd /scratch2/dima/misc_sw/octo_work/sim_eval/roselite/finegrain
+cd ../octo_work/sim_eval/roselite/finegrain
 V=videos_ladder
-TR=/scratch2/dima/misc_sw/XPU-RT/qnn_models/octo/repro_runs
+TR=./qnn_models/octo/repro_runs
 OUT=videos_gantt; mkdir -p "$OUT"
 
 go () {  # key env_label arm arm_label lat cadence trace sr ep

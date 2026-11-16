@@ -29,8 +29,8 @@
 #
 # Time: push ~1 min/box; launch ~90 s/box (it waits for the count); verify ~10 s.
 # Produces: runs on the workers under
-#   /home/ubuntu/simpler/sim_eval/roselite/finegrain/runs/<task>_<arm>_rng<seed>/
-# plus /home/ubuntu/simpler/logs/fine_sweep.log per box.
+#   ../simpler/sim_eval/roselite/finegrain/runs/<task>_<arm>_rng<seed>/
+# plus ../simpler/logs/fine_sweep.log per box.
 # It worked if `verify` shows exactly 3 for every worker with a non-empty joblist.
 
 set -u
@@ -67,9 +67,9 @@ do_verify() {
     printf '  %-3s %-15s jobs=%-3d runners=%-3s%s\n' "$w" "$h" "$jn" "${n:-?}" "$flag"
     # remaining work, cheap and honest: lines already reported done
     d=$(timeout 40 $SSH -n ubuntu@"$h" \
-        "grep -c '^done ' /home/ubuntu/simpler/logs/fine_sweep.log 2>/dev/null" 2>/dev/null | tr -cd '0-9')
+        "grep -c '^done ' ../simpler/logs/fine_sweep.log 2>/dev/null" 2>/dev/null | tr -cd '0-9')
     a=$(timeout 40 $SSH -n ubuntu@"$h" \
-        "grep -c ALLDONE /home/ubuntu/simpler/logs/fine_sweep.log 2>/dev/null" 2>/dev/null | tr -cd '0-9')
+        "grep -c ALLDONE ../simpler/logs/fine_sweep.log 2>/dev/null" 2>/dev/null | tr -cd '0-9')
     printf '        completed=%s/%s  ALLDONE=%s\n' "${d:-?}" "$jn" "${a:-0}"
   done
   return $bad

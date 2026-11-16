@@ -12,8 +12,8 @@
 # episode. summary.json (success) and energy.json (scalars) are all that survive.
 #
 # Argument: "TASK:ARM:SEED".
-source /home/ubuntu/simpler/sim_eval/roselite/env.sh
-cd /home/ubuntu/simpler/sim_eval/roselite/finegrain
+source ../simpler/sim_eval/roselite/env.sh
+cd ../simpler/sim_eval/roselite/finegrain
 IFS=: read -r TASK ARM S <<< "$1"
 case "$TASK" in
   spoon)  T=widowx_spoon_on_towel ;;
@@ -22,15 +22,15 @@ case "$TASK" in
   coke)   T=google_robot_pick_coke_can ;;
   *) echo "bad task $TASK"; exit 2 ;;
 esac
-LAT=$(awk -v a="$ARM" '$1==a{print $2}' /home/ubuntu/arms_grid.tsv)
-PER=$(awk -v a="$ARM" '$1==a{print $3}' /home/ubuntu/arms_grid.tsv)
+LAT=$(awk -v a="$ARM" '$1==a{print $2}' $HOME/arms_grid.tsv)
+PER=$(awk -v a="$ARM" '$1==a{print $3}' $HOME/arms_grid.tsv)
 [ -z "$LAT" ] && { echo "bad arm $ARM"; exit 2; }
-OUT=/home/ubuntu/simpler/sim_eval/roselite/finegrain/runs_energy/${TASK}_${ARM}_rng${S}
+OUT=../simpler/sim_eval/roselite/finegrain/runs_energy/${TASK}_${ARM}_rng${S}
 [ -f "$OUT/energy.json" ] && { echo "skip ${TASK}_${ARM}_rng${S}"; exit 0; }
 mkdir -p "$(dirname "$OUT")"
 python trace_eval.py --task "$T" --latency-ms "$LAT" --issue-period-ms "$PER" \
        --init-rng "$S" --n 24 --out "$OUT" \
-       > /home/ubuntu/simpler/sim_eval/roselite/finegrain/logs/en_${TASK}_${ARM}_rng${S}.log 2>&1
+       > ../simpler/sim_eval/roselite/finegrain/logs/en_${TASK}_${ARM}_rng${S}.log 2>&1
 rc=$?
 [ $rc -ne 0 ] && { echo "FAIL ${TASK}_${ARM}_rng${S} rc=$rc"; exit $rc; }
 python - "$OUT" <<'PY'

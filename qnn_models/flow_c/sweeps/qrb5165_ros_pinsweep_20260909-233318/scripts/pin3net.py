@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """The `3net` arm: the RoSE 3-network configs, pinned on the QRB5165.
 
-`/scratch/dima/rose-infra/RoSE/soc/sw/xpu-rt/data/toplevel/networks_3net_*.json`
+`../RoSE/soc/sw/xpu-rt/data/toplevel/networks_3net_*.json`
 and `3net_pairs/*.json` are fifteen FireSim workloads over the three base
 networks the RISC-V flow runs -- `mlp_control`, `dronet`, `yolov8_nano` -- plus
 `fused_full`. They cannot be run as written on this board: their
@@ -55,7 +55,7 @@ REPO = os.path.abspath(os.path.join(FLOWC, "..", ".."))
 sys.path.insert(0, HERE)
 import pinsweep  # noqa: E402  (simulate/build_plan/ranking are shared)
 
-ROSE = ("/scratch/dima/rose-infra/RoSE/soc/sw/xpu-rt/data/toplevel")
+ROSE = ("../RoSE/soc/sw/xpu-rt/data/toplevel")
 TARGET = "qrb5165_flowc"
 QUANT = "int8"
 HW_LABEL = {"cpu": "CPU", "dsp": "DSP", "hta": "HTA", "gpu": "GPU"}

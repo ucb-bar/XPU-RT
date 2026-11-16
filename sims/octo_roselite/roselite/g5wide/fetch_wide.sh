@@ -3,7 +3,7 @@
 # Run dirs are made unique across tasks by latency_eval.py's --tag (_GW_<task>),
 # and unique across workers by the per-worker subdirectory here.
 set -u
-G5=/scratch2/dima/misc_sw/octo_work/sim_eval/roselite/g5wide
+G5=../octo_work/sim_eval/roselite/g5wide
 KEY=$HOME/.ssh/firesim.pem
 declare -A HOSTS=(
   [w0]=3.93.66.216      # i-043560448065532ff  (pre-existing)
@@ -17,10 +17,10 @@ for w in "${!HOSTS[@]}"; do
   mkdir -p "$G5/runs/$w" "$G5/validation/$w"
   rsync -a --include='*/' --include='summary.json' --exclude='*' \
     -e "ssh -i $KEY -o StrictHostKeyChecking=no -o BatchMode=yes" \
-    "ubuntu@${HOSTS[$w]}:/home/ubuntu/simpler/sim_eval/roselite/runs/" "$G5/runs/$w/" 2>/dev/null
+    "ubuntu@${HOSTS[$w]}:../simpler/sim_eval/roselite/runs/" "$G5/runs/$w/" 2>/dev/null
   rsync -a --include='*/' --include='summary.json' --exclude='*' \
     -e "ssh -i $KEY -o StrictHostKeyChecking=no -o BatchMode=yes" \
-    "ubuntu@${HOSTS[$w]}:/home/ubuntu/simpler/sim_eval/runs/" "$G5/validation/$w/" 2>/dev/null
+    "ubuntu@${HOSTS[$w]}:../simpler/sim_eval/runs/" "$G5/validation/$w/" 2>/dev/null
   echo "$w  runs=$(find "$G5/runs/$w" -name summary.json 2>/dev/null | wc -l)" \
        " gate=$(find "$G5/validation/$w" -name summary.json 2>/dev/null | wc -l)"
 done

@@ -32,7 +32,7 @@ fixed-pinning reference the scheduler is measured against — the number a team
 gets by writing ordinary ROS nodes and picking a lane per network.
 
 The reference experiment is
-`/scratch/dima/rose-infra/RoSE/experiments/microros_pinsweep/`, the same design
+`../RoSE/experiments/microros_pinsweep/`, the same design
 on FireSim with micro-ROS. What ports, and what does not, is §6.
 
 **Backends: CPU, DSP, HTA.** GPU is not a pinning candidate. Its measured

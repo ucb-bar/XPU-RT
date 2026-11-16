@@ -7,7 +7,7 @@ cd "$(dirname "$0")"; source hosts.sh
 for w in $(printf '%s\n' "${!HOSTS[@]}" | sort); do
   h=${HOSTS[$w]}; mkdir -p "runs/$w"
   rsync -a --include='*/' --include='summary.json' --exclude='*' -e "$SSH" \
-    ubuntu@"$h":/home/ubuntu/simpler/sim_eval/roselite/finegrain/runs/ "runs/$w/" 2>/dev/null
+    ubuntu@"$h":../simpler/sim_eval/roselite/finegrain/runs/ "runs/$w/" 2>/dev/null
   echo "$w  $(find "runs/$w" -name summary.json 2>/dev/null | wc -l) summaries"
 done
 echo "TOTAL: $(find runs -name summary.json 2>/dev/null | wc -l)"

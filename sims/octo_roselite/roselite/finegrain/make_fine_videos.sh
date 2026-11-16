@@ -2,9 +2,9 @@
 # Fine-grain replay clips: the zero-order hold on stale data drawn per 40 ms
 # tick instead of quantised into 200 ms granules.
 set -euo pipefail
-source /scratch2/dima/miniforge3/etc/profile.d/conda.sh
+source ../miniforge3/etc/profile.d/conda.sh
 conda activate octo_sim
-cd /scratch2/dima/misc_sw/octo_work/sim_eval/roselite/finegrain
+cd ../octo_work/sim_eval/roselite/finegrain
 mkdir -p videos
 A () { python animate_fine_replay.py "$@"; }
 

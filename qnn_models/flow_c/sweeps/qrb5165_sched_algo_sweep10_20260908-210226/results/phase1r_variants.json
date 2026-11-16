@@ -9,7 +9,7 @@
    "flatten_gemm_to_conv"
   ],
   "rationale": "HTA rejects Batchnorm; dronet's BNs follow the residual Add so there is nothing to fold them into, and the Flatten before the two heads is what the converter turns into the Transpose HTA also rejects.",
-  "zoo": "/scratch/dima/rose-infra/RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
+  "zoo": "../RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
   "rewrite": {
    "chain": [
     "onnxsim",
@@ -150,7 +150,7 @@
    "flatten_gemm_to_conv"
   ],
   "rationale": "HTA rejects Batchnorm; dronet's BNs follow the residual Add so there is nothing to fold them into, and the Flatten before the two heads is what the converter turns into the Transpose HTA also rejects.",
-  "zoo": "/scratch/dima/rose-infra/RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
+  "zoo": "../RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
   "rewrite": {
    "chain": [
     "onnxsim",
@@ -291,7 +291,7 @@
    "flatten_gemm_to_conv"
   ],
   "rationale": "HTA rejects Batchnorm; dronet's BNs follow the residual Add so there is nothing to fold them into, and the Flatten before the two heads is what the converter turns into the Transpose HTA also rejects.",
-  "zoo": "/scratch/dima/rose-infra/RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
+  "zoo": "../RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
   "rewrite": {
    "chain": [
     "onnxsim",
@@ -432,7 +432,7 @@
    "flatten_gemm_to_conv"
   ],
   "rationale": "HTA rejects Batchnorm; dronet's BNs follow the residual Add so there is nothing to fold them into, and the Flatten before the two heads is what the converter turns into the Transpose HTA also rejects.",
-  "zoo": "/scratch/dima/rose-infra/RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
+  "zoo": "../RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
   "rewrite": {
    "chain": [
     "onnxsim",
@@ -573,7 +573,7 @@
    "flatten_gemm_to_conv"
   ],
   "rationale": "HTA rejects Batchnorm; dronet's BNs follow the residual Add so there is nothing to fold them into, and the Flatten before the two heads is what the converter turns into the Transpose HTA also rejects.",
-  "zoo": "/scratch/dima/rose-infra/RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
+  "zoo": "../RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
   "rewrite": {
    "chain": [
     "onnxsim",
@@ -714,7 +714,7 @@
    "flatten_gemm_to_conv"
   ],
   "rationale": "HTA rejects Batchnorm; dronet's BNs follow the residual Add so there is nothing to fold them into, and the Flatten before the two heads is what the converter turns into the Transpose HTA also rejects.",
-  "zoo": "/scratch/dima/rose-infra/RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
+  "zoo": "../RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
   "rewrite": {
    "chain": [
     "onnxsim",
@@ -855,7 +855,7 @@
    "flatten_gemm_to_conv"
   ],
   "rationale": "HTA rejects Batchnorm; dronet's BNs follow the residual Add so there is nothing to fold them into, and the Flatten before the two heads is what the converter turns into the Transpose HTA also rejects.",
-  "zoo": "/scratch/dima/rose-infra/RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
+  "zoo": "../RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
   "rewrite": {
    "chain": [
     "onnxsim",
@@ -995,7 +995,7 @@
    "channel_slice_to_conv1x1"
   ],
   "rationale": "HTA rejects StridedSlice, which is how the converter lowers the C2f channel chunk that modelblaster exports as a Slice pair. The 1x1 selector convolution computes the same tensor with an op HTA has.",
-  "zoo": "/scratch/dima/rose-infra/RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
+  "zoo": "../RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
   "rewrite": {
    "chain": [
     "onnxsim",
@@ -1132,7 +1132,7 @@
    "channel_slice_to_conv1x1"
   ],
   "rationale": "HTA rejects StridedSlice, which is how the converter lowers the C2f channel chunk that modelblaster exports as a Slice pair. The 1x1 selector convolution computes the same tensor with an op HTA has.",
-  "zoo": "/scratch/dima/rose-infra/RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
+  "zoo": "../RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
   "rewrite": {
    "chain": [
     "onnxsim",
@@ -1269,7 +1269,7 @@
    "channel_slice_to_conv1x1"
   ],
   "rationale": "HTA rejects StridedSlice, which is how the converter lowers the C2f channel chunk that modelblaster exports as a Slice pair. The 1x1 selector convolution computes the same tensor with an op HTA has.",
-  "zoo": "/scratch/dima/rose-infra/RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
+  "zoo": "../RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
   "rewrite": {
    "chain": [
     "onnxsim",
@@ -1406,7 +1406,7 @@
    "channel_slice_to_conv1x1"
   ],
   "rationale": "HTA rejects StridedSlice, which is how the converter lowers the C2f channel chunk that modelblaster exports as a Slice pair. The 1x1 selector convolution computes the same tensor with an op HTA has.",
-  "zoo": "/scratch/dima/rose-infra/RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
+  "zoo": "../RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
   "rewrite": {
    "chain": [
     "onnxsim",
@@ -1543,7 +1543,7 @@
    "elu_to_relu"
   ],
   "rationale": "NUMERICS-CHANGING probe. Elu has no frozen-constant linear equivalent, so substituting the activation is the only way mlp_control reaches HTA at all. Run on the largest rung only: if HTA loses there it loses on every smaller one, since HTA's dispatch floor is fixed.",
-  "zoo": "/scratch/dima/rose-infra/RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
+  "zoo": "../RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
   "rewrite": {
    "chain": [
     "onnxsim",

@@ -27,11 +27,11 @@ def dataset2path(dataset_name):
 
 if __name__ == "__main__":
     """
-    python tools/sysid/prepare_sysid_dataset.py --save-path /home/xuanlin/Downloads/sysid_dataset.pkl --dataset-name fractal20220817_data
-    python tools/sysid/prepare_sysid_dataset.py --save-path /home/xuanlin/Downloads/sysid_dataset_bridge.pkl --dataset-name bridge
+    python tools/sysid/prepare_sysid_dataset.py --save-path $HOME/Downloads/sysid_dataset.pkl --dataset-name fractal20220817_data
+    python tools/sysid/prepare_sysid_dataset.py --save-path $HOME/Downloads/sysid_dataset_bridge.pkl --dataset-name bridge
     """
     parser = argparse.ArgumentParser()
-    parser.add_argument("--save-path", type=str, default="/home/xuanlin/Downloads/sysid_dataset.pkl")
+    parser.add_argument("--save-path", type=str, default="$HOME/Downloads/sysid_dataset.pkl")
     parser.add_argument("--dataset-name", type=str, default="fractal20220817_data")
     args = parser.parse_args()
 

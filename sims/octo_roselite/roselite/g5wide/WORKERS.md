@@ -120,13 +120,13 @@ idling. If the follow-ups above are not going to run soon, prune early.
 ## Pruning, when the study is done
 
 **Before terminating anything**, pull the per-job stdout logs — `fetch_wide.sh`
-copies only `summary.json`, so `/home/ubuntu/simpler/logs/gw_*.log` (per-episode
+copies only `summary.json`, so `../simpler/logs/gw_*.log` (per-episode
 progress, the `SUCCESS RATE` lines, any warnings) exists **only on the boxes**:
 
 ```bash
 # start the boxes, re-read IPs, then per worker:
 rsync -a -e "ssh -i ~/.ssh/firesim.pem" \
-  ubuntu@<ip>:/home/ubuntu/simpler/logs/ g5wide/logs/<worker>/
+  ubuntu@<ip>:../simpler/logs/ g5wide/logs/<worker>/
 ```
 
 Then, from the manager (`ubuntu@3.88.218.39`, creds in `~/.aws`):

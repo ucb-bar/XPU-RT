@@ -174,6 +174,6 @@ vint_decoder           terminal         6       0.000     0.000    0.015    0.01
   bytes ever read back         8.23 MiB  (8.41% of cached)
   copies for terminal tiles  25.397 ms of 66.300 ms (38.3%) -- structurally unreadable, 48.5 MiB
 
-  data log  -> /scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c/transfer_study/data_log.json
-  entries   -> /scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c/transfer_study/data_log_entries.csv (609 rows)
-  placements-> /scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c/transfer_study/data_log_placements.csv (243 rows)
+  data log  -> ./qnn_models/flow_c/transfer_study/data_log.json
+  entries   -> ./qnn_models/flow_c/transfer_study/data_log_entries.csv (609 rows)
+  placements-> ./qnn_models/flow_c/transfer_study/data_log_placements.csv (243 rows)

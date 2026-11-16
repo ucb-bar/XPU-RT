@@ -5,7 +5,7 @@
 set -u
 HERE=$(cd "$(dirname "$0")/.." && pwd)
 # env.sh cd's to roselite/, so source it FIRST and cd back afterwards.
-source /scratch2/dima/misc_sw/octo_work/sim_eval/roselite/env.sh
+source ../octo_work/sim_eval/roselite/env.sh
 cd "$HERE"
 source parity/configs.sh
 N=${N:-3}; RNG=${RNG:-80}; TASKS=${TASKS:-"google_robot_close_drawer google_robot_pick_coke_can"}

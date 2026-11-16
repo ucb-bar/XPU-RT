@@ -3,8 +3,8 @@
 # Supersedes job_torque.sh, which covered only eggplant+drawer (a leftover from when
 # the energy analysis was conditioned on success and drawer was the only task where
 # every arm succeeded) and used the OLD mislabelled pipelined latencies.
-source /home/ubuntu/simpler/sim_eval/roselite/env.sh
-cd /home/ubuntu/simpler/sim_eval/roselite/finegrain
+source ../simpler/sim_eval/roselite/env.sh
+cd ../simpler/sim_eval/roselite/finegrain
 IFS=: read -r KEY TASK ARM <<< "$1"
 case "$TASK" in
   egg)    T=widowx_put_eggplant_in_basket ;;
@@ -26,8 +26,8 @@ case "$ARM" in                      # MEASURED latency / cadence, ungated
   *) echo "bad arm $ARM"; exit 2 ;;
 esac
 EXTRA=""; [ "$PER" != auto ] && EXTRA="--issue-period-ms $PER"
-OUT=/home/ubuntu/simpler/sim_eval/roselite/finegrain/traces_torque2/${KEY}
+OUT=../simpler/sim_eval/roselite/finegrain/traces_torque2/${KEY}
 mkdir -p "$(dirname "$OUT")"
 python trace_eval.py --task "$T" --latency-ms "$LAT" $EXTRA --init-rng 100 --n 24 \
-       --out "$OUT" > /home/ubuntu/simpler/logs/tq2_${KEY}.log 2>&1
-echo "done ${KEY} rc=$? : $(grep -h 'SUCCESS RATE' /home/ubuntu/simpler/logs/tq2_${KEY}.log | tail -1)"
+       --out "$OUT" > ../simpler/logs/tq2_${KEY}.log 2>&1
+echo "done ${KEY} rc=$? : $(grep -h 'SUCCESS RATE' ../simpler/logs/tq2_${KEY}.log | tail -1)"

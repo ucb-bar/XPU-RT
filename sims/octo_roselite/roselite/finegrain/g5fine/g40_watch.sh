@@ -5,7 +5,7 @@
 set -u; cd "$(dirname "$0")/.."; source g5fine/g40_hosts.sh
 while true; do
   n=$(for h in "${G40[@]}"; do
-        $SSH ubuntu@$h 'cd /home/ubuntu/simpler/sim_eval/roselite/finegrain/runs_g40 2>/dev/null && for x in */; do [ -f "$x/summary.json" ] && basename "$x"; done' 2>/dev/null
+        $SSH ubuntu@$h 'cd ../simpler/sim_eval/roselite/finegrain/runs_g40 2>/dev/null && for x in */; do [ -f "$x/summary.json" ] && basename "$x"; done' 2>/dev/null
       done | sort -u | wc -l)
   r=$(for h in "${G40[@]}"; do $SSH ubuntu@$h 'pgrep -cf "[f]inegrain_eval.py"' 2>/dev/null; done | paste -sd+ | bc)
   echo "$(date +%H:%M) distinct=$n/180 runners=${r:-0}"

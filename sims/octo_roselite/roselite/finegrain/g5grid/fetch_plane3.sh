@@ -11,7 +11,7 @@ for h in "${DR[@]}"; do
   mkdir -p "$DEST/h$i"
   rsync -a --include='*_g[0-9]*_rng*/' --include='*_g[0-9]*_rng*/energy2.json' \
         --exclude='*' -e "$SSH" \
-    ubuntu@"$h":/home/ubuntu/simpler/sim_eval/roselite/finegrain/plane3/ "$DEST/h$i/" 2>/dev/null &
+    ubuntu@"$h":../simpler/sim_eval/roselite/finegrain/plane3/ "$DEST/h$i/" 2>/dev/null &
   i=$((i+1))
 done; wait
 echo "cells local: $(find $DEST -name energy2.json 2>/dev/null | wc -l)"

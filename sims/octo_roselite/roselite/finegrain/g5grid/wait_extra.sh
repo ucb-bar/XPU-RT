@@ -11,7 +11,7 @@ for _ in $(seq 1 240); do
   for i in $(seq 0 $((N-1))); do
     [ -s "jl_${TAG}_${i}.txt" ] || continue
     live=$((live+1))
-    r=$(timeout 40 $SSH -n ubuntu@"${P3[$i]}" "grep -c ALLDONE /home/ubuntu/simpler/logs/${TAG}.log 2>/dev/null; pgrep -f 'finegrain_ev[a]l' | wc -l" 2>/dev/null | tr '\n' ' ')
+    r=$(timeout 40 $SSH -n ubuntu@"${P3[$i]}" "grep -c ALLDONE ../simpler/logs/${TAG}.log 2>/dev/null; pgrep -f 'finegrain_ev[a]l' | wc -l" 2>/dev/null | tr '\n' ' ')
     set -- $r
     [ "${1:-0}" -ge 1 ] 2>/dev/null && done_n=$((done_n+1))
     run_n=$((run_n + ${2:-0}))

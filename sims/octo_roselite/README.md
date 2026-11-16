@@ -17,7 +17,7 @@ rendered `.png`/`.mp4`. They are reproducible from these scripts given GPU time,
 and they do not belong in git.
 
 At the time of writing the data lives on the machine that produced it, under
-`/scratch2/dima/misc_sw/octo_work/sim_eval/roselite/`:
+`../octo_work/sim_eval/roselite/`:
 
 | dataset | size | what it is |
 |---|---|---|

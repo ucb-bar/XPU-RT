@@ -61,7 +61,7 @@
 #   --mgr HOST          fq manager (default ubuntu@3.88.218.39)
 #   --key PATH          ssh key (default ~/.ssh/firesim.pem)
 #   --tree PATH         chipyard tree on the manager that built the bitstream
-#                        (default /home/ubuntu/chipyard-rose)
+#                        (default ../chipyard-rose/)
 #   --hw-config KEY     hwdb key (default f2_dual_small_norose_tacit_q31_60mhz)
 #   --timeout N         per-job wall-clock backstop in seconds (default 3000;
 #                        vint points want ~5400)
@@ -189,7 +189,7 @@ REGISTRY="cores/chipyard_dual_rocket_gemmini_q31_f16.json"
 BACKENDS="gemmini_q31,rvv_f16"
 MGR="ubuntu@3.88.218.39"
 KEY="${HOME}/.ssh/firesim.pem"
-TREE="/home/ubuntu/chipyard-rose"
+TREE="../chipyard-rose/"
 HW_CONFIG="f2_dual_small_norose_tacit_q31_60mhz"
 JOB_TIMEOUT="3000"
 PREFIX="sw"
@@ -545,10 +545,10 @@ if [[ -n "${DRY_RUN}" ]]; then
         echo "                 CPU_P_KIND=gemmini_q31 CPU_E_KIND=rvv_f16 SCHED_NAME=${point} \\"
         echo "                 STOP_AFTER=build RUNNER=firesim FORCE_REGEN=0 XPURT_TRACE=1 \\"
         echo "                 bash examples/${EXAMPLE_DIR}/run.sh"
-        echo "      ship       scp <fresh zephyr.elf> ${MGR}:/home/ubuntu/${PREFIX}_${point}.elf"
+        echo "      ship       scp <fresh zephyr.elf> ${MGR}:$HOME/${PREFIX}_${point}.elf"
         echo "      submit     fq submit --tree ${TREE} --hw-config ${HW_CONFIG} \\"
-        echo "                 --elf /home/ubuntu/${PREFIX}_${point}.elf --timeout ${JOB_TIMEOUT} \\"
-        echo "                 --results /home/ubuntu/${PREFIX}res_${point}"
+        echo "                 --elf $HOME/${PREFIX}_${point}.elf --timeout ${JOB_TIMEOUT} \\"
+        echo "                 --results $HOME/${PREFIX}res_${point}"
         echo "      expect     uartlog 'schedule=${point} entries=${want}'"
     done
     echo
@@ -597,8 +597,8 @@ if [[ -z "${SKIP_BUILD}" ]]; then
         fi
         echo "  elf ${elf} ($(stat -c %s "${elf}") bytes)"
 
-        remote_elf="/home/ubuntu/${PREFIX}_${point}.elf"
-        remote_res="/home/ubuntu/${PREFIX}res_${point}"
+        remote_elf="$HOME/${PREFIX}_${point}.elf"
+        remote_res="$HOME/${PREFIX}res_${point}"
         scp -q -o BatchMode=yes -i "${KEY}" "${elf}" "${MGR}:${remote_elf}" || {
             echo "  scp failed"; continue; }
         "${SSH[@]}" "${MGR}" "rm -rf ${remote_res} && mkdir -p ${remote_res}" </dev/null
@@ -651,7 +651,7 @@ if [[ -z "${SKIP_WAIT}" ]]; then
             "grep -E 'job ${jid} finished' /var/lib/fq/daemon.out 2>/dev/null | tail -1" </dev/null)"
         echo "  ${point}: ${verdict:-NO TERMINAL STATE}"
         "${SSH[@]}" "${MGR}" \
-            "find /home/ubuntu/${PREFIX}res_${point} -name uartlog | head -1 | xargs -r cat" \
+            "find $HOME/${PREFIX}res_${point} -name uartlog | head -1 | xargs -r cat" \
             </dev/null > "${dest}/uartlog" 2>/dev/null || true
         [[ -s "${dest}/uartlog" ]] || echo "    no uartlog collected"
     done < "${JOBS_TSV}"

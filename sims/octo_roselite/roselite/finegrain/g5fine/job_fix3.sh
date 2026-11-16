@@ -12,8 +12,8 @@
 #              cpsat against the corrected profile. The only board-validated schedule
 #              satisfying REL 10/10; lowest stall rate (3.8%) and tightest cadence band
 #              (130-131 ms). The pick if jitter matters more than rate.
-source /home/ubuntu/simpler/sim_eval/roselite/env.sh
-cd /home/ubuntu/simpler/sim_eval/roselite/finegrain
+source ../simpler/sim_eval/roselite/env.sh
+cd ../simpler/sim_eval/roselite/finegrain
 IFS=: read -r TASK ARM S <<< "$1"
 case "$TASK" in
   spoon)  T=widowx_spoon_on_towel ;;
@@ -27,8 +27,8 @@ case "$ARM" in
   p130w275) LAT=272.3; PER=130.1 ;;
   *) echo "bad arm $ARM"; exit 2 ;;
 esac
-OUT=/home/ubuntu/simpler/sim_eval/roselite/finegrain/runs/${TASK}_${ARM}_rng${S}
-LOG=/home/ubuntu/simpler/sim_eval/roselite/finegrain/logs/${TASK}_${ARM}_rng${S}.log
+OUT=../simpler/sim_eval/roselite/finegrain/runs/${TASK}_${ARM}_rng${S}
+LOG=../simpler/sim_eval/roselite/finegrain/logs/${TASK}_${ARM}_rng${S}.log
 python finegrain_eval.py --task "$T" --latency-ms "$LAT" --issue-period-ms "$PER" \
        --init-rng "$S" --n 24 --out "$OUT" > "$LOG" 2>&1
 echo "done ${TASK} ${ARM} seed ${S} rc=$? : $(grep -h 'SUCCESS RATE' "$LOG" | tail -1)"

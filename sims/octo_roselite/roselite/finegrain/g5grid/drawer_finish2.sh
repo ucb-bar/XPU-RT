@@ -7,7 +7,7 @@
 set -u; cd "$(dirname "$0")"; source drawer_hosts.sh
 count_grid () {
   for h in "${DR[@]}"; do
-    $SSH ubuntu@$h 'cd /home/ubuntu/simpler/sim_eval/roselite/finegrain/runs 2>/dev/null && for x in drawer_g*_rng*/; do [ -f "$x/summary.json" ] && basename "$x"; done' 2>/dev/null
+    $SSH ubuntu@$h 'cd ../simpler/sim_eval/roselite/finegrain/runs 2>/dev/null && for x in drawer_g*_rng*/; do [ -f "$x/summary.json" ] && basename "$x"; done' 2>/dev/null
   done | grep -E '^drawer_g[0-9]+_[0-9]+_rng[0-9]+$' | sort -u | wc -l
 }
 while true; do
@@ -22,7 +22,7 @@ i=0
 for h in "${DR[@]}"; do
   mkdir -p "runs/dr_$i"
   rsync -a --include='drawer_g*_rng*/' --include='drawer_g*_rng*/summary.json' --exclude='*' \
-    -e "$SSH" ubuntu@"$h":/home/ubuntu/simpler/sim_eval/roselite/finegrain/runs/ "runs/dr_$i/" 2>/dev/null &
+    -e "$SSH" ubuntu@"$h":../simpler/sim_eval/roselite/finegrain/runs/ "runs/dr_$i/" 2>/dev/null &
   i=$((i+1))
 done; wait
 L=$(find runs -name summary.json -path '*drawer_g*' | xargs -n1 dirname | xargs -n1 basename | grep -E '^drawer_g[0-9]+_[0-9]+_rng[0-9]+$' | sort -u | wc -l)

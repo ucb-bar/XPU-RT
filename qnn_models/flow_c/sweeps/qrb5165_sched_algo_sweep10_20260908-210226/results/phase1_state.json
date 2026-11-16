@@ -2,7 +2,7 @@
  "mlp_control_sa": {
   "id": "mlp_control_sa",
   "family": "mlp_control",
-  "zoo": "/scratch/dima/rose-infra/RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
+  "zoo": "../RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
   "export_rc": 0,
   "onnx": "gen/onnx/mlp_control_sa.onnx",
   "onnx_bytes": 6091,
@@ -92,7 +92,7 @@
  "dronet_sa": {
   "id": "dronet_sa",
   "family": "dronet",
-  "zoo": "/scratch/dima/rose-infra/RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
+  "zoo": "../RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
   "export_rc": 0,
   "onnx": "gen/onnx/dronet_sa.onnx",
   "onnx_bytes": 1238940,
@@ -193,7 +193,7 @@
  "dronet_sb": {
   "id": "dronet_sb",
   "family": "dronet",
-  "zoo": "/scratch/dima/rose-infra/RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
+  "zoo": "../RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
   "export_rc": 0,
   "onnx": "gen/onnx/dronet_sb.onnx",
   "onnx_bytes": 1242012,
@@ -294,7 +294,7 @@
  "dronet_sc": {
   "id": "dronet_sc",
   "family": "dronet",
-  "zoo": "/scratch/dima/rose-infra/RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
+  "zoo": "../RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
   "export_rc": 0,
   "onnx": "gen/onnx/dronet_sc.onnx",
   "onnx_bytes": 1242012,
@@ -395,7 +395,7 @@
  "dronet_sd": {
   "id": "dronet_sd",
   "family": "dronet",
-  "zoo": "/scratch/dima/rose-infra/RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
+  "zoo": "../RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
   "export_rc": 0,
   "onnx": "gen/onnx/dronet_sd.onnx",
   "onnx_bytes": 1247132,
@@ -496,7 +496,7 @@
  "dronet_se": {
   "id": "dronet_se",
   "family": "dronet",
-  "zoo": "/scratch/dima/rose-infra/RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
+  "zoo": "../RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
   "export_rc": 0,
   "onnx": "gen/onnx/dronet_se.onnx",
   "onnx_bytes": 1255308,
@@ -597,7 +597,7 @@
  "dronet_sf": {
   "id": "dronet_sf",
   "family": "dronet",
-  "zoo": "/scratch/dima/rose-infra/RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
+  "zoo": "../RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
   "export_rc": 0,
   "onnx": "gen/onnx/dronet_sf.onnx",
   "onnx_bytes": 1254302,
@@ -698,7 +698,7 @@
  "dronet_sg": {
   "id": "dronet_sg",
   "family": "dronet",
-  "zoo": "/scratch/dima/rose-infra/RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
+  "zoo": "../RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
   "export_rc": 0,
   "onnx": "gen/onnx/dronet_sg.onnx",
   "onnx_bytes": 1263518,
@@ -799,7 +799,7 @@
  "mlp_control_sb": {
   "id": "mlp_control_sb",
   "family": "mlp_control",
-  "zoo": "/scratch/dima/rose-infra/RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
+  "zoo": "../RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
   "export_rc": 0,
   "onnx": "gen/onnx/mlp_control_sb.onnx",
   "onnx_bytes": 16173,
@@ -888,7 +888,7 @@
  "mlp_control_sd": {
   "id": "mlp_control_sd",
   "family": "mlp_control",
-  "zoo": "/scratch/dima/rose-infra/RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
+  "zoo": "../RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
   "export_rc": 0,
   "onnx": "gen/onnx/mlp_control_sd.onnx",
   "onnx_bytes": 184188,
@@ -977,7 +977,7 @@
  "mlp_control_sf": {
   "id": "mlp_control_sf",
   "family": "mlp_control",
-  "zoo": "/scratch/dima/rose-infra/RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
+  "zoo": "../RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
   "export_rc": 0,
   "onnx": "gen/onnx/mlp_control_sf.onnx",
   "onnx_bytes": 694911,
@@ -1066,7 +1066,7 @@
  "yolov8_nano_sc": {
   "id": "yolov8_nano_sc",
   "family": "yolov8_nano",
-  "zoo": "/scratch/dima/rose-infra/RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
+  "zoo": "../RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
   "export_rc": 0,
   "onnx": "gen/onnx/yolov8_nano_sc.onnx",
   "onnx_bytes": 12651071,
@@ -1168,7 +1168,7 @@
  "yolov8_nano_se": {
   "id": "yolov8_nano_se",
   "family": "yolov8_nano",
-  "zoo": "/scratch/dima/rose-infra/RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
+  "zoo": "../RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
   "export_rc": 0,
   "onnx": "gen/onnx/yolov8_nano_se.onnx",
   "onnx_bytes": 12651071,
@@ -1270,7 +1270,7 @@
  "yolov8_nano_sf": {
   "id": "yolov8_nano_sf",
   "family": "yolov8_nano",
-  "zoo": "/scratch/dima/rose-infra/RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
+  "zoo": "../RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
   "export_rc": 0,
   "onnx": "gen/onnx/yolov8_nano_sf.onnx",
   "onnx_bytes": 12651071,
@@ -1372,7 +1372,7 @@
  "yolov8_nano_sh": {
   "id": "yolov8_nano_sh",
   "family": "yolov8_nano",
-  "zoo": "/scratch/dima/rose-infra/RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
+  "zoo": "../RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
   "export_rc": 0,
   "onnx": "gen/onnx/yolov8_nano_sh.onnx",
   "onnx_bytes": 12651071,
@@ -1474,7 +1474,7 @@
  "fastdepth": {
   "id": "fastdepth",
   "family": "fastdepth",
-  "zoo": "/scratch/dima/rose-infra/RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
+  "zoo": "../RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster",
   "export_rc": 0,
   "onnx": "gen/onnx/fastdepth.onnx",
   "onnx_bytes": 1443241,

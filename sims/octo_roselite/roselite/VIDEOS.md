@@ -22,7 +22,7 @@ strategy the rollout clips use — see
 
 Every number below is tagged **MEASURED** or **MODELLED**. Read
 `RESULTS.txt` for the study, `latency_eval.py` for the timing model, and
-`/scratch2/dima/misc_sw/XPU-RT/qnn_models/octo/OCTO_INT8_QRB5165.md` for the
+`./qnn_models/octo/OCTO_INT8_QRB5165.md` for the
 board measurements.
 
 ---

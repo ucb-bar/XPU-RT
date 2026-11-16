@@ -10,8 +10,8 @@
 # Originals are untouched: this writes to runs_g40/, never runs/.
 #
 # Argument: "KEY:TASK:ARM:RATE" with RATE in {native,fine27}.
-source /home/ubuntu/simpler/sim_eval/roselite/env.sh
-cd /home/ubuntu/simpler/sim_eval/roselite/finegrain
+source ../simpler/sim_eval/roselite/env.sh
+cd ../simpler/sim_eval/roselite/finegrain
 IFS=: read -r KEY TASK ARM RATE <<< "$1"
 case "$TASK" in
   coke)   T=google_robot_pick_coke_can ;;
@@ -37,11 +37,11 @@ case "$RATE" in
   *) echo "bad rate $RATE"; exit 2 ;;
 esac
 EXTRA=""; [ "$PER" != auto ] && EXTRA="--issue-period-ms $PER"
-OUT=/home/ubuntu/simpler/sim_eval/roselite/finegrain/runs_g40/${KEY}
+OUT=../simpler/sim_eval/roselite/finegrain/runs_g40/${KEY}
 mkdir -p "$(dirname "$OUT")"
 # Idempotent: a relaunch must not redo completed work.
 if [ -f "$OUT/summary.json" ]; then echo "skip ${KEY}"; exit 0; fi
 python finegrain_eval.py --task "$T" --latency-ms "$LAT" $EXTRA $ACT \
        --control-mode "$CM" --init-rng "${RNG:-100}" --n 24 --out "$OUT" \
-       > /home/ubuntu/simpler/logs/g40_${KEY}.log 2>&1
-echo "done ${KEY} rc=$? : $(grep -h 'SUCCESS RATE' /home/ubuntu/simpler/logs/g40_${KEY}.log | tail -1)"
+       > ../simpler/logs/g40_${KEY}.log 2>&1
+echo "done ${KEY} rc=$? : $(grep -h 'SUCCESS RATE' ../simpler/logs/g40_${KEY}.log | tail -1)"

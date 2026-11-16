@@ -5,12 +5,12 @@ the paper has to tell, a shared visual vocabulary that makes events trackable be
 them, and a ranked recommendation for which figure carries which story.
 
 Everything lives in
-`/scratch2/dima/misc_sw/octo_work/sim_eval/roselite/finegrain/paper/layouts/`.
+`../octo_work/sim_eval/roselite/finegrain/paper/layouts/`.
 **No file outside this directory was modified.** The paper's live `fig_*.py` and `*.png`
 were read as reference only.
 
 ```bash
-cd /scratch2/dima/misc_sw/octo_work/sim_eval/roselite/finegrain/paper/layouts
+cd ../octo_work/sim_eval/roselite/finegrain/paper/layouts
 ./render_all.sh          # palette gate + all 26 candidates + the contact sheet
 ```
 

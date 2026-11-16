@@ -234,7 +234,7 @@ def fig5():
             best.setdefault(r["spec"], {})[r["solver"]] = ok
 
     def has_gemmini(spec):
-        d = _json.load(open(f"/scratch2/dima/misc_sw/XPU-RT/data/toplevel/{spec}.json"))
+        d = _json.load(open(f"./data/toplevel/{spec}.json"))
         lanes = (d.get("hardware", {}).get("profile_hw", {}) or {}).values()
         return any("gemmini" in str(v).lower() for v in lanes)
 

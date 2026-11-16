@@ -14,7 +14,7 @@ import numpy as np
 CODE = os.environ.get("XPURT_CODE_ROOT") or os.path.abspath(
     os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
 DATA = os.environ.get("XPURT_DATA_ROOT",
-                       "/scratch/dima/rose-infra/RoSE/soc/sw/xpu-rt")
+                       "../RoSE/soc/sw/xpu-rt/")
 OUT  = os.environ.get("XPURT_BENCH_OUT", ".")
 sys.path.insert(0, CODE); sys.path.insert(0, os.path.join(CODE, "xpu-rt"))
 
@@ -71,7 +71,7 @@ def methods(budget, cvxpy_time, cpsat_time):
 def main():
     os.environ.setdefault(
         "XPURT_CPSAT_PYTHON",
-        "/tmp/claude-1172/-scratch2-dima-misc-sw-XPU-RT/cb67e7aa-73a1-4f96-95bd-e31812fb2543/scratchpad/cpsat-venv/bin/python")
+        "python3")
     specs = sorted(glob.glob(f"{DATA}/data/toplevel/wl_sweep/*.json"))
     print(f"{len(specs)} wl_sweep specs; solvers from {CODE}, data from {DATA}\n")
     allrows = {}

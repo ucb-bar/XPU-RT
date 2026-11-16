@@ -2,11 +2,11 @@
 # ============================================================================
 # SIMPLER-env setup on the AWS g5.xlarge (A10G, Ubuntu 22.04 DLAMI).
 #
-# Replicates the local reference env at /scratch2/dima/misc_sw/octo_work/
+# Replicates the local reference env at ../octo_work/
 # (conda env `octo_sim`) exactly: same repo commits, same pinned wheels.
 #
 # Idempotent: safe to re-run. Installs into conda env `octo_sim` under
-# /home/ubuntu/miniforge3/envs. Does NOT touch any other env on the box.
+# ../miniforge3/envs. Does NOT touch any other env on the box.
 #
 # Traps this script works around (all previously discovered on this AMI):
 #   * libvulkan1 (the Vulkan *loader*) is not in the DLAMI. The driver and
@@ -24,8 +24,8 @@
 # ============================================================================
 set -euo pipefail
 
-ROOT=/home/ubuntu/simpler
-CONDA=/home/ubuntu/miniforge3
+ROOT=../simpler/
+CONDA=../miniforge3/
 ENVNAME=octo_sim
 SIMPLER_SHA=06accaca93535902d408da4855f21cece12bceb7
 MANISKILL_SHA=ef7a4d4fdf4b69f2c2154db5b15b9ac8dfe10682

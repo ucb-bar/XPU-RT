@@ -98,7 +98,7 @@ lanes, so build(N+1) overlaps run(N).
 
 ## 4. Collect + verify provenance + analyse
     ssh -i ~/.ssh/firesim.pem ubuntu@<MGR> \
-        "cd /home/ubuntu && tar czf /tmp/res.tgz swres_*/uartlog"
+        "cd $HOME/ && tar czf /tmp/res.tgz swres_*/uartlog"
     scp -i ~/.ssh/firesim.pem ubuntu@<MGR>:/tmp/res.tgz runs/sweeps/<TAG>/
     (cd runs/sweeps/<TAG> && tar xzf res.tgz)
 
@@ -172,7 +172,7 @@ The helpers are now maintained under `soc/sw/xpu-rt/scripts/`:
     drivers/serialize_instances.py ->  scripts/serialize_instances.py
     drivers/uartlog_to_profile.py  ->  scripts/uartlog_to_profile.py
 
-(`uartlog_to_profile.py` carried a hardcoded `/scratch/dima/...` on its
+(`uartlog_to_profile.py` carried a hardcoded absolute path on its
 `sys.path`; the committed copy resolves the `zephyr-chipyard-sw` submodule from
 `.gitmodules` instead.)
 

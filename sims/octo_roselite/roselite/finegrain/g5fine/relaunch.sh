@@ -12,7 +12,7 @@
 set -u
 cd "$(dirname "$0")"; source hosts.sh
 P=${P:-3}
-RUN="cd /home/ubuntu/simpler && setsid nohup bash -c 'xargs -a joblist.txt -I{} -P $P bash sim_eval/roselite/finegrain/job.sh {} > /home/ubuntu/simpler/logs/fine_sweep.log 2>&1; echo ALLDONE >> /home/ubuntu/simpler/logs/fine_sweep.log' >/dev/null 2>&1 </dev/null & disown"
+RUN="cd ../simpler/ && setsid nohup bash -c 'xargs -a joblist.txt -I{} -P $P bash sim_eval/roselite/finegrain/job.sh {} > ../simpler/logs/fine_sweep.log 2>&1; echo ALLDONE >> ../simpler/logs/fine_sweep.log' >/dev/null 2>&1 </dev/null & disown"
 count() { timeout 40 $SSH -n ubuntu@"$1" "pgrep -f 'finegrain_ev[a]l' | wc -l" 2>/dev/null | tr -cd '0-9'; }
 for w in ${WORKERS:-w0 w1 w2 w3 w4 w5}; do
   h=${HOSTS[$w]}
@@ -20,8 +20,8 @@ for w in ${WORKERS:-w0 w1 w2 w3 w4 w5}; do
   if [ "${pre:-0}" != "0" ]; then
     echo "$w ($h): SKIPPED -- ${pre} runner(s) already up, refusing to double-launch"; continue
   fi
-  timeout 60 scp -q -i "$KEY" -o StrictHostKeyChecking=no joblist_$w.txt ubuntu@"$h":/home/ubuntu/simpler/joblist.txt || { echo "$w SCP FAILED"; continue; }
-  timeout 45 $SSH -n ubuntu@"$h" "rm -f /home/ubuntu/simpler/logs/fine_sweep.log" >/dev/null 2>&1
+  timeout 60 scp -q -i "$KEY" -o StrictHostKeyChecking=no joblist_$w.txt ubuntu@"$h":../simpler/joblist.txt || { echo "$w SCP FAILED"; continue; }
+  timeout 45 $SSH -n ubuntu@"$h" "rm -f ../simpler/logs/fine_sweep.log" >/dev/null 2>&1
   timeout 45 $SSH -n ubuntu@"$h" "$RUN" >/dev/null 2>&1
   n=0
   for _ in 1 2 3 4 5 6; do

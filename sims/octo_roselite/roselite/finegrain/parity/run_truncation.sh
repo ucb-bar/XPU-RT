@@ -11,7 +11,7 @@
 #   F   registered, fine  27 Hz, sim_freq 4617  -- the actual test
 set -u
 HERE=$(cd "$(dirname "$0")/.." && pwd)
-source /scratch2/dima/misc_sw/octo_work/sim_eval/roselite/env.sh
+source ../octo_work/sim_eval/roselite/env.sh
 cd "$HERE"
 source parity/configs.sh
 N=${N:-12}; RNG=${RNG:-80}; T=${T:-google_robot_pick_coke_can}

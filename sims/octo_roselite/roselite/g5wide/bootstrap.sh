@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # Bring a bare Deep Learning OSS DLAMI (ami-012ba162b9cd2729c) up to the point
 # where g5/setup_simpler_g5.sh can run: that script assumes a conda at
-# /home/ubuntu/miniforge3, which the AMI does NOT ship (the original g5 worker
+# ../miniforge3/, which the AMI does NOT ship (the original g5 worker
 # had it installed by hand). Idempotent.
 set -euo pipefail
-ROOT=/home/ubuntu/simpler
-CONDA=/home/ubuntu/miniforge3
+ROOT=../simpler/
+CONDA=../miniforge3/
 mkdir -p "$ROOT/logs"
 exec > >(tee -a "$ROOT/logs/bootstrap.log") 2>&1
 echo "=== bootstrap start $(date -Is) on $(hostname) ==="

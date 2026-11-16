@@ -90,7 +90,7 @@ HERE = Path(__file__).resolve().parent
 PAPER = HERE.parent
 BASE = PAPER.parent
 BOARD = Path(os.environ.get("OCTO_REPRO_RUNS",
-                            "/scratch2/dima/misc_sw/XPU-RT/qnn_models/octo/repro_runs"))
+                            "./qnn_models/octo/repro_runs"))
 CURATED = BASE / "traces_torque3"
 PLANE = BASE / "g5grid" / "plane3_runs"
 ARMS_TSV = BASE / "g5grid" / "arms.tsv"

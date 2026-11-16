@@ -11,13 +11,13 @@
 #
 # Uses finegrain_eval_videosnap.py, md5 cb302b43f647 -- byte-identical to the
 # harness that produced the sweep numbers, and isolated from in-flight edits.
-source /scratch2/dima/miniforge3/etc/profile.d/conda.sh
+source ../miniforge3/etc/profile.d/conda.sh
 conda activate octo_sim
 export VK_ICD_FILENAMES=/etc/vulkan/icd.d/nvidia_icd.json
 export XLA_PYTHON_CLIENT_PREALLOCATE=false
 export TOKENIZERS_PARALLELISM=false
-cd /scratch2/dima/misc_sw/octo_work/sim_eval/roselite/finegrain
-OUT=/scratch2/dima/misc_sw/octo_work/sim_eval/roselite/finegrain/videos_contrast
+cd ../octo_work/sim_eval/roselite/finegrain
+OUT=../octo_work/sim_eval/roselite/finegrain/videos_contrast
 mkdir -p "$OUT"
 
 render () {  # task_key env_task seed arm lat cadence

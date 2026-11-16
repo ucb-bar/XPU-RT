@@ -3,14 +3,14 @@
 # are run from cron, from ssh, and from the wrong directory, and a relative path
 # has already cost this project one silently-wrong sweep.
 #
-# usage:  source /scratch2/dima/misc_sw/octo_work/sim_eval/roselite/finegrain/repro/common.sh
+# usage:  source ../octo_work/sim_eval/roselite/finegrain/repro/common.sh
 
 set -u
 
 # ---------------------------------------------------------------- local layout
-CONDA_ROOT="${CONDA_ROOT:-/scratch2/dima/miniforge3}"
+CONDA_ROOT="${CONDA_ROOT:-../miniforge3/}"
 ENVNAME="${ENVNAME:-octo_sim}"
-SIMROOT="${SIMROOT:-/scratch2/dima/misc_sw/octo_work/sim_eval}"
+SIMROOT="${SIMROOT:-../octo_work/sim_eval}"
 ROSE="$SIMROOT/roselite"
 FINE="$ROSE/finegrain"
 G5FINE="${G5FINE:-$FINE/g5fine}"

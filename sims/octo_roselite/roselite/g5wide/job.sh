@@ -14,7 +14,7 @@
 #
 # The run directory latency_eval.py builds does NOT contain the task name, so the
 # task goes into --tag to keep runs from different tasks from colliding.
-source /home/ubuntu/simpler/sim_eval/roselite/env.sh
+source ../simpler/sim_eval/roselite/env.sh
 IFS=: read -r TASK ARM S <<< "$1"
 
 case "$TASK" in
@@ -31,8 +31,8 @@ case "$ARM" in
   *) echo "bad arm $ARM"; exit 2 ;;
 esac
 
-LOG=/home/ubuntu/simpler/logs/gw_${TASK}_${ARM}_rng${S}.log
-mkdir -p /home/ubuntu/simpler/logs
+LOG=../simpler/logs/gw_${TASK}_${ARM}_rng${S}.log
+mkdir -p ../simpler/logs
 python latency_eval.py --task "$T" $OPTS --init-rng "$S" --n 24 --tag "_GW_${TASK}" > "$LOG" 2>&1
 rc=$?
 echo "done ${TASK} ${ARM} seed ${S} rc=${rc} : $(grep -h 'SUCCESS RATE' "$LOG" | tail -1)"

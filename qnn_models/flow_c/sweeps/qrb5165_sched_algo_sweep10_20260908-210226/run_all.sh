@@ -19,7 +19,7 @@ export XPURT_CPSAT_PYTHON="${XPURT_CPSAT_PYTHON:-$REPO/.cpsat-venv/bin/python}"
 python3 scripts/phase1_build.py                       # onnx -> dlc -> ctx, per backend
 # ---- Phase 1R: remove each measured backend blocker with a graph rewrite and
 #      build the variant as a candidate (needs an onnx-capable interpreter)
-"${SLICE_PY:-/scratch2/dima/miniforge3/envs/xpurt/bin/python}"     scripts/phase1_rewrite.py
+"${SLICE_PY:-python3}"     scripts/phase1_rewrite.py
 # ---- Phase 1B/1C: candidate manifests, then a cell for every candidate lane
 python3 scripts/phase1_bindings.py --candidates --write
 python3 scripts/phase1_measure.py --passes 5 --resume  # gap-phase cells, 5 passes
@@ -27,7 +27,7 @@ python3 scripts/phase1_measure.py --passes 5 --resume  # gap-phase cells, 5 pass
 python3 scripts/phase1_adopt.py --write
 python3 scripts/build_cost_model.py --write
 # ---- Phase 1G: the granularity decision, against the break-even rule
-"${SLICE_PY:-/scratch2/dima/miniforge3/envs/xpurt/bin/python}"     scripts/granularity.py
+"${SLICE_PY:-python3}"     scripts/granularity.py
 python3 scripts/make_ledger.py > results/REWRITE_LEDGER.md
 
 # ---- Phase 2: the 11 families x 4 lane configs, periods from those cells

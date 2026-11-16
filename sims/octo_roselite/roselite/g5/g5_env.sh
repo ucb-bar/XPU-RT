@@ -1,6 +1,6 @@
-source /home/ubuntu/miniforge3/etc/profile.d/conda.sh
+source ../miniforge3/etc/profile.d/conda.sh
 conda activate octo_sim
-cd /home/ubuntu/simpler/sim_eval/roselite
+cd ../simpler/sim_eval/roselite
 
 # --- traps on this DLAMI -----------------------------------------------------
 # SAPIEN otherwise selects the llvmpipe CPU device -> ErrorExtensionNotPresent.
@@ -18,5 +18,5 @@ export XLA_PYTHON_CLIENT_PREALLOCATE=false
 # conda env's own lib and nothing else.
 export LD_LIBRARY_PATH="$CONDA_PREFIX/lib"
 export TOKENIZERS_PARALLELISM=false
-export HF_HOME=/home/ubuntu/hf_cache
+export HF_HOME=$HOME/hf_cache
 export DISPLAY=""

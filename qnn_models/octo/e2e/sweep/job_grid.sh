@@ -7,8 +7,8 @@
 # They are NOT board-measured.  Board error is known and not one-directional
 # (-4.3% at p150/w300, +31% on a 4-deep pipeline), so these rank correctly but
 # must never be reported as measured numbers.
-source /home/ubuntu/simpler/sim_eval/roselite/env.sh
-cd /home/ubuntu/simpler/sim_eval/roselite/finegrain
+source ../simpler/sim_eval/roselite/env.sh
+cd ../simpler/sim_eval/roselite/finegrain
 IFS=: read -r TASK ARM S <<< "$1"
 case "$TASK" in
   spoon)  T=widowx_spoon_on_towel ;;
@@ -64,8 +64,8 @@ case "$ARM" in
   g283_260) LAT=232.7; PER=283.0 ;;
   *) echo "bad arm $ARM"; exit 2 ;;
 esac
-OUT=/home/ubuntu/simpler/sim_eval/roselite/finegrain/runs/${TASK}_${ARM}_rng${S}
-LOG=/home/ubuntu/simpler/sim_eval/roselite/finegrain/logs/${TASK}_${ARM}_rng${S}.log
+OUT=../simpler/sim_eval/roselite/finegrain/runs/${TASK}_${ARM}_rng${S}
+LOG=../simpler/sim_eval/roselite/finegrain/logs/${TASK}_${ARM}_rng${S}.log
 python finegrain_eval.py --task "$T" --latency-ms "$LAT" --issue-period-ms "$PER" \
        --init-rng "$S" --n 24 --out "$OUT" > "$LOG" 2>&1
 echo "done ${TASK} ${ARM} seed ${S} rc=$? : $(grep -h 'SUCCESS RATE' "$LOG" | tail -1)"

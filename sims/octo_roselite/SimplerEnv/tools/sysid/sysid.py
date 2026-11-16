@@ -179,10 +179,10 @@ def calc_pose_err(dset, arm_stiffness, arm_damping, robot, control_mode, log_pat
 
 if __name__ == "__main__":
     """
-    python tools/sysid/sysid.py --dataset-path /home/xuanlin/Downloads/sysid_dataset.pkl \
-        --log-path /home/xuanlin/Downloads/opt_results.txt --robot google_robot_static
-    python tools/sysid/sysid.py --dataset-path /home/xuanlin/Downloads/sysid_dataset_bridge.pkl \
-        --log-path /home/xuanlin/Downloads/opt_results_bridge.txt --robot widowx
+    python tools/sysid/sysid.py --dataset-path $HOME/Downloads/sysid_dataset.pkl \
+        --log-path $HOME/Downloads/opt_results.txt --robot google_robot_static
+    python tools/sysid/sysid.py --dataset-path $HOME/Downloads/sysid_dataset_bridge.pkl \
+        --log-path $HOME/Downloads/opt_results_bridge.txt --robot widowx
     """
 
     os.environ["DISPLAY"] = ""

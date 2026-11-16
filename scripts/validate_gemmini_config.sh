@@ -51,7 +51,7 @@ fi
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 MODELBLASTER_ROOT="${REPO_ROOT}/zephyr-chipyard-sw"
-CHIPYARD_FSIM="${CHIPYARD_FSIM:-/scratch2/dima/chipyard-fsim}"
+CHIPYARD_FSIM="${CHIPYARD_FSIM:-../chipyard-fsim/}"
 
 # Parse flags.
 NO_ELABORATE=""

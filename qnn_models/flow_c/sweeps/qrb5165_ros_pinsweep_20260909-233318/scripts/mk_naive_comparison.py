@@ -2,7 +2,7 @@
 """Emit the XPU-RT vs naive-ROS comparison as markdown, from the recorded results."""
 import json, statistics as st
 
-SW = "/scratch2/dima/misc_sw/XPU-RT/qnn_models/flow_c/sweeps/qrb5165_ros_pinsweep_20260909-233318"
+SW = "./qnn_models/flow_c/sweeps/qrb5165_ros_pinsweep_20260909-233318"
 OUT = f"{SW}/NAIVE_ROS_COMPARISON.md"
 
 main = json.load(open(f"{SW}/results/analysis.json"))

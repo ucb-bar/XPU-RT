@@ -6,8 +6,8 @@
 # registered max_episode_steps), which is what keeps spoon at 12000 ms instead of
 # silently inheriting eggplant's 24000 ms, and puts the google_robot tasks on
 # their 3 Hz / 513 Hz timebase at a 27 Hz tick.
-source /home/ubuntu/simpler/sim_eval/roselite/env.sh
-cd /home/ubuntu/simpler/sim_eval/roselite/finegrain
+source ../simpler/sim_eval/roselite/env.sh
+cd ../simpler/sim_eval/roselite/finegrain
 IFS=: read -r TASK ARM S <<< "$1"
 
 case "$TASK" in
@@ -30,8 +30,8 @@ case "$ARM" in
 esac
 EXTRA=""; [ "$PER" != auto ] && EXTRA="--issue-period-ms $PER"
 
-OUT=/home/ubuntu/simpler/sim_eval/roselite/finegrain/runs/${TASK}_${ARM}_rng${S}
-LOG=/home/ubuntu/simpler/sim_eval/roselite/finegrain/logs/${TASK}_${ARM}_rng${S}.log
+OUT=../simpler/sim_eval/roselite/finegrain/runs/${TASK}_${ARM}_rng${S}
+LOG=../simpler/sim_eval/roselite/finegrain/logs/${TASK}_${ARM}_rng${S}.log
 python finegrain_eval.py --task "$T" --latency-ms "$LAT" $EXTRA \
        --init-rng "$S" --n 24 --out "$OUT" > "$LOG" 2>&1
 rc=$?

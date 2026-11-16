@@ -4,11 +4,11 @@
 # Build (or verify) the SIMPLER + Octo environment this study runs in, on a BARE
 # machine.  Every step below is lifted verbatim from the two scripts that built
 # the AWS workers -- roselite/g5wide/bootstrap.sh and roselite/g5/setup_simpler_g5.sh
-# -- with the hardcoded /home/ubuntu paths turned into variables.  Nothing here
+# -- with the hardcoded $HOME/ paths turned into variables.  Nothing here
 # is new; if this and those two ever disagree, THOSE are the reference.
 #
 #   ROOT    where SimplerEnv/ and octo/ are cloned      (default $HOME/simpler)
-#   CONDA   miniforge prefix                            (default /scratch2/dima/miniforge3)
+#   CONDA   miniforge prefix                            (default ../miniforge3/)
 #   ENVNAME conda env name                              (default octo_sim)
 #
 # Time: ~40 min from bare (conda + wheels + two git clones + the asset packs).

@@ -7,7 +7,7 @@ while :; do
   done_n=0; run_n=0
   for i in $(seq 0 24); do
     h=${HOSTS[n$i]}
-    r=$(timeout 30 $SSH -n ubuntu@"$h" "grep -c ALLDONE /home/ubuntu/simpler/logs/grid_sweep.log 2>/dev/null || echo 0; pgrep -f 'finegrain_ev[a]l' | wc -l" 2>/dev/null | tr '\n' ' ')
+    r=$(timeout 30 $SSH -n ubuntu@"$h" "grep -c ALLDONE ../simpler/logs/grid_sweep.log 2>/dev/null || echo 0; pgrep -f 'finegrain_ev[a]l' | wc -l" 2>/dev/null | tr '\n' ' ')
     set -- ${r:-0 0}; [ "${1:-0}" -ge 1 ] && done_n=$((done_n+1)); run_n=$((run_n+${2:-0}))
   done
   echo "$(date +%H:%M:%S) workers_done=$done_n/25 runners=$run_n"

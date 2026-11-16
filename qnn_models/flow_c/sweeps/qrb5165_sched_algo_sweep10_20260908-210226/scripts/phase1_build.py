@@ -59,11 +59,11 @@ REPO = os.path.abspath(os.path.join(FLOWC, "..", ".."))
 # The zoo that has the `_s*` rungs and fastdepth. See the docstring.
 MB_ROOT = os.environ.get(
     "SWEEP10_MB_ROOT",
-    "/scratch/dima/rose-infra/RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster")
+    "../RoSE/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster")
 MB_PY = os.environ.get("SWEEP10_MB_PYTHON",
-                       "/scratch2/dima/miniforge3/envs/xpurt/bin/python")
+                       "python3")
 QNN_SDK = os.environ.get("QNN_SDK",
-                         "/scratch2/dima/misc_sw/qualcomm/qairt/2.45.0.260326")
+                         "../qairt/2.45.0.260326")
 DOCKER_IMG = os.environ.get("QNN_DOCKER_IMG", "qnn-convert")
 BOARD = os.environ.get("QNN_BOARD_HOST", "root@qrb5165")
 BOARD_DLC = "/root/flowc_s10/dlc"

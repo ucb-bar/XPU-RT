@@ -1,6 +1,6 @@
 import glob, json, os, numpy as np
 rows=[]
-for f in sorted(glob.glob("/scratch2/dima/misc_sw/octo_work/sim_eval/runs/*/summary.json")):
+for f in sorted(glob.glob("../octo_work/sim_eval/runs/*/summary.json")):
     s=json.load(open(f))
     eps=s["episodes"]
     def frac(k): return float(np.mean([e["episode_stats"].get(k,False) for e in eps]))
@@ -21,4 +21,4 @@ for r in rows:
 print()
 for r in rows:
     print(f"{r['run'][:62]:62s} mean|rot|={r['rot']}  mean|trans|={r['trans']}  wall={r['wall']}s")
-json.dump(rows, open("/scratch2/dima/misc_sw/octo_work/sim_eval/aggregate.json","w"), indent=2)
+json.dump(rows, open("../octo_work/sim_eval/aggregate.json","w"), indent=2)

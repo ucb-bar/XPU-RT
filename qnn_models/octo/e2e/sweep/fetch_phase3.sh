@@ -8,7 +8,7 @@ for h in "${P3[@]}"; do
   mkdir -p "runs/p3_$i"
   rsync -a --include='*_g[0-9]*_rng*/' --include='*_g[0-9]*_rng*/summary.json' \
         --exclude='*' -e "$SSH" \
-    ubuntu@"$h":/home/ubuntu/simpler/sim_eval/roselite/finegrain/runs/ "runs/p3_$i/" 2>/dev/null &
+    ubuntu@"$h":../simpler/sim_eval/roselite/finegrain/runs/ "runs/p3_$i/" 2>/dev/null &
   i=$((i+1))
 done; wait
 echo "TOTAL local: $(find runs -name summary.json 2>/dev/null | wc -l)"

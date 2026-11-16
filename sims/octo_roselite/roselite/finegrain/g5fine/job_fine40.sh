@@ -10,8 +10,8 @@
 #   fine27   27 Hz actuation; the exact controller/sim-freq combination is filled in
 #            from GOOGLE_FINE_CFG below once Phase 1 settles which one reproduces stock
 # widowx is always 'fine' at 25 Hz and is unaffected by MODE.
-source /home/ubuntu/simpler/sim_eval/roselite/env.sh
-cd /home/ubuntu/simpler/sim_eval/roselite/finegrain
+source ../simpler/sim_eval/roselite/env.sh
+cd ../simpler/sim_eval/roselite/finegrain
 IFS=: read -r KEY TASK ARM MODE <<< "$1"
 case "$TASK" in
   egg)    T=widowx_put_eggplant_in_basket ;;
@@ -46,9 +46,9 @@ case "$T" in
     fi ;;
 esac
 EXTRA=""; [ "$PER" != auto ] && EXTRA="--issue-period-ms $PER"
-OUT=/home/ubuntu/simpler/sim_eval/roselite/finegrain/runs_fine40/${KEY}
+OUT=../simpler/sim_eval/roselite/finegrain/runs_fine40/${KEY}
 mkdir -p "$(dirname "$OUT")"
 python finegrain_eval.py --task "$T" --latency-ms "$LAT" $EXTRA $CFG \
        --init-rng "${RNG:-100}" --n 24 --out "$OUT" \
-       > /home/ubuntu/simpler/logs/f40_${KEY}.log 2>&1
-echo "done ${KEY} rc=$? : $(grep -h 'SUCCESS RATE' /home/ubuntu/simpler/logs/f40_${KEY}.log | tail -1)"
+       > ../simpler/logs/f40_${KEY}.log 2>&1
+echo "done ${KEY} rc=$? : $(grep -h 'SUCCESS RATE' ../simpler/logs/f40_${KEY}.log | tail -1)"

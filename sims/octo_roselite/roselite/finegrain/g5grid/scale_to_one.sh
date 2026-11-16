@@ -15,7 +15,7 @@ set -u; cd "$(dirname "$0")"; source drawer_hosts.sh
 MGR=ubuntu@3.88.218.39
 MSSH="ssh -o StrictHostKeyChecking=no -o ConnectTimeout=25 -o BatchMode=yes -i $HOME/.ssh/firesim.pem"
 KEEP="${KEEP:-i-043560448065532ff}"          # dima-smolvla-gpu, 107.20.17.186
-FG=/home/ubuntu/simpler/sim_eval/roselite/finegrain
+FG=../simpler/sim_eval/roselite/finegrain
 MODE="${1:-check}"
 ARCH=plane3_archive
 

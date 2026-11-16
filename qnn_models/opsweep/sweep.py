@@ -40,7 +40,7 @@ import numpy as np
 HERE = os.path.dirname(os.path.abspath(__file__))
 WORK = os.path.join(HERE, "gen")
 RESULTS = os.path.join(HERE, "results.jsonl")
-QNN_SDK = os.environ.get("QNN_SDK", "/scratch2/dima/misc_sw/qualcomm/qairt/2.45.0.260326")
+QNN_SDK = os.environ.get("QNN_SDK", "../qairt/2.45.0.260326")
 DOCKER_IMG = os.environ.get("QNN_DOCKER_IMG", "qnn-convert")
 BOARD = os.environ.get("QNN_BOARD", "root@qrb5165")
 LOCK = "/tmp/qnn_board.lock"

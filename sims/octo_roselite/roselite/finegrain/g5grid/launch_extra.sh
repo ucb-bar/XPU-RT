@@ -22,15 +22,15 @@ echo "dispatching $total jobs over $N workers (tag=$TAG)"
 rm -f "jl_${TAG}_"*.txt
 awk -v n="$N" -v t="$TAG" '{print > ("jl_" t "_" (NR-1)%n ".txt")}' "$JOBS"
 
-RUN="cd /home/ubuntu/simpler && setsid nohup bash -c 'xargs -a joblist_${TAG}.txt -I{} -P 3 bash sim_eval/roselite/finegrain/job_grid.sh {} > /home/ubuntu/simpler/logs/${TAG}.log 2>&1; echo ALLDONE >> /home/ubuntu/simpler/logs/${TAG}.log' >/dev/null 2>&1 </dev/null & disown"
+RUN="cd ../simpler/ && setsid nohup bash -c 'xargs -a joblist_${TAG}.txt -I{} -P 3 bash sim_eval/roselite/finegrain/job_grid.sh {} > ../simpler/logs/${TAG}.log 2>&1; echo ALLDONE >> ../simpler/logs/${TAG}.log' >/dev/null 2>&1 </dev/null & disown"
 
 for i in $(seq 0 $((N-1))); do
   h=${P3[$i]}; f="jl_${TAG}_${i}.txt"
   [ -s "$f" ] || { echo "w$i ($h): no jobs"; continue; }
   timeout 45 $SSH -n ubuntu@"$h" true >/dev/null 2>&1 || { echo "w$i ($h): UNREACHABLE -- skipped"; continue; }
-  timeout 60 scp -q -i "$KEY" -o StrictHostKeyChecking=no "$f" ubuntu@"$h":/home/ubuntu/simpler/joblist_${TAG}.txt || { echo "w$i ($h): SCP-JOBLIST FAILED"; continue; }
-  timeout 60 scp -q -i "$KEY" -o StrictHostKeyChecking=no job_grid.sh ubuntu@"$h":/home/ubuntu/simpler/sim_eval/roselite/finegrain/job_grid.sh || { echo "w$i ($h): SCP-JOB FAILED"; continue; }
-  timeout 45 $SSH -n ubuntu@"$h" "mkdir -p /home/ubuntu/simpler/logs /home/ubuntu/simpler/sim_eval/roselite/finegrain/{logs,runs}; rm -f /home/ubuntu/simpler/logs/${TAG}.log; chmod +x /home/ubuntu/simpler/sim_eval/roselite/finegrain/job_grid.sh" >/dev/null 2>&1
+  timeout 60 scp -q -i "$KEY" -o StrictHostKeyChecking=no "$f" ubuntu@"$h":../simpler/joblist_${TAG}.txt || { echo "w$i ($h): SCP-JOBLIST FAILED"; continue; }
+  timeout 60 scp -q -i "$KEY" -o StrictHostKeyChecking=no job_grid.sh ubuntu@"$h":../simpler/sim_eval/roselite/finegrain/job_grid.sh || { echo "w$i ($h): SCP-JOB FAILED"; continue; }
+  timeout 45 $SSH -n ubuntu@"$h" "mkdir -p ../simpler/logs ../simpler/sim_eval/roselite/finegrain/{logs,runs}; rm -f ../simpler/logs/${TAG}.log; chmod +x ../simpler/sim_eval/roselite/finegrain/job_grid.sh" >/dev/null 2>&1
   timeout 45 $SSH -n ubuntu@"$h" "$RUN" >/dev/null 2>&1
   sleep 6
   n=$(timeout 40 $SSH -n ubuntu@"$h" "pgrep -f 'finegrain_ev[a]l' | wc -l" 2>/dev/null | tr -cd '0-9')

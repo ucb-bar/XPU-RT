@@ -2,7 +2,7 @@
 
 Companion to `fig_drone_velocity.py` / `fig_drone_velocity.png`.
 
-Source: `/scratch/dima/rose-infra/RoSE/experiments/copied_drone_3gate/hil_data_package.zip`
+Source: `../RoSE/experiments/copied_drone_3gate/hil_data_package.zip`
 (3.7 MB, 22 files, sha256 `877f0a4a7575999d…`). Extracted read-only to a scratch dir; the
 original zip was not modified. The figure script reads the extracted tree via `$HIL_PKG`.
 

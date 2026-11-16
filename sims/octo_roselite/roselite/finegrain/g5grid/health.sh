@@ -7,10 +7,10 @@
 # "cmd || echo 0" emits TWO lines and silently shifts every later field. That
 # bug made an earlier pass report 15 GB of swap use on an 8 GB swapfile.
 set -u; cd "$(dirname "$0")"; source hosts_grid.sh
-REMOTE='R=/home/ubuntu/simpler/sim_eval/roselite/finegrain/runs
+REMOTE='R=../simpler/sim_eval/roselite/finegrain/runs
 s=$(ls -d $R/*_g[0-9]*_rng*/summary.json 2>/dev/null | wc -l)
 p=$(pgrep -cf "[f]inegrain_eval.py"); p=${p:-0}
-a=$(grep -c ALLDONE /home/ubuntu/simpler/logs/grid_sweep.log 2>/dev/null); a=${a:-0}
+a=$(grep -c ALLDONE ../simpler/logs/grid_sweep.log 2>/dev/null); a=${a:-0}
 d=$(df / | tail -1 | awk "{print \$5}" | tr -d %)
 m=$(free -m | awk "/Mem:/{print \$7}")
 w=$(free -m | awk "/Swap:/{print \$3}")

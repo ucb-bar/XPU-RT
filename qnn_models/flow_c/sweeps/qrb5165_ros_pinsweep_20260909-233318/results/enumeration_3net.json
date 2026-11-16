@@ -1,6 +1,6 @@
 {
  "_comment": "The 3net arm: RoSE's fifteen 3-network FireSim configs collapse to these distinct workload shapes on this board, because the machine axis (gempair/rvvpair/hetero) is a count of identical cores and this board has one of each kind. Full enumeration everywhere.",
- "source_dir": "/scratch/dima/rose-infra/RoSE/soc/sw/xpu-rt/data/toplevel",
+ "source_dir": "../RoSE/soc/sw/xpu-rt/data/toplevel",
  "cost_provenance": {
   "dronet/cpu": "gen/profile/CPU/qrb5165_flowc/dronet/dronet.int8/dronet_qrb5165_flowc_CPU_dronet.int8/topo_0/results.csv",
   "dronet/dsp": "gen/profile/DSP/qrb5165_flowc/dronet/dronet.int8/dronet_qrb5165_flowc_DSP_dronet.int8/topo_0/results.csv",

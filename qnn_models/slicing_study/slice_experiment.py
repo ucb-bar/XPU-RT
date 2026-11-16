@@ -64,7 +64,7 @@ LOGS = os.path.join(HERE, "logs")
 JOURNAL = os.path.join(HERE, "experiments.jsonl")
 
 # The interpreter that has onnx + onnxruntime in this checkout.
-PY = os.environ.get("SLICE_PY", "/scratch2/dima/miniforge3/envs/xpurt/bin/python3")
+PY = os.environ.get("SLICE_PY", "python3")
 
 BOARD = os.environ.get("BOARD", "root@qrb5165")
 BOARD_DIR = os.environ.get("BOARD_DIR", "/root/slicing_study")

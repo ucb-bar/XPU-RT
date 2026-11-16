@@ -13,10 +13,10 @@ Corrected drive-torque energy channel (`t2_drive_arm_sus`).
 > complete at 176/176. Without this they would have been lost when the instances stop.
 
 ```
-/scratch2/dima/misc_sw/octo_work/sim_eval/roselite/finegrain/g5grid/fetch_plane3.sh
-cd /scratch2/dima/misc_sw/octo_work/sim_eval/roselite/finegrain/paper
+../octo_work/sim_eval/roselite/finegrain/g5grid/fetch_plane3.sh
+cd ../octo_work/sim_eval/roselite/finegrain/paper
 python3 plane3_audit.py                                   # the numbers below
-/scratch2/dima/misc_sw/octo_work/sim_eval/roselite/finegrain/g5grid/recover_plane3.sh count                          # simulated-but-unreduced cells
+../octo_work/sim_eval/roselite/finegrain/g5grid/recover_plane3.sh count                          # simulated-but-unreduced cells
 python3 fig_plane3_progress.py && python3 fig_plane3_check.py
 ```
 

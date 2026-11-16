@@ -28,7 +28,7 @@ quantity is *when* a policy output becomes available to the environment:
 | `setup.log`            | the actual install transcript from the box |
 | `validation/`, `runs/` | raw `summary.json` files pulled back from the box (3 + 20) |
 
-## Box-side layout (all under `/home/ubuntu/simpler/`)
+## Box-side layout (all under `../simpler/`)
 
 ```
 simpler/
@@ -40,7 +40,7 @@ simpler/
       runs/              sweep output
   logs/                  setup.log, val_rng*.log, sweep_*.log
 ```
-Conda env `octo_sim` in `/home/ubuntu/miniforge3/envs`. Nothing else on the box
+Conda env `octo_sim` in `../miniforge3/envs`. Nothing else on the box
 was touched; the pre-existing `fastdepth`/`xpurt` envs and the running
 `train_fastdepth.py` job were left alone (and were competing for the box's 4
 vCPUs throughout — see the throughput note in `VALIDATION.txt`).
@@ -48,12 +48,12 @@ vCPUs throughout — see the throughput note in `VALIDATION.txt`).
 ## Reproducing
 
 ```bash
-scp setup_simpler_g5.sh requirements_g5.txt ubuntu@<host>:/home/ubuntu/simpler/
-ssh ubuntu@<host> 'bash /home/ubuntu/simpler/setup_simpler_g5.sh'   # ~8 min
+scp setup_simpler_g5.sh requirements_g5.txt ubuntu@<host>:../simpler/
+ssh ubuntu@<host> 'bash ../simpler/setup_simpler_g5.sh'   # ~8 min
 # port validation gate -- do not run the sweep until this passes
-ssh ubuntu@<host> '/home/ubuntu/simpler/validate.sh 0'
+ssh ubuntu@<host> '../simpler/validate.sh 0'
 # sweep
-ssh ubuntu@<host> 'xargs -a joblist.txt -n1 -P3 /home/ubuntu/simpler/sweep_job.sh'
+ssh ubuntu@<host> 'xargs -a joblist.txt -n1 -P3 ../simpler/sweep_job.sh'
 ./fetch_g5.sh && python analyze_g5.py
 ```
 

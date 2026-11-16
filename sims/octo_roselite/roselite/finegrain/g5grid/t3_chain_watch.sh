@@ -3,10 +3,10 @@
 set -u; cd "$(dirname "$0")"; source drawer_hosts.sh
 while true; do
   seed=$(for h in "${DR[@]}"; do
-      $SSH ubuntu@$h 'cd /home/ubuntu/simpler/sim_eval/roselite/finegrain/traces_torque3 2>/dev/null && for x in */; do [ -f "$x/energy2.json" ] && basename "$x"; done' 2>/dev/null
+      $SSH ubuntu@$h 'cd ../simpler/sim_eval/roselite/finegrain/traces_torque3 2>/dev/null && for x in */; do [ -f "$x/energy2.json" ] && basename "$x"; done' 2>/dev/null
     done | sort -u | wc -l)
   plane=$(for h in "${DR[@]}"; do
-      $SSH ubuntu@$h 'cd /home/ubuntu/simpler/sim_eval/roselite/finegrain/plane3 2>/dev/null && for x in */; do [ -f "$x/energy2.json" ] && basename "$x"; done' 2>/dev/null
+      $SSH ubuntu@$h 'cd ../simpler/sim_eval/roselite/finegrain/plane3 2>/dev/null && for x in */; do [ -f "$x/energy2.json" ] && basename "$x"; done' 2>/dev/null
     done | grep -E '^(egg|spoon|coke|drawer)_g[0-9]+_[0-9]+_rng[0-9]+$' | sort -u | wc -l)
   r=$(for h in "${DR[@]}"; do $SSH ubuntu@$h 'pgrep -cf "[t]race_eval2.py"' 2>/dev/null; done | paste -sd+ | bc)
   w=$(for h in "${DR[@]}"; do $SSH ubuntu@$h 'pgrep -cf "[c]hain_runner.sh"' 2>/dev/null; done | paste -sd+ | bc)

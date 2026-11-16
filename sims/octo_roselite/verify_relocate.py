@@ -5,7 +5,7 @@ import tensorflow as tf
 tf.config.set_visible_devices([], "GPU")
 import jax, numpy as np
 from octo.model.octo_model import OctoModel
-OUT="/scratch2/dima/misc_sw/octo_work"
+OUT="../octo_work/"
 print("octo module:", __import__("octo").__file__)
 assert "/tmp/" not in __import__("octo").__file__, "STILL ON /tmp!"
 m = OctoModel.load_pretrained("hf://rail-berkeley/octo-small-1.5")

@@ -48,7 +48,7 @@ from its own cost would let the consumer run more often than its producer.
 """
 import argparse, json, os, glob, sys, collections
 
-R = "/scratch/dima/rose-infra/RoSE"
+R = "../RoSE/"
 MB = f"{R}/soc/sw/xpu-rt/zephyr-chipyard-sw/modelblaster"
 GEN = "zephyr-chipyard-sw/gen"
 TARGET = "firesim_f2_rocket_saturn"
