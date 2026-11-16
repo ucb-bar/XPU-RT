@@ -4,8 +4,6 @@
 
 **XPU-RT** is an adaptable full-stack end-to-end (E2E) compilation and scheduling flow for efficient mapping of robotic multi-model workloads onto heterogeneous shared-memory SoCs.
 
-This project is under active development. If you would love to contribute or if you find any issues, please do so by opening a [pull request](https://github.com/ucb-bar/XPURT/pulls) or [filing an issue](https://github.com/ucb-bar/XPURT/issues) on GitHub.
-
 ## Framework model: bring your own compiler
 
 The scheduler core (`xpu-rt/`) is **plug-and-play** —
@@ -16,23 +14,23 @@ per-op kernels according to the schedule's core assignment can sit on the
 
 | flow | compiler / codegen | target | profiling | docs |
 |---|---|---|---|---|
-| **A — ModelBlaster** | PyTorch → quantized Zephyr/RISC-V; curated + LLM-agentic kernel-gen | chipyard (Saturn/Gemmini, RISC-V) | spike / FireSim | [Flow A section below](#flow-a-modelblaster-as-the-compiler-backend), [`zephyr-chipyard-sw/modelblaster/README.md`](zephyr-chipyard-sw/modelblaster/README.md) ("Workflow: integrating with XPURT"), [`docs/end_to_end_xpurt_firesim.md`](docs/end_to_end_xpurt_firesim.md) |
+| **ModelBlaster** | PyTorch → quantized Zephyr/RISC-V; curated + LLM-agentic kernel-gen | chipyard (Saturn/Gemmini, RISC-V) | spike / FireSim | [ModelBlaster section below](#modelblaster-as-the-compiler-backend), [`zephyr-chipyard-sw/modelblaster/README.md`](zephyr-chipyard-sw/modelblaster/README.md) ("Workflow: integrating with XPURT"), [`docs/end_to_end_xpurt_firesim.md`](docs/end_to_end_xpurt_firesim.md) |
 
 The flow feeds `xpu-rt/scheduler.py` and reads/writes the
 `gen/profile/.../results.csv` + `schedules/*.json` shapes; any other compiler
-that produces the same two artifacts can be swapped in. Flow A brings its own
+that produces the same two artifacts can be swapped in. ModelBlaster brings its own
 compiler (ModelBlaster's codegen pipeline, including an LLM-driven kernel
 generator) and its own Zephyr/chipyard build+run path; its walkthrough is in
-["Flow A: ModelBlaster as the compiler backend"](#flow-a-modelblaster-as-the-compiler-backend).
+["ModelBlaster as the compiler backend"](#modelblaster-as-the-compiler-backend).
 
 ### Documentation
 
 * [`docs/end_to_end_xpurt_firesim.md`](docs/end_to_end_xpurt_firesim.md)
   — full walkthrough from a multi-network workload spec to a FireSim
   run with trace plots (scheduler → codegen → build → run → analyze),
-  on the Saturn-Gemmini-Q31 path (Flow A).
+  on the Saturn-Gemmini-Q31 path.
 * [`docs/mlp_dronet_yolo_spike_reproduction.md`](docs/mlp_dronet_yolo_spike_reproduction.md)
-  — a simpler, no-FireSim variant of Flow A: same ModelBlaster codegen and
+  — a simpler, no-FireSim variant of the same flow: same ModelBlaster codegen and
   checkout (`zephyr-chipyard-sw/modelblaster/`), profiled entirely on
   spike with the `greedy`/`greedy_periodic`/`greedy_reserved`/`auto`
   solvers (no MOSEK license needed). Fresh clone to `OVERALL: PASS (3 models)` in six commands
@@ -55,6 +53,9 @@ generator) and its own Zephyr/chipyard build+run path; its walkthrough is in
   predicted-vs-actual gantts from `plot_xpurt_trace.py`. Includes a
   stage-by-stage diff against the standard modelblaster flow and a map to
   the key files.
+* [The XPU-RT Runtime: schedule walker](#the-xpu-rt-runtime-schedule-walker)
+  — the same generated walker on Zephyr/Chipyard and on any Linux target
+  (x86-64 host, riscv64 QEMU, SpacemiT K1 and K3).
 * [`zephyr-chipyard-sw/modelblaster/examples/microros_demo/ROS_FLOW.md`](zephyr-chipyard-sw/modelblaster/examples/microros_demo/ROS_FLOW.md)
   — micro-ROS fixed-pinning baseline flow (the reference against which
   the scheduler is benchmarked).
@@ -74,7 +75,7 @@ large (it vendors 100+ of its own nested submodules) and
 is not needed for the flows below; a recursive init will sit there
 for a very long time pulling in gigabytes you don't need, and may get
 effectively stuck on chipyard's own submodule tree. Initialize only what
-the flow you're following actually needs (Flow A's is in its own section
+the flow you're following actually needs (ModelBlaster's is in its own section
 further down).
 
 #### Describe the workload
@@ -105,15 +106,16 @@ and its plot to `plots/<workload>[_<solver>]_profiled.png`.
 
 | solver | what it does | when to use |
 | --- | --- | --- |
-| `milp` (default) | global cvxpy/MOSEK optimum | rarely usable — of the eleven spike/FireSim workloads only the 212-op `yolov8_only_spike` solves at all; see the scaling note below |
+| `milp` (default) | global cvxpy MILP optimum; MOSEK by default, any MIP-capable cvxpy backend via `--cvxpy-solver` (e.g. `HIGHS`, `SCIPY`) | rarely usable — of the eleven spike/FireSim workloads only the 212-op `yolov8_only_spike` solves at all; see the scaling note below |
 | `greedy` | list scheduling, earliest completion for every op | baseline heuristic |
 | `greedy_periodic` | same, but non-periodic ops get picked first | non-periodic critical path you don't want fragmented |
 | `greedy_reserved` | `greedy_periodic` ordering + periodic ops take the *least contended* lane that still meets their deadline instead of the fastest one | heterogeneous multi-lane targets where a periodic job would otherwise squat on the accelerator the makespan-critical job needs |
 | `heft` | HEFT: order by upward rank (longest path to a sink) rather than earliest completion, place by earliest finish with gap insertion | best makespan on several workloads — but it is deadline-blind, so check the window misses before trusting it |
 | `heft_edf` | HEFT's rank ordering for non-periodic ops, earliest-deadline-first for periodic ops, periodic banded above non-periodic | the strongest single picker by validity (8/11 RISC-V, 23/30 generated) |
+| `decomposed` | two-phase: periodic ops are placed first, then non-periodic ops backfill the remaining gaps | periodic-heavy workloads; the only picker that lands every dronet window on FireSim dronet@50ms + yolov8 |
 | `pso`, `sa` | particle swarm / simulated annealing over a random-key encoding, seeded from every heuristic | research use — they match the best heuristic and have not beaten it; `--search-budget` sets the per-pass wall clock |
 | `milp_native` | the same MILP as `milp`, built directly against MOSEK's Optimizer API instead of through cvxpy | when you want a MIP start: cvxpy silently discards one, this accepts it. Warm-started from HEFT by default. Better than `milp` cold (90.9 vs 112.3 ms on a 242-op instance) but its best result only ties the heuristic that seeded it |
-| `cpsat` | OR-Tools CP-SAT: interval variables + one `AddNoOverlap` per machine | the exact method that actually scales — beats MOSEK at every size measured (212, 242 and 271 ops) and still solves at 677 where the MILP cannot finish building. Needs `XPURT_CPSAT_PYTHON` pointing at an interpreter with `ortools` |
+| `cpsat` | OR-Tools CP-SAT: interval variables + one `AddNoOverlap` per machine | the exact method that actually scales — beats MOSEK at every size measured (212, 242 and 271 ops) and still solves at 677 where the MILP cannot finish building. Needs `ortools` in `python3`, or `XPURT_CPSAT_PYTHON` pointing at an interpreter that has it |
 | `auto` | runs all six constructive pickers and ranks them on (missed periodic windows, whether the refinement loop converged, makespan, total schedule length) | **recommended** — a few seconds even on the largest workloads here. It optimises for a *valid* schedule, so it will give up a little makespan to stop missing deadlines: 10/11 valid against 3-8 for any single picker, and it warns when no candidate is valid |
 
 #### What the MILP already prunes, and where it still runs out
@@ -195,7 +197,7 @@ about a second). On `yolov8_only_spike` it beats every heuristic —
 1.4 s, for 2.2%.
 
 No single heuristic wins everywhere — hence `auto`. Measured over the
-eleven spike/FireSim (Flow A / RISC-V) workloads, reporting the objective
+eleven spike/FireSim (RISC-V) workloads, reporting the objective
 makespan in ms and whether the schedule is *valid*: misses no periodic
 window, and holds enough periodic instances to cover its own makespan.
 `!` = missed a window, `u` = under-covers.
@@ -263,7 +265,7 @@ MOSEK is 2.8x better than HiGHS at equal time budget.
   workloads want a larger value — 2x-resnet50 needs 8.0 to find its 21.81 ms
   schedule — which is why this is a knob and not a constant.
 
-## Flow A: ModelBlaster as the compiler backend
+## ModelBlaster as the compiler backend
 
 ModelBlaster brings PyTorch → quantized Zephyr/RISC-V codegen (curated
 kernels + an LLM-agentic kernel generator) and profiles on spike/FireSim.
@@ -282,127 +284,88 @@ git submodule update --init --recursive zephyr-chipyard-sw   # pulls in modelbla
 ```text
 XPU-RT/                          (this repo)
 └── zephyr-chipyard-sw/          submodule — Zephyr BSP + samples
-    └── modelblaster/            submodule — Flow A compiler
+    └── modelblaster/            submodule — the compiler
 ```
 
-ModelBlaster's own scripts (`scripts/run_xpurt_scheduler*.py`,
-`benchmarks/runners/firesim.py`, `examples/xpurt_demo/run.sh`, ...) default to
-finding XPU-RT as a **sibling** checkout (`XPURT_ROOT` defaults to
-`../XPU-RT`) — that assumption predates the submodule and no longer holds
-once ModelBlaster is nested *inside* XPU-RT (two levels deep, inside
-`zephyr-chipyard-sw`). Set `XPURT_ROOT` to the XPU-RT root explicitly when
-working from the submodule:
+ModelBlaster's `examples/xpurt_demo/run.sh` and `benchmarks/runners/firesim.py`
+look for XPU-RT as a sibling checkout (`XPURT_ROOT` defaults to `../XPU-RT`).
+Inside this repo ModelBlaster sits two levels down, so set `XPURT_ROOT` to the
+XPU-RT root:
 
 ```bash
 export XPURT_ROOT="$(cd ../.. && pwd)"   # run from inside zephyr-chipyard-sw/modelblaster
 ```
 
-(No `pip install` of the `xpurt` package is required either way — the
-bridge scripts import `xpu-rt/*.py` straight off the path `XPURT_ROOT`
-resolves to.)
+[`scripts/repro_mlp_dronet_yolo_spike.sh`](scripts/repro_mlp_dronet_yolo_spike.sh)
+runs steps 1 to 3 end to end on spike; see
+[`docs/mlp_dronet_yolo_spike_reproduction.md`](docs/mlp_dronet_yolo_spike_reproduction.md).
 
 ### 1) Profile each (model, backend) pair
 
-From the ModelBlaster submodule, profile every model/backend combination this
-workload needs on spike or FireSim — this is what fills in the per-op cycle
-data the scheduler bridge reads in step 2:
+From the ModelBlaster submodule, profile every model/backend combination the
+workload needs, on spike or FireSim. This produces the per-op cycle data the
+scheduler reads in step 2:
 
 ```bash
 cd zephyr-chipyard-sw/modelblaster
-QUANT=int8 TARGET=rvv        RUNNER=firesim bash examples/dronet/run.sh
+QUANT=int8 TARGET=rvv         RUNNER=firesim bash examples/dronet/run.sh
 QUANT=int8 TARGET=gemmini_q31 RUNNER=firesim bash examples/dronet/run.sh
 # ...one run per (model, backend) pair in the workload
 ```
 
-### 2) Run the XPU-RT scheduler bridge
+Then emit each model's dispatch graph with `pipeline/emit_dispatch_graph.py`
+and copy the profiles into this repo's `gen/profile/` tree, where the scheduler
+looks for them. Steps 1 to 3 of `scripts/repro_mlp_dronet_yolo_spike.sh` do
+this for the three-network workload, with the exact environment and paths.
 
-ModelBlaster ships two scheduler bridge scripts that import `xpu-rt/scheduler.py`
-straight off this checkout (via `XPURT_ROOT`) and solve with MOSEK through cvxpy
-— the same MILP as `scripts/run_xpurt_schedule.py`, just invoked from
-the ModelBlaster side.
+### 2) Schedule the workload
 
-**Deps:** install the `milp` extra into the same `zephyr` conda env used for
-everything else in this repo, from the top-level XPU-RT checkout:
-
-```bash
-pip install -e ".[milp]"   # adds cvxpy (the modeling layer) to the zephyr env
-```
-
-**MOSEK** — the solver these scripts default to (`--solver MOSEK`) — is a
-separate, license-gated product: `pip install mosek` adds the Python
-package (no license needed just to install it), but actually solving
-requires a license file (`MOSEKLM_LICENSE_FILE`) from mosek.com.
-
-**These bridge scripts' `--solver` flag does not work today**, for either
-value. `scripts/run_xpurt_scheduler.py:328` calls
-`schedule(workload, cvxpy_solver=args.solver, ...)`, but
-`xpu-rt/scheduler.py`'s `schedule()` has no `cvxpy_solver` parameter and no
-`**kwargs`, so the call raises `TypeError` before any solve;
-`scripts/run_xpurt_scheduler_multi.py:362` does
-`from schedulers import get_scheduler`, and no `schedulers` module exists
-under `xpu-rt/`. `xpu-rt/scheduler.py` hardcodes `solver=cp.MOSEK` at four
-call sites (lines 289, 641, 643, 872), so MOSEK is the only backend the
-MILP path can currently use.
-
-For the record, of the solvers cvxpy has installed in the `xpurt` env —
-`CLARABEL`, `DAQP`, `HIGHS`, `MOSEK`, `OSQP`, `SCIPY`, `SCS` — only
-**HIGHS, MOSEK and SCIPY** can solve this model at all: the rest are
-continuous-only and reject the boolean variables outright (verified by
-handing each a 3-boolean toy MIP). HiGHS is free, open source, already
-installed, and cvxpy-drivable, so it is the obvious first alternative to
-benchmark once a `--cvxpy-solver` knob exists. OR-Tools CP-SAT is the
-interesting non-cvxpy candidate — this is a disjunctive no-overlap
-scheduling model, which is what its interval variables are built for — but
-it is not installed and would be a reformulation, not a solver swap.
-
-(modelblaster's own `pyproject.toml` also declares a `scheduler` extra meant
-for `uv sync --extra scheduler` + `uv run` — currently broken for this
-nested-submodule layout: `uv.lock` resolution pulls in every
-`[tool.uv.sources]` entry regardless of which extra you sync, including an
-unrelated `smolvla`-extra path that isn't checked out by default. Plain `python3` in the `zephyr` env, as below, is
-the reliable path today.)
+From the XPU-RT root, `scripts/run_xpurt_schedule.py` reads a network-dependency
+JSON (which networks, their periods, the machine) and the profiles from step 1,
+and writes the schedule to `schedules/`:
 
 ```bash
-cd zephyr-chipyard-sw/modelblaster
-export XPURT_ROOT="$(cd ../.. && pwd)"
-
-# single hetero workload
-PYTHONPATH=. python3 -m scripts.run_xpurt_scheduler \
-    --workload dronet_hetero_int8 \
-    --target-backends gemmini,rvv_opu \
-    --runner firesim \
-    --output schedule_fixtures/dronet_xpurt_mosek.json
-
-# multi-network workload (YAML spec of networks + instance counts)
-PYTHONPATH=. python3 -m scripts.run_xpurt_scheduler_multi \
-    --config configs/multi_3way_qrb.yaml \
-    --output schedule_fixtures/3way_mosek_qrb.json
+python3 scripts/run_xpurt_schedule.py \
+    --networks-json data/toplevel/networks_mlp_dronet_yolo_spike.json \
+    --solver greedy_periodic --profiled
+# -> schedules/scheduled_networks_mlp_dronet_yolo_spike_greedy_periodic_profiled.json
 ```
+
+`--solver` selects any solver from
+[Choosing a solver](#choosing-a-solver---solver). The `milp` solver needs the
+`milp` extra (`pip install -e ".[milp]"`, which adds cvxpy) and a MIP-capable
+cvxpy backend chosen with `--cvxpy-solver`:
+- **HIGHS** is free and open source.
+- **MOSEK** needs a licence file (`MOSEKLM_LICENSE_FILE`) and, at equal time
+  budget, finds schedules about 2.8x better on this model; see
+  [`docs/scheduler_solver_study.md`](docs/scheduler_solver_study.md).
+
+The greedy solvers need neither.
 
 ### 3) Build and run the scheduled binary
 
 ```bash
-SCHEDULE_JSON=$PWD/schedule_fixtures/dronet_xpurt_mosek.json \
-MODELS=dronet,mlp_control \
+cd zephyr-chipyard-sw
+SCHEDULE_JSON="$XPURT_ROOT/schedules/scheduled_networks_mlp_dronet_yolo_spike_greedy_periodic_profiled.json" \
+MODELS=mlp_control,dronet,yolov8_nano \
+QUANTS=fp32,int8,int8 \
 BACKENDS=scalar,rvv \
-QUANT=int8 \
-RUNNER=firesim \
+RUNNER=spike \
 XPURT_TRACE=1 \
-bash examples/xpurt_demo/run.sh
+bash modelblaster/examples/xpurt_demo/run.sh
 ```
 
-`xpurt_demo/run.sh` links one object per (model × backend) and dispatches
-each schedule entry to the right one. With `XPURT_TRACE=1`, the uartlog
-carries per-entry begin/end timestamps that ModelBlaster's
+`xpurt_demo/run.sh` links one object per (model × backend) and dispatches each
+schedule entry to the right one. With `XPURT_TRACE=1`, the log carries
+per-entry begin and end timestamps, which ModelBlaster's
 `scripts/plot_xpurt_trace.py` renders as a Gantt chart against the predicted
-timeline.
+timeline. Use `RUNNER=firesim` to run on FireSim instead of spike.
 
 ### Env vars ModelBlaster uses to find this checkout
 
 | var | default | used by |
 |---|---|---|
-| `XPURT_ROOT` | `../XPU-RT` (a **sibling-checkout default** — override to `../..` when running from `zephyr-chipyard-sw/modelblaster`) | `scripts/run_xpurt_scheduler.py`, `scripts/run_xpurt_scheduler_multi.py`, `scripts/find_min_periodic_makespan*.py`, `benchmarks/runners/firesim.py`, `examples/xpurt_demo/run.sh` |
-| `XPURT_PYTHON` | the `xpu-rt-schedule` conda env (derived from `CONDA_EXE`), else `python3` | `scripts/find_min_periodic_makespan_mosek.py` (needs cvxpy + MOSEK) |
+| `XPURT_ROOT` | `../XPU-RT` (a sibling checkout; set it to the XPU-RT root when running from `zephyr-chipyard-sw/modelblaster`) | `examples/xpurt_demo/run.sh`, `benchmarks/runners/firesim.py` |
 
 This submodule reference is pinned to a commit (standard submodule
 semantics). Because it is nested, bumping it means updating
@@ -413,6 +376,128 @@ For the full ModelBlaster-side workflow (profiling knobs, workload JSON
 schema, models in scope), see
 [`zephyr-chipyard-sw/modelblaster/README.md`](zephyr-chipyard-sw/modelblaster/README.md), section
 "Workflow: integrating with XPURT."
+
+## The XPU-RT Runtime: schedule walker
+
+The XPU-RT runtime is the **schedule walker**: a C program, generated from an
+XPU-RT schedule, that runs every dispatch on the core the scheduler assigned,
+in dependency order and at its scheduled start time.
+
+The walker is a single flow for Zephyr and Linux. One generated source builds
+as a Zephyr image for Chipyard (spike / FireSim) or as an executable for any
+Linux environment:
+- an x86-64 host;
+- riscv64 under QEMU user mode;
+- RISC-V boards such as the SpacemiT K1 and K3.
+
+### Components
+
+All components live in ModelBlaster, under
+[`zephyr-chipyard-sw/modelblaster/`](zephyr-chipyard-sw/modelblaster/):
+
+| Component | File |
+|---|---|
+| Schedule → dispatch table | `pipeline/ingest_xpurt_schedule.py` |
+| Walker source generator | `pipeline/generate_xpurt_main.py` |
+| Per-(model, backend) kernels and weights | `pipeline/generate_skeleton.py`, `pipeline/backend_rename.py` |
+| Intra-op parallel-for | `runtime/modelblaster_pool/` |
+| POSIX platform layer | `runtime/mb_posix.h` |
+| Linux build | `harness_xpurt/build_posix.sh` |
+| Zephyr build | `harness_xpurt/` (CMake app), driven by `examples/xpurt_demo/run.sh` |
+
+On Linux, `runtime/mb_posix.h` provides the platform services the walker uses:
+
+| Service | Linux implementation |
+|---|---|
+| Semaphores | `sem_t` |
+| Timestamps | `CLOCK_MONOTONIC_RAW`, in nanoseconds |
+| Thread pinning | `pthread_setaffinity_np` |
+| Exit | `exit(0)` |
+
+`build_posix.sh` compiles every translation unit with
+`-D_GNU_SOURCE -DMB_PLATFORM_POSIX`.
+
+The walker prints its outputs, per-dispatch profile and trace as
+`=== MODELBLASTER_* ===` markers on stdout. `scripts/plot_xpurt_trace.py`
+reads them on every platform.
+
+### Worker modes
+
+`generate_xpurt_main.py --worker-granularity` selects how the walker maps
+schedule entries to threads:
+
+| Mode | Workers | Use for |
+|---|---|---|
+| `kind` (default) | one per core kind | Chipyard, where a core kind is one hart or one intra-op pool |
+| `hart` | one pinned worker per `(core_kind, hart)` in the dispatch table | multi-hart boards such as the K1 and K3, where the schedule drives each hart (`CPU_P#0` … `CPU_P#7`) independently |
+
+Harts come from the core registry. To use every hart of a board, list each
+hart as a single-hart core of the same kind.
+
+### Core kinds and backends
+
+`--core-kinds` names the core kinds in the schedule and `--backends` names the
+kernel backend each kind runs. When the two lists have the same length, they
+pair by position. For example, on the K1 both core kinds run the `rvv_x60`
+backend:
+
+```bash
+--core-kinds rvv,rvv_c1 --backends rvv_x60,rvv_x60
+```
+
+### Running on Linux
+
+```bash
+cd zephyr-chipyard-sw/modelblaster
+
+# 1. schedule -> dispatch table
+python -m modelblaster.pipeline.ingest_xpurt_schedule \
+    --schedule sched.json --registry cores/<registry>.json \
+    --ir net:graph.json --out out/sched.c --name sched
+
+# 2. walker source
+python -m modelblaster.pipeline.generate_xpurt_main \
+    --schedule sched.json --out out/sched_main.c --name sched \
+    --dispatch-table-header sched.h --core-kinds rvv,rvv_c1 \
+    --backends rvv_x60,rvv_x60 --worker-granularity hart
+
+# 3. build a static riscv64 executable
+MODEL_NAMES=net MODEL_DIRS_BASE=/abs/gen MODEL_BACKENDS=rvv_x60 \
+XPURT_SCHEDULE_C=$PWD/out/sched.c XPURT_MAIN_C=$PWD/out/sched_main.c \
+XPURT_INCLUDE_DIR=$PWD/out OUT=$PWD/out/walker \
+CC=${CROSS}gcc LDFLAGS=-static \
+    bash harness_xpurt/build_posix.sh
+
+# 4. run
+./out/walker > run.log                                        # on a riscv64 board
+qemu-riscv64-static -cpu max,vlen=256 ./out/walker > run.log  # under QEMU on an x86-64 host
+```
+
+- `CROSS` is the prefix of a riscv64 Linux cross toolchain, such as the
+  SpacemiT toolchain.
+- To build for the x86-64 host, omit `CC` and `LDFLAGS` and use the `scalar`
+  backend.
+- To run on a board, copy the executable to the board and run it there.
+
+### Supported targets
+
+The table lists results for a three-network schedule (`mlp_control`, `dronet`,
+`yolov8_nano`: 826 dispatches, 46 instances) in both worker modes:
+
+| Target | Build | Result |
+|---|---|---|
+| x86-64 Linux host | native, `scalar` | all dispatches complete; `mlp_control` and `dronet` bit-exact against the golden |
+| riscv64, QEMU user mode (`-cpu max,vlen=256`) | static riscv64, `rvv_x60` | 46/46 instances; all three networks bit-exact |
+| SpacemiT K1 (8 × X60, Bianbu, Linux 6.6) | static riscv64, `rvv_x60` | 46/46 instances; all three networks bit-exact |
+| SpacemiT K3, X100 cluster (CPUs 0–7, Bianbu, Linux 6.18) | static riscv64, `rvv_x60`; run with `taskset -c 0-7` | 46/46 instances; outputs identical to the K1; about 3.3× faster than the K1 on `dronet` and `yolov8_nano` |
+
+One `rvv_x60` build serves the K1, the K3 X100 cluster and QEMU:
+- the backend targets `-march=rv64gcv`;
+- the X60 and X100 both have VLEN 256;
+- the executable is statically linked.
+
+For more detail and the host test (`tests/test_xpurt_walker_host.py`), see
+[`zephyr-chipyard-sw/modelblaster/harness_xpurt/LINUX.md`](zephyr-chipyard-sw/modelblaster/harness_xpurt/LINUX.md).
 
 ## Repository Map
 
@@ -429,24 +514,24 @@ XPU-RT/
 ├── scripts/                   # Python entry points for experiments/scheduling
 ├── data/                      # Collected benchmark/profile/scheduling outputs
 ├── zephyr-chipyard-sw/         # Git submodule — Zephyr BSP + samples
-│   └── modelblaster/           #   nested submodule (PyTorch->Zephyr/RISC-V pipeline) — Flow A
+│   └── modelblaster/           #   nested submodule (PyTorch->Zephyr/RISC-V pipeline)
 │       └── third_party/KernelBlaster/  # nested submodule — originating research project
 ├── env.yml                     # cvxpy+MOSEK conda env ("xpu-rt-schedule") for
-                                 #   ModelBlaster's own MOSEK bridge scripts (Flow A)
+                                 #   ModelBlaster's own MOSEK bridge scripts
 └── pyproject.toml              # xpu-rt's own deps (`pip install -e .`); see
                                  #   scripts/install_xpurt_deps.sh for the
                                  #   spike-only reproducible-flow's dependency set
 ```
 
 
-### Data/Artifact Flow Between This Repo and `ModelBlaster` (Flow A)
+### Data/Artifact Flow Between This Repo and `ModelBlaster`
 
 ModelBlaster is a submodule nested in `zephyr-chipyard-sw/modelblaster` — but its
 own scripts still reach back into XPU-RT via the `XPURT_ROOT` env
 vars and a `[tool.uv.sources]` entry rather than a relative import, so
 `XPURT_ROOT` needs to be set to `../..` (not left at its sibling-checkout
 default) when running from inside the submodule. See
-["Flow A: ModelBlaster as the compiler backend"](#flow-a-modelblaster-as-the-compiler-backend)
+["ModelBlaster as the compiler backend"](#modelblaster-as-the-compiler-backend)
 above.
 
 1. ModelBlaster profiles each (model, backend) pair on spike/FireSim and emits

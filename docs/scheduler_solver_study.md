@@ -11,7 +11,7 @@ makespan).
 
 This document surveys the mechanisms available, records which were
 implemented against `xpu-rt`, and reports what they measured. The measurement
-workloads are the Flow A / RISC-V ones (spike-profiled and FireSim), not the
+workloads are the RISC-V ones (spike-profiled and FireSim), not the
 Qualcomm ones.
 
 ## 1. The mechanism landscape

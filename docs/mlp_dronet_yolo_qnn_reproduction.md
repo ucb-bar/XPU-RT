@@ -379,10 +379,10 @@ limitations", not a measurement-state problem.
 
 ## How this differs from the standard modelblaster flow
 
-Flow A (spike/FireSim) and this flow share the front end and the scheduling
+The ModelBlaster spike/FireSim flow and this flow share the front end and the scheduling
 path, and diverge completely at codegen:
 
-| Stage | Flow A — modelblaster | Flow C — this doc |
+| Stage | ModelBlaster (spike/FireSim) | Flow C — this doc |
 |---|---|---|
 | PyTorch → IR | `extract_graph` | **same, reused verbatim** |
 | Quantization | `extract_graph --quant int8` (PTQ), weights baked into C | `qairt-quantizer` on the DLC; `extract_graph`'s `weights.npz` is **discarded** |
@@ -411,9 +411,9 @@ modelblaster is a schema: `flowc_sched_entry_t`'s first block is
 field-for-field `xpurt_sched_entry_t`, re-declared rather than included, so
 a reader of one table can read the other.
 
-### Additions with no Flow A counterpart
+### Additions with no ModelBlaster-flow counterpart
 
-- **`bindings/*.json` — the tile map.** Flow A does not need one: its
+- **`bindings/*.json` — the tile map.** The ModelBlaster flow does not need one: its
   dispatch unit is the op. Here a tile is a contiguous IR op range compiled
   into one QNN graph, with a context binary per backend. Tiling is
   therefore a compile-time decision, and re-tiling costs a conversion.
