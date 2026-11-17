@@ -103,6 +103,9 @@ def load_networks_config(json_path: str) -> tuple[dict, dict]:
         "impls": {k.strip().lower(): dict(v) for k, v in (hw.get("impls") or {}).items()
                   if isinstance(v, dict) and v},
         "enable_impls": bool(sched.get("enable_impls", False)),
+        # Hold the solver to ModelBlaster's codegen contract (cores/
+        # codegen_contract.json). None = on in shard mode, off otherwise.
+        "codegen_contract": sched.get("codegen_contract", None),
         "cpu_p_profile_hw": profile_hw.get("cpu_p", "RVV"),
         "cpu_e_profile_hw": profile_hw.get("cpu_e", "scalar"),
         "profile_target": profile_cfg.get("target", "spacemit_x60"),
@@ -387,7 +390,48 @@ def schedule_iree_networks(
         return any(jn.startswith(nid) and jn[len(nid):].isdigit() and jn != nid
                    for nid in periodic_net_ids)
 
+    # ModelBlaster's codegen contract: a convolution's weights are packed for
+    # its core width, so every instance of one must take one width, and that
+    # width must divide its output channels. On by default in shard mode, the
+    # mode that offers several widths per dispatch.
+    contract = None
+    use_contract = cfg["codegen_contract"]
+    if use_contract is None:
+        use_contract = machine_combination_mode == "shard"
+    if use_contract:
+        import codegen_contract
+        if not profiled_by_network:
+            print("  codegen contract: skipped, it needs profiled module names "
+                  "(use_profiled)")
+        else:
+            contract = codegen_contract.load()
+            print(f"  codegen contract: {codegen_contract.contract_path()}")
+    _net_ids = sorted(profiled_by_network or {}, key=len, reverse=True)
+
+    def _module_name_of(op):
+        name = str(op.operation_name or "")
+        for net in _net_ids:
+            rest = name[len(net):] if name.startswith(net) else None
+            if rest is None or not (rest.startswith("_") or rest[:1].isdigit()):
+                continue
+            for bucket in ("p", "e"):
+                rec = profiled_by_network[net].get(bucket, {}).get(op.operation_id)
+                if rec and rec.get("module_name"):
+                    return rec["module_name"], net
+            return None, net
+        return None, None
+
     def _build_workload():
+        workload = _create_workload()
+        if contract is not None:
+            st = codegen_contract.apply_to_workload(workload, _module_name_of, contract)
+            print(f"  codegen contract: pinned {st['pinned_dispatches']} packed-weight "
+                  f"dispatch(es) to one width, excluded {st['oc_excluded_options']} "
+                  f"option(s) whose width does not divide OC"
+                  + (f"; no common width for {st['unpinnable'][:4]}" if st["unpinnable"] else ""))
+        return workload
+
+    def _create_workload():
         return create_workload_from_network_hierarchy(
             networks_data=networks_data,
             repo_base_path=repo_base_path,
@@ -983,6 +1027,21 @@ def schedule_iree_networks(
         profiled_times_by_network=profiled_by_network,
         combo_impls=combo_impls,
     )
+    if contract is not None:
+        with open(json_output_path) as f:
+            _out = json.load(f)
+        bad = codegen_contract.violations(_out["dispatches"], contract)
+        _out.setdefault("metadata", {})["codegen_contract"] = {
+            "path": codegen_contract.contract_path(), "violations": bad}
+        with open(json_output_path, "w") as f:
+            json.dump(_out, f, indent=2)
+        if bad:
+            print(f"WARN: codegen contract: {len(bad)} violation(s); ModelBlaster "
+                  f"cannot build this schedule:")
+            for v in bad[:10]:
+                print(f"  - {v}")
+        else:
+            print("  codegen contract: schedule satisfies it")
 
     # Feedback-driven compilation: surface any dispatch-granularity mismatch
     # between periodic and non-periodic jobs in this schedule. Advisory
