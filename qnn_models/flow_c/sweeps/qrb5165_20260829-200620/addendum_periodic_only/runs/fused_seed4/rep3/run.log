@@ -1,0 +1,56 @@
+[main] lane 2 (dsp|fused_split) shares core 6 with lane 1 (dsp|mlp_control): dropping its SCHED_FIFO 0 and 114 us spin to avoid two real-time spinners on one core
+Context handle already exists!
+[bringup] HTA  /root/qnn_runtime_ctx/ctx_fused_depth_conv__Hta.bin → 1 graph(s): fused_depth_conv
+[bringup] DSP  /root/qnn_runtime_ctx/ctx_mlp_control__Dsp.bin → 1 graph(s): mlp_control
+[bringup] DSP  /root/qnn_runtime_ctx/ctx_fused_vision_conv__Dsp.bin → 1 graph(s): fused_vision_conv
+[bringup] DSP  /root/qnn_runtime_ctx/ctx_fused_tail_from_conv__Dsp.bin → 1 graph(s): fused_tail_from_conv
+[bringup] CPU  /root/qnn_runtime_ctx/ctx_mlp_control_fp32__Cpu.bin → 1 graph(s): mlp_control_fp32
+Context handle already exists!
+[bringup] HTA  /root/qnn_runtime_ctx/ctx_fused_vision_conv__Hta.bin → 1 graph(s): fused_vision_conv
+[bringup] DSP  /root/qnn_runtime_ctx/ctx_fused_depth_conv__Dsp.bin → 1 graph(s): fused_depth_conv
+[bringup] CPU  /root/qnn_runtime_ctx/ctx_fused_tail_from_conv_fp32__Cpu.bin → 1 graph(s): fused_tail_from_conv
+[main] 8 context(s), 15 entries, 5 lane(s):
+  lane 0  hta|fused_split core 7  spin 200 us  fifo 0
+  lane 1  dsp|mlp_control core 6  spin 200 us  fifo 0
+  lane 2  dsp|fused_split core 6  spin 0 us  fifo 0
+  lane 3  cpu|mlp_control core 5  spin 1276 us  fifo 40
+  lane 4  cpu|fused_split core 4  spin 1884 us  fifo 40
+[main] iteration 1/2 wall=20.427 ms
+[main] iteration 2/2 wall=20.469 ms
+/prj/qct/webtech_scratch20/mlg_user_admin/qaisw_source_repo/rel/qairt-2.45.0/release/SNPE_SRC/avante-tools/prebuilt/dsp/hexagon-sdk-4.1.0/ipc/fastrpc/rpcmem/src/rpcmem_android.c:38:dummy call to rpcmem_init, rpcmem APIs will be used from libxdsprpc
+[run] e=0   fused_split   #0  fused_depth_conv       lane=hta|fused_split HTA predicted=  1.568 actual=  0.360 ms (start=   0.134, late=+0.005)
+[run] e=1   mlp_control   #0  mlp_control_full       lane=dsp|mlp_control DSP predicted=  0.589 actual=  0.468 ms (start=   0.654, late=+0.005)
+[run] e=2   fused_split   #0  fused_vision_conv      lane=dsp|fused_split DSP predicted=  0.459 actual=  0.779 ms (start=   1.300, late=+0.062)
+[run] e=3   fused_split   #0  fused_tail             lane=dsp|fused_split DSP predicted=  4.303 actual=  3.442 ms (start=   2.095, late=+0.398)
+[run] e=4   mlp_control   #1  mlp_control_full       lane=cpu|mlp_control CPU predicted=  0.107 actual=  0.062 ms (start=   6.906, late=+0.013)
+[run] e=5   fused_split   #1  fused_vision_conv      lane=hta|fused_split HTA predicted=  0.931 actual=  1.183 ms (start=   8.534, late=+0.004)
+[run] e=7   mlp_control   #2  mlp_control_full       lane=dsp|mlp_control DSP predicted=  0.589 actual=  0.711 ms (start=   9.475, late=+0.014)
+[run] e=6   fused_split   #1  fused_depth_conv       lane=dsp|fused_split DSP predicted=  0.392 actual=  0.421 ms (start=  10.216, late=+1.147)
+[run] e=8   mlp_control   #3  mlp_control_full       lane=cpu|mlp_control CPU predicted=  0.107 actual=  0.048 ms (start=  12.009, late=+0.009)
+[run] e=9   fused_split   #1  fused_tail             lane=cpu|fused_split CPU predicted=  0.354 actual=  3.469 ms (start=  12.118, late=+0.011)
+[run] e=10  fused_split   #2  fused_vision_conv      lane=hta|fused_split HTA predicted=  0.931 actual=  0.468 ms (start=  16.008, late=+0.008)
+[run] e=11  mlp_control   #4  mlp_control_full       lane=dsp|mlp_control DSP predicted=  0.589 actual=  0.366 ms (start=  16.918, late=+0.007)
+[run] e=12  fused_split   #2  fused_depth_conv       lane=hta|fused_split HTA predicted=  1.568 actual=  0.536 ms (start=  16.934, late=+0.003)
+[run] e=14  mlp_control   #5  mlp_control_full       lane=cpu|mlp_control CPU predicted=  0.107 actual=  0.053 ms (start=  20.009, late=+0.009)
+[run] e=13  fused_split   #2  fused_tail             lane=cpu|fused_split CPU predicted=  0.354 actual=  0.811 ms (start=  19.658, late=+0.012)
+
+[summary] 15/15 entries executed, wall=20.469 ms (predicted makespan 20.107 ms, ratio 1.02x), tensor handoffs=1
+
+=== MODELBLASTER_XPURT_TRACE_BEGIN ===
+entry_id,network,instance,dispatch_id,op,name,core_kind,hart,predicted_start_ms,predicted_duration_ms,worker_kind_idx,actual_start_cycles,actual_end_cycles,time_unit,backend,ctx,graph,dep_wait_ms,gate_ms,n_ir_ops
+0,fused_split,0,1,qnn_graph,fused_depth_conv,hta,7,0.129000,1.568000,0,134,493,us,HTA,ctx_fused_depth_conv__Hta.bin,fused_depth_conv,0.000677,0.129073,2
+1,mlp_control,0,0,qnn_graph,mlp_control_full,dsp,6,0.649000,0.589000,1,654,1122,us,DSP,ctx_mlp_control__Dsp.bin,mlp_control,0.000677,0.649480,7
+2,fused_split,0,0,qnn_graph,fused_vision_conv,dsp,6,1.238000,0.459000,2,1299,2078,us,DSP,ctx_fused_vision_conv__Dsp.bin,fused_vision_conv,0.000677,1.295001,4
+3,fused_split,0,2,qnn_graph,fused_tail,dsp,6,1.697000,4.303000,2,2095,5537,us,DSP,ctx_fused_tail_from_conv__Dsp.bin,fused_tail_from_conv,2.085221,2.089024,10
+4,mlp_control,1,0,qnn_graph,mlp_control_full,cpu,5,6.893000,0.107000,3,6905,6967,us,CPU,ctx_mlp_control_fp32__Cpu.bin,mlp_control_fp32,0.019012,6.893320,7
+5,fused_split,1,0,qnn_graph,fused_vision_conv,hta,7,8.530010,0.931000,0,8534,9717,us,HTA,ctx_fused_vision_conv__Hta.bin,fused_vision_conv,0.501030,8.530119,4
+6,fused_split,1,1,qnn_graph,fused_depth_conv,dsp,6,9.069010,0.392000,2,10215,10637,us,DSP,ctx_fused_depth_conv__Dsp.bin,fused_depth_conv,5.549044,9.521450,2
+7,mlp_control,2,0,qnn_graph,mlp_control_full,dsp,6,9.461010,0.589000,1,9474,10185,us,DSP,ctx_mlp_control__Dsp.bin,mlp_control,5.557430,9.471238,7
+8,mlp_control,3,0,qnn_graph,mlp_control_full,cpu,5,12.000000,0.107000,3,12008,12056,us,CPU,ctx_mlp_control_fp32__Cpu.bin,mlp_control_fp32,6.976920,12.000558,7
+9,fused_split,1,2,qnn_graph,fused_tail,cpu,4,12.107000,0.354000,4,12118,15586,us,CPU,ctx_fused_tail_from_conv_fp32__Cpu.bin,fused_tail_from_conv,10.884634,12.107545,10
+10,fused_split,2,0,qnn_graph,fused_vision_conv,hta,7,16.000000,0.931000,0,16008,16475,us,HTA,ctx_fused_vision_conv__Hta.bin,fused_vision_conv,9.730477,16.000309,4
+11,mlp_control,4,0,qnn_graph,mlp_control_full,dsp,6,16.911000,0.589000,1,16917,17284,us,DSP,ctx_mlp_control__Dsp.bin,mlp_control,10.202599,16.912363,7
+12,fused_split,2,1,qnn_graph,fused_depth_conv,hta,7,16.931000,1.568000,0,16934,17470,us,HTA,ctx_fused_depth_conv__Hta.bin,fused_depth_conv,16.485661,16.931531,2
+13,fused_split,2,2,qnn_graph,fused_tail,cpu,4,19.646000,0.354000,4,19658,20469,us,CPU,ctx_fused_tail_from_conv_fp32__Cpu.bin,fused_tail_from_conv,17.695030,19.646126,10
+14,mlp_control,5,0,qnn_graph,mlp_control_full,cpu,5,20.000000,0.107000,3,20009,20062,us,CPU,ctx_mlp_control_fp32__Cpu.bin,mlp_control_fp32,15.816076,20.000218,7
+=== MODELBLASTER_XPURT_TRACE_END ===
