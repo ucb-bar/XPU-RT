@@ -490,11 +490,18 @@ The table lists results for a three-network schedule (`mlp_control`, `dronet`,
 | riscv64, QEMU user mode (`-cpu max,vlen=256`) | static riscv64, `rvv_x60` | 46/46 instances; all three networks bit-exact |
 | SpacemiT K1 (8 × X60, Bianbu, Linux 6.6) | static riscv64, `rvv_x60` | 46/46 instances; all three networks bit-exact |
 | SpacemiT K3, X100 cluster (CPUs 0–7, Bianbu, Linux 6.18) | static riscv64, `rvv_x60`; run with `taskset -c 0-7` | 46/46 instances; outputs identical to the K1; about 3.3× faster than the K1 on `dronet` and `yolov8_nano` |
+| SpacemiT K3, X100 + A100 (CPUs 0–15) | static riscv64, `rvv_k3` on the X100 and `ime_k3_a100` or `rvv_k3_a100` on the A100; `MODELBLASTER_AI_CPUS=8-15` | 46/46 instances; all three networks bit-exact; outputs identical to the K1 |
 
 One `rvv_x60` build serves the K1, the K3 X100 cluster and QEMU:
 - the backend targets `-march=rv64gcv`;
 - the X60 and X100 both have VLEN 256;
 - the executable is statically linked.
+
+The A100 cluster (VLEN 1024) needs its own backends, built at `zvl1024b`, which
+is illegal on the X100. A thread may run there only after it registers its own
+TID through `/proc/set_ai_thread`, so each walker worker places itself on its
+hart, and `main` stays on the X100. The K3 runs use the IRs, kernels and
+schedule generated with ModelBlaster's own pipeline (1,054 dispatches).
 
 For more detail and the host test (`tests/test_xpurt_walker_host.py`), see
 [`zephyr-chipyard-sw/modelblaster/harness_xpurt/LINUX.md`](zephyr-chipyard-sw/modelblaster/harness_xpurt/LINUX.md).
