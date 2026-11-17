@@ -143,7 +143,9 @@ def load_networks_config(json_path: str) -> tuple[dict, dict]:
         "reserved_max_slowdown": (float(sched["reserved_max_slowdown"])
                                   if sched.get("reserved_max_slowdown") is not None
                                   else None),
-        "machine_combination_mode": str(sched.get("machine_combination_mode", "singletons")),
+        # Which core groups a dispatch may run on: "prefix" (default),
+        # "singletons" or "shard"; see workload_factory.build_machine_combinations.
+        "machine_combination_mode": str(sched.get("machine_combination_mode", "prefix")),
         "enforce_same_processor_combinations": bool(sched.get("enforce_same_processor_combinations", True)),
         "machine_core_counts": machine_core_counts,
     }
@@ -283,8 +285,9 @@ def schedule_iree_networks(
     print(f"  machine_combination_mode: {machine_combination_mode}")
     print(f"  enforce_same_processor_combinations: {enforce_same_processor_combinations}")
 
-    # Build machines list and machine combinations (cumulative core groups per type)
-    machines, machine_combinations = build_machine_combinations(machine_core_counts)
+    # Build machines list and the core groups (topologies) a dispatch may use
+    machines, machine_combinations = build_machine_combinations(
+        machine_core_counts, mode=machine_combination_mode)
     n_cores = len(machines)
     transfer_times = np.zeros((n_cores, n_cores))
 

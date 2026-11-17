@@ -25,48 +25,85 @@ def expand_machine_core_counts_to_list(machine_core_counts: dict[str, int]) -> l
     return machines
 
 
-def build_machine_combinations(machine_core_counts: dict[str, int]) -> tuple[list[str], list[list[str]]]:
-    """
-    Build the full machines list and cumulative core-group combinations.
+MACHINE_COMBINATION_MODES = ("prefix", "singletons", "shard")
 
-    For {'CPU_P': 4, 'CPU_E': 4} returns:
-      machines = ['CPU_P#0', ..., 'CPU_P#3', 'CPU_E#0', ..., 'CPU_E#3']
-      combinations = [
-          ['CPU_P#0'],                                  # 1 P-core  → topo_0
-          ['CPU_P#0', 'CPU_P#1'],                       # 2 P-cores → topo_0_1
-          ['CPU_P#0', 'CPU_P#1', 'CPU_P#2'],            # 3 P-cores → topo_0_1_2
-          ['CPU_P#0', 'CPU_P#1', 'CPU_P#2', 'CPU_P#3'], # 4 P-cores → topo_0_1_2_3
-          ['CPU_E#0'],                                  # 1 E-core  → topo_0
-          ...
-      ]
 
-    Each combination only contains cores from the same processor type.
+def aligned_core_blocks(cores: list[str]) -> list[list[str]]:
+    """Every core on its own, plus buddy-aligned power-of-two blocks.
+
+    For eight cores: [0] .. [7], [0,1] [2,3] [4,5] [6,7], [0..3] [4..7], [0..7].
+
+    Aligned blocks are either disjoint or nested, so two blocks that share no
+    core can run at the same time and two that share one are serialised by the
+    overlap test. Unaligned windows such as [1,2] add no placement freedom (the
+    cores are interchangeable) but multiply the option count. Only widths that
+    are powers of two appear, which are the widths a board is profiled at. A
+    trailing group shorter than the block size is kept, so a cluster whose core
+    count is not a power of two still offers every core.
     """
+    out = [[c] for c in cores]
+    size = 2
+    while size <= len(cores):
+        for start in range(0, len(cores), size):
+            block = list(cores[start:start + size])
+            if len(block) > 1:
+                out.append(block)
+        size *= 2
+    return out
+
+
+def build_machine_combinations(
+    machine_core_counts: dict[str, int],
+    mode: str = "prefix",
+) -> tuple[list[str], list[list[str]]]:
+    """
+    Build the full machines list and the core groups a dispatch may run on.
+
+    `mode` (the spec's `scheduler.machine_combination_mode`) selects the
+    topologies the solver can choose from. Every group holds cores of one kind.
+
+      "prefix"      cumulative prefixes of each kind, [#0], [#0,#1], ...,
+                    plus every other core on its own. A multi-core group always
+                    starts at core 0, so two multi-core dispatches of one kind
+                    never run at the same time. The default.
+      "singletons"  every core on its own: as many concurrent dispatches as
+                    cores, none of them spread over several cores.
+      "shard"       every core on its own plus aligned power-of-two blocks
+                    (see `aligned_core_blocks`): a dispatch may take 1, 2, 4,
+                    ... cores, and disjoint blocks run concurrently, so the
+                    solver chooses between e.g. one 8-core group, two 4-core
+                    groups, or eight single cores.
+
+    For {'CPU_P': 4} in prefix mode:
+      machines     = ['CPU_P#0', ..., 'CPU_P#3']
+      combinations = [['CPU_P#0'], ['CPU_P#0','CPU_P#1'], ['CPU_P#0','CPU_P#1','CPU_P#2'],
+                      ['CPU_P#0','CPU_P#1','CPU_P#2','CPU_P#3'],
+                      ['CPU_P#1'], ['CPU_P#2'], ['CPU_P#3']]
+
+    A group of N cores is timed with the N-core profile (`topo_tag_for_combination`).
+    """
+    if mode not in MACHINE_COMBINATION_MODES:
+        raise ValueError(f"machine_combination_mode must be one of "
+                         f"{MACHINE_COMBINATION_MODES}, got {mode!r}")
     machines = expand_machine_core_counts_to_list(machine_core_counts)
     combinations = []
     for machine_type, count in machine_core_counts.items():
         cores = [f"{machine_type}#{i}" for i in range(count)]
-        # Cumulative groups: how MANY cores one dispatch uses (intra-op pool
-        # parallelism). The topo tag is derived from the group's LENGTH.
-        for n in range(1, count + 1):
-            combinations.append(cores[:n])
-        # Singletons for the non-first cores: WHICH core one dispatch uses.
-        #
-        # Without these the enumeration only ever offers prefixes of #0, so two
-        # independent dispatches of the same kind can never be placed on two
-        # sibling harts -- the solver would have handled it (greedy_scheduler's
-        # _earliest_start_for only serialises combinations that OVERLAP, and
-        # ['CPU_E#0'] and ['CPU_E#1'] do not), but the option was never in its
-        # search space. That is why a 12-tile split graph on cpu_e=2 scheduled
-        # all 27 dispatches onto CPU_E#0, and why every same-kind sharding win
-        # measured on the quad bitstream had to come from a hand-written
-        # schedule rather than the solver.
-        #
-        # Safe for profile lookup: topo_tag_for_combination() keys off the
-        # group's LENGTH, so ['CPU_E#1'] resolves to the same topo_0 profile as
-        # ['CPU_E#0'] -- same kind, one core.
-        for i in range(1, count):
-            combinations.append([cores[i]])
+        if mode == "shard":
+            combinations.extend(aligned_core_blocks(cores))
+        elif mode == "singletons":
+            combinations.extend([c] for c in cores)
+        else:
+            # Cumulative groups: how MANY cores one dispatch uses (intra-op pool
+            # parallelism). The topo tag is derived from the group's LENGTH.
+            for n in range(1, count + 1):
+                combinations.append(cores[:n])
+            # Singletons for the non-first cores: WHICH core one dispatch uses.
+            # Without these two independent dispatches of the same kind could
+            # never be placed on two sibling cores. Safe for profile lookup:
+            # ['CPU_E#1'] resolves to the same topo_0 profile as ['CPU_E#0'].
+            for i in range(1, count):
+                combinations.append([cores[i]])
     return machines, combinations
 
 
