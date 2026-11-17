@@ -14,6 +14,8 @@ import os
 
 import numpy as np
 
+from profile_roots import resolve_gen_root
+
 from workload_factory import (
     resolve_dispatch_deps_path,
     topo_tag_for_combination,
@@ -93,9 +95,14 @@ def find_profile_csv(
     hw: str,
     basename: str,
     topo_tag: str = "topo_0_1_2_3",
+    gen_root: str | None = None,
 ) -> str | None:
     """
     Find a profiling results.csv produced by runtime/scripts/profile_remote.sh.
+
+    The tree is `$XPURT_GEN_ROOT` when set, else `<repo>/<gen_root>`, where
+    `gen_root` is the spec's `hardware.profile.gen_root` (default "gen"; old
+    top-level names such as "gen_mb" resolve through profile_roots).
 
     Expected layout:
       gen/profile/<hw>/<target>/<model>/<basename>/<input_tag>/<topo_tag>/results.csv
@@ -103,7 +110,8 @@ def find_profile_csv(
     We pick the most recently modified match.
     """
     profile_root = os.path.join(
-        os.environ.get("XPURT_GEN_ROOT") or os.path.join(repo_base_path, "gen"),
+        os.environ.get("XPURT_GEN_ROOT")
+        or os.path.join(repo_base_path, resolve_gen_root(gen_root or "gen")),
         "profile")
 
     # New layout (with input_tag subdir).
@@ -492,6 +500,7 @@ def _load_all_topo_profiles(
     combo_hw: list[str],
     machine_combinations: list[list[str]],
     topo_tag_override=None,
+    gen_root: str | None = None,
 ) -> dict[tuple[str, str], dict[int, dict]]:
     """
     Load profiles for all (hw, topo) combinations for a network.
@@ -526,6 +535,7 @@ def _load_all_topo_profiles(
             csv_path = find_profile_csv(
                 repo_base_path, model=model_candidate,
                 target=profile_target, hw=hw, basename=basename, topo_tag=topo,
+                gen_root=gen_root,
             )
             if csv_path:
                 prof = load_profiled_times(csv_path)
@@ -586,6 +596,7 @@ def load_profiled_processing_times(
     p_core_speedup: float,
     topo_tag_override=None,
     strict: bool = True,
+    gen_root: str | None = None,
 ) -> tuple[dict[str, list[float]], dict[int, dict], dict[int, dict], dict[str, dict[str, dict[int, dict]]]]:
     """
     Load profiled processing times for all networks and dispatches.
@@ -642,7 +653,7 @@ def load_profiled_processing_times(
         all_profiles = _load_all_topo_profiles(
             net_id, net_info, dispatch_deps_path,
             repo_base_path, profile_target, combo_hw, machine_combinations,
-            topo_tag_override=topo_tag_override,
+            topo_tag_override=topo_tag_override, gen_root=gen_root,
         )
         # Verify every (hw, topo) requested by the schedule has a profile.
         hw_types = set(combo_hw)

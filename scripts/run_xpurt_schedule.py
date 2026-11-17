@@ -295,6 +295,17 @@ def schedule_iree_networks(
     print(f"  machine_combination_mode: {machine_combination_mode}")
     print(f"  enforce_same_processor_combinations: {enforce_same_processor_combinations}")
 
+    # Boards with a capability table (K1, K3): refuse a backend a core kind
+    # cannot execute (e.g. an IME build on a cluster without IME) before
+    # solving, for the main profile_hw map and every implementation.
+    import capabilities as _capabilities
+    if profile_target in _capabilities.CAPABILITIES_BY_TARGET:
+        _caps = _capabilities.capabilities_for_target(profile_target)
+        _capabilities.check_profile_hw_map(cfg["profile_hw_map"], capabilities=_caps)
+        for _kind, _impl_hw in cfg["impls"].items():
+            for _hw in _impl_hw.values():
+                _capabilities.check_profile_hw_map({_kind: _hw}, capabilities=_caps)
+
     # Build machines list and the core groups (topologies) a dispatch may use
     machines, machine_combinations = build_machine_combinations(
         machine_core_counts, mode=machine_combination_mode)
@@ -361,6 +372,7 @@ def schedule_iree_networks(
             rng=rng,
             p_core_speedup=effective_p_core_speedup,
             topo_tag_override=tt_override,
+            gen_root=cfg["gen_root"],
         )
 
     # "Periodic" means the op belongs to a network the workload declared
@@ -398,6 +410,13 @@ def schedule_iree_networks(
     use_contract = cfg["codegen_contract"]
     if use_contract is None:
         use_contract = machine_combination_mode == "shard"
+    # XPURT_UNIFORM_PACKED_WIDTH=1/0 overrides the spec (used by board scripts).
+    if os.environ.get("XPURT_UNIFORM_PACKED_WIDTH") in ("0", "1"):
+        use_contract = os.environ["XPURT_UNIFORM_PACKED_WIDTH"] == "1"
+    # XPURT_SHARD_ONLY_NETS=net1,net2: only these networks may take more than
+    # one core per dispatch; every other network stays on single cores.
+    shard_only = {n.strip() for n in os.environ.get("XPURT_SHARD_ONLY_NETS", "").split(",")
+                  if n.strip()}
     if use_contract:
         import codegen_contract
         if not profiled_by_network:
@@ -407,6 +426,7 @@ def schedule_iree_networks(
             contract = codegen_contract.load()
             print(f"  codegen contract: {codegen_contract.contract_path()}")
     _net_ids = sorted(profiled_by_network or {}, key=len, reverse=True)
+    from codegen_contract import PRICED_OUT_MS as codegen_contract_priced_out_ms
 
     def _module_name_of(op):
         name = str(op.operation_name or "")
@@ -423,6 +443,21 @@ def schedule_iree_networks(
 
     def _build_workload():
         workload = _create_workload()
+        if shard_only:
+            combos = workload.get_machine_combinations()
+            wide = [k for k, c in enumerate(combos) if len(c) > 1]
+            n_ops = 0
+            for op in workload.operations:
+                net = next((n for n in sorted(networks, key=len, reverse=True)
+                            if str(op.operation_name or "").startswith(n)), None)
+                if net is not None and net not in shard_only:
+                    op.processing_times = list(op.processing_times)
+                    for k in wide:
+                        if k < len(op.processing_times):
+                            op.processing_times[k] = codegen_contract_priced_out_ms
+                    n_ops += 1
+            print(f"  XPURT_SHARD_ONLY_NETS={sorted(shard_only)}: {n_ops} op(s) of "
+                  f"other networks limited to single cores")
         if contract is not None:
             st = codegen_contract.apply_to_workload(workload, _module_name_of, contract)
             print(f"  codegen contract: pinned {st['pinned_dispatches']} packed-weight "

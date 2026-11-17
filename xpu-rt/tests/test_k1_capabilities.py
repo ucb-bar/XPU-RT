@@ -390,12 +390,16 @@ class ShardGranularityTests(unittest.TestCase):
 
 class BackwardCompatibilityTests(unittest.TestCase):
     def test_single_implementation_matches_the_existing_builder(self):
-        """One impl per kind must reproduce the current combinations exactly."""
+        """One impl per kind must reproduce the builder's cumulative groups.
+
+        build_machine_combinations' prefix mode also offers every other core on
+        its own (so two dispatches can share a kind); the impl-aware builder
+        enumerates the cumulative groups only, so compare those."""
         machines_old, combos_old = build_machine_combinations(K1_CORES)
         machines_new, combos_new, impls = build_machine_combinations_with_impls(
             K1_CORES, {"CPU_P": ["rvv"], "CPU_E": ["rvv"]})
         self.assertEqual(machines_old, machines_new)
-        self.assertEqual(combos_old, combos_new)
+        self.assertEqual([c for c in combos_old if c[0].endswith("#0")], combos_new)
         self.assertEqual(len(impls), len(combos_new))
 
     def test_combination_count_is_cores_times_implementations(self):
@@ -481,10 +485,12 @@ class MachineCombinationModeTests(unittest.TestCase):
         self.assertEqual(a, b)
 
     def test_prefix_is_cumulative(self):
+        # cumulative groups from core 0, then every other core on its own
         _, combos = build_machine_combinations({"CPU_P": 3}, mode="prefix")
         self.assertEqual(combos, [["CPU_P#0"],
                                   ["CPU_P#0", "CPU_P#1"],
-                                  ["CPU_P#0", "CPU_P#1", "CPU_P#2"]])
+                                  ["CPU_P#0", "CPU_P#1", "CPU_P#2"],
+                                  ["CPU_P#1"], ["CPU_P#2"]])
 
     def test_singletons_are_independent(self):
         _, combos = build_machine_combinations({"CPU_P": 3}, mode="singletons")

@@ -148,7 +148,10 @@ def resolve_dispatch_deps_path(repo_base_path: str, dispatch_deps_path: str) -> 
     if not dispatch_deps_path:
         return ""
 
-    raw_path = dispatch_deps_path.strip()
+    # Old top-level tree names ("gen_mb/vmfb/...") resolve to their place
+    # under gen/ (profile_roots), so recorded specs keep working.
+    from profile_roots import resolve_path
+    raw_path = resolve_path(dispatch_deps_path.strip())
     if os.path.isabs(raw_path):
         return raw_path if os.path.exists(raw_path) else ""
 
