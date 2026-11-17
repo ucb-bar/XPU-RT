@@ -30,6 +30,7 @@ def output_scheduled_json(
     profiled_times_e: dict | None = None,
     profile_hw: dict | None = None,
     profiled_times_by_network: dict[str, dict[str, dict[int, dict]]] | None = None,
+    combo_impls: list | None = None,
 ):
     """
     Output a combined JSON file with all dispatches, their hardware targets, and start times.
@@ -41,6 +42,9 @@ def output_scheduled_json(
         output_path: Path to save the output JSON file
         profiled_times_p: Optional dict mapping dispatch_id -> {"time_ms": float, "module_name": str} for P-core
         profiled_times_e: Optional dict mapping dispatch_id -> {"time_ms": float, "module_name": str} for E-core
+        combo_impls: Optional implementation per machine combination (parallel to
+            the workload's combinations). Where it is not None the dispatch gets an
+            `impl` field naming the implementation the solver chose.
     """
     machine_combinations = combined_workload.get_machine_combinations()
 
@@ -132,7 +136,11 @@ def output_scheduled_json(
 
         completion_time = start_time + float(duration)
 
+        impl = (combo_impls[combo_idx]
+                if combo_impls is not None and combo_idx < len(combo_impls) else None)
+
         dispatch_info_list.append({
+            'impl': impl,
             'op_idx': op_idx,
             'dispatch_name': dispatch_name,
             'dispatch_id': dispatch_id,
@@ -220,6 +228,10 @@ def output_scheduled_json(
         # Add module_name if available
         if info['module_name']:
             dispatch_entry["module_name"] = info['module_name']
+
+        # The implementation the solver chose, when it chose between several
+        if info['impl']:
+            dispatch_entry["impl"] = info['impl']
 
         # Add time_dependency if found
         if time_dependency:

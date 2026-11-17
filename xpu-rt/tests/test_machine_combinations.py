@@ -16,7 +16,8 @@ import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from workload_factory import aligned_core_blocks, build_machine_combinations  # noqa: E402
+from workload_factory import (aligned_core_blocks, build_machine_combinations,  # noqa: E402
+                              expand_combinations_with_impls)
 
 
 def _overlap(a, b):
@@ -74,6 +75,36 @@ class PrefixAndSingletons(unittest.TestCase):
     def test_unknown_mode_is_refused(self):
         with self.assertRaises(ValueError):
             build_machine_combinations({"CPU_P": 2}, mode="every_subset")
+
+
+class Implementations(unittest.TestCase):
+    """One core group, several implementations (the K3 A100: IME or RVV)."""
+
+    def setUp(self):
+        _, combos = build_machine_combinations({"CPU_P": 2, "CPU_E": 2}, mode="shard")
+        hw = ["rvv_k3_x100" if c[0].startswith("CPU_P") else "rvv_k3_a100" for c in combos]
+        self.base = combos
+        self.c, self.hw, self.impl = expand_combinations_with_impls(
+            combos, hw, {"cpu_e": {"ime": "ime_k3_a100", "rvv": "rvv_k3_a100"}})
+
+    def test_each_group_of_an_impl_kind_appears_once_per_impl(self):
+        e = [c for c in self.base if c[0].startswith("CPU_E")]
+        p = [c for c in self.base if c[0].startswith("CPU_P")]
+        self.assertEqual(len(self.c), len(p) + 2 * len(e))
+        for c, hw, impl in zip(self.c, self.hw, self.impl):
+            if c[0].startswith("CPU_E"):
+                self.assertEqual(hw, {"ime": "ime_k3_a100", "rvv": "rvv_k3_a100"}[impl])
+            else:
+                self.assertIsNone(impl)
+                self.assertEqual(hw, "rvv_k3_x100")
+
+    def test_copies_keep_the_same_cores(self):
+        pairs = {}
+        for c, impl in zip(self.c, self.impl):
+            if impl:
+                pairs.setdefault(tuple(c), set()).add(impl)
+        self.assertTrue(pairs)
+        self.assertTrue(all(v == {"ime", "rvv"} for v in pairs.values()))
 
 
 if __name__ == "__main__":

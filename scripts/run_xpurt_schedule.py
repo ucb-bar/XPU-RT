@@ -26,6 +26,7 @@ from workload import Workload, Operation
 from workload_factory import (
     create_workload_from_network_hierarchy,
     build_machine_combinations,
+    expand_combinations_with_impls,
     machine_type_prefix,
 )
 # `scheduler` pulls in cvxpy/mosek; defer that import so `--solver greedy`
@@ -96,6 +97,12 @@ def load_networks_config(json_path: str) -> tuple[dict, dict]:
                       if isinstance(v, str)}
     cfg = {
         "profile_hw_map":   profile_hw_map,
+        # Per-dispatch implementations: {machine kind: {impl: profile hw}},
+        # e.g. {"cpu_e": {"ime": "ime_k3_a100", "rvv": "rvv_k3_a100"}}. Used
+        # only when scheduler.enable_impls is true.
+        "impls": {k.strip().lower(): dict(v) for k, v in (hw.get("impls") or {}).items()
+                  if isinstance(v, dict) and v},
+        "enable_impls": bool(sched.get("enable_impls", False)),
         "cpu_p_profile_hw": profile_hw.get("cpu_p", "RVV"),
         "cpu_e_profile_hw": profile_hw.get("cpu_e", "scalar"),
         "profile_target": profile_cfg.get("target", "spacemit_x60"),
@@ -304,6 +311,26 @@ def schedule_iree_networks(
             # Fall back to the legacy two-machine convention.
             hw = cpu_p_profile_hw if core_type == CPU_P else cpu_e_profile_hw
         combo_hw.append(hw)
+
+    # Per-dispatch implementations. `hardware_target` says which cores run a
+    # dispatch; with several implementations on one core (e.g. an A100 core's
+    # IME matrix unit and its vector unit) it cannot say which one. Offer each
+    # core group of such a kind once per implementation, timed from that
+    # implementation's profile, and record the solver's choice as the
+    # dispatch's `impl`. Groups of kinds without implementations keep None.
+    combo_impls: list[str | None] | None = None
+    if cfg["enable_impls"]:
+        if not cfg["impls"]:
+            raise SystemExit("scheduler.enable_impls is true but hardware.impls "
+                             "names no implementations")
+        unknown = set(cfg["impls"]) - {k.lower() for k in machine_core_counts}
+        if unknown:
+            raise SystemExit(f"hardware.impls names machine kinds that hardware.machines "
+                             f"does not have: {sorted(unknown)}")
+        machine_combinations, combo_hw, combo_impls = expand_combinations_with_impls(
+            machine_combinations, combo_hw, cfg["impls"])
+        print(f"  Implementations: {cfg['impls']} -> {len(machine_combinations)} "
+              f"(core group, impl) options")
 
     # Optional: build profiled processing times if requested
     processing_times: dict[str, list[float]] | None = None
@@ -954,6 +981,7 @@ def schedule_iree_networks(
         profiled_times_e=combined_profiled_e,
         profile_hw=plot_profile_hw,
         profiled_times_by_network=profiled_by_network,
+        combo_impls=combo_impls,
     )
 
     # Feedback-driven compilation: surface any dispatch-granularity mismatch

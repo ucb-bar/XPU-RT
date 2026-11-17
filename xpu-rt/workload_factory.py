@@ -107,6 +107,34 @@ def build_machine_combinations(
     return machines, combinations
 
 
+def expand_combinations_with_impls(
+    combinations: list[list[str]],
+    combo_hw: list[str],
+    impls: dict[str, dict[str, str]],
+) -> tuple[list[list[str]], list[str], list[str | None]]:
+    """Offer each core group once per implementation of its kind.
+
+    `impls` maps a lower-case machine kind to {impl: profile hw}, e.g.
+    {"cpu_e": {"ime": "ime_k3_a100", "rvv": "rvv_k3_a100"}}. A group of such a
+    kind is repeated per implementation with that implementation's profile hw;
+    groups of other kinds are kept once with impl None. Copies of one group
+    share its cores, so the overlap test still serialises them.
+
+    Returns (combinations, combo_hw, combo_impls), all parallel.
+    """
+    out_c: list[list[str]] = []
+    out_hw: list[str] = []
+    out_impl: list[str | None] = []
+    for combo, hw in zip(combinations, combo_hw):
+        kind_impls = impls.get(machine_type_prefix(combo[0]).lower())
+        if not kind_impls:
+            out_c.append(combo); out_hw.append(hw); out_impl.append(None)
+            continue
+        for impl, impl_hw in kind_impls.items():
+            out_c.append(list(combo)); out_hw.append(impl_hw); out_impl.append(impl)
+    return out_c, out_hw, out_impl
+
+
 def topo_tag_for_combination(combo: list[str]) -> str:
     """Return the topo tag that corresponds to a combination size, e.g. 3 cores → 'topo_0_1_2'."""
     n = len(combo)
