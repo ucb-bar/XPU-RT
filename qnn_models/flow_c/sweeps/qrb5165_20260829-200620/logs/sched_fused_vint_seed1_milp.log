@@ -1,4 +1,4 @@
-+ /tmp/claude-1172/-scratch2-dima-misc-sw-XPU-RT/3882980f-b60e-47b9-be3f-7fe85ec2bebb/scratchpad/milpenv/bin/python <scratch>/misc_sw/XPU-RT/scripts/run_xpurt_schedule.py --networks-json <scratch>/misc_sw/XPU-RT/qnn_models/flow_c/sweeps/qrb5165_20260829-200620/workloads/fused_vint_seed1.json --solver milp --time-limit 300 --profiled
++ <agent-tmp>/milpenv/bin/python <scratch>/misc_sw/XPU-RT/scripts/run_xpurt_schedule.py --networks-json <scratch>/misc_sw/XPU-RT/qnn_models/flow_c/sweeps/qrb5165_20260829-200620/workloads/fused_vint_seed1.json --solver milp --time-limit 300 --profiled
 (cwd=<scratch>/misc_sw/XPU-RT/qnn_models/flow_c/sweeps/qrb5165_20260829-200620)
 
 ============================================================
@@ -129,9 +129,9 @@ WARN: granularity advisor -- the desired granularity for yolov8n_e's dispatches 
 WARN: granularity advisor -- the desired granularity for vint's dispatches should be finer: its largest dispatch (37.83 ms) exceeds mlp_control's available free slot (4.41 ms) (period 5.00 ms, free slot 4.41 ms after mlp_control's own utilization) -- it would overrun mlp_control's cadence if they shared a core
 
 --- stderr ---
-/tmp/claude-1172/-scratch2-dima-misc-sw-XPU-RT/3882980f-b60e-47b9-be3f-7fe85ec2bebb/scratchpad/milpenv/lib/python3.12/site-packages/mosek/__init__.py:11539: UserWarning: Argument subi in putaijlist64: Incorrect array format causing data to be copied
+<agent-tmp>/milpenv/lib/python3.12/site-packages/mosek/__init__.py:11539: UserWarning: Argument subi in putaijlist64: Incorrect array format causing data to be copied
   warnings.warn("Argument subi in putaijlist64: Incorrect array format causing data to be copied");
-/tmp/claude-1172/-scratch2-dima-misc-sw-XPU-RT/3882980f-b60e-47b9-be3f-7fe85ec2bebb/scratchpad/milpenv/lib/python3.12/site-packages/mosek/__init__.py:11568: UserWarning: Argument subj in putaijlist64: Incorrect array format causing data to be copied
+<agent-tmp>/milpenv/lib/python3.12/site-packages/mosek/__init__.py:11568: UserWarning: Argument subj in putaijlist64: Incorrect array format causing data to be copied
   warnings.warn("Argument subj in putaijlist64: Incorrect array format causing data to be copied");
 <scratch>/misc_sw/XPU-RT/xpu-rt/scheduler.py:606: UserWarning: Optimization terminated by time limit; solution may be imprecise or absent.
   problem.solve(solver=cp.MOSEK, verbose=mosek_verbose, mosek_params=mosek_params)
