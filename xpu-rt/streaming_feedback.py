@@ -88,6 +88,10 @@ def normalise_event(line: dict[str, Any],
     schedule uses for a job, so a hint can be joined back to the dispatch that
     produced it without a second naming convention.
 
+    Ticks convert at the line's own `ticks_per_s` when it carries one (the
+    ModelBlaster walker writes it: 1e9 on hosted Linux, where the clock is in
+    ns), else at `rdtime_hz`.
+
     `deadline_miss` is None unless `windows_ms` supplies the network's
     deadline. None is not False: the derivation counts only explicit True, so
     an unknown miss cannot be silently read as "no misses".
@@ -101,7 +105,11 @@ def normalise_event(line: dict[str, Any],
     except (KeyError, TypeError, ValueError):
         return None
 
-    ticks_per_us = rdtime_hz / 1e6
+    try:
+        hz = float(line.get("ticks_per_s") or rdtime_hz)
+    except (TypeError, ValueError):
+        hz = rdtime_hz
+    ticks_per_us = hz / 1e6
     run_us = max(0.0, (t1 - t0) / ticks_per_us)
     planned_us = float(line.get("predicted_duration_ms", 0.0)) * 1000.0
 
@@ -339,7 +347,8 @@ def main(argv: Optional[list[str]] = None) -> int:
                         "measurement hides real misses (e.g. a "
                         "digit-suffixed network name misparsed).")
     p.add_argument("--clock-hz", type=float, default=K1_RDTIME_HZ,
-                   help="rdtime frequency in Hz that start/end_ticks count at "
+                   help="rdtime frequency in Hz that start/end_ticks count at, "
+                        "for lines that do not carry ticks_per_s "
                         "(default 24e6, the K1 and K3 timebase).")
     p.add_argument("--run-id", required=True,
                    help="Run identifier for this streaming session. "

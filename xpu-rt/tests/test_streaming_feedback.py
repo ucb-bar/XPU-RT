@@ -160,7 +160,7 @@ class TheProducerAndTheConsumerAgree(unittest.TestCase):
         src = gen._emit(networks=["m"], schedule_name="s",
                         dispatch_table_header="t.h", core_kinds=["rvv"],
                         backends=["rvv_x60"], pool_sizes=[1],
-                        n_instances={"m": 1}, platform="linux")
+                        n_instances={"m": 1})
         block = src[src.index("MODELBLASTER_XPURT_STREAM"):]
         block = block[:block.index("#endif")]
         for field in ("entry_id", "network", "instance", "dispatch_id",
@@ -182,6 +182,15 @@ class TheProducerAndTheConsumerAgree(unittest.TestCase):
         self.assertEqual(ev["target"], "ime")
         self.assertAlmostEqual(ev["run_us"], 500.0)
         self.assertAlmostEqual(ev["planned_duration_us"], 500.0)
+
+    def test_a_line_that_names_its_clock_is_read_at_that_clock(self):
+        """Hosted Linux counts in ns and says so; the default 24 MHz must not apply."""
+        raw = json.loads(
+            '{"entry_id":7,"network":"dronet","instance":2,"dispatch_id":13,'
+            '"impl":"ime","hart":3,"predicted_start_ms":1.25,'
+            '"predicted_duration_ms":0.5,"start_ticks":1000000,'
+            '"end_ticks":1500000,"ticks_per_s":1000000000}')
+        self.assertAlmostEqual(sf.normalise_event(raw)["run_us"], 500.0)
 
 
 if __name__ == "__main__":
