@@ -17,7 +17,9 @@ options that would break it; `violations` checks a finished schedule.
 Three more rules (k3-work TASK-016):
 
   * `shareable_ops` (hard): only ops with a pool path in ModelBlaster can use
-    several cores; every other op gets no multi-core option at all.
+    several cores; every other op gets no multi-core option at all. An op under
+    `backend_prefixes` (TASK-017: the simple layers, pool paths on the K3 backends
+    only) is shareable only where its module name names one of those backends.
   * `conv_split_axis`: on a K3 backend a conv2d_s8 with enough output rows is
     split by rows, so its width need not divide OC.
   * the width margin (soft, `margin`, default 10%): a wider width is offered
@@ -109,6 +111,18 @@ def shareable_ops(contract: dict) -> frozenset[str] | None:
     return frozenset(r.get("ops") or ()) if r else None
 
 
+def op_shareable(module_name: str, kind: str, contract: dict) -> bool:
+    """Can `kind` (the op of `module_name`) be spread over several cores on the
+    dispatch's backend? True when the contract has no shareable_ops list."""
+    r = contract.get("rules", {}).get("shareable_ops")
+    if not r:
+        return True
+    if kind not in frozenset(r.get("ops") or ()):
+        return False
+    prefixes = (r.get("backend_prefixes") or {}).get(kind)
+    return prefixes is None or any(f"_{p}" in str(module_name or "") for p in prefixes)
+
+
 def row_split(module_name: str, width: int, contract: dict) -> bool:
     """Does ModelBlaster split this dispatch by output rows at `width`?
     (rules.conv_split_axis: a K3 backend, a conv2d_s8, OH >= width and
@@ -176,8 +190,8 @@ def apply_to_workload(workload, module_name_of, contract: dict,
         if not mod:
             continue
         kind = op_of(mod, known)
-        if share is not None and kind not in share:
-            # No pool path: a multi-core option would hold idle cores.
+        if share is not None and not op_shareable(mod, kind, contract):
+            # No pool path (on this backend): a multi-core option would hold idle cores.
             bad = [k for k, c in enumerate(combos) if len(c) > 1]
             stats["unshareable_options"] += sum(1 for k in bad if usable(op, k))
             price_out(op, bad)
@@ -247,7 +261,7 @@ def violations(dispatches: dict, contract: dict) -> list[str]:
     for name, d in dispatches.items():
         mod = d.get("module_name") or ""
         w = len([x for x in str(d.get("hardware_target", "")).split("+") if x])
-        if share is not None and w > 1 and mod and op_of(mod, share) == "":
+        if share is not None and w > 1 and mod and not op_shareable(mod, op_of(mod, share), contract):
             out.append(f"{name}: no pool path for this op, but given {w} cores")
             continue
         kind = op_of(mod, uniform | divides)

@@ -8,6 +8,9 @@
   next narrower width kept; a conv's one width is the widest kept.
 * The repo's own contract (zephyr-chipyard-sw/modelblaster/cores/...) carries
   the same rules, and schedules checked by `violations` flag both breaches.
+* TASK-017: the simple layers (silu, add, maxpool, ...) are shareable on the K3
+  backends only (shareable_ops.backend_prefixes), one width per dispatch
+  (uniform_width_across_instances), chosen by the same margin.
 """
 from __future__ import annotations
 
@@ -34,6 +37,14 @@ SMALL = "yolov8_nano$dispatch_9_ime_k3_a100_conv2d_s8_N1xIC64xIH5xIW5xOC30xOH5xO
 K1CONV = "yolov8_nano$dispatch_4_rvv_x60_conv2d_s8_N1xIC32xIH20xIW20xOC30xOH20xOW20xKH3xKW3"
 SILU = "yolov8_nano$dispatch_5_ime_k3_x100_silu_s8_n12800"
 LIN = "mlp_control$dispatch_0_rvv_k3_x100_linear_s8_M1xK16xN256"
+K1SILU = "yolov8_nano$dispatch_5_rvv_x60_silu_s8_n12800"
+ELU = "mlp_control$dispatch_1_ime_k3_a100_elu_s8_n256"
+# TASK-017 rules: simple layers shareable on K3 backends, one width per dispatch
+CONTRACT17 = {"rules": {**CONTRACT["rules"],
+    "uniform_width_across_instances": {"applies_to_ops": ["conv2d_s8", "silu_s8", "elu_s8"]},
+    "shareable_ops": {"ops": ["conv2d_s8", "elu_s8", "linear_s8", "silu_s8"],
+                      "backend_prefixes": {"elu_s8": ["rvv_k3", "ime_k3"], "silu_s8": ["rvv_k3", "ime_k3"]}},
+}}
 
 
 class _Op:
@@ -76,13 +87,13 @@ class Apply(unittest.TestCase):
     def open_widths(self, op):
         return {len(c) for c, t in zip(self.combos, op.processing_times) if t < cc.PRICED_OUT_MS}
 
-    def run_rules(self, specs, margin):
+    def run_rules(self, specs, margin, contract=CONTRACT):
         ops = [_Op(f"{mod.split('$')[0]}{i}_dispatch_{did}", did, self.times(t))
                for (mod, did, t) in specs for i in range(2)]
         mods = {f"{mod.split('$')[0]}{i}_dispatch_{did}": (mod, mod.split("$")[0])
                 for (mod, did, t) in specs for i in range(2)}
         st = cc.apply_to_workload(_Workload(ops, self.combos, self.machines),
-                                  lambda op: mods[op.operation_name], CONTRACT, margin=margin)
+                                  lambda op: mods[op.operation_name], contract, margin=margin)
         return ops, st
 
     def test_unshareable_op_gets_one_core_even_if_its_profile_says_otherwise(self):
@@ -110,6 +121,32 @@ class Apply(unittest.TestCase):
         self.assertGreater(st["margin_excluded_options"], 0)
 
 
+    def test_k3_simple_layer_gets_one_width_by_the_margin(self):
+        t = {1: 100.0, 2: 55.0, 4: 30.0, 8: 28.0}     # 8 is 6.7% faster than 4: not enough
+        ops, st = self.run_rules([(SILU, 5, t)], margin=0.10, contract=CONTRACT17)
+        self.assertEqual(st["unshareable_options"], 0)
+        for op in ops:                                  # both instances pinned to 4
+            self.assertEqual(self.open_widths(op), {4})
+
+    def test_k3_simple_layer_stays_on_one_core_when_wider_is_not_10pct_faster(self):
+        ops, _ = self.run_rules([(ELU, 1, {1: 0.005, 2: 0.020, 4: 0.021, 8: 0.025})], margin=0.10,
+                                contract=CONTRACT17)
+        self.assertEqual(self.open_widths(ops[0]), {1})
+
+    def test_simple_layer_on_k1_backend_gets_one_core(self):
+        ops, st = self.run_rules([(K1SILU, 5, {1: 10.0, 2: 5.0, 4: 3.0, 8: 2.0})], margin=0.10,
+                                 contract=CONTRACT17)
+        self.assertEqual(self.open_widths(ops[0]), {1})
+        self.assertGreater(st["unshareable_options"], 0)
+
+    def test_op_shareable(self):
+        self.assertTrue(cc.op_shareable(SILU, "silu_s8", CONTRACT17))
+        self.assertFalse(cc.op_shareable(K1SILU, "silu_s8", CONTRACT17))
+        self.assertTrue(cc.op_shareable(K1CONV, "conv2d_s8", CONTRACT17))   # no prefix list: everywhere
+        self.assertFalse(cc.op_shareable(SILU, "silu_s8", CONTRACT))        # TASK-016 list
+        self.assertTrue(cc.op_shareable(SILU, "silu_s8", {"rules": {}}))     # no list at all
+
+
 class RepoContract(unittest.TestCase):
     PATH = os.path.join(os.path.dirname(os.path.dirname(_HERE)), "zephyr-chipyard-sw",
                         "modelblaster", "cores", "codegen_contract.json")
@@ -118,7 +155,11 @@ class RepoContract(unittest.TestCase):
     def test_repo_contract_has_the_rules(self):
         c = json.load(open(self.PATH))
         self.assertIn("conv2d_s8", cc.shareable_ops(c))
-        self.assertNotIn("silu_s8", cc.shareable_ops(c))
+        self.assertNotIn("gelu_s8", cc.shareable_ops(c))
+        # TASK-017: simple layers shareable on K3 backends only, one width per dispatch
+        self.assertTrue(cc.op_shareable(SILU, "silu_s8", c))
+        self.assertFalse(cc.op_shareable(K1SILU, "silu_s8", c))
+        self.assertIn("silu_s8", cc.uniform_width_ops(c))
         self.assertTrue(cc.row_split(ROWCONV, 8, c))
         self.assertFalse(cc.row_split(K1CONV, 8, c))
 
@@ -128,6 +169,10 @@ class RepoContract(unittest.TestCase):
              "c": {"module_name": SMALL, "hardware_target": "+".join(f"CPU_E#{i}" for i in range(4)), "id": 9}}
         v = cc.violations(d, CONTRACT)
         self.assertTrue(any(x.startswith("a:") and "no pool path" in x for x in v))
+        v17 = cc.violations(dict(d, k={"module_name": K1SILU, "hardware_target": "CPU_P#0+CPU_P#1", "id": 5}),
+                            CONTRACT17)
+        self.assertFalse(any(x.startswith("a:") for x in v17))   # K3 silu on 2 cores: fine now
+        self.assertTrue(any(x.startswith("k:") and "no pool path" in x for x in v17))
         self.assertFalse(any(x.startswith("b:") for x in v))       # rows: OC=30 is fine
         self.assertTrue(any(x.startswith("c:") and "width must divide OC" in x for x in v))
 
