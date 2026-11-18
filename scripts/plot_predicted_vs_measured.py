@@ -120,14 +120,17 @@ def main() -> int:
     ap.add_argument("--out-dir", default=None)
     ap.add_argument("--stem", default="k1_predicted_vs_measured")
     ap.add_argument("--board", default="K1", help="board name for the axis label (K1, K3)")
+    ap.add_argument("--clock-hz", type=float, default=k1_trace.K1_RDTIME_HZ,
+                    help="trace tick rate: 24e6 (K1 rdtime, default) or 1e9 (hosted-Linux "
+                         "walker, ns; K3 runs of ModelBlaster main)")
     a = ap.parse_args()
     global BOARD
     BOARD = a.board
 
     schedule = json.load(open(a.schedule))
     aligned = pairs(schedule, k1_trace.read(
-        a.trace, k1_trace.slot_maps_from_irs(a.ir) if a.ir else None))
-    raw = pairs(schedule, k1_trace.read(a.trace))
+        a.trace, k1_trace.slot_maps_from_irs(a.ir) if a.ir else None, clock_hz=a.clock_hz))
+    raw = pairs(schedule, k1_trace.read(a.trace, clock_hz=a.clock_hz))
 
     fig, axes = plt.subplots(1, 2, figsize=(figstyle.DOUBLE_COL, 62 * figstyle.MM))
     flat_a = [p for pts in aligned.values() for p in pts]
