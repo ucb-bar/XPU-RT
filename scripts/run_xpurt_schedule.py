@@ -142,6 +142,10 @@ def load_networks_config(json_path: str) -> tuple[dict, dict]:
         # Hold the solver to ModelBlaster's codegen contract (cores/
         # codegen_contract.json). None = on in shard mode, off otherwise.
         "codegen_contract": sched.get("codegen_contract", None),
+        # Width margin (with the codegen contract): a wider core group is
+        # offered only if >= this fraction faster than the next narrower one
+        # kept (codegen_contract.margin_widths). 0 = off (exact ties only).
+        "width_margin": float(sched.get("width_margin", 0.0)),
         "cpu_p_profile_hw": profile_hw.get("cpu_p", "RVV"),
         "cpu_e_profile_hw": profile_hw.get("cpu_e", "scalar"),
         "profile_target": profile_cfg.get("target", "spacemit_x60"),
@@ -478,11 +482,16 @@ def schedule_iree_networks(
     def _build_workload():
         workload = _create_workload()
         if contract is not None:
-            st = codegen_contract.apply_to_workload(workload, _module_name_of, contract)
+            st = codegen_contract.apply_to_workload(workload, _module_name_of, contract,
+                                                    margin=cfg["width_margin"])
             print(f"  codegen contract: pinned {st['pinned_dispatches']} packed-weight "
                   f"dispatch(es) to one width, excluded {st['oc_excluded_options']} "
                   f"option(s) whose width does not divide OC"
                   + (f"; no common width for {st['unpinnable'][:4]}" if st["unpinnable"] else ""))
+            print(f"  codegen contract: {st['unshareable_options']} multi-core option(s) of "
+                  f"ops without a pool path excluded; width margin {cfg['width_margin']:.0%}: "
+                  f"{st['margin_excluded_options']} option(s) excluded, "
+                  f"{st['margin_narrowed_dispatches']} dispatch(es) given a narrower width")
         return workload
 
     def _create_workload():
