@@ -179,6 +179,7 @@ def schedule_iree_networks(
     seed_solver: str | None = None,
     cpsat_time_limit: float | None = None,
     no_milp_native_warm_start: bool = False,
+    duration_feedback: str | None = None,
 ) -> tuple[Workload, np.ndarray, np.ndarray]:
     """
     Main function to schedule networks from a hierarchical network dependencies JSON file.
@@ -374,6 +375,18 @@ def schedule_iree_networks(
             topo_tag_override=tt_override,
             gen_root=cfg["gen_root"],
         )
+        if duration_feedback:
+            # Scheduling feedback: profiled time * (measured / predicted) per
+            # (network, dispatch, machine kind). See xpu-rt/duration_feedback.py.
+            import duration_feedback as _dfb
+            _doc = _dfb.load(duration_feedback)
+            _kinds = [machine_type_prefix(c[0]).lower() for c in machine_combinations]
+            _st = _dfb.apply(processing_times, networks.keys(), _kinds, _doc)
+            print(f"  duration feedback: {duration_feedback} "
+                  f"(rounds {_doc.get('rounds', [])}): scaled {_st['ops_scaled']} op(s), "
+                  f"{_st['values_scaled']} value(s); factors {_dfb.summarize(_doc)}")
+    elif duration_feedback:
+        raise SystemExit("--duration-feedback needs profiled runtimes (use_profiled)")
 
     # "Periodic" means the op belongs to a network the workload declared
     # with a `period`.  Not "the op has a time window": a sporadic network
@@ -1273,6 +1286,13 @@ if __name__ == "__main__":
         default=None,
         help="Override P-core speedup factor. If omitted, uses JSON config (hardware/scheduler p_core_speedup) or 1.5.",
     )
+    parser.add_argument(
+        "--duration-feedback",
+        default=None,
+        help="Factor file from scripts/update_duration_feedback.py. Each profiled "
+             "duration is multiplied by its op's measured/predicted factor "
+             "(default 1). Without it the solve is unchanged.",
+    )
     args = parser.parse_args()
 
     seed = None if args.random_seed is not None and args.random_seed < 0 else args.random_seed
@@ -1294,4 +1314,5 @@ if __name__ == "__main__":
         seed_solver=args.seed_solver,
         cpsat_time_limit=args.cpsat_time_limit,
         no_milp_native_warm_start=args.no_milp_native_warm_start,
+        duration_feedback=args.duration_feedback,
     )
