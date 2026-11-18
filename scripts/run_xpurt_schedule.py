@@ -53,6 +53,42 @@ CPU_P = "CPU_P"
 CPU_E = "CPU_E"
 
 
+def _parse_profile_targets(profile_cfg: dict, machine_core_counts: dict) -> dict | None:
+    """Read the optional per-kind `hardware.profile.targets` (K3).
+
+      "targets": {"cpu_p": "spacemit_x100", "cpu_e": "spacemit_a100"}
+
+    Says which profile target each machine kind's measurements are filed
+    under, for chips whose kinds are profiled as different targets (K3: X100
+    and A100, via ModelBlaster's PROFILE_CPU). Each combination's hw label
+    becomes `<hw>@<target>` (profile_loader.split_hw_label), so the two kinds'
+    profiles are separate keys even when a profile folder name is shared.
+    Topo tags are unchanged: ModelBlaster's K3 runner files multi-core
+    profiles under topo_0..n-1 whatever the physical cpus (MB_TOPO_RELATIVE).
+    Returns {KIND: target}, or None when absent (every K1 config).
+    """
+    raw = profile_cfg.get("targets")
+    if raw is None:
+        return None
+    if not isinstance(raw, dict):
+        raise ValueError(f"hardware.profile.targets: want {{kind: target}}, got {raw!r}")
+    per_kind = {str(k).strip().upper(): v for k, v in raw.items()}
+    kinds = set(machine_core_counts)
+    missing = kinds - set(per_kind)
+    unknown = set(per_kind) - kinds - {CPU_P, CPU_E}   # a 0-count kind may stay listed
+    if missing or unknown:
+        raise ValueError(f"hardware.profile.targets: kinds {sorted(per_kind)} vs "
+                         f"hardware.machines {sorted(kinds)} (missing {sorted(missing)}, "
+                         f"unknown {sorted(unknown)})")
+    for kind in sorted(kinds):
+        t = per_kind[kind]
+        # used as a path component and split on '@'
+        if not (isinstance(t, str) and t and not any(c in t for c in "@/")):
+            raise ValueError(f"hardware.profile.targets.{kind.lower()}: want a target "
+                             f"name, got {t!r}")
+    return {kind: per_kind[kind] for kind in kinds}
+
+
 def load_networks_config(json_path: str) -> tuple[dict, dict]:
     """
     Load a network dependencies JSON file and extract hardware/scheduler config.
@@ -125,6 +161,10 @@ def load_networks_config(json_path: str) -> tuple[dict, dict]:
         # need to read different topos to reflect the actual cluster
         # widths. Takes precedence over the scalar topo_tag_override.
         "profile_topo_tag_per_hw": profile_cfg.get("topo_tag_per_hw") or None,
+        # Optional per-kind profile targets (K3: X100 and A100 profiled as
+        # spacemit_x100 / spacemit_a100). Absent on every K1 config, which
+        # then behaves exactly as before. See _parse_profile_targets.
+        "profile_targets": _parse_profile_targets(profile_cfg, machine_core_counts),
         "gen_root": profile_cfg.get("gen_root", None),
         "p_core_speedup": float(hw.get("p_core_speedup", 1.5)),
         "random_seed": seed,
@@ -259,6 +299,7 @@ def schedule_iree_networks(
     profile_topo_tag = cfg["profile_topo_tag"]
     profile_topo_tag_override = cfg["profile_topo_tag_override"]
     profile_topo_tag_per_hw = cfg["profile_topo_tag_per_hw"]
+    profile_targets = cfg.get("profile_targets")   # None on K1 configs
     effective_p_core_speedup = cfg["p_core_speedup"]
     effective_random_seed = cfg["random_seed"]
     effective_solver_verbosity = cfg["solver_verbosity"]
@@ -284,6 +325,8 @@ def schedule_iree_networks(
     print(f"  Machine core counts: {machine_core_counts}")
     print(f"  Profile HW mapping: {CPU_P}->{cpu_p_profile_hw}, {CPU_E}->{cpu_e_profile_hw}")
     print(f"  Profile target/topology: target={profile_target}, topo_tag={profile_topo_tag}")
+    if profile_targets is not None:
+        print(f"  Per-kind profile targets: {profile_targets}")
     print(f"  p_core_speedup: {effective_p_core_speedup}")
     print(f"  random_seed: {'nondeterministic' if effective_random_seed is None else effective_random_seed}")
     print(f"  solver_verbosity: {effective_solver_verbosity}")
@@ -335,6 +378,13 @@ def schedule_iree_networks(
         print(f"  Implementations: {cfg['impls']} -> {len(machine_combinations)} "
               f"(core group, impl) options")
 
+    # Per-kind profile targets: 'ime_k3_a100@spacemit_a100' reads that folder
+    # under that target (profile_loader.split_hw_label). Applied after the
+    # impl expansion so every implementation of a kind reads its kind's target.
+    if profile_targets is not None:
+        combo_hw = [f"{hw}@{profile_targets[machine_type_prefix(c[0])]}"
+                    for hw, c in zip(combo_hw, machine_combinations)]
+
     # Optional: build profiled processing times if requested
     processing_times: dict[str, list[float]] | None = None
     combined_profiled_p: dict[int, dict] | None = None
@@ -356,7 +406,11 @@ def schedule_iree_networks(
             machine_combinations=machine_combinations,
             combo_hw=combo_hw,
             profile_target=profile_target,
-            cpu_p_profile_hw=cpu_p_profile_hw,
+            # The loader buckets a profile as "p" when its hw label equals this;
+            # with per-kind targets that is CPU_P's label.
+            cpu_p_profile_hw=(cpu_p_profile_hw if profile_targets is None else
+                              f"{profile_hw_map.get(CPU_P.lower(), cpu_p_profile_hw)}"
+                              f"@{profile_targets[CPU_P]}"),
             cpu_e_profile_hw=cpu_e_profile_hw,
             rng=rng,
             p_core_speedup=effective_p_core_speedup,
@@ -996,6 +1050,9 @@ def schedule_iree_networks(
     # Builds the per-machine-kind label from the generalised profile_hw_map
     # so 3-way (and higher) configs render correctly.
     plot_profile_hw = {k.upper(): v for k, v in profile_hw_map.items()}
+    if profile_targets is not None:
+        for _kind, _target in profile_targets.items():
+            plot_profile_hw.setdefault(_kind, _target)
     plot_profile_hw.setdefault(CPU_P, cpu_p_profile_hw)
     plot_profile_hw.setdefault(CPU_E, cpu_e_profile_hw)
     plot.plot_optimization_schedule(
