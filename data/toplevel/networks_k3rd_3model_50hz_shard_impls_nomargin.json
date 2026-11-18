@@ -1,0 +1,69 @@
+{
+ "hardware": {
+  "machines": {
+   "cpu_p": 8,
+   "cpu_e": 8
+  },
+  "profile_hw": {
+   "cpu_p": "ime_k3_x100",
+   "cpu_e": "ime_k3_a100"
+  },
+  "profile": {
+   "target": "spacemit_k3",
+   "targets": {
+    "cpu_p": "spacemit_x100",
+    "cpu_e": "spacemit_a100"
+   }
+  },
+  "p_core_speedup": 1.0,
+  "impls": {
+   "cpu_p": {
+    "rvv": "rvv_k3_x100",
+    "ime": "ime_k3_x100"
+   },
+   "cpu_e": {
+    "rvv": "rvv_k3_a100",
+    "ime": "ime_k3_a100"
+   }
+  }
+ },
+ "scheduler": {
+  "random_seed": 42,
+  "solver_verbosity": 1,
+  "time_limit": 120,
+  "use_profiled": true,
+  "prune_periodic": true,
+  "restrict_makespan_to_nonperiodic": false,
+  "machine_combination_mode": "shard",
+  "enable_impls": true,
+  "width_margin": 0.0
+ },
+ "networks": {
+  "mlp_control": {
+   "id": 0,
+   "identifier": "mlp_control",
+   "dispatch_deps_path": "gen/vmfb/mlp_control/spacemit_k3/ime_k3/mlp_control.int8/mlp_control.int8_dispatch_graph.json",
+   "period": 10,
+   "window_duration": 10,
+   "num_instances": 100
+  },
+  "dronet": {
+   "id": 1,
+   "identifier": "dronet",
+   "dispatch_deps_path": "gen/vmfb/dronet/spacemit_k3/ime_k3/dronet.int8/dronet.int8_dispatch_graph.json",
+   "period": 33.3,
+   "window_duration": 33.3,
+   "num_instances": 50
+  },
+  "yolov8_nano": {
+   "id": 2,
+   "identifier": "yolov8_nano",
+   "dispatch_deps_path": "gen/vmfb/yolov8_nano/spacemit_k3/ime_k3/yolov8_nano.int8/yolov8_nano.int8_dispatch_graph.json",
+   "period": 20.0,
+   "window_duration": 20.0,
+   "num_instances": 50
+  }
+ },
+ "edges": [],
+ "_comment": "k3-work TASK-016 step 6 comparison: networks_k3rd_3model_50hz_shard_impls.json with the width margin off (exact ties only) and solved against a contract without rules.shareable_ops, i.e. the scheduler as main has it. Counts the layers given more cores than they need before the margin rule."
+}
