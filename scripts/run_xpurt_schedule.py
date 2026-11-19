@@ -180,6 +180,7 @@ def schedule_iree_networks(
     cpsat_time_limit: float | None = None,
     no_milp_native_warm_start: bool = False,
     duration_feedback: str | None = None,
+    calibration: str | None = None,
 ) -> tuple[Workload, np.ndarray, np.ndarray]:
     """
     Main function to schedule networks from a hierarchical network dependencies JSON file.
@@ -385,8 +386,17 @@ def schedule_iree_networks(
             print(f"  duration feedback: {duration_feedback} "
                   f"(rounds {_doc.get('rounds', [])}): scaled {_st['ops_scaled']} op(s), "
                   f"{_st['values_scaled']} value(s); factors {_dfb.summarize(_doc)}")
-    elif duration_feedback:
-        raise SystemExit("--duration-feedback needs profiled runtimes (use_profiled)")
+        if calibration:
+            # Calibrated feedback: robust per-op costs, dispatch gap, and harts
+            # reserved for networks that were blocked. See xpu-rt/calibration_feedback.py.
+            import calibration_feedback as _cfb
+            _cdoc = _cfb.load(calibration)
+            _kinds = [machine_type_prefix(c[0]).lower() for c in machine_combinations]
+            _st = _cfb.apply(processing_times, networks.keys(), machine_combinations, _kinds, _cdoc)
+            print(f"  calibration: {calibration} (rounds {_cdoc.get('rounds', [])}): {_st}; "
+                  f"reserved {_cdoc.get('reserve', {})}")
+    elif duration_feedback or calibration:
+        raise SystemExit("--duration-feedback/--calibration need profiled runtimes (use_profiled)")
 
     # "Periodic" means the op belongs to a network the workload declared
     # with a `period`.  Not "the op has a time window": a sporadic network
@@ -1293,6 +1303,13 @@ if __name__ == "__main__":
              "duration is multiplied by its op's measured/predicted factor "
              "(default 1). Without it the solve is unchanged.",
     )
+    parser.add_argument(
+        "--calibration",
+        default=None,
+        help="Calibration file from scripts/calibrated_feedback_loop.py: robust "
+             "per-op costs, measured dispatch gap, and harts reserved for networks "
+             "that were blocked (xpu-rt/calibration_feedback.py).",
+    )
     args = parser.parse_args()
 
     seed = None if args.random_seed is not None and args.random_seed < 0 else args.random_seed
@@ -1315,4 +1332,5 @@ if __name__ == "__main__":
         cpsat_time_limit=args.cpsat_time_limit,
         no_milp_native_warm_start=args.no_milp_native_warm_start,
         duration_feedback=args.duration_feedback,
+        calibration=args.calibration,
     )
