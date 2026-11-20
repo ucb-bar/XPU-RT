@@ -1,0 +1,58 @@
+{
+ "_comment": "SpaceMiT K3 three-model workload: mlp_control 1600 Hz, dronet 480 Hz, yolov8_nano 64 Hz. cpu_p = X100 (CPUs 0-7, rvv_k3), cpu_e = A100 (CPUs 8-15, ime_k3_a100). Hyperperiod 62.5 ms = 100 x 0.625 = 30 x 2.0833 = 4 x 15.625. Profiles measured on the board into gen/k3_board_profiles. Variant: singletons (one core per dispatch). Used by scripts/k3_walker_feedback/ (static vs dynamic walker, global pool, calibrated feedback).",
+ "_topo_comment": "topo_tag_override is false so each width block is costed from its own N-hart profile (topo tag derived from the combination); true would charge every block the 1-hart time.",
+ "_instances_comment": "num_instances pinned (as in the K1 spec) so solves stay comparable.",
+ "hardware": {
+  "machines": {
+   "cpu_p": 8,
+   "cpu_e": 8
+  },
+  "profile_hw": {
+   "cpu_p": "rvv_k3_x100",
+   "cpu_e": "ime_k3_a100"
+  },
+  "profile": {
+   "target": "spacemit_k3",
+   "topo_tag_override": false,
+   "gen_root": "gen/k3_board_profiles"
+  },
+  "p_core_speedup": 1.0
+ },
+ "scheduler": {
+  "random_seed": 42,
+  "solver_verbosity": 1,
+  "time_limit": 120,
+  "use_profiled": true,
+  "prune_periodic": true,
+  "restrict_makespan_to_nonperiodic": false,
+  "machine_combination_mode": "singletons",
+  "enable_impls": false
+ },
+ "networks": {
+  "mlp_control": {
+   "id": 0,
+   "identifier": "mlp_control",
+   "dispatch_deps_path": "gen/k3_board_profiles/vmfb/mlp_control/spacemit_k3/rvv_k3/mlp_control.int8/mlp_control.int8_dispatch_graph.json",
+   "period": 0.625,
+   "window_duration": 0.625,
+   "num_instances": 100
+  },
+  "dronet": {
+   "id": 1,
+   "identifier": "dronet",
+   "dispatch_deps_path": "gen/k3_board_profiles/vmfb/dronet/spacemit_k3/rvv_k3/dronet.int8/dronet.int8_dispatch_graph.json",
+   "period": 2.0833333333333335,
+   "window_duration": 2.0833333333333335,
+   "num_instances": 30
+  },
+  "yolov8_nano": {
+   "id": 2,
+   "identifier": "yolov8_nano",
+   "dispatch_deps_path": "gen/k3_board_profiles/vmfb/yolov8_nano/spacemit_k3/rvv_k3/yolov8_nano.int8/yolov8_nano.int8_dispatch_graph.json",
+   "period": 15.625,
+   "window_duration": 15.625,
+   "num_instances": 4
+  }
+ },
+ "edges": []
+}

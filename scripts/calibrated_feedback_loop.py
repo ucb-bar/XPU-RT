@@ -15,7 +15,8 @@ op, ``xpu-rt/duration_feedback.py``).
 
 Example (offline, 4 rounds, static walker)::
 
-    python scripts/calibrated_feedback_loop.py --spec data/toplevel/k3fb_base.json \\
+    python scripts/calibrated_feedback_loop.py \\
+        --spec data/toplevel/networks_k3_mlp1600_dronet480_yolo64_singletons.json \\
         --truth SCHED.json:TRACE1.csv,TRACE2.csv --rounds 4 --out out/calib_static
 """
 
@@ -84,7 +85,7 @@ def main() -> None:
     args = ap.parse_args()
 
     args.out.mkdir(parents=True, exist_ok=True)
-    windows, periods = W.spec_windows(args.spec)
+    windows, periods = W.spec_windows(ROOT / args.spec if not args.spec.is_absolute() else args.spec)
     truth = [(t.split(":", 1)[0], t.split(":", 1)[1].split(",")) for t in args.truth]
     op_names = op_names_from(truth) if truth else {}
     model_S = model_G = None
@@ -101,8 +102,10 @@ def main() -> None:
         rd = args.out / f"round{r}"
         rd.mkdir(exist_ok=True)
         prev = args.out / f"round{r - 1}" / "feedback_after.json" if r > 0 else None
-        spec_r = ROOT / "data" / "toplevel" / f"{args.spec.stem}_{args.out.name}_r{r}.json"
-        shutil.copy(args.spec, spec_r)
+        # The round's spec copy lives with the round's outputs (its stem names
+        # the schedule), not in data/toplevel.
+        spec_r = rd / f"{args.spec.stem}_{args.out.name}_r{r}.json"
+        shutil.copy(ROOT / args.spec if not args.spec.is_absolute() else args.spec, spec_r)
         used = rd / "feedback_used.json"
         if prev and prev.exists():
             shutil.copy(prev, used)
