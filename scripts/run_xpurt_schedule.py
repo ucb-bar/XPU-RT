@@ -45,6 +45,7 @@ from greedy_scheduler import (
 from metaheuristics import (heft_schedule, heft_edf_schedule,
                             pso_schedule, sa_schedule)
 from profile_loader import load_profiled_processing_times
+from sender_delay import apply_sender_delay
 from postprocessing import trim_periodic_after_nonperiodic_makespan, output_scheduled_json
 from granularity_advisor import analyze_granularity, from_workload
 import plot
@@ -207,6 +208,10 @@ def load_networks_config(json_path: str) -> tuple[dict, dict]:
         # cores, {from kind: {to kind: ms}}; fills the transfer table. Absent
         # = all zeros. See workload_factory.build_handoff_transfer_times.
         "handoff_ms": sched.get("handoff_ms") or None,
+        # Optional sender's delay in ms, {core kind: ms}: a worker that wakes
+        # another core's thread starts its own next layer that much later.
+        # Absent = not applied. See sender_delay.apply_sender_delay.
+        "sender_ms": sched.get("sender_ms") or None,
     }
 
     return networks_data, cfg
@@ -745,6 +750,12 @@ def schedule_iree_networks(
                 print(f"  Job names: {combined_workload.job_names}")
 
                 t, alpha = _greedy_fn(combined_workload)
+                if cfg["sender_ms"]:
+                    _t_planned = t
+                    t = apply_sender_delay(combined_workload, t, alpha, cfg["sender_ms"])
+                    _shift = np.asarray(t) - np.asarray(_t_planned)
+                    print(f"  Sender delay {cfg['sender_ms']}: {int((_shift > 1e-9).sum())} of {len(_shift)} "
+                          f"ops start later, largest shift {float(_shift.max()) if len(_shift) else 0.0:.4f} ms")
 
                 # Measure makespan, optionally restricted to non-periodic ops
                 # (matches the MILP solver's objective when
