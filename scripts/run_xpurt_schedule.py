@@ -26,6 +26,7 @@ from workload import Workload, Operation
 from workload_factory import (
     create_workload_from_network_hierarchy,
     build_machine_combinations,
+    build_handoff_transfer_times,
     expand_combinations_with_impls,
     machine_type_prefix,
 )
@@ -202,6 +203,10 @@ def load_networks_config(json_path: str) -> tuple[dict, dict]:
         "machine_combination_mode": str(sched.get("machine_combination_mode", "prefix")),
         "enforce_same_processor_combinations": bool(sched.get("enforce_same_processor_combinations", True)),
         "machine_core_counts": machine_core_counts,
+        # Optional hand-off (worker wake-up) cost in ms between two different
+        # cores, {from kind: {to kind: ms}}; fills the transfer table. Absent
+        # = all zeros. See workload_factory.build_handoff_transfer_times.
+        "handoff_ms": sched.get("handoff_ms") or None,
     }
 
     return networks_data, cfg
@@ -346,7 +351,9 @@ def schedule_iree_networks(
     machines, machine_combinations = build_machine_combinations(
         machine_core_counts, mode=machine_combination_mode)
     n_cores = len(machines)
-    transfer_times = np.zeros((n_cores, n_cores))
+    transfer_times = build_handoff_transfer_times(machines, cfg["handoff_ms"])
+    if cfg["handoff_ms"]:
+        print(f"  Hand-off cost between cores (ms, from kind -> to kind): {cfg['handoff_ms']}")
 
     # Map each combination to its profile hw and topo tag.
     # The general path uses the full profile_hw_map (machine-kind → hw
