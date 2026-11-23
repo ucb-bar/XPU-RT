@@ -135,6 +135,45 @@ def expand_combinations_with_impls(
     return out_c, out_hw, out_impl
 
 
+def build_handoff_transfer_times(machines: list[str], handoff_ms: dict | None) -> np.ndarray:
+    """The planner's per-core-pair transfer table, filled with hand-off costs.
+
+    On the board each core has its own worker thread. A layer whose input was
+    produced on ANOTHER core starts only after its worker has been woken; a
+    layer that continues on the same core does not wait. `handoff_ms` gives
+    that wake-up time in ms by core kind, from the producing core's kind to
+    the consuming core's kind (kind names are case-insensitive), e.g.
+
+        {"cpu_p": {"cpu_p": 0.0115, "cpu_e": 0.0153},
+         "cpu_e": {"cpu_p": 0.0137, "cpu_e": 0.0153}}
+
+    Returns table[i][j] = cost from machines[i] to machines[j]; the same core
+    is always 0. None or {} gives all zeros (no hand-off cost). Every pair of
+    different cores the hardware has must be given, as a finite number >= 0.
+    """
+    n = len(machines)
+    table = np.zeros((n, n))
+    if not handoff_ms:
+        return table
+    if not isinstance(handoff_ms, dict):
+        raise ValueError(f"scheduler.handoff_ms must be {{from kind: {{to kind: ms}}}}, got {handoff_ms!r}")
+    by_kind = {str(k).strip().lower(): {str(k2).strip().lower(): v
+                                        for k2, v in (row if isinstance(row, dict) else {}).items()}
+               for k, row in handoff_ms.items()}
+    kinds = [machine_type_prefix(m).lower() for m in machines]
+    for i, src in enumerate(kinds):
+        for j, dst in enumerate(kinds):
+            if i == j:
+                continue
+            value = by_kind.get(src, {}).get(dst)
+            ok = isinstance(value, (int, float)) and not isinstance(value, bool)
+            if not ok or not np.isfinite(value) or value < 0:
+                raise ValueError(
+                    f"scheduler.handoff_ms needs a number >= 0 (ms) for {src} -> {dst}, got {value!r}")
+            table[i, j] = float(value)
+    return table
+
+
 def topo_tag_for_combination(combo: list[str]) -> str:
     """Return the topo tag that corresponds to a combination size, e.g. 3 cores → 'topo_0_1_2'."""
     n = len(combo)

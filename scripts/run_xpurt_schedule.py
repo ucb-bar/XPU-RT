@@ -26,6 +26,7 @@ from workload import Workload, Operation
 from workload_factory import (
     create_workload_from_network_hierarchy,
     build_machine_combinations,
+    build_handoff_transfer_times,
     expand_combinations_with_impls,
     machine_type_prefix,
 )
@@ -44,6 +45,7 @@ from greedy_scheduler import (
 from metaheuristics import (heft_schedule, heft_edf_schedule,
                             pso_schedule, sa_schedule)
 from profile_loader import load_profiled_processing_times
+from sender_delay import apply_sender_delay
 from postprocessing import trim_periodic_after_nonperiodic_makespan, output_scheduled_json
 from granularity_advisor import analyze_granularity, from_workload
 import plot
@@ -51,6 +53,42 @@ import plot
 # Hardware constants — SpacemiT x60
 CPU_P = "CPU_P"
 CPU_E = "CPU_E"
+
+
+def _parse_profile_targets(profile_cfg: dict, machine_core_counts: dict) -> dict | None:
+    """Read the optional per-kind `hardware.profile.targets` (K3).
+
+      "targets": {"cpu_p": "spacemit_x100", "cpu_e": "spacemit_a100"}
+
+    Says which profile target each machine kind's measurements are filed
+    under, for chips whose kinds are profiled as different targets (K3: X100
+    and A100, via ModelBlaster's PROFILE_CPU). Each combination's hw label
+    becomes `<hw>@<target>` (profile_loader.split_hw_label), so the two kinds'
+    profiles are separate keys even when a profile folder name is shared.
+    Topo tags are unchanged: ModelBlaster's K3 runner files multi-core
+    profiles under topo_0..n-1 whatever the physical cpus (MB_TOPO_RELATIVE).
+    Returns {KIND: target}, or None when absent (every K1 config).
+    """
+    raw = profile_cfg.get("targets")
+    if raw is None:
+        return None
+    if not isinstance(raw, dict):
+        raise ValueError(f"hardware.profile.targets: want {{kind: target}}, got {raw!r}")
+    per_kind = {str(k).strip().upper(): v for k, v in raw.items()}
+    kinds = set(machine_core_counts)
+    missing = kinds - set(per_kind)
+    unknown = set(per_kind) - kinds - {CPU_P, CPU_E}   # a 0-count kind may stay listed
+    if missing or unknown:
+        raise ValueError(f"hardware.profile.targets: kinds {sorted(per_kind)} vs "
+                         f"hardware.machines {sorted(kinds)} (missing {sorted(missing)}, "
+                         f"unknown {sorted(unknown)})")
+    for kind in sorted(kinds):
+        t = per_kind[kind]
+        # used as a path component and split on '@'
+        if not (isinstance(t, str) and t and not any(c in t for c in "@/")):
+            raise ValueError(f"hardware.profile.targets.{kind.lower()}: want a target "
+                             f"name, got {t!r}")
+    return {kind: per_kind[kind] for kind in kinds}
 
 
 def load_networks_config(json_path: str) -> tuple[dict, dict]:
@@ -106,6 +144,10 @@ def load_networks_config(json_path: str) -> tuple[dict, dict]:
         # Hold the solver to ModelBlaster's codegen contract (cores/
         # codegen_contract.json). None = on in shard mode, off otherwise.
         "codegen_contract": sched.get("codegen_contract", None),
+        # Width margin (with the codegen contract): a wider core group is
+        # offered only if >= this fraction faster than the next narrower one
+        # kept (codegen_contract.margin_widths). 0 = off (exact ties only).
+        "width_margin": float(sched.get("width_margin", 0.0)),
         "cpu_p_profile_hw": profile_hw.get("cpu_p", "RVV"),
         "cpu_e_profile_hw": profile_hw.get("cpu_e", "scalar"),
         "profile_target": profile_cfg.get("target", "spacemit_x60"),
@@ -125,6 +167,10 @@ def load_networks_config(json_path: str) -> tuple[dict, dict]:
         # need to read different topos to reflect the actual cluster
         # widths. Takes precedence over the scalar topo_tag_override.
         "profile_topo_tag_per_hw": profile_cfg.get("topo_tag_per_hw") or None,
+        # Optional per-kind profile targets (K3: X100 and A100 profiled as
+        # spacemit_x100 / spacemit_a100). Absent on every K1 config, which
+        # then behaves exactly as before. See _parse_profile_targets.
+        "profile_targets": _parse_profile_targets(profile_cfg, machine_core_counts),
         "gen_root": profile_cfg.get("gen_root", None),
         "p_core_speedup": float(hw.get("p_core_speedup", 1.5)),
         "random_seed": seed,
@@ -158,6 +204,14 @@ def load_networks_config(json_path: str) -> tuple[dict, dict]:
         "machine_combination_mode": str(sched.get("machine_combination_mode", "prefix")),
         "enforce_same_processor_combinations": bool(sched.get("enforce_same_processor_combinations", True)),
         "machine_core_counts": machine_core_counts,
+        # Optional hand-off (worker wake-up) cost in ms between two different
+        # cores, {from kind: {to kind: ms}}; fills the transfer table. Absent
+        # = all zeros. See workload_factory.build_handoff_transfer_times.
+        "handoff_ms": sched.get("handoff_ms") or None,
+        # Optional sender's delay in ms, {core kind: ms}: a worker that wakes
+        # another core's thread starts its own next layer that much later.
+        # Absent = not applied. See sender_delay.apply_sender_delay.
+        "sender_ms": sched.get("sender_ms") or None,
     }
 
     return networks_data, cfg
@@ -259,6 +313,7 @@ def schedule_iree_networks(
     profile_topo_tag = cfg["profile_topo_tag"]
     profile_topo_tag_override = cfg["profile_topo_tag_override"]
     profile_topo_tag_per_hw = cfg["profile_topo_tag_per_hw"]
+    profile_targets = cfg.get("profile_targets")   # None on K1 configs
     effective_p_core_speedup = cfg["p_core_speedup"]
     effective_random_seed = cfg["random_seed"]
     effective_solver_verbosity = cfg["solver_verbosity"]
@@ -284,6 +339,8 @@ def schedule_iree_networks(
     print(f"  Machine core counts: {machine_core_counts}")
     print(f"  Profile HW mapping: {CPU_P}->{cpu_p_profile_hw}, {CPU_E}->{cpu_e_profile_hw}")
     print(f"  Profile target/topology: target={profile_target}, topo_tag={profile_topo_tag}")
+    if profile_targets is not None:
+        print(f"  Per-kind profile targets: {profile_targets}")
     print(f"  p_core_speedup: {effective_p_core_speedup}")
     print(f"  random_seed: {'nondeterministic' if effective_random_seed is None else effective_random_seed}")
     print(f"  solver_verbosity: {effective_solver_verbosity}")
@@ -299,7 +356,9 @@ def schedule_iree_networks(
     machines, machine_combinations = build_machine_combinations(
         machine_core_counts, mode=machine_combination_mode)
     n_cores = len(machines)
-    transfer_times = np.zeros((n_cores, n_cores))
+    transfer_times = build_handoff_transfer_times(machines, cfg["handoff_ms"])
+    if cfg["handoff_ms"]:
+        print(f"  Hand-off cost between cores (ms, from kind -> to kind): {cfg['handoff_ms']}")
 
     # Map each combination to its profile hw and topo tag.
     # The general path uses the full profile_hw_map (machine-kind → hw
@@ -335,6 +394,13 @@ def schedule_iree_networks(
         print(f"  Implementations: {cfg['impls']} -> {len(machine_combinations)} "
               f"(core group, impl) options")
 
+    # Per-kind profile targets: 'ime_k3_a100@spacemit_a100' reads that folder
+    # under that target (profile_loader.split_hw_label). Applied after the
+    # impl expansion so every implementation of a kind reads its kind's target.
+    if profile_targets is not None:
+        combo_hw = [f"{hw}@{profile_targets[machine_type_prefix(c[0])]}"
+                    for hw, c in zip(combo_hw, machine_combinations)]
+
     # Optional: build profiled processing times if requested
     processing_times: dict[str, list[float]] | None = None
     combined_profiled_p: dict[int, dict] | None = None
@@ -356,7 +422,11 @@ def schedule_iree_networks(
             machine_combinations=machine_combinations,
             combo_hw=combo_hw,
             profile_target=profile_target,
-            cpu_p_profile_hw=cpu_p_profile_hw,
+            # The loader buckets a profile as "p" when its hw label equals this;
+            # with per-kind targets that is CPU_P's label.
+            cpu_p_profile_hw=(cpu_p_profile_hw if profile_targets is None else
+                              f"{profile_hw_map.get(CPU_P.lower(), cpu_p_profile_hw)}"
+                              f"@{profile_targets[CPU_P]}"),
             cpu_e_profile_hw=cpu_e_profile_hw,
             rng=rng,
             p_core_speedup=effective_p_core_speedup,
@@ -424,11 +494,16 @@ def schedule_iree_networks(
     def _build_workload():
         workload = _create_workload()
         if contract is not None:
-            st = codegen_contract.apply_to_workload(workload, _module_name_of, contract)
+            st = codegen_contract.apply_to_workload(workload, _module_name_of, contract,
+                                                    margin=cfg["width_margin"])
             print(f"  codegen contract: pinned {st['pinned_dispatches']} packed-weight "
                   f"dispatch(es) to one width, excluded {st['oc_excluded_options']} "
                   f"option(s) whose width does not divide OC"
                   + (f"; no common width for {st['unpinnable'][:4]}" if st["unpinnable"] else ""))
+            print(f"  codegen contract: {st['unshareable_options']} multi-core option(s) of "
+                  f"ops without a pool path excluded; width margin {cfg['width_margin']:.0%}: "
+                  f"{st['margin_excluded_options']} option(s) excluded, "
+                  f"{st['margin_narrowed_dispatches']} dispatch(es) given a narrower width")
         return workload
 
     def _create_workload():
@@ -675,6 +750,12 @@ def schedule_iree_networks(
                 print(f"  Job names: {combined_workload.job_names}")
 
                 t, alpha = _greedy_fn(combined_workload)
+                if cfg["sender_ms"]:
+                    _t_planned = t
+                    t = apply_sender_delay(combined_workload, t, alpha, cfg["sender_ms"])
+                    _shift = np.asarray(t) - np.asarray(_t_planned)
+                    print(f"  Sender delay {cfg['sender_ms']}: {int((_shift > 1e-9).sum())} of {len(_shift)} "
+                          f"ops start later, largest shift {float(_shift.max()) if len(_shift) else 0.0:.4f} ms")
 
                 # Measure makespan, optionally restricted to non-periodic ops
                 # (matches the MILP solver's objective when
@@ -996,6 +1077,9 @@ def schedule_iree_networks(
     # Builds the per-machine-kind label from the generalised profile_hw_map
     # so 3-way (and higher) configs render correctly.
     plot_profile_hw = {k.upper(): v for k, v in profile_hw_map.items()}
+    if profile_targets is not None:
+        for _kind, _target in profile_targets.items():
+            plot_profile_hw.setdefault(_kind, _target)
     plot_profile_hw.setdefault(CPU_P, cpu_p_profile_hw)
     plot_profile_hw.setdefault(CPU_E, cpu_e_profile_hw)
     plot.plot_optimization_schedule(

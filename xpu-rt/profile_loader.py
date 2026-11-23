@@ -136,6 +136,18 @@ def _model_candidates(net_id: str, net_info: dict, dispatch_deps_path: str) -> l
     return candidates or [net_id]
 
 
+def split_hw_label(hw: str, default_target: str) -> tuple[str, str]:
+    """'ime_k3_a100@spacemit_a100' -> ('ime_k3_a100', 'spacemit_a100').
+
+    A combination's hw label carries its own profile target when the machine
+    kinds were profiled as different targets (`hardware.profile.targets`, K3:
+    X100 and A100). A plain label ('rvv_x60') uses the config's single
+    `profile.target`, as before.
+    """
+    hw_dir, _, target = hw.partition("@")
+    return hw_dir, (target or default_target)
+
+
 def _resolve_topo_for(
     hw: str, combo: list[str], topo_tag_override
 ) -> str:
@@ -521,17 +533,22 @@ def _load_all_topo_profiles(
             # to be safe; the resolver picks the topo.
             pairs.add((hw, _resolve_topo_for(hw, combo, topo_tag_override)))
 
+    if any("@" in hw for hw in hw_types):
+        # Per-kind targets (K3): sorted, so which profile fills the p/e buckets
+        # last does not depend on PYTHONHASHSEED. K1 keeps its iteration.
+        pairs = sorted(pairs)
     for hw, topo in pairs:
+        hw_dir, target = split_hw_label(hw, profile_target)
         for model_candidate in candidates:
             csv_path = find_profile_csv(
                 repo_base_path, model=model_candidate,
-                target=profile_target, hw=hw, basename=basename, topo_tag=topo,
+                target=target, hw=hw_dir, basename=basename, topo_tag=topo,
             )
             if csv_path:
                 prof = load_profiled_times(csv_path)
                 prof = _apply_id_remap(
                     prof, _load_id_remap(dispatch_deps_path),
-                    _load_tile_widths(dispatch_deps_path), hw=hw,
+                    _load_tile_widths(dispatch_deps_path), hw=hw_dir,
                     axes=_load_tile_axes(dispatch_deps_path))
                 if prof:
                     profiles[(hw, topo)] = prof
@@ -653,9 +670,10 @@ def load_profiled_processing_times(
         for (hw, topo) in requested_pairs:
             if (hw, topo) not in all_profiles:
                 if strict:
+                    hw_dir, target = split_hw_label(hw, profile_target)
                     missing.append(
                         f"  - {net_id} @ {hw}/{topo}: no profile CSV under "
-                        f"gen/profile/{hw}/{profile_target}/<model>/<basename>/.../{topo}/results.csv"
+                        f"gen/profile/{hw_dir}/{target}/<model>/<basename>/.../{topo}/results.csv"
                     )
         if not all_profiles:
             if not strict:
