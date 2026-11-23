@@ -1,0 +1,514 @@
+"""The K1 resource model: IME is a property of cores 0-3, not a separate engine.
+
+THE FAILURE THIS PREVENTS: the natural way to let the scheduler choose IME is to
+declare it as extra machines -- `{"cpu_p": 4, "cpu_e": 4, "ime": 4}`. That
+produces schedules that cannot run. The IME "machine" is marked busy while
+CPU_P#2, the core the IME instruction actually executes on, is still marked
+idle, so the solver happily places an unrelated RVV dispatch there at the same
+instant. Nothing in the model objects, the Gantt looks great, and the schedule
+is physically impossible.
+
+The measured fact behind all of this, from a per-core SIGILL probe on the board
+(artifacts/k1_bringup/*/ime_capability_probe.txt): `smt.vmadot` executes on
+cores 0-3 and traps on cores 4-7. Note "traps" -- an IME kernel sent to cluster
+1 does not degrade gracefully, so legality has to be enforced when the workload
+is built rather than discovered at runtime.
+
+The representation we use instead: alternative implementations are separate
+combinations that share the *same* machine names. `combinations_overlap` is set
+intersection, and both schedulers refuse to overlap intersecting combinations,
+so mutual exclusion falls out of machinery that already exists and double
+booking is unrepresentable rather than merely discouraged.
+"""
+
+from __future__ import annotations
+
+import os
+import sys
+import unittest
+
+import numpy as np
+
+_HERE = os.path.dirname(os.path.abspath(__file__))
+_XPURT = os.path.dirname(_HERE)
+_REPO = os.path.dirname(_XPURT)
+sys.path.insert(0, _REPO)
+sys.path.insert(0, _XPURT)
+
+from capabilities import (  # noqa: E402
+    K1_CAPABILITIES,
+    aligned_core_blocks,
+    IllegalPlacement,
+    build_machine_combinations_with_impls,
+    check_implementation_legality,
+    core_ids_for_combination,
+    legal_combination_indices,
+)
+from workload import Workload  # noqa: E402
+from workload_factory import build_machine_combinations  # noqa: E402
+
+K1_CORES = {"CPU_P": 4, "CPU_E": 4}
+K1_IMPLS = {"CPU_P": ["rvv", "ime"], "CPU_E": ["rvv"]}
+
+
+def _workload(machines, combinations):
+    """A Workload carrying only the resource model -- no operations needed."""
+    n = len(machines)
+    return Workload(operations=[], machines=machines,
+                    transfer_times=np.zeros((n, n)),
+                    machine_combinations=combinations)
+
+
+class LegalityTests(unittest.TestCase):
+    def test_ime_is_rejected_on_cluster_1(self):
+        with self.assertRaises(IllegalPlacement) as ctx:
+            check_implementation_legality({"CPU_E": ["ime"]})
+        self.assertIn("ime", str(ctx.exception))
+        self.assertIn("CPU_E", str(ctx.exception))
+
+    def test_ime_is_accepted_on_cluster_0(self):
+        check_implementation_legality({"CPU_P": ["ime"]})  # must not raise
+
+    def test_rvv_and_scalar_are_legal_on_both_clusters(self):
+        check_implementation_legality({"CPU_P": ["scalar", "rvv"],
+                                       "CPU_E": ["scalar", "rvv"]})
+
+    def test_every_violation_is_reported_at_once(self):
+        """One run should tell you everything that is wrong, not just the first."""
+        with self.assertRaises(IllegalPlacement) as ctx:
+            check_implementation_legality({"CPU_E": ["ime", "gemmini"]})
+        msg = str(ctx.exception)
+        self.assertIn("ime", msg)
+        self.assertIn("gemmini", msg)
+
+    def test_unknown_machine_kind_is_rejected(self):
+        with self.assertRaises(IllegalPlacement):
+            check_implementation_legality({"NPU": ["ime"]})
+
+    def test_a_kind_with_no_implementations_is_rejected(self):
+        """Silently unschedulable is worse than a loud failure."""
+        with self.assertRaises(IllegalPlacement):
+            build_machine_combinations_with_impls({"CPU_P": 2}, {"CPU_P": []})
+
+    def test_capability_table_matches_what_was_measured_on_the_board(self):
+        self.assertIn("ime", K1_CAPABILITIES["CPU_P"])
+        self.assertNotIn("ime", K1_CAPABILITIES["CPU_E"])
+        for kind in ("CPU_P", "CPU_E"):
+            self.assertIn("rvv", K1_CAPABILITIES[kind])
+            self.assertIn("scalar", K1_CAPABILITIES[kind])
+
+
+class NoDoubleBookingTests(unittest.TestCase):
+    """The core invariant, checked through the real Workload, not a stand-in."""
+
+    def setUp(self):
+        self.machines, self.combos, self.impls = \
+            build_machine_combinations_with_impls(K1_CORES, K1_IMPLS)
+        self.wl = _workload(self.machines, self.combos)
+
+    def test_rvv_and_ime_on_the_same_core_are_mutually_exclusive(self):
+        rvv = self.combos.index(["CPU_P#0"])
+        ime = next(i for i, (c, m) in enumerate(zip(self.combos, self.impls))
+                   if c == ["CPU_P#0"] and m == "ime")
+        self.assertNotEqual(rvv, ime, "they must be distinct combinations")
+        self.assertTrue(
+            self.wl.combinations_overlap(rvv, ime),
+            "an IME dispatch and an RVV dispatch on CPU_P#0 must never be "
+            "allowed to run concurrently -- they are the same physical core",
+        )
+
+    def test_every_pair_sharing_a_core_overlaps(self):
+        """Exhaustive: no pair of combinations sharing any machine is free to overlap."""
+        for i, ci in enumerate(self.combos):
+            for j, cj in enumerate(self.combos):
+                if i >= j:
+                    continue
+                shares = bool(set(ci) & set(cj))
+                self.assertEqual(
+                    shares, self.wl.combinations_overlap(i, j),
+                    f"combination {i} {ci} ({self.impls[i]}) vs "
+                    f"{j} {cj} ({self.impls[j]})",
+                )
+
+    def test_disjoint_clusters_may_run_concurrently(self):
+        """The model must not over-serialise: cluster 0 and cluster 1 are independent."""
+        p = self.combos.index(["CPU_P#0"])
+        e = self.combos.index(["CPU_E#0"])
+        self.assertFalse(self.wl.combinations_overlap(p, e))
+
+    def test_a_multicore_implementation_reserves_all_of_its_cores(self):
+        """A 4-core combination must block every combination overlapping it."""
+        four = self.combos.index(["CPU_P#0", "CPU_P#1", "CPU_P#2", "CPU_P#3"])
+        blocked = 0
+        for i, combo in enumerate(self.combos):
+            if i == four:
+                continue
+            if set(combo) & {"CPU_P#0", "CPU_P#1", "CPU_P#2", "CPU_P#3"}:
+                self.assertTrue(
+                    self.wl.combinations_overlap(four, i),
+                    f"a 4-core cluster-0 dispatch must exclude {combo} "
+                    f"({self.impls[i]})",
+                )
+                blocked += 1
+        self.assertGreater(blocked, 0)
+
+    def test_combinations_are_cumulative_prefixes_so_a_cluster_is_ONE_resource(self):
+        """Document a real limit of the existing model, so nobody assumes 8-way.
+
+        `build_machine_combinations` emits cumulative prefixes: ['CPU_P#0'],
+        ['CPU_P#0','CPU_P#1'], ... There is deliberately no ['CPU_P#1'] on its
+        own. Every cluster-0 combination therefore contains CPU_P#0, so every
+        pair of them intersects, so **at most one dispatch runs on cluster 0 at
+        a time** no matter how many cores are declared.
+
+        `machines: {cpu_p: 4}` means "one dispatch may be given up to 4 cores",
+        NOT "four dispatches may run side by side". Concurrency in this model
+        comes from having several machine KINDS (cluster 0 vs cluster 1), which
+        for the K1 caps genuinely-parallel dispatches at 2.
+
+        That is a defensible model -- it matches the profile tree, where
+        topo_0_1_2_3 is the 4-hart time for one dispatch -- but it is a ceiling
+        the periodic MLP+DroNet+YOLO workload will run into, and it should be a
+        deliberate choice rather than a surprise.
+        """
+        cluster0 = [i for i, c in enumerate(self.combos)
+                    if all(m.startswith("CPU_P#") for m in c)]
+        self.assertGreater(len(cluster0), 1)
+        for i in cluster0:
+            self.assertIn("CPU_P#0", self.combos[i],
+                          "every cluster-0 combination contains core 0")
+        for a in cluster0:
+            for b in cluster0:
+                if a < b:
+                    self.assertTrue(
+                        self.wl.combinations_overlap(a, b),
+                        "cluster 0 serialises: no two dispatches can share it",
+                    )
+
+    def test_the_broken_alternative_would_have_failed_this(self):
+        """Guard the actual mistake: IME as its own machine kind.
+
+        Modelled as separate machines, an IME combination and a CPU_P
+        combination do NOT intersect, so the scheduler is free to run both at
+        once -- on hardware that is one core doing two things.
+        """
+        machines, combos = build_machine_combinations(
+            {"CPU_P": 4, "CPU_E": 4, "IME": 4})
+        wl = _workload(machines, combos)
+        ime = combos.index(["IME#0"])
+        cpu = combos.index(["CPU_P#0"])
+        self.assertFalse(
+            wl.combinations_overlap(ime, cpu),
+            "this is the bug: as separate machines they look independent",
+        )
+
+
+class PerCoreGranularityTests(unittest.TestCase):
+    """`per_core` is the model that actually gives the K1 eight-way concurrency."""
+
+    def setUp(self):
+        self.machines, self.combos, self.impls = \
+            build_machine_combinations_with_impls(
+                K1_CORES, K1_IMPLS, granularity="per_core")
+        self.wl = _workload(self.machines, self.combos)
+
+    def test_every_combination_is_a_single_core(self):
+        for combo in self.combos:
+            self.assertEqual(len(combo), 1, f"{combo} should be one core")
+
+    def test_eight_dispatches_can_run_concurrently(self):
+        """The whole point: one dispatch per physical core, none excluding another."""
+        one_per_core = {}
+        for i, combo in enumerate(self.combos):
+            if self.impls[i] == "rvv":
+                one_per_core.setdefault(combo[0], i)
+        self.assertEqual(len(one_per_core), 8, "all 8 cores schedulable")
+        idx = sorted(one_per_core.values())
+        for a in idx:
+            for b in idx:
+                if a < b:
+                    self.assertFalse(
+                        self.wl.combinations_overlap(a, b),
+                        f"{self.combos[a]} and {self.combos[b]} are different "
+                        f"physical cores and must run concurrently",
+                    )
+
+    def test_ime_still_excludes_rvv_on_the_same_core(self):
+        """Per-core must not weaken the invariant that motivated all of this."""
+        for core in ("CPU_P#0", "CPU_P#1", "CPU_P#2", "CPU_P#3"):
+            rvv = next(i for i, (c, m) in enumerate(zip(self.combos, self.impls))
+                       if c == [core] and m == "rvv")
+            ime = next(i for i, (c, m) in enumerate(zip(self.combos, self.impls))
+                       if c == [core] and m == "ime")
+            self.assertTrue(
+                self.wl.combinations_overlap(rvv, ime),
+                f"IME and RVV on {core} are the same physical core",
+            )
+
+    def test_ime_is_offered_on_cluster_0_only(self):
+        for combo, impl in zip(self.combos, self.impls):
+            if impl == "ime":
+                self.assertTrue(combo[0].startswith("CPU_P#"))
+
+    def test_single_core_combinations_imply_the_topo_0_profile(self):
+        """Guard the profile pairing: per_core must be timed single-hart.
+
+        workload_factory.topo_tag_for_combination derives the tag from
+        combination length, so every per_core combination maps to topo_0. Using
+        a 4-hart profile tree with this granularity would silently credit each
+        core with the throughput of the whole cluster.
+        """
+        from workload_factory import topo_tag_for_combination
+        for combo in self.combos:
+            self.assertEqual(topo_tag_for_combination(combo), "topo_0")
+
+    def test_an_unknown_granularity_is_rejected(self):
+        with self.assertRaises(ValueError):
+            build_machine_combinations_with_impls(
+                K1_CORES, K1_IMPLS, granularity="whatever")
+
+    def test_prefix_and_per_core_disagree_about_concurrency(self):
+        """The two models are genuinely different, not cosmetic variants."""
+        _, prefix_combos, prefix_impls = build_machine_combinations_with_impls(
+            K1_CORES, K1_IMPLS, granularity="prefix")
+        wl_prefix = _workload(self.machines, prefix_combos)
+        p0 = prefix_combos.index(["CPU_P#0"])
+        # under prefix there is no ['CPU_P#1'] at all to run beside it
+        self.assertNotIn(["CPU_P#1"], prefix_combos)
+        # under per_core there is, and the two are independent
+        a = next(i for i, c in enumerate(self.combos) if c == ["CPU_P#0"])
+        b = next(i for i, c in enumerate(self.combos) if c == ["CPU_P#1"])
+        self.assertFalse(self.wl.combinations_overlap(a, b))
+        self.assertGreater(len(prefix_combos), 0)
+        self.assertGreaterEqual(p0, 0)
+
+
+class ShardGranularityTests(unittest.TestCase):
+    """B4: a dispatch may be given several cores instead of one.
+
+    DroNet's measured single-core latency is 113 ms against a 33.3 ms period, so
+    it misses every deadline under *every* placement policy, including static
+    pinning. That is a property of the workload, not of the scheduler, and the
+    only fix that exists at the scheduling layer is to spend more cores on one
+    dispatch. These tests pin the resource model that makes that expressible
+    without letting it become a licence to double-book.
+    """
+
+    def test_blocks_are_singletons_plus_aligned_powers_of_two(self):
+        cores = ["CPU_P#0", "CPU_P#1", "CPU_P#2", "CPU_P#3"]
+        self.assertEqual(
+            aligned_core_blocks(cores),
+            [["CPU_P#0"], ["CPU_P#1"], ["CPU_P#2"], ["CPU_P#3"],
+             ["CPU_P#0", "CPU_P#1"], ["CPU_P#2", "CPU_P#3"],
+             ["CPU_P#0", "CPU_P#1", "CPU_P#2", "CPU_P#3"]])
+
+    def test_every_pair_of_blocks_is_disjoint_or_nested(self):
+        """The property the whole design rests on.
+
+        If two blocks partially overlapped, the scheduler could pick both,
+        `combinations_overlap` would serialise them, and we would have paid for
+        a placement option that buys nothing. Alignment rules that out.
+        """
+        blocks = [set(b) for b in aligned_core_blocks(
+            [f"CPU_P#{i}" for i in range(8)])]
+        for a in blocks:
+            for b in blocks:
+                inter = a & b
+                self.assertTrue(not inter or inter == a or inter == b,
+                                f"partial overlap between {sorted(a)} and "
+                                f"{sorted(b)}")
+
+    def test_a_shard_block_excludes_the_cores_it_spans(self):
+        """The bug this must never allow: a 4-core shard running while
+        something else is also placed on one of those four cores."""
+        machines, combos, _ = build_machine_combinations_with_impls(
+            {"CPU_P": 4}, {"CPU_P": ["rvv"]}, granularity="shard")
+        w = _workload(machines, combos)
+        quad = combos.index(["CPU_P#0", "CPU_P#1", "CPU_P#2", "CPU_P#3"])
+        for i, combo in enumerate(combos):
+            if i == quad:
+                continue
+            self.assertTrue(
+                w.combinations_overlap(quad, i),
+                f"a 4-core shard must exclude {combo}, but they were "
+                "allowed to run concurrently")
+
+    def test_disjoint_pairs_still_run_concurrently(self):
+        """Sharding must not collapse into 'one dispatch per cluster'. The two
+        halves of a cluster are genuinely independent and must stay so."""
+        machines, combos, _ = build_machine_combinations_with_impls(
+            {"CPU_P": 4}, {"CPU_P": ["rvv"]}, granularity="shard")
+        w = _workload(machines, combos)
+        lo = combos.index(["CPU_P#0", "CPU_P#1"])
+        hi = combos.index(["CPU_P#2", "CPU_P#3"])
+        self.assertFalse(w.combinations_overlap(lo, hi))
+
+    def test_shard_supersets_per_core(self):
+        """Adding shards may not remove a placement that used to be legal."""
+        _, per_core, _ = build_machine_combinations_with_impls(
+            K1_CORES, K1_IMPLS, granularity="per_core")
+        _, shard, _ = build_machine_combinations_with_impls(
+            K1_CORES, K1_IMPLS, granularity="shard")
+        for combo in per_core:
+            self.assertIn(combo, shard)
+
+    def test_shard_blocks_carry_the_multi_core_topo_tag(self):
+        """A 4-core shard must be timed with the 4-hart profile. Timing it with
+        the single-core number would credit the shard with a speedup it did not
+        get; timing a single core with the 4-hart number would do the reverse.
+        """
+        from workload_factory import topo_tag_for_combination
+        _, combos, _ = build_machine_combinations_with_impls(
+            {"CPU_P": 4}, {"CPU_P": ["rvv"]}, granularity="shard")
+        quad = combos.index(["CPU_P#0", "CPU_P#1", "CPU_P#2", "CPU_P#3"])
+        pair = combos.index(["CPU_P#2", "CPU_P#3"])
+        one = combos.index(["CPU_P#1"])
+        self.assertEqual(topo_tag_for_combination(combos[quad]), "topo_0_1_2_3")
+        self.assertEqual(topo_tag_for_combination(combos[pair]), "topo_0_1")
+        self.assertEqual(topo_tag_for_combination(combos[one]), "topo_0")
+
+    def test_illegal_implementations_are_still_rejected_when_sharding(self):
+        with self.assertRaises(IllegalPlacement):
+            build_machine_combinations_with_impls(
+                {"CPU_E": 4}, {"CPU_E": ["ime"]}, granularity="shard")
+
+    def test_unknown_granularity_names_shard(self):
+        with self.assertRaises(ValueError) as cm:
+            build_machine_combinations_with_impls(
+                K1_CORES, K1_IMPLS, granularity="nonsense")
+        self.assertIn("shard", str(cm.exception))
+
+    def test_non_power_of_two_cluster_keeps_every_core(self):
+        """The Merlin runner's own default is an asymmetric 4+2, so a cluster
+        whose core count is not a power of two is not hypothetical."""
+        blocks = aligned_core_blocks(["c0", "c1", "c2"])
+        self.assertIn(["c2"], blocks)
+        self.assertIn(["c0", "c1"], blocks)
+        covered = {c for b in blocks for c in b}
+        self.assertEqual(covered, {"c0", "c1", "c2"})
+
+
+class BackwardCompatibilityTests(unittest.TestCase):
+    def test_single_implementation_matches_the_existing_builder(self):
+        """One impl per kind must reproduce the builder's cumulative groups.
+
+        build_machine_combinations' prefix mode also offers every other core on
+        its own (so two dispatches can share a kind); the impl-aware builder
+        enumerates the cumulative groups only, so compare those."""
+        machines_old, combos_old = build_machine_combinations(K1_CORES)
+        machines_new, combos_new, impls = build_machine_combinations_with_impls(
+            K1_CORES, {"CPU_P": ["rvv"], "CPU_E": ["rvv"]})
+        self.assertEqual(machines_old, machines_new)
+        self.assertEqual([c for c in combos_old if c[0].endswith("#0")], combos_new)
+        self.assertEqual(len(impls), len(combos_new))
+
+    def test_combination_count_is_cores_times_implementations(self):
+        _, combos, _ = build_machine_combinations_with_impls(K1_CORES, K1_IMPLS)
+        # CPU_P: 4 prefixes x 2 impls, CPU_E: 4 prefixes x 1 impl
+        self.assertEqual(len(combos), 4 * 2 + 4 * 1)
+
+    def test_topo_tag_size_convention_is_preserved(self):
+        """Profile lookup keys off combination size; impl variants must not shift it.
+
+        ModelBlaster writes 4-core profiles under topo_0_1_2_3
+        (pipeline/profile_writer.py), and workload_factory derives the tag from
+        combination length, so the two agree only if adding an implementation
+        does not change the machine set.
+        """
+        _, combos, impls = build_machine_combinations_with_impls(K1_CORES, K1_IMPLS)
+        for combo, impl in zip(combos, impls):
+            if len(combo) == 4 and impl == "ime":
+                self.assertEqual(combo,
+                                 ["CPU_P#0", "CPU_P#1", "CPU_P#2", "CPU_P#3"])
+                break
+        else:
+            self.fail("expected a 4-core IME combination")
+
+
+class ImplementationSelectionTests(unittest.TestCase):
+    def test_indices_for_a_required_implementation(self):
+        _, combos, impls = build_machine_combinations_with_impls(K1_CORES, K1_IMPLS)
+        ime_idx = legal_combination_indices(combos, impls, "ime")
+        self.assertTrue(ime_idx)
+        for i in ime_idx:
+            self.assertEqual(impls[i], "ime")
+            for m in combos[i]:
+                self.assertTrue(m.startswith("CPU_P#"),
+                                "IME must never be offered on cluster 1")
+
+    def test_a_dispatch_with_no_ime_kernel_gets_no_ime_combination(self):
+        _, combos, impls = build_machine_combinations_with_impls(K1_CORES, K1_IMPLS)
+        rvv_only = legal_combination_indices(combos, impls, "rvv")
+        self.assertTrue(all(impls[i] == "rvv" for i in rvv_only))
+
+
+class PhysicalCoreIdTests(unittest.TestCase):
+    """Affinity masks need physical ids, and cluster 1 does not start at 0."""
+
+    def test_cluster0_indices_are_identity(self):
+        self.assertEqual(core_ids_for_combination(["CPU_P#0", "CPU_P#3"]), [0, 3])
+
+    def test_cluster1_is_offset_to_cores_4_through_7(self):
+        self.assertEqual(core_ids_for_combination(["CPU_E#0"]), [4])
+        self.assertEqual(core_ids_for_combination(["CPU_E#3"]), [7])
+
+    def test_all_eight_cores_are_reachable_and_distinct(self):
+        _, combos, _ = build_machine_combinations_with_impls(
+            K1_CORES, {"CPU_P": ["rvv"], "CPU_E": ["rvv"]})
+        ids = set()
+        for combo in combos:
+            ids.update(core_ids_for_combination(combo))
+        self.assertEqual(ids, set(range(8)))
+
+    def test_out_of_range_core_is_rejected(self):
+        with self.assertRaises(IllegalPlacement):
+            core_ids_for_combination(["CPU_E#9"])
+
+
+if __name__ == "__main__":
+    unittest.main()
+
+
+class MachineCombinationModeTests(unittest.TestCase):
+    """`machine_combination_mode` was inert; making it live must change nothing old.
+
+    It was parsed into config and only ever printed, with a default of
+    "singletons" -- so the documented default disagreed with the sole
+    implemented behaviour (cumulative prefixes). The fix is safe precisely
+    because the two modes coincide when a kind has one core, which every
+    pre-K1 config uses.
+    """
+
+    def test_modes_coincide_for_single_core_kinds(self):
+        a = build_machine_combinations({"CPU_P": 1, "CPU_E": 1}, mode="prefix")
+        b = build_machine_combinations({"CPU_P": 1, "CPU_E": 1}, mode="singletons")
+        self.assertEqual(a, b)
+
+    def test_prefix_is_cumulative(self):
+        # cumulative groups from core 0, then every other core on its own
+        _, combos = build_machine_combinations({"CPU_P": 3}, mode="prefix")
+        self.assertEqual(combos, [["CPU_P#0"],
+                                  ["CPU_P#0", "CPU_P#1"],
+                                  ["CPU_P#0", "CPU_P#1", "CPU_P#2"],
+                                  ["CPU_P#1"], ["CPU_P#2"]])
+
+    def test_singletons_are_independent(self):
+        _, combos = build_machine_combinations({"CPU_P": 3}, mode="singletons")
+        self.assertEqual(combos, [["CPU_P#0"], ["CPU_P#1"], ["CPU_P#2"]])
+
+    def test_default_stays_prefix_at_the_function_level(self):
+        """The function default must not shift under existing callers."""
+        self.assertEqual(build_machine_combinations({"CPU_P": 2}),
+                         build_machine_combinations({"CPU_P": 2}, mode="prefix"))
+
+    def test_bad_mode_is_rejected(self):
+        with self.assertRaises(ValueError):
+            build_machine_combinations({"CPU_P": 2}, mode="nonsense")
+
+    def test_singletons_give_the_k1_eight_independent_cores(self):
+        machines, combos = build_machine_combinations(K1_CORES, mode="singletons")
+        wl = _workload(machines, combos)
+        self.assertEqual(len(combos), 8)
+        for i in range(len(combos)):
+            for j in range(i + 1, len(combos)):
+                self.assertFalse(wl.combinations_overlap(i, j))

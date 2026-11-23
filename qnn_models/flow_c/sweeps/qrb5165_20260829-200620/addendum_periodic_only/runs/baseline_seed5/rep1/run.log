@@ -1,0 +1,41 @@
+[bringup] DSP  /root/qnn_runtime_ctx/ctx_dronet_full_hta__Dsp.bin → 1 graph(s): dronet_full_hta
+[bringup] CPU  /root/qnn_runtime_ctx/ctx_mlp_control_fp32__Cpu.bin → 1 graph(s): mlp_control_fp32
+Context handle already exists!
+[bringup] HTA  /root/qnn_runtime_ctx/ctx_dronet_full_hta__Hta.bin → 1 graph(s): dronet_full_hta
+[main] 3 context(s), 12 entries, 3 lane(s):
+  lane 0  dsp|dronet     core 6  spin 200 us  fifo 0
+  lane 1  cpu|mlp_control core 5  spin 1500 us  fifo 40
+  lane 2  hta|dronet     core 7  spin 200 us  fifo 0
+[main] iteration 1/2 wall=48.042 ms
+/prj/qct/webtech_scratch20/mlg_user_admin/qaisw_source_repo/rel/qairt-2.45.0/release/SNPE_SRC/avante-tools/prebuilt/dsp/hexagon-sdk-4.1.0/ipc/fastrpc/rpcmem/src/rpcmem_android.c:38:dummy call to rpcmem_init, rpcmem APIs will be used from libxdsprpc
+[run] e=1   mlp_control   #0  mlp_control_full       lane=cpu|mlp_control CPU predicted=  0.107 actual=  0.042 ms (start=   0.028, late=+0.028)
+[run] e=0   dronet        #0  dronet_full            lane=dsp|dronet DSP predicted=  0.645 actual=  0.914 ms (start=   0.011, late=+0.011)
+[run] e=2   mlp_control   #1  mlp_control_full       lane=cpu|mlp_control CPU predicted=  0.107 actual=  0.043 ms (start=   6.009, late=+0.009)
+[run] e=3   mlp_control   #2  mlp_control_full       lane=cpu|mlp_control CPU predicted=  0.107 actual=  0.036 ms (start=  12.005, late=+0.005)
+[run] e=5   mlp_control   #3  mlp_control_full       lane=cpu|mlp_control CPU predicted=  0.107 actual=  0.036 ms (start=  18.004, late=+0.004)
+[run] e=4   dronet        #1  dronet_full            lane=hta|dronet HTA predicted=  2.030 actual=  1.992 ms (start=  18.098, late=+0.098)
+[run] e=6   mlp_control   #4  mlp_control_full       lane=cpu|mlp_control CPU predicted=  0.107 actual=  0.042 ms (start=  24.014, late=+0.014)
+[run] e=7   mlp_control   #5  mlp_control_full       lane=cpu|mlp_control CPU predicted=  0.107 actual=  0.037 ms (start=  30.007, late=+0.007)
+[run] e=8   mlp_control   #6  mlp_control_full       lane=cpu|mlp_control CPU predicted=  0.107 actual=  0.036 ms (start=  36.006, late=+0.006)
+[run] e=10  mlp_control   #7  mlp_control_full       lane=cpu|mlp_control CPU predicted=  0.107 actual=  0.037 ms (start=  42.006, late=+0.006)
+[run] e=9   dronet        #2  dronet_full            lane=dsp|dronet DSP predicted=  0.645 actual=  0.986 ms (start=  41.409, late=+0.054)
+[run] e=11  mlp_control   #8  mlp_control_full       lane=cpu|mlp_control CPU predicted=  0.107 actual=  0.036 ms (start=  48.006, late=+0.006)
+
+[summary] 12/12 entries executed, wall=48.041 ms (predicted makespan 48.107 ms, ratio 1.00x), tensor handoffs=0
+
+=== MODELBLASTER_XPURT_TRACE_BEGIN ===
+entry_id,network,instance,dispatch_id,op,name,core_kind,hart,predicted_start_ms,predicted_duration_ms,worker_kind_idx,actual_start_cycles,actual_end_cycles,time_unit,backend,ctx,graph,dep_wait_ms,gate_ms,n_ir_ops
+0,dronet,0,0,qnn_graph,dronet_full,dsp,6,0.000000,0.645000,0,10,924,us,DSP,ctx_dronet_full_hta__Dsp.bin,dronet_full_hta,0.000990,0.005990,24
+1,mlp_control,0,0,qnn_graph,mlp_control_full,cpu,5,0.000000,0.107000,1,28,70,us,CPU,ctx_mlp_control_fp32__Cpu.bin,mlp_control_fp32,0.000990,0.021669,7
+2,mlp_control,1,0,qnn_graph,mlp_control_full,cpu,5,6.000000,0.107000,1,6009,6051,us,CPU,ctx_mlp_control_fp32__Cpu.bin,mlp_control_fp32,0.087612,6.000603,7
+3,mlp_control,2,0,qnn_graph,mlp_control_full,cpu,5,12.000000,0.107000,1,12004,12040,us,CPU,ctx_mlp_control_fp32__Cpu.bin,mlp_control_fp32,6.057588,12.000269,7
+4,dronet,1,0,qnn_graph,dronet_full,hta,7,18.000000,2.030000,2,18097,20089,us,HTA,ctx_dronet_full_hta__Hta.bin,dronet_full_hta,0.001510,18.088693,24
+5,mlp_control,3,0,qnn_graph,mlp_control_full,cpu,5,18.000000,0.107000,1,18004,18040,us,CPU,ctx_mlp_control_fp32__Cpu.bin,mlp_control_fp32,12.045221,18.000248,7
+6,mlp_control,4,0,qnn_graph,mlp_control_full,cpu,5,24.000000,0.107000,1,24014,24056,us,CPU,ctx_mlp_control_fp32__Cpu.bin,mlp_control_fp32,18.043898,24.000539,7
+7,mlp_control,5,0,qnn_graph,mlp_control_full,cpu,5,30.000000,0.107000,1,30006,30043,us,CPU,ctx_mlp_control_fp32__Cpu.bin,mlp_control_fp32,24.066065,30.000152,7
+8,mlp_control,6,0,qnn_graph,mlp_control_full,cpu,5,36.000000,0.107000,1,36005,36041,us,CPU,ctx_mlp_control_fp32__Cpu.bin,mlp_control_fp32,30.047084,36.000287,7
+9,dronet,2,0,qnn_graph,dronet_full,dsp,6,41.355000,0.645000,0,41408,42395,us,DSP,ctx_dronet_full_hta__Dsp.bin,dronet_full_hta,0.932221,41.399794,24
+10,mlp_control,7,0,qnn_graph,mlp_control_full,cpu,5,42.000000,0.107000,1,42006,42043,us,CPU,ctx_mlp_control_fp32__Cpu.bin,mlp_control_fp32,36.045239,42.000318,7
+11,mlp_control,8,0,qnn_graph,mlp_control_full,cpu,5,48.000000,0.1[main] iteration 2/2 wall=48.041 ms
+07000,1,48005,48041,us,CPU,ctx_mlp_control_fp32__Cpu.bin,mlp_control_fp32,42.046051,48.000504,7
+=== MODELBLASTER_XPURT_TRACE_END ===

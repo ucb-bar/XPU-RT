@@ -1,0 +1,40 @@
+# Runs the scheduler test suite on every push to main and on every pull request
+# into it. No submodules are needed: tests that want a ModelBlaster checkout, a
+# board or a licensed solver skip themselves.
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pytest:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: pyproject.toml
+
+      - name: Install dependencies
+        run: python -m pip install numpy scipy matplotlib pandas pytest ortools
+
+      - name: Run tests
+        # XPURT_CPSAT_PYTHON lets the CP-SAT tests use this interpreter's ortools.
+        run: |
+          export XPURT_CPSAT_PYTHON="$(command -v python)"
+          python -m pytest xpu-rt/tests tests -q -rs

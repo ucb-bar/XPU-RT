@@ -105,6 +105,13 @@ class TimeConversionUsesTheBoardsClock(unittest.TestCase):
         self.assertAlmostEqual(rows[0]["start_us"], 0.0)
         self.assertAlmostEqual(rows[1]["start_us"], 1000.0)
 
+    def test_the_clock_is_a_parameter_and_k1_stays_the_default(self):
+        """The same ticks at 48 MHz take half as long; omitting it is 24 MHz."""
+        r = _row(0, start=0, end=24_000)
+        self.assertAlmostEqual(
+            k1_trace.normalise([r], rdtime_hz=48e6)[0]["run_us"], 500.0)
+        self.assertAlmostEqual(k1_trace.normalise([r])[0]["run_us"], 1000.0)
+
 
 if __name__ == "__main__":
     unittest.main()

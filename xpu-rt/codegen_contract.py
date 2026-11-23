@@ -280,3 +280,30 @@ def violations(dispatches: dict, contract: dict) -> list[str]:
             out.append(f"{net} dispatch {did}: instances take widths {sorted(ws)} "
                        f"(one width per dispatch)")
     return out
+
+
+def main(argv=None) -> int:
+    """Check a solved schedule against the contract.
+
+        python3 xpu-rt/codegen_contract.py schedules/<schedule>.json [--contract PATH]
+
+    Prints each violation and exits 1 if there are any, 0 if there are none.
+    """
+    import argparse
+    ap = argparse.ArgumentParser(description=main.__doc__)
+    ap.add_argument("schedule", help="scheduled JSON written by run_xpurt_schedule.py")
+    ap.add_argument("--contract", default=None,
+                    help="codegen_contract.json (default: $XPURT_CODEGEN_CONTRACT or "
+                         "the ModelBlaster copy inside zephyr-chipyard-sw)")
+    a = ap.parse_args(argv)
+    with open(a.schedule) as f:
+        dispatches = json.load(f)["dispatches"]
+    bad = violations(dispatches, load(a.contract))
+    for v in bad:
+        print(v)
+    print(f"{len(bad)} violation(s) of {a.contract or contract_path()}")
+    return 1 if bad else 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
