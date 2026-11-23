@@ -20,6 +20,11 @@ Three more rules (k3-work TASK-016):
     several cores; every other op gets no multi-core option at all. An op under
     `backend_prefixes` (TASK-017: the simple layers, pool paths on the K3 backends
     only) is shareable only where its module name names one of those backends.
+    With `applies_to_backend_prefixes` the list covers those backends only (the
+    K3); elsewhere every op keeps its multi-core options, as with no list, and
+    `uniform_width_across_instances.backend_prefixes` likewise pins the simple
+    layers only on the K3, so K1 plans are the ones a contract without these
+    rules gives.
   * `conv_split_axis`: on a K3 backend a conv2d_s8 with enough output rows is
     split by rows, so its width need not divide OC.
   * the width margin (soft, `margin`, default 10%): a wider width is offered
@@ -111,16 +116,37 @@ def shareable_ops(contract: dict) -> frozenset[str] | None:
     return frozenset(r.get("ops") or ()) if r else None
 
 
+def _names_backend(module_name: str, prefixes) -> bool:
+    """Does the module name name a backend starting with one of `prefixes`?"""
+    mod = str(module_name or "")
+    return any(f"_{p}" in mod for p in prefixes)
+
+
 def op_shareable(module_name: str, kind: str, contract: dict) -> bool:
     """Can `kind` (the op of `module_name`) be spread over several cores on the
-    dispatch's backend? True when the contract has no shareable_ops list."""
+    dispatch's backend? True when the contract has no shareable_ops list, or
+    when the list covers other backends only (applies_to_backend_prefixes)."""
     r = contract.get("rules", {}).get("shareable_ops")
     if not r:
+        return True
+    scope = r.get("applies_to_backend_prefixes")
+    if scope is not None and not _names_backend(module_name, scope):
         return True
     if kind not in frozenset(r.get("ops") or ()):
         return False
     prefixes = (r.get("backend_prefixes") or {}).get(kind)
-    return prefixes is None or any(f"_{p}" in str(module_name or "") for p in prefixes)
+    return prefixes is None or _names_backend(module_name, prefixes)
+
+
+def width_pinned(module_name: str, kind: str, contract: dict) -> bool:
+    """Must every instance of this dispatch take one width? `kind` is under
+    uniform_width_across_instances and, if the rule lists backend_prefixes for
+    it, the module's backend is one of them."""
+    if kind not in uniform_width_ops(contract):
+        return False
+    r = contract.get("rules", {}).get("uniform_width_across_instances", {})
+    prefixes = (r.get("backend_prefixes") or {}).get(kind)
+    return prefixes is None or _names_backend(module_name, prefixes)
 
 
 def row_split(module_name: str, width: int, contract: dict) -> bool:
@@ -205,7 +231,7 @@ def apply_to_workload(workload, module_name_of, contract: dict,
                 price_out(op, bad)
         if op.operation_id is None:
             continue
-        if kind in uniform:
+        if width_pinned(mod, kind, contract):
             groups[(net, int(op.operation_id))].append(op)
         elif margin > 0:
             free_groups[(net, int(op.operation_id))].append(op)
@@ -273,7 +299,7 @@ def violations(dispatches: dict, contract: dict) -> list[str]:
             if oc and oc % w and not row_split(mod, w, contract):
                 out.append(f"{name}: {kind} with OC={oc} on {w} cores "
                            f"(width must divide OC)")
-        if kind in uniform:
+        if width_pinned(mod, kind, contract):
             widths[(net, d.get("id"))].add(w)
     for (net, did), ws in sorted(widths.items(), key=lambda kv: str(kv[0])):
         if len(ws) > 1:
