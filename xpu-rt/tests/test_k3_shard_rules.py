@@ -11,6 +11,10 @@
 * TASK-017: the simple layers (silu, add, maxpool, ...) are shareable on the K3
   backends only (shareable_ops.backend_prefixes), one width per dispatch
   (uniform_width_across_instances), chosen by the same margin.
+* K1 as on main: with shareable_ops.applies_to_backend_prefixes and
+  uniform_width_across_instances.backend_prefixes, a K1 dispatch gets exactly
+  the options main's rules (the convolution rules only) give it, and a K3
+  dispatch the same options as without the scope.
 """
 from __future__ import annotations
 
@@ -45,6 +49,31 @@ CONTRACT17 = {"rules": {**CONTRACT["rules"],
     "shareable_ops": {"ops": ["conv2d_s8", "elu_s8", "linear_s8", "silu_s8"],
                       "backend_prefixes": {"elu_s8": ["rvv_k3", "ime_k3"], "silu_s8": ["rvv_k3", "ime_k3"]}},
 }}
+K3 = ["rvv_k3", "ime_k3"]
+# Main's rules as XPU-RT reads them: the convolution rules only
+MAIN_CONVS = ["conv2d_s8", "conv2d_batchnorm2d_s8", "conv2d_batchnorm2d_silu_s8", "conv2d_silu_s8"]
+MAIN = {"rules": {"uniform_width_across_instances": {"applies_to_ops": MAIN_CONVS},
+                  "width_divides_output_channels": {"applies_to_ops": MAIN_CONVS}}}
+# The K3 rules on top of main's, without and with the K3 scope (ModelBlaster's contract now)
+UNSCOPED = {"rules": {**CONTRACT17["rules"],
+    "uniform_width_across_instances": {"applies_to_ops": MAIN_CONVS + ["silu_s8", "elu_s8"]},
+    "width_divides_output_channels": {"applies_to_ops": MAIN_CONVS},
+}}
+SCOPED = {"rules": {**UNSCOPED["rules"],
+    "uniform_width_across_instances": {"applies_to_ops": MAIN_CONVS + ["silu_s8", "elu_s8"],
+                                       "backend_prefixes": {"elu_s8": K3, "silu_s8": K3}},
+    "shareable_ops": {**CONTRACT17["rules"]["shareable_ops"], "applies_to_backend_prefixes": K3},
+}}
+K1AVG = "dronet$dispatch_7_rvv_x60_avgpool2d_s8_n64"              # in no list
+K1LIN = "mlp_control$dispatch_0_ime_x60_linear_s8_M1xK16xN256"
+K1FUSED = "dronet$dispatch_2_rvv_x60_conv2d_batchnorm2d_s8_N1xIC8xIH16xIW16xOC6xOH8xOW8xKH3xKW3"
+K3SOFT = "mlp_control$dispatch_3_rvv_k3_a100_softmax_s8_n16"       # K3, in no list
+K1_SPECS = [(K1SILU, 5, {1: 10.0, 2: 5.0, 4: 3.0, 8: 2.0}), (K1CONV, 4, {1: 10.0, 2: 6.0, 4: 3.0, 8: 2.0}),
+            (K1AVG, 7, {1: 4.0, 2: 2.5, 4: 2.0, 8: 1.9}), (K1LIN, 0, {1: 10.0, 2: 9.5, 4: 7.0, 8: 6.9}),
+            (K1FUSED, 2, {1: 8.0, 2: 4.0, 4: 3.0, 8: 2.0})]
+K3_SPECS = [(SILU, 5, {1: 100.0, 2: 55.0, 4: 30.0, 8: 28.0}), (ELU, 1, {1: 0.005, 2: 0.020, 4: 0.021, 8: 0.025}),
+            (ROWCONV, 4, {1: 10.0, 2: 6.0, 4: 5.6, 8: 5.5}), (SMALL, 9, {1: 10.0, 2: 6.0, 4: 3.0, 8: 2.0}),
+            (LIN, 0, {1: 10.0, 2: 9.5, 4: 7.0, 8: 6.9}), (K3SOFT, 3, {1: 3.0, 2: 1.0, 4: 0.8, 8: 0.7})]
 
 
 class _Op:
@@ -139,6 +168,50 @@ class Apply(unittest.TestCase):
         self.assertEqual(self.open_widths(ops[0]), {1})
         self.assertGreater(st["unshareable_options"], 0)
 
+    def test_k1_dispatches_get_what_mains_rules_give(self):
+        for margin in (0.0,):          # main has no width margin
+            main_ops, main_st = self.run_rules(K1_SPECS, margin, contract=MAIN)
+            ops, st = self.run_rules(K1_SPECS, margin, contract=SCOPED)
+            self.assertEqual([o.processing_times for o in ops], [o.processing_times for o in main_ops])
+            self.assertEqual(st["unshareable_options"], 0)
+            for k in ("oc_excluded_options", "pinned_dispatches", "unpinnable"):
+                self.assertEqual(st[k], main_st[k], k)
+        # before the scope, the K1 silu and avgpool lost their multi-core options
+        ops, _ = self.run_rules(K1_SPECS, 0.0, contract=UNSCOPED)
+        self.assertEqual(self.open_widths(ops[0]), {1})
+        self.assertEqual(self.open_widths(ops[4]), {1})
+
+    def test_k3_dispatches_unchanged_by_the_scope(self):
+        for margin in (0.0, 0.10):
+            before, st0 = self.run_rules(K3_SPECS, margin, contract=UNSCOPED)
+            after, st1 = self.run_rules(K3_SPECS, margin, contract=SCOPED)
+            self.assertEqual([o.processing_times for o in after], [o.processing_times for o in before])
+            self.assertEqual(st1, st0)
+            self.assertGreater(st1["unshareable_options"], 0)        # the K3 softmax still on one core
+
+    @unittest.skipUnless(os.path.exists(os.path.join(os.path.dirname(os.path.dirname(_HERE)),
+                         "zephyr-chipyard-sw", "modelblaster", "cores", "codegen_contract.json")),
+                         "ModelBlaster submodule not checked out")
+    def test_repo_contract_gives_k1_mains_options(self):
+        c = json.load(open(RepoContract.PATH))
+        main_ops, _ = self.run_rules(K1_SPECS, 0.0, contract=MAIN)
+        ops, st = self.run_rules(K1_SPECS, 0.0, contract=c)
+        self.assertEqual([o.processing_times for o in ops], [o.processing_times for o in main_ops])
+        self.assertEqual(st["unshareable_options"], 0)
+
+    def test_width_pinned(self):
+        self.assertTrue(cc.width_pinned(SILU, "silu_s8", SCOPED))
+        self.assertFalse(cc.width_pinned(K1SILU, "silu_s8", SCOPED))
+        self.assertTrue(cc.width_pinned(K1CONV, "conv2d_s8", SCOPED))     # no prefix list: everywhere
+        self.assertTrue(cc.width_pinned(K1SILU, "silu_s8", UNSCOPED))     # unscoped contract
+        self.assertFalse(cc.width_pinned(LIN, "linear_s8", SCOPED))
+
+    def test_op_shareable_scoped(self):
+        self.assertTrue(cc.op_shareable(K1SILU, "silu_s8", SCOPED))
+        self.assertTrue(cc.op_shareable(K1AVG, "", SCOPED))
+        self.assertTrue(cc.op_shareable(SILU, "silu_s8", SCOPED))
+        self.assertFalse(cc.op_shareable(K3SOFT, "", SCOPED))
+
     def test_op_shareable(self):
         self.assertTrue(cc.op_shareable(SILU, "silu_s8", CONTRACT17))
         self.assertFalse(cc.op_shareable(K1SILU, "silu_s8", CONTRACT17))
@@ -158,8 +231,13 @@ class RepoContract(unittest.TestCase):
         self.assertNotIn("gelu_s8", cc.shareable_ops(c))
         # TASK-017: simple layers shareable on K3 backends only, one width per dispatch
         self.assertTrue(cc.op_shareable(SILU, "silu_s8", c))
-        self.assertFalse(cc.op_shareable(K1SILU, "silu_s8", c))
         self.assertIn("silu_s8", cc.uniform_width_ops(c))
+        self.assertTrue(cc.width_pinned(SILU, "silu_s8", c))
+        # the K1 keeps main's options: every op shareable, only convolutions pinned
+        self.assertTrue(cc.op_shareable(K1SILU, "silu_s8", c))
+        self.assertTrue(cc.op_shareable(K1AVG, "", c))
+        self.assertFalse(cc.width_pinned(K1SILU, "silu_s8", c))
+        self.assertTrue(cc.width_pinned(K1CONV, "conv2d_s8", c))
         self.assertTrue(cc.row_split(ROWCONV, 8, c))
         self.assertFalse(cc.row_split(K1CONV, 8, c))
 
@@ -173,6 +251,15 @@ class RepoContract(unittest.TestCase):
                             CONTRACT17)
         self.assertFalse(any(x.startswith("a:") for x in v17))   # K3 silu on 2 cores: fine now
         self.assertTrue(any(x.startswith("k:") and "no pool path" in x for x in v17))
+        vs = cc.violations(dict(d, k={"module_name": K1SILU, "hardware_target": "CPU_P#0+CPU_P#1", "id": 5},
+                                k2={"module_name": K1SILU, "hardware_target": "CPU_P#2", "id": 5},
+                                a2={"module_name": SILU, "hardware_target": "CPU_P#4", "id": 5}), SCOPED)
+        self.assertFalse(any(x.startswith("k") for x in vs))       # K1 silu: any width, per instance
+        self.assertTrue(any("yolov8_nano dispatch 5" in x and "[1, 2]" in x for x in vs))  # K3 silu pinned
+        self.assertEqual(cc.violations({"k": {"module_name": K1SILU, "hardware_target": "CPU_P#0+CPU_P#1",
+                                              "id": 5}}, SCOPED),
+                         cc.violations({"k": {"module_name": K1SILU, "hardware_target": "CPU_P#0+CPU_P#1",
+                                              "id": 5}}, MAIN))
         self.assertFalse(any(x.startswith("b:") for x in v))       # rows: OC=30 is fine
         self.assertTrue(any(x.startswith("c:") and "width must divide OC" in x for x in v))
 
