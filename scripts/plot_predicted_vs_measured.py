@@ -129,8 +129,8 @@ def main() -> int:
 
     schedule = json.load(open(a.schedule))
     aligned = pairs(schedule, k1_trace.read(
-        a.trace, k1_trace.slot_maps_from_irs(a.ir) if a.ir else None, clock_hz=a.clock_hz))
-    raw = pairs(schedule, k1_trace.read(a.trace, clock_hz=a.clock_hz))
+        a.trace, k1_trace.slot_maps_from_irs(a.ir) if a.ir else None, rdtime_hz=a.clock_hz))
+    raw = pairs(schedule, k1_trace.read(a.trace, rdtime_hz=a.clock_hz))
 
     fig, axes = plt.subplots(1, 2, figsize=(figstyle.DOUBLE_COL, 62 * figstyle.MM))
     flat_a = [p for pts in aligned.values() for p in pts]

@@ -265,6 +265,51 @@ MOSEK is 2.8x better than HiGHS at equal time budget.
   workloads want a larger value — 2x-resnet50 needs 8.0 to find its 21.81 ms
   schedule — which is why this is a knob and not a constant.
 
+### Topologies, implementations and the codegen contract
+
+Three spec settings shape what the solver may choose for each dispatch:
+
+| Setting | Values | Effect |
+|---|---|---|
+| `scheduler.machine_combination_mode` | `prefix` (default), `singletons`, `shard` | Which core groups a dispatch may run on. `prefix`: groups that start at core 0, plus every other core on its own. `singletons`: every core on its own. `shard`: every core plus aligned power-of-two blocks (`{0,1}`, `{2,3}`, `{0..3}`, `{4..7}`, ...), so disjoint blocks run concurrently and the solver chooses the topology. |
+| `scheduler.enable_impls` + `hardware.impls` | e.g. `"impls": {"cpu_e": {"ime": "ime_k3_a100", "rvv": "rvv_k3_a100"}}` | Offers each core group of a kind once per implementation, timed from that implementation's profile; the choice is written to the dispatch as `impl` (ModelBlaster: `--impl-backends`). |
+| `scheduler.codegen_contract` | `true` / `false`; default on in `shard` mode | Holds the solver to ModelBlaster's `cores/codegen_contract.json`: a convolution keeps one core width across its instances, and that width divides its output channels. The result is recorded in `metadata.codegen_contract`. |
+
+The contract is read from `$XPURT_CODEGEN_CONTRACT`, else from
+`zephyr-chipyard-sw/modelblaster/cores/codegen_contract.json`.
+`XPURT_UNIFORM_PACKED_WIDTH=1` (or `0`) turns it on (or off) whatever the spec says,
+and `XPURT_SHARD_ONLY_NETS=net1,net2` lets only those networks take more than one
+core per dispatch. `hardware.profile.gen_root` selects the profile tree
+(`<gen_root>/profile/...`; `gen_mb` is `gen/mb`), and `$XPURT_GEN_ROOT` overrides it.
+On boards with a capability table (`spacemit_x60`, `spacemit_k3`) a backend a core
+kind cannot run is refused before solving.
+
+### Multi-core board workflow (SpaceMiT K3)
+
+The K3 specs (`data/toplevel/networks_k3_mb_3model*.json`) and their profiles
+(`gen/profile_mb/`, widths 1/2/4/8) are in the repository:
+
+```bash
+export XPURT_CODEGEN_CONTRACT=zephyr-chipyard-sw/modelblaster/cores/codegen_contract.json
+python3 scripts/run_xpurt_schedule.py \
+    --networks-json data/toplevel/networks_k3_mb_3model_ime.json --solver greedy
+S=schedules/scheduled_networks_k3_mb_3model_ime_greedy_profiled.json
+python3 xpu-rt/codegen_contract.py "$S"                       # 0 violations
+python3 scripts/check_schedule_feasibility.py --board k3 --schedule "$S"
+python3 scripts/emit_compile_advice.py --schedule "$S" --gen-root gen/mb \
+    --target spacemit_k3 --profile-format csv --impls rvv_k3_x100,ime_k3_a100 \
+    --baseline-impl rvv_k3_x100 --models mlp_control:mlp_control.int8,... \
+    --ir mlp_control:<ir>/graph.json ... --out advice.json
+python3 scripts/advice_to_split_hint.py --advice advice.json \
+    --ir <ir>/graph.json --model yolov8_nano --out hint.json
+```
+
+The schedule then runs through ModelBlaster's walker (see "The XPU-RT Runtime"
+below; `run_xpurt_k3.sh --impl-backends ...`). Measured on the K3 with the
+three-model workload, mean yolov8_nano latency is 33.5 ms with every dispatch
+on one core (`singletons`), 21.4 ms with `shard`, and 17.8 ms with `shard` plus
+IME/RVV implementation choice, all bit-exact.
+
 ## ModelBlaster as the compiler backend
 
 ModelBlaster brings PyTorch → quantized Zephyr/RISC-V codegen (curated

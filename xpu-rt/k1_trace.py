@@ -30,12 +30,10 @@ from __future__ import annotations
 import csv
 from typing import Any, Dict, List
 
-#: rdtime on the K1. Every cycles->time conversion in this project uses it.
+#: rdtime on the K1. Every cycles->time conversion in this project uses it as the
+#: DEFAULT; the K3's timer is also 24 MHz but callers that know better pass
+#: `rdtime_hz` explicitly rather than editing this constant.
 K1_RDTIME_HZ = 24_000_000.0
-#: The hosted-Linux walker (ModelBlaster main, build_posix.sh: MB_PLATFORM_POSIX)
-#: stamps its trace with k_cycle_get_64() = CLOCK_MONOTONIC_RAW in NANOSECONDS
-#: (runtime/mb_posix.h). K3 traces from scripts/run_xpurt_k3.sh are in this unit.
-POSIX_NS_HZ = 1_000_000_000.0
 
 #: Ops that emit no kernel call, so `generate_skeleton` allocates them no
 #: profile record. They are why the trace's `dispatch_id` is not the IR's --
@@ -113,7 +111,7 @@ def is_modelblaster(rows: List[Dict[str, Any]]) -> bool:
 def normalise(rows: List[Dict[str, Any]],
               slot_maps: Dict[str, Dict[int, int]] | None = None,
               fill_queue_delay: bool = True,
-              clock_hz: float = K1_RDTIME_HZ,
+              rdtime_hz: float = K1_RDTIME_HZ,
               ) -> List[Dict[str, Any]]:
     """Map a ModelBlaster trace onto the canonical column names above.
 
@@ -145,10 +143,10 @@ def normalise(rows: List[Dict[str, Any]],
     for r in rows:
         s, e = int(r["actual_start_cycles"]), int(r["actual_end_cycles"])
         d = dict(r)
-        start_us = (s - t0) / clock_hz * 1e6
+        start_us = (s - t0) / rdtime_hz * 1e6
         d["start_us"] = start_us
-        d["end_us"] = (e - t0) / clock_hz * 1e6
-        d["run_us"] = max(e - s, 0) / clock_hz * 1e6
+        d["end_us"] = (e - t0) / rdtime_hz * 1e6
+        d["run_us"] = max(e - s, 0) / rdtime_hz * 1e6
         d["job_name"] = f'{r.get("network", "")}{r.get("instance", "")}'
         # `dispatch_id` in the file is a record SLOT. With the model's IR
         # available it is translated to the IR id everything else uses; without
@@ -186,9 +184,11 @@ def normalise(rows: List[Dict[str, Any]],
 
 
 def read(path: str, slot_maps: Dict[str, Dict[int, int]] | None = None,
-         fill_queue_delay: bool = True, clock_hz: float = K1_RDTIME_HZ) -> List[Dict[str, Any]]:
+         fill_queue_delay: bool = True,
+         rdtime_hz: float = K1_RDTIME_HZ) -> List[Dict[str, Any]]:
     with open(path, newline="") as f:
-        return normalise(list(csv.DictReader(f)), slot_maps, fill_queue_delay, clock_hz)
+        return normalise(list(csv.DictReader(f)), slot_maps, fill_queue_delay,
+                         rdtime_hz)
 
 
 def slot_maps_from_irs(ir_paths: List[str]) -> Dict[str, Dict[int, int]]:

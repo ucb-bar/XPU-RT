@@ -233,6 +233,19 @@ def output_scheduled_json(
         if info['impl']:
             dispatch_entry["impl"] = info['impl']
 
+        # Release semantics, stated rather than left for the runtime to infer.
+        # A root dispatch (no predecessor inside its instance) of a periodic
+        # network is released at its period boundary k*T (min_start_t, set by
+        # workload_factory); everything else starts when its predecessors end.
+        release_t = getattr(op, "min_start_t", None)
+        if release_t is not None and not dependencies:
+            dispatch_entry["release_policy"] = "phase_locked"
+            dispatch_entry["release_us"] = float(release_t) * 1000.0
+            dispatch_entry["time_dep_mode"] = "soft"
+        else:
+            dispatch_entry["release_policy"] = "immediate"
+            dispatch_entry["time_dep_mode"] = "hard"
+
         # Add time_dependency if found
         if time_dependency:
             dispatch_entry["time_dependency"] = time_dependency
