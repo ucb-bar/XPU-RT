@@ -31,7 +31,7 @@
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-DIRNAME="spacemit-toolchain-linux-glibc-x86_64-v1.1.2"
+DIRNAME="spacemit-toolchain-linux-glibc-x86_64-v1.2.4"
 URL="https://archive.spacemit.com/toolchain/${DIRNAME}.tar.xz"
 DEST_ROOT="${SPACEMIT_TOOLCHAIN_ROOT:-${REPO_ROOT}/tools/riscv-tools-spacemit}"
 
