@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Get the SpaceMiT cross toolchain, and print the CROSS export that uses it.
 #
-# WHY THIS EXISTS. Every board build needs riscv64-unknown-linux-gnu-gcc 14.3,
+# WHY THIS EXISTS. Every board build needs riscv64-unknown-linux-gnu-gcc 14 or newer (v1.2.4 ships 15.2),
 # and until now the only copy on this machine lived inside the `merlin`
 # submodule -- so XPU-RT carried an entire compiler repo as a git dependency to
 # get one tarball. merlin is not used by the live K1 path for anything else
