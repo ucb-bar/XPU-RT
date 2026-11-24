@@ -28,7 +28,8 @@
 #      K3TL_REUSE_BUILD=1 the build is on disk and on the board already: no rebuild, no smoke run
 #      K3TL_FETCH_ONLY=1  the batch already ran on the board: only fetch its archive
 #      STALL_S (150), WATCHDOG_S (600)   patience with a stalled copy / a silent deploy step
-#      builder.sh's: K3TL_BUILDER_IMAGE, K3TL_DOCKER, K3_SSH_KEY, K3TL_BUILDER_BOARD_ALIAS
+#      builder.sh's: K3TL_BUILDER_IMAGE (default: no container, build on this machine), K3TL_DOCKER, K3_SSH_KEY,
+#      K3TL_BUILDER_BOARD_ALIAS
 # Exit codes: 0 ok; 3 raw dir already has runs; 5 board not free; 9-12 set-up; 20-25 a step failed (see config.txt).
 set -uo pipefail
 JOB="$1"; RAW="$2"; SCHED="$3"; CFG="$4"; REPS="$5"; STAMPS="${6:-1}"
@@ -85,7 +86,7 @@ else
 IMPL="x100:rvv=rvv_k3,x100:ime=ime_k3_x100,a100:rvv=rvv_k3_a100,a100:ime=ime_k3_a100"
 args=(--schedule "$SCHED" --models "${MODELS// /,}" --backends ime_k3_x100,ime_k3_a100
       --impl-backends "$IMPL" --out-root "$OUT_ROOT")
-envs=(MODELBLASTER_K3_HOST="${K3TL_BUILDER_BOARD_ALIAS:-k3w}" MODELBLASTER_K3_REMOTE_ROOT="$BDIR" MB_XPURT_WARMUP=1 MB_XPURT_PLACEMENT=1
+envs=(MODELBLASTER_K3_HOST="$(k3tl_board_alias "$HOST")" MODELBLASTER_K3_REMOTE_ROOT="$BDIR" MB_XPURT_WARMUP=1 MB_XPURT_PLACEMENT=1
       MB_XPURT_REPEATS=1 MB_XPURT_WORKERS=hart MB_KB_RISCV=0 MODELBLASTER_K3_RT_PRIORITY="$PRIO")
 [[ "$STAMPS" == 1 ]] && envs+=(MB_XPURT_STAMPS=1)
 qargs="$(printf '%q ' "${args[@]}")"
@@ -101,10 +102,10 @@ while kill -0 "$pid" 2>/dev/null; do
   # touched. While the copy is growing, the watchdog clock is reset.
   out_size="$(cat "$G"/*_stdout*.txt 2>/dev/null | wc -c | tr -d ' ')"
   if [[ "$out_size" != "${last_size:-}" ]]; then last_size="$out_size"; last_change=$(date +%s); fi
-  if "${K3TL_DOCKER:-docker}" exec "$CNAME" pgrep -f 'scp .*_stdout' >/dev/null 2>&1; then
+  if k3tl_builder_exec "$CNAME" pgrep -f 'scp .*_stdout' >/dev/null 2>&1; then
     [[ -n "${copy_seen:-}" ]] || { copy_seen=1; last_change=$(date +%s); }
     if (( $(date +%s) - last_change > STALL_S )); then
-      "${K3TL_DOCKER:-docker}" exec "$CNAME" bash -c 'pkill -f "scp .*_stdout"; pkill -f "PermitLocalCommand=no.*_stdout"' >/dev/null 2>&1
+      k3tl_builder_exec "$CNAME" bash -c 'pkill -f "scp .*_stdout"; pkill -f "PermitLocalCommand=no.*_stdout"' >/dev/null 2>&1
       note "smoke-output copy stopped after ${STALL_S}s without a new byte ($(date '+%T')); the runner retries it"
       copy_seen=""
     fi
@@ -113,8 +114,8 @@ while kill -0 "$pid" 2>/dev/null; do
     copy_seen=""
   fi
   if (( age > WATCHDOG_S )); then
-    note "WATCHDOG $(date '+%F %T'): runner.log silent ${age}s in the deploy step; stopping the builder container $CNAME"
-    "${K3TL_DOCKER:-docker}" kill "$CNAME" >/dev/null 2>&1
+    note "WATCHDOG $(date '+%F %T'): runner.log silent ${age}s in the deploy step; stopping the build $CNAME"
+    k3tl_builder_stop "$CNAME" "$pid"
     break
   fi
 done

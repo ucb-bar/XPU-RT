@@ -40,8 +40,10 @@ paths written into the state and the result files are relative to. Everything th
 --out unless --results-root, --raw-root, --tree-root or --solve-dir say otherwise.
 
 usage:
-  timing_loop.py --out <loop folder> --config <workload.json> --raw-tree <raw profile tree> \\
-      [--runs 20] [--max-rounds 5] [--delta 0.03] [--gap-rule layer|table] [--prefix r] [--models a,b,c] \\
+  timing_loop.py --config <workload.json>     any workload; starts from the profiled times in gen/k3_raw_profiles,
+                                              gap rule table, results in ./k3tl_<workload>
+  timing_loop.py --config <workload.json> [--out <loop folder>] [--raw-tree <raw profile tree>] \\
+      [--runs 20] [--max-rounds 5] [--delta 0.03] [--gap-rule table|layer] [--prefix r] [--models a,b,c] \\
       [--modelblaster <checkout with the stamps walker>] [--host k3w] [--start-from <raw folder>[,<tree>] ...]
 """
 from __future__ import annotations
@@ -60,6 +62,7 @@ from typing import Dict, List, Optional
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.abspath(os.path.join(HERE, "../.."))          # the XPU-RT checkout this file is in (the planner used)
 BASE = os.getcwd()                                           # relative paths, in and out, are relative to this folder
+DEFAULT_RAW_TREE = os.path.join(REPO, "gen/k3_raw_profiles")  # per-layer times profiled on the K3, every option
 SCHEMA = "k3work.timing_loop/v1"                             # state file format (name kept so earlier loop folders continue)
 TREE_ENTRIES = "t023_tree_entries.csv"                       # written into a corrected tree by apply.py
 STEPS = ("tree", "plan", "board", "analyze", "verdict")
@@ -698,16 +701,17 @@ def write_report(lay: Layout, state: dict) -> str:
 
 def parser() -> argparse.ArgumentParser:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--out", required=True, help="loop folder: loop_state.json, loop_report.md, logs/, and by default results/, raw/, trees/, solve/")
-    ap.add_argument("--config", required=True, help="workload config (networks json)")
-    ap.add_argument("--raw-tree", required=True, help="raw profile tree (never modified)")
+    ap.add_argument("--out", default="", help="loop folder: loop_state.json, loop_report.md, logs/, and by default results/, raw/, trees/, solve/ "
+                    "(default: k3tl_<workload> in the current folder)")
+    ap.add_argument("--config", required=True, help="workload config (networks json): any workload whose models have profiles in the raw tree")
+    ap.add_argument("--raw-tree", default=DEFAULT_RAW_TREE, help=f"raw profile tree, never modified (default: {os.path.relpath(DEFAULT_RAW_TREE, REPO)})")
     ap.add_argument("--runs", type=int, default=20)
     ap.add_argument("--max-rounds", type=int, default=5)
     ap.add_argument("--delta", type=float, default=0.03)
     ap.add_argument("--abs-tol-ms", type=float, default=0.0, help="also accept a model whose board and planned frame differ by at most this (off by default)")
-    ap.add_argument("--gap-rule", choices=("layer", "table"), default="layer")
+    ap.add_argument("--gap-rule", choices=("layer", "table"), default="table")
     ap.add_argument("--prefix", default="r", help="round tags: <prefix>0, <prefix>1, ...")
-    ap.add_argument("--models", default="", help="comma list of the workload's models; default: mlp_control,dronet,yolov8_nano")
+    ap.add_argument("--models", default="", help="comma list of the workload's models (default: the config's networks)")
     ap.add_argument("--modelblaster", default="", help="ModelBlaster checkout with the stamps walker (default: <this repo>/zephyr-chipyard-sw/modelblaster)")
     ap.add_argument("--name", default="", help="prefix of the build folders in ModelBlaster and of our folders on the board (default: the --out folder's name)")
     ap.add_argument("--start-from", nargs="*", default=[], metavar="RAW[,TREE]", help="finished rounds to adopt, in order (round 0 first)")
@@ -736,8 +740,17 @@ def parser() -> argparse.ArgumentParser:
     return ap
 
 
+def fill_defaults(a: argparse.Namespace) -> argparse.Namespace:
+    """The options whose default depends on the config: the model list and the loop folder."""
+    if not a.models:
+        a.models = ",".join(json.load(open(a.config))["networks"])
+    if not a.out:
+        a.out = "k3tl_" + (a.workload_name or re.sub(r"^networks_", "", os.path.splitext(os.path.basename(a.config))[0]))
+    return a
+
+
 def main() -> int:
-    a = parser().parse_args()
+    a = fill_defaults(parser().parse_args())
     state = run_loop(a)
     print(f"loop {state['status']}: {state['message']}; report {rel(os.path.join(os.path.abspath(a.out), 'loop_report.md'))}")
     return 0 if state["status"] == "stopped" else 1
