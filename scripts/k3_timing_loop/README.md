@@ -25,7 +25,9 @@ The loop measures both on the board and feeds them back. Each round it
    `tree_audit.py`); round 0 uses the raw tree as it is;
 2. plans with that tree (`solve.sh`, `plan_summary.py`);
 3. builds the plan with ModelBlaster's walker, runs it N times on the board at real-time priority 80 and
-   copies the output back, md5-checked (`job.sh`);
+   copies the output back, md5-checked (`job.sh`). Each run first makes one untimed pass of the whole schedule
+   (`MB_XPURT_WARMUP=1`); the walker's default warm start is switched off (`MB_XPURT_WARM=0`), as in every
+   loop run measured so far;
 4. checks every run and measures (`golden_c.sh`, `analyze.py`): a run counts only if its output is exact,
    every layer ran on the planned cores, and the trace matches the plan;
 5. compares plan and board per model and decides: stop, or another round.
@@ -38,11 +40,31 @@ a measurement is never forgotten when the planner moves a layer to another optio
 Run from any folder; relative paths are relative to that folder.
 
 ```bash
-python3 scripts/k3_timing_loop/timing_loop.py \
-    --out <loop folder> --config <workload.json> --raw-tree <raw profile tree> \
-    --modelblaster <ModelBlaster checkout with the stamps walker> \
-    [--runs 20] [--max-rounds 5] [--delta 0.03] [--gap-rule layer|table] [--models yolov8_nano] [--host k3w]
+python3 scripts/k3_timing_loop/timing_loop.py --config <workload.json>
 ```
+
+The workload is the only thing to give; it can be any workload config (the planner's networks json) whose
+models have profiles in the raw tree. Everything else has a default:
+
+| Option | Default |
+|---|---|
+| `--raw-tree` | `gen/k3_raw_profiles`: each layer of mlp_control, dronet and yolov8_nano profiled alone on the K3, for X100 and A100, RVV and IME kernels, on 1, 2, 4 and 8 cores |
+| `--gap-rule` | `table`: the loop measures the hand-off table and the sender's delay from its own runs (see below) |
+| `--models` | the networks in the workload config |
+| `--out` | `k3tl_<workload>` in the current folder |
+| `--modelblaster` | `zephyr-chipyard-sw/modelblaster` of this repository |
+| `--runs`, `--max-rounds`, `--delta`, `--host` | 20, 5, 0.03 (3%), `k3w` |
+
+Any option given overrides its default, e.g.
+
+```bash
+python3 scripts/k3_timing_loop/timing_loop.py --config <workload.json> \
+    [--out <loop folder>] [--raw-tree <raw profile tree>] [--modelblaster <checkout with the stamps walker>] \
+    [--runs 20] [--max-rounds 5] [--delta 0.03] [--gap-rule table|layer] [--models yolov8_nano] [--host k3w]
+```
+
+The rounds run by themselves: one command plans, builds, runs on the board, measures, corrects and plans
+again until the stop rule is met or the round limit is reached.
 
 Running the same command again continues after the last finished step. A finished board round is never
 repeated; a round whose runs are on the board but not yet copied back is only fetched. `--start-from
@@ -56,13 +78,16 @@ continues a loop that stopped at its limit. `timing_loop.py --help` lists every 
 - **A ModelBlaster checkout whose walker writes the two extra stamps** (`MB_XPURT_STAMPS=1`: `got_cores` and
   `kernel_end` in the trace). `--modelblaster`, default `zephyr-chipyard-sw/modelblaster` of this repository.
   Its `cores/codegen_contract.json` and `cores/spacemit_k3.json` are read as well.
-- **The K3 builder image** (default name `k3-builder`, `K3TL_BUILDER_IMAGE`): a container image with the
-  SpacemiT cross-compiler and ModelBlaster's Python packages whose entrypoint takes `K3_IP` and `K3_USER`
-  and sets up ssh to the board with the key mounted at `/run/host-ssh/id_ed25519` (`builder.sh`). The loop
-  reads the board's address and user from `ssh -G <alias>` and the key from `K3_SSH_KEY` (default
-  `~/.ssh/id_ed25519`).
-- **A raw profile tree** for the workload's models (`<tree>/profile/...`) and a **workload config** (the
-  planner's networks json) whose `dispatch_deps_path` entries exist.
+- **The SpacemiT cross-compiler and ModelBlaster's Python packages**, as for any ModelBlaster board build.
+  By default the build runs on this machine: `CROSS` from the environment, else this repository's
+  `scripts/setup_spacemit_toolchain.sh` fetches the vendor toolchain (a Linux x86-64 build) and sets it.
+  On a machine that cannot run that toolchain (macOS), name a container image that has both with
+  `K3TL_BUILDER_IMAGE=<image>`; its entrypoint takes `K3_IP` and `K3_USER` and sets up ssh to the board with
+  the key mounted at `/run/host-ssh/id_ed25519` (`builder.sh`). In that case the loop reads the board's
+  address and user from `ssh -G <alias>` and the key from `K3_SSH_KEY` (default `~/.ssh/id_ed25519`).
+- **A workload config** (the planner's networks json) whose `dispatch_deps_path` entries exist, and a **raw
+  profile tree** for its models (`<tree>/profile/...`; the default `gen/k3_raw_profiles` has mlp_control,
+  dronet and yolov8_nano). A model outside the tree needs its own profiles first.
 - Python with the planner's packages and numpy on the machine that runs the loop. Tried on macOS only.
 
 Sharing the board: before every job the loop checks that nobody is logged in, the load is low, no other
@@ -191,7 +216,7 @@ group's K3 work notes: walker stamps, timing fix on the 3-model mix, hand-off ta
 | `plan_summary.py` | what a plan predicts per model and what moved against the round before |
 | `job.sh` | one board job: lock, build, smoke run, N runs in one login, md5-checked copy |
 | `board.sh` | board free check and our lock, one login each |
-| `builder.sh` | runs a command in the builder image |
+| `builder.sh` | runs a build command on this machine, or in a builder image when `K3TL_BUILDER_IMAGE` is set |
 | `fetch_resume.sh` | copies the run archive over a link that drops, resuming where it stopped |
 | `golden_c.sh` | golden outputs with the C kernels' rounding, for the output check |
 | `walker_run.py`, `loop_lib.py` | read a run: trace, placement, dispatch table, IRs; cut each layer into gap, wait for cores and run time; output and placement checks |

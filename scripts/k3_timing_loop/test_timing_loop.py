@@ -23,9 +23,11 @@ replay: recorded board rounds through the REAL fit / apply / audit / plan summar
 from __future__ import annotations
 
 import filecmp
+import glob
 import json
 import os
 import shutil
+import subprocess
 import sys
 
 import pytest
@@ -262,7 +264,7 @@ def test_gap_rule_table_writes_the_measured_table_into_the_round_config(tmp_path
         json.dump({"handoff_ms": table}, f)
     assert json.load(open(steps.write_config(1)))["scheduler"]["handoff_ms"] == table
     assert "handoff_ms" not in json.load(open(steps.write_config(0))).get("scheduler", {})     # round 0: raw tree, no table
-    a2 = args(tmp_path)                                                                       # the layer rule never writes one
+    a2 = args(tmp_path, "--gap-rule", "layer")                                                # the layer rule never writes one
     assert "handoff_ms" not in json.load(open(TL.Steps(TL.Layout(a2)).write_config(1))).get("scheduler", {})
 
 
@@ -320,3 +322,49 @@ def test_replay_rebuilds_the_recorded_tree_byte_for_byte(tmp_path):
         return not (d.left_only or d.right_only or d.diff_files or d.funny_files) and all(same(x) for x in d.subdirs.values())
     assert same(filecmp.dircmp(os.path.join(new, "profile"), os.path.join(old, "profile")))
     assert filecmp.cmp(os.path.join(new, TL.TREE_ENTRIES), os.path.join(old, TL.TREE_ENTRIES), shallow=False)
+
+
+
+# ------------------------------------------------------------------ defaults: only the workload is required
+def workload(tmp_path, nets=("yolov8_nano",), name="networks_my_mix.json"):
+    cfg = tmp_path / name
+    cfg.write_text(json.dumps({"networks": {n: {"id": i, "identifier": n} for i, n in enumerate(nets)}}))
+    return str(cfg)
+
+
+def test_only_the_workload_is_required_the_rest_defaults_to_the_shipped_profiles_and_table_rule(tmp_path):
+    with pytest.raises(SystemExit):
+        TL.parser().parse_args([])
+    a = TL.fill_defaults(TL.parser().parse_args(["--config", workload(tmp_path, ("mlp_control", "yolov8_nano"))]))
+    assert os.path.samefile(a.raw_tree, os.path.join(TL.REPO, "gen/k3_raw_profiles"))
+    assert a.gap_rule == "table"
+    assert (a.models, a.out) == ("mlp_control,yolov8_nano", "k3tl_my_mix")
+
+
+def test_options_still_win_over_the_defaults(tmp_path):
+    a = TL.fill_defaults(TL.parser().parse_args(["--config", workload(tmp_path), "--out", str(tmp_path / "o"), "--models", "x",
+                                                 "--gap-rule", "layer", "--raw-tree", str(tmp_path)]))
+    assert (a.models, a.out, a.gap_rule, a.raw_tree) == ("x", str(tmp_path / "o"), "layer", str(tmp_path))
+
+
+def test_shipped_profiles_cover_every_model_kernel_set_and_width():
+    # mlp_control, dronet, yolov8_nano x {X100, A100} x {RVV, IME} x 1/2/4/8 cores: one results.csv each, in the
+    # layout the planner reads (profile/<kernels>/<per-kind target>/<model>/<basename>/<input tag>/<topo>/results.csv)
+    tree = os.path.join(TL.REPO, "gen/k3_raw_profiles/profile")
+    for net in ("mlp_control", "dronet", "yolov8_nano"):
+        for hw, target in (("rvv_k3_x100", "spacemit_x100"), ("ime_k3_x100", "spacemit_x100"),
+                           ("rvv_k3_a100", "spacemit_a100"), ("ime_k3_a100", "spacemit_a100")):
+            for topo in ("topo_0", "topo_0_1", "topo_0_1_2_3", "topo_0_1_2_3_4_5_6_7"):
+                hits = glob.glob(os.path.join(tree, hw, target, net, "*", "*", topo, "results.csv"))
+                assert len(hits) == 1, (net, hw, topo, hits)
+
+
+def test_builder_runs_here_unless_an_image_is_named():
+    sh = os.path.join(TL.HERE, "builder.sh")
+    def run(env, cmd):
+        e = {k: v for k, v in os.environ.items() if k not in ("K3TL_BUILDER_IMAGE", "K3TL_BUILDER_BOARD_ALIAS")}
+        e.update(env)
+        return subprocess.run(["bash", "-c", f". '{sh}'; {cmd}"], capture_output=True, text=True, env=e).stdout.strip()
+    assert run({"CROSS": "x-"}, 'k3tl_builder n "" "" echo built here; k3tl_board_alias myboard') == "built here\nmyboard"
+    assert run({"K3TL_BUILDER_IMAGE": "none", "CROSS": "x-"}, 'k3tl_builder_exec n echo here') == "here"
+    assert run({"K3TL_BUILDER_IMAGE": "img", "K3TL_DOCKER": "echo"}, 'k3tl_builder n "" "" make; k3tl_board_alias myboard').endswith("img make\nk3w")

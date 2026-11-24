@@ -1,0 +1,8 @@
+dispatch_id,module_name,vmfb_path,mlir_path,mean_time,mean_unit,mean_time_ns,returncode,log_path,source,op,shape,cycles,cycles_n,cycles_cv_pct,implementation
+0,mlp_control$dispatch_0_rvv_k3_x100_linear_s8_M1xK16xN256,,,0.005667,ms,5666.666667,0,,k3,linear_s8,M=1;K=16;N=256,136,49,0.58,curated[rvv]/direct
+1,mlp_control$dispatch_1_rvv_k3_x100_elu_s8_n256,,,0.000125,ms,125.000000,0,,k3,elu_s8,n=256,3,49,50.58,curated/rvv_memo_lut_gather
+2,mlp_control$dispatch_2_rvv_k3_x100_linear_s8_M1xK256xN128,,,0.006625,ms,6625.000000,0,,k3,linear_s8,M=1;K=256;N=128,159,49,0.24,curated[rvv]/direct
+3,mlp_control$dispatch_3_rvv_k3_x100_elu_s8_n128,,,0.000125,ms,125.000000,0,,k3,elu_s8,n=128,3,49,11.04,curated/rvv_memo_lut_gather
+4,mlp_control$dispatch_4_rvv_k3_x100_linear_s8_M1xK128xN64,,,0.002250,ms,2250.000000,0,,k3,linear_s8,M=1;K=128;N=64,54,49,0.65,curated[rvv]/direct
+5,mlp_control$dispatch_5_rvv_k3_x100_elu_s8_n64,,,0.000125,ms,125.000000,0,,k3,elu_s8,n=64,3,49,17.6,curated/rvv_memo_lut_gather
+6,mlp_control$dispatch_6_rvv_k3_x100_linear_s8_M1xK64xN4,,,0.000125,ms,125.000000,0,,k3,linear_s8,M=1;K=64;N=4,3,49,11.79,curated[rvv]/direct
