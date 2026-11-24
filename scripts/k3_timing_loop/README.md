@@ -25,7 +25,9 @@ The loop measures both on the board and feeds them back. Each round it
    `tree_audit.py`); round 0 uses the raw tree as it is;
 2. plans with that tree (`solve.sh`, `plan_summary.py`);
 3. builds the plan with ModelBlaster's walker, runs it N times on the board at real-time priority 80 and
-   copies the output back, md5-checked (`job.sh`);
+   copies the output back, md5-checked (`job.sh`). Each run first makes one untimed pass of the whole schedule
+   (`MB_XPURT_WARMUP=1`); the walker's default warm start is switched off (`MB_XPURT_WARM=0`), as in every
+   loop run measured so far;
 4. checks every run and measures (`golden_c.sh`, `analyze.py`): a run counts only if its output is exact,
    every layer ran on the planned cores, and the trace matches the plan;
 5. compares plan and board per model and decides: stop, or another round.

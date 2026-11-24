@@ -57,7 +57,7 @@ K3_IP="$(ssh -G "$HOST" 2>/dev/null | awk '$1 == "hostname" {print $2}')"
 K3_USER="$(ssh -G "$HOST" 2>/dev/null | awk '$1 == "user" {print $2}')"
 export K3_IP K3_USER
 {
-  echo "name=$JOB sched=$SCHED config=$CFG repeats=$REPS stamps=$STAMPS workers=hart warmup=1 placement=1 kb_riscv=0 policy=SCHED_FIFO_$PRIO"
+  echo "name=$JOB sched=$SCHED config=$CFG repeats=$REPS stamps=$STAMPS workers=hart warmup=1 warm_start=0 placement=1 kb_riscv=0 policy=SCHED_FIFO_$PRIO"
   echo "host_alias=$HOST"
   echo "xpurt=$(git -C "$REPO" rev-parse --short HEAD) branch=$(git -C "$REPO" branch --show-current)"
   echo "modelblaster=$K3TL_MB commit=$(git -C "$K3TL_MB" rev-parse --short HEAD) branch=$(git -C "$K3TL_MB" rev-parse --abbrev-ref HEAD) dirty=$(git -C "$K3TL_MB" status --porcelain --untracked-files=no | wc -l | tr -d ' ')"
@@ -86,7 +86,9 @@ else
 IMPL="x100:rvv=rvv_k3,x100:ime=ime_k3_x100,a100:rvv=rvv_k3_a100,a100:ime=ime_k3_a100"
 args=(--schedule "$SCHED" --models "${MODELS// /,}" --backends ime_k3_x100,ime_k3_a100
       --impl-backends "$IMPL" --out-root "$OUT_ROOT")
-envs=(MODELBLASTER_K3_HOST="$(k3tl_board_alias "$HOST")" MODELBLASTER_K3_REMOTE_ROOT="$BDIR" MB_XPURT_WARMUP=1 MB_XPURT_PLACEMENT=1
+# Warm-up: ours only (MB_XPURT_WARMUP=1: one untimed pass of the whole schedule). MB_XPURT_WARM=0 switches off the
+# walker's default warm start (one untimed frame of every network before it), which none of the measured loop runs had.
+envs=(MODELBLASTER_K3_HOST="$(k3tl_board_alias "$HOST")" MODELBLASTER_K3_REMOTE_ROOT="$BDIR" MB_XPURT_WARM=0 MB_XPURT_WARMUP=1 MB_XPURT_PLACEMENT=1
       MB_XPURT_REPEATS=1 MB_XPURT_WORKERS=hart MB_KB_RISCV=0 MODELBLASTER_K3_RT_PRIORITY="$PRIO")
 [[ "$STAMPS" == 1 ]] && envs+=(MB_XPURT_STAMPS=1)
 qargs="$(printf '%q ' "${args[@]}")"
@@ -157,7 +159,7 @@ rm -f batch.status batch.log batch.md5 batch.tgz
 cat > run_batch.sh <<'EOB'
 #!/usr/bin/env bash
 # Batch loop written by k3_timing_loop/job.sh. The run line is the ModelBlaster runner's own:
-# ulimit -n 8192, taskset -c 0-7, chrt -f <prio>.
+# ulimit -n 8192, taskset -c 0-7, chrt -f <prio>; plus MB_XPURT_WARM=0 (only the walker's warm-up pass, as in the smoke run).
 OWNER="$1"; NAME="$2"; N="$3"; PRIO="$4"
 exec 7>>/tmp/k3_board.lock
 if ! flock -n 7; then echo "FLOCK_BUSY" > batch.status; exit 3; fi
@@ -172,7 +174,7 @@ for k in $(seq 1 "$N"); do
   log="${NAME}_stdout_r$k.txt"
   echo "r$k start $(date -u '+%T') load $(cut -d' ' -f1-3 /proc/loadavg) who $(who | wc -l)" >> batch.log
   printf '%s\n' "xpurt_runner: sched_policy=SCHED_FIFO priority=$PRIO" > "$log"
-  taskset -c 0-7 chrt -f "$PRIO" "./$NAME" >> "$log" 2>&1
+  MB_XPURT_WARM=0 taskset -c 0-7 chrt -f "$PRIO" "./$NAME" >> "$log" 2>&1
   echo $? > "$log.rc"
   echo "r$k rc $(cat "$log.rc") bytes $(stat -c %s "$log")" >> batch.log
   files="$files $log $log.rc"
