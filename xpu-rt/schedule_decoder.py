@@ -134,6 +134,54 @@ class DecoderContext:
             raise ValueError("release overrun margin must be finite and >= 0")
         self.is_root = np.array([len(p) == 0 for p in self.pred])
 
+        # G2 hyperperiod wrap-around (2026-11-26): with a hyperperiod H the
+        # table repeats; work placed past H occupies its core at the start of
+        # the next cycle. decode() then runs twice or three times, seeding each
+        # pass with the previous pass's overflow folded to [0, e - H] (and,
+        # with F5 on, with a zero-length marker so a root at the start of the
+        # cycle sees the overrun exposure of the chain that crosses H).
+        # XPURT_WRAP_HYPER_MS or workload.wrap_hyper_ms; 0/None = off.
+        _w = getattr(workload, "wrap_hyper_ms", None)
+        if _w is None:
+            _w = os.environ.get("XPURT_WRAP_HYPER_MS") or 0.0
+        self.wrap_H = float(_w)
+
+        # G3 A100 L2 co-location price (2026-11-26): a large-weight dispatch
+        # placed on a core of an L2 cluster while k-1 other large-weight
+        # dispatches overlap it in that cluster runs f(k) times longer, with
+        # f(k) = 1 + slope * (k - 1), capped at f(cluster size); slope 0.9 from
+        # 3.7x for four co-running 0.9 MB-weight convolutions in one A100
+        # cluster (k3_eval tables/corun/corun.txt, a1 vs a4). Off unless
+        # XPURT_L2_WEIGHTS names a JSON {model: {dispatch_id: weight_bytes}}.
+        self.l2 = None
+        _wf = getattr(workload, "l2_weights_path", None) or os.environ.get("XPURT_L2_WEIGHTS")
+        if _wf:
+            import json as _json, re as _re
+            wmap = _json.load(open(_wf))
+            prefix = os.environ.get("XPURT_L2_KIND_PREFIX", "CPU_E#")
+            csize = int(os.environ.get("XPURT_L2_CLUSTER", "4"))
+            thr = float(os.environ.get("XPURT_L2_THRESHOLD_BYTES", str(256 * 1024)))
+            slope = float(os.environ.get("XPURT_L2_SLOPE", "0.9"))
+            names = list(getattr(workload, "job_names", []) or [])
+            bases = sorted(wmap, key=len, reverse=True)
+            large = np.zeros(self.n, dtype=bool)
+            for i, op in enumerate(self.ops):
+                jid = getattr(op, "job_id", None)
+                job = names[jid] if (jid is not None and 0 <= jid < len(names)) else ""
+                base = next((b for b in bases if job.lower().startswith(b.lower())), None)
+                did = getattr(op, "operation_id", None)
+                if base is not None and did is not None:
+                    large[i] = float(wmap[base].get(str(did), 0)) >= thr
+            cluster_of = {}
+            for m in self.machines:
+                if m.startswith(prefix):
+                    cluster_of[m] = int(m[len(prefix):]) // csize
+            combo_cluster = []
+            for c in range(self.n_combos):
+                cl = {cluster_of.get(m) for m in self.combos[c]}
+                combo_cluster.append(next(iter(cl)) if len(cl) == 1 and None not in cl else None)
+            self.l2 = dict(large=large, combo_cluster=combo_cluster, slope=slope, cap=1.0 + slope * (csize - 1))
+
     def _topological_order(self) -> list[int]:
         indeg = [len(p) for p in self.pred]
         stack = [i for i in range(self.n) if indeg[i] == 0]
@@ -171,6 +219,38 @@ def decode(ctx: DecoderContext, priority: np.ndarray,
            combo_choice: np.ndarray | None = None,
            insertion: bool = True,
            price=None) -> tuple[np.ndarray, np.ndarray]:
+    """See `_decode_once`. With G2 on (ctx.wrap_H > 0) the decode is repeated
+    with the previous pass's overflow past the hyperperiod folded to the start
+    of the cycle on the same combination (at most three passes; stops when the
+    overflow set does not change)."""
+    t, alpha, info = _decode_once(ctx, priority, combo_choice, insertion, price, None)
+    if ctx.wrap_H <= 0.0:
+        return t, alpha
+    H = ctx.wrap_H
+    prev = None
+    for _ in range(2):
+        pre = []
+        for i in range(ctx.n):
+            c = int(np.argmax(alpha[i]))
+            s0 = float(t[i]); e0 = s0 + float(info["deff"][i])
+            r = float(info["rel"][i])
+            stretched = (r + (1.0 + ctx.release_margin) * (e0 - r)) if ctx.release_margin > 0 else e0
+            if e0 > H + _EPS:
+                pre.append((c, max(0.0, s0 - H), e0 - H, r - H))
+            elif stretched > H + _EPS:
+                pre.append((c, s0 - H, e0 - H, r - H))       # marker before 0: F5 sees it
+        key = sorted((c, round(a, 6), round(b, 6)) for c, a, b, _r in pre)
+        if key == prev:
+            break
+        prev = key
+        t, alpha, info = _decode_once(ctx, priority, combo_choice, insertion, price, pre)
+    return t, alpha
+
+
+def _decode_once(ctx: DecoderContext, priority: np.ndarray,
+                 combo_choice: np.ndarray | None,
+                 insertion: bool,
+                 price, prebusy):
     """Turn (priority, combination choice) into a concrete schedule.
 
     `combo_choice[i] < 0` (or a None vector) means "pick the combination that
@@ -203,15 +283,24 @@ def decode(ctx: DecoderContext, priority: np.ndarray,
     # F5: release time of the chain each placed interval belongs to (the
     # earliest release among its op's ancestors), keyed by (combo, start, end).
     rel = np.zeros(n)
+    deff = np.zeros(n)                    # committed duration (G3 may inflate)
     chain_rel: dict = {} if ctx.release_margin > 0.0 else None
+    l2 = ctx.l2
+    l2_busy: dict = {}                    # cluster -> [(start, end)] of large-weight ops
+    for (c0, a0, b0, r0) in (prebusy or []):   # G2: previous cycle's overflow
+        if b0 > a0:
+            _commit(ctx, busy, c0, a0, b0)
+        if chain_rel is not None:
+            if b0 <= a0:
+                _commit(ctx, busy, c0, a0, a0)   # zero-length marker for F5
+            chain_rel[(c0, a0, b0 if b0 > a0 else a0)] = r0
 
     order = _priority_order(ctx, priority)
 
     for i in order:
         pred_ready = 0.0
         for p in ctx.pred[i]:
-            pc = chosen[p]
-            end = t[p] + ctx.dur[p, pc]
+            end = t[p] + deff[p]
             pred_ready = max(pred_ready, end)
         floor_base = max(pred_ready, ctx.min_start[i])
 
@@ -226,9 +315,13 @@ def decode(ctx: DecoderContext, priority: np.ndarray,
             floor = floor_base
             for p in ctx.pred[i]:
                 pc = chosen[p]
-                floor = max(floor, t[p] + ctx.dur[p, pc]
+                floor = max(floor, t[p] + deff[p]
                             + ctx.transfer[ctx.first_machine[pc], ctx.first_machine[c]])
             start = _earliest_slot(ctx, busy, c, floor, d, insertion)
+            if l2 is not None and l2["large"][i] and l2["combo_cluster"][c] is not None:
+                k = 1 + sum(1 for (a1, b1) in l2_busy.get(l2["combo_cluster"][c], ())
+                            if a1 < start + d - _EPS and b1 > start + _EPS)
+                d = d * min(1.0 + l2["slope"] * (k - 1), l2["cap"])
             finish = start + d
             # An unpriced op keeps the bare finish time, so the unpriced path
             # is the old comparison bit for bit.
@@ -236,27 +329,28 @@ def decode(ctx: DecoderContext, priority: np.ndarray,
             if chain_rel is not None and ctx.is_root[i]:
                 score += _release_block(ctx, busy, c, start, chain_rel)
             if best is None or score < best[0]:
-                best = (score, c, start)
+                best = (score, c, start, d)
 
         if best is None:                  # no usable combination; force one
             c = 0
             d = ctx.dur[i, c] if np.isfinite(ctx.dur[i, c]) else 0.0
-            best = (floor_base + d, c, floor_base)
+            best = (floor_base + d, c, floor_base, d)
 
-        _, c, start = best
+        _, c, start, d = best
         t[i] = start
         chosen[i] = c
         alpha[i, c] = 1.0
-        d = ctx.dur[i, c]
-        if chain_rel is not None:
-            rel[i] = (ctx.min_start[i] if not ctx.pred[i]
-                      else min(rel[p] for p in ctx.pred[i]))
+        deff[i] = d if np.isfinite(d) else 0.0
+        rel[i] = (ctx.min_start[i] if not ctx.pred[i]
+                  else min(rel[p] for p in ctx.pred[i]))
+        if l2 is not None and l2["large"][i] and l2["combo_cluster"][c] is not None and np.isfinite(d):
+            l2_busy.setdefault(l2["combo_cluster"][c], []).append((start, start + d))
         if np.isfinite(d) and d > 0:
             _commit(ctx, busy, c, start, start + d)
             if chain_rel is not None:
                 chain_rel[(c, start, start + d)] = rel[i]
 
-    return t, alpha
+    return t, alpha, dict(rel=rel, deff=deff)
 
 
 def _priority_order(ctx: DecoderContext, priority: np.ndarray) -> list[int]:
