@@ -26,6 +26,25 @@ import numpy as np
 _EPS = 1e-9
 
 
+def _price_vector(price, n: int):
+    """None, or a length-n float array. A scalar applies to every op; 0 (or an
+    all-zero vector) is None, which is the unpriced code path exactly."""
+    if price is None:
+        return None
+    if isinstance(price, str):
+        raise ValueError(
+            f"core-time price {price!r} is a policy, not a price: resolve it with "
+            f"metaheuristics.heft_schedule / heft_edf_schedule")
+    arr = np.asarray(price, dtype=float)
+    if arr.ndim == 0:
+        arr = np.full(n, float(arr))
+    if arr.shape != (n,):
+        raise ValueError(f"core-time price has shape {arr.shape}, expected ({n},)")
+    if np.any(arr < 0) or not np.all(np.isfinite(arr)):
+        raise ValueError("core-time price must be finite and non-negative")
+    return arr if np.any(arr > 0) else None
+
+
 class DecoderContext:
     """Immutable, workload-derived tables the decoder needs.
 
@@ -81,6 +100,23 @@ class DecoderContext:
 
         self.topo = self._topological_order()
 
+        # Price of core time (see `decode`). The POLICY travels on the workload
+        # as `core_time_price` -- None, a number, or "auto" -- so it reaches
+        # every decode without a global; `price` is the per-op vector `decode`
+        # uses when it is not handed one. "auto" leaves it None until
+        # `metaheuristics` has resolved a level.
+        self.core_time_price = getattr(workload, "core_time_price", None)
+        self.price = (None if isinstance(self.core_time_price, str)
+                      else _price_vector(self.core_time_price, self.n))
+        # core_excess[i, c] = len(c) * dur[i, c] - min over c' of the same: the
+        # core time combination c burns beyond the cheapest way to run op i.
+        width = np.array([len(c) for c in self.combos], dtype=float)
+        core_ms = np.where(np.isfinite(self.dur), self.dur * width[None, :], np.inf)
+        floor = core_ms.min(axis=1) if self.n_combos else np.zeros(self.n)
+        floor = np.where(np.isfinite(floor), floor, 0.0)
+        self.core_ms = core_ms
+        self.core_excess = core_ms - floor[:, None]
+
     def _topological_order(self) -> list[int]:
         indeg = [len(p) for p in self.pred]
         stack = [i for i in range(self.n) if indeg[i] == 0]
@@ -116,15 +152,31 @@ class DecoderContext:
 
 def decode(ctx: DecoderContext, priority: np.ndarray,
            combo_choice: np.ndarray | None = None,
-           insertion: bool = True) -> tuple[np.ndarray, np.ndarray]:
+           insertion: bool = True,
+           price=None) -> tuple[np.ndarray, np.ndarray]:
     """Turn (priority, combination choice) into a concrete schedule.
 
     `combo_choice[i] < 0` (or a None vector) means "pick the combination that
     finishes this op earliest given what is already placed" — the HEFT rule.
     Otherwise the given combination is used, which is what lets a search
     optimise placement as well as ordering.
+
+    `price` puts a price on core time. Earliest finish alone treats the helper
+    cores of a wide combination as free, so a width-8 placement wins whenever
+    it finishes any earlier at all, however much core time it burns. With a
+    price the combination chosen for op i minimises
+
+        finish + price[i] * (core_ms(i, c) - min over c' of core_ms(i, c'))
+
+    where core_ms(i, c) = len(combination c) * dur[i, c] over the combinations
+    the op can use: a millisecond of finish time is traded against `price`
+    milliseconds of extra core time. It is a scalar (every op) or a length-n
+    vector; None falls back to the context's own (`ctx.price`, from the
+    workload's `core_time_price`), and None or 0 there is the earliest-finish
+    rule exactly, tie-breaks included.
     """
     n, n_combos = ctx.n, ctx.n_combos
+    pvec = ctx.price if price is None else _price_vector(price, n)
     t = np.zeros(n)
     alpha = np.zeros((n, n_combos))
     chosen = np.full(n, -1, dtype=int)
@@ -142,7 +194,8 @@ def decode(ctx: DecoderContext, priority: np.ndarray,
             pred_ready = max(pred_ready, end)
         floor_base = max(pred_ready, ctx.min_start[i])
 
-        best = None                       # (finish, combo, start)
+        best = None                       # (score, combo, start)
+        p_i = 0.0 if pvec is None else float(pvec[i])
         candidates = (range(n_combos) if combo_choice is None or combo_choice[i] < 0
                       else [int(combo_choice[i]) % n_combos])
         for c in candidates:
@@ -156,8 +209,11 @@ def decode(ctx: DecoderContext, priority: np.ndarray,
                             + ctx.transfer[ctx.first_machine[pc], ctx.first_machine[c]])
             start = _earliest_slot(ctx, busy, c, floor, d, insertion)
             finish = start + d
-            if best is None or finish < best[0]:
-                best = (finish, c, start)
+            # An unpriced op keeps the bare finish time, so the unpriced path
+            # is the old comparison bit for bit.
+            score = finish if p_i == 0.0 else finish + p_i * ctx.core_excess[i, c]
+            if best is None or score < best[0]:
+                best = (score, c, start)
 
         if best is None:                  # no usable combination; force one
             c = 0
