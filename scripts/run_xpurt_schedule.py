@@ -1230,18 +1230,23 @@ def schedule_iree_networks(
         profiled_times_by_network=profiled_by_network,
         combo_impls=combo_impls,
     )
-    if _price_policy is not None:
-        # What the schedule was solved with. Absent on a solve without a
-        # price, so such a schedule is the file it always was.
+    _overrun_eps = float(os.environ.get("XPURT_RELEASE_OVERRUN_MARGIN") or 0.0)
+    if _price_policy is not None or _overrun_eps > 0.0:
+        # What the schedule was solved with. Absent on a solve without these
+        # options, so such a schedule is the file it always was.
         with open(json_output_path) as f:
             _out = json.load(f)
-        _pr = _won_price_result
-        _out.setdefault("metadata", {})["core_time_price"] = {
-            "policy": _price_policy,
-            "solver": solver_used,
-            "implemented_by_solver": solver_used in _price_solvers,
-            **({k: v for k, v in _pr.items() if k != "policy"} if _pr else {}),
-        }
+        _md = _out.setdefault("metadata", {})
+        if _overrun_eps > 0.0:
+            _md["release_overrun_margin"] = _overrun_eps
+        if _price_policy is not None:
+            _pr = _won_price_result
+            _md["core_time_price"] = {
+                "policy": _price_policy,
+                "solver": solver_used,
+                "implemented_by_solver": solver_used in _price_solvers,
+                **({k: v for k, v in _pr.items() if k != "policy"} if _pr else {}),
+            }
         with open(json_output_path, "w") as f:
             json.dump(_out, f, indent=2)
     if contract is not None:
@@ -1479,7 +1484,17 @@ if __name__ == "__main__":
               "auto only runs heft and heft_edf. Overrides "
               "scheduler.core_time_price. Default: unset (earliest finish)."),
     )
+    parser.add_argument(
+        "--release-overrun-margin", type=float, default=None, metavar="EPS",
+        help=("F5: score a time-released dispatch (no predecessor) on a core with "
+              "the delay it would see if the entry placed just before it overran "
+              "by EPS x its duration (decoder family: heft, heft_edf, pso, sa). "
+              "Default: off."),
+    )
     args = parser.parse_args()
+    if args.release_overrun_margin:
+        os.environ["XPURT_RELEASE_OVERRUN_MARGIN"] = str(args.release_overrun_margin)
+        print(f"  release_overrun_margin: {args.release_overrun_margin}")
 
     seed = None if args.random_seed is not None and args.random_seed < 0 else args.random_seed
 

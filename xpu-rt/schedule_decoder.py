@@ -21,6 +21,8 @@ drive it without knowing anything about scheduling.
 
 from __future__ import annotations
 
+import os
+
 import numpy as np
 
 _EPS = 1e-9
@@ -117,6 +119,21 @@ class DecoderContext:
         self.core_ms = core_ms
         self.core_excess = core_ms - floor[:, None]
 
+        # F5 release-overrun guard (2026-11-26). A dispatch with no predecessor
+        # is released by time; if the non-preemptible entry placed just before
+        # it on a core overruns its planned duration by the factor
+        # `release_margin`, the release waits. Candidates are scored with that
+        # expected blocking added (see `_release_block`). 0 = off (default):
+        # the decode is then the earlier one exactly. Set by
+        # XPURT_RELEASE_OVERRUN_MARGIN or workload.release_overrun_margin.
+        _m = getattr(workload, "release_overrun_margin", None)
+        if _m is None:
+            _m = os.environ.get("XPURT_RELEASE_OVERRUN_MARGIN") or 0.0
+        self.release_margin = float(_m)
+        if not (self.release_margin >= 0.0 and np.isfinite(self.release_margin)):
+            raise ValueError("release overrun margin must be finite and >= 0")
+        self.is_root = np.array([len(p) == 0 for p in self.pred])
+
     def _topological_order(self) -> list[int]:
         indeg = [len(p) for p in self.pred]
         stack = [i for i in range(self.n) if indeg[i] == 0]
@@ -183,6 +200,10 @@ def decode(ctx: DecoderContext, priority: np.ndarray,
     # busy[c] holds (start, end) intervals already committed on combination c,
     # kept sorted so the gap scan below is a single pass.
     busy: list[list[tuple[float, float]]] = [[] for _ in range(n_combos)]
+    # F5: release time of the chain each placed interval belongs to (the
+    # earliest release among its op's ancestors), keyed by (combo, start, end).
+    rel = np.zeros(n)
+    chain_rel: dict = {} if ctx.release_margin > 0.0 else None
 
     order = _priority_order(ctx, priority)
 
@@ -212,6 +233,8 @@ def decode(ctx: DecoderContext, priority: np.ndarray,
             # An unpriced op keeps the bare finish time, so the unpriced path
             # is the old comparison bit for bit.
             score = finish if p_i == 0.0 else finish + p_i * ctx.core_excess[i, c]
+            if chain_rel is not None and ctx.is_root[i]:
+                score += _release_block(ctx, busy, c, start, chain_rel)
             if best is None or score < best[0]:
                 best = (score, c, start)
 
@@ -225,8 +248,13 @@ def decode(ctx: DecoderContext, priority: np.ndarray,
         chosen[i] = c
         alpha[i, c] = 1.0
         d = ctx.dur[i, c]
+        if chain_rel is not None:
+            rel[i] = (ctx.min_start[i] if not ctx.pred[i]
+                      else min(rel[p] for p in ctx.pred[i]))
         if np.isfinite(d) and d > 0:
             _commit(ctx, busy, c, start, start + d)
+            if chain_rel is not None:
+                chain_rel[(c, start, start + d)] = rel[i]
 
     return t, alpha
 
@@ -276,6 +304,31 @@ def _earliest_slot(ctx: DecoderContext, busy, combo: int, after: float,
             return cur
         cur = max(cur, e)
     return cur
+
+
+def _release_block(ctx: DecoderContext, busy, combo: int, start: float,
+                   chain_rel: dict) -> float:
+    """Blocking a time-released dispatch starting at `start` on `combo` sees
+    when everything runs `margin` longer than planned: the latest interval
+    (s, e) placed before `start` on a conflicting combination belongs to a
+    chain released at r, and under a uniform overrun its end moves to
+    r + (1 + margin) * (e - r) at most (the chain's whole planned span from
+    its release stretched). The part of that beyond `start` is the delay."""
+    worst = 0.0
+    for c2 in range(ctx.n_combos):
+        if not ctx.conflict[combo][c2]:
+            continue
+        prev = None
+        for s, e in busy[c2]:            # sorted by start
+            if s < start - _EPS:
+                prev = (s, e)
+            else:
+                break
+        if prev is not None:
+            s, e = prev
+            r = chain_rel.get((c2, s, e), s)
+            worst = max(worst, r + (1.0 + ctx.release_margin) * (e - r) - start)
+    return worst
 
 
 def _commit(ctx: DecoderContext, busy, combo: int, start: float, end: float) -> None:
