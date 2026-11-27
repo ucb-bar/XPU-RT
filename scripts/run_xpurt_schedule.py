@@ -212,6 +212,10 @@ def load_networks_config(json_path: str) -> tuple[dict, dict]:
         # another core's thread starts its own next layer that much later.
         # Absent = not applied. See sender_delay.apply_sender_delay.
         "sender_ms": sched.get("sender_ms") or None,
+        # Optional price of core time in the decoder family's placement rule:
+        # a number or "auto". Absent = earliest finish, the behaviour before it
+        # existed. See docs/handoff_and_width_pricing.md.
+        "core_time_price": sched.get("core_time_price"),
     }
 
     return networks_data, cfg
@@ -235,6 +239,7 @@ def schedule_iree_networks(
     no_milp_native_warm_start: bool = False,
     duration_feedback: str | None = None,
     calibration: str | None = None,
+    core_time_price=None,
 ) -> tuple[Workload, np.ndarray, np.ndarray]:
     """
     Main function to schedule networks from a hierarchical network dependencies JSON file.
@@ -372,6 +377,14 @@ def schedule_iree_networks(
     transfer_times = build_handoff_transfer_times(machines, cfg["handoff_ms"])
     if cfg["handoff_ms"]:
         print(f"  Hand-off cost between cores (ms, from kind -> to kind): {cfg['handoff_ms']}")
+    # PRICE OF CORE TIME in the decoder family's placement rule: None, a
+    # number, or "auto" (`scheduler.core_time_price`, or --core-time-price,
+    # which wins).
+    from metaheuristics import _parse_price_policy
+    _price_policy = _parse_price_policy(
+        core_time_price if core_time_price is not None else cfg.get("core_time_price"))
+    if _price_policy is not None:
+        print(f"  core_time_price: {_price_policy}")
 
     # Map each combination to its profile hw and topo tag.
     # The general path uses the full profile_hw_map (machine-kind → hw
@@ -562,6 +575,10 @@ def schedule_iree_networks(
                   f"ops without a pool path excluded; width margin {cfg['width_margin']:.0%}: "
                   f"{st['margin_excluded_options']} option(s) excluded, "
                   f"{st['margin_narrowed_dispatches']} dispatch(es) given a narrower width")
+        if _price_policy is not None:
+            # Read by schedule_decoder.DecoderContext; the greedy pickers,
+            # CP-SAT and the MILP do not look at it.
+            workload.core_time_price = _price_policy
         return workload
 
     def _create_workload():
@@ -575,6 +592,13 @@ def schedule_iree_networks(
             processing_times=processing_times,
             machine_combinations=machine_combinations,
         )
+
+    _price_solvers = ("heft", "heft_edf", "pso", "sa")
+    _won_price_result = None
+    if _price_policy is not None and solver != "auto" and solver not in _price_solvers:
+        print(f"  NOTE: core_time_price={_price_policy} is set, but solver "
+              f"'{solver}' does not implement it (only {', '.join(_price_solvers)} "
+              f"do); it has no effect on this solve.")
 
     if solver == "milp":
         # Single global solve. Build workload once, run the MILP
@@ -651,7 +675,18 @@ def schedule_iree_networks(
         # cannot build, and a pass costs about a second. See §4.6 of
         # docs/scheduler_solver_study.md, which names the measurement that
         # would justify removing it.
-        if solver == "auto":
+        if solver == "auto" and _price_policy is not None:
+            # The greedy pickers choose op and combination together by earliest
+            # completion and have no place for a core-time price, so a
+            # candidate from them would be ranked against priced ones on
+            # makespan alone. With a price set, `auto` only runs the solvers
+            # that implement it.
+            candidate_solvers = ["heft", "heft_edf"]
+            print(f"auto: core_time_price={_price_policy} is set; candidates "
+                  f"restricted to the solvers that implement it: "
+                  f"{', '.join(candidate_solvers)} (greedy_reserved, "
+                  f"greedy_periodic, greedy and decomposed do not)")
+        elif solver == "auto":
             candidate_solvers = ["greedy_reserved", "greedy_periodic",
                                  "greedy", "decomposed", "heft", "heft_edf"]
         else:
@@ -718,6 +753,8 @@ def schedule_iree_networks(
         }
 
         _candidate_results = []
+        _candidate_price_result: dict = {}
+        _candidate_handoff: dict = {}
         for candidate in candidate_solvers:
             for net_id, seeded in _seed_instances.items():
                 if seeded is None:
@@ -921,6 +958,11 @@ def schedule_iree_networks(
                       f"Raising --max-periodic-iters makes this worse, not better; "
                       f"try --solver auto.")
 
+            # What the price policy settled on for this candidate (the trim
+            # below may hand back a new workload object without it).
+            _candidate_price_result[candidate] = getattr(
+                combined_workload, "core_time_price_result", None)
+
             # Score the candidate on the schedule it actually ships — the
             # trim drops periodic instances that start after the
             # non-periodic makespan, and it moves the numbers enough that
@@ -982,6 +1024,21 @@ def schedule_iree_networks(
                   f"(all ops {_cand_makespan:.2f} ms), "
                   f"periodic window misses={_misses}, "
                   f"{'converged' if converged_this_pass else 'DID NOT converge'}")
+            if _price_policy is not None:
+                # Not part of the ranking; shown so the log says what each
+                # candidate costs in core time and in hand-offs.
+                try:
+                    import handoff_metrics as _hm
+                    _tot = _hm.solution_metrics(combined_workload, t, alpha)["totals"]
+                    _candidate_handoff[candidate] = _tot
+                    _pr = _candidate_price_result.get(candidate) or {}
+                    print(f"  {candidate}: total core-ms={_tot['core_ms']:.3f}, "
+                          f"hand-offs={_tot['core_changes']} "
+                          f"(kind changes {_tot['kind_changes']}, composite "
+                          f"dispatches {_tot['composite']}); core_time_price "
+                          f"level={_pr.get('level')} tried={_pr.get('tried')}")
+                except Exception as _e:
+                    print(f"  {candidate}: hand-off metrics unavailable ({_e})")
 
         _candidate_results.sort(key=lambda r: (r[0], r[1], r[2], r[3]))
         (_misses, _diverged, iter_makespan, _all_makespan, _won,
@@ -990,9 +1047,12 @@ def schedule_iree_networks(
             print("\nauto: candidate ranking "
                   "(window misses, converged, makespan, all-ops end):")
             for m, dv, ms, msall, name, *_ in _candidate_results:
+                _tot = _candidate_handoff.get(name)
                 print(f"  {'->' if name == _won else '  '} {name:<16} "
                       f"misses={m:<4} {'converged' if not dv else 'diverged '} "
-                      f"makespan={ms:.2f} ms  all-ops={msall:.2f} ms")
+                      f"makespan={ms:.2f} ms  all-ops={msall:.2f} ms"
+                      + (f"  core-ms={_tot['core_ms']:.3f}  "
+                         f"hand-offs={_tot['core_changes']}" if _tot else ""))
             print(f"auto: selected '{_won}'")
             if _misses or _diverged:
                 print("auto: WARNING — no candidate produced a fully valid "
@@ -1000,6 +1060,7 @@ def schedule_iree_networks(
                       "periodic window or returned fewer periodic instances "
                       "than its own makespan needs).")
         solver_used = _won
+        _won_price_result = _candidate_price_result.get(_won)
 
     # Calculate makespan over whatever set the solver objective actually covered.
     # With restrict_makespan_to_nonperiodic the objective is the non-periodic
@@ -1169,6 +1230,25 @@ def schedule_iree_networks(
         profiled_times_by_network=profiled_by_network,
         combo_impls=combo_impls,
     )
+    _overrun_eps = float(os.environ.get("XPURT_RELEASE_OVERRUN_MARGIN") or 0.0)
+    if _price_policy is not None or _overrun_eps > 0.0:
+        # What the schedule was solved with. Absent on a solve without these
+        # options, so such a schedule is the file it always was.
+        with open(json_output_path) as f:
+            _out = json.load(f)
+        _md = _out.setdefault("metadata", {})
+        if _overrun_eps > 0.0:
+            _md["release_overrun_margin"] = _overrun_eps
+        if _price_policy is not None:
+            _pr = _won_price_result
+            _md["core_time_price"] = {
+                "policy": _price_policy,
+                "solver": solver_used,
+                "implemented_by_solver": solver_used in _price_solvers,
+                **({k: v for k, v in _pr.items() if k != "policy"} if _pr else {}),
+            }
+        with open(json_output_path, "w") as f:
+            json.dump(_out, f, indent=2)
     if contract is not None:
         with open(json_output_path) as f:
             _out = json.load(f)
@@ -1394,7 +1474,27 @@ if __name__ == "__main__":
              "per-op costs, measured dispatch gap, and harts reserved for networks "
              "that were blocked (xpu-rt/calibration_feedback.py).",
     )
+    parser.add_argument(
+        "--core-time-price", default=None, metavar="PRICE|auto",
+        help=("Price of core time in the decoder family's placement rule (heft, "
+              "heft_edf, pso, sa): a combination is chosen by finish + price * "
+              "(extra core-ms over the op's cheapest combination) instead of by "
+              "finish alone. 'auto' keeps the highest price in 1, 0.5, 0.25, 0 "
+              "that misses the fewest periodic windows. With it set, --solver "
+              "auto only runs heft and heft_edf. Overrides "
+              "scheduler.core_time_price. Default: unset (earliest finish)."),
+    )
+    parser.add_argument(
+        "--release-overrun-margin", type=float, default=None, metavar="EPS",
+        help=("F5: score a time-released dispatch (no predecessor) on a core with "
+              "the delay it would see if the entry placed just before it overran "
+              "by EPS x its duration (decoder family: heft, heft_edf, pso, sa). "
+              "Default: off."),
+    )
     args = parser.parse_args()
+    if args.release_overrun_margin:
+        os.environ["XPURT_RELEASE_OVERRUN_MARGIN"] = str(args.release_overrun_margin)
+        print(f"  release_overrun_margin: {args.release_overrun_margin}")
 
     seed = None if args.random_seed is not None and args.random_seed < 0 else args.random_seed
 
@@ -1417,4 +1517,5 @@ if __name__ == "__main__":
         no_milp_native_warm_start=args.no_milp_native_warm_start,
         duration_feedback=args.duration_feedback,
         calibration=args.calibration,
+        core_time_price=args.core_time_price,
     )

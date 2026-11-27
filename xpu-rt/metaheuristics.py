@@ -206,7 +206,12 @@ def _heuristic_seeds(ctx: DecoderContext, workload,
     """
     import greedy_scheduler as _gs
     seeds = []
+    priced = ctx.core_time_price is not None
     ht, ha, hkeys = _heft_keys(ctx)
+    if isinstance(ctx.core_time_price, str):
+        # `_heft_keys` decodes with the context's price vector, which a policy
+        # ("auto") has not produced yet; take HEFT's own resolved answer.
+        ht, ha = heft_schedule(workload)
     if defer_frac >= 1.0:
         hkeys = hkeys[:ctx.n]
     elif defer_frac > 0.0:
@@ -217,8 +222,13 @@ def _heuristic_seeds(ctx: DecoderContext, workload,
         hkeys = np.concatenate([hkeys[:ctx.n], _combo_keys_for(ctx, ha, 0.0)])
     seeds.append((hkeys, ht, ha))
     fns = [heft_edf_schedule]
-    for name in ("greedy_reserved_schedule", "greedy_periodic_schedule",
-                 "greedy_schedule", "decomposed_schedule"):
+    # The greedy pickers do not implement the core-time price. A search ranks
+    # its incumbent by (missed windows, makespan), which an unpriced greedy seed
+    # can win on makespan alone, so with a price set they are left out and the
+    # search starts from the two priced heuristics only.
+    for name in (() if priced else
+                 ("greedy_reserved_schedule", "greedy_periodic_schedule",
+                  "greedy_schedule", "decomposed_schedule")):
         fn = getattr(_gs, name, None)
         if fn is not None:
             fns.append(fn)
@@ -228,6 +238,11 @@ def _heuristic_seeds(ctx: DecoderContext, workload,
             seeds.append((_keys_from_schedule(ctx, t, alpha, defer_frac), t, alpha))
         except Exception:
             continue
+    if isinstance(ctx.core_time_price, str):
+        # The searches decode through `ctx.price`. Under a policy that is the
+        # per-op vector deadline-aware HEFT settled on (it ran last above).
+        vec = getattr(workload, "_core_time_price_vector", None)
+        ctx.price = None if vec is None else np.array(vec, dtype=float)
     return seeds
 
 
@@ -238,10 +253,173 @@ def _penalty_scale(ctx: DecoderContext) -> float:
     return max(1.0, total)
 
 
-def heft_schedule(workload) -> tuple[np.ndarray, np.ndarray]:
-    """HEFT: upward-rank priority + insertion-based earliest-finish placement."""
+#: Price levels the "auto" core-time-price policy tries, highest first.
+PRICE_LEVELS = (1.0, 0.5, 0.25, 0.0)
+
+_INHERIT = object()
+
+
+def _parse_price_policy(policy):
+    """None, a non-negative float, or the string "auto"."""
+    if policy is None:
+        return None
+    if isinstance(policy, str):
+        p = policy.strip().lower()
+        if p in ("", "none", "off"):
+            return None
+        if p == "auto":
+            return "auto"
+        policy = float(p)
+    v = float(policy)
+    if not np.isfinite(v) or v < 0:
+        raise ValueError(f"core_time_price must be >= 0 or 'auto', got {policy!r}")
+    return v
+
+
+def op_networks(ctx: DecoderContext) -> list:
+    """The network each op belongs to, so the instances of one periodic network
+    share a key. `op_network` (attached from the profile database by
+    run_xpurt_schedule) is authoritative; a job none of whose ops carries one
+    falls back to its job name with the instance digits trimmed, and an op with
+    no job at all is its own network."""
+    names = getattr(ctx.workload, "job_names", None) or []
+    by_job: dict = {}
+    for op in ctx.ops:
+        net = getattr(op, "op_network", None)
+        if net and op.job_id is not None and op.job_id not in by_job:
+            by_job[op.job_id] = str(net)
+    out = []
+    for i, op in enumerate(ctx.ops):
+        jid = op.job_id
+        if jid is None:
+            out.append(("op", i))
+        elif jid in by_job:
+            out.append(by_job[jid])
+        elif isinstance(jid, int) and 0 <= jid < len(names) and names[jid]:
+            name = str(names[jid])
+            out.append(name.rstrip("0123456789") or name)
+        else:
+            out.append(("job", jid))
+    return out
+
+
+def _missed_networks(ctx: DecoderContext, t, alpha) -> set:
+    combo = np.argmax(alpha, axis=1)
+    finish = t + ctx.dur[np.arange(ctx.n), combo]
+    finish = np.where(np.isfinite(finish), finish, t)
+    late = np.flatnonzero(finish > ctx.max_end + 1e-6)
+    nets = op_networks(ctx)
+    return {nets[i] for i in late}
+
+
+def solve_with_core_time_price(ctx: DecoderContext, policy, solve,
+                               restrict_to_nonperiodic: bool = True):
+    """Run `solve(price) -> (t, alpha)` under a core-time-price policy.
+
+    `policy` is a number (that price for every op) or "auto". Returns
+    `(t, alpha, info)`; `info` records the policy, the level that won and what
+    each level tried scored, and is also left on the workload as
+    `core_time_price_result` (with the per-op vector as
+    `_core_time_price_vector`) so the caller can put it in the schedule's
+    metadata.
+
+    WHY "auto" RANKS THE WAY IT DOES. With deadlines, finishing early has no
+    value by itself: a periodic instance that ends at 30% of its window is worth
+    exactly what one that ends at 95% is. Core time is the scarce resource --
+    every core-millisecond a dispatch occupies is one another network cannot
+    have -- so a split (or a placement on the slow kind that burns more core
+    time) should be taken only when it is needed to meet a window. Hence: try
+    the price levels `PRICE_LEVELS` = 1.0, 0.5, 0.25, 0.0 and keep the HIGHEST
+    price whose schedule has the fewest missed periodic windows (`evaluate`'s
+    miss count). Ranking between levels is (misses, then the higher price);
+    ranking inside one level is whatever `solve` already does.
+
+    Between the global levels there is one intermediate stage. Lowering the
+    price everywhere to rescue one overloaded network lets every other network
+    split again too. So before a global lowering, the price stays at 1.0 for
+    the ops of every network all of whose instances met their windows in the
+    price-1.0 schedule, and is lowered (0.5, 0.25, 0) only for the ops of the
+    networks that had a missed instance. A staged schedule is preferred over a
+    global lowering that reaches the same miss count. The full preference
+    order is therefore
+
+        1.0,  staged 0.5,  staged 0.25,  staged 0,  0.5,  0.25,  0
+
+    and the winner is the first entry of that list with the minimum miss
+    count. A price-1.0 schedule with no misses ends the search at once.
+    """
+    policy = _parse_price_policy(policy)
+    info: dict = {"policy": policy}
+
+    def misses_of(t, alpha):
+        return evaluate(ctx, t, alpha, restrict_to_nonperiodic)[1]
+
+    if policy != "auto":
+        vec = np.full(ctx.n, float(policy or 0.0))
+        t, alpha = solve(vec)
+        info.update(level="fixed", price=float(policy or 0.0),
+                    misses=int(misses_of(t, alpha)))
+    else:
+        top = PRICE_LEVELS[0]
+        nets = op_networks(ctx)
+        tried = []                         # (misses, order, label, vec, t, alpha, extra)
+
+        def attempt(label, vec, extra):
+            t, alpha = solve(vec)
+            tried.append((int(misses_of(t, alpha)), len(tried), label, vec, t,
+                          alpha, extra))
+            return tried[-1]
+
+        first = attempt(f"{top:g}", np.full(ctx.n, top),
+                        {"price": top, "lowered_price": None,
+                         "lowered_networks": []})
+        if first[0] > 0:
+            missed = _missed_networks(ctx, first[4], first[5])
+            lower = np.array([nets[i] in missed for i in range(ctx.n)])
+            listed = sorted(str(x) for x in missed)
+            if np.any(lower) and not np.all(lower):
+                for lvl in PRICE_LEVELS[1:]:
+                    vec = np.where(lower, lvl, top)
+                    attempt(f"staged {lvl:g}", vec,
+                            {"price": top, "lowered_price": lvl,
+                             "lowered_networks": listed})
+            for lvl in PRICE_LEVELS[1:]:
+                attempt(f"{lvl:g}", np.full(ctx.n, lvl),
+                        {"price": lvl, "lowered_price": None,
+                         "lowered_networks": []})
+        best = min(tried, key=lambda r: (r[0], r[1]))
+        misses, _order, label, vec, t, alpha, extra = best
+        info.update(level=label, misses=misses, **extra)
+        info["tried"] = [{"level": r[2], "misses": r[0]} for r in tried]
+    try:
+        ctx.workload.core_time_price_result = info
+        ctx.workload._core_time_price_vector = [float(x) for x in vec]
+    except Exception:
+        pass
+    return t, alpha, info
+
+
+def heft_schedule(workload, core_time_price=_INHERIT,
+                  restrict_to_nonperiodic: bool = True
+                  ) -> tuple[np.ndarray, np.ndarray]:
+    """HEFT: upward-rank priority + insertion-based earliest-finish placement.
+
+    `core_time_price` (default: the workload's own `core_time_price` attribute)
+    prices core time in the placement rule -- a number, or "auto"; see
+    :func:`solve_with_core_time_price`. None is plain HEFT.
+    """
     ctx = DecoderContext(workload)
-    t, alpha, _keys = _heft_keys(ctx)
+    policy = _parse_price_policy(ctx.core_time_price if core_time_price is _INHERIT
+                                 else core_time_price)
+    if policy is None:
+        if ctx.price is None:
+            t, alpha, _keys = _heft_keys(ctx)
+            return t, alpha
+        policy = 0.0                       # explicit None over a priced workload
+    rank = ctx.upward_rank()
+    t, alpha, _info = solve_with_core_time_price(
+        ctx, policy, lambda price: decode(ctx, rank, None, price=price),
+        restrict_to_nonperiodic)
     return t, alpha
 
 
@@ -389,7 +567,8 @@ def laxity_gates(ctx: DecoderContext, gate=None) -> list[np.ndarray]:
 
 
 def heft_edf_schedule(workload, gate=None,
-                      restrict_to_nonperiodic: bool = True
+                      restrict_to_nonperiodic: bool = True,
+                      core_time_price=_INHERIT,
                       ) -> tuple[np.ndarray, np.ndarray]:
     """Deadline-aware HEFT: EDF for the *tight* periodic ops, rank for the rest.
 
@@ -442,25 +621,43 @@ def heft_edf_schedule(workload, gate=None,
 
     `gate` overrides the enumeration with literal thresholds: a float for one
     fixed cut, or `float("inf")` to restore the old unconditional band.
+
+    `core_time_price` (default: the workload's own `core_time_price` attribute)
+    prices core time in the placement rule -- a number, or "auto"; see
+    :func:`solve_with_core_time_price`. The gate enumeration and its ranking
+    are run unchanged inside each price level; the levels are then ranked by
+    (missed windows, higher price). None leaves the placement rule alone.
     """
     ctx = DecoderContext(workload)
     rank = ctx.upward_rank()
     span = rank.max() - rank.min()
     np_band = (rank - rank.min()) / span if span > 0 else np.full(ctx.n, 0.5)
+    policy = _parse_price_policy(ctx.core_time_price if core_time_price is _INHERIT
+                                 else core_time_price)
+    gates = laxity_gates(ctx, gate) if np.any(ctx.periodic) else None
 
-    if not np.any(ctx.periodic):           # nothing to band: this is HEFT
-        return decode(ctx, np.array(np_band, dtype=float), None)
+    def solve(price):
+        if gates is None:                  # nothing to band: this is HEFT
+            return decode(ctx, np.array(np_band, dtype=float), None, price=price)
+        best = None                        # (misses, objective, -lifted, t, alpha)
+        for lift in gates:
+            t, alpha = decode(ctx, _band_priority(ctx, np_band, lift), None,
+                              price=price)
+            obj, misses, _ = evaluate(ctx, t, alpha, restrict_to_nonperiodic)
+            # Ties go to the wider gate: when the objective cannot tell two
+            # schedules apart, the one protecting more deadlines is the safer bet.
+            cand = (misses, obj, -int(lift.sum()), t, alpha)
+            if best is None or cand[:3] < best[:3]:
+                best = cand
+        return best[3], best[4]
 
-    best = None                            # (misses, objective, -lifted, t, alpha)
-    for lift in laxity_gates(ctx, gate):
-        t, alpha = decode(ctx, _band_priority(ctx, np_band, lift), None)
-        obj, misses, _ = evaluate(ctx, t, alpha, restrict_to_nonperiodic)
-        # Ties go to the wider gate: when the objective cannot tell two
-        # schedules apart, the one protecting more deadlines is the safer bet.
-        cand = (misses, obj, -int(lift.sum()), t, alpha)
-        if best is None or cand[:3] < best[:3]:
-            best = cand
-    return best[3], best[4]
+    if policy is None:
+        # `price=None` defers to the context, which is unpriced here unless an
+        # explicit None was passed over a priced workload.
+        return solve(None if ctx.price is None else 0.0)
+    t, alpha, _info = solve_with_core_time_price(ctx, policy, solve,
+                                                 restrict_to_nonperiodic)
+    return t, alpha
 
 
 def pso_schedule(workload, n_particles: int = 24, iters: int = 60,
